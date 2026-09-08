@@ -108,7 +108,7 @@ function buildReadme(wb, stats) {
     ['Modelo', ''],
     ['Drill-down (4 colunas)', 'ETAPA > CATEGORIA > SUBCATEGORIA > LINHA'],
     ['Código caminho 4×3', 'Formato A01AB — A=etapa · 01=categoria · A=subcategoria · B=linha'],
-    ['Componente SKU (3 colunas)', 'comp1 | comp2 | comp3  (ex.: Estribo | 7×17 | vazio)'],
+    ['Componente SKU (3 colunas)', 'comp1 | comp2 | comp3 — se comp2 vazio, comp3 desce para comp2'],
     ['Visão unificada (opcional)', 'Junta acabamentos de domínio em b. Instalações'],
     ['', ''],
     ['Etapas (prefixo ordena)', ''],

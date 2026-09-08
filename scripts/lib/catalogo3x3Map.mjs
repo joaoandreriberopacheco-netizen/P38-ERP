@@ -133,6 +133,18 @@ export function cellStr(value) {
   return String(value).trim();
 }
 
+/** Compacta comp2/comp3: se comp2 vazio, comp3 passa para comp2. */
+export function normalizeComponentes(comp1, comp2, comp3) {
+  let c1 = cellStr(comp1);
+  let c2 = cellStr(comp2);
+  let c3 = cellStr(comp3);
+  if (!c2 && c3) {
+    c2 = c3;
+    c3 = '';
+  }
+  return { comp1: c1, comp2: c2, comp3: c3 };
+}
+
 function norm(s) {
   return String(s ?? '')
     .normalize('NFD')
@@ -859,15 +871,14 @@ export function to4x3(row, abHit) {
   const classified = classify4x3(row, abHit);
   const unified = unify4x3(classified);
   const legacy3 = classify3x3(row, abHit);
+  const comps = normalizeComponentes(row.produto_compra, row.eixo_a, row.eixo_b);
   return {
     ...classified,
     etapa_u: unified.etapa,
     categoria_u: unified.categoria,
     subcategoria_u: unified.subcategoria,
     linha_u: unified.linha,
-    comp1: cellStr(row.produto_compra),
-    comp2: cellStr(row.eixo_a),
-    comp3: cellStr(row.eixo_b),
+    ...comps,
     codigo_interno: cellStr(row.codigo_interno).toUpperCase(),
     novo_sku: cellStr(row.novo_sku),
     sku_atual: cellStr(row.sku_atual),
@@ -884,14 +895,13 @@ export function to4x3(row, abHit) {
 export function to3x3(row, abHit) {
   const classified = classify3x3(row, abHit);
   const unified = unify3x3(classified);
+  const comps = normalizeComponentes(row.produto_compra, row.eixo_a, row.eixo_b);
   return {
     ...classified,
     etapa_u: unified.etapa,
     categoria_u: unified.categoria,
     linha_u: unified.linha,
-    comp1: cellStr(row.produto_compra),
-    comp2: cellStr(row.eixo_a),
-    comp3: cellStr(row.eixo_b),
+    ...comps,
     codigo_interno: cellStr(row.codigo_interno).toUpperCase(),
     novo_sku: cellStr(row.novo_sku),
     sku_atual: cellStr(row.sku_atual),
