@@ -580,9 +580,16 @@ export function deriveLinhaEletrica(row, abHit) {
   return linhaComPrefixoCnc(linha);
 }
 
+export function isAdaptadorCaixaAgua(row) {
+  return pcMatch(row, ["ADAPTADOR CAIXA D'ÁGUA", 'ADAPTADOR CAIXA D AGUA', 'ADAPTADOR CAIXA']);
+}
+
 export function deriveLinhaHidraulica(row, abHit) {
   let linha;
-  if (abHit?.sub && isAbHidraulica(abHit)) {
+  if (isAdaptadorCaixaAgua(row)) {
+    linha = 'Soldável';
+  }
+  if (!linha && abHit?.sub && isAbHidraulica(abHit)) {
     const s = String(abHit.sub);
     if (/01|Soldável/i.test(s)) linha = 'Soldável';
     else if (/02|Esgoto/i.test(s)) linha = 'Esgoto';
@@ -596,7 +603,7 @@ export function deriveLinhaHidraulica(row, abHit) {
     if (core === 'AGUA_FRIA_SOLDAVEL' || lb === 'SOLDÁVEL') linha = 'Soldável';
     else if (core === 'ESGOTO' || lb === 'ESGOTO') linha = 'Esgoto';
     else if (core === 'AGUA_FRIA_ROSCAVEL' || lb === 'ROSCÁVEL') linha = 'Roscável';
-    else if (pcMatch(row, ["CAIXA D'ÁGUA", 'CAIXA D AGUA', 'ADAPTADOR CAIXA', 'POÇO', 'POCO'])) linha = 'Captação';
+    else if (pcMatch(row, ["CAIXA D'ÁGUA", 'CAIXA D AGUA', 'POÇO', 'POCO'])) linha = 'Captação';
     else linha = 'Componentes';
   }
   return linhaComPrefixoCnc(linha);
