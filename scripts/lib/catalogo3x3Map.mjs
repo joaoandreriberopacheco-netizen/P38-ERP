@@ -337,6 +337,7 @@ export function isLoucasSanitarias(row) {
     'ASSENTO SANITARIO',
     'ASSENTO SANITÁRIO',
     'CAIXA DE DESCARGA',
+    'TUBO DESCARGA',
     'MICTORIO',
     'MICTÓRIO',
     'LAVATORIO',
@@ -345,6 +346,27 @@ export function isLoucasSanitarias(row) {
     'TANQUE DECORALITA',
   ])) return true;
   return norm(linhaBase(row.linha)).includes('LOUCA') || norm(linhaBase(row.linha)).includes('LOUÇA');
+}
+
+/** Vaso convencional + tubo de descarga — mesmo grupo comercial. */
+export function isVasoConvencionalGrupo(row) {
+  const pc = norm(row.produto_compra);
+  const ea = norm(row.eixo_a);
+  if (pc.includes('TUBO DESCARGA')) return true;
+  return pc.includes('VASO SANIT') && ea.includes('CONVENCIONAL');
+}
+
+export function deriveLinhaLoucasAcab(row) {
+  if (isVasoConvencionalGrupo(row)) return 'Vaso convencional';
+  const pc = norm(row.produto_compra);
+  const ea = norm(row.eixo_a);
+  if (pc.includes('VASO SANIT') && ea.includes('CAIXA ACOPLADA')) return 'Vaso caixa acoplada';
+  if (pc.includes('CAIXA DE DESCARGA')) return 'Caixa de descarga';
+  if (pc.includes('ASSENTO SANIT')) return 'Assentos sanitários';
+  if (pc.includes('MICTORIO') || pc.includes('MICTÓRIO')) return 'Mictório';
+  if (pc.includes('LAVATORIO') || pc.includes('LAVATÓRIO')) return 'Lavatório';
+  if (pc.includes('BANHEIRA')) return 'Banheira';
+  return SUB_ACAB_HID.LOUCAS;
 }
 
 export function isChuveiroAcabamento(row) {
@@ -694,7 +716,7 @@ export function classify3x3(row, abHit) {
     return {
       etapa: ETAPA.ACABAMENTOS,
       categoria: CATEGORIA_ACAB.HIDRAULICA,
-      linha: acabLinha(SUB_ACAB_HID.LOUCAS, SUB_ACAB_HID.LOUCAS),
+      linha: acabLinha(SUB_ACAB_HID.LOUCAS, deriveLinhaLoucasAcab(row)),
     };
   }
   if (isChuveiroAcabamento(row)) {
