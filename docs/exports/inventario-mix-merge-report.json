@@ -1,0 +1,1319 @@
+{
+  "generated_at": "2026-09-09T20:53:19.131Z",
+  "apply": true,
+  "reuse": [
+    {
+      "items": [
+        1
+      ],
+      "ref": "CVCPB",
+      "codigo_interno": "K36-3OL",
+      "id": "69bd5b7ff963c1a735f746ec",
+      "nome_novo": "CHUVEIRO PLÁSTICO, PAREDE, CROMADO - JAPI",
+      "estoque_novo": 4,
+      "estoque_anterior": 0,
+      "payload": {
+        "nome": "CHUVEIRO PLÁSTICO, PAREDE, CROMADO - JAPI",
+        "campo_hierarquico_1": "CHUVEIRO",
+        "campo_hierarquico_2": "Banheiro",
+        "campo_hierarquico_3": "Parede",
+        "campo_hierarquico_4": "CVCPB",
+        "campo_hierarquico_5": "Japi",
+        "marca": "Japi",
+        "codigo_barras": "CVCPB",
+        "estoque_atual": 4,
+        "ativo": true,
+        "tags": [
+          "mix-inventario-2026",
+          "CHUVEIRO",
+          "Banheiro",
+          "Japi"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "items": [
+        3
+      ],
+      "ref": "1158MS (UP)",
+      "codigo_interno": "JMH-O79",
+      "id": "69bd64cb34a3dad263014c9c",
+      "nome_novo": "TORNEIRA PARA COZINHA, MESA/BANCADA, BICA MÓVEL CROMADA 1158MS UP - JAPI",
+      "estoque_novo": 1,
+      "estoque_anterior": 0,
+      "payload": {
+        "nome": "TORNEIRA PARA COZINHA, MESA/BANCADA, BICA MÓVEL CROMADA 1158MS UP - JAPI",
+        "campo_hierarquico_1": "TORNEIRA",
+        "campo_hierarquico_2": "Cozinha",
+        "campo_hierarquico_3": "Mesa/Bancada",
+        "campo_hierarquico_4": "1158MS (UP)",
+        "campo_hierarquico_5": "Japi",
+        "marca": "Japi",
+        "codigo_barras": "1158MS (UP)",
+        "estoque_atual": 1,
+        "ativo": true,
+        "tags": [
+          "mix-inventario-2026",
+          "TORNEIRA",
+          "Cozinha",
+          "Japi"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "items": [
+        4
+      ],
+      "ref": "1156MBR",
+      "codigo_interno": "LV0-IUR",
+      "id": "69bd64c8d210e268e5e003fa",
+      "nome_novo": "TORNEIRA PARA COZINHA, MESA/BANCADA, BICA MÓVEL BRANCA DN15 1156MBR - JAPI",
+      "estoque_novo": 2,
+      "estoque_anterior": 6,
+      "payload": {
+        "nome": "TORNEIRA PARA COZINHA, MESA/BANCADA, BICA MÓVEL BRANCA DN15 1156MBR - JAPI",
+        "campo_hierarquico_1": "TORNEIRA",
+        "campo_hierarquico_2": "Cozinha",
+        "campo_hierarquico_3": "Mesa/Bancada",
+        "campo_hierarquico_4": "1156MBR",
+        "campo_hierarquico_5": "Japi",
+        "marca": "Japi",
+        "codigo_barras": "1156MBR",
+        "estoque_atual": 2,
+        "ativo": true,
+        "tags": [
+          "mix-inventario-2026",
+          "TORNEIRA",
+          "Cozinha",
+          "Japi"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "items": [
+        5
+      ],
+      "ref": "1156MSHK",
+      "codigo_interno": "SV7-Q22",
+      "id": "69bd64c9de9614ca421758c7",
+      "nome_novo": "TORNEIRA PARA COZINHA, MESA/BANCADA, BICA MÓVEL SHK DN15 1156MSHK - JAPI",
+      "estoque_novo": 18,
+      "estoque_anterior": 11,
+      "payload": {
+        "nome": "TORNEIRA PARA COZINHA, MESA/BANCADA, BICA MÓVEL SHK DN15 1156MSHK - JAPI",
+        "campo_hierarquico_1": "TORNEIRA",
+        "campo_hierarquico_2": "Cozinha",
+        "campo_hierarquico_3": "Mesa/Bancada",
+        "campo_hierarquico_4": "1156MSHK",
+        "campo_hierarquico_5": "Japi",
+        "marca": "Japi",
+        "codigo_barras": "1156MSHK",
+        "estoque_atual": 18,
+        "ativo": true,
+        "tags": [
+          "mix-inventario-2026",
+          "TORNEIRA",
+          "Cozinha",
+          "Japi"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "items": [
+        6
+      ],
+      "ref": "1195HB",
+      "codigo_interno": "KG3-BSR",
+      "id": "69bd64c93f69c167a9381fd4",
+      "nome_novo": "TORNEIRA PARA LAVATÓRIO, MESA/BANCADA, BICA MÓVEL SHB DN15 1195HB - JAPI",
+      "estoque_novo": 4,
+      "estoque_anterior": 5,
+      "payload": {
+        "nome": "TORNEIRA PARA LAVATÓRIO, MESA/BANCADA, BICA MÓVEL SHB DN15 1195HB - JAPI",
+        "campo_hierarquico_1": "TORNEIRA",
+        "campo_hierarquico_2": "Lavatório",
+        "campo_hierarquico_3": "Mesa/Bancada",
+        "campo_hierarquico_4": "1195HB",
+        "campo_hierarquico_5": "Japi",
+        "marca": "Japi",
+        "codigo_barras": "1195HB",
+        "estoque_atual": 4,
+        "ativo": true,
+        "tags": [
+          "mix-inventario-2026",
+          "TORNEIRA",
+          "Lavatório",
+          "Japi"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "items": [
+        7
+      ],
+      "ref": "1195BR",
+      "codigo_interno": "YPK-P2E",
+      "id": "69bd64c885f321ea7552a55f",
+      "nome_novo": "TORNEIRA PARA LAVATÓRIO, MESA/BANCADA, BICA MÓVEL BRANCA DN15 1195BR - JAPI",
+      "estoque_novo": 5,
+      "estoque_anterior": 6,
+      "payload": {
+        "nome": "TORNEIRA PARA LAVATÓRIO, MESA/BANCADA, BICA MÓVEL BRANCA DN15 1195BR - JAPI",
+        "campo_hierarquico_1": "TORNEIRA",
+        "campo_hierarquico_2": "Lavatório",
+        "campo_hierarquico_3": "Mesa/Bancada",
+        "campo_hierarquico_4": "1195BR",
+        "campo_hierarquico_5": "Japi",
+        "marca": "Japi",
+        "codigo_barras": "1195BR",
+        "estoque_atual": 5,
+        "ativo": true,
+        "tags": [
+          "mix-inventario-2026",
+          "TORNEIRA",
+          "Lavatório",
+          "Japi"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "items": [
+        8
+      ],
+      "ref": "1156MSHB",
+      "codigo_interno": "0E4-4JI",
+      "id": "69bd64ca5195805d0dfbe47a",
+      "nome_novo": "TORNEIRA PARA COZINHA, MESA/BANCADA, BICA MÓVEL SHB DN15 1156MSHB - JAPI",
+      "estoque_novo": 9,
+      "estoque_anterior": 10,
+      "payload": {
+        "nome": "TORNEIRA PARA COZINHA, MESA/BANCADA, BICA MÓVEL SHB DN15 1156MSHB - JAPI",
+        "campo_hierarquico_1": "TORNEIRA",
+        "campo_hierarquico_2": "Cozinha",
+        "campo_hierarquico_3": "Mesa/Bancada",
+        "campo_hierarquico_4": "1156MSHB",
+        "campo_hierarquico_5": "Japi",
+        "marca": "Japi",
+        "codigo_barras": "1156MSHB",
+        "estoque_atual": 9,
+        "ativo": true,
+        "tags": [
+          "mix-inventario-2026",
+          "TORNEIRA",
+          "Cozinha",
+          "Japi"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "items": [
+        10
+      ],
+      "ref": "JSMG",
+      "codigo_interno": "39E-AH5",
+      "id": "69bd5cfa3fd49e0dd3e57f22",
+      "nome_novo": "REPARO PARA REGISTRO, BUCHAS EM LATÃO JSMG - JAPI / FOX",
+      "estoque_novo": 1,
+      "estoque_anterior": 3,
+      "payload": {
+        "nome": "REPARO PARA REGISTRO, BUCHAS EM LATÃO JSMG - JAPI / FOX",
+        "campo_hierarquico_1": "REPARO",
+        "campo_hierarquico_2": "Registro Geral",
+        "campo_hierarquico_3": "Embutido",
+        "campo_hierarquico_4": "JSMG",
+        "campo_hierarquico_5": "Japi",
+        "marca": "Japi",
+        "codigo_barras": "JSMG",
+        "estoque_atual": 1,
+        "ativo": true,
+        "tags": [
+          "mix-inventario-2026",
+          "REPARO",
+          "Registro Geral",
+          "Japi"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "items": [
+        11
+      ],
+      "ref": "J20RP34",
+      "codigo_interno": "5C4-IXK",
+      "id": "69bd5cedd222ae588abc84af",
+      "nome_novo": "REGISTRO DE PRESSÃO, PAREDE, ACABAMENTO CROMADO DN20 J20RP34 - JAPI",
+      "estoque_novo": 1,
+      "estoque_anterior": 4,
+      "payload": {
+        "nome": "REGISTRO DE PRESSÃO, PAREDE, ACABAMENTO CROMADO DN20 J20RP34 - JAPI",
+        "campo_hierarquico_1": "REGISTRO",
+        "campo_hierarquico_2": "Chuveiro/Geral",
+        "campo_hierarquico_3": "Parede",
+        "campo_hierarquico_4": "J20RP34",
+        "campo_hierarquico_5": "Japi",
+        "marca": "Japi",
+        "codigo_barras": "J20RP34",
+        "estoque_atual": 1,
+        "ativo": true,
+        "tags": [
+          "mix-inventario-2026",
+          "REGISTRO",
+          "Chuveiro/Geral",
+          "Japi"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "items": [
+        14
+      ],
+      "ref": "JTL3BR1",
+      "codigo_interno": "2W2-8W1",
+      "id": "69bd64d1ac44405a3bebe9fe",
+      "nome_novo": "TORNEIRA PARA LAVATÓRIO, MESA/BANCADA, PLÁSTICA BRANCA 1 DN15 JTL3BR1 - JAPI",
+      "estoque_novo": 2,
+      "estoque_anterior": 16,
+      "payload": {
+        "nome": "TORNEIRA PARA LAVATÓRIO, MESA/BANCADA, PLÁSTICA BRANCA 1 DN15 JTL3BR1 - JAPI",
+        "campo_hierarquico_1": "TORNEIRA",
+        "campo_hierarquico_2": "Lavatório",
+        "campo_hierarquico_3": "Mesa/Bancada",
+        "campo_hierarquico_4": "JTL3BR1",
+        "campo_hierarquico_5": "Japi",
+        "marca": "Japi",
+        "codigo_barras": "JTL3BR1",
+        "estoque_atual": 2,
+        "ativo": true,
+        "tags": [
+          "mix-inventario-2026",
+          "TORNEIRA",
+          "Lavatório",
+          "Japi"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "items": [
+        15
+      ],
+      "ref": "1194IHP",
+      "codigo_interno": "M0Y-YQZ",
+      "id": "69bd64caa471e18832a3fd30",
+      "nome_novo": "TORNEIRA PARA LAVATÓRIO, MESA/BANCADA, BICA RETA IHP CROMADA DN15 1194IHP - JAPI",
+      "estoque_novo": 1,
+      "estoque_anterior": 0,
+      "payload": {
+        "nome": "TORNEIRA PARA LAVATÓRIO, MESA/BANCADA, BICA RETA IHP CROMADA DN15 1194IHP - JAPI",
+        "campo_hierarquico_1": "TORNEIRA",
+        "campo_hierarquico_2": "Lavatório",
+        "campo_hierarquico_3": "Mesa/Bancada",
+        "campo_hierarquico_4": "1194IHP",
+        "campo_hierarquico_5": "Japi",
+        "marca": "Japi",
+        "codigo_barras": "1194IHP",
+        "estoque_atual": 1,
+        "ativo": true,
+        "tags": [
+          "mix-inventario-2026",
+          "TORNEIRA",
+          "Lavatório",
+          "Japi"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "items": [
+        16
+      ],
+      "ref": "1134J4",
+      "codigo_interno": "PXF-N4V",
+      "id": "69bd64d137b785a845b2a053",
+      "nome_novo": "TORNEIRA PARA TANQUE / MÁQUINA DE LAVAR, PAREDE, METÁLICA J4 CROMADA DN15 1134J4 - JAPI",
+      "estoque_novo": 1,
+      "estoque_anterior": 3,
+      "payload": {
+        "nome": "TORNEIRA PARA TANQUE / MÁQUINA DE LAVAR, PAREDE, METÁLICA J4 CROMADA DN15 1134J4 - JAPI",
+        "campo_hierarquico_1": "TORNEIRA",
+        "campo_hierarquico_2": "Tanque / Lavanderia",
+        "campo_hierarquico_3": "Parede",
+        "campo_hierarquico_4": "1134J4",
+        "campo_hierarquico_5": "Japi",
+        "marca": "Japi",
+        "codigo_barras": "1134J4",
+        "estoque_atual": 1,
+        "ativo": true,
+        "tags": [
+          "mix-inventario-2026",
+          "TORNEIRA",
+          "Tanque / Lavanderia",
+          "Japi"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "items": [
+        17
+      ],
+      "ref": "Acqua Due",
+      "codigo_interno": "P2O-L4L",
+      "id": "69bd64c67c0bdfe29e876b6b",
+      "nome_novo": "PURIFICADOR COM TORNEIRA PARA COZINHA, MESA/BANCADA, BICA MÓVEL ACQUA DUE - LORENZETTI",
+      "estoque_novo": 1,
+      "estoque_anterior": 4,
+      "payload": {
+        "nome": "PURIFICADOR COM TORNEIRA PARA COZINHA, MESA/BANCADA, BICA MÓVEL ACQUA DUE - LORENZETTI",
+        "campo_hierarquico_1": "PURIFICADOR",
+        "campo_hierarquico_2": "Cozinha",
+        "campo_hierarquico_3": "Mesa/Bancada",
+        "campo_hierarquico_4": "Acqua Due",
+        "campo_hierarquico_5": "Lorenzetti",
+        "marca": "Lorenzetti",
+        "codigo_barras": "Acqua Due",
+        "estoque_atual": 1,
+        "ativo": true,
+        "tags": [
+          "mix-inventario-2026",
+          "PURIFICADOR",
+          "Cozinha",
+          "Lorenzetti"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "items": [
+        18
+      ],
+      "ref": "Acqua Bella",
+      "codigo_interno": "2AX-V8I",
+      "id": "69bd64c579845daa782dc419",
+      "nome_novo": "PURIFICADOR COM TORNEIRA PARA COZINHA, PAREDE, BICA MÓVEL ACQUA BELLA - LORENZETTI",
+      "estoque_novo": 1,
+      "estoque_anterior": 3,
+      "payload": {
+        "nome": "PURIFICADOR COM TORNEIRA PARA COZINHA, PAREDE, BICA MÓVEL ACQUA BELLA - LORENZETTI",
+        "campo_hierarquico_1": "PURIFICADOR",
+        "campo_hierarquico_2": "Cozinha",
+        "campo_hierarquico_3": "Parede",
+        "campo_hierarquico_4": "Acqua Bella",
+        "campo_hierarquico_5": "Lorenzetti",
+        "marca": "Lorenzetti",
+        "codigo_barras": "Acqua Bella",
+        "estoque_atual": 1,
+        "ativo": true,
+        "tags": [
+          "mix-inventario-2026",
+          "PURIFICADOR",
+          "Cozinha",
+          "Lorenzetti"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "items": [
+        19
+      ],
+      "ref": "1195IHP",
+      "codigo_interno": "DSM-KP4",
+      "id": "69bd64cab55914d4d78a5548",
+      "nome_novo": "TORNEIRA PARA LAVATÓRIO, MESA/BANCADA, BICA MÓVEL IHP CROMADA DN15 1195IHP - JAPI",
+      "estoque_novo": 1,
+      "estoque_anterior": 3,
+      "payload": {
+        "nome": "TORNEIRA PARA LAVATÓRIO, MESA/BANCADA, BICA MÓVEL IHP CROMADA DN15 1195IHP - JAPI",
+        "campo_hierarquico_1": "TORNEIRA",
+        "campo_hierarquico_2": "Lavatório",
+        "campo_hierarquico_3": "Mesa/Bancada",
+        "campo_hierarquico_4": "1195IHP",
+        "campo_hierarquico_5": "Japi",
+        "marca": "Japi",
+        "codigo_barras": "1195IHP",
+        "estoque_atual": 1,
+        "ativo": true,
+        "tags": [
+          "mix-inventario-2026",
+          "TORNEIRA",
+          "Lavatório",
+          "Japi"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "items": [
+        21
+      ],
+      "ref": "1178P61",
+      "codigo_interno": "9ES-MWX",
+      "id": "69bd64cc60bde87a90e22185",
+      "nome_novo": "TORNEIRA PARA LAVATÓRIO, PAREDE, BICA RETA CROMADA DN15 LINHA SUPREMA 1178P61 - JAPI",
+      "estoque_novo": 1,
+      "estoque_anterior": 4,
+      "payload": {
+        "nome": "TORNEIRA PARA LAVATÓRIO, PAREDE, BICA RETA CROMADA DN15 LINHA SUPREMA 1178P61 - JAPI",
+        "campo_hierarquico_1": "TORNEIRA",
+        "campo_hierarquico_2": "Lavatório",
+        "campo_hierarquico_3": "Parede",
+        "campo_hierarquico_4": "1178P61",
+        "campo_hierarquico_5": "Japi",
+        "marca": "Japi",
+        "codigo_barras": "1178P61",
+        "estoque_atual": 1,
+        "ativo": true,
+        "tags": [
+          "mix-inventario-2026",
+          "TORNEIRA",
+          "Lavatório",
+          "Japi"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "items": [
+        22
+      ],
+      "ref": "1156MIHP",
+      "codigo_interno": "VQL-VI0",
+      "id": "6a3afb7cefac2cf83e096b8b",
+      "nome_novo": "TORNEIRA PARA COZINHA, MESA/BANCADA, BICA MÓVEL IHP CROMADA DN15 1156MIHP - JAPI",
+      "estoque_novo": 1,
+      "estoque_anterior": 4,
+      "payload": {
+        "nome": "TORNEIRA PARA COZINHA, MESA/BANCADA, BICA MÓVEL IHP CROMADA DN15 1156MIHP - JAPI",
+        "campo_hierarquico_1": "TORNEIRA",
+        "campo_hierarquico_2": "Cozinha",
+        "campo_hierarquico_3": "Mesa/Bancada",
+        "campo_hierarquico_4": "1156MIHP",
+        "campo_hierarquico_5": "Japi",
+        "marca": "Japi",
+        "codigo_barras": "1156MIHP",
+        "estoque_atual": 1,
+        "ativo": true,
+        "tags": [
+          "mix-inventario-2026",
+          "TORNEIRA",
+          "Cozinha",
+          "Japi"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "items": [
+        23
+      ],
+      "ref": "VPKP",
+      "codigo_interno": "ER3-LA5",
+      "id": "69bd64e2de2b4ea01e868583",
+      "nome_novo": "VÁLVULA PARA LAVATÓRIO/CUBA, MESA/BANCADA, PRÁTIKA 1.1/4 DN32 CROMADA VPKP - JAPI",
+      "estoque_novo": 2,
+      "estoque_anterior": 11,
+      "payload": {
+        "nome": "VÁLVULA PARA LAVATÓRIO/CUBA, MESA/BANCADA, PRÁTIKA 1.1/4 DN32 CROMADA VPKP - JAPI",
+        "campo_hierarquico_1": "VÁLVULA",
+        "campo_hierarquico_2": "Lavatório",
+        "campo_hierarquico_3": "Mesa/Bancada",
+        "campo_hierarquico_4": "VPKP",
+        "campo_hierarquico_5": "Japi",
+        "marca": "Japi",
+        "codigo_barras": "VPKP",
+        "estoque_atual": 2,
+        "ativo": true,
+        "tags": [
+          "mix-inventario-2026",
+          "VÁLVULA",
+          "Lavatório",
+          "Japi"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "items": [
+        24
+      ],
+      "ref": "VPKB",
+      "codigo_interno": "AZL-N9X",
+      "id": "69bd64e2dc454bba2f57d62e",
+      "nome_novo": "VÁLVULA PARA LAVATÓRIO/CUBA, MESA/BANCADA, PRÁTIKA 1.1/4 DN32 BRANCA VPKB - JAPI",
+      "estoque_novo": 2,
+      "estoque_anterior": 8,
+      "payload": {
+        "nome": "VÁLVULA PARA LAVATÓRIO/CUBA, MESA/BANCADA, PRÁTIKA 1.1/4 DN32 BRANCA VPKB - JAPI",
+        "campo_hierarquico_1": "VÁLVULA",
+        "campo_hierarquico_2": "Lavatório",
+        "campo_hierarquico_3": "Mesa/Bancada",
+        "campo_hierarquico_4": "VPKB",
+        "campo_hierarquico_5": "Japi",
+        "marca": "Japi",
+        "codigo_barras": "VPKB",
+        "estoque_atual": 2,
+        "ativo": true,
+        "tags": [
+          "mix-inventario-2026",
+          "VÁLVULA",
+          "Lavatório",
+          "Japi"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "items": [
+        25
+      ],
+      "ref": "DHJ4",
+      "codigo_interno": "Z0D-Y7Z",
+      "id": "69bd5ba5d49d803dd01b521a",
+      "nome_novo": "DUCHA HIGIÊNICA, PAREDE, GATILHO COM MANGUEIRA J4 CROMADA DN15 DHJ4 - JAPI",
+      "estoque_novo": 2,
+      "estoque_anterior": 3,
+      "payload": {
+        "nome": "DUCHA HIGIÊNICA, PAREDE, GATILHO COM MANGUEIRA J4 CROMADA DN15 DHJ4 - JAPI",
+        "campo_hierarquico_1": "DUCHA HIGIÊNICA",
+        "campo_hierarquico_2": "Banheiro",
+        "campo_hierarquico_3": "Parede",
+        "campo_hierarquico_4": "DHJ4",
+        "campo_hierarquico_5": "Japi",
+        "marca": "Japi",
+        "codigo_barras": "DHJ4",
+        "estoque_atual": 2,
+        "ativo": true,
+        "tags": [
+          "mix-inventario-2026",
+          "DUCHA HIGIÊNICA",
+          "Banheiro",
+          "Japi"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "items": [
+        26
+      ],
+      "ref": "1193J4",
+      "codigo_interno": "71I-W47",
+      "id": "69bd64d1487a808fb2c6463e",
+      "nome_novo": "TORNEIRA PARA LAVATÓRIO, MESA/BANCADA, METÁLICA J4 CROMADA DN15 1193J4 - JAPI",
+      "estoque_novo": 2,
+      "estoque_anterior": 3,
+      "payload": {
+        "nome": "TORNEIRA PARA LAVATÓRIO, MESA/BANCADA, METÁLICA J4 CROMADA DN15 1193J4 - JAPI",
+        "campo_hierarquico_1": "TORNEIRA",
+        "campo_hierarquico_2": "Lavatório",
+        "campo_hierarquico_3": "Mesa/Bancada",
+        "campo_hierarquico_4": "1193J4",
+        "campo_hierarquico_5": "Japi",
+        "marca": "Japi",
+        "codigo_barras": "1193J4",
+        "estoque_atual": 2,
+        "ativo": true,
+        "tags": [
+          "mix-inventario-2026",
+          "TORNEIRA",
+          "Lavatório",
+          "Japi"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "items": [
+        27
+      ],
+      "ref": "JSIF3AS",
+      "codigo_interno": "I1F-GOK",
+      "id": "69bd5d08c0db240ca29ca603",
+      "nome_novo": "SIFÃO PARA COZINHA, PAREDE, METÁLICO VÁLVULA AMERICANA 1.1/2 X 1.1/2 DN40 JSIF3AS - JAPI",
+      "estoque_novo": 1,
+      "estoque_anterior": 3,
+      "payload": {
+        "nome": "SIFÃO PARA COZINHA, PAREDE, METÁLICO VÁLVULA AMERICANA 1.1/2 X 1.1/2 DN40 JSIF3AS - JAPI",
+        "campo_hierarquico_1": "SIFÃO",
+        "campo_hierarquico_2": "Cozinha",
+        "campo_hierarquico_3": "Parede",
+        "campo_hierarquico_4": "JSIF3AS",
+        "campo_hierarquico_5": "Japi",
+        "marca": "Japi",
+        "codigo_barras": "JSIF3AS",
+        "estoque_atual": 1,
+        "ativo": true,
+        "tags": [
+          "mix-inventario-2026",
+          "SIFÃO",
+          "Cozinha",
+          "Japi"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "items": [
+        28
+      ],
+      "ref": "JSIF2AS",
+      "codigo_interno": "9W0-FQI",
+      "id": "69bd5d09de9614ca42174f94",
+      "nome_novo": "SIFÃO PARA LAVATÓRIO / TANQUE, PAREDE, METÁLICO CUBA APOIO 1.1/4 X 1.1/2 DN32XDN40 JSIF2AS - JAPI",
+      "estoque_novo": 1,
+      "estoque_anterior": 3,
+      "payload": {
+        "nome": "SIFÃO PARA LAVATÓRIO / TANQUE, PAREDE, METÁLICO CUBA APOIO 1.1/4 X 1.1/2 DN32XDN40 JSIF2AS - JAPI",
+        "campo_hierarquico_1": "SIFÃO",
+        "campo_hierarquico_2": "Lavatório / Tanque",
+        "campo_hierarquico_3": "Parede",
+        "campo_hierarquico_4": "JSIF2AS",
+        "campo_hierarquico_5": "Japi",
+        "marca": "Japi",
+        "codigo_barras": "JSIF2AS",
+        "estoque_atual": 1,
+        "ativo": true,
+        "tags": [
+          "mix-inventario-2026",
+          "SIFÃO",
+          "Lavatório / Tanque",
+          "Japi"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "items": [
+        29
+      ],
+      "ref": "Avulso",
+      "codigo_interno": "4KW-7YB",
+      "id": "69bd64cffa325ae7d0a12e4f",
+      "nome_novo": "TORNEIRA PARA TANQUE / JARDIM, PAREDE, PLÁSTICA PRETA COM BICO PARA MANGUEIRA",
+      "estoque_novo": 1,
+      "estoque_anterior": -2,
+      "payload": {
+        "nome": "TORNEIRA PARA TANQUE / JARDIM, PAREDE, PLÁSTICA PRETA COM BICO PARA MANGUEIRA",
+        "campo_hierarquico_1": "TORNEIRA",
+        "campo_hierarquico_2": "Tanque / Jardim",
+        "campo_hierarquico_3": "Parede",
+        "campo_hierarquico_4": null,
+        "campo_hierarquico_5": null,
+        "marca": null,
+        "codigo_barras": null,
+        "estoque_atual": 1,
+        "ativo": true,
+        "tags": [
+          "mix-inventario-2026",
+          "TORNEIRA",
+          "Tanque / Jardim"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "items": [
+        30
+      ],
+      "ref": "Avulso",
+      "codigo_interno": "6TE-3PD",
+      "id": "69bd64cc1486242e39726f3e",
+      "nome_novo": "TORNEIRA PARA BEBEDOURO / FILTRO, MESA/BANCADA, PLÁSTICA BRANCA COM ALAVANCA AZUL",
+      "estoque_novo": 3,
+      "estoque_anterior": 4,
+      "payload": {
+        "nome": "TORNEIRA PARA BEBEDOURO / FILTRO, MESA/BANCADA, PLÁSTICA BRANCA COM ALAVANCA AZUL",
+        "campo_hierarquico_1": "TORNEIRA",
+        "campo_hierarquico_2": "Bebedouro / Filtro",
+        "campo_hierarquico_3": "Mesa/Bancada",
+        "campo_hierarquico_4": null,
+        "campo_hierarquico_5": null,
+        "marca": null,
+        "codigo_barras": null,
+        "estoque_atual": 3,
+        "ativo": true,
+        "tags": [
+          "mix-inventario-2026",
+          "TORNEIRA",
+          "Bebedouro / Filtro"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "items": [
+        31
+      ],
+      "ref": "Avulso",
+      "codigo_interno": "OM3-A0I",
+      "id": "69bd64d23fef203a504ae1b3",
+      "nome_novo": "TORNEIRA PARA COZINHA / BEBEDOURO, MESA/BANCADA, PLÁSTICA BICA CURVA BRANCA COM VOLANTE CINZA",
+      "estoque_novo": 3,
+      "estoque_anterior": 0,
+      "payload": {
+        "nome": "TORNEIRA PARA COZINHA / BEBEDOURO, MESA/BANCADA, PLÁSTICA BICA CURVA BRANCA COM VOLANTE CINZA",
+        "campo_hierarquico_1": "TORNEIRA",
+        "campo_hierarquico_2": "Cozinha",
+        "campo_hierarquico_3": "Mesa/Bancada",
+        "campo_hierarquico_4": null,
+        "campo_hierarquico_5": null,
+        "marca": null,
+        "codigo_barras": null,
+        "estoque_atual": 3,
+        "ativo": true,
+        "tags": [
+          "mix-inventario-2026",
+          "TORNEIRA",
+          "Cozinha"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "items": [
+        32
+      ],
+      "ref": "Avulso",
+      "codigo_interno": "NUP-7QS",
+      "id": "69bd64d3c4cf055bf2675dc6",
+      "nome_novo": "TORNEIRA PARA TANQUE / JARDIM, PAREDE, PLÁSTICA BRANCA SAÍDA INCLINADA COM BICO E VOLANTE CINZA",
+      "estoque_novo": 1,
+      "estoque_anterior": 0,
+      "payload": {
+        "nome": "TORNEIRA PARA TANQUE / JARDIM, PAREDE, PLÁSTICA BRANCA SAÍDA INCLINADA COM BICO E VOLANTE CINZA",
+        "campo_hierarquico_1": "TORNEIRA",
+        "campo_hierarquico_2": "Tanque / Jardim",
+        "campo_hierarquico_3": "Parede",
+        "campo_hierarquico_4": null,
+        "campo_hierarquico_5": null,
+        "marca": null,
+        "codigo_barras": null,
+        "estoque_atual": 1,
+        "ativo": true,
+        "tags": [
+          "mix-inventario-2026",
+          "TORNEIRA",
+          "Tanque / Jardim"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "items": [
+        33
+      ],
+      "ref": "Avulso",
+      "codigo_interno": "IMN-IN8",
+      "id": "69bd64d38e818276ce471713",
+      "nome_novo": "TORNEIRA PARA TANQUE / JARDIM, PAREDE, PLÁSTICA BRANCA BICA RETA SIMPLES COM VOLANTE CINZA",
+      "estoque_novo": 1,
+      "estoque_anterior": 0,
+      "payload": {
+        "nome": "TORNEIRA PARA TANQUE / JARDIM, PAREDE, PLÁSTICA BRANCA BICA RETA SIMPLES COM VOLANTE CINZA",
+        "campo_hierarquico_1": "TORNEIRA",
+        "campo_hierarquico_2": "Tanque / Jardim",
+        "campo_hierarquico_3": "Parede",
+        "campo_hierarquico_4": null,
+        "campo_hierarquico_5": null,
+        "marca": null,
+        "codigo_barras": null,
+        "estoque_atual": 1,
+        "ativo": true,
+        "tags": [
+          "mix-inventario-2026",
+          "TORNEIRA",
+          "Tanque / Jardim"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    }
+  ],
+  "create": [
+    {
+      "items": [
+        2
+      ],
+      "ref": "7110015",
+      "codigo_interno": "CVG-95E",
+      "id": "9c158e04c635fe87778b3e63",
+      "nome": "TORNEIRA PARA LAVATÓRIO, MESA/BANCADA, BICA ALTA 195 F31 CROMADA DN15 MVC - LORENZETTI",
+      "estoque": 8
+    },
+    {
+      "items": [
+        12
+      ],
+      "ref": "300000461",
+      "codigo_interno": "DRD-2OV",
+      "id": "3ac9e5eeabb83f161d21e1fe",
+      "nome": "TORNEIRA PARA COZINHA, MESA/BANCADA, BICA ALTA MÓVEL ORB E BC 1/2 (300000461) - TIGRE",
+      "estoque": 1
+    },
+    {
+      "items": [
+        13
+      ],
+      "ref": "300000453",
+      "codigo_interno": "60J-XFF",
+      "id": "7f9c76722af1c6b2cf171f02",
+      "nome": "TORNEIRA PARA TANQUE / MÁQUINA DE LAVAR, PAREDE, CROSS BC 1/2 X 3/4 (300000453) - TIGRE",
+      "estoque": 1
+    },
+    {
+      "items": [
+        20
+      ],
+      "ref": "1195P61",
+      "codigo_interno": "PC9-7VB",
+      "id": "867a4a2df07e4c6c69612006",
+      "nome": "TORNEIRA PARA LAVATÓRIO, MESA/BANCADA, BICA BAIXA CROMADA DN15 LINHA SUPREMA 1195P61 - JAPI",
+      "estoque": 1
+    }
+  ],
+  "deactivate": [
+    {
+      "codigo_interno": "0FQ-TGE",
+      "id": "69bd64c72a3d36583d1beea1",
+      "nome": "TORNEIRA BIC MOV P/PIA COZ MESA ABS DN15",
+      "estoque_atual": 1,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "0VD-L46",
+      "id": "69bd5b7c715b2ab3f2178346",
+      "nome": "CHUVEIRO PLÁSTICO 5\" C/BRAÇO - S/REGISTRO",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "11D-153",
+      "id": "69bd64c8487a808fb2c64636",
+      "nome": "TORNEIRA BICA MOVEL DE PAREDE  PIA/COZINHA J4 DN15",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "303-DVF",
+      "id": "69bd64d36d4064a53ab77ccb",
+      "nome": "TORNEIRA PLASTICA TANQUE CURTA COM CHUVEIRINHO 1/2",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "3RK-NAI",
+      "id": "69bd64cf6167847f47a04a0d",
+      "nome": "TORNEIRA MAQ/PAREDE CURTA 1/2",
+      "estoque_atual": 3,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "44J-C1D",
+      "id": "69bd5cec0b365ad7fb666dec",
+      "nome": "REGISTRO PARA CHUVEIROBRANCO 3/4",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "4JX-CIO",
+      "id": "69bd5b7facd22acd5b145d4c",
+      "nome": "CHUVEIRO ELÉTRICO 127 V/ 5500W ADVANCED ELETRÔNICO LORENZETTI",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "4T1-52O",
+      "id": "69bd64c4d99cc1810db9ebd7",
+      "nome": "TORNEIRA (PURIFICADOR) ACQUA BELLA MESA",
+      "estoque_atual": 3,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "58R-TJ7",
+      "id": "69bd64cf2ae0332312475f83",
+      "nome": "TORNEIRA P/LAVATORIO MESA ABS 1/4 VOLTA DN15",
+      "estoque_atual": 2,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "5AE-0MX",
+      "id": "69bd64cbd28a88c8d46a4db8",
+      "nome": "TORNEIRA DE MESA PARA LAVATORIO BICA MOVEL CROMADA DN15",
+      "estoque_atual": 14,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "64M-Q0T",
+      "id": "69bd5b7d87854e4bffcb274b",
+      "nome": "CHUVEIRO ABS BRANCO PLÁSTICO 8\" C/BRAÇO - S/REGISTRO BRANCO",
+      "estoque_atual": -4,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "6MV-4A0",
+      "id": "69bd64d2fa9143aa30b439fd",
+      "nome": "TORNEIRA PLASTICA PIA/LONGA COM CHUVEIRINHO 1/2",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "820-9W1",
+      "id": "69bd64d09d2cfedca9c64813",
+      "nome": "TORNEIRA P/LAVATORIO MESA ACAB AQUILA COM AREJADOR ARTICULAD",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "82P-AN1",
+      "id": "69bd64ccfee78e40a25ed789",
+      "nome": "TORNEIRA GR P/LAVATORIO PLAST BRANCA 1 DN15",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "8D1-0J6",
+      "id": "69bd5b801567aa3826ac2afe",
+      "nome": "CHUVEIRO ELETRICO BR 3 TEMP 220V 3 TEMP 220V/5500W TRAMONTINA",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "95S-Y0H",
+      "id": "69bd64d0de152954146fc2c9",
+      "nome": "TORNEIRA P/LAVATORIO MESA ABS BRANCA SHB",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "BK6-DME",
+      "id": "69bd64d4ed9881478debd869",
+      "nome": "TORNEIRA TANQUE/PAREDE C/ALAVANCA 15 CM 1/2",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "BXG-G87",
+      "id": "69bd5b822482e2459ed3410e",
+      "nome": "CHUVEIRO PLÁSTICO 4\" CROMADO",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "BZY-404",
+      "id": "69bd5b827ce99d4e20ab1f62",
+      "nome": "CHUVEIRO PLÁSTICO 7\" BRANCO",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "DRS-M0Q",
+      "id": "69bd64c994a69909d1cfa541",
+      "nome": "TORNEIRA BICA MOVEL MESA LAV 1195 SHK",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "E5R-MMT",
+      "id": "69bd5b80ffc7c6fa993c4978",
+      "nome": "CHUVEIRO ELÉTRICO 127 V/ 5500W LOREN SHOWER ELETRÔNICO LORENZETTI",
+      "estoque_atual": 1,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "F8M-1O5",
+      "id": "69bd64c7fdd78be95311a3be",
+      "nome": "TORNEIRA BIC MOV P/ PIA COZ PAREDE ABS DN15",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "FHQ-02Z",
+      "id": "69bd5cecf2d3c3f1d7968bcc",
+      "nome": "REGISTRO PARA CHUVEIRO BRANCO 3/4",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "HVM-PV2",
+      "id": "69bd64d217305f4fe2b304ee",
+      "nome": "TORNEIRA PLASTICA P/LAVATÓRIO 1/2",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "I0B-Z0B",
+      "id": "69bd5b80466b036d0c70f536",
+      "nome": "CHUVEIRO PLÁSTICO 4\" BRANCO",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "I1E-U8K",
+      "id": "69bd5b83020a59394717501f",
+      "nome": "CHUVEIRO PVC 4\" S/REG 4\" S/REG BRANCO REBOUÇAS",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "KI1-4E5",
+      "id": "69bd5b7da20911b97481ab08",
+      "nome": "CHUVEIRO ELÉTRICO 127 V/ 5500W ACQUA STORM BRANCO LORENZETTI",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "KPM-NZ3",
+      "id": "69bd5b83312eba698f710633",
+      "nome": "CHUVEIRO PLASTICO CROMADO 12\" X 1/2 ASTRA",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "MS9-D8N",
+      "id": "69bd5b7dba7f880cd1b56e85",
+      "nome": "CHUVEIRO ELÉTRICO 127 V/ 5500W ACQUA DUO BRANCO LORENZETTI",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "MVY-J8B",
+      "id": "69bd5b7e21f3bee49d619a46",
+      "nome": "CHUVEIRO ELÉTRICO 127 V/ 5500W ACQUA STORM PRETO LORENZETTI",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "O10-QWQ",
+      "id": "69bd5b7de3bd727a89dc33d0",
+      "nome": "CHUVEIRO 8 COMBRAÇO 30CM S PLÁSTICO 8\" C/BRAÇO - S/REGISTRO CROMADO",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "OPC-5P4",
+      "id": "6a3afbf5349037b3b3ebae61",
+      "nome": "TORNEIRA BIC MOV COZ IHP CROMADA DN15 I/4 VOLTA 1156MIHP",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "OWB-EI4",
+      "id": "69bd64cf132601148c5f5098",
+      "nome": "TORNEIRA JARDIM/PAREDE PRETO  3/4",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "P7R-FNU",
+      "id": "69bd5b7eacdba24b89ed7708",
+      "nome": "CHUVEIRO ELÉTRICO 127 V/ 5500W ADVANCED BLINDADO LORENZETTI",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "P85-O76",
+      "id": "69bd64c6b92f375e9640d0e8",
+      "nome": "TORNEIRA 2877 C70 MONOCOMANDO WATERFALL",
+      "estoque_atual": 2,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "QS4-PSR",
+      "id": "69bd5ceafe73c53b9ad6ad48",
+      "nome": "REGISTRO PARA CHUVEIRO BRANCO 1/2",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "QSE-Q2E",
+      "id": "69bd5b847e0c54d4d3382159",
+      "nome": "CHUVEIRO REDONDO 10cm CROMADO",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "S0Z-ORY",
+      "id": "69bd5b838b5ba6ff0098fb12",
+      "nome": "CHUVEIRO PLÁSTICO PLÁSTICO 9\" C/BRAÇO - S/REGISTRO BRANCO",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "SD9-LN0",
+      "id": "69bd5b847d45044d51c1a74d",
+      "nome": "CHUVEIRO QUADRADO 15 X 15 X 15cm CROMADO",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "SH8-PWW",
+      "id": "6a3afb689cd82d7c3fc73e8c",
+      "nome": "TORNEIRA BIC MOV COZ IHP CROMADA DN15 I/4 VOLTA",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "SVB-HW8",
+      "id": "69bd64d2e9eeb82b336cd2e2",
+      "nome": "TORNEIRA PLASTICA TANQUE CURTA 10CM 1/2",
+      "estoque_atual": -4,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "SZ9-IRE",
+      "id": "69bd5b7e7ca5761c159ba903",
+      "nome": "CHUVEIRO ELÉTRICO 127 V/ 5500W ACQUA WAVE BRANCO LORENZETTI",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "T59-6G3",
+      "id": "69bd5b807d742564eda324b6",
+      "nome": "CHUVEIRO ELÉTRICO 127 V/ 5500W LOREN BELLO C/CANO BRANCO LORENZETTI",
+      "estoque_atual": 1,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "T6O-V8F",
+      "id": "69bd5b7f90ee34ded665d002",
+      "nome": "CHUVEIRO ELÉTRICO 127 V/ 5500W DUO SHOWER BRANCO LORENZETTI",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "T9I-93U",
+      "id": "69bd5b838bb0c313a07e7819",
+      "nome": "CHUVEIRO PVC COM REGISTRO",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "TF3-3VS",
+      "id": "69bd5b7ed222ae588abc837a",
+      "nome": "CHUVEIRO ELÉTRICO 127 V/ 5500W ACQUA STORM CROMADO LORENZETTI",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "TG8-MQR",
+      "id": "69bd64c77f00461c54f4e907",
+      "nome": "TORNEIRA BICA MOV P/ LAVAT MESA ABS TUBO CURVO DN15",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "TJH-S7T",
+      "id": "69bd5ceb99d4b2871a10d943",
+      "nome": "REGISTRO PARA CHUVEIRO BRANCO 1/2",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "U63-RGG",
+      "id": "69bd64d3020a5939471756cf",
+      "nome": "TORNEIRA TANQUE/PAREDE 15CM 1/2 HERC",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "VQ4-F7P",
+      "id": "69bd64cc0ff1c9c71f7dc83e",
+      "nome": "TORNEIRA ESF P/JARDIM MET 1/2",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "VV9-MRR",
+      "id": "69bd64cabe89c2d1b2224cad",
+      "nome": "TORNEIRA BICA MÓVEL PAREDE SHB ABS 1/4 DE VOLTA DN15",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "W0B-9C4",
+      "id": "69bd5b7f5ffb6da19959cc02",
+      "nome": "CHUVEIRO ELÉTRICO 127 V/ 5500W ADVANCED MULTITEMPERATURAS LORENZETTI",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "W4U-OGT",
+      "id": "69bd64c86af4061bb3246fc9",
+      "nome": "TORNEIRA BICA MOVEL DE MESA PIA/COZINHA J4 DN15",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "WOD-507",
+      "id": "69bd64cb3ebfa0e2dd953b31",
+      "nome": "TORNEIRA DE PAREDE PARA COZINHA CROMADA DN15",
+      "estoque_atual": 0,
+      "motivo": "fora do mix inventário"
+    },
+    {
+      "codigo_interno": "ZFG-Q25",
+      "id": "69bd64c6fe4419b0cda9286b",
+      "nome": "TORNEIRA (PURIFICADOR) ACQUA DUE PAREDE",
+      "estoque_atual": -1,
+      "motivo": "fora do mix inventário"
+    }
+  ],
+  "deactivate_duplicates": [
+    {
+      "codigo_interno": "OPC-5P4",
+      "id": "6a3afbf5349037b3b3ebae61",
+      "nome": "TORNEIRA BIC MOV COZ IHP CROMADA DN15 I/4 VOLTA 1156MIHP",
+      "motivo": "duplicata no cadastro"
+    },
+    {
+      "codigo_interno": "ZFG-Q25",
+      "id": "69bd64c6fe4419b0cda9286b",
+      "nome": "TORNEIRA (PURIFICADOR) ACQUA DUE PAREDE",
+      "motivo": "duplicata no cadastro"
+    },
+    {
+      "codigo_interno": "4T1-52O",
+      "id": "69bd64c4d99cc1810db9ebd7",
+      "nome": "TORNEIRA (PURIFICADOR) ACQUA BELLA MESA",
+      "motivo": "duplicata no cadastro"
+    }
+  ],
+  "errors": []
+}
