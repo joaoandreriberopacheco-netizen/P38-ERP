@@ -541,7 +541,8 @@ export const LINHA_TORNEIRA = {
   COZINHA: 'Torneira Cozinha',
   LAVATORIO: 'Torneira Lavatório',
   TANQUE: 'Torneira Tanque',
-  CUBAS: 'Cubas',
+  /** Linha comercial Aquila — torneira para cuba (não confundir com produto Cuba). */
+  PARA_CUBA: 'Torneira para cuba',
 };
 
 export function deriveLinhaTorneira(row) {
@@ -567,6 +568,7 @@ export function deriveLinhaTorneiraLinha(row) {
       .join(' '),
   );
 
+  if (blob.includes('AQUILA')) return LINHA_TORNEIRA.PARA_CUBA;
   if (
     blob.includes('PURIFICADOR')
     || blob.includes('COZINHA')
@@ -620,7 +622,8 @@ export function deriveAmbiente(row) {
 }
 
 export function deriveLinhaCuba(row) {
-  return LINHA_TORNEIRA.CUBAS;
+  if (isCubaCozinha(row)) return 'Cuba cozinha';
+  return 'Cuba banheiro';
 }
 
 export function deriveLinhaLoucas(row) {
@@ -1051,7 +1054,7 @@ export function classify3x3(row, abHit) {
     return {
       etapa: ETAPA.ACABAMENTOS,
       categoria: CATEGORIA_ACAB.HIDRAULICA,
-      linha: acabLinha(SUB_ACAB_HID.PONTOS_AGUA, deriveLinhaCuba(row)),
+      linha: acabLinha(SUB_ACAB_HID.CUBAS, deriveLinhaCuba(row)),
     };
   }
   if (isLoucasSanitarias(row)) {
