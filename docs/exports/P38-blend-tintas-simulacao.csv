@@ -1,9 +1,87 @@
-produto compra;cor;estoque;custo médio;preço venda médio;legados;destino;motivo
-;;;0,00;0,00;;;
-;;;0,00;0,00;;;
-;;;0,00;0,00;;;
-;;;0,00;0,00;;;
-;;;0,00;0,00;;;
-;;;0,00;0,00;;;
-;;;0,00;0,00;;;
-;;;0,00;0,00;;;
+produto compra;cor;estoque;compra pendente;custo médio;preço venda médio;legados;destino;motivo
+TINTA ACABAMENTO · GL;CIMENTO QUEIMADO;3;0,00;38,00;57,00;1;core;estoque 3
+TINTA ACRILICA FOSCO · BD;AREIA;0;0,00;63,52;95,28;1;espaco;sem estoque · sem compra pendente
+TINTA ACRILICA FOSCO · BD;BRANCO NEVE;15;0,00;85,15;119,21;1;core;estoque 15
+TINTA ACRILICA FOSCO · GL;AREIA;0;0,00;23,40;35,10;1;espaco;sem estoque · sem compra pendente
+TINTA ACRILICA FOSCO · GL;BRANCO #G;0;0,00;17,72;26,58;1;espaco;sem estoque · sem compra pendente
+TINTA ACRILICA FOSCO · GL;BRANCO NEVE;12;0,00;28,19;39,47;1;core;estoque 12
+TINTA ACRILICA FOSCO · GL;HORTENCIA;2;0,00;20,90;31,35;1;core;estoque 2
+TINTA ACRILICA FOSCO · GL;LARANJA CÍTRICO;0;0,00;16,86;23,06;1;espaco;sem estoque · sem compra pendente
+TINTA ACRILICA FOSCO POUPE+ · BD;PRETO;2;0,00;66,65;91,35;1;core;estoque 2
+TINTA ACRILICA FOSCO POUPE+ · GL;VIOLETA CLARO;0;0,00;18,82;25,77;1;espaco;sem estoque · sem compra pendente
+TINTA ANTICORROSIVA · GL;CINZA;0;4,00;74,28;74,28;1;core;compra pendente 4 un
+TINTA ANTICORROSIVA · GL;PRETO;0;8,00;74,28;74,28;1;core;compra pendente 8 un
+TINTA ANTICORROSIVA · LT;CINZA;0;6,00;22,37;22,37;1;core;compra pendente 6 un
+TINTA ANTICORROSIVA · LT;LARANJA;0;6,00;22,37;22,37;1;core;compra pendente 6 un
+TINTA ANTICORROSIVA · LT;PRETO;0;12,00;22,37;22,37;1;core;compra pendente 12 un
+TINTA ESMALTE SINTETICO · GL;ACAI;1;0,00;68,50;102,75;1;core;estoque 1
+TINTA ESMALTE SINTETICO · GL;AMARELO;0;4,00;61,69;89,95;4;core;compra pendente 4 un
+TINTA ESMALTE SINTETICO · GL;AMARELO CATERPILAR;1;0,00;51,96;77,94;2;core;estoque 1
+TINTA ESMALTE SINTETICO · GL;AZUL DEL REY;0;0,00;68,50;102,75;1;espaco;sem estoque · sem compra pendente
+TINTA ESMALTE SINTETICO · GL;AZUL FRANÇA;0;8,00;63,12;89,52;2;core;compra pendente 8 un
+TINTA ESMALTE SINTETICO · GL;AZUL MAR;0;8,00;74,28;101,10;1;core;compra pendente 8 un
+TINTA ESMALTE SINTETICO · GL;BRANCO;0;0,00;51,96;77,94;1;espaco;sem estoque · sem compra pendente
+TINTA ESMALTE SINTETICO · GL;BRANCO NEVE;0;12,00;74,28;101,10;1;core;compra pendente 12 un
+TINTA ESMALTE SINTETICO · GL;CINZA MEDIO;1;4,00;51,96;77,94;2;core;estoque 1 · compra pendente 4 un
+TINTA ESMALTE SINTETICO · GL;CREME;0;0,00;51,96;77,94;1;espaco;sem estoque · sem compra pendente
+TINTA ESMALTE SINTETICO · GL;LARANJA;3;4,00;59,06;79,47;2;core;estoque 3 · compra pendente 4 un
+TINTA ESMALTE SINTETICO · GL;PRETO;0;8,00;64,41;91,45;2;core;compra pendente 8 un
+TINTA ESMALTE SINTETICO · GL;TABACO;0;0,00;52,61;73,75;2;espaco;sem estoque · sem compra pendente
+TINTA ESMALTE SINTETICO · GL;VERDE FOLHA;0;8,00;74,28;101,10;1;core;compra pendente 8 un
+TINTA ESMALTE SINTETICO · GL;VERDE LIMAO;0;8,00;74,28;101,10;1;core;compra pendente 8 un
+TINTA ESMALTE SINTETICO · GL;VERMELHO;0;0,00;51,96;77,94;1;espaco;sem estoque · sem compra pendente
+TINTA ESMALTE SINTETICO · GL;VERMELHO GARANTIDO;0;0,00;68,50;102,75;1;espaco;sem estoque · sem compra pendente
+TINTA ESMALTE SINTETICO · LT;AÇAÍ;2;0,00;20,00;30,00;1;core;estoque 2
+TINTA ESMALTE SINTETICO · LT;AMARELO;5;6,00;14,48;21,72;3;core;estoque 5 · compra pendente 6 un
+TINTA ESMALTE SINTETICO · LT;AMARELO CATERPILAR;3;0,00;20,22;30,33;1;core;estoque 3
+TINTA ESMALTE SINTETICO · LT;AZUL DEL REY;1;0,00;20,00;30,00;2;core;estoque 1
+TINTA ESMALTE SINTETICO · LT;AZUL FRANÇA;6;12,00;14,48;21,72;2;core;estoque 6 · compra pendente 12 un
+TINTA ESMALTE SINTETICO · LT;AZUL MAR;0;12,00;22,37;30,45;1;core;compra pendente 12 un
+TINTA ESMALTE SINTETICO · LT;BRANCO NEVE;0;18,00;18,67;24,27;2;core;compra pendente 18 un
+TINTA ESMALTE SINTETICO · LT;CINZA MEDIO;3;6,00;14,48;21,72;2;core;estoque 3 · compra pendente 6 un
+TINTA ESMALTE SINTETICO · LT;CREME;1;0,00;20,22;30,33;1;core;estoque 1
+TINTA ESMALTE SINTETICO · LT;LARANJA;0;6,00;22,37;30,45;1;core;compra pendente 6 un
+TINTA ESMALTE SINTETICO · LT;PRETO;0;12,00;22,37;30,45;1;core;compra pendente 12 un
+TINTA ESMALTE SINTETICO · LT;TABACO;0;12,00;22,37;30,45;1;core;compra pendente 12 un
+TINTA ESMALTE SINTETICO · LT;VERDE FOLHA;0;12,00;22,37;30,45;1;core;compra pendente 12 un
+TINTA ESMALTE SINTETICO · LT;VERDE LIMAO;0;12,00;22,37;30,45;1;core;compra pendente 12 un
+TINTA ESMALTE SINTETICO · LT;VERMELHO;5;0,00;14,48;21,72;1;core;estoque 5
+TINTA ESMALTE SINTETICO · LT;VERMELHO GARANTIDO;3;0,00;20,00;30,00;1;core;estoque 3
+TINTA P/ PISO · BD;AZUL;2;0,00;187,11;280,67;1;core;estoque 2
+TINTA P/ PISO · BD;BRANCO NEVE #G;0;0,00;191,96;287,94;1;espaco;sem estoque · sem compra pendente
+TINTA P/ PISO · BD;CINZA #G;0;0,00;138,50;207,75;1;espaco;sem estoque · sem compra pendente
+TINTA P/ PISO · BD;VERDE;2;0,00;187,11;280,67;1;core;estoque 2
+TINTA P/ PISO · BD;VERMELHO SEGURANÇA #G;3;0,00;84,16;126,24;1;core;estoque 3
+TINTA P/ PISO · GL;AMARELO DEMARCACAO;0;0,00;35,85;53,77;2;espaco;sem estoque · sem compra pendente
+TINTA P/ PISO · GL;AZUL;4;0,00;49,11;73,66;1;core;estoque 4
+TINTA P/ PISO · GL;AZUL PROFUNDO;0;0,00;42,19;63,29;1;espaco;sem estoque · sem compra pendente
+TINTA P/ PISO · GL;BRANCO NEVE;1;0,00;46,17;61,95;1;core;estoque 1
+TINTA P/ PISO · GL;CINZA;3;0,00;49,10;73,65;1;core;estoque 3
+TINTA P/ PISO · GL;CINZA ESCURO #G;0;0,00;42,19;63,29;1;espaco;sem estoque · sem compra pendente
+TINTA P/ PISO · GL;CINZA MEDIO;0;0,00;42,19;63,29;1;espaco;sem estoque · sem compra pendente
+TINTA P/ PISO · GL;VERDE;3;0,00;49,10;73,65;1;core;estoque 3
+TINTA P/ PISO · GL;VERMELHO #G;0;0,00;42,20;63,30;1;espaco;sem estoque · sem compra pendente
+TINTA P/ PISO · GL;VERMELHO SEGURANÇA;5;0,00;49,10;73,65;1;core;estoque 5
+TINTA SEMI-BRILHO · BD;BRANCO NEVE #G;0;0,00;190,90;286,35;1;espaco;sem estoque · sem compra pendente
+TINTA SEMI-BRILHO · BD;LARANJA IMPERIAL;0;0,00;218,54;300,81;1;espaco;sem estoque · sem compra pendente
+TINTA SEMI-BRILHO · GL;AMARELO VANILLA;1;0,00;52,07;78,11;1;core;estoque 1
+TINTA SEMI-BRILHO · GL;BRANCO NEVE #G;3;0,00;58,40;87,60;1;core;estoque 3
+TINTA SEMI-BRILHO · GL;LARANJA IMPERIAL;0;0,00;54,14;81,21;1;espaco;sem estoque · sem compra pendente
+TINTA SPRAY · AVULSO;DOURADO;0;0,00;22,56;33,84;1;espaco;sem estoque · sem compra pendente
+TINTA SPRAY · AVULSO;PRATA;0;0,00;18,00;27,00;1;espaco;sem estoque · sem compra pendente
+TINTA SPRAY · SPRAY;360ML INZA;0;0,00;11,49;17,24;1;espaco;sem estoque · sem compra pendente
+TINTA SPRAY · SPRAY;ALUMÍNIO;0;0,00;14,93;22,40;1;espaco;sem estoque · sem compra pendente
+TINTA SPRAY · SPRAY;AZUL MÉDIO;0;0,00;11,49;17,24;1;espaco;sem estoque · sem compra pendente
+TINTA SPRAY · SPRAY;AZUL OCEANO;0;0,00;13,21;12,07;1;espaco;sem estoque · sem compra pendente
+TINTA SPRAY · SPRAY;BEGE;0;0,00;9,43;14,15;1;espaco;sem estoque · sem compra pendente
+TINTA SPRAY · SPRAY;BRANCO FOSCO;0;0,00;12,91;19,37;1;espaco;sem estoque · sem compra pendente
+TINTA SPRAY · SPRAY;GRAFITE;0;0,00;9,99;14,99;1;espaco;sem estoque · sem compra pendente
+TINTA SPRAY · SPRAY;ROSA;0;0,00;8,99;13,49;1;espaco;sem estoque · sem compra pendente
+TINTA SPRAY · SPRAY;VIOLETA;0;0,00;14,53;21,80;1;espaco;sem estoque · sem compra pendente
+TINTA STANDARD · GL;GEADA;0;0,00;27,67;41,51;1;espaco;sem estoque · sem compra pendente
+TINTA STANDARD POUPE+ · BD;POENTE;1;0,00;104,12;156,18;1;core;estoque 1
+TINTA STANDARD POUPE+ · GL;AMARELO FREVO;1;0,00;29,50;44,25;1;core;estoque 1
+TINTA STANDARD POUPE+ · GL;AREIA;1;0,00;29,81;44,72;1;core;estoque 1
+TINTA STANDARD POUPE+ · GL;CREME;1;0,00;29,50;44,25;1;core;estoque 1
+TINTA STANDARD POUPE+ · GL;MARFIM;1;0,00;29,50;44,25;1;core;estoque 1
+TINTA STANDARD POUPE+ · GL;POENTE;1;0,00;29,50;44,25;1;core;estoque 1

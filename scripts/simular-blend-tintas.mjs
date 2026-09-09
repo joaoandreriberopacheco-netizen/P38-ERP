@@ -17,7 +17,6 @@ const CORE_PATH = path.join(process.cwd(), 'docs', 'exports', 'P38-sku-hierarqui
 const OUT_CSV = path.join(process.cwd(), 'docs', 'exports', 'P38-blend-tintas-simulacao.csv');
 const OUT_CORE = path.join(process.cwd(), 'docs', 'exports', 'P38-blend-tintas-core.csv');
 const OUT_ESPACO = path.join(process.cwd(), 'docs', 'exports', 'P38-blend-tintas-espaco.csv');
-const DIAS_MOVIMENTO = 365;
 
 const MARCAS = [
   'VERBRAS',
@@ -266,78 +265,249 @@ function fmtMoney(v) {
   return v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-async function fetchMovimentoPorProduto(sb, produtoIds, sinceIso) {
-  const map = new Map();
-  for (const id of produtoIds) {
-    map.set(id, { vendas_qty: 0, compras_qty: 0, vendeu: false, comprou: false });
+function normalizeStatus(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '');
+}
+
+const PEDIDO_STATUS_EXCLUIDOS = new Set([
+  'rascunho',
+  'cancelado',
+  'rejeitado financeiramente',
+  'rejeitado',
+  'concluido',
+  'devolvido',
+]);
+
+const PEDIDO_APROVADO = new Set([
+  'aprovado financeiramente',
+  'aprovado',
+  'enviado',
+  'despachado',
+  'em transito',
+  'aguardando recepcao',
+  'aguardando recepcao',
+  'aguardando embarque',
+  'em recepcao',
+  'recebido parcialmente',
+  'recebido parcial',
+  'pendencia',
+]);
+
+function pedidoCompraEstaConcluido(pedido = {}) {
+  const statusPedido = normalizeStatus(pedido.status);
+  if (PEDIDO_STATUS_EXCLUIDOS.has(statusPedido)) return true;
+  const statusReceb = normalizeStatus(pedido.status_recebimento_geral);
+  return (
+    statusReceb.startsWith('concluido') ||
+    statusReceb === 'recebido ok' ||
+    statusReceb.includes('concluido com divergencia')
+  );
+}
+
+function pedidoCompraAprovadoNaoConcluido(pedido = {}) {
+  if (pedidoCompraEstaConcluido(pedido)) return false;
+  const statusPedido = normalizeStatus(pedido.status);
+  if (PEDIDO_STATUS_EXCLUIDOS.has(statusPedido)) return false;
+  const aprov = normalizeStatus(pedido.status_aprovacao_financeira);
+  const status = normalizeStatus(pedido.status);
+  return PEDIDO_APROVADO.has(aprov) || PEDIDO_APROVADO.has(status);
+}
+
+function qtyBaseItemPedido(item = {}) {
+  const base = Number(item.quantidade_base);
+  if (Number.isFinite(base) && base > 0) return base;
+  const qtd = Number(item.quantidade_comercial) || 0;
+  if (qtd <= 0) return 0;
+  const fator = Number(item.fator_aplicado ?? item.fator_conversao) || 1;
+  return qtd * fator;
+}
+
+function fatorEmbarque(item = {}, pedidoItem = null) {
+  return Number(item.fator_aplicado ?? pedidoItem?.fator_aplicado) || 1;
+}
+
+function qtyBaseRecebidaEmbarque(item = {}, pedidoItem = null) {
+  const recebida = Number(item.quantidade_recebida_comercial) || 0;
+  if (recebida <= 0) return 0;
+  if (pedidoItem) {
+    const basePedido = qtyBaseItemPedido(pedidoItem);
+    const qtdPedido = Number(pedidoItem.quantidade_comercial) || 0;
+    if (basePedido > 0 && qtdPedido > 0) return (recebida / qtdPedido) * basePedido;
   }
+  return recebida * fatorEmbarque(item, pedidoItem);
+}
+
+function qtyBaseEmbarcada(item = {}, pedidoItem = null) {
+  const qtd =
+    Number(item.quantidade_embarcada_comercial) ||
+    Number(item.quantidade_pedida_comercial) ||
+    0;
+  if (qtd <= 0) return 0;
+  if (pedidoItem) {
+    const basePedido = qtyBaseItemPedido(pedidoItem);
+    const qtdPedido = Number(pedidoItem.quantidade_comercial) || 0;
+    if (basePedido > 0 && qtdPedido > 0) return (qtd / qtdPedido) * basePedido;
+  }
+  return qtd * fatorEmbarque(item, pedidoItem);
+}
+
+function embarqueEmTransito(embarque = {}) {
+  const statusReceb = normalizeStatus(embarque.status_recebimento);
+  const statusEmb = normalizeStatus(embarque.status);
+  if (statusReceb === 'recebido ok' || statusReceb === 'com divergencia' || statusEmb === 'concluido') {
+    return false;
+  }
+  return true;
+}
+
+/** Pendente de compra por produto (pedido aprovado não concluído + embarque em trânsito). */
+async function fetchPendenteCompraPorProduto(sb, produtoIds) {
+  const map = new Map();
+  for (const id of produtoIds) map.set(String(id), 0);
+  if (!produtoIds.length) return map;
 
   const chunk = 40;
+  const pciRows = [];
   for (let i = 0; i < produtoIds.length; i += chunk) {
-    const slice = produtoIds.slice(i, i + chunk);
-    const { data: pvi, error: ev } = await sb
-      .from('pedido_venda_item')
-      .select('produto_id, quantidade_base')
-      .in('produto_id', slice)
-      .gte('created_at', sinceIso);
-    if (ev) throw ev;
-    for (const row of pvi || []) {
-      const e = map.get(row.produto_id);
-      if (!e) continue;
-      const q = Math.abs(Number(row.quantidade_base) || 0);
-      if (q > 0) {
-        e.vendas_qty += q;
-        e.vendeu = true;
-      }
-    }
-
-    const { data: pci, error: ec } = await sb
+    const { data, error } = await sb
       .from('pedido_compra_item')
-      .select('produto_id, quantidade_base')
-      .in('produto_id', slice)
-      .gte('created_at', sinceIso);
-    if (ec) throw ec;
-    for (const row of pci || []) {
-      const e = map.get(row.produto_id);
-      if (!e) continue;
-      const q = Math.abs(Number(row.quantidade_base) || 0);
-      if (q > 0) {
-        e.compras_qty += q;
-        e.comprou = true;
-      }
+      .select(
+        'id, produto_id, pedido_compra_id, quantidade_base, quantidade_comercial, fator_aplicado',
+      )
+      .in('produto_id', produtoIds.slice(i, i + chunk));
+    if (error) throw error;
+    pciRows.push(...(data || []));
+  }
+
+  const pedidoIds = [...new Set(pciRows.map((r) => r.pedido_compra_id).filter(Boolean))];
+  const pedidos = [];
+  for (let i = 0; i < pedidoIds.length; i += chunk) {
+    const { data, error } = await sb
+      .from('pedido_compra')
+      .select('id, status, status_aprovacao_financeira, status_recebimento_geral')
+      .in('id', pedidoIds.slice(i, i + chunk));
+    if (error) throw error;
+    pedidos.push(...(data || []));
+  }
+
+  const pedidosById = new Map(pedidos.map((p) => [String(p.id), { ...p, itens: [] }]));
+  for (const item of pciRows) {
+    const pedido = pedidosById.get(String(item.pedido_compra_id));
+    if (pedido) pedido.itens.push(item);
+  }
+
+  const embarques = [];
+  for (let i = 0; i < pedidoIds.length; i += chunk) {
+    const { data, error } = await sb
+      .from('embarque')
+      .select('id, pedido_compra_id, status, status_recebimento')
+      .in('pedido_compra_id', pedidoIds.slice(i, i + chunk));
+    if (error) throw error;
+    embarques.push(...(data || []));
+  }
+
+  const embIds = embarques.map((e) => e.id);
+  const embItems = [];
+  for (let i = 0; i < embIds.length; i += chunk) {
+    const { data, error } = await sb
+      .from('embarque_item')
+      .select(
+        'embarque_id, produto_id, pedido_compra_item_id, quantidade_recebida_comercial, quantidade_embarcada_comercial, quantidade_pedida_comercial',
+      )
+      .in('embarque_id', embIds.slice(i, i + chunk));
+    if (error) throw error;
+    embItems.push(...(data || []));
+  }
+
+  const embItemsByEmb = new Map();
+  for (const item of embItems) {
+    const k = String(item.embarque_id);
+    if (!embItemsByEmb.has(k)) embItemsByEmb.set(k, []);
+    embItemsByEmb.get(k).push(item);
+  }
+
+  const recebidosPorPedido = {};
+  for (const embarque of embarques) {
+    const pedidoKey = String(embarque.pedido_compra_id);
+    if (!recebidosPorPedido[pedidoKey]) recebidosPorPedido[pedidoKey] = {};
+    const pedido = pedidosById.get(pedidoKey);
+    for (const item of embItemsByEmb.get(String(embarque.id)) || []) {
+      const pid = String(item.produto_id || '');
+      if (!pid) continue;
+      const pedidoItem =
+        pedido?.itens?.find(
+          (l) => l.id === item.pedido_compra_item_id || l.produto_id === item.produto_id,
+        ) || null;
+      const qty = qtyBaseRecebidaEmbarque(item, pedidoItem);
+      if (qty > 0) recebidosPorPedido[pedidoKey][pid] = (recebidosPorPedido[pedidoKey][pid] || 0) + qty;
     }
   }
+
+  for (const pedido of pedidosById.values()) {
+    if (!pedidoCompraAprovadoNaoConcluido(pedido)) continue;
+    const recebidos = recebidosPorPedido[String(pedido.id)] || {};
+    for (const item of pedido.itens) {
+      const pid = String(item.produto_id || '');
+      if (!pid || !map.has(pid)) continue;
+      const pedidoQty = qtyBaseItemPedido(item);
+      const recebido = Number(recebidos[pid] || 0);
+      const pendente = Math.max(0, pedidoQty - recebido);
+      if (pendente > 0) map.set(pid, (map.get(pid) || 0) + pendente);
+    }
+  }
+
+  for (const embarque of embarques) {
+    if (!embarqueEmTransito(embarque)) continue;
+    const pedido = pedidosById.get(String(embarque.pedido_compra_id));
+    if (pedido && pedidoCompraEstaConcluido(pedido)) continue;
+    for (const item of embItemsByEmb.get(String(embarque.id)) || []) {
+      const pid = String(item.produto_id || '');
+      if (!pid || !map.has(pid)) continue;
+      const pedidoItem =
+        pedido?.itens?.find(
+          (l) => l.id === item.pedido_compra_item_id || l.produto_id === item.produto_id,
+        ) || null;
+      const embarcado = qtyBaseEmbarcada(item, pedidoItem);
+      const recebido = qtyBaseRecebidaEmbarque(item, pedidoItem);
+      const pendente = Math.max(0, embarcado - recebido);
+      if (pendente <= 0) continue;
+      map.set(pid, Math.max(map.get(pid) || 0, pendente));
+    }
+  }
+
   return map;
 }
 
 function classificaDestino(legados) {
   const temEstoque = legados.some((l) => l.estoque > 0);
-  const vendeu = legados.some((l) => l.vendeu);
-  const comprou = legados.some((l) => l.comprou);
-  if (temEstoque || vendeu || comprou) return 'core';
+  const temPendente = legados.some((l) => l.pendente_compra > 0);
+  if (temEstoque || temPendente) return 'core';
   return 'espaco';
 }
 
 function motivoDestino(legados) {
   const parts = [];
   const est = legados.reduce((s, l) => s + l.estoque, 0);
-  const vendas = legados.reduce((s, l) => s + l.vendas_qty, 0);
-  const compras = legados.reduce((s, l) => s + l.compras_qty, 0);
+  const pend = legados.reduce((s, l) => s + l.pendente_compra, 0);
   if (est > 0) parts.push(`estoque ${est}`);
-  if (vendas > 0) parts.push(`vendas ${vendas.toFixed(0)} un`);
-  if (compras > 0) parts.push(`compras ${compras.toFixed(0)} un`);
-  if (!parts.length) return 'sem estoque · sem venda · sem compra (12m)';
+  if (pend > 0) parts.push(`compra pendente ${pend.toFixed(0)} un`);
+  if (!parts.length) return 'sem estoque · sem compra pendente';
   return parts.join(' · ');
 }
 
 function writeCsv(pathOut, rows) {
   const lines = [
-    'produto compra;cor;estoque;custo médio;preço venda médio;legados;destino;motivo',
+    'produto compra;cor;estoque;compra pendente;custo médio;preço venda médio;legados;destino;motivo',
     ...rows.map((r) =>
       [
         r.produto_compra,
         r.cor,
         r.estoque,
+        Number(r.pendente_compra || 0).toFixed(2).replace('.', ','),
         Number(r.custo_medio || 0).toFixed(2).replace('.', ','),
         Number(r.preco_medio || 0).toFixed(2).replace('.', ','),
         r.n_legados,
@@ -384,17 +554,14 @@ async function main() {
     (p) => !/^VERNIZ/i.test(p.nome || '') && !/^VERNIZ/i.test(p.campo_hierarquico_1 || ''),
   );
 
-  const since = new Date();
-  since.setDate(since.getDate() - DIAS_MOVIMENTO);
-  const movMap = await fetchMovimentoPorProduto(
+  const pendenteMap = await fetchPendenteCompraPorProduto(
     sb,
     produtos.map((p) => p.id),
-    since.toISOString(),
   );
 
   const legados = [];
   for (const p of produtos) {
-    const mov = movMap.get(p.id) || { vendas_qty: 0, compras_qty: 0, vendeu: false, comprou: false };
+    const pendente_compra = Number(pendenteMap.get(String(p.id)) || 0);
     const codigo = cellStr(p.codigo_interno).toUpperCase();
     const catalogRow = coreMap.get(codigo) || inferCatalogRow(p);
     const mapped = to4x3(catalogRow);
@@ -418,10 +585,7 @@ async function main() {
       estoque: Math.max(0, Number(p.estoque_atual) || 0),
       custo: Number(p.preco_custo_calculado) || 0,
       preco: Number(p.preco_venda_padrao) || 0,
-      vendeu: mov.vendeu,
-      comprou: mov.comprou,
-      vendas_qty: mov.vendas_qty,
-      compras_qty: mov.compras_qty,
+      pendente_compra,
       comp1: mapped.comp1,
       comp2: mapped.comp2,
       comp3: mapped.comp3,
@@ -444,6 +608,7 @@ async function main() {
   const blended = [...grupos.values()]
     .map((g) => {
       const estoque = g.legados.reduce((s, l) => s + l.estoque, 0);
+      const pendente_compra = g.legados.reduce((s, l) => s + l.pendente_compra, 0);
       const custo_medio = weightedAvg(g.legados, 'estoque', 'custo');
       const preco_medio = weightedAvg(g.legados, 'estoque', 'preco');
       const destino = classificaDestino(g.legados);
@@ -451,6 +616,7 @@ async function main() {
         produto_compra: g.produto_compra,
         cor: g.cor,
         estoque,
+        pendente_compra,
         custo_medio,
         preco_medio,
         n_legados: g.legados.length,
@@ -474,14 +640,24 @@ async function main() {
   console.log('═══════════════════════════════════════════════════════════════');
   console.log('  BLEND CADASTRAL — TINTAS (simulação + core / espaço)');
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log(`Janela movimento: ${DIAS_MOVIMENTO} dias`);
   console.log(`Legados activos:  ${legados.length}`);
   console.log(`Linhas curadas:   ${blended.length} (${fusoes.length} fusões N→1)`);
-  console.log(`→ CORE (catálogo): ${core.length} linhas · ${core.reduce((s, r) => s + r.estoque, 0)} un estoque`);
-  console.log(`→ ESPAÇO (arquivo): ${espaco.length} linhas · ${legadosEspaco} legados sem giro`);
+  console.log(
+    `→ CORE (catálogo): ${core.length} linhas · ${core.reduce((s, r) => s + r.estoque, 0)} un estoque · ${core.reduce((s, r) => s + r.pendente_compra, 0).toFixed(0)} un compra pendente`,
+  );
+  console.log(`→ ESPAÇO (arquivo): ${espaco.length} linhas · ${legadosEspaco} legados`);
   console.log('');
 
-  const hdr = ['produto compra', 'cor', 'estoque', 'custo médio', 'preço venda médio', 'legados', 'destino', 'motivo'];
+  const hdr = [
+    'produto compra',
+    'cor',
+    'estoque',
+    'compra pend.',
+    'custo médio',
+    'preço venda médio',
+    'legados',
+    'motivo',
+  ];
 
   console.log('── CORE (fica no catálogo) ──');
   for (const r of core) {
@@ -490,6 +666,7 @@ async function main() {
         r.produto_compra,
         r.cor || '(sem cor)',
         r.estoque,
+        r.pendente_compra > 0 ? r.pendente_compra.toFixed(0) : '0',
         fmtMoney(r.custo_medio),
         fmtMoney(r.preco_medio),
         r.n_legados > 1 ? `${r.n_legados}→1` : '1',
@@ -498,7 +675,7 @@ async function main() {
     );
   }
 
-  console.log('\n── ESPAÇO (sem estoque · sem compra · sem venda 12m) ──');
+  console.log('\n── ESPAÇO (sem estoque · sem compra pendente) ──');
   for (const r of espaco) {
     console.log([r.produto_compra, r.cor || '(sem cor)', r.n_legados > 1 ? `${r.n_legados}→1` : '1'].join('\t'));
   }
