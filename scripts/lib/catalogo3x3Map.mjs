@@ -254,7 +254,12 @@ export function canonicalCeramicaComp1(comp1 = '') {
   const c = cellStr(comp1);
   const n = norm(c);
   if (n.startsWith('CERAM BOLD') || n.startsWith('CERAM RETIF')) {
-    return c.replace(/^CERAM\b/i, 'CERAMICA');
+    let out = c.replace(/^CERAM\b/i, 'CERAMICA');
+    // Retificada: lisa integra brilhante (mesmo produto compra).
+    if (norm(out).startsWith('CERAMICA RETIF LISA')) {
+      out = out.replace(/^CERAMICA RETIF LISA/i, 'CERAMICA RETIF BRILH');
+    }
+    return out;
   }
   return c;
 }
