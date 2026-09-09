@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "source": "WhatsApp Agenda Virtual (imagem 09/09/2026)",
+  "exportedAt": "2026-09-09T23:35:00.000Z",
+  "marca": "STAM",
+  "categoria": {
+    "nome": "F - ESQUADRIAS E FERRAGENS",
+    "linha": "FECHADURA"
+  },
+  "count": 8,
+  "total_unidades": 12,
+  "items": [
+    {
+      "item": 1,
+      "qtd": 1,
+      "descricao": "FECHADURA STAM 803/33 ESP. OXIDADO E-COAT (G) EXTERNA",
+      "aplicacao": "externa",
+      "acabamento": "oxidado e-coat",
+      "ref_fabricante": "803/33",
+      "ean": "7893858403917",
+      "p38_codigo_interno": "N60-DE4",
+      "nota": "Confirmado foto individual 1"
+    },
+    {
+      "item": 2,
+      "qtd": 2,
+      "descricao": "Fechadura Stam espelhada — maçaneta cromada/inox (mostruário)",
+      "aplicacao": "externa",
+      "acabamento": "inox/cromado",
+      "ref_fabricante": null,
+      "nota": "Sem caixa visível; modelo não legível na foto"
+    },
+    {
+      "item": 3,
+      "qtd": 4,
+      "descricao": "Fechadura Stam EXTERNA (caixa laranja)",
+      "aplicacao": "externa",
+      "acabamento": "inox (maçaneta prata visível)",
+      "ref_fabricante": null,
+      "nota": "Caixa genérica EXTERNA; ref. não legível"
+    },
+    {
+      "item": 4,
+      "qtd": 1,
+      "descricao": "FECHADURA STAM 1801/21 ESP. OXIDADO (G) E-COAT EXTERNA",
+      "aplicacao": "externa",
+      "acabamento": "oxidado e-coat",
+      "ref_fabricante": "1801/21",
+      "ean": "7893858350860",
+      "p38_codigo_interno": "BK1-L8K",
+      "nota": "Confirmado foto 4"
+    },
+    {
+      "item": 5,
+      "qtd": 1,
+      "descricao": "Fechadura Stam EXTERNA (caixa laranja)",
+      "aplicacao": "externa",
+      "acabamento": "inox (maçaneta prata visível)",
+      "ref_fabricante": null,
+      "nota": "Caixa genérica EXTERNA; ref. não legível"
+    },
+    {
+      "item": 6,
+      "qtd": 1,
+      "descricao": "FECHADURA ZONA MATA ZP 1601/01",
+      "aplicacao": "zona mata",
+      "acabamento": null,
+      "ref_fabricante": "1601/01",
+      "nota": "Etiqueta legível na foto"
+    },
+    {
+      "item": 7,
+      "qtd": 1,
+      "descricao": "FECHADURA STAM 823/03 ESP. INOX WC BANHEIRO",
+      "aplicacao": "banheiro",
+      "acabamento": "inox",
+      "ref_fabricante": "823/03",
+      "ean": "7893858318235",
+      "p38_codigo_interno": "0EK-Y4Z",
+      "nota": "Confirmado foto (João disse 6; produto é item 7 — WA tinha 823/02 grafite errado)"
+    },
+    {
+      "item": 8,
+      "qtd": 1,
+      "descricao": "EXTERNA 1601/09 GRAFITE",
+      "aplicacao": "externa",
+      "acabamento": "grafite",
+      "ref_fabricante": "1601/09",
+      "nota": "Etiqueta legível na foto"
+    }
+  ]
+}

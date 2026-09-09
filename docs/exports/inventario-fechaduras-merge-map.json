@@ -1,0 +1,98 @@
+{
+  "version": 2,
+  "source": "docs/exports/inventario-fechaduras-whatsapp.json",
+  "categoria": {
+    "nome": "F - ESQUADRIAS E FERRAGENS",
+    "linha": "FECHADURA"
+  },
+  "items": [
+    {
+      "item": 1,
+      "action": "reuse",
+      "p38_codigo_interno": "N60-DE4",
+      "ref": "803/33",
+      "qtd": 1,
+      "nome": "FECHADURA STAM 803/33 ESP. OXIDADO E-COAT (G)",
+      "ean": "7893858403917",
+      "status": "confirmado"
+    },
+    {
+      "item": 2,
+      "action": "reuse?",
+      "p38_codigo_interno": "YKQ-42N",
+      "ref": "3100",
+      "qtd": 2,
+      "nome": "FECHADURA STAM 3100 (40 MM) ROS QUADR - EXT. INOX",
+      "ean": "7893858382229",
+      "status": "foto batch — confirmar qtd 2 un."
+    },
+    {
+      "item": 3,
+      "action": "reuse?",
+      "p38_codigo_interno": "JQ6-7GN",
+      "ref": "803/33",
+      "qtd": 4,
+      "nome": "FECHADURA STAM 803/33 ESP. PRETO FOSCO (G)",
+      "ean": "7893858563871",
+      "status": "foto batch — hipótese p/ 4 cx EXTERNA; confirmar"
+    },
+    {
+      "item": 4,
+      "action": "reuse",
+      "p38_codigo_interno": "BK1-L8K",
+      "ref": "1801/21",
+      "qtd": 1,
+      "nome": "FECHADURA STAM 1801/21 ESP. OXIDADO (G) E-COAT EXTERNA",
+      "ean": "7893858350860",
+      "status": "confirmado — foto 4 (João)"
+    },
+    {
+      "item": 5,
+      "action": "reuse?",
+      "p38_codigo_interno": "VZL-3J2",
+      "ref": "803/10",
+      "qtd": 1,
+      "nome": "FECHADURA STAM 803/10 OXIDADO",
+      "ean": "7893858350136",
+      "status": "foto batch — confirmar qtd 1 un."
+    },
+    {
+      "item": 6,
+      "action": "create",
+      "p38_codigo_interno": null,
+      "ref": "1601/01",
+      "qtd": 1,
+      "nome_sugerido": "FECHADURA STAM 1601/01 ZONA MATA ZP",
+      "status": "aguarda foto"
+    },
+    {
+      "item": 7,
+      "action": "reuse",
+      "p38_codigo_interno": "0EK-Y4Z",
+      "ref": "823/03",
+      "qtd": 1,
+      "nome": "FECHADURA STAM 823/03 ESP. INOX WC BANHEIRO",
+      "ean": "7893858318235",
+      "status": "confirmado — foto (João disse 6; corrige WA 823/02→823/03 inox)"
+    },
+    {
+      "item": 8,
+      "action": "create",
+      "p38_codigo_interno": null,
+      "ref": "1601/09",
+      "qtd": 1,
+      "nome_sugerido": "FECHADURA STAM 1601/09 EXTERNA GRAFITE",
+      "status": "aguarda foto"
+    }
+  ],
+  "extras_fotos": [
+    {
+      "nome": "FECHADURA STAM PARA PORTA DE ENROLAR",
+      "action": "create?",
+      "nota": "Apareceu na foto batch — não estava no WhatsApp original; incluir no mix?"
+    }
+  ],
+  "manual_keep": [],
+  "deactivate_out_of_mix": true,
+  "mix_scope": "FECHADURA STAM na categoria F"
+}
