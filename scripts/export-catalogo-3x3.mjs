@@ -119,7 +119,10 @@ function buildReadme(wb, stats) {
     ['C / c. Acabamentos', 'Domínio: 05 Hidráulica · 06 Elétrica — sub = função · linha = gama'],
     ['D / d. Transversal', 'Itens transversais da obra'],
     ['', ''],
-    ['Revestimentos', 'Sub Assentamento · Cerâmica Bold · Cerâmica Retif · Argamassa · Rejunte'],
+    [
+      'Revestimentos',
+      'Sub Assentamento · Cerâmica Retificada · Cerâmica Bold · Porcelanato · Argamassa · Rejunte · Separadores e niveladores',
+    ],
     ['Cerâmica Bold/Retif', 'comp1=CERAMICA BOLD LISA… · sufixo 4 letras (POLI MATE BRIL…) · comp2=formato · comp3=modelo'],
     ['Tintas', 'Sub Tintas · linhas por tipo · comp1=produto+marca · comp2=formato · comp3=cor'],
     ['Hidráulica (acab.)', 'Sub Pontos de água · linhas Torneiras Premium / Torneiras Pop'],

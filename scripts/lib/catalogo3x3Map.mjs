@@ -243,7 +243,11 @@ export function isArgamassaRejunte(row) {
 }
 
 export const LINHA_CERAMICA_BOLD = 'Cerâmica Bold';
-export const LINHA_CERAMICA_RETIF = 'Cerâmica Retif';
+export const LINHA_CERAMICA_RETIF = 'Cerâmica Retificada';
+export const LINHA_PORCELANATO = 'Porcelanato';
+export const LINHA_ARGAMASSA = 'Argamassa';
+export const LINHA_REJUNTE = 'Rejunte';
+export const LINHA_SEPARADORES = 'Separadores e niveladores';
 
 export function isCeramicaBoldProduto(row) {
   const pc = norm(row.produto_compra);
@@ -292,13 +296,61 @@ export function canonicalCeramicaComp1(comp1 = '') {
   return c;
 }
 
+function isSeparadorNiveladorProduto(row) {
+  const pc = norm(row.produto_compra);
+  const sku = norm(row.sku_atual || row.novo_sku);
+  return (
+    pc.includes('ESPAÇADOR') ||
+    pc.includes('ESPACADOR') ||
+    pc.includes('NIVELADOR') ||
+    pc.includes('SEPARADOR') ||
+    pc.includes('JUNTA PISO') ||
+    sku.includes('NIVELADOR') ||
+    sku.includes('ESPAÇADOR') ||
+    sku.includes('ESPACADOR')
+  );
+}
+
+function isAdesivoAssentamentoProduto(row) {
+  const pc = norm(row.produto_compra);
+  return pc.startsWith('ADESIVO');
+}
+
+function isPorcelanatoProduto(row) {
+  const pc = norm(row.produto_compra);
+  const sku = norm(row.sku_atual || row.novo_sku);
+  if (
+    pc.includes('PORCELANATO') ||
+    pc.includes('PORCELENATO') ||
+    sku.includes('PORCELANATO') ||
+    sku.includes('PORCELENATO')
+  ) {
+    return true;
+  }
+  if (isCeramicaBoldProduto(row) || isCeramicaRetifProduto(row)) return false;
+  return (
+    pc === 'PISO' ||
+    pc.startsWith('PISO ') ||
+    pc.startsWith('REV ') ||
+    pc.startsWith('REV.') ||
+    pc.startsWith('REV EKP') ||
+    pc.startsWith('REVESTIMENTO') ||
+    pc.includes('PAVER') ||
+    pc.startsWith('CERAMICA A')
+  );
+}
+
 export function deriveLinhaRevestimentos(row) {
   const pc = norm(row.produto_compra);
-  if (pc.includes('ARGAMASSA')) return 'Argamassa';
-  if (pc.includes('REJUNTE') || pc.includes('LIMPADOR DE REJUNTE')) return 'Rejunte';
+  if (isSeparadorNiveladorProduto(row)) return LINHA_SEPARADORES;
+  if (pc.includes('ARGAMASSA') || isAdesivoAssentamentoProduto(row)) return LINHA_ARGAMASSA;
+  if (pc.includes('REJUNTE') || pc.includes('LIMPADOR DE REJUNTE') || pc.includes('TECPLUS')) {
+    return LINHA_REJUNTE;
+  }
   if (isCeramicaBoldProduto(row)) return LINHA_CERAMICA_BOLD;
   if (isCeramicaRetifProduto(row)) return LINHA_CERAMICA_RETIF;
-  return 'Cerâmica';
+  if (isPorcelanatoProduto(row)) return LINHA_PORCELANATO;
+  return LINHA_PORCELANATO;
 }
 
 /** Linhas drill-down — sub Tintas (modelo 4×3). */
