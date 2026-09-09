@@ -24,20 +24,24 @@
     {
       "item": 2,
       "qtd": 2,
-      "descricao": "Fechadura Stam espelhada — maçaneta cromada/inox (mostruário)",
+      "descricao": "FECHADURA STAM 803/21 ESP. INOX (G) EXTERNA",
       "aplicacao": "externa",
-      "acabamento": "inox/cromado",
-      "ref_fabricante": null,
-      "nota": "Sem caixa visível; modelo não legível na foto"
+      "acabamento": "inox",
+      "ref_fabricante": "803/21",
+      "ean": "7893858349482",
+      "p38_codigo_interno": "9O8-0JI",
+      "nota": "Confirmado foto — João: 02 (mostruário na foto; WA 2 un.)"
     },
     {
       "item": 3,
       "qtd": 4,
-      "descricao": "Fechadura Stam EXTERNA (caixa laranja)",
+      "descricao": "FECHADURA STAM 803/33 ESP. PRETO FOSCO (G) EXTERNA",
       "aplicacao": "externa",
-      "acabamento": "inox (maçaneta prata visível)",
-      "ref_fabricante": null,
-      "nota": "Caixa genérica EXTERNA; ref. não legível"
+      "acabamento": "preto fosco",
+      "ref_fabricante": "803/33",
+      "ean": "7893858563871",
+      "p38_codigo_interno": "JQ6-7GN",
+      "nota": "Confirmado foto — João: 3"
     },
     {
       "item": 4,
@@ -48,16 +52,18 @@
       "ref_fabricante": "1801/21",
       "ean": "7893858350860",
       "p38_codigo_interno": "BK1-L8K",
-      "nota": "Confirmado foto 4"
+      "nota": "Confirmado foto — João: 4"
     },
     {
       "item": 5,
       "qtd": 1,
-      "descricao": "Fechadura Stam EXTERNA (caixa laranja)",
+      "descricao": "FECHADURA STAM 803/10 ESP. OXIDADO E-COAT (G) EXTERNA",
       "aplicacao": "externa",
-      "acabamento": "inox (maçaneta prata visível)",
-      "ref_fabricante": null,
-      "nota": "Caixa genérica EXTERNA; ref. não legível"
+      "acabamento": "oxidado e-coat",
+      "ref_fabricante": "803/10",
+      "ean": "7893858350136",
+      "p38_codigo_interno": "VZL-3J2",
+      "nota": "Confirmado foto — João: 5"
     },
     {
       "item": 6,
@@ -73,11 +79,13 @@
     {
       "item": 7,
       "qtd": 1,
-      "descricao": "BANHEIRO 823/02 ROS. QUAD. GRAFITE",
+      "descricao": "FECHADURA STAM 823/03 ESP. INOX WC BANHEIRO",
       "aplicacao": "banheiro",
-      "acabamento": "grafite",
-      "ref_fabricante": "823/02",
-      "nota": "Texto WA; aguarda foto (823/03 foi para item 6)"
+      "acabamento": "inox",
+      "ref_fabricante": "823/03",
+      "ean": "7893858318235",
+      "p38_codigo_interno": "0EK-Y4Z",
+      "nota": "Confirmado foto — João: 7 (WA tinha 823/02 grafite; mesmo SKU que item 6)"
     },
     {
       "item": 8,

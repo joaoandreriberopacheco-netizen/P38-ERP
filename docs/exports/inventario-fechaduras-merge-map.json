@@ -18,22 +18,23 @@
     },
     {
       "item": 2,
-      "action": "pending",
-      "p38_codigo_interno": null,
-      "ref": null,
+      "action": "reuse",
+      "p38_codigo_interno": "9O8-0JI",
+      "ref": "803/21",
       "qtd": 2,
-      "nome_sugerido": "Fechadura Stam EXTERNA inox/espelhada (2 un.)",
-      "status": "aguarda foto — 3100 inox foi para item 8"
+      "nome": "FECHADURA STAM 803/21 ESP. INOX (G) EXTERNA",
+      "ean": "7893858349482",
+      "status": "confirmado — João: 02"
     },
     {
       "item": 3,
-      "action": "reuse?",
+      "action": "reuse",
       "p38_codigo_interno": "JQ6-7GN",
       "ref": "803/33",
       "qtd": 4,
-      "nome": "FECHADURA STAM 803/33 ESP. PRETO FOSCO (G)",
+      "nome": "FECHADURA STAM 803/33 ESP. PRETO FOSCO (G) EXTERNA",
       "ean": "7893858563871",
-      "status": "foto batch — hipótese p/ 4 cx EXTERNA; confirmar"
+      "status": "confirmado — João: 3"
     },
     {
       "item": 4,
@@ -43,17 +44,17 @@
       "qtd": 1,
       "nome": "FECHADURA STAM 1801/21 ESP. OXIDADO (G) E-COAT EXTERNA",
       "ean": "7893858350860",
-      "status": "confirmado — foto 4 (João)"
+      "status": "confirmado — João: 4"
     },
     {
       "item": 5,
-      "action": "reuse?",
+      "action": "reuse",
       "p38_codigo_interno": "VZL-3J2",
       "ref": "803/10",
       "qtd": 1,
-      "nome": "FECHADURA STAM 803/10 OXIDADO",
+      "nome": "FECHADURA STAM 803/10 ESP. OXIDADO E-COAT (G) EXTERNA",
       "ean": "7893858350136",
-      "status": "foto batch — confirmar qtd 1 un."
+      "status": "confirmado — João: 5"
     },
     {
       "item": 6,
@@ -67,12 +68,13 @@
     },
     {
       "item": 7,
-      "action": "pending",
-      "p38_codigo_interno": null,
-      "ref": "823/02",
+      "action": "reuse",
+      "p38_codigo_interno": "0EK-Y4Z",
+      "ref": "823/03",
       "qtd": 1,
-      "nome_sugerido": "FECHADURA STAM 823/02 ROS. QUAD. GRAFITE BANHEIRO",
-      "status": "aguarda foto — texto WA; 823/03 confirmado no item 6"
+      "nome": "FECHADURA STAM 823/03 ESP. INOX WC BANHEIRO",
+      "ean": "7893858318235",
+      "status": "confirmado — João: 7 (WA 823/02→823/03; estoque +1 no mesmo SKU)"
     },
     {
       "item": 8,
@@ -90,6 +92,18 @@
       "nome": "FECHADURA STAM PARA PORTA DE ENROLAR",
       "action": "create?",
       "nota": "Apareceu na foto batch — não estava no WhatsApp original; incluir no mix?"
+    },
+    {
+      "nome": "FECHADURA STAM 1601/01 ZONA MATA ZP",
+      "ref": "1601/01",
+      "action": "create",
+      "nota": "Texto WA item 6 original — ainda sem foto confirmada"
+    },
+    {
+      "nome": "FECHADURA STAM 1601/09 EXTERNA GRAFITE",
+      "ref": "1601/09",
+      "action": "create",
+      "nota": "Texto WA item 8 original — ainda sem foto confirmada"
     }
   ],
   "manual_keep": [],
