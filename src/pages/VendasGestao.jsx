@@ -1,6 +1,6 @@
 import { memo, useState, useRef, useMemo, useEffect } from 'react';
 import { useCompactShell } from '@/hooks/use-breakpoint';
-import { useScrollChromeVisibility } from '@/hooks/useScrollChromeVisibility';
+import { MOBILE_LIST_CHROME_OPTIONS, useScrollChromeVisibility } from '@/hooks/useScrollChromeVisibility';
 import { cn } from '@/lib/utils';
 import { P38ScrollChromeCollapse } from '@/components/layout/P38ScrollChromeCollapse';
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -479,9 +479,7 @@ function VendasGestaoPage() {
   }
 
   const isPhone = useCompactShell();
-  const { chromeVisible, scrollRef, scrollEl } = useScrollChromeVisibility(isPhone, {
-    revealMode: 'immediate-up',
-  });
+  const { chromeVisible, scrollRef, scrollEl } = useScrollChromeVisibility(isPhone, MOBILE_LIST_CHROME_OPTIONS);
   const { invalidateHomeKpis } = useP38QueryInvalidation();
   const [dataInicio, setDataInicio] = useState(() => getVendasGestaoPeriodoPadrao().start);
   const [dataFim, setDataFim] = useState(() => getVendasGestaoPeriodoPadrao().end);
@@ -819,7 +817,7 @@ function VendasGestaoPage() {
     >
       {isPhone ? (
         <>
-          <P38ScrollChromeCollapse visible={chromeVisible} enabled className="shrink-0">
+          <P38ScrollChromeCollapse visible={chromeVisible} enabled scrollEl={scrollEl} className="shrink-0">
             <div className="space-y-4 px-4">
               <div className="flex flex-col gap-3">
                 <P38PageHeader

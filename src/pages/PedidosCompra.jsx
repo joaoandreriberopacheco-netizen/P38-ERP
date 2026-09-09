@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useCompactShell } from '@/hooks/use-breakpoint';
-import { useScrollChromeVisibility } from '@/hooks/useScrollChromeVisibility';
+import { MOBILE_LIST_CHROME_OPTIONS, useScrollChromeVisibility } from '@/hooks/useScrollChromeVisibility';
 import { cn } from '@/lib/utils';
 import { P38ScrollChromeCollapse } from '@/components/layout/P38ScrollChromeCollapse';
 import { useNavigate } from 'react-router-dom';
@@ -261,9 +261,7 @@ function ComprasViewTabsInline({ activeView, onSelect, dataTour }) {
 
 export default function PedidosCompraPage() {
   const isPhone = useCompactShell();
-  const { chromeVisible, scrollRef } = useScrollChromeVisibility(isPhone, {
-    revealMode: 'immediate-up',
-  });
+  const { chromeVisible, scrollRef, scrollEl } = useScrollChromeVisibility(isPhone, MOBILE_LIST_CHROME_OPTIONS);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [filtroUltimos30Dias, setFiltroUltimos30Dias] = useState(FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT);
@@ -657,7 +655,7 @@ export default function PedidosCompraPage() {
     >
       {isPhone ? (
         <>
-          <P38ScrollChromeCollapse visible={chromeVisible} enabled className="shrink-0">
+          <P38ScrollChromeCollapse visible={chromeVisible} enabled scrollEl={scrollEl} className="shrink-0">
             <div className="space-y-4 px-4">
               {/* Header */}
               <div className="pb-3 mb-1 flex flex-col gap-3">

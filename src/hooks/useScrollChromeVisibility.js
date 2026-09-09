@@ -11,13 +11,21 @@ const SCROLL_EDGE_PX = 12;
 /** Scroll up acumulado (~1 ecrã) para reexibir no modo long-up. */
 const DEFAULT_REVEAL_AFTER_UP_PX = 420;
 
+/** Preset para listas mobile (Embarques, Financeiro, Vendas). */
+export const MOBILE_LIST_CHROME_OPTIONS = {
+  revealMode: 'long-up',
+  revealAfterUpPx: 88,
+  minDelta: 14,
+  hideCooldownMs: 200,
+};
+
 /**
  * Mostra/esconde chrome superior conforme direção do scroll num contentor interno.
  *
  * Modos (melhores práticas leitura mobile):
  * - `top-only` — só reaparece ao chegar ao topo da lista
- * - `long-up` — topo OU ~420px acumulados para cima
- * - `immediate-up` — qualquer scroll para cima (listas mobile: Embarques, Financeiro, Vendas)
+ * - `long-up` — topo OU scroll acumulado para cima (ver revealAfterUpPx)
+ * - `immediate-up` — qualquer scroll para cima (pode piscar com jitter do dedo)
  *
  * @param {boolean} enabled
  * @param {{
@@ -26,6 +34,7 @@ const DEFAULT_REVEAL_AFTER_UP_PX = 420;
  *   revealNearTopY?: number,
  *   minDelta?: number,
  *   revealAfterUpPx?: number,
+ *   hideCooldownMs?: number,
  * }} [options]
  */
 export function useScrollChromeVisibility(enabled = true, options = {}) {
@@ -34,11 +43,13 @@ export function useScrollChromeVisibility(enabled = true, options = {}) {
   const revealNearTopY = options.revealNearTopY ?? DEFAULT_REVEAL_NEAR_TOP_Y;
   const minDelta = options.minDelta ?? DEFAULT_MIN_DELTA;
   const revealAfterUpPx = options.revealAfterUpPx ?? DEFAULT_REVEAL_AFTER_UP_PX;
+  const hideCooldownMs = options.hideCooldownMs ?? 0;
 
   const [visible, setVisible] = useState(true);
   const [scrollEl, setScrollEl] = useState(null);
   const lastYRef = useRef(0);
   const accumulatedUpRef = useRef(0);
+  const lastHideAtRef = useRef(0);
 
   const scrollRef = useCallback((node) => {
     setScrollEl(node);
@@ -48,7 +59,8 @@ export function useScrollChromeVisibility(enabled = true, options = {}) {
     setVisible(true);
     lastYRef.current = 0;
     accumulatedUpRef.current = 0;
-  }, [enabled, hideAfterY, revealNearTopY, revealMode, revealAfterUpPx]);
+    lastHideAtRef.current = 0;
+  }, [enabled, hideAfterY, revealNearTopY, revealMode, revealAfterUpPx, hideCooldownMs]);
 
   useEffect(() => {
     if (!enabled || !scrollEl) return undefined;
@@ -77,8 +89,16 @@ export function useScrollChromeVisibility(enabled = true, options = {}) {
 
       if (delta > 0 && y > hideAfterY) {
         setVisible(false);
+        lastHideAtRef.current = Date.now();
         accumulatedUpRef.current = 0;
       } else if (delta < 0 && revealMode !== 'top-only') {
+        const inHideCooldown =
+          hideCooldownMs > 0 && Date.now() - lastHideAtRef.current < hideCooldownMs;
+        if (inHideCooldown) {
+          lastYRef.current = y;
+          return;
+        }
+
         if (revealMode === 'immediate-up') {
           setVisible(true);
         } else {
@@ -95,7 +115,16 @@ export function useScrollChromeVisibility(enabled = true, options = {}) {
 
     scrollEl.addEventListener('scroll', onScroll, { passive: true });
     return () => scrollEl.removeEventListener('scroll', onScroll);
-  }, [enabled, scrollEl, hideAfterY, revealNearTopY, minDelta, revealMode, revealAfterUpPx]);
+  }, [
+    enabled,
+    scrollEl,
+    hideAfterY,
+    revealNearTopY,
+    minDelta,
+    revealMode,
+    revealAfterUpPx,
+    hideCooldownMs,
+  ]);
 
   return { chromeVisible: visible, scrollRef, scrollEl };
 }

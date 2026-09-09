@@ -65,7 +65,7 @@ import { CONCILIACAO_LOTE_TAMANHO } from '@/lib/conciliacaoEmLote';
 import { consumirArquivoLancamentoTorreDoBridge, temFluxoLancamentoTorreAtivo, concluirFluxoTorreCompartilhamento } from '@/lib/torreLancamentoBridge';
 import { uploadAnexoParaLancamentoFinanceiro } from '@/lib/uploadAnexoReferencia';
 import { resolveViewportLayout, useCompactShell } from '@/hooks/use-breakpoint';
-import { useScrollChromeVisibility } from '@/hooks/useScrollChromeVisibility';
+import { MOBILE_LIST_CHROME_OPTIONS, useScrollChromeVisibility } from '@/hooks/useScrollChromeVisibility';
 import { P38ScrollChromeCollapse } from '@/components/layout/P38ScrollChromeCollapse';
 import {
   calcularKpisProgramadas,
@@ -193,9 +193,7 @@ export default function ExecucaoOrcamentaria() {
   const { s: ds, e: de } = useMemo(() => dateRange(periodo, cs, ce), [periodo, cs, ce]);
 
   const isCompactShell = useCompactShell();
-  const { chromeVisible, scrollRef, scrollEl } = useScrollChromeVisibility(isCompactShell, {
-    revealMode: 'immediate-up',
-  });
+  const { chromeVisible, scrollRef, scrollEl } = useScrollChromeVisibility(isCompactShell, MOBILE_LIST_CHROME_OPTIONS);
 
   useEffect(() => {
     if (!isCompactShell || !scrollEl) return;
@@ -1169,7 +1167,7 @@ export default function ExecucaoOrcamentaria() {
     >
       {/* Header unificado — título, KPIs do fluxo, abas */}
       {isCompactShell ? (
-        <P38ScrollChromeCollapse visible={chromeVisible} enabled className="shrink-0">
+        <P38ScrollChromeCollapse visible={chromeVisible} enabled scrollEl={scrollEl} className="shrink-0">
           <div className="min-w-0 max-w-full space-y-2 px-4 pb-2">
             {financeiroHeaderInner}
           </div>
