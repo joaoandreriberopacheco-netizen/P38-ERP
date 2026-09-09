@@ -1,9 +1,14 @@
 import { getSupabaseBrowserClient, isSupabaseBrowserConfigured } from '@/lib/supabaseBrowserClient';
 
-/** Piloto: produtos cuja descrição começa com "PISO". */
+/**
+ * Produto com galeria clicável: piloto PISO* ou qualquer um com imagem_url.
+ * (PDV, tabela de preços, orçamento usam ProdutoThumb com esta regra por defeito.)
+ */
 export function isProdutoPilotoGaleria(produto) {
+  if (!produto?.id) return false;
   const nome = String(produto?.nome || produto?.produto_nome || '').trim().toUpperCase();
-  return nome.startsWith('PISO');
+  if (nome.startsWith('PISO')) return true;
+  return Boolean(String(produto?.imagem_url || '').trim());
 }
 
 const cache = new Map();

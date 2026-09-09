@@ -12,7 +12,7 @@ const SIZE_CLASS = {
 };
 
 /**
- * Miniatura de produto. No piloto PISO*, toque abre galeria fullscreen (swipe).
+ * Miniatura de produto. Toque abre galeria fullscreen quando há foto (ou piloto PISO*).
  */
 export default function ProdutoThumb({
   produto,
