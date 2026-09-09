@@ -121,6 +121,7 @@ function buildReadme(wb, stats) {
     ['', ''],
     ['Revestimentos', 'Sub Assentamento · Cerâmica Bold · Cerâmica Retif · Argamassa · Rejunte'],
     ['Cerâmica Bold/Retif', 'comp1=CERAMICA BOLD LISA… · sufixo 4 letras (POLI MATE BRIL…) · comp2=formato · comp3=modelo'],
+    ['Tintas', 'Sub Tintas · linhas por tipo · comp1=produto+marca · comp2=formato · comp3=cor'],
     ['Hidráulica (acab.)', 'Sub Pontos de água · linhas Torneiras Premium / Torneiras Pop'],
     ['Elétrica (acab.)', 'Sub Iluminação · Pontos elétricos'],
     ['Ambiente', 'Coluna opcional (Banheiro · Cozinha…) — não entra no drill-down'],

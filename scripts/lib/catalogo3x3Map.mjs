@@ -173,7 +173,8 @@ function mergeSufixoProduto(c1, c2, c3) {
   return { comp1: c1, comp2: c3, comp3: '' };
 }
 
-export function normalizeComponentes(comp1, comp2, comp3) {
+/** @param {string} comp1 @param {string} comp2 @param {string} comp3 @param {{ sku_atual?: string, novo_sku?: string }} [ctx] */
+export function normalizeComponentes(comp1, comp2, comp3, ctx = {}) {
   let c1 = cellStr(comp1);
   let c2 = cellStr(comp2);
   let c3 = cellStr(comp3);
@@ -196,6 +197,11 @@ export function normalizeComponentes(comp1, comp2, comp3) {
   // Cerâmica Bold/Retif — comp1 canónico; comp2=formato · comp3=modelo (não compactar modelo).
   if (isCeramicaBoldProduto({ produto_compra: c1 }) || isCeramicaRetifProduto({ produto_compra: c1 })) {
     c1 = canonicalCeramicaComp1(c1);
+  }
+
+  // Tintas — comp1=produto+marca · comp2=formato · comp3=cor (extraída do nome legado).
+  if (isTintaProdutoComp1(c1)) {
+    return normalizeComponentesTinta(c1, c2, c3, ctx);
   }
 
   if (!c2 && c3) {
@@ -293,6 +299,107 @@ export function deriveLinhaRevestimentos(row) {
   if (isCeramicaBoldProduto(row)) return LINHA_CERAMICA_BOLD;
   if (isCeramicaRetifProduto(row)) return LINHA_CERAMICA_RETIF;
   return 'Cerâmica';
+}
+
+/** Linhas drill-down — sub Tintas (modelo 4×3). */
+export const LINHA_TINTA_LABELS = {
+  TINTA: 'Acabamento',
+  'TINTA ACRILICA FOSCO': 'Acrílica Fosco',
+  'TINTA ESMALTE SINTETICO': 'Esmalte Sintético',
+  'TINTA P/ PISO': 'Piso',
+  'TINTA SEMI-BRILHO': 'Semi-Brilho',
+  'TINTA STANDARD': 'Standard Int/Ext',
+  'TINTA SPRAY': 'Spray',
+};
+
+export function isTintaProduto(row) {
+  return norm(row?.produto_compra ?? '').startsWith('TINTA');
+}
+
+function isTintaProdutoComp1(comp1 = '') {
+  return norm(comp1).startsWith('TINTA');
+}
+
+export function deriveLinhaTinta(produtoCompra = '') {
+  const pc = cellStr(produtoCompra);
+  const label = LINHA_TINTA_LABELS[norm(pc)];
+  if (label) return label;
+  const semPrefixo = pc.replace(/^TINTA\s*/i, '').trim();
+  return semPrefixo || pc;
+}
+
+function normalizeFormatoTinta(fmt = '') {
+  let f = cellStr(fmt).replace(/^\(|\)$/g, '').trim();
+  if (!f) return '';
+  f = f.replace(/(\d),(\d)\s*([A-Za-z]+)/, '$1,$2 $3');
+  f = f.replace(/(\d)\s*(ML|L|GL|KG|G)\b/gi, (_, n, u) => `${n} ${u.toUpperCase()}`);
+  return f.replace(/\s+/g, ' ').trim();
+}
+
+function extractFormatoFromSkuTinta(sku = '') {
+  const s = cellStr(sku);
+  const paren = s.match(/\(([^)]+)\)/);
+  if (paren) return normalizeFormatoTinta(paren[1]);
+  const inline = s.match(/\b(\d+[,.]?\d*\s*(?:ML|L|GL))\b/i);
+  return inline ? normalizeFormatoTinta(inline[1]) : '';
+}
+
+function extractMarcaTintaAux(skuAtual = '', eixoB = '') {
+  if (eixoB) return cellStr(eixoB);
+  const s = cellStr(skuAtual);
+  if (/COLORGIN/i.test(s)) return 'COLORGIN';
+  if (/RENNER/i.test(s)) return 'RENNER';
+  if (/METÁLICA|METALICA/i.test(s)) return 'METÁLICA';
+  if (/CITYCOLOR/i.test(s)) return 'CITYCOLOR';
+  return '';
+}
+
+function extractCorTinta(skuAtual = '', eixoA = '', eixoB = '') {
+  const raw = cellStr(skuAtual);
+  if (!raw) return '';
+
+  const afterParenEarly = raw.match(/\)\s+(.+)$/);
+  const dash = raw.match(/\s[-–—]\s+(.+)$/);
+  if (dash) return dash[1].trim();
+
+  let tail = raw;
+  const fmt = normalizeFormatoTinta(eixoA);
+  if (fmt) {
+    const escaped = fmt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    tail = tail.replace(new RegExp(`\\(\\s*${escaped}\\s*\\)`, 'gi'), ' ');
+    tail = tail.replace(new RegExp(`\\b${escaped}\\b`, 'gi'), ' ');
+  }
+
+  const marca = cellStr(eixoB) || extractMarcaTintaAux(raw, '');
+  if (marca) {
+    const idx = norm(tail).lastIndexOf(norm(marca));
+    if (idx >= 0) {
+      const cor = tail.slice(idx + marca.length).replace(/^[\s#\-–—]+/, '').trim();
+      if (cor) return cor;
+    }
+  }
+
+  if (afterParenEarly) return afterParenEarly[1].trim();
+
+  const mlTail = tail.match(/\d+\s*ML\s+(.+)$/i);
+  if (mlTail) return mlTail[1].trim();
+
+  return '';
+}
+
+function normalizeComponentesTinta(c1, c2, c3, ctx = {}) {
+  const skuAtual = cellStr(ctx.sku_atual) || cellStr(ctx.novo_sku);
+  const marca = cellStr(c3) || extractMarcaTintaAux(skuAtual, c3);
+  if (marca) {
+    ({ comp1: c1 } = mergeMarcaComp1(c1, '', '', marca));
+  }
+  if (norm(c1) === 'TINTA' && /ACABEM/i.test(skuAtual)) {
+    c1 = `TINTA ACABAMENTO${marca ? ` ${marca}` : ''}`.trim();
+  }
+  let formato = normalizeFormatoTinta(c2) || extractFormatoFromSkuTinta(skuAtual);
+  if (!formato && /SPRAY/i.test(c1)) formato = 'AVULSO';
+  const cor = extractCorTinta(skuAtual, c2, marca);
+  return { comp1: c1, comp2: formato, comp3: cor };
 }
 
 export function isRevestimentos(row) {
@@ -778,6 +885,13 @@ export function classify3x3(row, abHit) {
     };
   }
   if (isPintura(row)) {
+    if (isTintaProduto(row)) {
+      return {
+        etapa: ETAPA.ACABAMENTOS,
+        categoria: CATEGORIA_ACAB.PINTURA,
+        linha: cellStr(row.produto_compra) || 'TINTA',
+      };
+    }
     return { etapa: ETAPA.ACABAMENTOS, categoria: CATEGORIA_ACAB.PINTURA, linha: 'Pintura' };
   }
   if (isPortasEsquadrias(row)) {
@@ -919,6 +1033,9 @@ export function expandTo4x3({ etapa, categoria, linha }) {
     return { subcategoria: 'Forro', linha: lb };
   }
   if (categoria === CATEGORIA_ACAB.PINTURA) {
+    if (norm(lb).startsWith('TINTA')) {
+      return { subcategoria: 'Tintas', linha: deriveLinhaTinta(lb) };
+    }
     return { subcategoria: 'Pintura', linha: lb };
   }
   if (categoria === CATEGORIA_ACAB.PORTAS) {
@@ -1024,7 +1141,10 @@ export function to4x3(row, abHit) {
   const classified = classify4x3(row, abHit);
   const unified = unify4x3(classified);
   const legacy3 = classify3x3(row, abHit);
-  const comps = normalizeComponentes(row.produto_compra, row.eixo_a, row.eixo_b);
+  const comps = normalizeComponentes(row.produto_compra, row.eixo_a, row.eixo_b, {
+    sku_atual: row.sku_atual,
+    novo_sku: row.novo_sku,
+  });
   return {
     ...classified,
     etapa_u: unified.etapa,
@@ -1048,7 +1168,10 @@ export function to4x3(row, abHit) {
 export function to3x3(row, abHit) {
   const classified = classify3x3(row, abHit);
   const unified = unify3x3(classified);
-  const comps = normalizeComponentes(row.produto_compra, row.eixo_a, row.eixo_b);
+  const comps = normalizeComponentes(row.produto_compra, row.eixo_a, row.eixo_b, {
+    sku_atual: row.sku_atual,
+    novo_sku: row.novo_sku,
+  });
   return {
     ...classified,
     etapa_u: unified.etapa,
