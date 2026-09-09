@@ -11,6 +11,7 @@ export const CATEGORIA_ACAB = {
   PORTAS: '04. Portas',
   HIDRAULICA: '05. Hidráulica',
   ELETRICA: '06. Elétrica',
+  CALCAMENTOS: '07. Calçamentos',
 };
 
 /** Subcategorias de acabamento — função (não ambiente). */
@@ -245,9 +246,11 @@ export function isArgamassaRejunte(row) {
 export const LINHA_CERAMICA_BOLD = 'Cerâmica Bold';
 export const LINHA_CERAMICA_RETIF = 'Cerâmica Retificada';
 export const LINHA_PORCELANATO = 'Porcelanato';
+export const LINHA_PISO_REVESTIMENTO = 'Piso e revestimento';
 export const LINHA_ARGAMASSA = 'Argamassa';
 export const LINHA_REJUNTE = 'Rejunte';
 export const LINHA_SEPARADORES = 'Separadores e niveladores';
+export const LINHA_PAVER = 'Paver';
 
 export function isCeramicaBoldProduto(row) {
   const pc = norm(row.produto_compra);
@@ -316,18 +319,29 @@ function isAdesivoAssentamentoProduto(row) {
   return pc.startsWith('ADESIVO');
 }
 
+function isPaverProduto(row) {
+  const pc = norm(row.produto_compra);
+  const sku = norm(row.sku_atual || row.novo_sku);
+  return pc.includes('PAVER') || sku.includes('PAVER');
+}
+
 function isPorcelanatoProduto(row) {
   const pc = norm(row.produto_compra);
   const sku = norm(row.sku_atual || row.novo_sku);
-  if (
+  return (
     pc.includes('PORCELANATO') ||
     pc.includes('PORCELENATO') ||
     sku.includes('PORCELANATO') ||
     sku.includes('PORCELENATO')
-  ) {
-    return true;
+  );
+}
+
+function isPisoRevestimentoProduto(row) {
+  if (isCeramicaBoldProduto(row) || isCeramicaRetifProduto(row) || isPorcelanatoProduto(row)) {
+    return false;
   }
-  if (isCeramicaBoldProduto(row) || isCeramicaRetifProduto(row)) return false;
+  const pc = norm(row.produto_compra);
+  const sku = norm(row.sku_atual || row.novo_sku);
   return (
     pc === 'PISO' ||
     pc.startsWith('PISO ') ||
@@ -335,9 +349,19 @@ function isPorcelanatoProduto(row) {
     pc.startsWith('REV.') ||
     pc.startsWith('REV EKP') ||
     pc.startsWith('REVESTIMENTO') ||
-    pc.includes('PAVER') ||
-    pc.startsWith('CERAMICA A')
+    pc.startsWith('CERAMICA A') ||
+    sku.startsWith('PISO ') ||
+    sku.startsWith('REVESTIMENTO ')
   );
+}
+
+export function isCalcamentos(row) {
+  return isPaverProduto(row);
+}
+
+export function deriveLinhaCalcamentos(row) {
+  if (isPaverProduto(row)) return LINHA_PAVER;
+  return 'Calçamento';
 }
 
 export function deriveLinhaRevestimentos(row) {
@@ -350,7 +374,8 @@ export function deriveLinhaRevestimentos(row) {
   if (isCeramicaBoldProduto(row)) return LINHA_CERAMICA_BOLD;
   if (isCeramicaRetifProduto(row)) return LINHA_CERAMICA_RETIF;
   if (isPorcelanatoProduto(row)) return LINHA_PORCELANATO;
-  return LINHA_PORCELANATO;
+  if (isPisoRevestimentoProduto(row)) return LINHA_PISO_REVESTIMENTO;
+  return LINHA_PISO_REVESTIMENTO;
 }
 
 /** Linhas drill-down — sub Tintas (modelo 4×3). */
@@ -493,7 +518,9 @@ export function isBanheiro(row) {
 }
 
 export function isTorneira(row) {
-  return pcMatch(row, ['TORNEIRA']);
+  if (pcMatch(row, ['TORNEIRA'])) return true;
+  const h1 = norm(row.campo_hierarquico_1);
+  return h1 === 'TORNEIRA' || h1 === 'PURIFICADOR';
 }
 
 export function isCuba(row) {
@@ -510,31 +537,73 @@ export function isCubaCozinha(row) {
 }
 
 export function deriveLinhaTorneira(row) {
-  const pc = norm(row.produto_compra);
-  if (pc.includes('COZINHA') || pc.includes('PURIFICADOR')) return 'Torneira cozinha';
-  if (pc.includes('TANQUE') || pc.includes('PLASTICA')) return 'Torneira área de serviço';
+  const uso = deriveLinhaTorneiraUso(row);
+  if (uso === 'Cozinha' || uso === 'Purificador') return 'Torneira cozinha';
+  if (uso.includes('Tanque') || uso.includes('Jardim') || uso.includes('Lavanderia') || uso === 'Bebedouro / Filtro') {
+    return 'Torneira área de serviço';
+  }
   return 'Torneira banheiro';
 }
 
-/** Gama comercial — Premium vs Pop (47 torneiras no core). */
-export function deriveLinhaTorneiraGama(row) {
-  const pc = norm(row.produto_compra);
-  if (
-    pc.includes('MONOCOMANDO')
-    || pc.includes('COZINHA')
-    || pc.includes('PURIFICADOR')
-    || pc.includes('BICA')
-  ) {
-    return 'Torneiras Premium';
+/** Uso / função — alinhado ao cadastro Supabase (h2). */
+export function deriveLinhaTorneiraUso(row) {
+  const blob = norm(
+    [
+      row.campo_hierarquico_1,
+      row.campo_hierarquico_2,
+      row.produto_compra,
+      row.eixo_a,
+      row.eixo_b,
+      row.sku_atual,
+      row.novo_sku,
+    ]
+      .filter(Boolean)
+      .join(' '),
+  );
+
+  if (blob.includes('PURIFICADOR')) return 'Purificador';
+  if (blob.includes('BEBEDOURO') || (blob.includes('FILTRO') && blob.includes('TORNEIRA'))) {
+    return 'Bebedouro / Filtro';
   }
-  return 'Torneiras Pop';
+  if (blob.includes('JARDIM')) return 'Tanque / Jardim';
+  if (
+    blob.includes('TANQUE')
+    || blob.includes('LAVANDERIA')
+    || blob.includes(' MAQ ')
+    || blob.includes('MAQUINA')
+  ) {
+    return 'Tanque / Lavanderia';
+  }
+  if (
+    blob.includes('COZINHA')
+    || blob.includes(' COZ ')
+    || blob.endsWith(' COZ')
+    || blob.includes('P/ PIA COZ')
+    || blob.includes('P/PIA COZ')
+  ) {
+    return 'Cozinha';
+  }
+  if (blob.includes('LAVATORIO') || blob.includes('LAVATÓRIO')) return 'Lavatório';
+  return 'Lavatório';
+}
+
+/** @deprecated Preferir deriveLinhaTorneiraUso — mantém compat. */
+export function deriveLinhaTorneiraGama(row) {
+  return deriveLinhaTorneiraUso(row);
 }
 
 export function deriveAmbiente(row) {
   if (isTorneira(row)) {
-    const lb = deriveLinhaTorneira(row);
-    if (lb.includes('cozinha')) return 'Cozinha';
-    if (lb.includes('serviço')) return 'Área de serviço';
+    const uso = deriveLinhaTorneiraUso(row);
+    if (uso === 'Cozinha' || uso === 'Purificador') return 'Cozinha';
+    if (
+      uso.includes('Tanque')
+      || uso.includes('Jardim')
+      || uso.includes('Lavanderia')
+      || uso === 'Bebedouro / Filtro'
+    ) {
+      return 'Área de serviço';
+    }
     return 'Banheiro';
   }
   if (isCuba(row)) return isCubaCozinha(row) ? 'Cozinha' : 'Banheiro';
@@ -915,6 +984,13 @@ export function unify3x3(classified) {
  * @returns {{ etapa: string, categoria: string, linha: string }}
  */
 export function classify3x3(row, abHit) {
+  if (isCalcamentos(row)) {
+    return {
+      etapa: ETAPA.ACABAMENTOS,
+      categoria: CATEGORIA_ACAB.CALCAMENTOS,
+      linha: deriveLinhaCalcamentos(row),
+    };
+  }
   if (isRevestimentos(row)) {
     return {
       etapa: ETAPA.ACABAMENTOS,
@@ -967,7 +1043,7 @@ export function classify3x3(row, abHit) {
     return {
       etapa: ETAPA.ACABAMENTOS,
       categoria: CATEGORIA_ACAB.HIDRAULICA,
-      linha: acabLinha(SUB_ACAB_HID.PONTOS_AGUA, deriveLinhaTorneiraGama(row)),
+      linha: acabLinha(SUB_ACAB_HID.PONTOS_AGUA, deriveLinhaTorneiraUso(row)),
     };
   }
   if (isCuba(row)) {
@@ -1080,6 +1156,9 @@ export function expandTo4x3({ etapa, categoria, linha }) {
   }
   if (categoria === CATEGORIA_ACAB.REVESTIMENTOS) {
     return { subcategoria: 'Assentamento', linha: lb };
+  }
+  if (categoria === CATEGORIA_ACAB.CALCAMENTOS) {
+    return { subcategoria: 'Calçamento', linha: lb };
   }
   if (categoria === CATEGORIA_ACAB.FORRO) {
     return { subcategoria: 'Forro', linha: lb };

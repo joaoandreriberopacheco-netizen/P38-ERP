@@ -121,8 +121,10 @@ function buildReadme(wb, stats) {
     ['', ''],
     [
       'Revestimentos',
-      'Sub Assentamento · Cerâmica Retificada · Cerâmica Bold · Porcelanato · Argamassa · Rejunte · Separadores e niveladores',
+      'Sub Assentamento · Cerâmica Retificada · Cerâmica Bold · Porcelanato · Piso e revestimento · Argamassa · Rejunte · Separadores e niveladores',
     ],
+    ['Calçamentos', 'Sub Calçamento · Paver (fora de Porcelanato)'],
+    ['Torneiras', 'Sub Pontos de água · linha = uso (Lavatório · Cozinha · Tanque/Jardim · Purificador…) — alinhado h2 Supabase'],
     ['Cerâmica Bold/Retif', 'comp1=CERAMICA BOLD LISA… · sufixo 4 letras (POLI MATE BRIL…) · comp2=formato · comp3=modelo'],
     ['Tintas', 'Sub Tintas · linhas por tipo · comp1=produto+marca · comp2=formato · comp3=cor'],
     ['Hidráulica (acab.)', 'Sub Pontos de água · linhas Torneiras Premium / Torneiras Pop'],
