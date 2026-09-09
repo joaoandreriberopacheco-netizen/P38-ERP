@@ -193,6 +193,11 @@ export function normalizeComponentes(comp1, comp2, comp3) {
     ({ comp1: c1, comp2: c2, comp3: c3 } = mergeMarcaComp1(c1, c2, c3, 'FORTLEV'));
   }
 
+  // Cerâmica Bold/Retif — comp1 canónico; comp2=formato · comp3=modelo (não compactar modelo).
+  if (isCeramicaBoldProduto({ produto_compra: c1 }) || isCeramicaRetifProduto({ produto_compra: c1 })) {
+    c1 = canonicalCeramicaComp1(c1);
+  }
+
   if (!c2 && c3) {
     c2 = c3;
     c3 = '';
@@ -231,10 +236,35 @@ export function isArgamassaRejunte(row) {
   return pcMatch(row, ['ARGAMASSA', 'REJUNTE', 'LIMPADOR DE REJUNTE']);
 }
 
+export const LINHA_CERAMICA_BOLD = 'Cerâmica Bold';
+export const LINHA_CERAMICA_RETIF = 'Cerâmica Retif';
+
+export function isCeramicaBoldProduto(row) {
+  const pc = norm(row.produto_compra);
+  return pc.startsWith('CERAM BOLD') || pc.startsWith('CERAMICA BOLD');
+}
+
+export function isCeramicaRetifProduto(row) {
+  const pc = norm(row.produto_compra);
+  return pc.startsWith('CERAM RETIF') || pc.startsWith('CERAMICA RETIF');
+}
+
+/** Nome canónico: CERAMICA BOLD LISA (comp1); comp2=formato · comp3=modelo. */
+export function canonicalCeramicaComp1(comp1 = '') {
+  const c = cellStr(comp1);
+  const n = norm(c);
+  if (n.startsWith('CERAM BOLD') || n.startsWith('CERAM RETIF')) {
+    return c.replace(/^CERAM\b/i, 'CERAMICA');
+  }
+  return c;
+}
+
 export function deriveLinhaRevestimentos(row) {
   const pc = norm(row.produto_compra);
   if (pc.includes('ARGAMASSA')) return 'Argamassa';
   if (pc.includes('REJUNTE') || pc.includes('LIMPADOR DE REJUNTE')) return 'Rejunte';
+  if (isCeramicaBoldProduto(row)) return LINHA_CERAMICA_BOLD;
+  if (isCeramicaRetifProduto(row)) return LINHA_CERAMICA_RETIF;
   return 'Cerâmica';
 }
 
