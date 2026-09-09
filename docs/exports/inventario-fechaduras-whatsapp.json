@@ -62,31 +62,33 @@
     {
       "item": 6,
       "qtd": 1,
-      "descricao": "FECHADURA ZONA MATA ZP 1601/01",
-      "aplicacao": "zona mata",
-      "acabamento": null,
-      "ref_fabricante": "1601/01",
-      "nota": "Etiqueta legível na foto"
-    },
-    {
-      "item": 7,
-      "qtd": 1,
       "descricao": "FECHADURA STAM 823/03 ESP. INOX WC BANHEIRO",
       "aplicacao": "banheiro",
       "acabamento": "inox",
       "ref_fabricante": "823/03",
       "ean": "7893858318235",
       "p38_codigo_interno": "0EK-Y4Z",
-      "nota": "Confirmado foto (João disse 6; produto é item 7 — WA tinha 823/02 grafite errado)"
+      "nota": "Confirmado foto — João: essa é a 6"
+    },
+    {
+      "item": 7,
+      "qtd": 1,
+      "descricao": "BANHEIRO 823/02 ROS. QUAD. GRAFITE",
+      "aplicacao": "banheiro",
+      "acabamento": "grafite",
+      "ref_fabricante": "823/02",
+      "nota": "Texto WA; aguarda foto (823/03 foi para item 6)"
     },
     {
       "item": 8,
       "qtd": 1,
-      "descricao": "EXTERNA 1601/09 GRAFITE",
+      "descricao": "FECHADURA STAM CLASSIC 3100 (40MM) ROS. QUADRADA - EXT. INOX",
       "aplicacao": "externa",
-      "acabamento": "grafite",
-      "ref_fabricante": "1601/09",
-      "nota": "Etiqueta legível na foto"
+      "acabamento": "inox",
+      "ref_fabricante": "3100",
+      "ean": "7893858382229",
+      "p38_codigo_interno": "YKQ-42N",
+      "nota": "Confirmado foto — João: 8 (WA tinha 1601/09 grafite)"
     }
   ]
 }
