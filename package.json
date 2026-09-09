@@ -107,6 +107,7 @@
     "export:linhas-mestre": "node scripts/export-linhas-mestre.mjs",
     "export:catalogo-skus": "node scripts/export-catalogo-skus.mjs",
     "export:sku-hierarquia-unificado": "node scripts/export-sku-hierarquia-unificado.mjs",
+    "inativar:porcelanato-sem-estoque": "node scripts/inativar-porcelanato-sem-estoque.mjs",
     "export:catalogo-4x3": "node scripts/export-catalogo-3x3.mjs",
     "export:catalogo-3x3": "node scripts/export-catalogo-3x3.mjs",
     "export:conta-azul": "node scripts/export-catalogo-conta-azul.mjs",

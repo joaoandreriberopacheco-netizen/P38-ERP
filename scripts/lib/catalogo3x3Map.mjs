@@ -536,17 +536,23 @@ export function isCubaCozinha(row) {
   return blob.includes('INOX') || blob.includes('COZINHA') || pc.startsWith('PIA');
 }
 
+/** Linhas drill — sub Pontos de água (modelo 4×3). */
+export const LINHA_TORNEIRA = {
+  COZINHA: 'Torneira Cozinha',
+  LAVATORIO: 'Torneira Lavatório',
+  TANQUE: 'Torneira Tanque',
+  CUBAS: 'Cubas',
+};
+
 export function deriveLinhaTorneira(row) {
-  const uso = deriveLinhaTorneiraUso(row);
-  if (uso === 'Cozinha' || uso === 'Purificador') return 'Torneira cozinha';
-  if (uso.includes('Tanque') || uso.includes('Jardim') || uso.includes('Lavanderia') || uso === 'Bebedouro / Filtro') {
-    return 'Torneira área de serviço';
-  }
+  const linha = deriveLinhaTorneiraLinha(row);
+  if (linha === LINHA_TORNEIRA.COZINHA) return 'Torneira cozinha';
+  if (linha === LINHA_TORNEIRA.TANQUE) return 'Torneira área de serviço';
   return 'Torneira banheiro';
 }
 
-/** Uso / função — alinhado ao cadastro Supabase (h2). */
-export function deriveLinhaTorneiraUso(row) {
+/** Linha comercial Pontos de água — alinhada ao h2 Supabase. */
+export function deriveLinhaTorneiraLinha(row) {
   const blob = norm(
     [
       row.campo_hierarquico_1,
@@ -561,49 +567,45 @@ export function deriveLinhaTorneiraUso(row) {
       .join(' '),
   );
 
-  if (blob.includes('PURIFICADOR')) return 'Purificador';
-  if (blob.includes('BEBEDOURO') || (blob.includes('FILTRO') && blob.includes('TORNEIRA'))) {
-    return 'Bebedouro / Filtro';
-  }
-  if (blob.includes('JARDIM')) return 'Tanque / Jardim';
   if (
-    blob.includes('TANQUE')
-    || blob.includes('LAVANDERIA')
-    || blob.includes(' MAQ ')
-    || blob.includes('MAQUINA')
-  ) {
-    return 'Tanque / Lavanderia';
-  }
-  if (
-    blob.includes('COZINHA')
+    blob.includes('PURIFICADOR')
+    || blob.includes('COZINHA')
     || blob.includes(' COZ ')
     || blob.endsWith(' COZ')
     || blob.includes('P/ PIA COZ')
     || blob.includes('P/PIA COZ')
   ) {
-    return 'Cozinha';
+    return LINHA_TORNEIRA.COZINHA;
   }
-  if (blob.includes('LAVATORIO') || blob.includes('LAVATÓRIO')) return 'Lavatório';
-  return 'Lavatório';
+  if (
+    blob.includes('JARDIM')
+    || blob.includes('TANQUE')
+    || blob.includes('LAVANDERIA')
+    || blob.includes(' MAQ ')
+    || blob.includes('MAQUINA')
+    || blob.includes('BEBEDOURO')
+    || (blob.includes('FILTRO') && blob.includes('TORNEIRA'))
+  ) {
+    return LINHA_TORNEIRA.TANQUE;
+  }
+  return LINHA_TORNEIRA.LAVATORIO;
 }
 
-/** @deprecated Preferir deriveLinhaTorneiraUso — mantém compat. */
+/** @deprecated Preferir deriveLinhaTorneiraLinha */
+export function deriveLinhaTorneiraUso(row) {
+  return deriveLinhaTorneiraLinha(row);
+}
+
+/** @deprecated Preferir deriveLinhaTorneiraLinha */
 export function deriveLinhaTorneiraGama(row) {
-  return deriveLinhaTorneiraUso(row);
+  return deriveLinhaTorneiraLinha(row);
 }
 
 export function deriveAmbiente(row) {
   if (isTorneira(row)) {
-    const uso = deriveLinhaTorneiraUso(row);
-    if (uso === 'Cozinha' || uso === 'Purificador') return 'Cozinha';
-    if (
-      uso.includes('Tanque')
-      || uso.includes('Jardim')
-      || uso.includes('Lavanderia')
-      || uso === 'Bebedouro / Filtro'
-    ) {
-      return 'Área de serviço';
-    }
+    const linha = deriveLinhaTorneiraLinha(row);
+    if (linha === LINHA_TORNEIRA.COZINHA) return 'Cozinha';
+    if (linha === LINHA_TORNEIRA.TANQUE) return 'Área de serviço';
     return 'Banheiro';
   }
   if (isCuba(row)) return isCubaCozinha(row) ? 'Cozinha' : 'Banheiro';
@@ -618,8 +620,7 @@ export function deriveAmbiente(row) {
 }
 
 export function deriveLinhaCuba(row) {
-  if (isCubaCozinha(row)) return 'Cuba cozinha';
-  return 'Cuba banheiro';
+  return LINHA_TORNEIRA.CUBAS;
 }
 
 export function deriveLinhaLoucas(row) {
@@ -1043,14 +1044,14 @@ export function classify3x3(row, abHit) {
     return {
       etapa: ETAPA.ACABAMENTOS,
       categoria: CATEGORIA_ACAB.HIDRAULICA,
-      linha: acabLinha(SUB_ACAB_HID.PONTOS_AGUA, deriveLinhaTorneiraUso(row)),
+      linha: acabLinha(SUB_ACAB_HID.PONTOS_AGUA, deriveLinhaTorneiraLinha(row)),
     };
   }
   if (isCuba(row)) {
     return {
       etapa: ETAPA.ACABAMENTOS,
       categoria: CATEGORIA_ACAB.HIDRAULICA,
-      linha: acabLinha(SUB_ACAB_HID.CUBAS, SUB_ACAB_HID.CUBAS),
+      linha: acabLinha(SUB_ACAB_HID.PONTOS_AGUA, deriveLinhaCuba(row)),
     };
   }
   if (isLoucasSanitarias(row)) {
