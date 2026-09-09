@@ -249,6 +249,28 @@ export function isCeramicaRetifProduto(row) {
   return pc.startsWith('CERAM RETIF') || pc.startsWith('CERAMICA RETIF');
 }
 
+/** Sufixos cerâmica → 4 letras (produto compra). */
+const SUFIXO_CERAMICA_4L = {
+  POL: 'POLI',
+  BRILH: 'BRIL',
+  BRIL: 'BRIL',
+  MATE: 'MATE',
+  ANTI: 'ANTI',
+  SEMI: 'SEMI',
+  LISA: 'LISA',
+  PARE: 'PARE',
+};
+
+function compactCeramicaSufixo4L(nome = '') {
+  const parts = String(nome ?? '').trim().split(/\s+/);
+  if (parts.length < 3) return String(nome ?? '').trim();
+  const ultimo = parts[parts.length - 1];
+  const key = norm(ultimo);
+  const compacto = SUFIXO_CERAMICA_4L[key] ?? (key.length === 4 ? ultimo.toUpperCase() : ultimo);
+  parts[parts.length - 1] = compacto;
+  return parts.join(' ');
+}
+
 /** Nome canónico: CERAMICA BOLD LISA (comp1); comp2=formato · comp3=modelo. */
 export function canonicalCeramicaComp1(comp1 = '') {
   const c = cellStr(comp1);
@@ -259,7 +281,7 @@ export function canonicalCeramicaComp1(comp1 = '') {
     if (norm(out).startsWith('CERAMICA RETIF LISA')) {
       out = out.replace(/^CERAMICA RETIF LISA/i, 'CERAMICA RETIF BRILH');
     }
-    return out;
+    return compactCeramicaSufixo4L(out);
   }
   return c;
 }

@@ -120,7 +120,7 @@ function buildReadme(wb, stats) {
     ['D / d. Transversal', 'Itens transversais da obra'],
     ['', ''],
     ['Revestimentos', 'Sub Assentamento · Cerâmica Bold · Cerâmica Retif · Argamassa · Rejunte'],
-    ['Cerâmica Bold/Retif', 'comp1=CERAMICA BOLD LISA… · comp2=formato · comp3=modelo'],
+    ['Cerâmica Bold/Retif', 'comp1=CERAMICA BOLD LISA… · sufixo 4 letras (POLI MATE BRIL…) · comp2=formato · comp3=modelo'],
     ['Hidráulica (acab.)', 'Sub Pontos de água · linhas Torneiras Premium / Torneiras Pop'],
     ['Elétrica (acab.)', 'Sub Iluminação · Pontos elétricos'],
     ['Ambiente', 'Coluna opcional (Banheiro · Cozinha…) — não entra no drill-down'],
