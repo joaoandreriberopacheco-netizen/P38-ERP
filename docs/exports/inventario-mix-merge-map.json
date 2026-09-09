@@ -46,6 +46,13 @@
     "300000453": "60J-XFF",
     "1195P61": "PC9-7VB"
   },
+  "manual_keep": [
+    {
+      "p38_codigo_interno": "P85-O76",
+      "ref": "2877",
+      "nota": "Torneira waterfall — estoque físico, fora do Excel"
+    }
+  ],
   "deactivate_duplicates": [
     "OPC-5P4",
     "ZFG-Q25",

@@ -248,6 +248,7 @@ async function main() {
     apply,
     reuse: [],
     create: [],
+    keep: [],
     deactivate: [],
     deactivate_duplicates: [],
     errors: [],
@@ -295,6 +296,31 @@ async function main() {
     }
   }
 
+  for (const entry of mapConfig.manual_keep || []) {
+    const code = String(entry.p38_codigo_interno || '').toUpperCase();
+    if (!code) continue;
+    const existing = byCode.get(code);
+    if (!existing) {
+      report.errors.push({ code, ref: entry.ref, error: 'SKU manual_keep não encontrado' });
+      continue;
+    }
+    keepCodes.add(code);
+    const tags = new Set(existing.tags || []);
+    tags.delete('descontinuado-mix-2026');
+    tags.add('mix-inventario-2026');
+    report.keep.push({
+      codigo_interno: existing.codigo_interno,
+      id: existing.id,
+      nome: existing.nome,
+      ref: entry.ref,
+      nota: entry.nota,
+      payload: {
+        ativo: true,
+        tags: [...tags],
+      },
+    });
+  }
+
   for (const code of mapConfig.deactivate_duplicates || []) {
     keepCodes.delete(code.toUpperCase());
     const existing = byCode.get(code.toUpperCase());
@@ -328,6 +354,7 @@ async function main() {
   console.log('[merge-inventario-mix] Relatório:', REPORT_PATH);
   console.log(`  Reaproveitar: ${report.reuse.length}`);
   console.log(`  Cadastrar:    ${report.create.length}`);
+  console.log(`  Manter:       ${report.keep.length}`);
   console.log(`  Descontinuar: ${report.deactivate.length} (+ ${report.deactivate_duplicates.length} duplicatas)`);
   if (report.errors.length) console.log(`  Erros:        ${report.errors.length}`, report.errors);
 
@@ -356,6 +383,15 @@ async function main() {
       prefer: 'return=minimal',
     });
     console.log(`[create] ${item.codigo_interno} ${item.nome.slice(0, 60)}`);
+  }
+
+  for (const item of report.keep) {
+    await sbFetch(`produto?id=eq.${item.id}`, {
+      method: 'PATCH',
+      body: item.payload,
+      prefer: 'return=minimal',
+    });
+    console.log(`[keep] ${item.codigo_interno} ${item.nome.slice(0, 60)}`);
   }
 
   const toDeactivate = [...report.deactivate, ...report.deactivate_duplicates];
