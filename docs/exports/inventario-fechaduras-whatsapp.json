@@ -68,13 +68,11 @@
     {
       "item": 6,
       "qtd": 1,
-      "descricao": "FECHADURA STAM 823/03 ESP. INOX WC BANHEIRO",
-      "aplicacao": "banheiro",
-      "acabamento": "inox",
-      "ref_fabricante": "823/03",
-      "ean": "7893858318235",
-      "p38_codigo_interno": "0EK-Y4Z",
-      "nota": "Confirmado foto — João: essa é a 6"
+      "descricao": "FECHADURA STAM PARA PORTA DE ENROLAR",
+      "aplicacao": "porta de enrolar",
+      "acabamento": null,
+      "ref_fabricante": null,
+      "nota": "Confirmado João — item 6 é porta de enrolar (não 823/03)"
     },
     {
       "item": 7,
@@ -85,7 +83,7 @@
       "ref_fabricante": "823/03",
       "ean": "7893858318235",
       "p38_codigo_interno": "0EK-Y4Z",
-      "nota": "Confirmado foto — João: 7 (WA tinha 823/02 grafite; mesmo SKU que item 6)"
+      "nota": "Confirmado foto — João: 7"
     },
     {
       "item": 8,
@@ -96,7 +94,7 @@
       "ref_fabricante": "3100",
       "ean": "7893858382229",
       "p38_codigo_interno": "YKQ-42N",
-      "nota": "Confirmado foto — João: 8 (WA tinha 1601/09 grafite)"
+      "nota": "Confirmado foto — João: 8"
     }
   ]
 }

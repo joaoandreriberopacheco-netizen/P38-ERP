@@ -58,13 +58,12 @@
     },
     {
       "item": 6,
-      "action": "reuse",
-      "p38_codigo_interno": "0EK-Y4Z",
-      "ref": "823/03",
+      "action": "create",
+      "p38_codigo_interno": null,
+      "ref": null,
       "qtd": 1,
-      "nome": "FECHADURA STAM 823/03 ESP. INOX WC BANHEIRO",
-      "ean": "7893858318235",
-      "status": "confirmado — João: essa é a 6"
+      "nome_sugerido": "FECHADURA STAM PARA PORTA DE ENROLAR",
+      "status": "confirmado — João: item 6 é porta de enrolar (SKU novo)"
     },
     {
       "item": 7,
@@ -74,7 +73,7 @@
       "qtd": 1,
       "nome": "FECHADURA STAM 823/03 ESP. INOX WC BANHEIRO",
       "ean": "7893858318235",
-      "status": "confirmado — João: 7 (WA 823/02→823/03; estoque +1 no mesmo SKU)"
+      "status": "confirmado — João: 7"
     },
     {
       "item": 8,
@@ -84,29 +83,12 @@
       "qtd": 1,
       "nome": "FECHADURA STAM CLASSIC 3100 (40MM) ROS. QUADRADA - EXT. INOX",
       "ean": "7893858382229",
-      "status": "confirmado — João: 8 (corrige WA 1601/09→3100 inox)"
+      "status": "confirmado — João: 8"
     }
   ],
-  "extras_fotos": [
-    {
-      "nome": "FECHADURA STAM PARA PORTA DE ENROLAR",
-      "action": "create?",
-      "nota": "Apareceu na foto batch — não estava no WhatsApp original; incluir no mix?"
-    },
-    {
-      "nome": "FECHADURA STAM 1601/01 ZONA MATA ZP",
-      "ref": "1601/01",
-      "action": "create",
-      "nota": "Texto WA item 6 original — ainda sem foto confirmada"
-    },
-    {
-      "nome": "FECHADURA STAM 1601/09 EXTERNA GRAFITE",
-      "ref": "1601/09",
-      "action": "create",
-      "nota": "Texto WA item 8 original — ainda sem foto confirmada"
-    }
-  ],
+  "extras_fotos": [],
   "manual_keep": [],
   "deactivate_out_of_mix": true,
-  "mix_scope": "FECHADURA STAM na categoria F"
+  "mix_scope": "FECHADURA STAM na categoria F",
+  "mix_status": "8/8 confirmados — 6=reaproveitar 7 SKUs + 1 SKU novo (porta enrolar); sem 1601"
 }
