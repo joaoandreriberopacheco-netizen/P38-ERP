@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
 import { formatEstoqueDisponivelLabel } from '@/lib/productUnits';
 import { PrecoVendaTabelaLinhas } from './quickBudgetUtils';
+import { shouldSuppressProductRowActivation } from '@/lib/produtoGaleriaGuard';
 
 export default function QuickBudgetProductSearch({ inputRef, query, onQueryChange, produtos, tabelaPreco, onAddProduct, onSubmitFirstResult }) {
   const resultados = useMemo(() => {
@@ -42,7 +43,10 @@ export default function QuickBudgetProductSearch({ inputRef, query, onQueryChang
             <button
               key={produto.id}
               type="button"
-              onClick={() => onAddProduct(produto)}
+              onClick={() => {
+                if (shouldSuppressProductRowActivation()) return;
+                onAddProduct(produto);
+              }}
               className="w-full rounded-2xl bg-card shadow-sm px-4 py-3 text-left hover:bg-muted/40 dark:hover:bg-muted transition-colors"
             >
               <div className="flex items-start gap-3">

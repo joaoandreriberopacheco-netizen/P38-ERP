@@ -50,6 +50,11 @@ import { consumirOrcamentoParaPdv } from '@/lib/orcamentoRapidoPdvBridge';
 import { usePermissoesUsuario } from '@/hooks/usePermissoesUsuario';
 import { useProdutosPdvCatalogoQuery, useClientesPdvSearchQuery } from '@/hooks/useP38Entities';
 import { fetchProdutoPdvPorCodigo } from '@/lib/fetchPdvCatalogo';
+import {
+  isProdutoGaleriaInteraction,
+  onProdutoGaleriaClosed,
+  shouldSuppressProductRowActivation,
+} from '@/lib/produtoGaleriaGuard';
 
 export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
   const navigate = useNavigate();
@@ -514,6 +519,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (isProdutoGaleriaInteraction(event)) return;
       if (suggestionsRef.current && !suggestionsRef.current.contains(event.target)) {
         setShowSuggestions(false);
       }
@@ -521,6 +527,14 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    return onProdutoGaleriaClosed(() => {
+      if (buscaProduto.trim().length >= 2 && produtosSugeridos.length > 0) {
+        setShowSuggestions(true);
+      }
+    });
+  }, [buscaProduto, produtosSugeridos.length]);
 
   useEffect(() => {
     if (!showSuggestions || produtosSugeridos.length === 0) return;
@@ -1181,7 +1195,12 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                   className="w-full pl-12 pr-14 bg-card dark:bg-secondary border-0 outline-none ring-0 shadow-sm rounded-2xl text-foreground h-14 text-base focus:ring-0 focus:border-transparent focus:outline-none focus-visible:ring-0 focus-visible:outline-none active:outline-none appearance-none [-webkit-tap-highlight-color:transparent] placeholder:text-muted-foreground"
                   value={buscaProduto}
                   onChange={(e) => setBuscaProduto(e.target.value)}
-                  onFocus={() => setCatalogoPdvEnabled(true)}
+                  onFocus={() => {
+                    setCatalogoPdvEnabled(true);
+                    if (buscaProduto.trim().length >= 2 && produtosSugeridos.length > 0) {
+                      setShowSuggestions(true);
+                    }
+                  }}
                   onKeyDown={handleKeyDown}
                   autoFocus={false} />
                   <Button type="button" variant="ghost" size="icon" onClick={() => setShowBarcodeScanner(true)}
@@ -1229,7 +1248,10 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                     ref={(el) => { suggestionItemRefs.current[index] = el; }}
                     className={`flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors border-b border-border/30 dark:border-border/40 last:border-b-0 ${
                     index === produtoSelecionadoIndex ? 'bg-muted/40 dark:bg-card' : 'hover:bg-muted/40 dark:hover:bg-muted/60'}`}
-                    onClick={() => handleSelecionarProduto(produto)}>
+                    onClick={() => {
+                      if (shouldSuppressProductRowActivation()) return;
+                      handleSelecionarProduto(produto);
+                    }}>
                     <ProdutoThumb
                       produto={produto}
                       size="md"

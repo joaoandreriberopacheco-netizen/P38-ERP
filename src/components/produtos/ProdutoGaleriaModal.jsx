@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { notifyProdutoGaleriaClosed } from '@/lib/produtoGaleriaGuard';
 import {
   Carousel,
   CarouselContent,
@@ -45,10 +46,19 @@ export default function ProdutoGaleriaModal({
     setCurrent(initialIndex);
   }, [open, api, initialIndex]);
 
+  const handleClose = useCallback(() => {
+    notifyProdutoGaleriaClosed();
+    onClose?.();
+  }, [onClose]);
+
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (e) => {
-      if (e.key === 'Escape') onClose?.();
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        handleClose();
+      }
     };
     document.addEventListener('keydown', onKey);
     const prev = document.body.style.overflow;
@@ -57,12 +67,13 @@ export default function ProdutoGaleriaModal({
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = prev;
     };
-  }, [open, onClose]);
+  }, [open, handleClose]);
 
   if (!open || imagens.length === 0) return null;
 
   const overlay = (
     <div
+      data-produto-galeria-modal
       className="fixed inset-0 z-[200] flex flex-col bg-black/95"
       role="dialog"
       aria-modal="true"
@@ -82,7 +93,11 @@ export default function ProdutoGaleriaModal({
         </div>
         <button
           type="button"
-          onClick={onClose}
+          onPointerDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleClose();
+          }}
           className="h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center flex-shrink-0"
           aria-label="Fechar galeria"
         >
