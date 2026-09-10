@@ -12,6 +12,8 @@ export const SHELL_Z = {
   caixaMirrorShell: 80080,
   caixaMirrorDialog: 80090,
   caixaMirrorChild: 80100,
+  /** Galeria de foto do produto — acima de painéis de atalho (orçamento FAB, PDV overlay). */
+  produtoGaleria: 80200,
 };
 
 /** @deprecated Prefer SHELL_Z — mantido para imports existentes. */
@@ -38,6 +40,7 @@ export const CAIXA_MIRROR_SHELL_Z = SHELL_Z.caixaMirrorShell;
 export const CAIXA_MIRROR_SHELL_CLASS = 'z-[80080]';
 export const CAIXA_MIRROR_DIALOG_CLASS = 'z-[80090]';
 export const CAIXA_MIRROR_DIALOG_CHILD_CLASS = 'z-[80100]';
+export const PRODUTO_GALERIA_Z_CLASS = 'z-[80200]';
 
 /**
  * Hierarquia interna do orçamento rápido (dentro do shell z-80020).

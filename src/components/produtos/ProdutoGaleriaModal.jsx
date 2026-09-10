@@ -10,6 +10,7 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel';
 import { cn } from '@/lib/utils';
+import { PRODUTO_GALERIA_Z_CLASS } from '@/lib/quickAccessOverlay';
 
 const TIPO_LABEL = {
   principal: 'Cerâmica',
@@ -85,7 +86,7 @@ export default function ProdutoGaleriaModal({
   const overlay = (
     <div
       data-produto-galeria-modal
-      className="fixed inset-0 z-[200]"
+      className={cn('fixed inset-0', PRODUTO_GALERIA_Z_CLASS)}
       role="dialog"
       aria-modal="true"
       aria-label={produtoNome ? `Galeria: ${produtoNome}` : 'Galeria do produto'}
