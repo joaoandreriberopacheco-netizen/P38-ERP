@@ -18,6 +18,38 @@ function emptyMonthlyTotals() {
   };
 }
 
+function sumDayValues(dayMap = {}, maxDay = null) {
+  return Object.entries(dayMap).reduce((sum, [dayStr, value]) => {
+    const day = Number(dayStr);
+    if (!day || (maxDay != null && day > maxDay)) return sum;
+    return sum + (Number(value) || 0);
+  }, 0);
+}
+
+/** Se monthlyTotals.profit vier zerado mas profitByDay tem dados, reconcilia. */
+function reconcileSealedMonthTotals(seal, monthlyEntry, profitByDay, salesByDay, cutoffDay) {
+  const profitFromDays = sumDayValues(profitByDay, cutoffDay);
+  const salesFromDays = sumDayValues(salesByDay, cutoffDay);
+
+  if (profitFromDays > 0 && !(Number(monthlyEntry.profit) > 0)) {
+    monthlyEntry.profit = Math.round(profitFromDays * 100) / 100;
+  }
+  if (salesFromDays > 0 && !(Number(monthlyEntry.salesNet) > 0)) {
+    monthlyEntry.salesNet = Math.round(salesFromDays * 100) / 100;
+  }
+
+  const cost = Number(monthlyEntry.cost) || 0;
+  const profit = Number(monthlyEntry.profit) || 0;
+  if (!monthlyEntry.markupPercent && cost > 0 && profit > 0) {
+    monthlyEntry.markupPercent = Math.round((profit / cost) * 10000) / 100;
+  }
+
+  monthlyEntry.frozen = Boolean(seal?.frozen);
+  monthlyEntry.costBasis = seal?.costBasis || seal?.monthlyTotals?.costBasis || null;
+  monthlyEntry.sourceVersion =
+    seal?.sourceVersion || seal?.monthlyTotals?.sourceVersion || null;
+}
+
 /** Preenche salesByMonthDay / profitByMonthDay / monthlyTotals a partir de sealedMonths. */
 export function mergeSealedVendasIntoBuckets(monthBuckets6, sealedMonths = {}) {
   const salesByMonthDay = {};
@@ -60,6 +92,14 @@ export function mergeSealedVendasIntoBuckets(monthBuckets6, sealedMonths = {}) {
       if (!day) continue;
       profitByMonthDay[bucket.key][day] = Number(value) || 0;
     }
+
+    reconcileSealedMonthTotals(
+      seal,
+      monthlyTotals[bucket.key],
+      profitByMonthDay[bucket.key],
+      salesByMonthDay[bucket.key],
+      null,
+    );
   }
 
   return { salesByMonthDay, profitByMonthDay, monthlyTotals };

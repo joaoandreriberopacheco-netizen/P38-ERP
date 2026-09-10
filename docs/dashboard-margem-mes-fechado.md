@@ -23,9 +23,11 @@ Documento para a equipa: como o P38 trata **resultado histórico** (mês encerra
 
 ### Dashboard (aba Vendas)
 
-1. **Até ontem** — job noturno grava `dashboard_kpi_mensal` (snapshot).
+1. **Até ontem** — job noturno grava `dashboard_kpi_mensal` (snapshot com `profitByDay`).
 2. **Hoje** — o browser soma só o delta do dia com a mesma fórmula.
 3. **Mês passado** — lê o snapshot com `frozen: true`; o job **não reescreve**.
+
+Gráficos e KPIs de **lucro** (diário, acumulado, 6 meses, rosca, donuts) leem `profit` / `profitByDay` do snapshot KPI (`relatorio_margem_v1`), com prioridade sobre células legadas.
 
 Comando do job (também em GitHub Actions, ~05:10 UTC):
 

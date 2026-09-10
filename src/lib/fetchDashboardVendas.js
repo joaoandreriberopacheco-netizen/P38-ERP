@@ -200,7 +200,7 @@ export async function fetchDashboardVendasPeriodo({
   const sealedMonthsFromKpi = sealedMonthsFromSnapshotMap(snapshotMap);
   const sealedMonths = mergeSealedMonthsFromCelulas(
     celulasVendas?.sealedMonths || {},
-    sealedMonthsFromKpi,
+    sealedMonthsFromKpi, // KPI margem v1 tem prioridade (ver mergeSealedMonthsFromCelulas)
   );
 
   const sealedMonthKeys = new Set(

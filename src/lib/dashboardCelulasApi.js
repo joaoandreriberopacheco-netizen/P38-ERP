@@ -4,6 +4,7 @@
  */
 
 import { getSupabaseBrowserClient, isSupabaseBrowserConfigured } from '@/lib/supabaseBrowserClient';
+import { DASHBOARD_KPI_MARGEM_SOURCE_VERSION } from '@/lib/dashboardKpiMargemCompute';
 import { getMonthBucketsEndingAt } from '@/lib/dashboardVendasPeriod';
 import { getMonthBuckets, getSupplyMonthBuckets } from '@/lib/dashboardEstoqueData';
 import { sumCatalogTransitStockValueByAbcd } from '@/lib/catalogStockTotals';
@@ -236,12 +237,34 @@ export function buildEstoqueHistoricoFromCelulas(celulasData) {
   };
 }
 
-/** Mescla células de vendas com snapshots legados (dashboard_kpi). */
-export function mergeSealedMonthsFromCelulas(primary = {}, fallback = {}) {
-  const buckets = Object.keys({ ...primary, ...fallback });
+/** KPI margem v1 tem prioridade sobre células legadas (sem lucro ou custo SQL antigo). */
+export function isPreferredMargemSealedPayload(payload) {
+  if (!payload?.monthlyTotals) return false;
+  const version = payload.sourceVersion || payload.monthlyTotals?.sourceVersion;
+  if (version === DASHBOARD_KPI_MARGEM_SOURCE_VERSION) return true;
+  const profit = Number(payload.monthlyTotals.profit);
+  const hasProfitDays =
+    payload.profitByDay && Object.values(payload.profitByDay).some((v) => Number(v) > 0);
+  return profit > 0 || hasProfitDays;
+}
+
+/**
+ * Mescla células de vendas com snapshots KPI (dashboard_kpi_mensal).
+ * KPI relatorio_margem_v1 ganha sobre célula quando ambos existem.
+ */
+export function mergeSealedMonthsFromCelulas(celulas = {}, kpiSnapshots = {}) {
+  const keys = new Set([...Object.keys(celulas), ...Object.keys(kpiSnapshots)]);
   const merged = {};
-  for (const key of buckets) {
-    merged[key] = primary[key] || fallback[key];
+  for (const key of keys) {
+    const kpi = kpiSnapshots[key];
+    const cel = celulas[key];
+    if (isPreferredMargemSealedPayload(kpi)) {
+      merged[key] = kpi;
+    } else if (cel) {
+      merged[key] = cel;
+    } else if (kpi) {
+      merged[key] = kpi;
+    }
   }
   return merged;
 }

@@ -67,14 +67,13 @@ export async function fetchDashboardVendasBundle(selectedMonthKey, queryClient) 
   ]);
 
   const pedidos = dashboardData.pedidos || [];
-  const podeOmitirDevolucoes =
-    passadoAteOntemCobertoPorSnapshots(dashboardData.sealedMonths, selectedMonthKey)
-    && !pedidosPrecisamDevolucoesTroca(pedidos);
+  const precisaMargemAoVivo =
+    pedidos.length > 0 || !passadoAteOntemCobertoPorSnapshots(dashboardData.sealedMonths, selectedMonthKey);
 
   let devolucoes = [];
   let pedidosOrigemTroca = {};
 
-  if (!podeOmitirDevolucoes) {
+  if (precisaMargemAoVivo || pedidosPrecisamDevolucoesTroca(pedidos)) {
     const devolucoesTroca = await base44.entities.DevolucaoTroca.list('-created_date', 200);
     devolucoes = Array.isArray(devolucoesTroca) ? devolucoesTroca : [];
     pedidosOrigemTroca = await fetchPedidosOrigemTrocaMargem(devolucoes);

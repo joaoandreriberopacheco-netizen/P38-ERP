@@ -32,6 +32,33 @@ import { P38_ROSCA_COLORS } from '@/lib/p38RoscaGauge';
 
 const RING_COLORS = P38_ROSCA_COLORS;
 
+function sumDayValues(dayMap = {}, maxDay = null) {
+  return Object.entries(dayMap || {}).reduce((sum, [dayStr, value]) => {
+    const day = Number(dayStr);
+    if (!day || (maxDay != null && day > maxDay)) return sum;
+    return sum + (Number(value) || 0);
+  }, 0);
+}
+
+/** Garante que totais mensais batem com a soma dos dias (snapshot + delta de hoje). */
+function reconcileMonthTotalsFromDays(monthKey, salesByMonthDay, profitByMonthDay, monthlyTotals, cutoffDay) {
+  const mt = monthlyTotals[monthKey];
+  if (!mt) return;
+
+  const profitFromDays = sumDayValues(profitByMonthDay[monthKey], cutoffDay);
+  const salesFromDays = sumDayValues(salesByMonthDay[monthKey], cutoffDay);
+
+  if (profitFromDays > 0) {
+    mt.profit = Math.round(profitFromDays * 100) / 100;
+  }
+  if (salesFromDays > 0) {
+    mt.salesNet = Math.round(salesFromDays * 100) / 100;
+  }
+  if (mt.cost > 0 && mt.profit > 0) {
+    mt.markupPercent = Math.round((mt.profit / mt.cost) * 10000) / 100;
+  }
+}
+
 function buildMonthlyAndDailyBuckets(monthBuckets6) {
   const salesByMonthDay = {};
   const profitByMonthDay = {};
@@ -128,6 +155,15 @@ export function computeDashboardVendasMetricsMargem({
     monthlyTotals[monthKey].profit += totals.profit;
   }
 
+  const cutoffDay = getCutoffCalendarDay(selectedMonthKey);
+  reconcileMonthTotalsFromDays(
+    selectedMonthKey,
+    salesByMonthDay,
+    profitByMonthDay,
+    monthlyTotals,
+    cutoffDay,
+  );
+
   for (const bucket of monthBuckets6) {
     const mt = monthlyTotals[bucket.key];
     if (!mt) continue;
@@ -135,13 +171,21 @@ export function computeDashboardVendasMetricsMargem({
       mt.cost > 0 ? Math.round((mt.profit / mt.cost) * 10000) / 100 : 0;
   }
 
-  const cutoffDay = getCutoffCalendarDay(selectedMonthKey);
   const dailyData = Array.from({ length: selectedBucket.daysInMonth }, (_, idx) => {
     const day = idx + 1;
     return {
       diaNumero: day,
       diaLabel: `D${String(day).padStart(2, '0')}`,
       valor: day <= cutoffDay ? Number(salesByMonthDay[selectedMonthKey]?.[day] || 0) : null,
+    };
+  });
+
+  const dailyProfitData = Array.from({ length: selectedBucket.daysInMonth }, (_, idx) => {
+    const day = idx + 1;
+    return {
+      diaNumero: day,
+      diaLabel: `D${String(day).padStart(2, '0')}`,
+      valor: day <= cutoffDay ? Number(profitByMonthDay[selectedMonthKey]?.[day] || 0) : null,
     };
   });
 
@@ -169,6 +213,13 @@ export function computeDashboardVendasMetricsMargem({
   const monthlySalesData = monthBuckets6.map((bucket, idx) => ({
     periodo: bucket.shortLabel,
     valor: Number(monthlyTotals[bucket.key]?.salesNet || 0),
+    isSelected: bucket.key === selectedMonthKey,
+    colorIdx: idx,
+  }));
+
+  const monthlyProfitData = monthBuckets6.map((bucket, idx) => ({
+    periodo: bucket.shortLabel,
+    valor: Number(monthlyTotals[bucket.key]?.profit || 0),
     isSelected: bucket.key === selectedMonthKey,
     colorIdx: idx,
   }));
@@ -209,8 +260,10 @@ export function computeDashboardVendasMetricsMargem({
     selectedBucket,
     cutoffLabel: formatTemporalCutoffLabel(selectedMonthKey),
     dailyData,
+    dailyProfitData,
     accumulatedSalesData,
     monthlySalesData,
+    monthlyProfitData,
     accumulatedProfitData,
     breakEvenDaily,
     metaLucroDaily,

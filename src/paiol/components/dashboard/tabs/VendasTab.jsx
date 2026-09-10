@@ -77,9 +77,17 @@ export default function VendasTab({ enabled = true } = {}) {
     () => buildDashboardYDomain(metrics?.dailyData, 'valor'),
     [metrics?.dailyData],
   );
+  const dailyProfitYDomain = useMemo(
+    () => buildDashboardYDomain(metrics?.dailyProfitData, 'valor'),
+    [metrics?.dailyProfitData],
+  );
   const monthlyYDomain = useMemo(
     () => buildDashboardYDomain(metrics?.monthlySalesData, 'valor'),
     [metrics?.monthlySalesData],
+  );
+  const monthlyProfitYDomain = useMemo(
+    () => buildDashboardYDomain(metrics?.monthlyProfitData, 'valor'),
+    [metrics?.monthlyProfitData],
   );
   const chartSurface = `h-[280px] sm:h-[268px] rounded-xl ${p38Dashboard.inner}`;
 
@@ -218,6 +226,89 @@ export default function VendasTab({ enabled = true } = {}) {
           </Card>
         </div>
 
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-3">
+          <Card className={p38Dashboard.card}>
+            <CardHeader className="pb-1">
+              <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
+                <TrendingUp className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
+                Lucro diário — {selectedMonthLabel}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-1">
+              <div className={chartSurface}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={metrics.dailyProfitData}
+                    margin={DASHBOARD_CHART_MARGIN.daily}
+                    barCategoryGap={isMobile ? '14%' : '8%'}
+                  >
+                    <CartesianGrid {...buildCartesianGridProps(chartTheme)} />
+                    <XAxis
+                      {...buildXAxisProps(chartTheme, {
+                        dataKey: 'diaNumero',
+                        tickFormatter: (value) => `D${String(value).padStart(2, '0')}`,
+                        interval: isMobile ? 4 : 2,
+                      })}
+                    />
+                    <YAxis
+                      {...buildYAxisProps(chartTheme, {
+                        domain: dailyProfitYDomain,
+                        width: 44,
+                        tickCount: 5,
+                      })}
+                    />
+                    <Tooltip
+                      labelFormatter={dayTooltipLabel}
+                      formatter={(value) => [BRL.format(Number(value || 0)), 'Lucro']}
+                      cursor={{ fill: chartTheme.cursor }}
+                      contentStyle={chartTheme.tooltip.contentStyle}
+                      labelStyle={chartTheme.tooltip.labelStyle}
+                      itemStyle={chartTheme.tooltip.itemStyle}
+                    />
+                    <Bar
+                      dataKey="valor"
+                      radius={[3, 3, 0, 0]}
+                      maxBarSize={isMobile ? 14 : 22}
+                      fill="#a4ce33"
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className={p38Dashboard.card}>
+            <CardHeader className="pb-1">
+              <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
+                <TrendingUp className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
+                Lucro acumulado — {selectedMonthLabel}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-1">
+              <LucroAcumuladoChart
+                data={metrics.accumulatedProfitData}
+                innerSurfaceClassName={chartSurface}
+              />
+              <div className={`flex flex-wrap gap-3 mt-2 text-[10px] ${p38Dashboard.legend}`}>
+                <span className="inline-flex items-center gap-1">
+                  <span className="inline-block h-[2px] w-4 rounded-full bg-[#ef4444]" />
+                  Break-even/dia: <strong className={p38Dashboard.title}>{formatShort(metrics.breakEvenDaily)}</strong>
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <span className="inline-block h-[2px] w-4 rounded-full bg-[#22c55e]" />
+                  Meta/dia: <strong className={p38Dashboard.title}>{formatShort(metrics.metaLucroDaily)}</strong>
+                </span>
+                <AccumulatedLegendLine
+                  label="Acumulado"
+                  total={metrics.accumulatedProfitData.at(-1)?.lucro || 0}
+                  dailyAvg={metrics.avgDailyProfit}
+                  titleClassName={p38Dashboard.title}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-3">
           <Card className={p38Dashboard.card}>
             <CardHeader className="pb-1">
@@ -324,60 +415,53 @@ export default function VendasTab({ enabled = true } = {}) {
             </CardContent>
           </Card>
 
-          <Card className={p38Dashboard.placeholder}>
+          <Card className={p38Dashboard.card}>
             <CardHeader className="pb-1">
-              <CardTitle className={`text-sm font-medium uppercase tracking-wide ${p38Dashboard.titleMuted}`}>Em breve</CardTitle>
+              <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
+                <TrendingUp className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
+                Lucro mensal (6 meses)
+              </CardTitle>
             </CardHeader>
             <CardContent className="pt-1">
-              <div className={`h-[180px] rounded-xl p-3 ${p38Dashboard.placeholderInner}`}>
-                <div className={`h-2 w-24 rounded mb-3 ${p38Dashboard.skeletonHeader}`} />
-                <div className="grid grid-cols-5 gap-1 items-end h-16 mb-3">
-                  {[30, 44, 26, 52, 36].map((h, idx) => (
-                    <div key={`placeholder-top-${idx}`} className={`rounded-sm ${p38Dashboard.skeletonBar}`} style={{ height: `${h}%` }} />
-                  ))}
-                </div>
-                <div className="space-y-2">
-                  <div className={`h-1.5 rounded w-full ${p38Dashboard.skeletonLine}`} />
-                  <div className={`h-1.5 rounded w-4/5 ${p38Dashboard.skeletonLine}`} />
-                  <div className={`h-1.5 rounded w-3/5 ${p38Dashboard.skeletonLine}`} />
-                </div>
+              <div className={chartSurface}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={metrics.monthlyProfitData}
+                    margin={DASHBOARD_CHART_MARGIN.categorical}
+                    barCategoryGap="12%"
+                  >
+                    <CartesianGrid {...buildCartesianGridProps(chartTheme)} />
+                    <XAxis {...buildXAxisProps(chartTheme, { dataKey: 'periodo' })} />
+                    <YAxis
+                      {...buildYAxisProps(chartTheme, {
+                        domain: monthlyProfitYDomain,
+                        width: 44,
+                        tickCount: 5,
+                      })}
+                    />
+                    <Tooltip
+                      formatter={(value) => [BRL.format(Number(value || 0)), 'Lucro']}
+                      cursor={{ fill: chartTheme.cursor }}
+                      contentStyle={chartTheme.tooltip.contentStyle}
+                      labelStyle={chartTheme.tooltip.labelStyle}
+                      itemStyle={chartTheme.tooltip.itemStyle}
+                    />
+                    <Bar dataKey="valor" radius={[6, 6, 0, 0]} maxBarSize={56}>
+                      {metrics.monthlyProfitData.map((entry) => (
+                        <Cell
+                          key={entry.periodo}
+                          fill={entry.isSelected ? '#a4ce33' : SALES_BAR_COLORS[entry.colorIdx % SALES_BAR_COLORS.length]}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-3">
-          <Card className={p38Dashboard.card}>
-            <CardHeader className="pb-1">
-              <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
-                <TrendingUp className={`w-4 h-4 ${p38Dashboard.iconAccent}`} />
-                Lucro acumulado — {selectedMonthLabel}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-1">
-              <LucroAcumuladoChart
-                data={metrics.accumulatedProfitData}
-                innerSurfaceClassName={chartSurface}
-              />
-              <div className={`flex flex-wrap gap-3 mt-2 text-[10px] ${p38Dashboard.legend}`}>
-                <span className="inline-flex items-center gap-1">
-                  <span className="inline-block h-[2px] w-4 rounded-full bg-[#ef4444]" />
-                  Break-even/dia: <strong className={p38Dashboard.title}>{formatShort(metrics.breakEvenDaily)}</strong>
-                </span>
-                <span className="inline-flex items-center gap-1">
-                  <span className="inline-block h-[2px] w-4 rounded-full bg-[#22c55e]" />
-                  Meta/dia: <strong className={p38Dashboard.title}>{formatShort(metrics.metaLucroDaily)}</strong>
-                </span>
-                <AccumulatedLegendLine
-                  label="Acumulado"
-                  total={metrics.accumulatedProfitData.at(-1)?.lucro || 0}
-                  dailyAvg={metrics.avgDailyProfit}
-                  titleClassName={p38Dashboard.title}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-3">
           <Card className={p38Dashboard.card}>
             <CardHeader className="pb-1">
               <CardTitle className={`text-sm font-medium flex items-center gap-2 uppercase tracking-wide ${p38Dashboard.title}`}>
