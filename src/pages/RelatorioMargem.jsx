@@ -40,6 +40,7 @@ import {
   vendaNoIntervaloConsulta,
   itensPedidoValidos,
   resolverTotalLinhaVenda,
+  defaultMargemDateRange,
 } from '@/lib/relatorioMargemCalculos';
 import {
   aplicarDeducaoLucroTrocaSubstituto,
@@ -764,7 +765,9 @@ export default function RelatorioMargemVendas() {
   const [viewMode, setViewMode] = useState('plana'); // 'dinamica' | 'plana'
   const [treeLevel, setTreeLevel] = useState(99);
   const [expandedKeys, setExpandedKeys] = useState(new Set());
-  const [dateRange, setDateRange] = useState({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) });
+  const [dateRange, setDateRange] = useState(
+    () => defaultMargemDateRange() ?? { from: startOfMonth(new Date()), to: endOfMonth(new Date()) },
+  );
   const [searchDraft, setSearchDraft] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState('lucro_total');
@@ -1960,7 +1963,7 @@ export default function RelatorioMargemVendas() {
     setSearchDraft('');
     setSearchTerm('');
     setTreeLevel(99);
-    setDateRange({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) });
+    setDateRange(defaultMargemDateRange() ?? { from: startOfMonth(new Date()), to: endOfMonth(new Date()) });
   };
 
   const periodLabel =
@@ -2178,7 +2181,9 @@ export default function RelatorioMargemVendas() {
                   <button
                     onClick={() => {
                       const today = new Date();
-                      setDateRange({ from: startOfMonth(today), to: endOfMonth(today) });
+                      setDateRange(
+                        defaultMargemDateRange() ?? { from: startOfMonth(today), to: endOfMonth(today) },
+                      );
                     }}
                     className="px-3 h-10 md:h-9 rounded-xl md:rounded-lg text-sm md:text-xs font-medium bg-muted dark:bg-secondary text-foreground/90 hover:bg-muted dark:hover:bg-muted/80 transition"
                   >

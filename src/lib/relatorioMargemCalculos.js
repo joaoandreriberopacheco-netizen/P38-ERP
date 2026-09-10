@@ -6,7 +6,13 @@
  * Desconto comercial diluído no valor de compra — não exibido como linha separada.
  */
 
-import { toLocalDateKey } from '@/components/utils/dateUtils';
+import {
+  boundsMesCivil,
+  dataHoje,
+  fimDiaSistemaISO,
+  inicioDiaSistemaISO,
+  toLocalDateKey,
+} from '@/components/utils/dateUtils';
 import { STATUS_PEDIDO_CONTA_NO_TURNO_CAIXA } from '@/lib/pdvCaixaTurnoVendas';
 import {
   resolveAvariaCompraFator1,
@@ -79,10 +85,18 @@ function normalizeCustoNum(value) {
 export function competenciaParaIntervalo(competencia) {
   const [y, m] = String(competencia).slice(0, 7).split('-').map(Number);
   if (!y || !m) return null;
+  const { start, end } = boundsMesCivil(y, m - 1);
   return {
-    from: new Date(y, m - 1, 1),
-    to: new Date(y, m, 0, 23, 59, 59, 999),
+    from: new Date(inicioDiaSistemaISO(start)),
+    to: new Date(fimDiaSistemaISO(end)),
   };
+}
+
+/** Intervalo padrão do Relatório de Margem — mês corrente em Tabatinga (não UTC do servidor). */
+export function defaultMargemDateRange() {
+  const intervalo = competenciaParaIntervalo(dataHoje().slice(0, 7));
+  if (!intervalo) return null;
+  return { from: intervalo.from, to: intervalo.to };
 }
 
 /** Mesmo recorte da aba Consulta em VendasGestao. */
@@ -93,18 +107,33 @@ export function pedidoElegivelMargem(pedido) {
   return STATUS_PEDIDO_CONTA_NO_TURNO_CAIXA.includes(status);
 }
 
-/** Data da venda no Margem — created_date em UTC-5 (Rio Branco), como Consulta de Vendas. */
+/**
+ * Data civil da venda — espelho de `p38_pedido_venda_sale_date` (SQL).
+ * Prioridade: data_venda → data_emissao → data_fechamento → created_at Tabatinga.
+ */
+export function resolveDataVendaMargemKey(pedido) {
+  const dados = pedido?.dados && typeof pedido.dados === 'object' ? pedido.dados : {};
+  for (const field of ['data_venda', 'data_emissao', 'data_fechamento']) {
+    const raw = pedido?.[field] ?? dados[field];
+    if (typeof raw === 'string' && /^\d{4}-\d{2}-\d{2}/.test(raw)) {
+      return raw.slice(0, 10);
+    }
+  }
+  return toLocalDateKey(pedido?.created_date ?? pedido?.created_at);
+}
+
+/** Data da venda no Margem — competência comercial (data_venda), não só created_at. */
 export function getDataVendaMargem(pedido) {
-  const key = toLocalDateKey(pedido?.created_date ?? pedido?.created_at);
+  const key = resolveDataVendaMargemKey(pedido);
   if (!key) return null;
   const [y, m, d] = key.split('-').map(Number);
   if (!y || !m || !d) return null;
   return new Date(y, m - 1, d, 12, 0, 0, 0);
 }
 
-/** Mesma data da Consulta de Vendas: created_date em UTC-5 (Rio Branco). */
+/** Mesma competência do Relatório de Margem / `p38_pedido_venda_sale_date`. */
 export function vendaNoIntervaloConsulta(sale, from, to) {
-  const key = toLocalDateKey(sale?.created_date);
+  const key = resolveDataVendaMargemKey(sale);
   if (!key) return false;
   if (from) {
     const fromKey = toLocalDateKey(from);

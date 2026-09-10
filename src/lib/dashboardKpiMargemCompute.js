@@ -4,6 +4,7 @@
  * Mês corrente: custo do cadastro (dinâmico). Mês fechado: congelado no snapshot.
  */
 import { format, getDate } from 'date-fns';
+import { fimDiaSistemaISO, inicioDiaSistemaISO } from '@/components/utils/dateUtils';
 import { shouldFreezeMargemMonthPayload } from '@/lib/margemCustoMode';
 import { getCurrentMonthKey } from '@/lib/dashboardVendasPeriod';
 import {
@@ -44,17 +45,18 @@ export function intervaloCompetenciaAte(competencia, throughDateKey) {
   if (!base || !throughDateKey) return null;
   const [y, m, d] = throughDateKey.split('-').map(Number);
   if (!y || !m || !d) return null;
+  const pad = (n) => String(n).padStart(2, '0');
+  const throughKey = `${y}-${pad(m)}-${pad(d)}`;
   return {
     from: base.from,
-    to: new Date(y, m - 1, d, 23, 59, 59, 999),
+    to: new Date(fimDiaSistemaISO(throughKey)),
   };
 }
 
 function intervaloDiaCivil(dateKey) {
-  const [y, m, d] = dateKey.split('-').map(Number);
   return {
-    from: new Date(y, m - 1, d, 0, 0, 0, 0),
-    to: new Date(y, m - 1, d, 23, 59, 59, 999),
+    from: new Date(inicioDiaSistemaISO(dateKey)),
+    to: new Date(fimDiaSistemaISO(dateKey)),
   };
 }
 

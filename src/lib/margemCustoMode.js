@@ -5,6 +5,7 @@
  * - momento_venda: custo_unitario_momento gravado na linha (meses fechados)
  */
 import { toLocalDateKey } from '@/components/utils/dateUtils';
+import { resolveDataVendaMargemKey } from '@/lib/relatorioMargemCalculos';
 import { getCurrentMonthKey } from '@/lib/dashboardVendasPeriod';
 
 export const MARGEM_CUSTO_CADASTRO_ATUAL = 'cadastro_atual';
@@ -17,7 +18,7 @@ export function isMargemMesFechado(monthKey) {
 
 /** Custo por venda: fechado → momento; corrente → cadastro. */
 export function margemCustoModeParaVenda(sale) {
-  const key = toLocalDateKey(sale?.created_date ?? sale?.created_at);
+  const key = resolveDataVendaMargemKey(sale);
   if (!key) return MARGEM_CUSTO_CADASTRO_ATUAL;
   return isMargemMesFechado(key.slice(0, 7))
     ? MARGEM_CUSTO_MOMENTO_VENDA

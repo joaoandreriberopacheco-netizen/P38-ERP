@@ -87,9 +87,9 @@ export async function fetchMargemKpiDataset(competencia, sb = createMargemKpiSup
   }
 
   const fetchStart = new Date(intervalo.from);
-  fetchStart.setDate(fetchStart.getDate() - 20);
+  fetchStart.setDate(fetchStart.getDate() - 45);
   const fetchEnd = new Date(intervalo.to);
-  fetchEnd.setDate(fetchEnd.getDate() + 20);
+  fetchEnd.setDate(fetchEnd.getDate() + 45);
   const createdFrom = format(fetchStart, 'yyyy-MM-dd');
   const createdTo = format(fetchEnd, 'yyyy-MM-dd');
 
@@ -131,15 +131,24 @@ export async function fetchMargemKpiDataset(competencia, sb = createMargemKpiSup
     };
   }
 
-  const sales = pedidosRaw.map((p) => ({
-    ...p,
-    status: p.status || p.dados?.status,
-    tipo: p.tipo || p.dados?.tipo,
-    valor_total: p.dados?.valor_total ?? p.total,
-    valor_desconto: p.dados?.valor_desconto ?? p.valor_desconto,
-    created_date: p.created_at,
-    itens: byPed[p.id] || [],
-  }));
+  const sales = pedidosRaw.map((p) => {
+    const dados = p.dados && typeof p.dados === 'object' ? p.dados : {};
+    const flat = { ...p };
+    for (const [k, v] of Object.entries(dados)) {
+      if (!(k in flat)) flat[k] = v;
+    }
+    return {
+      ...flat,
+      dados,
+      status: p.status || dados.status,
+      tipo: p.tipo || dados.tipo,
+      valor_total: dados.valor_total ?? p.total,
+      valor_desconto: dados.valor_desconto ?? p.valor_desconto,
+      created_date: flat.created_date ?? p.created_at,
+      created_at: p.created_at,
+      itens: byPed[p.id] || [],
+    };
+  });
 
   return {
     sales,
