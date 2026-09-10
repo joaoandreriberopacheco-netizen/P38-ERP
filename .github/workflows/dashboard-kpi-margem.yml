@@ -1,0 +1,55 @@
+# Fecha KPI de vendas do dashboard com a mesma lógica do Relatório de Margem.
+# Corre após o cron Postgres (05:05 UTC) para gravar ontem com custos de hoje.
+#
+# 05:10 UTC = 00:10 Tabatinga
+
+name: Dashboard KPI margem
+
+concurrency:
+  group: dashboard-kpi-margem
+  cancel-in-progress: false
+
+on:
+  schedule:
+    - cron: '10 5 * * *'
+  workflow_dispatch:
+    inputs:
+      month:
+        description: 'YYYY-MM (opcional; default = mês de ontem Tabatinga)'
+        required: false
+        type: string
+      through:
+        description: 'YYYY-MM-DD até quando fechar (opcional; default = ontem)'
+        required: false
+        type: string
+
+jobs:
+  fechar-margem:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Fechar KPI vendas (Relatório de Margem)
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          ARGS=""
+          if [ -n "${{ github.event.inputs.month }}" ]; then
+            ARGS="$ARGS --month ${{ github.event.inputs.month }}"
+          fi
+          if [ -n "${{ github.event.inputs.through }}" ]; then
+            ARGS="$ARGS --through ${{ github.event.inputs.through }}"
+          fi
+          npm run dashboard:kpi-margem-fechar -- $ARGS
