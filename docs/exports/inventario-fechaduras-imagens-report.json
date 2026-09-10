@@ -1,0 +1,64 @@
+{
+  "generated_at": "2026-09-10T00:21:45.124Z",
+  "apply": false,
+  "fonte": "Stam / revendedores (loja.stam.com.br bloqueada no agente)",
+  "resolved": [
+    {
+      "item": 1,
+      "codigo_interno": "N60-DE4",
+      "url": "https://images.tcdn.com.br/img/img_prod/1180995/fechadura_803_33_gorje_externa_oxidado_1099_1_0de4db8c11cd41d12de90939831c5577.jpg",
+      "local_path": "/workspace/docs/assets/fechaduras-stam/01-803-33-oxidado.jpg",
+      "fonte_ref": "rombaldimoveis:803/33-oxidado"
+    },
+    {
+      "item": 2,
+      "codigo_interno": "9O8-0JI",
+      "url": "https://cdntravaforte.adsomos.com.br/image/cache/data/Produtos/FE/FECHADURA-STAM-FANO-803-21-REDONDA-EXTERNA-INOX-POLIDO-COR-NO-DEFINIDA-16D12D82-1-800x800.jpg",
+      "local_path": "/workspace/docs/assets/fechaduras-stam/02-803-21-inox.jpg",
+      "fonte_ref": "travaforte:803/21-inox"
+    },
+    {
+      "item": 3,
+      "codigo_interno": "JQ6-7GN",
+      "url": "https://portalfechaduras.com.br/wp-content/uploads/2022/06/fechadura-stam-preta-externa.jpg",
+      "local_path": "/workspace/docs/assets/fechaduras-stam/03-803-33-preto-fosco.jpg",
+      "fonte_ref": "portalfechaduras:803/33-preto-fosco"
+    },
+    {
+      "item": 4,
+      "codigo_interno": "BK1-L8K",
+      "url": "https://coelhodistribuidor.agilecdn.com.br/8499_1.jpg",
+      "local_path": "/workspace/docs/assets/fechaduras-stam/04-1801-21-oxidado.jpg",
+      "fonte_ref": "coelhodistribuidor:1801/21-oxidado"
+    },
+    {
+      "item": 5,
+      "codigo_interno": "VZL-3J2",
+      "url": "https://hiperfer.cdn.magazord.com.br/img/2021/08/produto/9790/3542-fechadura-externa-fano-803-10-espelho-oxidado-stam.jpg",
+      "local_path": "/workspace/docs/assets/fechaduras-stam/05-803-10-oxidado.jpg",
+      "fonte_ref": "hiperfer:803/10-oxidado"
+    },
+    {
+      "item": 6,
+      "codigo_interno": null,
+      "url": "https://casacardao.agilecdn.com.br/17085.jpg",
+      "local_path": "/workspace/docs/assets/fechaduras-stam/06-porta-enrolar.jpg",
+      "fonte_ref": "casacardao:porta-enrolar-200"
+    },
+    {
+      "item": 7,
+      "codigo_interno": "0EK-Y4Z",
+      "url": "https://www.ferragenssaocarlos.com.br/media/catalog/product/f/e/ferragens-sao-carlos-imagem-fechadura-para-banheiro-inox-cromado-823-03-stam-31823-3.jpeg",
+      "local_path": "/workspace/docs/assets/fechaduras-stam/07-823-03-banheiro.jpeg",
+      "fonte_ref": "ferragenssaocarlos:823/03-inox"
+    },
+    {
+      "item": 8,
+      "codigo_interno": "YKQ-42N",
+      "url": "https://images.tcdn.com.br/img/img_prod/1324197/fechadura_externa_cromada_classic_40mm_roseta_quad_3100_stam_767_1_268ac1559824c4560e0deac0dc493e7f.jpg",
+      "local_path": "/workspace/docs/assets/fechaduras-stam/08-3100-inox.jpg",
+      "fonte_ref": "comercialivaipora:3100-inox"
+    }
+  ],
+  "missing": []
+}
