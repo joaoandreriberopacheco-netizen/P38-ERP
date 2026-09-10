@@ -2,10 +2,12 @@
  * KPIs de vendas do dashboard — mesma fonte e regras do Relatório de Margem.
  */
 import { format, getDate, isAfter, isBefore } from 'date-fns';
+import { fimDiaSistemaISO, inicioDiaSistemaISO } from '@/components/utils/dateUtils';
 import {
   getDataVendaMargem,
   pedidoElegivelMargem,
 } from '@/lib/relatorioMargemCalculos';
+import { getCurrentMonthKey } from '@/lib/dashboardVendasPeriod';
 import { calcularMargemKpiIntervalo } from '@/lib/dashboardKpiMargemCompute';
 import {
   buildMonthBucket,
@@ -99,8 +101,17 @@ export function computeDashboardVendasMetricsMargem({
   const windowStart = getTemporalStartForMonth(monthBuckets6[0]?.key);
   const windowEnd = getTemporalCutoffForMonth(selectedMonthKey);
 
-  const sealedBucketData = Object.keys(sealedMonths || {}).length
-    ? mergeSealedVendasIntoBuckets(monthBuckets6, sealedMonths)
+  // Mês corrente: "custos de hoje" — recalcula no browser como Relatório de Margem (snapshot só meses passados).
+  const currentMonthKey = getCurrentMonthKey();
+  const sealedForMargem = { ...(sealedMonths || {}) };
+  for (const bucket of monthBuckets6) {
+    if (bucket.key >= currentMonthKey) {
+      delete sealedForMargem[bucket.key];
+    }
+  }
+
+  const sealedBucketData = Object.keys(sealedForMargem).length
+    ? mergeSealedVendasIntoBuckets(monthBuckets6, sealedForMargem)
     : buildMonthlyAndDailyBuckets(monthBuckets6);
   const { salesByMonthDay, profitByMonthDay, monthlyTotals } = sealedBucketData;
 
@@ -110,7 +121,7 @@ export function computeDashboardVendasMetricsMargem({
     if (!saleDate) return false;
     if (isBefore(saleDate, windowStart) || isAfter(saleDate, windowEnd)) return false;
     const monthKey = format(saleDate, 'yyyy-MM');
-    if (isSaleCoveredBySealedMonth(saleDate, monthKey, sealedMonths)) return false;
+    if (isSaleCoveredBySealedMonth(saleDate, monthKey, sealedForMargem)) return false;
     return true;
   });
 
@@ -132,10 +143,11 @@ export function computeDashboardVendasMetricsMargem({
   }
 
   for (const { monthKey, day, sales: daySales } of Object.values(liveSalesByMonthDay)) {
-    const [y, m] = monthKey.split('-').map(Number);
+    const pad = (n) => String(n).padStart(2, '0');
+    const dateKey = `${monthKey}-${pad(day)}`;
     const intervalo = {
-      from: new Date(y, m - 1, day, 0, 0, 0, 0),
-      to: new Date(y, m - 1, day, 23, 59, 59, 999),
+      from: new Date(inicioDiaSistemaISO(dateKey)),
+      to: new Date(fimDiaSistemaISO(dateKey)),
     };
     const totals = calcularMargemKpiIntervalo({
       pedidos: daySales,
