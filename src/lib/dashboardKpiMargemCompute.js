@@ -185,27 +185,45 @@ export function computeDashboardKpiMargemForMonth({
     pedidoCount: monthlyTotals.pedidoCount,
   });
 
+  // Lucro diário: cumulativo do motor mensal (trocas não batem dia-a-dia isolado).
+  const salesByDayChart = {};
+  const profitByDayChart = {};
   const daily = {};
-  for (const [refDate, totals] of Object.entries(dailyTotals)) {
+  let cumulativePedidos = [];
+  let prevCumulativeProfit = 0;
+
+  for (const refDate of Object.keys(salesByDay).sort()) {
+    const daySales = salesByDay[refDate];
+    const totals = dailyTotals[refDate] || emptyDayTotals();
+    cumulativePedidos.push(...daySales);
+
+    const intervaloCumulativo = intervaloCompetenciaAte(prefix, refDate);
+    const linhasCumulativas = calcularLinhasMargemVendas(
+      cumulativePedidos,
+      produtosLista,
+      intervaloCumulativo,
+      devolucoesTroca,
+      pedidosOrigemTroca,
+    );
+    const profitCumulativo = roundMoney(calcularTotaisMargem(linhasCumulativas).lucro_bruto);
+    const profitDia = roundMoney(profitCumulativo - prevCumulativeProfit);
+    prevCumulativeProfit = profitCumulativo;
+
     const dayNum = getDate(new Date(`${refDate}T12:00:00-05:00`));
+    salesByDayChart[String(dayNum)] = roundMoney(totals.salesNet);
+    profitByDayChart[String(dayNum)] = profitDia;
+
     daily[refDate] = {
       day: dayNum,
       salesNet: roundMoney(totals.salesNet),
       salesGross: roundMoney(totals.salesGross),
       discounts: roundMoney(totals.discounts),
       cost: roundMoney(totals.cost),
-      profit: roundMoney(totals.profit),
+      profit: profitDia,
       markupPercent: totals.markupPercent,
       pedidoCount: totals.pedidoCount,
       sourceVersion: DASHBOARD_KPI_MARGEM_SOURCE_VERSION,
     };
-  }
-
-  const salesByDayChart = {};
-  const profitByDayChart = {};
-  for (const [refDate, payload] of Object.entries(daily)) {
-    salesByDayChart[String(payload.day)] = payload.salesNet;
-    profitByDayChart[String(payload.day)] = payload.profit;
   }
 
   let closedThrough = null;

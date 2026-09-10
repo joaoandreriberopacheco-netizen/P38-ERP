@@ -1,8 +1,9 @@
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { fetchDashboardVendasPeriodo, fetchProdutosCustoPorIds } from '@/lib/fetchDashboardVendas';
+import { fetchDashboardVendasPeriodo } from '@/lib/fetchDashboardVendas';
 import { fetchPedidosOrigemTrocaMargem } from '@/lib/fetchPedidosVenda90d';
-import { buildProdutosMargemFromCostMap, isMonthCoveredAteOntem } from '@/lib/dashboardMargemVendasSealed';
+import { isMonthCoveredAteOntem } from '@/lib/dashboardMargemVendasSealed';
+import { fetchAllProdutosCatalogo } from '@/lib/fetchProdutosAtivos';
 import { getDashboardEstoqueStaleTime, getDashboardVendasStaleTime } from '@/lib/dashboardIncrementalCache';
 import { getMonthBucketsEndingAt } from '@/lib/dashboardVendasPeriod';
 import { normalizeDashboardKpiConfig } from '@/lib/dashboardKpiConfig';
@@ -12,29 +13,9 @@ import {
 } from '@/lib/dashboardEstoqueData';
 import { p38Keys, P38_GC_TIME, P38_STALE_TIME } from '@/lib/p38QueryConfig';
 
-function collectProdutoIdsFromPedidosMap(pedidosMap = {}) {
-  const ids = new Set();
-  for (const pedido of Object.values(pedidosMap)) {
-    for (const item of pedido?.itens || []) {
-      const pid = item?.produto_id ?? item?.produtoId;
-      if (pid) ids.add(pid);
-    }
-  }
-  return [...ids];
-}
-
-async function buildProdutosMargemForDashboard(dashboardData, pedidosOrigemTroca = {}) {
-  const costMap = new Map(dashboardData.productCostMap || []);
-  const missingIds = collectProdutoIdsFromPedidosMap(pedidosOrigemTroca).filter((id) => !costMap.has(id));
-
-  if (missingIds.length) {
-    const extraCosts = await fetchProdutosCustoPorIds(missingIds);
-    for (const [id, cost] of extraCosts.entries()) {
-      costMap.set(id, cost);
-    }
-  }
-
-  return buildProdutosMargemFromCostMap(costMap);
+/** Mesmo catálogo completo do Relatório de Margem. */
+async function buildProdutosMargemForDashboard() {
+  return fetchAllProdutosCatalogo();
 }
 
 function pedidosPrecisamDevolucoesTroca(pedidos = []) {
@@ -79,7 +60,7 @@ export async function fetchDashboardVendasBundle(selectedMonthKey, queryClient) 
     pedidosOrigemTroca = await fetchPedidosOrigemTrocaMargem(devolucoes);
   }
 
-  const produtos = await buildProdutosMargemForDashboard(dashboardData, pedidosOrigemTroca);
+  const produtos = await buildProdutosMargemForDashboard();
 
   return {
     pedidos,

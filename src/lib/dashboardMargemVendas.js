@@ -7,11 +7,20 @@ import {
   getDataVendaMargem,
   pedidoElegivelMargem,
 } from '@/lib/relatorioMargemCalculos';
-import { calcularMargemKpiIntervalo } from '@/lib/dashboardKpiMargemCompute';
+import {
+  calcularMargemKpiIntervalo,
+  DASHBOARD_KPI_MARGEM_SOURCE_VERSION,
+} from '@/lib/dashboardKpiMargemCompute';
+import {
+  calcularLinhasMargemVendas,
+  calcularTotaisMargem,
+  competenciaParaIntervalo,
+} from '@/lib/relatorioMargemCalculos';
 import {
   buildMonthBucket,
   formatTemporalCutoffLabel,
   getCutoffCalendarDay,
+  getCurrentMonthKey,
   getMonthBucketsEndingAt,
   getReferenceDateForMonth,
   getTemporalCutoffForMonth,
@@ -33,6 +42,106 @@ import { P38_ROSCA_COLORS } from '@/lib/p38RoscaGauge';
 
 const RING_COLORS = P38_ROSCA_COLORS;
 
+function roundMoney(value) {
+  return Math.round((Number(value) || 0) * 100) / 100;
+}
+
+/** Mês corrente ao vivo — mesmo motor do Relatório (trocas exigem mês inteiro). */
+function rebuildCurrentMonthFromPedidos({
+  monthKey,
+  pedidos,
+  produtos,
+  devolucoesTroca,
+  pedidosOrigemTroca,
+  windowEnd,
+  salesByMonthDay,
+  profitByMonthDay,
+  monthlyTotals,
+}) {
+  const monthSales = (pedidos || []).filter((sale) => {
+    if (!pedidoElegivelMargem(sale)) return false;
+    const saleDate = getDataVendaMargem(sale);
+    if (!saleDate) return false;
+    if (format(saleDate, 'yyyy-MM') !== monthKey) return false;
+    if (isAfter(saleDate, windowEnd)) return false;
+    return saleWithinMonthTemporalCut(saleDate, monthKey);
+  });
+
+  if (!monthSales.length) return false;
+
+  const intervaloMes = competenciaParaIntervalo(monthKey);
+  if (!intervaloMes) return false;
+  intervaloMes.to = windowEnd;
+
+  const monthKpi = calcularMargemKpiIntervalo({
+    pedidos: monthSales,
+    produtos,
+    devolucoesTroca,
+    pedidosOrigemTroca,
+    intervalo: intervaloMes,
+    pedidoCount: monthSales.length,
+  });
+
+  monthlyTotals[monthKey] = {
+    salesGross: monthKpi.salesGross,
+    discounts: monthKpi.discounts,
+    salesNet: monthKpi.salesNet,
+    cost: monthKpi.cost,
+    profit: monthKpi.profit,
+    markupPercent: monthKpi.markupPercent,
+  };
+
+  const salesByDay = {};
+  for (const sale of monthSales) {
+    const saleDate = getDataVendaMargem(sale);
+    const day = getDate(saleDate);
+    if (!salesByDay[day]) salesByDay[day] = [];
+    salesByDay[day].push(sale);
+  }
+
+  salesByMonthDay[monthKey] = {};
+  profitByMonthDay[monthKey] = {};
+  let cumulative = [];
+  let prevProfit = 0;
+
+  for (const day of Object.keys(salesByDay).map(Number).sort((a, b) => a - b)) {
+    cumulative.push(...salesByDay[day]);
+    const pad = (n) => String(n).padStart(2, '0');
+    const dateKey = `${monthKey}-${pad(day)}`;
+    const intervaloCumulativo = {
+      from: intervaloMes.from,
+      to: new Date(fimDiaSistemaISO(dateKey)),
+    };
+    const linhas = calcularLinhasMargemVendas(
+      cumulative,
+      produtos,
+      intervaloCumulativo,
+      devolucoesTroca,
+      pedidosOrigemTroca,
+    );
+    const tot = calcularTotaisMargem(linhas);
+    const profitDia = roundMoney(tot.lucro_bruto - prevProfit);
+    prevProfit = roundMoney(tot.lucro_bruto);
+
+    const dayTotals = calcularMargemKpiIntervalo({
+      pedidos: salesByDay[day],
+      produtos,
+      devolucoesTroca,
+      pedidosOrigemTroca,
+      intervalo: {
+        from: new Date(inicioDiaSistemaISO(dateKey)),
+        to: new Date(fimDiaSistemaISO(dateKey)),
+      },
+      pedidoCount: salesByDay[day].length,
+    });
+
+    salesByMonthDay[monthKey][day] = dayTotals.salesNet;
+    profitByMonthDay[monthKey][day] = profitDia;
+  }
+
+  return true;
+}
+
 function sumDayValues(dayMap = {}, maxDay = null) {
   return Object.entries(dayMap || {}).reduce((sum, [dayStr, value]) => {
     const day = Number(dayStr);
@@ -41,20 +150,36 @@ function sumDayValues(dayMap = {}, maxDay = null) {
   }, 0);
 }
 
-/** Garante que totais mensais batem com a soma dos dias (snapshot + delta de hoje). */
-function reconcileMonthTotalsFromDays(monthKey, salesByMonthDay, profitByMonthDay, monthlyTotals, cutoffDay) {
+/**
+ * Reconcilia receita mensal com soma dos dias.
+ * Lucro mensal margem v1: mantém sealed + delta ao vivo (profitByDay legado pode divergir por trocas).
+ */
+function reconcileMonthTotalsFromDays(
+  monthKey,
+  salesByMonthDay,
+  profitByMonthDay,
+  monthlyTotals,
+  cutoffDay,
+  sealedMonths = {},
+) {
   const mt = monthlyTotals[monthKey];
   if (!mt) return;
 
-  const profitFromDays = sumDayValues(profitByMonthDay[monthKey], cutoffDay);
+  const seal = sealedMonths[monthKey];
+  const sourceVersion = seal?.sourceVersion || seal?.monthlyTotals?.sourceVersion;
   const salesFromDays = sumDayValues(salesByMonthDay[monthKey], cutoffDay);
 
-  if (profitFromDays > 0) {
-    mt.profit = Math.round(profitFromDays * 100) / 100;
-  }
   if (salesFromDays > 0) {
     mt.salesNet = Math.round(salesFromDays * 100) / 100;
   }
+
+  if (sourceVersion !== DASHBOARD_KPI_MARGEM_SOURCE_VERSION) {
+    const profitFromDays = sumDayValues(profitByMonthDay[monthKey], cutoffDay);
+    if (profitFromDays > 0) {
+      mt.profit = Math.round(profitFromDays * 100) / 100;
+    }
+  }
+
   if (mt.cost > 0 && mt.profit > 0) {
     mt.markupPercent = Math.round((mt.profit / mt.cost) * 10000) / 100;
   }
@@ -105,7 +230,27 @@ export function computeDashboardVendasMetricsMargem({
     : buildMonthlyAndDailyBuckets(monthBuckets6);
   const { salesByMonthDay, profitByMonthDay, monthlyTotals } = sealedBucketData;
 
-  const eligibleSales = (Array.isArray(pedidos) ? pedidos : []).filter((sale) => {
+  const currentMonthKey = getCurrentMonthKey();
+  const pedidosLista = Array.isArray(pedidos) ? pedidos : [];
+  const rebuiltCurrentMonth =
+    selectedMonthKey === currentMonthKey &&
+    rebuildCurrentMonthFromPedidos({
+      monthKey: selectedMonthKey,
+      pedidos: pedidosLista,
+      produtos,
+      devolucoesTroca,
+      pedidosOrigemTroca,
+      windowEnd,
+      salesByMonthDay,
+      profitByMonthDay,
+      monthlyTotals,
+    });
+
+  const eligibleSales = pedidosLista.filter((sale) => {
+    if (rebuiltCurrentMonth) {
+      const saleDate = getDataVendaMargem(sale);
+      if (saleDate && format(saleDate, 'yyyy-MM') === selectedMonthKey) return false;
+    }
     if (!pedidoElegivelMargem(sale)) return false;
     const saleDate = getDataVendaMargem(sale);
     if (!saleDate) return false;
@@ -164,6 +309,7 @@ export function computeDashboardVendasMetricsMargem({
     profitByMonthDay,
     monthlyTotals,
     cutoffDay,
+    sealedMonths,
   );
 
   for (const bucket of monthBuckets6) {
