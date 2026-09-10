@@ -126,7 +126,11 @@ function buildReadme(wb, stats) {
     ['Calçamentos', 'Sub Calçamento · Paver (fora de Porcelanato)'],
     [
       'Pontos de água',
-      'Sub Pontos de água · linhas: Torneira Cozinha · Torneira Lavatório · Torneira Tanque · Torneira para cuba (Aquila) — produto compra + eixo A/B depois',
+      'Sub Pontos de água · linhas: Torneira Cozinha · Torneira Lavatório · Torneira Tanque · Torneira para cuba (Aquila)',
+    ],
+    [
+      'Ferragens (fechaduras)',
+      'Sub Ferragens · linhas: Fechadura banheiro · externa · enrolar · interna (STAM — h3/h4 Supabase)',
     ],
     ['Cerâmica Bold/Retif', 'comp1=CERAMICA BOLD LISA… · sufixo 4 letras (POLI MATE BRIL…) · comp2=formato · comp3=modelo'],
     ['Tintas', 'Sub Tintas · linhas por tipo · comp1=produto+marca · comp2=formato · comp3=cor'],

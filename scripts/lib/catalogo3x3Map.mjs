@@ -503,10 +503,17 @@ export function isPintura(row) {
   return lb.includes('PINTURA') || lb === 'THINNER';
 }
 
+export function isFechadura(row) {
+  if (pcMatch(row, ['FECHADURA'])) return true;
+  const h1 = norm(row.campo_hierarquico_1);
+  return h1 === 'FECHADURA' || h1.startsWith('FECHADURA ');
+}
+
 export function isPortasEsquadrias(row) {
+  if (isFechadura(row)) return false;
   const core = String(row.core ?? '').trim();
   if (core === 'ESQUADRIAS') return true;
-  if (pcMatch(row, ['PORTA MADEIRA', 'PORTA MDF', 'DOBRADIÇA', 'DOBRADICA', 'FECHADURA', 'MACANETA', 'MAÇANETA'])) return true;
+  if (pcMatch(row, ['PORTA MADEIRA', 'PORTA MDF', 'DOBRADIÇA', 'DOBRADICA', 'MACANETA', 'MAÇANETA'])) return true;
   if (norm(row.produto_compra).startsWith('PORTA ') && !norm(row.produto_compra).includes('PORTA-CADEADO')) return true;
   return norm(linhaBase(row.linha)).includes('ESQUADRIA');
 }
@@ -544,6 +551,35 @@ export const LINHA_TORNEIRA = {
   /** Linha comercial Aquila — torneira para cuba (não confundir com produto Cuba). */
   PARA_CUBA: 'Torneira para cuba',
 };
+
+/** Linhas drill — sub Ferragens · Portas (modelo 4×3). */
+export const LINHA_FECHADURA = {
+  BANHEIRO: 'Fechadura banheiro',
+  EXTERNA: 'Fechadura externa',
+  ENROLAR: 'Fechadura enrolar',
+  INTERNA: 'Fechadura interna',
+};
+
+export function deriveLinhaFechadura(row) {
+  const blob = norm(
+    [
+      row.campo_hierarquico_2,
+      row.campo_hierarquico_3,
+      row.campo_hierarquico_4,
+      row.eixo_a,
+      row.eixo_b,
+      row.produto_compra,
+      row.sku_atual,
+      row.novo_sku,
+    ]
+      .filter(Boolean)
+      .join(' '),
+  );
+  if (blob.includes('ENROLAR')) return LINHA_FECHADURA.ENROLAR;
+  if (blob.includes('BANHEIRO') || blob.includes('823/')) return LINHA_FECHADURA.BANHEIRO;
+  if (blob.includes('EXT') || blob.includes('EXTERNA') || blob.includes('3100')) return LINHA_FECHADURA.EXTERNA;
+  return LINHA_FECHADURA.INTERNA;
+}
 
 export function deriveLinhaTorneira(row) {
   const linha = deriveLinhaTorneiraLinha(row);
@@ -903,9 +939,14 @@ export function isCaixaAguaGreen(row) {
   return sku.includes('GREEN');
 }
 
+/** Legado movido para espaço (fora do catálogo activo 4×3). */
+export function isCatalogoEspaco(row) {
+  return String(row.core ?? '').trim() === 'CATALOGO_ESPACO';
+}
+
 /** SKUs excluídos do catálogo activo (descontinuados). */
 export function isSkuDescontinuado(row) {
-  return isCaixaAguaGreen(row);
+  return isCaixaAguaGreen(row) || isCatalogoEspaco(row);
 }
 
 export function deriveLinhaHidraulica(row, abHit) {
@@ -1025,6 +1066,13 @@ export function classify3x3(row, abHit) {
       };
     }
     return { etapa: ETAPA.ACABAMENTOS, categoria: CATEGORIA_ACAB.PINTURA, linha: 'Pintura' };
+  }
+  if (isFechadura(row)) {
+    return {
+      etapa: ETAPA.ACABAMENTOS,
+      categoria: CATEGORIA_ACAB.PORTAS,
+      linha: acabLinha('Ferragens', deriveLinhaFechadura(row)),
+    };
   }
   if (isPortasEsquadrias(row)) {
     return { etapa: ETAPA.ACABAMENTOS, categoria: CATEGORIA_ACAB.PORTAS, linha: 'Esquadrias' };
@@ -1174,6 +1222,8 @@ export function expandTo4x3({ etapa, categoria, linha }) {
     return { subcategoria: 'Pintura', linha: lb };
   }
   if (categoria === CATEGORIA_ACAB.PORTAS) {
+    const parsed = parseAcabLinha(lb);
+    if (parsed) return parsed;
     return { subcategoria: 'Esquadrias', linha: lb };
   }
   if (categoria === CATEGORIA_ACAB.HIDRAULICA || categoria === CATEGORIA_ACAB.ELETRICA) {
