@@ -1,9 +1,11 @@
 /**
  * KPIs diários/mensais do dashboard — mesma base do Relatório de Margem.
  * Agrega por produto (calcularLinhasMargemVendas), não por pedido.
- * Recalcula com custos de hoje em cada corrida do job.
+ * Mês corrente: custo do cadastro (dinâmico). Mês fechado: congelado no snapshot.
  */
 import { format, getDate } from 'date-fns';
+import { shouldFreezeMargemMonthPayload } from '@/lib/margemCustoMode';
+import { getCurrentMonthKey } from '@/lib/dashboardVendasPeriod';
 import {
   calcularLinhasMargemVendas,
   calcularTotaisMargem,
@@ -209,9 +211,13 @@ export function computeDashboardKpiMargemForMonth({
     if (!closedThrough || refDate > closedThrough) closedThrough = refDate;
   }
 
+  const frozen = shouldFreezeMargemMonthPayload(prefix);
   const monthly = {
     monthKey: prefix,
     closedThrough,
+    frozen,
+    frozenAt: frozen ? new Date().toISOString() : null,
+    costBasis: frozen ? 'momento_venda' : 'cadastro_atual',
     salesByDay: salesByDayChart,
     profitByDay: profitByDayChart,
     monthlyTotals: {
@@ -223,6 +229,8 @@ export function computeDashboardKpiMargemForMonth({
       markupPercent: monthlyFromLinhas.markupPercent,
       pedidoCount: monthlyFromLinhas.pedidoCount,
       sourceVersion: DASHBOARD_KPI_MARGEM_SOURCE_VERSION,
+      frozen,
+      costBasis: frozen ? 'momento_venda' : 'cadastro_atual',
     },
     sourceVersion: DASHBOARD_KPI_MARGEM_SOURCE_VERSION,
   };

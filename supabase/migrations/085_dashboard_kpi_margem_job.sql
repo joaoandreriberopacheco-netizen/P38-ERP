@@ -13,7 +13,7 @@ declare
   v_anotacao jsonb;
 begin
   -- Vendas: npm run dashboard:kpi-margem-fechar (GitHub Actions 05:10 UTC ou manual).
-  -- Recalcula o mês com custos de hoje (mesma base do Relatório de Margem).
+  -- Vendas: mês corrente dinâmico; meses passados congelados (ver migration 086).
   perform public.dashboard_kpi_compute_estoque_dia(v_ontem);
 
   v_anotacao := public.job_fechar_p38_anotacao_ontem();
