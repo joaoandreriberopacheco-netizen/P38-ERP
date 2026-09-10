@@ -51,6 +51,19 @@ export default function ProdutoGaleriaModal({
     onClose?.();
   }, [onClose]);
 
+  const closeFromOverlay = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleClose();
+  }, [handleClose]);
+
+  /** Fecha ao tocar fora da área da foto (overlay escuro), sem propagar para a lista abaixo. */
+  const handleOverlayPointerDown = useCallback((e) => {
+    if (e.target.closest('[data-galeria-foto-area]')) return;
+    if (e.target.closest('button')) return;
+    closeFromOverlay(e);
+  }, [closeFromOverlay]);
+
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (e) => {
@@ -78,8 +91,13 @@ export default function ProdutoGaleriaModal({
       role="dialog"
       aria-modal="true"
       aria-label={produtoNome ? `Galeria: ${produtoNome}` : 'Galeria do produto'}
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
     >
-      <div className="flex items-center justify-between gap-3 px-4 py-3 text-white flex-shrink-0">
+      <div
+        className="flex items-center justify-between gap-3 px-4 py-3 text-white flex-shrink-0"
+        onPointerDown={handleOverlayPointerDown}
+      >
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium truncate">{produtoNome}</p>
           <p className="text-xs text-white/70">
@@ -93,11 +111,7 @@ export default function ProdutoGaleriaModal({
         </div>
         <button
           type="button"
-          onPointerDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleClose();
-          }}
+          onPointerDown={closeFromOverlay}
           className="h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center flex-shrink-0"
           aria-label="Fechar galeria"
         >
@@ -105,44 +119,49 @@ export default function ProdutoGaleriaModal({
         </button>
       </div>
 
-      <div className="flex-1 min-h-0 flex items-center justify-center px-2 pb-6">
-        <Carousel
-          setApi={setApi}
-          opts={{ align: 'center', loop: imagens.length > 1, startIndex: initialIndex }}
-          className="w-full max-w-3xl"
-        >
-          <CarouselContent className="-ml-0">
-            {imagens.map((img, idx) => (
-              <CarouselItem key={img.id || `${img.url}-${idx}`} className="pl-0 basis-full">
-                <div className="flex items-center justify-center h-[min(72vh,640px)] w-full px-2">
-                  <img
-                    src={img.url}
-                    alt=""
-                    className="max-h-full max-w-full object-contain select-none"
-                    draggable={false}
-                    loading={idx === 0 ? 'eager' : 'lazy'}
-                  />
-                </div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          {imagens.length > 1 && (
-            <>
-              <CarouselPrevious
-                className={cn(
-                  'left-2 border-white/20 bg-black/40 text-white hover:bg-black/60 hover:text-white',
-                  'disabled:opacity-30'
-                )}
-              />
-              <CarouselNext
-                className={cn(
-                  'right-2 border-white/20 bg-black/40 text-white hover:bg-black/60 hover:text-white',
-                  'disabled:opacity-30'
-                )}
-              />
-            </>
-          )}
-        </Carousel>
+      <div
+        className="flex-1 min-h-0 flex items-center justify-center px-2 pb-6"
+        onPointerDown={handleOverlayPointerDown}
+      >
+        <div data-galeria-foto-area className="w-full max-w-3xl">
+          <Carousel
+            setApi={setApi}
+            opts={{ align: 'center', loop: imagens.length > 1, startIndex: initialIndex }}
+            className="w-full max-w-3xl"
+          >
+            <CarouselContent className="-ml-0">
+              {imagens.map((img, idx) => (
+                <CarouselItem key={img.id || `${img.url}-${idx}`} className="pl-0 basis-full">
+                  <div className="flex items-center justify-center h-[min(72vh,640px)] w-full px-2">
+                    <img
+                      src={img.url}
+                      alt=""
+                      className="max-h-full max-w-full object-contain select-none"
+                      draggable={false}
+                      loading={idx === 0 ? 'eager' : 'lazy'}
+                    />
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            {imagens.length > 1 && (
+              <>
+                <CarouselPrevious
+                  className={cn(
+                    'left-2 border-white/20 bg-black/40 text-white hover:bg-black/60 hover:text-white',
+                    'disabled:opacity-30'
+                  )}
+                />
+                <CarouselNext
+                  className={cn(
+                    'right-2 border-white/20 bg-black/40 text-white hover:bg-black/60 hover:text-white',
+                    'disabled:opacity-30'
+                  )}
+                />
+              </>
+            )}
+          </Carousel>
+        </div>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 /** Evita fechar listas de busca / activar linhas ao fechar a galeria de fotos (portal no body). */
 let suppressRowActivationUntil = 0;
 
-export function armProdutoGaleriaRowGuard(ms = 450) {
+export function armProdutoGaleriaRowGuard(ms = 600) {
   suppressRowActivationUntil = Date.now() + ms;
 }
 
