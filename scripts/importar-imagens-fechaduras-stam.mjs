@@ -14,6 +14,7 @@ import { resolveStamFechaduraImagem, STAM_FECHADURA_IMAGENS } from './lib/stamFe
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const MAP_PATH = path.join(ROOT, 'docs', 'exports', 'inventario-fechaduras-merge-map.json');
+const MERGE_REPORT_PATH = path.join(ROOT, 'docs', 'exports', 'inventario-fechaduras-merge-report.json');
 const REPORT_PATH = path.join(ROOT, 'docs', 'exports', 'inventario-fechaduras-imagens-report.json');
 
 const apply = process.argv.includes('--apply');
@@ -103,6 +104,12 @@ async function upsertImagem(produtoId, imagem) {
 
 async function main() {
   const map = JSON.parse(fs.readFileSync(MAP_PATH, 'utf8'));
+  let enrolarSku = null;
+  if (fs.existsSync(MERGE_REPORT_PATH)) {
+    try {
+      enrolarSku = JSON.parse(fs.readFileSync(MERGE_REPORT_PATH, 'utf8')).enrolar_codigo || null;
+    } catch { /* ignore */ }
+  }
   const report = {
     generated_at: new Date().toISOString(),
     apply,
@@ -112,8 +119,11 @@ async function main() {
   };
 
   for (const row of map.items) {
-    const codigo = row.p38_codigo_interno;
-    const imagem = resolveStamFechaduraImagem(codigo, { item: row.item });
+    const codigo = row.item === 6 ? (row.p38_codigo_interno || enrolarSku || 'ENROLAR') : row.p38_codigo_interno;
+    const imagem = resolveStamFechaduraImagem(
+      row.item === 6 ? 'ENROLAR' : codigo,
+      { item: row.item },
+    );
     if (!imagem?.url) {
       report.missing.push({ item: row.item, codigo_interno: codigo, nome: row.nome || row.nome_sugerido });
       console.log(`✗ item ${row.item} ${codigo || '(novo)'} sem imagem`);

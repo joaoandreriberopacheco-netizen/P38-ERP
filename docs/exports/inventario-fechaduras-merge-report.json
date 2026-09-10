@@ -1,0 +1,240 @@
+{
+  "generated_at": "2026-09-10T00:26:12.816Z",
+  "apply": true,
+  "reuse": [
+    {
+      "item": 1,
+      "codigo_interno": "N60-DE4",
+      "id": "69bd5bb33e4a8881901f495b",
+      "estoque_anterior": -2,
+      "estoque_novo": 1,
+      "nome_novo": "FECHADURA STAM 803/33 ESP. OXIDADO E-COAT (G)",
+      "payload": {
+        "nome": "FECHADURA STAM 803/33 ESP. OXIDADO E-COAT (G)",
+        "campo_hierarquico_1": "FECHADURA",
+        "campo_hierarquico_2": "STAM",
+        "campo_hierarquico_4": "803/33",
+        "marca": "STAM",
+        "codigo_barras": "7893858403917",
+        "estoque_atual": 1,
+        "ativo": true,
+        "tags": [
+          "Ferragens > Fechaduras",
+          "Stam",
+          "Acabamento Oxidado E-Coat",
+          "Uso Entrada",
+          "mix-fechaduras-2026",
+          "FECHADURA",
+          "STAM"
+        ],
+        "categoria_id": "6a3e8eb06f284a2c3a9d7245",
+        "categoria_nome": "F - ESQUADRIAS E FERRAGENS"
+      }
+    },
+    {
+      "item": 2,
+      "codigo_interno": "9O8-0JI",
+      "id": "69bd5bb24e807a9a350d62b0",
+      "estoque_anterior": 0,
+      "estoque_novo": 2,
+      "nome_novo": "FECHADURA STAM 803/21 ESP. INOX (G) EXTERNA",
+      "payload": {
+        "nome": "FECHADURA STAM 803/21 ESP. INOX (G) EXTERNA",
+        "campo_hierarquico_1": "FECHADURA",
+        "campo_hierarquico_2": "STAM",
+        "campo_hierarquico_4": "803/21",
+        "marca": "STAM",
+        "codigo_barras": "7893858349482",
+        "estoque_atual": 2,
+        "ativo": true,
+        "tags": [
+          "Ferragens > Fechaduras",
+          "Stam",
+          "Acabamento Inox",
+          "mix-fechaduras-2026",
+          "FECHADURA",
+          "STAM"
+        ],
+        "categoria_id": "6a3e8eb06f284a2c3a9d7245",
+        "categoria_nome": "F - ESQUADRIAS E FERRAGENS"
+      }
+    },
+    {
+      "item": 3,
+      "codigo_interno": "JQ6-7GN",
+      "id": "69bd5bb36d4064a53ab76c46",
+      "estoque_anterior": 0,
+      "estoque_novo": 4,
+      "nome_novo": "FECHADURA STAM 803/33 ESP. PRETO FOSCO (G) EXTERNA",
+      "payload": {
+        "nome": "FECHADURA STAM 803/33 ESP. PRETO FOSCO (G) EXTERNA",
+        "campo_hierarquico_1": "FECHADURA",
+        "campo_hierarquico_2": "STAM",
+        "campo_hierarquico_4": "803/33",
+        "marca": "STAM",
+        "codigo_barras": "7893858563871",
+        "estoque_atual": 4,
+        "ativo": true,
+        "tags": [
+          "Ferragens > Fechaduras",
+          "Stam",
+          "Acabamento Preto Fosco",
+          "Uso Entrada",
+          "mix-fechaduras-2026",
+          "FECHADURA",
+          "STAM"
+        ],
+        "categoria_id": "6a3e8eb06f284a2c3a9d7245",
+        "categoria_nome": "F - ESQUADRIAS E FERRAGENS"
+      }
+    },
+    {
+      "item": 4,
+      "codigo_interno": "BK1-L8K",
+      "id": "69bd5bb1fcbaf805b8f1ae8c",
+      "estoque_anterior": 0,
+      "estoque_novo": 1,
+      "nome_novo": "FECHADURA STAM 1801/21 ESP. OXIDADO (G) E-COAT EXTERNA",
+      "payload": {
+        "nome": "FECHADURA STAM 1801/21 ESP. OXIDADO (G) E-COAT EXTERNA",
+        "campo_hierarquico_1": "FECHADURA",
+        "campo_hierarquico_2": "STAM",
+        "campo_hierarquico_4": "1801/21",
+        "marca": "STAM",
+        "codigo_barras": "7893858350860",
+        "estoque_atual": 1,
+        "ativo": true,
+        "tags": [
+          "Ferragens > Fechaduras",
+          "Stam",
+          "Residencial",
+          "Segurança",
+          "mix-fechaduras-2026",
+          "FECHADURA",
+          "STAM"
+        ],
+        "categoria_id": "6a3e8eb06f284a2c3a9d7245",
+        "categoria_nome": "F - ESQUADRIAS E FERRAGENS"
+      }
+    },
+    {
+      "item": 5,
+      "codigo_interno": "VZL-3J2",
+      "id": "69bd5bb200b4817202e9de95",
+      "estoque_anterior": 0,
+      "estoque_novo": 1,
+      "nome_novo": "FECHADURA STAM 803/10 ESP. OXIDADO E-COAT (G) EXTERNA",
+      "payload": {
+        "nome": "FECHADURA STAM 803/10 ESP. OXIDADO E-COAT (G) EXTERNA",
+        "campo_hierarquico_1": "FECHADURA",
+        "campo_hierarquico_2": "STAM",
+        "campo_hierarquico_4": "803/10",
+        "marca": "STAM",
+        "codigo_barras": "7893858350136",
+        "estoque_atual": 1,
+        "ativo": true,
+        "tags": [
+          "Ferragens > Fechaduras",
+          "Stam",
+          "Acabamento Oxidado",
+          "Uso Residencial",
+          "mix-fechaduras-2026",
+          "FECHADURA",
+          "STAM"
+        ],
+        "categoria_id": "6a3e8eb06f284a2c3a9d7245",
+        "categoria_nome": "F - ESQUADRIAS E FERRAGENS"
+      }
+    },
+    {
+      "item": 7,
+      "codigo_interno": "0EK-Y4Z",
+      "id": "69bd5bb37992803e2e83225f",
+      "estoque_anterior": 0,
+      "estoque_novo": 1,
+      "nome_novo": "FECHADURA STAM 823/03 ESP. INOX WC BANHEIRO",
+      "payload": {
+        "nome": "FECHADURA STAM 823/03 ESP. INOX WC BANHEIRO",
+        "campo_hierarquico_1": "FECHADURA",
+        "campo_hierarquico_2": "STAM",
+        "campo_hierarquico_4": "823/03",
+        "marca": "STAM",
+        "codigo_barras": "7893858318235",
+        "estoque_atual": 1,
+        "ativo": true,
+        "tags": [
+          "Ferragens > Fechaduras",
+          "Stam",
+          "Acabamento Inox",
+          "Uso Banheiro",
+          "mix-fechaduras-2026",
+          "FECHADURA",
+          "STAM"
+        ],
+        "categoria_id": "6a3e8eb06f284a2c3a9d7245",
+        "categoria_nome": "F - ESQUADRIAS E FERRAGENS"
+      }
+    },
+    {
+      "item": 8,
+      "codigo_interno": "YKQ-42N",
+      "id": "69bd5bb4c9bcf625c9307ddd",
+      "estoque_anterior": 0,
+      "estoque_novo": 1,
+      "nome_novo": "FECHADURA STAM CLASSIC 3100 (40MM) ROS. QUADRADA - EXT. INOX",
+      "payload": {
+        "nome": "FECHADURA STAM CLASSIC 3100 (40MM) ROS. QUADRADA - EXT. INOX",
+        "campo_hierarquico_1": "FECHADURA",
+        "campo_hierarquico_2": "STAM",
+        "campo_hierarquico_4": "3100",
+        "marca": "STAM",
+        "codigo_barras": "7893858382229",
+        "estoque_atual": 1,
+        "ativo": true,
+        "tags": [
+          "Ferragens > Fechaduras",
+          "Stam",
+          "Inox",
+          "Externo",
+          "Segurança",
+          "mix-fechaduras-2026",
+          "FECHADURA",
+          "STAM"
+        ],
+        "categoria_id": "6a3e8eb06f284a2c3a9d7245",
+        "categoria_nome": "F - ESQUADRIAS E FERRAGENS"
+      }
+    }
+  ],
+  "create": [
+    {
+      "item": 6,
+      "codigo_interno": "ZL9-11D",
+      "nome": "FECHADURA STAM PARA PORTA DE ENROLAR",
+      "estoque": 1,
+      "ean": "7893858560337"
+    }
+  ],
+  "deactivate": [
+    {
+      "codigo_interno": "J6E-L9K",
+      "id": "69bd5bb22a3d36583d1be48d",
+      "nome": "FECHADURA STAM 803/21 ESP. PRETO FOSCO (G)",
+      "motivo": "Fora do mix — sem foto/inventário"
+    },
+    {
+      "codigo_interno": "W9E-NJA",
+      "id": "69bd5bb3dc454bba2f57cd4e",
+      "nome": "FECHADURA STAM 803/35 ESP. INOX (G)",
+      "motivo": "Fora do mix — sem foto/inventário"
+    },
+    {
+      "codigo_interno": "O39-ONH",
+      "id": "69bd5bb42b552b88dff25089",
+      "nome": "FECHADURA SOPRANO 40 X 53 REFINATA A",
+      "motivo": "Fora do mix — sem foto/inventário"
+    }
+  ],
+  "errors": [],
+  "enrolar_codigo": "ZL9-11D"
+}

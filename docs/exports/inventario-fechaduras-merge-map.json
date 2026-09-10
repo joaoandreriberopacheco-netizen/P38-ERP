@@ -59,11 +59,12 @@
     {
       "item": 6,
       "action": "create",
-      "p38_codigo_interno": null,
+      "p38_codigo_interno": "ZL9-11D",
       "ref": null,
       "qtd": 1,
       "nome_sugerido": "FECHADURA STAM PARA PORTA DE ENROLAR",
-      "status": "confirmado — João: item 6 é porta de enrolar (SKU novo)"
+      "status": "confirmado — João: item 6 é porta de enrolar (SKU novo)",
+      "ean": "7893858560337"
     },
     {
       "item": 7,
@@ -90,14 +91,46 @@
     "fonte": "Stam / revendedores — assets em docs/assets/fechaduras-stam/",
     "script": "npm run import:imagens-fechaduras-stam",
     "por_item": [
-      { "item": 1, "sku": "N60-DE4", "asset": "01-803-33-oxidado.jpg" },
-      { "item": 2, "sku": "9O8-0JI", "asset": "02-803-21-inox.jpg" },
-      { "item": 3, "sku": "JQ6-7GN", "asset": "03-803-33-preto-fosco.jpg" },
-      { "item": 4, "sku": "BK1-L8K", "asset": "04-1801-21-oxidado.jpg" },
-      { "item": 5, "sku": "VZL-3J2", "asset": "05-803-10-oxidado.jpg" },
-      { "item": 6, "sku": "(novo enrolar)", "asset": "06-porta-enrolar.jpg" },
-      { "item": 7, "sku": "0EK-Y4Z", "asset": "07-823-03-banheiro.jpeg" },
-      { "item": 8, "sku": "YKQ-42N", "asset": "08-3100-inox.jpg" }
+      {
+        "item": 1,
+        "sku": "N60-DE4",
+        "asset": "01-803-33-oxidado.jpg"
+      },
+      {
+        "item": 2,
+        "sku": "9O8-0JI",
+        "asset": "02-803-21-inox.jpg"
+      },
+      {
+        "item": 3,
+        "sku": "JQ6-7GN",
+        "asset": "03-803-33-preto-fosco.jpg"
+      },
+      {
+        "item": 4,
+        "sku": "BK1-L8K",
+        "asset": "04-1801-21-oxidado.jpg"
+      },
+      {
+        "item": 5,
+        "sku": "VZL-3J2",
+        "asset": "05-803-10-oxidado.jpg"
+      },
+      {
+      "item": 6,
+      "sku": "ZL9-11D",
+        "asset": "06-porta-enrolar.jpg"
+      },
+      {
+        "item": 7,
+        "sku": "0EK-Y4Z",
+        "asset": "07-823-03-banheiro.jpeg"
+      },
+      {
+        "item": 8,
+        "sku": "YKQ-42N",
+        "asset": "08-3100-inox.jpg"
+      }
     ]
   },
   "extras_fotos": [],
