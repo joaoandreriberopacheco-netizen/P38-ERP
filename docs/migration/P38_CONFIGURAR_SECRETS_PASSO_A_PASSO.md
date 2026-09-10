@@ -76,6 +76,17 @@ Confirma que a URL contém:
 
 ---
 
+### 1.5 `SUPABASE_SERVICE_ROLE_KEY`
+
+1. Entra em: https://supabase.com/dashboard/project/zhonvxkkqabfdyehyxpu/settings/api  
+2. Secção **Project API keys**  
+3. Linha **`service_role`** · **`secret`**  
+4. Clica **Reveal** e copia a chave inteira (começa por `eyJ...`)
+
+**Dá acesso a:** jobs noturnos no GitHub (fecho KPI margem do dashboard, provisionamento de utilizadores Auth). **Nunca** expor no frontend nem em variáveis `VITE_*`.
+
+---
+
 ## PARTE 2 — Obter os valores no Vercel
 
 ### 2.1 `VERCEL_TOKEN`
@@ -124,6 +135,7 @@ Confirma que a URL contém:
 | `VITE_SUPABASE_ANON_KEY` | Parte 1.2 |
 | `DATABASE_URL` | Parte 1.3 |
 | `SUPABASE_ACCESS_TOKEN` | Parte 1.4 |
+| `SUPABASE_SERVICE_ROLE_KEY` | Parte 1.5 |
 | `VERCEL_TOKEN` | Parte 2.1 |
 | `VERCEL_ORG_ID` | Parte 2.2 |
 | `VERCEL_PROJECT_ID` | Parte 2.3 |
@@ -135,7 +147,7 @@ Confirma que a URL contém:
 | `VITE_P38_USE_SUPABASE_AUTH` | `true` |
 | `VITE_P38_ENABLE_GOOGLE_LOGIN` | deixar vazio ou `true` |
 
-Quando terminares, deves ver **7 secrets** (ou 9 com os opcionais) na lista do GitHub.
+Quando terminares, deves ver **8 secrets** (ou 10 com os opcionais) na lista do GitHub.
 
 ---
 
@@ -143,7 +155,7 @@ Quando terminares, deves ver **7 secrets** (ou 9 com os opcionais) na lista do G
 
 1. Abre: https://cursor.com/dashboard/cloud-agents/environments/e/334db7fa-cbaa-49eb-9dd0-1c1b7a206ced  
 2. Secção **Secrets**  
-3. Adiciona **os mesmos 7 secrets** com os **mesmos nomes** e **mesmos valores** da Parte 3  
+3. Adiciona **os mesmos 8 secrets** com os **mesmos nomes** e **mesmos valores** da Parte 3  
 
 **Importante:**
 - Usa nomes **exactos** (`DATABASE_URL`, não `database_url`)

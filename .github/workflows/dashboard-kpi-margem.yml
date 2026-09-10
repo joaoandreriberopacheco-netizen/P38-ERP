@@ -30,6 +30,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Verificar secrets obrigatórios
+        run: |
+          if [ -z "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" ]; then
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY em falta nos GitHub Secrets."
+            echo "Supabase → Project Settings → API → service_role → gravar em"
+            echo "https://github.com/joaoandreriberopacheco-netizen/P38-ERP/settings/secrets/actions"
+            echo "Guia: docs/migration/P38_CONFIGURAR_SECRETS_PASSO_A_PASSO.md §1.5"
+            exit 1
+          fi
+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'

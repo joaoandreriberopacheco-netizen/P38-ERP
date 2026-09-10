@@ -27,11 +27,13 @@ Documento para a equipa: como o P38 trata **resultado histórico** (mês encerra
 2. **Hoje** — o browser soma só o delta do dia com a mesma fórmula.
 3. **Mês passado** — lê o snapshot com `frozen: true`; o job **não reescreve**.
 
-Comando do job (também em GitHub Actions, ~05:10 UTC):
+Comando do job (também em GitHub Actions **Dashboard KPI margem**, ~05:10 UTC / 00:10 Tabatinga):
 
 ```bash
 npm run dashboard:kpi-margem-fechar
 ```
+
+**GitHub Secrets obrigatórios** para o job automático: `SUPABASE_SERVICE_ROLE_KEY` (+ `VITE_SUPABASE_URL` recomendado). Ver [`docs/migration/P38_CONFIGURAR_SECRETS_PASSO_A_PASSO.md`](migration/P38_CONFIGURAR_SECRETS_PASSO_A_PASSO.md) §1.5.
 
 ### Relatório de Margem
 
