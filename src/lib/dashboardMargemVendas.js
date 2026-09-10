@@ -3,11 +3,10 @@
  */
 import { format, getDate, isAfter, isBefore } from 'date-fns';
 import {
-  calcularTotaisPedidoMargem,
   getDataVendaMargem,
   pedidoElegivelMargem,
 } from '@/lib/relatorioMargemCalculos';
-import { buildIndiceDevolucaoTrocaMargem } from '@/lib/relatorioMargemTroca';
+import { calcularMargemKpiIntervalo } from '@/lib/dashboardKpiMargemCompute';
 import {
   buildMonthBucket,
   formatTemporalCutoffLabel,
@@ -47,6 +46,7 @@ function buildMonthlyAndDailyBuckets(monthBuckets6) {
       salesNet: 0,
       cost: 0,
       profit: 0,
+      markupPercent: 0,
     };
   });
 
@@ -72,12 +72,6 @@ export function computeDashboardVendasMetricsMargem({
   const windowStart = getTemporalStartForMonth(monthBuckets6[0]?.key);
   const windowEnd = getTemporalCutoffForMonth(selectedMonthKey);
 
-  const prodMap = (produtos || []).reduce((acc, produto) => {
-    if (produto?.id) acc[produto.id] = produto;
-    return acc;
-  }, {});
-
-  const indiceTrocas = buildIndiceDevolucaoTrocaMargem(devolucoesTroca);
   const sealedBucketData = Object.keys(sealedMonths || {}).length
     ? mergeSealedVendasIntoBuckets(monthBuckets6, sealedMonths)
     : buildMonthlyAndDailyBuckets(monthBuckets6);
@@ -93,18 +87,36 @@ export function computeDashboardVendasMetricsMargem({
     return true;
   });
 
-  eligibleSales.forEach((sale) => {
+  const liveSalesByMonthDay = {};
+  for (const sale of eligibleSales) {
     const saleDate = getDataVendaMargem(sale);
-    if (!saleDate) return;
+    if (!saleDate) continue;
 
     const monthKey = format(saleDate, 'yyyy-MM');
-    if (!monthlyTotals[monthKey]) return;
-    if (!saleWithinMonthTemporalCut(saleDate, monthKey)) return;
+    if (!monthlyTotals[monthKey]) continue;
+    if (!saleWithinMonthTemporalCut(saleDate, monthKey)) continue;
 
     const day = getDate(saleDate);
-    const totals = calcularTotaisPedidoMargem(sale, prodMap, {
-      indiceTrocas,
-      pedidosOrigemMap: pedidosOrigemTroca,
+    const bucketKey = `${monthKey}|${day}`;
+    if (!liveSalesByMonthDay[bucketKey]) {
+      liveSalesByMonthDay[bucketKey] = { monthKey, day, sales: [] };
+    }
+    liveSalesByMonthDay[bucketKey].sales.push(sale);
+  }
+
+  for (const { monthKey, day, sales: daySales } of Object.values(liveSalesByMonthDay)) {
+    const [y, m] = monthKey.split('-').map(Number);
+    const intervalo = {
+      from: new Date(y, m - 1, day, 0, 0, 0, 0),
+      to: new Date(y, m - 1, day, 23, 59, 59, 999),
+    };
+    const totals = calcularMargemKpiIntervalo({
+      pedidos: daySales,
+      produtos,
+      devolucoesTroca,
+      pedidosOrigemTroca,
+      intervalo,
+      pedidoCount: daySales.length,
     });
 
     salesByMonthDay[monthKey][day] = (salesByMonthDay[monthKey][day] || 0) + totals.salesNet;
@@ -114,7 +126,14 @@ export function computeDashboardVendasMetricsMargem({
     monthlyTotals[monthKey].salesNet += totals.salesNet;
     monthlyTotals[monthKey].cost += totals.cost;
     monthlyTotals[monthKey].profit += totals.profit;
-  });
+  }
+
+  for (const bucket of monthBuckets6) {
+    const mt = monthlyTotals[bucket.key];
+    if (!mt) continue;
+    mt.markupPercent =
+      mt.cost > 0 ? Math.round((mt.profit / mt.cost) * 10000) / 100 : 0;
+  }
 
   const cutoffDay = getCutoffCalendarDay(selectedMonthKey);
   const dailyData = Array.from({ length: selectedBucket.daysInMonth }, (_, idx) => {
@@ -156,6 +175,11 @@ export function computeDashboardVendasMetricsMargem({
 
   const previousMonthKey = monthBuckets6[monthBuckets6.length - 2]?.key;
   const selectedProfit = Number(monthlyTotals[selectedMonthKey]?.profit || 0);
+  const selectedCost = Number(monthlyTotals[selectedMonthKey]?.cost || 0);
+  const selectedMarkupPercent =
+    selectedCost > 0
+      ? Math.round((selectedProfit / selectedCost) * 10000) / 100
+      : Number(monthlyTotals[selectedMonthKey]?.markupPercent || 0);
   const previousProfit = Number(monthlyTotals[previousMonthKey]?.profit || 0);
   const ratioPercent =
     previousProfit > 0 ? (selectedProfit / previousProfit) * 100 : selectedProfit > 0 ? 100 : 0;
@@ -226,7 +250,8 @@ export function computeDashboardVendasMetricsMargem({
       selectedProfit,
       previousProfit,
       selectedSalesNet: Number(monthlyTotals[selectedMonthKey]?.salesNet || 0),
-      selectedCost: Number(monthlyTotals[selectedMonthKey]?.cost || 0),
+      selectedCost,
+      selectedMarkupPercent,
       ratioPercent,
       ringFill,
       ringOverflow,

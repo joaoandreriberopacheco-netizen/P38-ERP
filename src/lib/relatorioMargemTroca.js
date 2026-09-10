@@ -85,7 +85,15 @@ export function calcularDeducaoLucroDevolvidoMargem(devolucao, pedidoOrigem, pro
     if (qtdOriginal <= 0 || qtdDevolvida <= 0) continue;
 
     const product = produtoId ? prodMap[produtoId] : null;
-    const custoUnit = resolverCustoUnitarioMargem(item, product);
+    const costMode =
+      typeof deps.margemCustoModeParaVenda === 'function'
+        ? deps.margemCustoModeParaVenda(pedidoOrigem)
+        : undefined;
+    const custoUnit = resolverCustoUnitarioMargem(
+      item,
+      product,
+      costMode ? { costMode } : undefined,
+    );
     const receitaLinha = alocacoesOrigem[idx]?.receita_liquida ?? 0;
     const lucroLinhaOriginal = receitaLinha - roundMoney(custoUnit * qtdOriginal);
     // Troca no caixa: deduz o lucro integral já contabilizado na linha devolvida (pedido origem).

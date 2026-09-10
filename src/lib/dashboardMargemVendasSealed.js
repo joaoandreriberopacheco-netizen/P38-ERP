@@ -14,6 +14,7 @@ function emptyMonthlyTotals() {
     salesNet: 0,
     cost: 0,
     profit: 0,
+    markupPercent: 0,
   };
 }
 
@@ -34,12 +35,17 @@ export function mergeSealedVendasIntoBuckets(monthBuckets6, sealedMonths = {}) {
     if (!seal?.monthlyTotals) continue;
 
     const mt = seal.monthlyTotals;
+    const cost = Number(mt.cost) || 0;
+    const profit = Number(mt.profit) || 0;
     monthlyTotals[bucket.key] = {
       salesGross: Number(mt.salesGross) || 0,
       discounts: Number(mt.discounts) || 0,
       salesNet: Number(mt.salesNet) || 0,
-      cost: Number(mt.cost) || 0,
-      profit: Number(mt.profit) || 0,
+      cost,
+      profit,
+      markupPercent:
+        Number(mt.markupPercent) ||
+        (cost > 0 ? Math.round((profit / cost) * 10000) / 100 : 0),
     };
 
     const salesByDay = seal.salesByDay || {};

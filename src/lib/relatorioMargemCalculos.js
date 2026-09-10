@@ -20,6 +20,11 @@ import {
   resolverDevolucaoTrocaPedidoMargem,
   valorSubstitutosTrocaMargem,
 } from '@/lib/relatorioMargemTroca';
+import {
+  MARGEM_CUSTO_CADASTRO_ATUAL,
+  margemCustoModeParaVenda,
+} from '@/lib/margemCustoMode';
+
 
 export const CUSTO_MARGEM_CAMPOS = [
   {
@@ -144,8 +149,25 @@ export function resolveMargemProdutoKey(item = {}) {
   return `nome:${nome || 'sem-nome'}`;
 }
 
-/** Componentes de custo unitário na unidade base — cadastro atual (preços de hoje). */
-export function resolveCustoComponentesUnitBaseMargem(product = null, item = {}) {
+/** Componentes de custo unitário na unidade base — cadastro ou custo na venda. */
+export function resolveCustoComponentesUnitBaseMargem(
+  product = null,
+  item = {},
+  options = {},
+) {
+  const costMode = options.costMode || MARGEM_CUSTO_CADASTRO_ATUAL;
+  const momentoUnit = resolveCustoUnitarioMargem(item, product, { costMode });
+  if (costMode !== MARGEM_CUSTO_CADASTRO_ATUAL && momentoUnit > 0) {
+    return {
+      valor_compra: momentoUnit,
+      custo_avaria: 0,
+      custo_frete: 0,
+      custo_imposto1: 0,
+      custo_imposto2: 0,
+      custo_outros: 0,
+    };
+  }
+
   if (product) {
     const valorCompraBruto = normalizeCustoNum(product.valor_compra);
     const desconto = resolveValorDescontoCompraPadraoFator1(product, valorCompraBruto);
@@ -298,8 +320,15 @@ export function resolvePrecoVendaLiquidoUnitarioMargem(row = {}) {
   return roundMoney(receita / qtd);
 }
 
-/** Custo unitário na unidade base — lê `preco_custo_calculado` (SQL). */
-export function resolveCustoUnitarioMargem(item = {}, product = null) {
+/** Custo unitário na unidade base — cadastro ou `custo_unitario_momento` na venda. */
+export function resolveCustoUnitarioMargem(item = {}, product = null, options = {}) {
+  const costMode = options.costMode || MARGEM_CUSTO_CADASTRO_ATUAL;
+  if (costMode !== MARGEM_CUSTO_CADASTRO_ATUAL) {
+    const momento = normalizeCustoNum(
+      item.custo_unitario_momento ?? item.custo_unitario ?? item.custo_calculado,
+    );
+    if (momento > 0) return roundMoney(momento);
+  }
   if (product) {
     return roundMoney(resolveCustoTotalUnitBaseProduto(product));
   }
@@ -410,6 +439,7 @@ function margemTrocaDeps() {
     resolverTotalLinhaVenda,
     resolveMargemProdutoKey,
     itensPedidoValidos,
+    margemCustoModeParaVenda,
   };
 }
 
@@ -433,6 +463,7 @@ export function calcularTotaisPedidoMargem(
   for (let index = 0; index < itens.length; index += 1) {
     const item = itens[index];
     const product = item.produto_id ? prodMap[item.produto_id] : null;
+    const costMode = margemCustoModeParaVenda(pedido);
     const alloc = alocacoes[index] || {
       receita_liquida: 0,
       total_recebido: 0,
@@ -448,7 +479,9 @@ export function calcularTotaisPedidoMargem(
 
     receita_liquida += alloc.receita_liquida;
     total_desconto_venda += alloc.total_desconto_venda;
-    custo_total += roundMoney(resolveCustoUnitarioMargem(item, product) * quantidadeBase);
+    custo_total += roundMoney(
+      resolveCustoUnitarioMargem(item, product, { costMode }) * quantidadeBase,
+    );
   }
 
   receita_liquida = roundMoney(receita_liquida);
@@ -537,7 +570,8 @@ export function calcularLinhasMargemVendas(
       const item = itens[index];
       const prodKey = resolveMargemProdutoKey(item);
       const product = item.produto_id ? prodMap[item.produto_id] : null;
-      const custoCalculado = resolveCustoUnitarioMargem(item, product);
+      const costMode = margemCustoModeParaVenda(sale);
+      const custoCalculado = resolveCustoUnitarioMargem(item, product, { costMode });
       const alloc = alocacoes[index] || {
         total_recebido: 0,
         total_desconto_venda: 0,
@@ -569,7 +603,7 @@ export function calcularLinhasMargemVendas(
       entry.total_desconto_venda += alloc.total_desconto_venda;
       acumularCustoComponentesMargem(
         entry,
-        resolveCustoComponentesUnitBaseMargem(product, item),
+        resolveCustoComponentesUnitBaseMargem(product, item, { costMode }),
         quantidadeBase,
       );
     }

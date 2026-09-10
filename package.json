@@ -88,6 +88,7 @@
     "abcd:enable-noturno": "node scripts/set-abcd-job-noturno-secret.mjs",
     "estoque:atualizar-metas": "node scripts/invoke-atualizar-metas-estoque.mjs",
     "dashboard:kpi-backfill": "node scripts/dashboard-kpi-backfill.mjs",
+    "dashboard:kpi-margem-fechar": "npx vite-node scripts/dashboard-kpi-margem-fechar.mjs",
     "dashboard:celulas-backfill": "node scripts/dashboard-celulas-backfill.mjs",
     "dashboard:celulas-sanity": "node scripts/dashboard-celulas-sanity.mjs",
     "anotacao:vendas-gestao-backfill": "node scripts/anotacao-vendas-gestao-backfill.mjs",

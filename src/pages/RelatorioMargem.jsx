@@ -21,6 +21,7 @@ import { resolveCommercialDisplay, formatCommercialQuantity } from '@/lib/produc
 import { fetchPedidosVendaParaMargem, fetchPedidosOrigemTrocaMargem } from '@/lib/fetchPedidosVenda90d';
 import { base44 } from '@/api/base44Client';
 import { fetchAllProdutosCatalogo } from '@/lib/fetchProdutosAtivos';
+import { margemCustoModeParaIntervalo, margemCustoModeParaVenda } from '@/lib/margemCustoMode';
 import {
   pedidoElegivelMargem,
   alocarReceitaPedidoNasLinhas,
@@ -798,6 +799,12 @@ export default function RelatorioMargemVendas() {
     }
   };
 
+  const margemCostMode = useMemo(
+    () => margemCustoModeParaIntervalo(dateRange?.from, dateRange?.to),
+    [dateRange?.from, dateRange?.to],
+  );
+  const margemMesFechado = margemCostMode === 'momento_venda';
+
   const processedData = useMemo(() => {
     if (!sales.length || !products.length) return [];
 
@@ -815,6 +822,7 @@ export default function RelatorioMargemVendas() {
       resolverTotalLinhaVenda,
       resolveMargemProdutoKey,
       itensPedidoValidos,
+      margemCustoModeParaVenda,
     };
 
     sales.forEach(sale => {
@@ -842,7 +850,8 @@ export default function RelatorioMargemVendas() {
          const prodKey = resolveMargemProdutoKey(item);
          const prodId = item.produto_id;
          const product = prodId ? prodMap[prodId] : null;
-         const custoCalculado = resolveCustoUnitarioMargem(item, product);
+         const costMode = margemCustoModeParaVenda(sale);
+         const custoCalculado = resolveCustoUnitarioMargem(item, product, { costMode });
 
          if (!reportMap[prodKey]) {
           const unidadeInicial = product
@@ -883,7 +892,7 @@ export default function RelatorioMargemVendas() {
          entry.total_desconto_venda += alloc.total_desconto_venda;
          acumularCustoComponentesMargem(
            entry,
-           resolveCustoComponentesUnitBaseMargem(product, item),
+           resolveCustoComponentesUnitBaseMargem(product, item, { costMode }),
            quantidadeBase,
          );
        });
@@ -1995,6 +2004,13 @@ export default function RelatorioMargemVendas() {
                     {periodLabel ? (
                       <span className="truncate text-muted-foreground">{periodLabel}</span>
                     ) : null}
+                    {margemMesFechado ? (
+                      <span className="truncate text-amber-600 dark:text-amber-400/90">
+                        mês fechado · custo na venda
+                      </span>
+                    ) : (
+                      <span className="truncate text-muted-foreground">mês corrente · custos de hoje</span>
+                    )}
                   </div>
                   <p className="desktop-layout:hidden text-xs text-muted-foreground truncate">
                     {productCount} produto{productCount === 1 ? '' : 's'}
