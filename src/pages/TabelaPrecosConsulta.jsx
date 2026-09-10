@@ -146,10 +146,7 @@ export default function TabelaPrecosConsulta() {
   return (
     <div className="flex flex-col h-full min-h-0 overflow-hidden w-full bg-card relative">
 
-      {/* Área rolável: título/chips sobem; busca fica colada no topo */}
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain pb-[var(--p38-scroll-pad-below-nav)] desktop-layout:pb-4">
-
-        <div className="px-4 pt-3 pb-2 space-y-3">
+      <div className="flex-shrink-0 px-4 pt-3 pb-2 space-y-3">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <P38PageHeader
@@ -183,21 +180,27 @@ export default function TabelaPrecosConsulta() {
               ))}
             </div>
           )}
-        </div>
+      </div>
 
-        <div className="sticky top-0 z-20 bg-card/95 backdrop-blur-sm border-b border-border/40 px-4 py-2.5 shadow-sm">
-          <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
-            <Input
-              placeholder="Nome ou código (espaço ou ; para combinar termos)..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className={cn(p38Mobile.searchInput, 'text-sm pl-10 w-full')}
-              aria-label="Buscar produto por nome ou código"
-            />
-          </div>
+      <div className="flex-shrink-0 z-20 bg-card/95 backdrop-blur-sm border-b border-border/40 px-4 py-2.5 shadow-sm">
+        <div className="relative">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
+          <Input
+            placeholder="Nome ou código (espaço ou ; para combinar termos)..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className={cn(p38Mobile.searchInput, 'text-sm pl-10 w-full')}
+            aria-label="Buscar produto por nome ou código"
+          />
         </div>
+        {searchTerm.trim() && produtosFiltrados.length > 0 && (
+          <p className="mt-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            {produtosFiltrados.length} resultado{produtosFiltrados.length > 1 ? 's' : ''}
+          </p>
+        )}
+      </div>
 
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain pb-[var(--p38-scroll-pad-below-nav)] desktop-layout:pb-4">
         {produtosFiltrados.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
             <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center mb-3">

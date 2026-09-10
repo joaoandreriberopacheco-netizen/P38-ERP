@@ -569,25 +569,30 @@ export default function OrcamentoPanel({
 
           <div className="relative flex flex-1 min-h-0 flex-col px-3">
             <div className="flex-1 min-h-0 flex overflow-hidden">
-              <div className="flex-1 min-h-0 flex flex-col overflow-hidden pb-28 md:pb-5">
-                <div className="flex-1 min-h-0 overflow-y-auto space-y-4 py-1">
-                  <QuickBudgetProductSearch
-                    inputRef={searchInputRef}
-                    query={query}
-                    onQueryChange={setQuery}
-                    produtos={produtos}
-                    tabelaPreco={tabelaSelecionada}
-                    onAddProduct={handleSelectProduct}
-                    onSubmitFirstResult={handleSelectProduct}
-                  />
+              <div
+                className={cn(
+                  'flex-1 min-h-0 flex flex-col overflow-hidden py-1',
+                  items.length > 0 ? 'pb-28 md:pb-5' : 'pb-3 md:pb-5',
+                )}
+              >
+                <QuickBudgetProductSearch
+                  inputRef={searchInputRef}
+                  query={query}
+                  onQueryChange={setQuery}
+                  produtos={produtos}
+                  tabelaPreco={tabelaSelecionada}
+                  onAddProduct={handleSelectProduct}
+                  onSubmitFirstResult={handleSelectProduct}
+                  expanded
+                  className="flex-1 min-h-0"
+                />
 
-                  {items.length === 0 && (
-                    <div className={cn('rounded-[28px] px-4 py-4 flex items-center gap-3 text-xs text-muted-foreground', P38_FIELD_SURFACE, 'bg-card dark:bg-background')}>
-                      <Search className="w-4 h-4 shrink-0" />
-                      Busque produtos, salve, imprima (cupom ou A4) ou envie ao PDV.
-                    </div>
-                  )}
-                </div>
+                {items.length === 0 && !query.trim() && (
+                  <div className={cn('mt-3 flex-shrink-0 rounded-[28px] px-4 py-4 flex items-center gap-3 text-xs text-muted-foreground', P38_FIELD_SURFACE, 'bg-card dark:bg-background')}>
+                    <Search className="w-4 h-4 shrink-0" />
+                    Busque produtos, salve, imprima (cupom ou A4) ou envie ao PDV.
+                  </div>
+                )}
               </div>
 
               {items.length > 0 && !isMobile && (
