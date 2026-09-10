@@ -7,18 +7,25 @@ import {
   listarLancamentosPedidoCompra,
   temLancamentoPagoParaPedido,
 } from '@/lib/pedidoCompraFinanceiro';
+import { roundQuantidade } from '@/lib/parseQuantidadeInput';
 import {
   pickDefaultPurchaseUnit,
-  commercialQuantityFromBase,
+  applyPurchaseUnitOptionToItem,
+  syncItemQuantidadeBaseComercial,
   syncItemDescontoApresentacao,
   calcTotalItemCompraPedido,
   normalizeItemToCanonicalFactorOne,
   normalizePedidoCompraItemCustoLiquidoParaPersist,
-  custoApresentacaoParaFator1,
   resolveValorDescontoCompraPadraoFator1,
   resolveDescontoPctCompraProduto,
 } from '@/lib/productUnits';
 import { savePedidoCompraItem } from '@/functions/savePedidoCompraItem';
+
+function formatLinhaQuantidadeItem(item = {}) {
+  const qty = roundQuantidade(Number(item.quantidade) || 0);
+  const unidade = item.unidade_medida || item.unidade_apresentacao || 'UN';
+  return `${qty.toLocaleString('pt-BR', { maximumFractionDigits: 6 })} ${unidade}`;
+}
 
 export function formatNotaHistoricoTroca({
   itemOriginal = {},
@@ -33,7 +40,7 @@ export function formatNotaHistoricoTroca({
   const sinal = diff > 0 ? '+' : diff < 0 ? '-' : '';
   const diffAbs = Math.abs(diff).toFixed(2);
   const partes = [
-    `[Troca de item: ${nomeAntigo} → ${nomeNovo}`,
+    `[Troca de item: ${nomeAntigo} (${formatLinhaQuantidadeItem(itemOriginal)}) → ${nomeNovo} (${formatLinhaQuantidadeItem(itemNovo)})`,
     `Diferença: ${sinal}R$ ${diffAbs}`,
     motivo ? `Motivo: ${motivo}` : '',
     responsavel ? `Por: ${responsavel}` : '',
@@ -42,7 +49,7 @@ export function formatNotaHistoricoTroca({
   return `\n${partes.join(' | ')}]`;
 }
 
-export function buildItemSubstitutoCompra(itemOriginal = {}, produtoNovo = {}) {
+export function buildItemSubstitutoCompra(itemOriginal = {}, produtoNovo = {}, substituicao = {}) {
   if (!itemOriginal?.produto_id || !produtoNovo?.id) {
     throw new Error('Item original ou produto substituto inválido.');
   }
@@ -50,53 +57,65 @@ export function buildItemSubstitutoCompra(itemOriginal = {}, produtoNovo = {}) {
     throw new Error('Escolha um produto diferente do item atual.');
   }
 
-  const opt = pickDefaultPurchaseUnit(produtoNovo);
-  const fatorPu = Number(opt?.fator_conversao) || 1;
-  const custoF1 = opt
-    ? custoApresentacaoParaFator1(opt.valor_unitario ?? 0, fatorPu)
-    : Number(produtoNovo.valor_compra) || 0;
+  const unitOption = substituicao.unitOption || pickDefaultPurchaseUnit(produtoNovo);
+  if (!unitOption) {
+    throw new Error('Produto substituto sem unidade de compra configurada.');
+  }
 
-  const quantidadeBase =
-    Number(itemOriginal.quantidade_base) > 0
-      ? Number(itemOriginal.quantidade_base)
-      : (Number(itemOriginal.quantidade) || 0) * (Number(itemOriginal.fator_conversao) || 1);
+  const quantidadeComercial = roundQuantidade(
+    substituicao.quantidadeComercial != null && Number(substituicao.quantidadeComercial) > 0
+      ? Number(substituicao.quantidadeComercial)
+      : Number(itemOriginal.quantidade) || 1,
+  );
+  if (quantidadeComercial <= 0) {
+    throw new Error('Informe uma quantidade maior que zero.');
+  }
 
-  let item = {
-    ...itemOriginal,
-    produto_id: produtoNovo.id,
-    produto_nome: produtoNovo.nome,
-    codigo_produto: produtoNovo.codigo_interno || produtoNovo.codigo_barras || '',
-    unidade_medida: opt?.unidade || produtoNovo.unidade_compra || produtoNovo.unidade_principal || 'UN',
-    fator_conversao: fatorPu,
-    quantidade_base: roundToTwoDecimals(quantidadeBase),
-    quantidade: commercialQuantityFromBase(
-      quantidadeBase,
-      fatorPu,
-      opt?.unidade || produtoNovo.unidade_compra || 'UN',
-    ),
-    custo_unitario: roundToTwoDecimals(custoF1),
-    valor_desconto_item: resolveValorDescontoCompraPadraoFator1(produtoNovo, custoF1),
-    desconto_pct_item: resolveDescontoPctCompraProduto(produtoNovo, custoF1),
-    produto_unidade_id: opt?.produto_unidade_id || opt?.id || itemOriginal.produto_unidade_id || '',
-  };
+  let item = applyPurchaseUnitOptionToItem(
+    {
+      ...itemOriginal,
+      produto_id: produtoNovo.id,
+      produto_nome: produtoNovo.nome,
+      codigo_produto: produtoNovo.codigo_interno || produtoNovo.codigo_barras || '',
+      quantidade: quantidadeComercial,
+      valor_desconto_item: 0,
+      desconto_pct_item: 0,
+    },
+    produtoNovo,
+    unitOption,
+    { preserveQuantidadeBase: false, usarCustoSugerido: true },
+  );
 
+  item = syncItemQuantidadeBaseComercial(item);
+  item.valor_desconto_item = resolveValorDescontoCompraPadraoFator1(
+    produtoNovo,
+    Number(item.custo_unitario) || 0,
+  );
+  item.desconto_pct_item = resolveDescontoPctCompraProduto(produtoNovo, Number(item.custo_unitario) || 0);
   item = syncItemDescontoApresentacao(item);
+
   const cost = roundToTwoDecimals(Number(item.custo_unitario) || 0);
   const descUnit = roundToTwoDecimals(Number(item.valor_desconto_item) || 0);
+  const quantidadeBase = roundToTwoDecimals(Number(item.quantidade_base) || 0);
   item.custo_final_unitario = roundToTwoDecimals(cost - descUnit);
   item.subtotal = roundToTwoDecimals(quantidadeBase * cost);
   item.total = calcTotalItemCompraPedido(item);
   return normalizeItemToCanonicalFactorOne(item, 'custo');
 }
 
-export function calcularPreviewTrocaPedidoCompra(pedido = {}, itemIndex = -1, produtoSubstituto = {}) {
+export function calcularPreviewTrocaPedidoCompra(
+  pedido = {},
+  itemIndex = -1,
+  produtoSubstituto = {},
+  substituicao = {},
+) {
   const itens = Array.isArray(pedido.itens) ? [...pedido.itens] : [];
   if (itemIndex < 0 || itemIndex >= itens.length) {
     throw new Error('Item do pedido não encontrado.');
   }
 
   const itemOriginal = itens[itemIndex];
-  const itemNovo = buildItemSubstitutoCompra(itemOriginal, produtoSubstituto);
+  const itemNovo = buildItemSubstitutoCompra(itemOriginal, produtoSubstituto, substituicao);
   const itensNovos = itens.map((it, idx) => (idx === itemIndex ? itemNovo : it));
 
   const pedidoAnterior = { ...pedido, itens };
@@ -159,6 +178,7 @@ export async function executarTrocaRapidaPedidoCompra(base44, {
   pedido = {},
   itemIndex = -1,
   produtoSubstituto = {},
+  substituicao = {},
   motivo = '',
   responsavel = '',
   onSave,
@@ -166,7 +186,12 @@ export async function executarTrocaRapidaPedidoCompra(base44, {
   if (!pedido?.id) throw new Error('Salve o pedido antes de trocar itens.');
   if (typeof onSave !== 'function') throw new Error('Função de salvamento indisponível.');
 
-  const preview = calcularPreviewTrocaPedidoCompra(pedido, itemIndex, produtoSubstituto);
+  const preview = calcularPreviewTrocaPedidoCompra(
+    pedido,
+    itemIndex,
+    produtoSubstituto,
+    substituicao,
+  );
   const notaHistorico = formatNotaHistoricoTroca({
     itemOriginal: preview.itemOriginal,
     itemNovo: preview.itemNovo,

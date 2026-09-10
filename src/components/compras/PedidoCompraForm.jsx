@@ -102,6 +102,13 @@ import {
 } from '@/lib/comprasP38Theme';
 import { P38_PAGE_KICKER, P38_PAGE_SUBTITLE, P38_PAGE_TITLE } from '@/lib/p38FormTypography';
 import { valorEmbarqueSplit } from '@/lib/pedidoCompraValorExibicao';
+import { formatQuantidadeDisplay } from '@/lib/parseQuantidadeInput';
+
+function formatTrocaQuantidadeResumo(item = {}) {
+  const qty = formatQuantidadeDisplay(Number(item.quantidade) || 0);
+  const unidade = item.unidade_medida || item.unidade_apresentacao || 'UN';
+  return `${qty} ${unidade}`;
+}
 
 export default function PedidoCompraForm({
   pedido,
@@ -1038,7 +1045,7 @@ export default function PedidoCompraForm({
     setTrocaRapidaState({ open: true, itemIndex, itemOriginal });
   };
 
-  const handleConfirmTrocaRapida = async ({ itemIndex, produtoSubstituto, motivo, preview }) => {
+  const handleConfirmTrocaRapida = async ({ itemIndex, produtoSubstituto, substituicao, motivo, preview }) => {
     if (!pedido?.id) return;
 
     const diff = preview?.diferencaPedido ?? 0;
@@ -1048,10 +1055,12 @@ export default function PedidoCompraForm({
       Math.abs(diff) >= 0.01
         ? `\n\nDiferença ${direcao}: R$ ${diffAbs}.`
         : '\n\nSem alteração de valor.';
+    const qtdAntes = formatTrocaQuantidadeResumo(preview?.itemOriginal);
+    const qtdDepois = formatTrocaQuantidadeResumo(preview?.itemNovo);
 
     const confirmou = window.confirm(
       `Confirmar troca?\n\n` +
-      `${preview?.itemOriginal?.produto_nome} → ${preview?.itemNovo?.produto_nome}` +
+      `${preview?.itemOriginal?.produto_nome} (${qtdAntes})\n→ ${preview?.itemNovo?.produto_nome} (${qtdDepois})` +
       msgDiff +
       `\n\nA troca ficará registrada no histórico do pedido.`
     );
@@ -1064,6 +1073,7 @@ export default function PedidoCompraForm({
         pedido: { ...formData, id: pedido.id, numero: pedido.numero },
         itemIndex,
         produtoSubstituto,
+        substituicao,
         motivo,
         responsavel,
         onSave,
