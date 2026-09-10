@@ -1251,6 +1251,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                     index === produtoSelecionadoIndex ? 'bg-muted/40 dark:bg-card' : ''}`}>
                     <ProdutoThumb
                       produto={produto}
+                      tabelaPreco={tabelaPreco}
                       size="md"
                       roundedClassName="rounded-xl"
                       asDiv

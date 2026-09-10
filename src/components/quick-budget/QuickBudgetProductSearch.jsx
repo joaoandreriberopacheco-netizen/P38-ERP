@@ -49,7 +49,7 @@ export default function QuickBudgetProductSearch({ inputRef, query, onQueryChang
               key={produto.id}
               className="w-full rounded-2xl bg-card shadow-sm px-4 py-3 flex items-start gap-3"
             >
-              <ProdutoThumb produto={produto} size="xs" roundedClassName="rounded-2xl" asDiv />
+              <ProdutoThumb produto={produto} tabelaPreco={tabelaPreco} size="xs" roundedClassName="rounded-2xl" asDiv />
               <button
                 type="button"
                 onClick={() => handleSelectProduct(produto)}

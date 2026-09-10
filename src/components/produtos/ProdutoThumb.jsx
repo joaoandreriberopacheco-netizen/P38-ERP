@@ -2,7 +2,19 @@ import React, { useState } from 'react';
 import { Package, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isProdutoPilotoGaleria, resolveProdutoGaleria } from '@/lib/produtoImagens';
+import { getSaleUnitContextForTabela } from '@/lib/orcamentoPrecoTabela';
 import ProdutoGaleriaModal from '@/components/produtos/ProdutoGaleriaModal';
+
+function buildGaleriaPrecoLabel(produto, tabelaPreco) {
+  if (!produto) return '';
+  const ctx = getSaleUnitContextForTabela(produto, tabelaPreco);
+  const unit = ctx.unidadeDefault;
+  const preco = Number(ctx.precoSelecionado ?? produto.preco_venda_padrao ?? 0);
+  if (!(preco > 0)) return '';
+  const sigla = unit?.unidade || produto.unidade_principal || 'UN';
+  const valor = preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return `R$ ${valor}/${sigla}`;
+}
 
 const SIZE_CLASS = {
   xs: 'w-9 h-9',
@@ -22,6 +34,8 @@ export default function ProdutoThumb({
   roundedClassName = 'rounded-2xl',
   fallbackClassName,
   enableGaleria,
+  tabelaPreco = null,
+  precoLabel,
   onClick,
   stopPropagation = true,
   /** Evita <button> dentro de <button> (ex.: linha clicável do orçamento rápido). */
@@ -97,6 +111,7 @@ export default function ProdutoThumb({
   );
 
   const ariaLabel = imagemUrl ? `Ver fotos de ${nome}` : `Produto ${nome}`;
+  const galeriaPrecoLabel = precoLabel ?? buildGaleriaPrecoLabel(produto, tabelaPreco);
 
   return (
     <>
@@ -134,6 +149,7 @@ export default function ProdutoThumb({
         open={galeriaOpen}
         onClose={() => setGaleriaOpen(false)}
         produtoNome={nome}
+        precoLabel={galeriaPrecoLabel}
         imagens={galeriaImagens}
       />
     </>

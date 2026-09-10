@@ -40,7 +40,7 @@ function SkuCard({ row, calcularPreco, tabelaSelecionada }) {
       style={{ boxSizing: 'border-box' }}
     >
       {/* Thumbnail */}
-      <ProdutoThumb produto={p} size="md" roundedClassName="rounded-2xl" />
+      <ProdutoThumb produto={p} tabelaPreco={tabelaSelecionada} size="md" roundedClassName="rounded-2xl" />
 
       {/* Nome + info */}
       <div className="flex-1 min-w-0 overflow-hidden">
