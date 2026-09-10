@@ -46,7 +46,7 @@ Antes de qualquer deploy: `npm run secrets:check`
 | `VITE_P38_USE_SUPABASE_AUTH` | `true` — login interno P38 | Vercel | Sim |
 | `DATABASE_URL` | Migrações SQL (`npm run db:apply-migrations`) | GitHub Actions, Cloud Agent | **Nunca** |
 | `SUPABASE_ACCESS_TOKEN` | PAT — deploy Edge Functions | GitHub Actions, Cloud Agent | **Nunca** |
-| `SUPABASE_SERVICE_ROLE_KEY` | Scripts admin / futuro proxy estável | GitHub (opcional), Vercel serverless | **Nunca** |
+| `SUPABASE_SERVICE_ROLE_KEY` | Job KPI margem, scripts admin, serverless | GitHub Actions, Vercel serverless | **Nunca** |
 | `P38_AUTH_URL` | URL da função `p38-auth` (proxy Vercel) | Vercel (opcional — deriva da URL) | **Nunca** |
 | `VERCEL_TOKEN` | Deploy Vercel | GitHub Actions | **Nunca** |
 | `VERCEL_ORG_ID` | ID da conta Vercel | GitHub Actions | **Nunca** |
