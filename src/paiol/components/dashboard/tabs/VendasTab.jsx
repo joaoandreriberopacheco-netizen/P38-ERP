@@ -263,7 +263,7 @@ export default function VendasTab({ enabled = true } = {}) {
                       <p className={`text-sm font-semibold ${p38Dashboard.title}`}>{formatShort(metrics.lucroKpi.previousProfit)}</p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-1.5 text-[10px]">
+                    <div className="grid grid-cols-3 gap-1.5 text-[10px]">
                       <div className={p38Dashboard.statSm}>
                         <p className="text-muted-foreground uppercase">Venda líquida</p>
                         <p className={`${p38Dashboard.title} font-medium`}>{formatShort(metrics.lucroKpi.selectedSalesNet)}</p>
@@ -271,6 +271,12 @@ export default function VendasTab({ enabled = true } = {}) {
                       <div className={p38Dashboard.statSm}>
                         <p className="text-muted-foreground uppercase">Custo</p>
                         <p className={`${p38Dashboard.title} font-medium`}>{formatShort(metrics.lucroKpi.selectedCost)}</p>
+                      </div>
+                      <div className={p38Dashboard.statSm}>
+                        <p className="text-muted-foreground uppercase">Markup</p>
+                        <p className={`${p38Dashboard.title} font-medium`}>
+                          {Number(metrics.lucroKpi.selectedMarkupPercent || 0).toFixed(1)}%
+                        </p>
                       </div>
                     </div>
                   </div>

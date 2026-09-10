@@ -1,10 +1,13 @@
 /**
  * KPIs diários/mensais do dashboard — mesma base do Relatório de Margem.
- * Recalcula com custos de hoje (preco_custo_calculado) em cada corrida do job.
+ * Agrega por produto (calcularLinhasMargemVendas), não por pedido.
+ * Recalcula com custos de hoje em cada corrida do job.
  */
 import { format, getDate } from 'date-fns';
 import {
-  calcularTotaisPedidoMargem,
+  calcularLinhasMargemVendas,
+  calcularTotaisMargem,
+  competenciaParaIntervalo,
   getDataVendaMargem,
   pedidoElegivelMargem,
 } from '@/lib/relatorioMargemCalculos';
@@ -19,6 +22,7 @@ function emptyDayTotals() {
     salesNet: 0,
     cost: 0,
     profit: 0,
+    markupPercent: 0,
     pedidoCount: 0,
   };
 }
@@ -30,6 +34,85 @@ function roundMoney(value) {
 function saleDateKey(saleDate) {
   if (!saleDate) return null;
   return format(saleDate, 'yyyy-MM-dd');
+}
+
+/** Intervalo civil do mês até uma data inclusive (Tabatinga / created_date). */
+export function intervaloCompetenciaAte(competencia, throughDateKey) {
+  const base = competenciaParaIntervalo(competencia);
+  if (!base || !throughDateKey) return null;
+  const [y, m, d] = throughDateKey.split('-').map(Number);
+  if (!y || !m || !d) return null;
+  return {
+    from: base.from,
+    to: new Date(y, m - 1, d, 23, 59, 59, 999),
+  };
+}
+
+function intervaloDiaCivil(dateKey) {
+  const [y, m, d] = dateKey.split('-').map(Number);
+  return {
+    from: new Date(y, m - 1, d, 0, 0, 0, 0),
+    to: new Date(y, m - 1, d, 23, 59, 59, 999),
+  };
+}
+
+/** Converte linhas do Relatório de Margem para totais do dashboard KPI. */
+export function totaisLinhasMargemParaKpi(linhas = [], { pedidoCount = 0 } = {}) {
+  const tot = calcularTotaisMargem(linhas);
+  const salesGross = roundMoney(
+    linhas.reduce((sum, row) => sum + (Number(row.total_recebido) || 0), 0),
+  );
+  const discounts = roundMoney(
+    linhas.reduce((sum, row) => sum + (Number(row.total_desconto_venda) || 0), 0),
+  );
+  const cost = roundMoney(tot.custo_total);
+  const profit = roundMoney(tot.lucro_bruto);
+  const salesNet = roundMoney(tot.receita_liquida);
+  const markupPercent = cost > 0 ? roundMoney((profit / cost) * 100) : 0;
+
+  return {
+    salesGross,
+    discounts,
+    salesNet,
+    cost,
+    profit,
+    markupPercent,
+    pedidoCount,
+  };
+}
+
+/**
+ * Mesmo motor do Relatório de Margem para um conjunto de pedidos e intervalo.
+ */
+export function calcularMargemKpiIntervalo({
+  pedidos = [],
+  sales = [],
+  produtos = [],
+  products = [],
+  devolucoesTroca = [],
+  pedidosOrigemTroca = {},
+  intervalo,
+  pedidoCount = null,
+}) {
+  const pedidosLista = pedidos.length ? pedidos : sales;
+  const produtosLista = produtos.length ? produtos : products;
+  if (!intervalo) return emptyDayTotals();
+
+  const linhas = calcularLinhasMargemVendas(
+    pedidosLista,
+    produtosLista,
+    intervalo,
+    devolucoesTroca,
+    pedidosOrigemTroca,
+  );
+
+  const count =
+    pedidoCount ??
+    (Array.isArray(pedidosLista)
+      ? pedidosLista.filter((sale) => pedidoElegivelMargem(sale)).length
+      : 0);
+
+  return totaisLinhasMargemParaKpi(linhas, { pedidoCount: count });
 }
 
 /**
@@ -53,50 +136,50 @@ export function computeDashboardKpiMargemForMonth({
     return { daily: {}, monthly: null, sourceVersion: DASHBOARD_KPI_MARGEM_SOURCE_VERSION };
   }
 
-  const prodMap = (produtosLista || []).reduce((acc, produto) => {
-    if (produto?.id) acc[produto.id] = produto;
-    return acc;
-  }, {});
+  const intervaloMes = intervaloCompetenciaAte(prefix, throughDateKey);
+  const salesByDay = {};
 
-  const indiceTrocas = buildIndiceDevolucaoTrocaMargem(devolucoesTroca);
+  for (const sale of Array.isArray(pedidosLista) ? pedidosLista : []) {
+    if (!pedidoElegivelMargem(sale)) continue;
+    const saleDate = getDataVendaMargem(sale);
+    const key = saleDateKey(saleDate);
+    if (!key || !key.startsWith(prefix) || key > throughDateKey) continue;
+    if (!salesByDay[key]) salesByDay[key] = [];
+    salesByDay[key].push(sale);
+  }
+
   const dailyTotals = {};
   const monthlyTotals = emptyDayTotals();
-  monthlyTotals.pedidoCount = 0;
 
-  const eligible = (Array.isArray(pedidosLista) ? pedidosLista : []).filter((sale) => {
-    if (!pedidoElegivelMargem(sale)) return false;
-    const saleDate = getDataVendaMargem(sale);
-    const key = saleDateKey(saleDate);
-    if (!key || !key.startsWith(prefix)) return false;
-    return key <= throughDateKey;
-  });
-
-  for (const sale of eligible) {
-    const saleDate = getDataVendaMargem(sale);
-    const key = saleDateKey(saleDate);
-    if (!key) continue;
-
-    const totals = calcularTotaisPedidoMargem(sale, prodMap, {
-      indiceTrocas,
-      pedidosOrigemMap: pedidosOrigemTroca,
+  for (const [refDate, daySales] of Object.entries(salesByDay).sort()) {
+    const totals = calcularMargemKpiIntervalo({
+      pedidos: daySales,
+      produtos: produtosLista,
+      devolucoesTroca,
+      pedidosOrigemTroca,
+      intervalo: intervaloDiaCivil(refDate),
+      pedidoCount: daySales.length,
     });
 
-    if (!dailyTotals[key]) dailyTotals[key] = emptyDayTotals();
-    const day = dailyTotals[key];
-    day.salesGross += totals.salesGross;
-    day.discounts += totals.discounts;
-    day.salesNet += totals.salesNet;
-    day.cost += totals.cost;
-    day.profit += totals.profit;
-    day.pedidoCount += 1;
-
+    dailyTotals[refDate] = totals;
     monthlyTotals.salesGross += totals.salesGross;
     monthlyTotals.discounts += totals.discounts;
     monthlyTotals.salesNet += totals.salesNet;
     monthlyTotals.cost += totals.cost;
     monthlyTotals.profit += totals.profit;
-    monthlyTotals.pedidoCount += 1;
+    monthlyTotals.pedidoCount += totals.pedidoCount;
   }
+
+  const monthlyLinhas = calcularLinhasMargemVendas(
+    pedidosLista,
+    produtosLista,
+    intervaloMes,
+    devolucoesTroca,
+    pedidosOrigemTroca,
+  );
+  const monthlyFromLinhas = totaisLinhasMargemParaKpi(monthlyLinhas, {
+    pedidoCount: monthlyTotals.pedidoCount,
+  });
 
   const daily = {};
   for (const [refDate, totals] of Object.entries(dailyTotals)) {
@@ -108,16 +191,17 @@ export function computeDashboardKpiMargemForMonth({
       discounts: roundMoney(totals.discounts),
       cost: roundMoney(totals.cost),
       profit: roundMoney(totals.profit),
+      markupPercent: totals.markupPercent,
       pedidoCount: totals.pedidoCount,
       sourceVersion: DASHBOARD_KPI_MARGEM_SOURCE_VERSION,
     };
   }
 
-  const salesByDay = {};
-  const profitByDay = {};
+  const salesByDayChart = {};
+  const profitByDayChart = {};
   for (const [refDate, payload] of Object.entries(daily)) {
-    salesByDay[String(payload.day)] = payload.salesNet;
-    profitByDay[String(payload.day)] = payload.profit;
+    salesByDayChart[String(payload.day)] = payload.salesNet;
+    profitByDayChart[String(payload.day)] = payload.profit;
   }
 
   let closedThrough = null;
@@ -128,15 +212,16 @@ export function computeDashboardKpiMargemForMonth({
   const monthly = {
     monthKey: prefix,
     closedThrough,
-    salesByDay,
-    profitByDay,
+    salesByDay: salesByDayChart,
+    profitByDay: profitByDayChart,
     monthlyTotals: {
-      salesGross: roundMoney(monthlyTotals.salesGross),
-      discounts: roundMoney(monthlyTotals.discounts),
-      salesNet: roundMoney(monthlyTotals.salesNet),
-      cost: roundMoney(monthlyTotals.cost),
-      profit: roundMoney(monthlyTotals.profit),
-      pedidoCount: monthlyTotals.pedidoCount,
+      salesGross: monthlyFromLinhas.salesGross,
+      discounts: monthlyFromLinhas.discounts,
+      salesNet: monthlyFromLinhas.salesNet,
+      cost: monthlyFromLinhas.cost,
+      profit: monthlyFromLinhas.profit,
+      markupPercent: monthlyFromLinhas.markupPercent,
+      pedidoCount: monthlyFromLinhas.pedidoCount,
       sourceVersion: DASHBOARD_KPI_MARGEM_SOURCE_VERSION,
     },
     sourceVersion: DASHBOARD_KPI_MARGEM_SOURCE_VERSION,
