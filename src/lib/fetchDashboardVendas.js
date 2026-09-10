@@ -16,7 +16,6 @@ import {
   readDashboardCelulasVendas,
 } from '@/lib/dashboardCelulasApi';
 import {
-  getHojeDateKey,
   isMonthFullyClosed,
   isVendasWindowFullyClosed,
   mergePedidosById,
@@ -218,18 +217,9 @@ export async function fetchDashboardVendasPeriodo({
   let pedidos;
 
   if (passadoCoberto) {
-    const currentKey = getCurrentMonthKey();
-    const viewingCurrentMonth = selectedMonthKey === currentKey
-      && buckets.some((b) => b.key === currentKey);
-    if (viewingCurrentMonth) {
-      const monthStart = format(getTemporalStartForMonth(currentKey), 'yyyy-MM-dd');
-      const hoje = getHojeDateKey();
-      pedidos = await fetchPedidosVendaHydratedRange(monthStart, hoje, 5000);
-    } else {
-      pedidos = plan.hoje
-        ? await fetchPedidosVendaHydratedRange(plan.hoje.dataInicio, plan.hoje.dataFim, 500)
-        : [];
-    }
+    pedidos = plan.hoje
+      ? await fetchPedidosVendaHydratedRange(plan.hoje.dataInicio, plan.hoje.dataFim, 500)
+      : [];
   } else if (isVendasWindowFullyClosed(selectedMonthKey, months)) {
     pedidos = await ensurePedidosSegment(
       queryClient,
