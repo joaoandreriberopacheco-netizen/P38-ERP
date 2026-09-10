@@ -533,6 +533,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
       if (buscaProduto.trim().length >= 2 && produtosSugeridos.length > 0) {
         setShowSuggestions(true);
       }
+      inputProdutoRef.current?.focus({ preventScroll: true });
     });
   }, [buscaProduto, produtosSugeridos.length]);
 
@@ -1246,18 +1247,32 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                 return (
                   <div key={produto.id}
                     ref={(el) => { suggestionItemRefs.current[index] = el; }}
-                    className={`flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors border-b border-border/30 dark:border-border/40 last:border-b-0 ${
-                    index === produtoSelecionadoIndex ? 'bg-muted/40 dark:bg-card' : 'hover:bg-muted/40 dark:hover:bg-muted/60'}`}
-                    onClick={() => {
-                      if (shouldSuppressProductRowActivation()) return;
-                      handleSelecionarProduto(produto);
-                    }}>
+                    className={`flex items-center gap-4 px-5 py-4 transition-colors border-b border-border/30 dark:border-border/40 last:border-b-0 ${
+                    index === produtoSelecionadoIndex ? 'bg-muted/40 dark:bg-card' : ''}`}>
                     <ProdutoThumb
                       produto={produto}
                       size="md"
                       roundedClassName="rounded-xl"
+                      asDiv
                       fallbackClassName={estoqueStatus === 'sem' ? 'bg-red-50 dark:bg-red-900/20' : undefined}
                     />
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      className={`flex-1 min-w-0 cursor-pointer transition-colors rounded-xl -my-1 py-1 ${
+                        index === produtoSelecionadoIndex ? '' : 'hover:bg-muted/40 dark:hover:bg-muted/60'}`}
+                      onClick={() => {
+                        if (shouldSuppressProductRowActivation()) return;
+                        handleSelecionarProduto(produto);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          if (shouldSuppressProductRowActivation()) return;
+                          handleSelecionarProduto(produto);
+                        }
+                      }}
+                    >
                     <div className="flex-1 min-w-0">
                       <p className="text-base font-medium text-foreground dark:text-foreground leading-snug break-words whitespace-normal">{produto.nome}</p>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -1286,6 +1301,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                           R$ {precoTabela.toFixed(2).replace('.', ',')}
                         </span>
                       </div>
+                    </div>
                     </div>
                   </div>);
               })}

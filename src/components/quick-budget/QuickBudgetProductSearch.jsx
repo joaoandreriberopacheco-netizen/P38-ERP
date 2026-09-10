@@ -17,6 +17,11 @@ export default function QuickBudgetProductSearch({ inputRef, query, onQueryChang
 
   const shouldShowResults = query?.trim().length > 0;
 
+  const handleSelectProduct = (produto) => {
+    if (shouldSuppressProductRowActivation()) return;
+    onAddProduct(produto);
+  };
+
   return (
     <div className="space-y-3">
       <div className="relative">
@@ -40,39 +45,40 @@ export default function QuickBudgetProductSearch({ inputRef, query, onQueryChang
       {shouldShowResults && (
         <div className="space-y-2 max-h-[min(40vh,20rem)] overflow-y-auto pr-1 pb-1">
           {resultados.map((produto) => (
-            <button
+            <div
               key={produto.id}
-              type="button"
-              onClick={() => {
-                if (shouldSuppressProductRowActivation()) return;
-                onAddProduct(produto);
-              }}
-              className="w-full rounded-2xl bg-card shadow-sm px-4 py-3 text-left hover:bg-muted/40 dark:hover:bg-muted transition-colors"
+              className="w-full rounded-2xl bg-card shadow-sm px-4 py-3 flex items-start gap-3"
             >
-              <div className="flex items-start gap-3">
-                <ProdutoThumb produto={produto} size="xs" roundedClassName="rounded-2xl" asDiv />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground break-words">{produto.nome}</p>
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <span>Estoque: {formatEstoqueDisponivelLabel(produto)}</span>
-                    {produto.codigo_interno && (
-                      <span className="font-mono text-[10px] tracking-wide text-muted-foreground/80">
-                        #{produto.codigo_interno}
-                      </span>
-                    )}
+              <ProdutoThumb produto={produto} size="xs" roundedClassName="rounded-2xl" asDiv />
+              <button
+                type="button"
+                onClick={() => handleSelectProduct(produto)}
+                className="flex-1 min-w-0 text-left hover:bg-muted/40 dark:hover:bg-muted transition-colors rounded-xl -my-1 py-1 px-1"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground break-words">{produto.nome}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <span>Estoque: {formatEstoqueDisponivelLabel(produto)}</span>
+                      {produto.codigo_interno && (
+                        <span className="font-mono text-[10px] tracking-wide text-muted-foreground/80">
+                          #{produto.codigo_interno}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0 self-center">
+                    <PrecoVendaTabelaLinhas
+                      produto={produto}
+                      tabelaPreco={tabelaPreco}
+                      variant="quickBudget"
+                      finalClassName="text-sm font-bold text-foreground tabular-nums"
+                      labelBottom={false}
+                    />
                   </div>
                 </div>
-                <div className="flex-shrink-0 self-center">
-                  <PrecoVendaTabelaLinhas
-                    produto={produto}
-                    tabelaPreco={tabelaPreco}
-                    variant="quickBudget"
-                    finalClassName="text-sm font-bold text-foreground tabular-nums"
-                    labelBottom={false}
-                  />
-                </div>
-              </div>
-            </button>
+              </button>
+            </div>
           ))}
 
           {resultados.length === 0 && (

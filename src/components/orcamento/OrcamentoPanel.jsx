@@ -36,6 +36,7 @@ import { quickBudgetStateToCupomProps, buildOrcamentoRapidoShareHtml } from '@/l
 import { useIsDesktop } from '@/hooks/use-breakpoint';
 import { P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
 import { cn } from '@/lib/utils';
+import { onProdutoGaleriaClosed } from '@/lib/produtoGaleriaGuard';
 
 function resolveFlowScreen({ itemDialog, isMobile, showCartMobile, showSalvos }) {
   if (itemDialog) return 'quantity';
@@ -192,6 +193,14 @@ export default function OrcamentoPanel({
     setQuery('');
     setTimeout(() => searchInputRef.current?.focus(), 80);
   };
+
+  useEffect(() => {
+    if (!open) return undefined;
+    return onProdutoGaleriaClosed(() => {
+      if (itemDialog || showSalvos || (isMobile && showCartMobile)) return;
+      searchInputRef.current?.focus({ preventScroll: true });
+    });
+  }, [open, itemDialog, showSalvos, isMobile, showCartMobile]);
 
   const resetPanel = () => {
     resetFlow();

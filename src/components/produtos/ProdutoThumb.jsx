@@ -12,7 +12,8 @@ const SIZE_CLASS = {
 };
 
 /**
- * Miniatura de produto. Toque abre galeria fullscreen quando há foto (ou piloto PISO*).
+ * Miniatura de produto — só pré-visualização: toque abre galeria fullscreen.
+ * Não seleciona nem adiciona ao carrinho; ao fechar a galeria o ecrã anterior permanece.
  */
 export default function ProdutoThumb({
   produto,
@@ -35,8 +36,14 @@ export default function ProdutoThumb({
   const galeriaAtiva = enableGaleria ?? isProdutoPilotoGaleria(produto);
   const sizeClass = SIZE_CLASS[size] || size;
 
+  const stopGalleryPointer = (e) => {
+    if (!stopPropagation) return;
+    e?.stopPropagation?.();
+    e?.nativeEvent?.stopImmediatePropagation?.();
+  };
+
   const handleOpenGaleria = async (e) => {
-    if (stopPropagation) e?.stopPropagation?.();
+    stopGalleryPointer(e);
     if (!galeriaAtiva || !produto?.id) return;
 
     setLoadingGaleria(true);
@@ -100,6 +107,7 @@ export default function ProdutoThumb({
             tabIndex={0}
             className={shellClass}
             onClick={handleShellClick}
+            onPointerDown={stopGalleryPointer}
             onKeyDown={handleShellKeyDown}
             aria-label={ariaLabel}
           >
@@ -110,6 +118,7 @@ export default function ProdutoThumb({
             type="button"
             className={shellClass}
             onClick={handleShellClick}
+            onPointerDown={stopGalleryPointer}
             aria-label={ariaLabel}
           >
             {shellContent}
