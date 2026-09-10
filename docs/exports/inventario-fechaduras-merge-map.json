@@ -89,6 +89,24 @@
   "extras_fotos": [],
   "manual_keep": [],
   "deactivate_out_of_mix": true,
-  "mix_scope": "FECHADURA STAM na categoria F",
-  "mix_status": "8/8 confirmados — 6=reaproveitar 7 SKUs + 1 SKU novo (porta enrolar); sem 1601"
+  "mix_policy": "Somente itens com foto confirmada pelo João (+ porta enrolar item 6). Todo o resto na linha FECHADURA desactiva.",
+  "deactivate_skus": [
+    {
+      "p38_codigo_interno": "J6E-L9K",
+      "nome": "FECHADURA STAM 803/21 ESP. PRETO FOSCO (G)",
+      "motivo": "Fora do mix — sem foto/inventário"
+    },
+    {
+      "p38_codigo_interno": "W9E-NJA",
+      "nome": "FECHADURA STAM 803/35 ESP. INOX (G)",
+      "motivo": "Fora do mix — sem foto/inventário"
+    },
+    {
+      "p38_codigo_interno": "O39-ONH",
+      "nome": "FECHADURA SOPRANO 40 X 53 REFINATA A",
+      "motivo": "Fora do mix — sem foto/inventário"
+    }
+  ],
+  "mix_scope": "FECHADURA na categoria F (Stam + enrolar)",
+  "mix_status": "8/8 confirmados — activar 7 SKUs + criar enrolar; desactivar 3 SKUs antigos"
 }
