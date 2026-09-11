@@ -1,5 +1,7 @@
 import { getSupabaseBrowserClient, isSupabaseBrowserConfigured } from '@/lib/supabaseBrowserClient';
 
+export { resolveProdutoThumbUrl, buildCanonicalThumbPublicUrl, thumbStoragePath } from '@/lib/produtoThumbUrl';
+
 /**
  * Produto com galeria clicável: piloto PISO* ou qualquer um com imagem_url.
  * (PDV, tabela de preços, orçamento usam ProdutoThumb com esta regra por defeito.)
@@ -48,16 +50,6 @@ export async function fetchProdutoImagens(produtoId) {
   const imagens = data || [];
   cache.set(produtoId, imagens);
   return imagens;
-}
-
-/**
- * URL leve para listas/miniaturas — nunca a foto completa.
- * A URL raiz (imagem_url) só entra na galeria ao clicar.
- */
-export function resolveProdutoThumbUrl(produto) {
-  const thumb = String(produto?.imagem_thumb_url || '').trim();
-  if (thumb) return thumb;
-  return null;
 }
 
 /** Monta lista para galeria: DB primeiro, fallback para imagem_url do produto. */

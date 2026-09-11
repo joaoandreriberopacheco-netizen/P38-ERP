@@ -7,7 +7,7 @@
  * npm run backfill:imagens-thumb -- --apply --codigo=R5D-PII
  */
 import { resolveP38Secrets } from './p38-secrets.mjs';
-import { ensureThumbFromImageUrl } from './lib/produtoThumbStorage.mjs';
+import { ensureThumbFromImageUrl, normalizeImageUrl } from './lib/produtoThumbStorage.mjs';
 
 const apply = process.argv.includes('--apply');
 const codigoArg = process.argv.find((a) => a.startsWith('--codigo='));
@@ -45,7 +45,7 @@ async function sbFetch(pathSuffix, { method = 'GET', body, prefer } = {}) {
 }
 
 async function main() {
-  let query = 'produto?select=id,codigo_interno,nome,imagem_url,imagem_thumb_url&imagem_url=not.is.null&ativo=eq.true&order=codigo_interno.asc&limit=500';
+  let query = 'produto?select=id,codigo_interno,nome,imagem_url,imagem_thumb_url&imagem_url=not.is.null&imagem_url=neq.&ativo=eq.true&order=codigo_interno.asc&limit=500';
   if (codigoFilter) {
     query += `&codigo_interno=eq.${encodeURIComponent(codigoFilter)}`;
   } else {
@@ -61,8 +61,9 @@ async function main() {
       continue;
     }
 
+    const imagemUrl = normalizeImageUrl(produto.imagem_url);
     const thumbUrl = await ensureThumbFromImageUrl({
-      imageUrl: produto.imagem_url,
+      imageUrl: imagemUrl,
       codigoInterno: produto.codigo_interno || produto.id,
       supabaseUrl: SUPABASE_URL,
       supabaseKey: SUPABASE_KEY,
@@ -78,9 +79,13 @@ async function main() {
     console.log(`✓ ${produto.codigo_interno} → thumb`);
 
     if (apply) {
+      const produtoPatch = { imagem_thumb_url: thumbUrl };
+      if (imagemUrl && imagemUrl !== produto.imagem_url) {
+        produtoPatch.imagem_url = imagemUrl;
+      }
       await sbFetch(`produto?id=eq.${produto.id}`, {
         method: 'PATCH',
-        body: { imagem_thumb_url: thumbUrl },
+        body: produtoPatch,
         prefer: 'return=minimal',
       });
 

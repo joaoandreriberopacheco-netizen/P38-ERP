@@ -15,10 +15,54 @@ export async function buildThumbWebp(imageBuffer) {
     .toBuffer();
 }
 
+/** Normaliza protocolo e casing de host/path — cadastros legados vêm HTTPS://HOST/... em maiúsculas. */
+export function normalizeImageUrl(url) {
+  let u = String(url || '').trim();
+  if (!u) return '';
+  if (/^HTTPS:\/\//i.test(u)) u = `https://${u.slice(8)}`;
+  else if (/^HTTP:\/\//i.test(u)) u = `http://${u.slice(7)}`;
+  try {
+    const parsed = new URL(u);
+    parsed.hostname = parsed.hostname.toLowerCase();
+    parsed.pathname = parsed.pathname.toLowerCase();
+    return parsed.href;
+  } catch {
+    return u;
+  }
+}
+
 export async function fetchImageBuffer(url) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`fetch ${url} → ${res.status}`);
+  const normalized = normalizeImageUrl(url);
+  const res = await fetch(normalized);
+  if (!res.ok) throw new Error(`fetch ${normalized} → ${res.status}`);
   return Buffer.from(await res.arrayBuffer());
+}
+
+/** Baixa imagem mesmo quando imagem_url é signed URL expirada (Supabase Storage). */
+export async function fetchImageBufferResilient(url, { supabaseUrl, supabaseKey } = {}) {
+  const normalized = normalizeImageUrl(url);
+  if (!normalized) throw new Error('url vazia');
+
+  const signMatch = normalized.match(/\/storage\/v1\/object\/sign\/([^/]+)\/(.+?)(?:\?|$)/i);
+  if (signMatch && supabaseUrl && supabaseKey) {
+    const bucket = signMatch[1];
+    const objectPath = decodeURIComponent(signMatch[2]);
+    const res = await fetch(`${supabaseUrl}/storage/v1/object/${bucket}/${objectPath}`, {
+      headers: {
+        apikey: supabaseKey,
+        Authorization: `Bearer ${supabaseKey}`,
+      },
+    });
+    if (res.ok) return Buffer.from(await res.arrayBuffer());
+  }
+
+  return fetchImageBuffer(normalized);
+}
+
+export function buildCanonicalThumbPublicUrl(codigoInterno, supabaseUrl) {
+  const base = String(supabaseUrl || '').replace(/\/+$/, '');
+  if (!base || !codigoInterno) return null;
+  return `${base}/storage/v1/object/public/${THUMB_BUCKET}/${thumbStoragePath(codigoInterno)}`;
 }
 
 export function thumbStoragePath(codigoInterno, prefix = THUMB_PREFIX) {
@@ -65,7 +109,7 @@ export async function ensureThumbFromImageUrl({
   if (!fullUrl) return null;
 
   try {
-    const buf = imageBuffer || await fetchImageBuffer(fullUrl);
+    const buf = imageBuffer || await fetchImageBufferResilient(fullUrl, { supabaseUrl, supabaseKey });
     const thumbBuf = await buildThumbWebp(buf);
     const storagePath = thumbStoragePath(codigoInterno);
     return await uploadThumbToStorage({
