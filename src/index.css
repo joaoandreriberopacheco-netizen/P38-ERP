@@ -299,6 +299,11 @@ html[data-p38-bottom-nav-hidden] {
     bottom: var(--p38-bottom-nav-total);
     transition: bottom 0.3s ease-out;
   }
+  /* PDV Vendedor mobile: barra fixa (pt-3 + h-10 + pb-0.65rem) acima do bottom nav + 1 step Tailwind */
+  .p38-pdv-vendedor-scroll-pad {
+    padding-bottom: calc(var(--p38-bottom-nav-total) + 4rem + 0.25rem);
+    transition: padding-bottom 0.3s ease-out;
+  }
   /* Legado: era “muito alto”; alinhar ao principal */
   .p38-bottom-fab-xl {
     bottom: calc(var(--p38-bottom-nav-total) + var(--p38-fab-gap));
