@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "source": "docs/exports/inventario-cubas-japi.json",
+  "categoria": {
+    "nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS",
+    "linha": "CUBA DE APOIO",
+    "marca": "JAPI"
+  },
+  "items": [
+    {
+      "item": 1,
+      "action": "reuse",
+      "p38_codigo_interno": "RHN-8PH",
+      "ref_japi": "CSQ4",
+      "qtd": 4,
+      "nome": "CUBA DE APOIO SOTTILE QUAD NERO JAPI",
+      "campo_hierarquico_2": "SOTTILE QUAD NERO"
+    },
+    {
+      "item": 2,
+      "action": "reuse",
+      "p38_codigo_interno": "1VT-UEH",
+      "ref_japi": "CSQ3",
+      "qtd": 1,
+      "nome": "CUBA DE APOIO SOTTILE QUAD CALACATA GOLD JAPI",
+      "campo_hierarquico_2": "SOTTILE QUAD CALACATA GOLD"
+    },
+    {
+      "item": 3,
+      "action": "reuse",
+      "p38_codigo_interno": "8Z0-Z5G",
+      "ref_japi": "JCUBABN",
+      "qtd": 3,
+      "nome": "CUBA DE APOIO NOVA BOLONHA BRANCA JAPI",
+      "campo_hierarquico_2": "NOVA BOLONHA BRANCA"
+    },
+    {
+      "item": 4,
+      "action": "reuse",
+      "p38_codigo_interno": "NDQ-I9U",
+      "ref_japi": "JCUBAR",
+      "ref_imagem_japi": "JCUBARD",
+      "qtd": 2,
+      "nome": "CUBA DE APOIO RAVENA BRANCA JAPI",
+      "campo_hierarquico_2": "RAVENA BRANCA"
+    },
+    {
+      "item": 5,
+      "action": "reuse",
+      "p38_codigo_interno": "5XL-0FK",
+      "ref_japi": "JCUBAMO",
+      "qtd": 1,
+      "nome": "CUBA DE APOIO MODENA BRANCA JAPI",
+      "campo_hierarquico_2": "MODENA BRANCA"
+    },
+    {
+      "item": 6,
+      "action": "reuse",
+      "p38_codigo_interno": "0LM-A43",
+      "ref_japi": "JCUBAV",
+      "qtd": 1,
+      "nome": "CUBA DE APOIO VENEZA BRANCA JAPI",
+      "campo_hierarquico_2": "VENEZA BRANCA"
+    }
+  ],
+  "zero_skus": [
+    {
+      "p38_codigo_interno": "GBB-0OJ",
+      "ref_japi": "JCUBAC",
+      "nome": "CUBA DE APOIO CAPRI JAPI",
+      "motivo": "Fora do estoque físico"
+    },
+    {
+      "p38_codigo_interno": "19T-4N7",
+      "ref_japi": "CSR0",
+      "nome": "CUBA DE APOIO SOTTILE REDONDA BRANCA JAPI",
+      "motivo": "Fora do estoque físico"
+    }
+  ],
+  "zero_out_of_mix": true,
+  "mix_tag": "mix-cubas-japi-2026"
+}

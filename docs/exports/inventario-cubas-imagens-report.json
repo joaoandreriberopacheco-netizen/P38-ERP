@@ -1,0 +1,50 @@
+{
+  "generated_at": "2026-09-11T14:25:37.339Z",
+  "apply": true,
+  "fonte": "Japi VTEX (lojajapi.com.br)",
+  "resolved": [
+    {
+      "item": 1,
+      "codigo_interno": "RHN-8PH",
+      "ref_japi": "CSQ4",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/163094/CSQ4.jpg?v=637502241562400000",
+      "fonte_ref": "japivtex:CSQ4"
+    },
+    {
+      "item": 2,
+      "codigo_interno": "1VT-UEH",
+      "ref_japi": "CSQ3",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/174614/CSQ3.jpg?v=638786738939300000",
+      "fonte_ref": "japivtex:CSQ3"
+    },
+    {
+      "item": 3,
+      "codigo_interno": "8Z0-Z5G",
+      "ref_japi": "JCUBABN",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/174645/JCUBABN.jpg?v=638786742908400000",
+      "fonte_ref": "japivtex:JCUBABN"
+    },
+    {
+      "item": 4,
+      "codigo_interno": "NDQ-I9U",
+      "ref_japi": "JCUBAR",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/177381/JCUBARD_.jpg?v=638884559487600000",
+      "fonte_ref": "japivtex:JCUBARD"
+    },
+    {
+      "item": 5,
+      "codigo_interno": "5XL-0FK",
+      "ref_japi": "JCUBAMO",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/174573/jcubamo.jpg?v=638786735279330000",
+      "fonte_ref": "japivtex:JCUBAMO"
+    },
+    {
+      "item": 6,
+      "codigo_interno": "0LM-A43",
+      "ref_japi": "JCUBAV",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/174582/JCUBAV.jpg?v=638786736317700000",
+      "fonte_ref": "japivtex:JCUBAV"
+    }
+  ],
+  "missing": []
+}

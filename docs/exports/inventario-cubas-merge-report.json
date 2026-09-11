@@ -1,0 +1,223 @@
+{
+  "generated_at": "2026-09-11T14:25:13.329Z",
+  "apply": true,
+  "reuse": [
+    {
+      "item": 1,
+      "codigo_interno": "RHN-8PH",
+      "ref_japi": "CSQ4",
+      "id": "69bd5b9338943ccb9fb979e7",
+      "estoque_anterior": 4,
+      "estoque_novo": 4,
+      "payload": {
+        "nome": "CUBA DE APOIO SOTTILE QUAD NERO JAPI",
+        "campo_hierarquico_1": "CUBA DE APOIO",
+        "campo_hierarquico_2": "SOTTILE QUAD NERO",
+        "campo_hierarquico_4": "CSQ4",
+        "campo_hierarquico_5": "JAPI",
+        "marca": "JAPI",
+        "estoque_atual": 4,
+        "ativo": true,
+        "tags": [
+          "Banheiro > Cubas",
+          "Cuba > Apoio",
+          "Modelo > Sottile Quad",
+          "Marca > Japi",
+          "Cor > Nero",
+          "mix-cubas-japi-2026",
+          "CUBA DE APOIO",
+          "JAPI"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "item": 2,
+      "codigo_interno": "1VT-UEH",
+      "ref_japi": "CSQ3",
+      "id": "69bd5b90ba7f880cd1b56e8b",
+      "estoque_anterior": 1,
+      "estoque_novo": 1,
+      "payload": {
+        "nome": "CUBA DE APOIO SOTTILE QUAD CALACATA GOLD JAPI",
+        "campo_hierarquico_1": "CUBA DE APOIO",
+        "campo_hierarquico_2": "SOTTILE QUAD CALACATA GOLD",
+        "campo_hierarquico_4": "CSQ3",
+        "campo_hierarquico_5": "JAPI",
+        "marca": "JAPI",
+        "estoque_atual": 1,
+        "ativo": true,
+        "tags": [
+          "Banheiro > Cubas",
+          "Cuba > Apoio",
+          "Modelo > Sottile Quad",
+          "Marca > Japi",
+          "Cor > Calacata Gold",
+          "mix-cubas-japi-2026",
+          "CUBA DE APOIO",
+          "JAPI"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "item": 3,
+      "codigo_interno": "8Z0-Z5G",
+      "ref_japi": "JCUBABN",
+      "id": "69bd5b90b0d24b417d9f9708",
+      "estoque_anterior": 3,
+      "estoque_novo": 3,
+      "payload": {
+        "nome": "CUBA DE APOIO NOVA BOLONHA BRANCA JAPI",
+        "campo_hierarquico_1": "CUBA DE APOIO",
+        "campo_hierarquico_2": "NOVA BOLONHA BRANCA",
+        "campo_hierarquico_4": "JCUBABN",
+        "campo_hierarquico_5": "JAPI",
+        "marca": "JAPI",
+        "estoque_atual": 3,
+        "ativo": true,
+        "tags": [
+          "Banheiro > Cubas",
+          "Cuba > Apoio",
+          "Modelo > Nova Bolonha",
+          "Marca > Japi",
+          "Cor > Branca",
+          "mix-cubas-japi-2026",
+          "CUBA DE APOIO",
+          "JAPI"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "item": 4,
+      "codigo_interno": "NDQ-I9U",
+      "ref_japi": "JCUBAR",
+      "id": "69bd5b920cd1a1e00aa0efe4",
+      "estoque_anterior": 2,
+      "estoque_novo": 2,
+      "payload": {
+        "nome": "CUBA DE APOIO RAVENA BRANCA JAPI",
+        "campo_hierarquico_1": "CUBA DE APOIO",
+        "campo_hierarquico_2": "RAVENA BRANCA",
+        "campo_hierarquico_4": "JCUBAR",
+        "campo_hierarquico_5": "JAPI",
+        "marca": "JAPI",
+        "estoque_atual": 2,
+        "ativo": true,
+        "tags": [
+          "Banheiro > Cubas",
+          "Cuba > Apoio",
+          "Modelo > Ravena",
+          "Marca > Japi",
+          "Cor > Branca",
+          "mix-cubas-japi-2026",
+          "CUBA DE APOIO",
+          "JAPI"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "item": 5,
+      "codigo_interno": "5XL-0FK",
+      "ref_japi": "JCUBAMO",
+      "id": "69bd5b91830071f5db326cb9",
+      "estoque_anterior": 1,
+      "estoque_novo": 1,
+      "payload": {
+        "nome": "CUBA DE APOIO MODENA BRANCA JAPI",
+        "campo_hierarquico_1": "CUBA DE APOIO",
+        "campo_hierarquico_2": "MODENA BRANCA",
+        "campo_hierarquico_4": "JCUBAMO",
+        "campo_hierarquico_5": "JAPI",
+        "marca": "JAPI",
+        "estoque_atual": 1,
+        "ativo": true,
+        "tags": [
+          "Banheiro > Cubas",
+          "Cuba > Apoio",
+          "Modelo > Modena",
+          "Marca > Japi",
+          "Cor > Branca",
+          "mix-cubas-japi-2026",
+          "CUBA DE APOIO",
+          "JAPI"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "item": 6,
+      "codigo_interno": "0LM-A43",
+      "ref_japi": "JCUBAV",
+      "id": "69bd5b98d99cc1810db9b8dc",
+      "estoque_anterior": 1,
+      "estoque_novo": 1,
+      "payload": {
+        "nome": "CUBA DE APOIO VENEZA BRANCA JAPI",
+        "campo_hierarquico_1": "CUBA DE APOIO",
+        "campo_hierarquico_2": "VENEZA BRANCA",
+        "campo_hierarquico_4": "JCUBAV",
+        "campo_hierarquico_5": "JAPI",
+        "marca": "JAPI",
+        "estoque_atual": 1,
+        "ativo": true,
+        "tags": [
+          "Banheiro > Cubas",
+          "Cuba > Apoio",
+          "Modelo > Veneza",
+          "Marca > Japi",
+          "Cor > Branca",
+          "mix-cubas-japi-2026",
+          "CUBA DE APOIO",
+          "JAPI"
+        ],
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    }
+  ],
+  "zero": [
+    {
+      "codigo_interno": "GBB-0OJ",
+      "ref_japi": "JCUBAC",
+      "id": "69bd5b9099fa6a4399f82e35",
+      "estoque_anterior": 0,
+      "nome": "CUBA DE APOIO CAPRI JAPI",
+      "motivo": "Fora do estoque físico",
+      "payload": {
+        "estoque_atual": 0,
+        "ativo": true,
+        "campo_hierarquico_4": "JCUBAC",
+        "campo_hierarquico_5": "JAPI",
+        "marca": "JAPI",
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    },
+    {
+      "codigo_interno": "19T-4N7",
+      "ref_japi": "CSR0",
+      "id": "69bd5b939a244fce1c744f65",
+      "estoque_anterior": 0,
+      "nome": "CUBA DE APOIO SOTTILE REDONDA BRANCA JAPI",
+      "motivo": "Fora do estoque físico",
+      "payload": {
+        "estoque_atual": 0,
+        "ativo": true,
+        "campo_hierarquico_4": "CSR0",
+        "campo_hierarquico_5": "JAPI",
+        "marca": "JAPI",
+        "categoria_id": "6a3e8eb034482830bdba461f",
+        "categoria_nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+      }
+    }
+  ],
+  "errors": []
+}

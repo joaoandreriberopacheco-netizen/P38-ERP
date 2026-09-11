@@ -116,6 +116,8 @@
     "formigres:cruzar-imagens-piso": "node scripts/cruzar-formigres-imagens-produto.mjs --piso-only",
     "import:imagens-fechaduras-stam": "node scripts/importar-imagens-fechaduras-stam.mjs",
     "merge:inventario-fechaduras": "node scripts/merge-inventario-fechaduras.mjs",
+    "merge:inventario-cubas-japi": "node scripts/merge-inventario-cubas-japi.mjs",
+    "import:imagens-cubas-japi": "node scripts/importar-imagens-cubas-japi.mjs",
     "esquenta:enriquecer": "node scripts/enriquecer-esquenta-fornecedor.mjs",
     "esquenta:pdf": "node scripts/gerar-pdf-esquenta-fornecedor.mjs",
     "esquenta:gerar": "npm run esquenta:enriquecer && npm run esquenta:pdf",

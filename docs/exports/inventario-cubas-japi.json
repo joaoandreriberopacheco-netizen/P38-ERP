@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "source": "Inventário físico João André — cubas Japi (estoque real)",
+  "exportedAt": "2026-09-11T00:00:00.000Z",
+  "items": [
+    { "item": 1, "nome": "CUBA DE APOIO SOTILE QUADRADA NERO", "ref_japi": "CSQ4", "qtd": 4 },
+    { "item": 2, "nome": "CUBA DE APOIO SOTILE QUADRADA CALACATA", "ref_japi": "CSQ3", "qtd": 1 },
+    { "item": 3, "nome": "CUBA DE APOIO NOVA BOLONHA", "ref_japi": "JCUBABN", "qtd": 3 },
+    { "item": 4, "nome": "CUBA DE APOIO RAVENA", "ref_japi": "JCUBAR", "qtd": 2, "ref_imagem_japi": "JCUBARD" },
+    { "item": 5, "nome": "CUBA DE APOIO MODENA", "ref_japi": "JCUBAMO", "qtd": 1 },
+    { "item": 6, "nome": "CUBA DE APOIO VENEZA", "ref_japi": "JCUBAV", "qtd": 1 }
+  ],
+  "fora_mix_zerar": [
+    { "ref_japi": "JCUBAC", "nome": "CAPRI" },
+    { "ref_japi": "CSR0", "nome": "SOTTILE REDONDA BRANCA" }
+  ]
+}
