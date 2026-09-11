@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-11T14:25:37.339Z",
+  "generated_at": "2026-09-11T14:28:04.500Z",
   "apply": true,
   "fonte": "Japi VTEX (lojajapi.com.br)",
   "resolved": [
@@ -44,6 +44,18 @@
       "ref_japi": "JCUBAV",
       "url": "https://japisa.vteximg.com.br/arquivos/ids/174582/JCUBAV.jpg?v=638786736317700000",
       "fonte_ref": "japivtex:JCUBAV"
+    },
+    {
+      "codigo_interno": "GBB-0OJ",
+      "ref_japi": "JCUBAC",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/174653/JCUBAC.jpg?v=638786743543900000",
+      "fonte_ref": "japivtex:JCUBAC"
+    },
+    {
+      "codigo_interno": "19T-4N7",
+      "ref_japi": "CSR0",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/172669/CSR0.jpg?v=638681447953930000",
+      "fonte_ref": "japivtex:CSR0"
     }
   ],
   "missing": []
