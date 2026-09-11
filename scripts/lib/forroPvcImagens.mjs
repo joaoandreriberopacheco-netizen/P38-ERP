@@ -1,11 +1,13 @@
 /**
- * Fotos de forro PVC e perfis — revendedores (Forrotex, Oca/Plasmeg).
+ * Fotos de forro PVC e perfis — revendedores (Forrotex, Oca/Plasmeg) + asset local.
  * Dimensões alinhadas ao mix P38: 8×200×6000 mm (forros) e perfis 6 m.
  */
+export const FORRO_PVC_ASSETS_DIR = 'docs/assets/forro-pvc';
+
 export const FORRO_PVC_IMAGENS = {
   '2IB-P0W': {
-    url: 'https://plasmeg.com.br/wp-content/uploads/2024/08/plasmeg-forro-de-pvc-frisado-ii-branco-pct-c18m215-laminas-6-metros-por-200x8mm.png',
-    fonte_ref: 'plasmeg:forro-frisado-ii-branco',
+    asset: 'forro-frisado-branco.png',
+    fonte_ref: 'p38:forro-frisado-branco',
     label: 'Forro PVC branco frisado',
   },
   '683-4QL': {
@@ -38,12 +40,17 @@ export const FORRO_PVC_IMAGENS = {
 /**
  * @param {string} codigoInterno — SKU P38 (codigo_interno)
  */
-export function resolveForroPvcImagem(codigoInterno) {
+export function resolveForroPvcImagem(codigoInterno, opts = {}) {
   const key = String(codigoInterno || '').toUpperCase();
   const hit = FORRO_PVC_IMAGENS[key];
-  if (!hit?.url) return null;
+  if (!hit) return null;
+
+  const url = opts.url || hit.url;
+  if (!url && !hit.asset) return null;
+
   return {
-    url: hit.url,
+    url,
+    asset: hit.asset,
     fonte: 'import',
     fonte_ref: hit.fonte_ref,
     label: hit.label,

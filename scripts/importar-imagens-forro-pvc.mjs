@@ -9,11 +9,18 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { resolveP38Secrets } from './p38-secrets.mjs';
-import { FORRO_PVC_IMAGENS, resolveForroPvcImagem } from './lib/forroPvcImagens.mjs';
+import {
+  FORRO_PVC_ASSETS_DIR,
+  FORRO_PVC_IMAGENS,
+  resolveForroPvcImagem,
+} from './lib/forroPvcImagens.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
+const ASSETS_DIR = path.join(ROOT, FORRO_PVC_ASSETS_DIR);
 const REPORT_PATH = path.join(ROOT, 'docs', 'exports', 'inventario-forro-pvc-imagens-report.json');
+const BUCKET = 'produtos-imagens';
+const STORAGE_PREFIX = 'catalogo/forro-pvc';
 
 const apply = process.argv.includes('--apply');
 const secrets = resolveP38Secrets();
@@ -31,6 +38,46 @@ const headers = {
   'Content-Type': 'application/json',
   Prefer: 'return=representation',
 };
+
+async function uploadToStorage(storagePath, bytes, contentType) {
+  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${storagePath}`, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': contentType,
+      'x-upsert': 'true',
+    },
+    body: bytes,
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`upload ${storagePath} → ${res.status}: ${text}`);
+  return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${storagePath}`;
+}
+
+async function resolveImagemUrl(codigo, hit) {
+  if (hit.url) {
+    return resolveForroPvcImagem(codigo, { url: hit.url });
+  }
+
+  if (!hit.asset) return null;
+
+  const localPath = path.join(ASSETS_DIR, hit.asset);
+  if (!fs.existsSync(localPath)) {
+    throw new Error(`asset em falta: ${localPath}`);
+  }
+
+  const bytes = fs.readFileSync(localPath);
+  const contentType = hit.asset.endsWith('.png') ? 'image/png' : 'image/jpeg';
+  const storagePath = `${STORAGE_PREFIX}/${hit.asset}`;
+  let publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${storagePath}`;
+
+  if (apply) {
+    publicUrl = await uploadToStorage(storagePath, bytes, contentType);
+  }
+
+  return resolveForroPvcImagem(codigo, { url: publicUrl });
+}
 
 async function sbFetch(pathSuffix, { method = 'GET', body, prefer } = {}) {
   const h = { ...headers };
@@ -104,7 +151,7 @@ async function main() {
   const report = {
     generated_at: new Date().toISOString(),
     apply,
-    fonte: 'Forrotex + Oca/Plasmeg (cdn.awsli.com.br)',
+    fonte: 'Assets P38 + Forrotex/Oca/Plasmeg',
     resolved: [],
     missing: [],
   };
@@ -112,7 +159,16 @@ async function main() {
   const codigos = Object.keys(FORRO_PVC_IMAGENS);
 
   for (const codigo of codigos) {
-    const imagem = resolveForroPvcImagem(codigo);
+    const hit = FORRO_PVC_IMAGENS[codigo];
+    let imagem;
+    try {
+      imagem = await resolveImagemUrl(codigo, hit);
+    } catch (err) {
+      report.missing.push({ codigo_interno: codigo, error: err.message });
+      console.log(`✗ ${codigo} ${err.message}`);
+      continue;
+    }
+
     if (!imagem?.url) {
       report.missing.push({ codigo_interno: codigo, error: 'sem URL no mapa' });
       console.log(`✗ ${codigo} sem imagem no mapa`);
@@ -133,6 +189,7 @@ async function main() {
       codigo_interno: codigo,
       nome: produto.nome,
       label: imagem.label,
+      asset: hit.asset || null,
       url: imagem.url,
       fonte_ref: imagem.fonte_ref,
     });
