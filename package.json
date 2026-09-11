@@ -122,6 +122,7 @@
     "import:imagens-argamassas-jbmix": "node scripts/importar-imagens-argamassas-jbmix.mjs",
     "import:imagens-forro-pvc": "node scripts/importar-imagens-forro-pvc.mjs",
     "import:imagens-luminarias-trial": "node scripts/importar-imagens-luminarias-trial.mjs",
+    "backfill:imagens-thumb": "node scripts/backfill-imagens-thumb.mjs",
     "import:imagens-hipercor": "node scripts/importar-imagens-hipercor.mjs",
     "esquenta:enriquecer": "node scripts/enriquecer-esquenta-fornecedor.mjs",
     "esquenta:pdf": "node scripts/gerar-pdf-esquenta-fornecedor.mjs",

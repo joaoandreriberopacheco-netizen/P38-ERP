@@ -50,6 +50,16 @@ export async function fetchProdutoImagens(produtoId) {
   return imagens;
 }
 
+/**
+ * URL leve para listas/miniaturas — nunca a foto completa.
+ * A URL raiz (imagem_url) só entra na galeria ao clicar.
+ */
+export function resolveProdutoThumbUrl(produto) {
+  const thumb = String(produto?.imagem_thumb_url || '').trim();
+  if (thumb) return thumb;
+  return null;
+}
+
 /** Monta lista para galeria: DB primeiro, fallback para imagem_url do produto. */
 export async function resolveProdutoGaleria(produto) {
   const imagens = await fetchProdutoImagens(produto?.id);

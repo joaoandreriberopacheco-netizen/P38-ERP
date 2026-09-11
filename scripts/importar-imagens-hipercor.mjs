@@ -16,6 +16,7 @@ import {
   resolveHipercorFonteRef,
   resolveHipercorHex,
 } from './lib/hipercorImagens.mjs';
+import { ensureThumbFromImageUrl } from './lib/produtoThumbStorage.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -137,23 +138,34 @@ async function sbFetch(pathSuffix, { method = 'GET', body, prefer } = {}) {
   return data;
 }
 
-async function upsertImagem(produtoId, imagem) {
+async function upsertImagem(produtoId, imagem, codigoInterno, imageBuffer = null) {
+  const thumbUrl = await ensureThumbFromImageUrl({
+    imageUrl: imagem.url,
+    codigoInterno,
+    supabaseUrl: SUPABASE_URL,
+    supabaseKey: SUPABASE_KEY,
+    imageBuffer,
+  });
+
   const existing = await sbFetch(
     `produto_imagem?select=id,url,ativo&produto_id=eq.${produtoId}&order=principal.desc,ordem.asc&limit=50`,
   );
+
+  const rowBody = {
+    principal: true,
+    ordem: 0,
+    tipo: 'principal',
+    fonte: 'import',
+    fonte_ref: imagem.fonte_ref,
+    ativo: true,
+    ...(thumbUrl ? { url_thumb: thumbUrl } : {}),
+  };
 
   const same = (existing || []).find((row) => row.url === imagem.url);
   if (same) {
     await sbFetch(`produto_imagem?id=eq.${same.id}`, {
       method: 'PATCH',
-      body: {
-        principal: true,
-        ordem: 0,
-        tipo: 'principal',
-        fonte: 'import',
-        fonte_ref: imagem.fonte_ref,
-        ativo: true,
-      },
+      body: rowBody,
       prefer: 'return=minimal',
     });
   } else {
@@ -172,12 +184,7 @@ async function upsertImagem(produtoId, imagem) {
       body: [{
         produto_id: produtoId,
         url: imagem.url,
-        tipo: 'principal',
-        ordem: 0,
-        principal: true,
-        fonte: 'import',
-        fonte_ref: imagem.fonte_ref,
-        ativo: true,
+        ...rowBody,
       }],
       prefer: 'return=minimal',
     });
@@ -185,7 +192,10 @@ async function upsertImagem(produtoId, imagem) {
 
   await sbFetch(`produto?id=eq.${produtoId}`, {
     method: 'PATCH',
-    body: { imagem_url: imagem.url },
+    body: {
+      imagem_url: imagem.url,
+      ...(thumbUrl ? { imagem_thumb_url: thumbUrl } : {}),
+    },
     prefer: 'return=minimal',
   });
 }
@@ -237,7 +247,7 @@ async function main() {
       console.log(`✓ ${codigo} ${def.cor || def.base} (${imagem.hex})`);
 
       if (apply) {
-        await upsertImagem(produto.id, imagem);
+        await upsertImagem(produto.id, imagem, codigo, bytes);
       }
     } catch (err) {
       report.missing.push({ codigo_interno: codigo, error: err.message });

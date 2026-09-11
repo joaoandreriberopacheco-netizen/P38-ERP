@@ -1,4 +1,5 @@
 import { Package } from 'lucide-react';
+import { resolveProdutoThumbUrl } from '@/lib/produtoImagens';
 import { pickDefaultSaleUnit, getUnidadeExibicaoSigla } from '@/lib/productUnits';
 import {
   AUTO_SURFACE_CLASS,
@@ -16,6 +17,9 @@ export default function AutoProductCard({ product, onClick }) {
       valor_unitario: product?.preco_venda_padrao || 0,
     };
 
+  const thumbUrl = resolveProdutoThumbUrl(product);
+  const temFoto = Boolean(String(product?.imagem_url || '').trim());
+
   return (
     <button
       type="button"
@@ -23,14 +27,16 @@ export default function AutoProductCard({ product, onClick }) {
       className={`${AUTO_SURFACE_CLASS} ${AUTO_CARD_HOVER} p-3 text-left h-full flex flex-col`}
     >
       <div className={`aspect-square ${AUTO_ACCENT_BG} rounded-lg mb-3 flex items-center justify-center overflow-hidden`}>
-        {product.imagem_url ? (
+        {thumbUrl ? (
           <img
-            src={product.imagem_url}
+            src={thumbUrl}
             alt=""
             loading="lazy"
             decoding="async"
             className="w-full h-full object-cover"
           />
+        ) : temFoto ? (
+          <Package className={`w-10 h-10 ${AUTO_ACCENT_TEXT} opacity-40`} aria-hidden="true" />
         ) : (
           <Package className={`w-10 h-10 ${AUTO_ACCENT_TEXT} opacity-50`} />
         )}

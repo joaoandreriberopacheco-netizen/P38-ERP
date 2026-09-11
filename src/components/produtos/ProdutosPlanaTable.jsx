@@ -1,6 +1,7 @@
 import { useMemo, useRef, memo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Copy, Edit, Package, Trash2 } from 'lucide-react';
+import { Copy, Edit, Trash2 } from 'lucide-react';
+import ProdutoThumb from '@/components/produtos/ProdutoThumb';
 import { isCadastroIncompleto, getStockStatusIndicator } from './ProdutosHelpers';
 import { getUnidadeExibicaoSigla, getCatalogUnitLabels, getCatalogoComercialView, resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
@@ -385,16 +386,13 @@ function ProdutosPlanaTable({
                 >
                   <div className="flex items-start gap-1 min-w-0 w-full">
                     <div className="flex items-start gap-1.5 min-w-0 flex-1">
-                      <span
-                        className="rounded bg-muted overflow-hidden inline-flex items-center justify-center flex-shrink-0 mt-0.5"
-                        style={{ width: 32, height: 32 }}
-                      >
-                        {produto.imagem_url ? (
-                          <img src={produto.imagem_url} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <Package className="w-3.5 h-3.5 text-muted-foreground" />
-                        )}
-                      </span>
+                      <ProdutoThumb
+                        produto={produto}
+                        size="xs"
+                        asDiv
+                        roundedClassName="rounded"
+                        className="!w-8 !h-8 mt-0.5"
+                      />
                       <div className="flex flex-col min-w-0 flex-1 gap-0.5">
                         <span className={CATALOG_ROW_DESC_CLASS}>{produto.nome}</span>
                         {produto.codigo_interno && (

@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef, useLayoutEffect } from 'react';
 import { ChevronRight, Package, Edit, Trash2 } from 'lucide-react';
+import ProdutoThumb from '@/components/produtos/ProdutoThumb';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCatalogTreeGrid, flattenTree, mergeAdjacentDuplicateGroupHeaders, aggregateEstoqueDisplay, aggregateMetaEstoqueDisplay, collectSkus, catalogProdutosStructureSig, TREE_GRID_EXPAND_ALL_LEVEL, resolveExpandedKeysForMasterLevel } from './useTreeGrid';
@@ -237,16 +238,13 @@ function CatalogProdutoCell({
             </span>
           )}
           {showIcon && (
-            <span
-              className="rounded bg-muted overflow-hidden inline-flex items-center justify-center flex-shrink-0"
-              style={{ width: 32, height: 32 }}
-            >
-              {produto?.imagem_url ? (
-                <img src={produto.imagem_url} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <Package className="w-3.5 h-3.5 text-muted-foreground" />
-              )}
-            </span>
+            <ProdutoThumb
+              produto={produto}
+              size="xs"
+              asDiv
+              roundedClassName="rounded"
+              className="!w-8 !h-8"
+            />
           )}
         </div>
       )}
