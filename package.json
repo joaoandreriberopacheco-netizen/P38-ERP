@@ -120,6 +120,7 @@
     "import:imagens-cubas-japi": "node scripts/importar-imagens-cubas-japi.mjs",
     "split:imagem-argamassas-jbmix": "node scripts/split-imagem-argamassas-jbmix.mjs",
     "import:imagens-argamassas-jbmix": "node scripts/importar-imagens-argamassas-jbmix.mjs",
+    "import:imagens-forro-pvc": "node scripts/importar-imagens-forro-pvc.mjs",
     "esquenta:enriquecer": "node scripts/enriquecer-esquenta-fornecedor.mjs",
     "esquenta:pdf": "node scripts/gerar-pdf-esquenta-fornecedor.mjs",
     "esquenta:gerar": "npm run esquenta:enriquecer && npm run esquenta:pdf",
