@@ -1,0 +1,125 @@
+{
+  "generated_at": "2026-09-11T16:41:24.170Z",
+  "apply": true,
+  "fonte": "Hipercor (hipercor.com.br) — lata oficial + fundo na cor",
+  "resolved": [
+    {
+      "codigo_interno": "95B-U2J",
+      "nome": "MASSA ACRILICA (BD 20 KG) HIPERCOR",
+      "base": "massa-acrilica",
+      "cor": null,
+      "hex": "#f5f5f5",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/hipercor/95b-u2j-massa-acrilica.png",
+      "fonte_ref": "hipercor:massa-acrilica"
+    },
+    {
+      "codigo_interno": "I4Z-LYJ",
+      "nome": "MASSA ACRILICA (BD 5 KG) HIPERCOR",
+      "base": "massa-acrilica",
+      "cor": null,
+      "hex": "#f5f5f5",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/hipercor/i4z-lyj-massa-acrilica.png",
+      "fonte_ref": "hipercor:massa-acrilica"
+    },
+    {
+      "codigo_interno": "YCF-12J",
+      "nome": "MASSA CORRIDA (BD 20 KG) HIPERCOR #G",
+      "base": "massa-corrida",
+      "cor": null,
+      "hex": "#f5f5f5",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/hipercor/ycf-12j-massa-corrida.png",
+      "fonte_ref": "hipercor:massa-corrida"
+    },
+    {
+      "codigo_interno": "GTU-H4G",
+      "nome": "MASSA CORRIDA (BD 5 KG) HIPERCOR",
+      "base": "massa-corrida",
+      "cor": null,
+      "hex": "#f5f5f5",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/hipercor/gtu-h4g-massa-corrida.png",
+      "fonte_ref": "hipercor:massa-corrida"
+    },
+    {
+      "codigo_interno": "IPN-14G",
+      "nome": "TINTA (15 L) ACR. FOSCO ECON. HIPERCOR BRANCO NEVE",
+      "base": "acrilica",
+      "cor": "BRANCO NEVE",
+      "hex": "#F5F4F2",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/hipercor/ipn-14g-branco-neve.png",
+      "fonte_ref": "hipercor:hiper-d-acrilica-economica:branco-neve"
+    },
+    {
+      "codigo_interno": "OXV-JK1",
+      "nome": "TINTA (3,6 L) ACR. FOSCO ECON. HIPERCOR AREIA",
+      "base": "acrilica",
+      "cor": "AREIA",
+      "hex": "#E0CDB4",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/hipercor/oxv-jk1-areia.png",
+      "fonte_ref": "hipercor:hiper-d-acrilica-economica:areia"
+    },
+    {
+      "codigo_interno": "SQ9-R06",
+      "nome": "TINTA (3,6 L) ACR. FOSCO ECON. HIPERCOR BRANCO NEVE",
+      "base": "acrilica",
+      "cor": "BRANCO NEVE",
+      "hex": "#F5F4F2",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/hipercor/sq9-r06-branco-neve.png",
+      "fonte_ref": "hipercor:hiper-d-acrilica-economica:branco-neve"
+    },
+    {
+      "codigo_interno": "U56-2UW",
+      "nome": "TINTA (3,6L) ESMALTE HIPERCOR AMARELO",
+      "base": "esmalte",
+      "cor": "AMARELO",
+      "hex": "#ffac00",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/hipercor/u56-2uw-amarelo.png",
+      "fonte_ref": "hipercor:hiperlar-esmalte-standard:amarelo"
+    },
+    {
+      "codigo_interno": "M30-4N1",
+      "nome": "TINTA (3,6L) ESMALTE HIPERCOR PRETO",
+      "base": "esmalte",
+      "cor": "PRETO",
+      "hex": "#1a1a1a",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/hipercor/m30-4n1-preto.png",
+      "fonte_ref": "hipercor:hiperlar-esmalte-standard:preto"
+    },
+    {
+      "codigo_interno": "41Z-4IR",
+      "nome": "TINTA (3,6L) ESMALTE HIPERCOR TABACO",
+      "base": "esmalte",
+      "cor": "TABACO",
+      "hex": "#573512",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/hipercor/41z-4ir-tabaco.png",
+      "fonte_ref": "hipercor:hiperlar-esmalte-standard:tabaco"
+    },
+    {
+      "codigo_interno": "4JR-4KJ",
+      "nome": "TINTA (900 ML) ESMALTE HIPERCOR AMARELO",
+      "base": "esmalte",
+      "cor": "AMARELO",
+      "hex": "#ffac00",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/hipercor/4jr-4kj-amarelo.png",
+      "fonte_ref": "hipercor:hiperlar-esmalte-standard:amarelo"
+    },
+    {
+      "codigo_interno": "CNH-7FX",
+      "nome": "TINTA (900 ML) ESMALTE HIPERCOR AZUL DEL REY",
+      "base": "esmalte",
+      "cor": "AZUL DEL REY",
+      "hex": "#00315c",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/hipercor/cnh-7fx-azul-del-rey.png",
+      "fonte_ref": "hipercor:hiperlar-esmalte-standard:azul-del-rey"
+    },
+    {
+      "codigo_interno": "97B-63F",
+      "nome": "TINTA (900 ML) ESMALTE HIPERCOR BRANCO NEVE",
+      "base": "esmalte",
+      "cor": "BRANCO NEVE",
+      "hex": "#f1f8ff",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/hipercor/97b-63f-branco-neve.png",
+      "fonte_ref": "hipercor:hiperlar-esmalte-standard:branco-neve"
+    }
+  ],
+  "missing": []
+}
