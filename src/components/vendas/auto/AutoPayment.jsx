@@ -157,7 +157,7 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
   return (
     <>
     <motion.div 
-      className={`flex-1 flex flex-col ${AUTO_SHELL_BG}`}
+      className={`flex-1 flex flex-col h-full min-h-0 overflow-hidden ${AUTO_SHELL_BG}`}
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
@@ -170,9 +170,9 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
         <div className="w-16" />
       </div>
 
-      <div className="flex-1 flex flex-col md:flex-row">
+      <div className="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden">
         {/* Resumo */}
-        <div className={`w-full md:w-1/3 p-8 ${AUTO_SURFACE_CLASS} border-r border-border/40 dark:border-border/40`}>
+        <div className={`w-full md:w-1/3 p-8 min-h-0 p38-stage-panel-scroll touch-pan-y ${AUTO_SURFACE_CLASS} border-r border-border/40 dark:border-border/40`}>
           <h3 className="text-lg font-semibold mb-6">Resumo do Pedido</h3>
           <div className="space-y-4 mb-8">
             {carrinho.map(item => (
@@ -200,7 +200,7 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
         </div>
 
         {/* Métodos de Pagamento */}
-        <div className={`flex-1 p-8 flex flex-col justify-center items-center ${AUTO_SHELL_BG}`}>
+        <div className={`flex-1 min-h-0 p-8 flex flex-col justify-center items-center p38-stage-panel-scroll touch-pan-y ${AUTO_SHELL_BG}`}>
           {processing ? (
             <div className="text-center">
               <div className="relative w-24 h-24 mx-auto mb-8">

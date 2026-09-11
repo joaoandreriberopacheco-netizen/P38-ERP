@@ -11,7 +11,7 @@ import {
 
 export default function AutoHome({ onStart }) {
   return (
-    <div className={`flex-1 flex flex-col min-h-screen ${AUTO_SHELL_BG}`}>
+    <div className={`flex-1 flex flex-col h-full min-h-0 ${AUTO_SHELL_BG}`}>
       <header className={AUTO_HEADER_CLASS}>
         <div className="flex items-center gap-2">
           <ShoppingBag className="w-6 h-6" />

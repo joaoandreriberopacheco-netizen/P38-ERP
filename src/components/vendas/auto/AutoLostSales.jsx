@@ -53,7 +53,7 @@ export default function AutoLostSales({ open, onClose }) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[85dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Não encontrou?</DialogTitle>
           <p className="text-sm text-muted-foreground">Conte o que você estava procurando.</p>

@@ -179,7 +179,7 @@ export default function AutoAtendimentoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/40 dark:bg-background overflow-hidden flex flex-col">
+    <div className="h-full min-h-0 flex flex-col overflow-hidden bg-muted/40 dark:bg-background">
       <AnimatePresence mode="wait">
         {step === 'home' && <AutoHome key="home" onStart={handleStart} />}
         {step === 'identification' && (

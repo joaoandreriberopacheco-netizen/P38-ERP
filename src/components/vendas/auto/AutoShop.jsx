@@ -108,7 +108,7 @@ export default function AutoShop({
   };
 
   return (
-    <div className={`flex-1 flex flex-col h-full ${AUTO_SHELL_BG} overflow-hidden`}>
+    <div className={`flex-1 flex flex-col h-full min-h-0 ${AUTO_SHELL_BG} overflow-hidden`}>
       {avisos.length > 0 && (
         <div className="bg-indigo-600 text-white py-1.5 overflow-hidden shrink-0">
           <div className="animate-marquee whitespace-nowrap flex gap-8 text-sm">
@@ -169,7 +169,11 @@ export default function AutoShop({
         )}
       </div>
 
-      <AutoWelcomeBanner config={configAuto} onUpdateConfig={loadConfig} visible={carrinho.length === 0} />
+      <AutoWelcomeBanner
+        config={configAuto}
+        onUpdateConfig={loadConfig}
+        visible={carrinho.length === 0 && showCategoryPicker}
+      />
 
       <div className="flex-1 flex flex-col min-h-0 px-4 pb-28 md:pb-4">
         <div className="max-w-6xl mx-auto w-full flex-1 flex flex-col min-h-0">
@@ -183,11 +187,11 @@ export default function AutoShop({
             </Button>
           </div>
 
-          <div className="flex-1 min-h-0 flex flex-col">
+          <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
             {showCategoryPicker ? (
-              <div className="overflow-y-auto">
+              <div className="flex-1 min-h-0 p38-stage-panel-scroll touch-pan-y">
                 <AutoCategoryGrid categories={categories} onSelect={setSelectedCategory} />
-                <p className="text-center text-sm text-muted-foreground mt-6">
+                <p className="text-center text-sm text-muted-foreground mt-6 pb-4">
                   Ou digite pelo menos 2 letras na busca para ver produtos em todas as categorias.
                 </p>
               </div>
@@ -195,6 +199,7 @@ export default function AutoShop({
               <AutoProductGrid
                 products={produtosFiltrados}
                 onSelect={openProduct}
+                className="flex-1 min-h-0 p38-stage-panel-scroll touch-pan-y"
                 emptyFallback={
                   <div className="text-center py-16">
                     <Package className="w-16 h-16 mx-auto text-muted-foreground/40 mb-4" />

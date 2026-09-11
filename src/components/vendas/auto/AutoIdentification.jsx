@@ -51,7 +51,7 @@ export default function AutoIdentification({ onIdentify, onSkip, onRegister, onB
   };
 
   return (
-    <div className={`flex-1 flex flex-col min-h-screen ${AUTO_SHELL_BG}`}>
+    <div className={`flex-1 flex flex-col h-full min-h-0 ${AUTO_SHELL_BG}`}>
       <header className={AUTO_HEADER_CLASS}>
         <Button
           variant="ghost"
@@ -64,8 +64,8 @@ export default function AutoIdentification({ onIdentify, onSkip, onRegister, onB
         <span className="w-16" />
       </header>
 
-      <div className="flex-1 flex items-center justify-center p-6">
-        <div className="w-full max-w-md">
+      <div className="flex-1 min-h-0 p38-stage-panel-scroll touch-pan-y p-6">
+        <div className="w-full max-w-md mx-auto py-4">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-foreground mb-2">Quem está comprando?</h2>
             <p className="text-muted-foreground">CPF, CNPJ ou telefone — ou continue sem identificar.</p>

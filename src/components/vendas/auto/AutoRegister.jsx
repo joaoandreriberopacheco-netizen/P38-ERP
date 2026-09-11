@@ -52,12 +52,13 @@ export default function AutoRegister({ onSuccess, onBack }) {
 
   return (
     <motion.div 
-      className={`flex-1 flex flex-col ${AUTO_SHELL_BG} p-6 md:p-12`}
+      className={`flex-1 flex flex-col h-full min-h-0 overflow-hidden ${AUTO_SHELL_BG}`}
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -50 }}
     >
-      <div className="max-w-md mx-auto w-full">
+      <div className="flex-1 min-h-0 p38-stage-panel-scroll touch-pan-y p-6 md:p-12">
+        <div className="max-w-md mx-auto w-full pb-8">
         <Button 
           onClick={onBack}
           variant="ghost"
@@ -111,6 +112,7 @@ export default function AutoRegister({ onSuccess, onBack }) {
             {loading ? 'Cadastrando...' : 'Concluir Cadastro'}
           </Button>
         </form>
+        </div>
       </div>
     </motion.div>
   );
