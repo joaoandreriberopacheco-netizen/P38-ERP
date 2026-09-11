@@ -1,5 +1,7 @@
 import { getSupabaseBrowserClient, isSupabaseBrowserConfigured } from '@/lib/supabaseBrowserClient';
 
+export { resolveProdutoThumbUrl, buildCanonicalThumbPublicUrl, thumbStoragePath } from '@/lib/produtoThumbUrl';
+
 /**
  * Produto com galeria clicável: piloto PISO* ou qualquer um com imagem_url.
  * (PDV, tabela de preços, orçamento usam ProdutoThumb com esta regra por defeito.)

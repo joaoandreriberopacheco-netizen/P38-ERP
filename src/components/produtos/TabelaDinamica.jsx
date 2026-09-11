@@ -6,6 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import CamposEdicaoSistema from './CamposEdicaoSistema';
+import ProdutoThumb from '@/components/produtos/ProdutoThumb';
 import { formatEstoqueApresentacao } from '@/lib/productUnits';
 
 const PAGE_SIZE = 50; // produtos por página
@@ -106,12 +107,13 @@ function ProdutoRow({ produto, visibleColumns, fornecedorMap, onEdit, depth, onE
 
       {/* Imagem */}
       <td className="p-1 w-10">
-        <div className="w-8 h-8 bg-muted rounded flex items-center justify-center overflow-hidden mx-auto">
-          {produto.imagem_url
-            ? <img src={produto.imagem_url} alt="" className="w-full h-full object-cover" />
-            : <Package className="w-3.5 h-3.5 text-muted-foreground dark:text-muted-foreground" />
-          }
-        </div>
+        <ProdutoThumb
+          produto={produto}
+          size="xs"
+          asDiv
+          roundedClassName="rounded"
+          className="!w-8 !h-8 mx-auto"
+        />
       </td>
 
       {/* Nome */}

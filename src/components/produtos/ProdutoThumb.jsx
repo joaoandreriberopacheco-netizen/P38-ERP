@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Package, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isProdutoPilotoGaleria, resolveProdutoGaleria } from '@/lib/produtoImagens';
+import ProdutoThumbImage from '@/components/produtos/ProdutoThumbImage';
 import { getSaleUnitContextForTabela } from '@/lib/orcamentoPrecoTabela';
 import ProdutoGaleriaModal from '@/components/produtos/ProdutoGaleriaModal';
 
@@ -46,7 +47,7 @@ export default function ProdutoThumb({
   const [loadingGaleria, setLoadingGaleria] = useState(false);
 
   const nome = produto?.nome || produto?.produto_nome || '';
-  const imagemUrl = produto?.imagem_url || null;
+  const temFoto = Boolean(String(produto?.imagem_url || '').trim());
   const galeriaAtiva = enableGaleria ?? isProdutoPilotoGaleria(produto);
   const sizeClass = SIZE_CLASS[size] || size;
 
@@ -71,17 +72,7 @@ export default function ProdutoThumb({
     }
   };
 
-  const thumbInner = imagemUrl ? (
-    <img
-      src={imagemUrl}
-      alt=""
-      className="w-full h-full object-cover pointer-events-none"
-      loading="lazy"
-      draggable={false}
-    />
-  ) : (
-  <Package className="w-5 h-5 text-muted-foreground" />
-  );
+  const thumbInner = <ProdutoThumbImage produto={produto} size={size} />;
 
   const shellClass = cn(
     sizeClass,
@@ -110,7 +101,7 @@ export default function ProdutoThumb({
     thumbInner
   );
 
-  const ariaLabel = imagemUrl ? `Ver fotos de ${nome}` : `Produto ${nome}`;
+  const ariaLabel = temFoto ? `Ver fotos de ${nome}` : `Produto ${nome}`;
   const galeriaPrecoLabel = precoLabel ?? buildGaleriaPrecoLabel(produto, tabelaPreco);
 
   return (

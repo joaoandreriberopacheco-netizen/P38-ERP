@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Search, AlertTriangle, Check, X, Package, Hash, MessageSquare, PackagePlus } from 'lucide-react';
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
+import ProdutoThumbImage from '@/components/produtos/ProdutoThumbImage';
 
 export default function LostSalesForm({ open, onClose, currentUser }) {
   const [produtos, setProdutos] = useState([]);
@@ -269,11 +270,9 @@ export default function LostSalesForm({ open, onClose, currentUser }) {
                     onClick={() => handleSelecionarProduto(produto)}
                   >
                     {formData.is_produto_do_mix && (
-                      produto.imagem_url
-                        ? <img src={produto.imagem_url} alt={produto.nome} className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
-                        : <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                            <Package className="w-4 h-4 text-muted-foreground" />
-                          </div>
+                      <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
+                        <ProdutoThumbImage produto={produto} size="xs" iconClassName="w-4 h-4 text-muted-foreground" />
+                      </div>
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm text-foreground truncate">{produto.nome}</p>

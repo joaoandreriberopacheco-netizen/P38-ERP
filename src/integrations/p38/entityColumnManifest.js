@@ -6,7 +6,7 @@
 export const PRODUTO_COLUMNS = [
   'nome', 'codigo_interno', 'codigo_barras', 'campo_hierarquico_1', 'campo_hierarquico_2',
   'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5', 'categoria_id',
-  'categoria_nome', 'area_id', 'area_codigo', 'marca', 'imagem_url', 'tags', 'tipo', 'abcd',
+  'categoria_nome', 'area_id', 'area_codigo', 'marca', 'imagem_url', 'imagem_thumb_url', 'tags', 'tipo', 'abcd',
   'preco_livre', 'casas_decimais', 'valor_compra', 'preco_venda_padrao', 'preco_venda_tipo',
   'preco_venda_percentual', 'preco_custo_calculado', 'estoque_atual', 'estoque_minimo',
   'estoque_ideal', 'estoque_maximo', 'estoque_avariado', 'unidade_principal', 'unidade_vitrine',

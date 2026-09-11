@@ -1,4 +1,4 @@
-import { Package } from 'lucide-react';
+import ProdutoThumbImage from '@/components/produtos/ProdutoThumbImage';
 import { pickDefaultSaleUnit, getUnidadeExibicaoSigla } from '@/lib/productUnits';
 import {
   AUTO_SURFACE_CLASS,
@@ -23,17 +23,11 @@ export default function AutoProductCard({ product, onClick }) {
       className={`${AUTO_SURFACE_CLASS} ${AUTO_CARD_HOVER} p-3 text-left h-full flex flex-col`}
     >
       <div className={`aspect-square ${AUTO_ACCENT_BG} rounded-lg mb-3 flex items-center justify-center overflow-hidden`}>
-        {product.imagem_url ? (
-          <img
-            src={product.imagem_url}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <Package className={`w-10 h-10 ${AUTO_ACCENT_TEXT} opacity-50`} />
-        )}
+        <ProdutoThumbImage
+          produto={product}
+          size="lg"
+          iconClassName={`w-10 h-10 ${AUTO_ACCENT_TEXT} opacity-50`}
+        />
       </div>
       <h3 className="font-semibold text-sm text-foreground line-clamp-3 leading-snug flex-1">
         {product.nome}
