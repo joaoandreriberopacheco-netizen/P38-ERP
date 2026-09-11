@@ -1,15 +1,15 @@
 /**
- * PDF A4 paisagem (tabela) — catálogo B2B Formigres / Tintão.
+ * PDF A4 retrato (tabela) — catálogo B2B Formigres / Tintão.
  */
 export function buildCatalogPdfA4ClientJs() {
   return `
     const a4RenderPedidoPdfBlob = (function() {
       function printPdfLayout() {
-        const marginMm = 8;
-        const pageWmm = 297;
+        const marginMm = 10;
+        const pageWmm = 210;
         const contentWmm = pageWmm - marginMm * 2;
         const contentWpx = Math.round(contentWmm * 96 / 25.4);
-        return { marginMm, pageWmm, contentWmm, contentWpx, orientation: 'landscape' };
+        return { marginMm, pageWmm, contentWmm, contentWpx, orientation: 'portrait' };
       }
       function printPageWidthPx() {
         return printPdfLayout().contentWpx;
@@ -172,37 +172,37 @@ export function buildCatalogPdfA4ClientJs() {
       }
       function printPedidoPrintCss() {
         const rowLine = '#707070';
-        const thumb = PDF_PRINT_THUMB_PX;
-        return '@page { size: A4 landscape; margin: 8mm; }' +
+        const thumb = Math.min(40, PDF_PRINT_THUMB_PX);
+        return '@page { size: A4 portrait; margin: 10mm; }' +
           'html, body { margin: 0; padding: 0; }' +
-          '.print-render-root { background: #ffffff; color: #5a5a5a; font-family: "Libre Franklin", "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; width: 100%; }' +
-          '.print-sheet { width: 100%; max-width: 100%; margin: 0; box-sizing: border-box; background: #ffffff; color: #5a5a5a; padding: 0 0 24px; }' +
-          '.print-head { margin-bottom: 10px; }' +
-          'h1 { margin: 0 0 4px; font-size: 15px; letter-spacing: .08em; text-transform: uppercase; color: #2f2f2f; font-weight: 600; }' +
-          '.print-meta, .print-note { margin: 0 0 4px; color: #767676; font-size: 10px; line-height: 1.35; }' +
-          '.print-resumo { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px 10px; margin-bottom: 10px; }' +
-          '.print-resumo-stat { min-width: 0; font-size: 9px; color: #767676; }' +
-          '.print-resumo-stat strong { display: block; font-size: 13px; color: #2f2f2f; margin-bottom: 2px; font-weight: 600; }' +
-          '.print-pedido-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 12px; margin-top: 0; }' +
-          '.print-pedido-table th, .print-pedido-table td { padding: 8px 5px; vertical-align: middle; }' +
-          '.print-pedido-table thead th { text-align: left; color: #767676; font-size: 9px; font-weight: 500; text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid ' + rowLine + '; white-space: nowrap; padding-top: 6px; padding-bottom: 6px; vertical-align: bottom; }' +
+          '.print-render-root { background: #ffffff; color: #5a5a5a; font-family: "Libre Franklin", "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 10px; -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; width: 100%; }' +
+          '.print-sheet { width: 100%; max-width: 100%; margin: 0; box-sizing: border-box; background: #ffffff; color: #5a5a5a; padding: 0 0 16px; }' +
+          '.print-head { margin-bottom: 8px; }' +
+          'h1 { margin: 0 0 4px; font-size: 14px; letter-spacing: .08em; text-transform: uppercase; color: #2f2f2f; font-weight: 600; }' +
+          '.print-meta, .print-note { margin: 0 0 4px; color: #767676; font-size: 9px; line-height: 1.35; }' +
+          '.print-resumo { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 8px; margin-bottom: 8px; }' +
+          '.print-resumo-stat { min-width: 0; font-size: 8px; color: #767676; }' +
+          '.print-resumo-stat strong { display: block; font-size: 12px; color: #2f2f2f; margin-bottom: 2px; font-weight: 600; }' +
+          '.print-pedido-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 10px; margin-top: 0; }' +
+          '.print-pedido-table th, .print-pedido-table td { padding: 5px 3px; vertical-align: middle; }' +
+          '.print-pedido-table thead th { text-align: left; color: #767676; font-size: 7px; font-weight: 500; text-transform: uppercase; letter-spacing: .03em; border-bottom: 1px solid ' + rowLine + '; white-space: nowrap; padding-top: 4px; padding-bottom: 4px; vertical-align: bottom; }' +
           '.print-pedido-table tbody td { border-bottom: 1px solid ' + rowLine + '; }' +
-          '.print-pedido-table col.col-foto { width: ' + (thumb + 6) + 'px; }' +
-          '.print-pedido-table col.col-modelo { width: 22%; }' +
-          '.print-pedido-table col.col-qty { width: 44px; }' +
-          '.print-pedido-table col.col-m2u { width: 62px; }' +
-          '.print-pedido-table col.col-m2 { width: 62px; }' +
-          '.print-pedido-table col.col-cx { width: 52px; }' +
-          '.print-pedido-table col.col-peso { width: 72px; }' +
-          '.print-pedido-table col.col-emb { width: 108px; }' +
-          '.print-pedido-table col.col-preco { width: 72px; }' +
-          '.print-pedido-table col.col-sub { width: 82px; }' +
-          '.print-pedido-table .pedido-row-title { display: block; font-weight: 600; line-height: 1.3; color: #2f2f2f; font-size: 12px; word-break: break-word; }' +
-          '.print-pedido-table .pedido-row-meta { margin-top: 2px; font-size: 10px; color: #767676; line-height: 1.3; }' +
+          '.print-pedido-table col.col-foto { width: ' + (thumb + 4) + 'px; }' +
+          '.print-pedido-table col.col-modelo { width: 26%; }' +
+          '.print-pedido-table col.col-qty { width: 32px; }' +
+          '.print-pedido-table col.col-m2u { width: 44px; }' +
+          '.print-pedido-table col.col-m2 { width: 44px; }' +
+          '.print-pedido-table col.col-cx { width: 40px; }' +
+          '.print-pedido-table col.col-peso { width: 48px; }' +
+          '.print-pedido-table col.col-emb { width: 72px; }' +
+          '.print-pedido-table col.col-preco { width: 52px; }' +
+          '.print-pedido-table col.col-sub { width: 58px; }' +
+          '.print-pedido-table .pedido-row-title { display: block; font-weight: 600; line-height: 1.25; color: #2f2f2f; font-size: 10px; word-break: break-word; }' +
+          '.print-pedido-table .pedido-row-meta { margin-top: 1px; font-size: 8px; color: #767676; line-height: 1.25; }' +
           '.print-pedido-table .pedido-col-num, .print-pedido-table th.pedido-col-num, .print-pedido-table .col-subtotal { text-align: right; font-variant-numeric: tabular-nums; }' +
-          '.print-pedido-table .pedido-col-qty, .print-pedido-table th.pedido-col-qty { text-align: center; font-variant-numeric: tabular-nums; font-weight: 700; color: #2f2f2f; font-size: 13px; }' +
-          '.print-pedido-table .col-subtotal { font-weight: 700; color: #b01219; white-space: nowrap; }' +
-          '.print-pedido-table .pedido-col-foto img { display: block; border-radius: 6px; width: ' + thumb + 'px; height: ' + thumb + 'px; object-fit: cover; }' +
+          '.print-pedido-table .pedido-col-qty, .print-pedido-table th.pedido-col-qty { text-align: center; font-variant-numeric: tabular-nums; font-weight: 700; color: #2f2f2f; font-size: 11px; }' +
+          '.print-pedido-table .col-subtotal { font-weight: 700; color: #b01219; white-space: nowrap; font-size: 10px; }' +
+          '.print-pedido-table .pedido-col-foto img { display: block; border-radius: 4px; width: ' + thumb + 'px; height: ' + thumb + 'px; object-fit: cover; }' +
           '.print-pedido-table tbody tr { break-inside: avoid; page-break-inside: avoid; }' +
           '.print-pedido-table tfoot td { border-top: 2px solid ' + rowLine + '; padding-top: 10px; padding-bottom: 10px; vertical-align: middle; }' +
           '.print-pedido-table .print-pedido-total-label { text-align: right; font-size: 12px; font-weight: 600; color: #2f2f2f; padding-right: 10px; }' +
@@ -275,7 +275,7 @@ export function buildCatalogPdfA4ClientJs() {
               backgroundColor: pdfCanvasBackground(PDF_THEME),
               onclone: injectPdfFontClone,
             },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
             pagebreak: { mode: ['css', 'legacy'], avoid: ['.print-pedido-table tbody tr', '.print-footer', '.print-fmt-resumo-wrap'] },
           }).from(measureEl).outputPdf('blob');
           if (!blob || blob.size < 12000) throw new Error('PDF gerado vazio');
