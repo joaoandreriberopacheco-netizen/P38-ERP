@@ -1,0 +1,29 @@
+{
+  "generated_at": "2026-09-11T14:35:01.297Z",
+  "apply": true,
+  "fonte": "Embalagem JBMIX 15kg (recorte individual)",
+  "items": [
+    {
+      "codigo_interno": "Y8B-Y4W",
+      "ref": "AC-III",
+      "local_path": "/workspace/docs/assets/argamassas-jbmix/ac3-15kg.png",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/jbmix/argamassa-15kg/ac3-15kg.png",
+      "fonte_ref": "jbmix-embalagem-2026:AC-III"
+    },
+    {
+      "codigo_interno": "MM7-CF9",
+      "ref": "AC-II",
+      "local_path": "/workspace/docs/assets/argamassas-jbmix/ac2-15kg.png",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/jbmix/argamassa-15kg/ac2-15kg.png",
+      "fonte_ref": "jbmix-embalagem-2026:AC-II"
+    },
+    {
+      "codigo_interno": "41W-A3S",
+      "ref": "AC-I",
+      "local_path": "/workspace/docs/assets/argamassas-jbmix/ac1-15kg.png",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/jbmix/argamassa-15kg/ac1-15kg.png",
+      "fonte_ref": "jbmix-embalagem-2026:AC-I"
+    }
+  ],
+  "missing": []
+}

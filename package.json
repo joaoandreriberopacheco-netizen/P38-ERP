@@ -118,6 +118,8 @@
     "merge:inventario-fechaduras": "node scripts/merge-inventario-fechaduras.mjs",
     "merge:inventario-cubas-japi": "node scripts/merge-inventario-cubas-japi.mjs",
     "import:imagens-cubas-japi": "node scripts/importar-imagens-cubas-japi.mjs",
+    "split:imagem-argamassas-jbmix": "node scripts/split-imagem-argamassas-jbmix.mjs",
+    "import:imagens-argamassas-jbmix": "node scripts/importar-imagens-argamassas-jbmix.mjs",
     "esquenta:enriquecer": "node scripts/enriquecer-esquenta-fornecedor.mjs",
     "esquenta:pdf": "node scripts/gerar-pdf-esquenta-fornecedor.mjs",
     "esquenta:gerar": "npm run esquenta:enriquecer && npm run esquenta:pdf",
