@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-09-11T19:51:23.463Z",
+  "generated_at": "2026-09-11T20:08:03.344Z",
   "apply": true,
   "include_inactive": true,
-  "total": 22,
+  "total": 23,
   "resolved": [
     {
       "codigo_interno": "016-P70",
@@ -64,8 +64,8 @@
       "codigo_interno": "KPM-NZ3",
       "nome": "CHUVEIRO PLASTICO CROMADO 12\" X 1/2 ASTRA",
       "ativo": false,
-      "resolver": "telhanorte-astra-fallback",
-      "url": "https://telhanorte.vteximg.com.br/arquivos/ids/403954/Chuveiro-4--com-Haste-Branco-Astra-1734032.jpg?v=637315562383200000"
+      "resolver": "manual",
+      "url": "https://astrasa.vteximg.com.br/arquivos/ids/314140/CV122_1.jpg.jpg?v=639217120940600000"
     },
     {
       "codigo_interno": "MS9-D8N",
@@ -159,5 +159,11 @@
       "url": "https://www.lorenzetti.com.br/images/default-source/produtos-png/chuveiros-eletricos/advanced-multi.png"
     }
   ],
-  "missing": []
+  "missing": [
+    {
+      "codigo_interno": "I0B-Z0B",
+      "nome": "CHUVEIRO PLÁSTICO 4\" BRANCO",
+      "ativo": false
+    }
+  ]
 }

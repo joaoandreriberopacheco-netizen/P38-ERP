@@ -1,10 +1,11 @@
 /**
  * Resolve imagens de chuveiros Lorenzetti, Japi e Astra.
- * Fontes: site Lorenzetti, loja Japi (VTEX), Telhanorte (VTEX fallback).
+ * Fontes: site Lorenzetti, loja Japi (VTEX), loja Astra (VTEX), Telhanorte (VTEX fallback).
  */
 import { execFileSync } from 'node:child_process';
 
 const JAPI_SEARCH = 'https://www.lojajapi.com.br/api/catalog_system/pub/products/search';
+const ASTRA_SEARCH = 'https://www.astra-sa.com/api/catalog_system/pub/products/search';
 const LOREN_BASE = 'https://www.lorenzetti.com.br';
 const TELHA_SEARCH = 'https://www.telhanorte.com.br/api/catalog_system/pub/products/search';
 
@@ -61,6 +62,7 @@ async function throttleRemote(minGapMs = 250) {
 
 const MANUAL_URLS = {
   CVCPB: 'https://japisa.vteximg.com.br/arquivos/ids/161509/CVCPB.jpg?v=637121169018030000',
+  CV122: 'https://astrasa.vteximg.com.br/arquivos/ids/314140/CV122_1.jpg.jpg?v=639217120940600000',
   NCPSR: 'https://japisa.vteximg.com.br/arquivos/ids/162000/NCPCR.jpg?v=637121171010400000',
   NCPCR: 'https://japisa.vteximg.com.br/arquivos/ids/162001/NCPCR.jpg?v=637121171014330000',
 };
@@ -256,6 +258,47 @@ function inferJapiRef(produto) {
   return hit?.ref || null;
 }
 
+function inferAstraRef(produto) {
+  const ref = normalizeManufacturerRef(produto.campo_hierarquico_4);
+  if (ref) return ref;
+  const nome = normNome(produto.nome);
+  const h1 = normNome(produto.campo_hierarquico_1);
+  const h2 = normNome(produto.campo_hierarquico_2);
+  const blob = `${nome} ${h1} ${h2}`;
+  if (/CV122/.test(blob)) return 'CV122';
+  if (/PLASTICO CROMADO.*12|12.*1\/2.*ASTRA|12.*ASTRA/.test(blob)) return 'CV122';
+  return null;
+}
+
+function resolveAstra(ref, searchTerm) {
+  const wanted = String(ref || '').trim().toUpperCase();
+  const term = encodeURIComponent(searchTerm || ref);
+  const data = curlJson(`${ASTRA_SEARCH}?ft=${term}`);
+  if (!Array.isArray(data) || !data.length) return null;
+
+  for (const product of data) {
+    for (const sku of product.items || []) {
+      const refId = (sku.referenceId || []).find((r) => r.Key === 'RefId')?.Value || '';
+      const name = `${product.productName || ''} ${sku.name || ''}`;
+      if (
+        refId.toUpperCase() === wanted
+        || (wanted && name.toUpperCase().includes(wanted))
+      ) {
+        const img = sku.images?.[0]?.imageUrl;
+        if (img) {
+          return { url: img, fonte: 'import', fonte_ref: `astra:${refId || ref}`, resolver: 'astra-vtex' };
+        }
+      }
+    }
+  }
+
+  const fallback = data[0]?.items?.[0]?.images?.[0]?.imageUrl;
+  if (fallback) {
+    return { url: fallback, fonte: 'import', fonte_ref: `astra-search:${term}`, resolver: 'astra-vtex-fallback' };
+  }
+  return null;
+}
+
 /**
  * @param {{ codigo_interno?: string, nome?: string, marca?: string|null, campo_hierarquico_1?: string|null, campo_hierarquico_2?: string|null, campo_hierarquico_4?: string|null, campo_hierarquico_5?: string|null }} produto
  */
@@ -287,6 +330,16 @@ export function resolveChuveiroImagem(produto) {
   }
 
   if (brand === 'Astra' || normNome(nome).includes('ASTRA')) {
+    const astraRef = ref || inferAstraRef(produto);
+    if (astraRef) {
+      if (MANUAL_URLS[astraRef]) {
+        return { url: MANUAL_URLS[astraRef], fonte: 'import', fonte_ref: `manual:${astraRef}`, resolver: 'manual' };
+      }
+      const hit = resolveAstra(astraRef);
+      if (hit) return hit;
+    }
+    const retail = resolveTelhanorte(produto, 'Astra');
+    if (retail) return retail;
     if (/CHUVEIRO/i.test(nome)) {
       return {
         url: 'https://telhanorte.vteximg.com.br/arquivos/ids/403954/Chuveiro-4--com-Haste-Branco-Astra-1734032.jpg?v=637315562383200000',
@@ -295,14 +348,6 @@ export function resolveChuveiroImagem(produto) {
         resolver: 'telhanorte-astra-fallback',
       };
     }
-    const retail = resolveTelhanorte(produto, 'Astra');
-    if (retail) return retail;
-    return {
-      url: 'https://telhanorte.vteximg.com.br/arquivos/ids/403954/Chuveiro-4--com-Haste-Branco-Astra-1734032.jpg?v=637315562383200000',
-      fonte: 'import',
-      fonte_ref: 'telhanorte:1734032',
-      resolver: 'telhanorte-astra-fallback',
-    };
   }
 
   if (brand === 'Japi') {
@@ -326,5 +371,6 @@ export function isChuveiroBrandTarget(produto) {
   const brand = detectBrand(produto);
   if (brand && ['Lorenzetti', 'Japi', 'Astra'].includes(brand)) return true;
   if (isChuveiroTarget(produto) && inferJapiRef(produto)) return true;
+  if (isChuveiroTarget(produto) && inferAstraRef(produto)) return true;
   return false;
 }
