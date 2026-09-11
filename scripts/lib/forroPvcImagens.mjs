@@ -9,6 +9,15 @@ export const FORRO_PVC_IMAGENS = {
     asset: 'forro-frisado-branco.png',
     fonte_ref: 'p38:forro-frisado-branco',
     label: 'Forro PVC branco frisado',
+    galeria: [
+      {
+        asset: 'forro-frisado-ambiente.png',
+        tipo: 'ambiente',
+        ordem: 10,
+        fonte_ref: 'p38:forro-frisado-ambiente',
+        label: 'Forro PVC frisado — ambiente',
+      },
+    ],
   },
   '683-4QL': {
     url: 'https://cdn.awsli.com.br/800x800/2405/2405744/produto/367325457/255555-1000-1000-fn7psy7oxu.jpg',

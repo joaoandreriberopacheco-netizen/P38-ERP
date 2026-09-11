@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-11T15:08:51.855Z",
+  "generated_at": "2026-09-11T15:35:27.277Z",
   "apply": true,
   "fonte": "Assets P38 + Forrotex/Oca/Plasmeg",
   "resolved": [
@@ -9,7 +9,16 @@
       "label": "Forro PVC branco frisado",
       "asset": "forro-frisado-branco.png",
       "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/forro-pvc/forro-frisado-branco.png",
-      "fonte_ref": "p38:forro-frisado-branco"
+      "fonte_ref": "p38:forro-frisado-branco",
+      "galeria": [
+        {
+          "label": "Forro PVC frisado — ambiente",
+          "tipo": "ambiente",
+          "asset": "forro-frisado-ambiente.png",
+          "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/forro-pvc/forro-frisado-ambiente.png",
+          "fonte_ref": "p38:forro-frisado-ambiente"
+        }
+      ]
     },
     {
       "codigo_interno": "683-4QL",
@@ -17,7 +26,8 @@
       "label": "Forro PVC branco canalado Gemini",
       "asset": null,
       "url": "https://cdn.awsli.com.br/800x800/2405/2405744/produto/367325457/255555-1000-1000-fn7psy7oxu.jpg",
-      "fonte_ref": "oca-plasmeg:forro-canelado-gemini"
+      "fonte_ref": "oca-plasmeg:forro-canelado-gemini",
+      "galeria": []
     },
     {
       "codigo_interno": "LSZ-65P",
@@ -25,7 +35,8 @@
       "label": "Perfil PVC colonial branco 6 m",
       "asset": null,
       "url": "https://cdn.awsli.com.br/800x800/2405/2405744/produto/367325500/255559-1000-1000-vrzw7b0fl0.jpg",
-      "fonte_ref": "oca-plasmeg:perfil-colonial"
+      "fonte_ref": "oca-plasmeg:perfil-colonial",
+      "galeria": []
     },
     {
       "codigo_interno": "QYI-7MI",
@@ -33,7 +44,8 @@
       "label": "Perfil PVC F branco 6 m",
       "asset": null,
       "url": "https://cdn.awsli.com.br/800x800/2620/2620642/produto/226640092/perfil-f-pvc--1--na5vuyesw7.jpg",
-      "fonte_ref": "forrotex:perfil-f"
+      "fonte_ref": "forrotex:perfil-f",
+      "galeria": []
     },
     {
       "codigo_interno": "LXE-85B",
@@ -41,7 +53,8 @@
       "label": "Perfil PVC H branco 6 m",
       "asset": null,
       "url": "https://cdn.awsli.com.br/800x800/2620/2620642/produto/226641576/perfil-h-pvc-bf0dw2dctr.jpg",
-      "fonte_ref": "forrotex:perfil-h"
+      "fonte_ref": "forrotex:perfil-h",
+      "galeria": []
     },
     {
       "codigo_interno": "E6M-3SX",
@@ -49,7 +62,8 @@
       "label": "Perfil PVC U branco 6 m",
       "asset": null,
       "url": "https://cdn.awsli.com.br/800x800/2620/2620642/produto/226636166/perfil-u-pvc-gff0vssy8o.jpg",
-      "fonte_ref": "forrotex:perfil-u"
+      "fonte_ref": "forrotex:perfil-u",
+      "galeria": []
     }
   ],
   "missing": []

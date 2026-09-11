@@ -55,28 +55,31 @@ async function uploadToStorage(storagePath, bytes, contentType) {
   return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${storagePath}`;
 }
 
-async function resolveImagemUrl(codigo, hit) {
-  if (hit.url) {
-    return resolveForroPvcImagem(codigo, { url: hit.url });
-  }
+async function resolveAssetOrUrl(entry) {
+  if (entry.url) return entry.url;
+  if (!entry.asset) return null;
 
-  if (!hit.asset) return null;
-
-  const localPath = path.join(ASSETS_DIR, hit.asset);
+  const localPath = path.join(ASSETS_DIR, entry.asset);
   if (!fs.existsSync(localPath)) {
     throw new Error(`asset em falta: ${localPath}`);
   }
 
   const bytes = fs.readFileSync(localPath);
-  const contentType = hit.asset.endsWith('.png') ? 'image/png' : 'image/jpeg';
-  const storagePath = `${STORAGE_PREFIX}/${hit.asset}`;
+  const contentType = entry.asset.endsWith('.png') ? 'image/png' : 'image/jpeg';
+  const storagePath = `${STORAGE_PREFIX}/${entry.asset}`;
   let publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${storagePath}`;
 
   if (apply) {
     publicUrl = await uploadToStorage(storagePath, bytes, contentType);
   }
 
-  return resolveForroPvcImagem(codigo, { url: publicUrl });
+  return publicUrl;
+}
+
+async function resolveImagemUrl(codigo, hit) {
+  const url = await resolveAssetOrUrl(hit);
+  if (!url) return null;
+  return resolveForroPvcImagem(codigo, { url });
 }
 
 async function sbFetch(pathSuffix, { method = 'GET', body, prefer } = {}) {
@@ -92,6 +95,40 @@ async function sbFetch(pathSuffix, { method = 'GET', body, prefer } = {}) {
   try { data = text ? JSON.parse(text) : null; } catch { data = text; }
   if (!res.ok) throw new Error(`${method} ${pathSuffix} → ${res.status}: ${text}`);
   return data;
+}
+
+async function upsertGaleriaImagem(produtoId, imagem) {
+  const existing = await sbFetch(
+    `produto_imagem?select=id,url&produto_id=eq.${produtoId}&url=eq.${encodeURIComponent(imagem.url)}&limit=1`,
+  );
+
+  const body = {
+    tipo: imagem.tipo,
+    ordem: imagem.ordem,
+    principal: false,
+    fonte: imagem.fonte,
+    fonte_ref: imagem.fonte_ref,
+    ativo: true,
+  };
+
+  if (existing?.[0]?.id) {
+    await sbFetch(`produto_imagem?id=eq.${existing[0].id}`, {
+      method: 'PATCH',
+      body,
+      prefer: 'return=minimal',
+    });
+    return;
+  }
+
+  await sbFetch('produto_imagem', {
+    method: 'POST',
+    body: [{
+      produto_id: produtoId,
+      url: imagem.url,
+      ...body,
+    }],
+    prefer: 'return=minimal',
+  });
 }
 
 async function upsertImagem(produtoId, imagem) {
@@ -185,19 +222,54 @@ async function main() {
       continue;
     }
 
-    report.resolved.push({
+    const resolvedItem = {
       codigo_interno: codigo,
       nome: produto.nome,
       label: imagem.label,
       asset: hit.asset || null,
       url: imagem.url,
       fonte_ref: imagem.fonte_ref,
-    });
+      galeria: [],
+    };
     console.log(`✓ ${codigo} ${imagem.label} → ${imagem.fonte_ref}`);
 
     if (apply) {
       await upsertImagem(produto.id, imagem);
     }
+
+    for (const extra of hit.galeria || []) {
+      let extraUrl;
+      try {
+        extraUrl = await resolveAssetOrUrl(extra);
+      } catch (err) {
+        report.missing.push({ codigo_interno: codigo, error: err.message, galeria: extra.label });
+        console.log(`✗ ${codigo} ${extra.label}: ${err.message}`);
+        continue;
+      }
+
+      if (!extraUrl) continue;
+
+      resolvedItem.galeria.push({
+        label: extra.label,
+        tipo: extra.tipo,
+        asset: extra.asset || null,
+        url: extraUrl,
+        fonte_ref: extra.fonte_ref,
+      });
+      console.log(`  + ${codigo} ${extra.label} (${extra.tipo}) → ${extra.fonte_ref}`);
+
+      if (apply) {
+        await upsertGaleriaImagem(produto.id, {
+          url: extraUrl,
+          tipo: extra.tipo || 'ambiente',
+          ordem: extra.ordem ?? 10,
+          fonte: 'import',
+          fonte_ref: extra.fonte_ref,
+        });
+      }
+    }
+
+    report.resolved.push(resolvedItem);
   }
 
   fs.mkdirSync(path.dirname(REPORT_PATH), { recursive: true });
