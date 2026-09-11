@@ -123,11 +123,8 @@ async function main() {
     snapshot: SNAPSHOT_PATH,
     resolved: [],
     missing: [],
-    skipped_no_trial: [
-      { codigo_interno: '7X7-W6L', nome: 'LUMINÁRIA LED TATARTARUGA 6500K 12W', motivo: 'não listada no catálogo Trial online' },
-      { codigo_interno: 'MNG-PX8', nome: 'SPOT LED AUXILIAR GRANDE 06W QUAD 6500K', motivo: 'Trial só tem spot 03W' },
-      { codigo_interno: 'W70-3U1', nome: 'SPOT LED AUXILIAR GRANDE 06W RED 3000K', motivo: 'Trial só tem spot 03W' },
-    ],
+    skipped_no_trial: [],
+    with_fallback: [],
   };
 
   for (const codigo of TRIAL_LUMINARIA_SKUS) {
@@ -148,7 +145,7 @@ async function main() {
       continue;
     }
 
-    report.resolved.push({
+    const entry = {
       codigo_interno: codigo,
       nome: produto.nome,
       trial_slug: imagem.trial_slug,
@@ -156,7 +153,9 @@ async function main() {
       url: imagem.url,
       fonte_ref: imagem.fonte_ref,
       fallback: imagem.fallback,
-    });
+    };
+    report.resolved.push(entry);
+    if (imagem.fallback) report.with_fallback.push(entry);
 
     const fb = imagem.fallback ? ` [${imagem.fallback}]` : '';
     console.log(`✓ ${codigo} → ${imagem.trial_slug}${fb}`);
@@ -172,7 +171,8 @@ async function main() {
   console.log('[import-imagens-luminarias-trial] Relatório:', REPORT_PATH);
   console.log(`  Resolvidas: ${report.resolved.length}/${TRIAL_LUMINARIA_SKUS.length}`);
   if (report.missing.length) console.log(`  Em falta: ${report.missing.length}`);
-  console.log(`  Sem Trial (manual): ${report.skipped_no_trial.length}`);
+  if (report.with_fallback.length) console.log(`  Com fallback Trial: ${report.with_fallback.length}`);
+  if (report.skipped_no_trial.length) console.log(`  Sem Trial (manual): ${report.skipped_no_trial.length}`);
 
   if (!apply) {
     console.log('\nDry-run. Para aplicar: npm run import:imagens-luminarias-trial -- --apply');
