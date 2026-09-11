@@ -33,20 +33,21 @@ export default function ProductDetailDialog({ isOpen, onClose, product, onConfir
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg p-0 overflow-hidden gap-0">
-        <div className="relative">
-          <AutoProductImageGallery product={product} />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="absolute top-3 right-3 z-10 rounded-full bg-black/30 hover:bg-black/50 text-white"
-          >
-            <X className="w-5 h-5" />
-          </Button>
-        </div>
+      <DialogContent className="max-w-lg max-h-[92dvh] p-0 gap-0 flex flex-col overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-y-auto touch-pan-y">
+          <div className="relative">
+            <AutoProductImageGallery product={product} />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="absolute top-3 right-3 z-10 rounded-full bg-black/30 hover:bg-black/50 text-white"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
 
-        <div className="p-5 space-y-5">
+          <div className="p-5 space-y-5">
           <div>
             <h2 className="text-xl font-bold text-foreground leading-snug">{product.nome}</h2>
             <div className="flex items-baseline gap-2 mt-2">
@@ -92,6 +93,7 @@ export default function ProductDetailDialog({ isOpen, onClose, product, onConfir
               Adicionar · R$ {formatAutoMoney(total)}
             </Button>
           </DialogFooter>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

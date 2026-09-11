@@ -121,7 +121,12 @@ export default function AutoProductImageGallery({ product, className }) {
         </p>
       </div>
 
-      <div className="flex gap-2 px-3 py-3 overflow-x-auto touch-pan-x scrollbar-thin">
+      <div className="px-3 pt-1">
+        <p className="text-xs text-center text-muted-foreground mb-2">
+          Deslize a foto ou toque nas miniaturas
+        </p>
+      </div>
+      <div className="flex gap-2 px-3 pb-3 overflow-x-auto touch-pan-x snap-x snap-mandatory scrollbar-thin">
         {imagens.map((img, idx) => (
           <button
             key={img.id || `${img.url}-${idx}`}
@@ -130,7 +135,7 @@ export default function AutoProductImageGallery({ product, className }) {
             aria-label={`Ver imagem ${idx + 1}`}
             aria-current={current === idx ? 'true' : undefined}
             className={cn(
-              'shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 transition-all',
+              'shrink-0 snap-start w-14 h-14 rounded-lg overflow-hidden border-2 transition-all',
               current === idx
                 ? 'border-indigo-600 ring-2 ring-indigo-600/30 opacity-100'
                 : 'border-transparent opacity-70 hover:opacity-100',
