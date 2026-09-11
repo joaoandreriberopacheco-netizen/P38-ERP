@@ -1,0 +1,169 @@
+{
+  "generated_at": "2026-09-11T20:08:03.344Z",
+  "apply": true,
+  "include_inactive": true,
+  "total": 23,
+  "resolved": [
+    {
+      "codigo_interno": "016-P70",
+      "nome": "AQUECEDOR 127V / 5500W VERSÁTIL LORENZETTI",
+      "ativo": true,
+      "resolver": "telhanorte-vtex",
+      "url": "https://telhanorte.vteximg.com.br/arquivos/ids/1282678/Ducha-Futura-Eletronica-5500w-127v-Lorenzetti-1579479-1.jpg?v=638633030176230000"
+    },
+    {
+      "codigo_interno": "4JX-CIO",
+      "nome": "CHUVEIRO ELÉTRICO 127 V/ 5500W ADVANCED ELETRÔNICO LORENZETTI",
+      "ativo": false,
+      "resolver": "telhanorte-vtex",
+      "url": "https://telhanorte.vteximg.com.br/arquivos/ids/1310396/Chuveiro Eletrico Lorenzetti Advanced Eletronico -2-.png?v=639020192164330000"
+    },
+    {
+      "codigo_interno": "64M-Q0T",
+      "nome": "CHUVEIRO ABS BRANCO PLÁSTICO 8\" C/BRAÇO - S/REGISTRO BRANCO",
+      "ativo": false,
+      "resolver": "manual",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/162000/NCPCR.jpg?v=637121171010400000"
+    },
+    {
+      "codigo_interno": "BXG-G87",
+      "nome": "CHUVEIRO PLÁSTICO 4\" CROMADO",
+      "ativo": false,
+      "resolver": "japi-vtex",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/162612/jprasc.jpg?v=637121178181270000"
+    },
+    {
+      "codigo_interno": "BZY-404",
+      "nome": "CHUVEIRO PLÁSTICO 7\" BRANCO",
+      "ativo": false,
+      "resolver": "japi-vtex",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/162611/jprasb.jpg?v=637121178178700000"
+    },
+    {
+      "codigo_interno": "E5R-MMT",
+      "nome": "CHUVEIRO ELÉTRICO 127 V/ 5500W LOREN SHOWER ELETRÔNICO LORENZETTI",
+      "ativo": false,
+      "resolver": "telhanorte-vtex",
+      "url": "https://telhanorte.vteximg.com.br/arquivos/ids/1321535/2313766-Image-1.jpg?v=639071038380970000"
+    },
+    {
+      "codigo_interno": "K36-3OL",
+      "nome": "CHUVEIRO PLÁSTICO PAREDE CROMADO JAPI",
+      "ativo": true,
+      "resolver": "manual",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/161509/CVCPB.jpg?v=637121169018030000"
+    },
+    {
+      "codigo_interno": "KI1-4E5",
+      "nome": "CHUVEIRO ELÉTRICO 127 V/ 5500W ACQUA STORM BRANCO LORENZETTI",
+      "ativo": false,
+      "resolver": "lorenzetti-site",
+      "url": "https://www.lorenzetti.com.br/images/default-source/produtos-png/chuveiros-eletricos/acqua-storm-branco-cromado.png"
+    },
+    {
+      "codigo_interno": "KPM-NZ3",
+      "nome": "CHUVEIRO PLASTICO CROMADO 12\" X 1/2 ASTRA",
+      "ativo": false,
+      "resolver": "manual",
+      "url": "https://astrasa.vteximg.com.br/arquivos/ids/314140/CV122_1.jpg.jpg?v=639217120940600000"
+    },
+    {
+      "codigo_interno": "MS9-D8N",
+      "nome": "CHUVEIRO ELÉTRICO 127 V/ 5500W ACQUA DUO BRANCO LORENZETTI",
+      "ativo": false,
+      "resolver": "lorenzetti-site",
+      "url": "https://www.lorenzetti.com.br/images/default-source/produtos-png/chuveiros-eletricos/acqua-duo-branco-matte-gold.png"
+    },
+    {
+      "codigo_interno": "MVY-J8B",
+      "nome": "CHUVEIRO ELÉTRICO 127 V/ 5500W ACQUA STORM PRETO LORENZETTI",
+      "ativo": false,
+      "resolver": "lorenzetti-site",
+      "url": "https://www.lorenzetti.com.br/images/default-source/produtos-png/chuveiros-eletricos/acqua-storm-preto-cromado.png"
+    },
+    {
+      "codigo_interno": "O10-QWQ",
+      "nome": "CHUVEIRO 8 COMBRAÇO 30CM S PLÁSTICO 8\" C/BRAÇO - S/REGISTRO CROMADO",
+      "ativo": false,
+      "resolver": "manual",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/162000/NCPCR.jpg?v=637121171010400000"
+    },
+    {
+      "codigo_interno": "P7R-FNU",
+      "nome": "CHUVEIRO ELÉTRICO 127 V/ 5500W ADVANCED BLINDADO LORENZETTI",
+      "ativo": false,
+      "resolver": "telhanorte-vtex",
+      "url": "https://telhanorte.vteximg.com.br/arquivos/ids/1325812/1227645-Image-1.jpg?v=639084172192700000"
+    },
+    {
+      "codigo_interno": "QSE-Q2E",
+      "nome": "CHUVEIRO REDONDO 10cm CROMADO",
+      "ativo": false,
+      "resolver": "japi-vtex",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/163053/CVR10.jpg?v=637472801120870000"
+    },
+    {
+      "codigo_interno": "S0Z-ORY",
+      "nome": "CHUVEIRO PLÁSTICO PLÁSTICO 9\" C/BRAÇO - S/REGISTRO BRANCO",
+      "ativo": false,
+      "resolver": "manual",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/162000/NCPCR.jpg?v=637121171010400000"
+    },
+    {
+      "codigo_interno": "SD9-LN0",
+      "nome": "CHUVEIRO QUADRADO 15 X 15 X 15cm CROMADO",
+      "ativo": false,
+      "resolver": "japi-vtex",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/163051/CVQ15.jpg?v=637472801114670000"
+    },
+    {
+      "codigo_interno": "SZ9-IRE",
+      "nome": "CHUVEIRO ELÉTRICO 127 V/ 5500W ACQUA WAVE BRANCO LORENZETTI",
+      "ativo": false,
+      "resolver": "lorenzetti-site",
+      "url": "https://www.lorenzetti.com.br/images/default-source/produtos-png/chuveiros-eletricos/acqua-wave-branco-cromado.png"
+    },
+    {
+      "codigo_interno": "T59-6G3",
+      "nome": "CHUVEIRO ELÉTRICO 127 V/ 5500W LOREN BELLO C/CANO BRANCO LORENZETTI",
+      "ativo": false,
+      "resolver": "lorenzetti-site",
+      "url": "https://www.lorenzetti.com.br/images/default-source/produtos-png/chuveiros-eletricos/loren-bello-branco.png"
+    },
+    {
+      "codigo_interno": "T6O-V8F",
+      "nome": "CHUVEIRO ELÉTRICO 127 V/ 5500W DUO SHOWER BRANCO LORENZETTI",
+      "ativo": false,
+      "resolver": "telhanorte-vtex",
+      "url": "https://telhanorte.vteximg.com.br/arquivos/ids/1282459/Ducha-Duo-Shower-Eletronica-7500w-220v-Lorenzetti-1322290-1.jpg?v=638633023969300000"
+    },
+    {
+      "codigo_interno": "T9I-93U",
+      "nome": "CHUVEIRO PVC COM REGISTRO",
+      "ativo": false,
+      "resolver": "manual",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/162001/NCPCR.jpg?v=637121171014330000"
+    },
+    {
+      "codigo_interno": "TF3-3VS",
+      "nome": "CHUVEIRO ELÉTRICO 127 V/ 5500W ACQUA STORM CROMADO LORENZETTI",
+      "ativo": false,
+      "resolver": "lorenzetti-site",
+      "url": "https://www.lorenzetti.com.br/images/default-source/produtos-png/chuveiros-eletricos/acqua-storm-preto-cromado.png"
+    },
+    {
+      "codigo_interno": "W0B-9C4",
+      "nome": "CHUVEIRO ELÉTRICO 127 V/ 5500W ADVANCED MULTITEMPERATURAS LORENZETTI",
+      "ativo": false,
+      "resolver": "lorenzetti-site",
+      "url": "https://www.lorenzetti.com.br/images/default-source/produtos-png/chuveiros-eletricos/advanced-multi.png"
+    }
+  ],
+  "missing": [
+    {
+      "codigo_interno": "I0B-Z0B",
+      "nome": "CHUVEIRO PLÁSTICO 4\" BRANCO",
+      "ativo": false
+    }
+  ]
+}
