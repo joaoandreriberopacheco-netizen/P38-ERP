@@ -1,9 +1,12 @@
 /**
- * Catálogo Trial Elétricos (WooCommerce) — luminárias e spots LED.
+ * Catálogo Trial Elétricos (WooCommerce) — lâmpadas, luminárias e spots LED.
  * @see https://trialeletricos.com.br/wp-json/wc/store/products
  */
 
 const TRIAL_API = 'https://trialeletricos.com.br/wp-json/wc/store/products';
+
+const BULBO_A55 = 'lampada-bulbo-a55';
+const CILINDRICA_T150 = 'lampada-cilindrica-t150';
 
 /** SKU P38 → slug Trial (produto exato ou fallback documentado). */
 export const TRIAL_LUMINARIA_SLUG_BY_SKU = {
@@ -28,6 +31,30 @@ export const TRIAL_LUMINARIA_SLUG_BY_SKU = {
   // Spots 03W
   'Z28-TGZ': { slug: '2484' },
   'D7Q-QQ2': { slug: 'spot-led-auxiliar-quadrado-luz-amarela' },
+
+  // Spots 06W — Trial só lista 03W; foto do mesmo modelo
+  'MNG-PX8': { slug: '2484', fallback: 'spot 03W quad branco para 06W' },
+  'W70-3U1': { slug: 'spot-led-auxiliar-redondo-luz-amarela', fallback: 'spot 03W red 3000K para 06W' },
+
+  // Bulbos A55 — Trial documenta 4,9W; mesma embalagem para todas as potências
+  'R5D-PII': { slug: BULBO_A55 },
+  'UZS-0GB': { slug: BULBO_A55, fallback: 'bulbo Trial 4,9W para 09W' },
+  '43F-7ES': { slug: BULBO_A55, fallback: 'bulbo Trial 4,9W para 09W' },
+  'H2H-D50': { slug: BULBO_A55, fallback: 'bulbo Trial 4,9W para 12W' },
+  'D1N-BU0': { slug: BULBO_A55, fallback: 'bulbo Trial 4,9W para 15W' },
+  'LJD-7QS': { slug: BULBO_A55, fallback: 'bulbo Trial 4,9W para 20W' },
+  'W4Q-Y6I': { slug: BULBO_A55, fallback: 'bulbo Trial 4,9W para 40W' },
+
+  // Cilíndricas — Trial lista T150 100W; mesma linha visual
+  'T3D-4AN': { slug: CILINDRICA_T150, fallback: 'cilíndrica Trial 100W para 40W' },
+  'PY4-X5U': { slug: CILINDRICA_T150, fallback: 'cilíndrica Trial 100W para 60W' },
+
+  // T8 tubular — Trial não lista T8 na API; forma tubular da cilíndrica
+  'Y9J-MZA': { slug: CILINDRICA_T150, fallback: 'cilíndrica Trial como referência tubular 09W' },
+  'FAN-10A': { slug: CILINDRICA_T150, fallback: 'cilíndrica Trial como referência tubular 18W' },
+
+  // Tartaruga — Trial não lista; luminária sobrepor redonda 12W equivalente
+  '7X7-W6L': { slug: 'luminaria-led-sobrepor-12w-redonda', fallback: 'sobrepor red 12W para tartaruga 12W' },
 };
 
 export const TRIAL_LUMINARIA_SKUS = Object.keys(TRIAL_LUMINARIA_SLUG_BY_SKU);
