@@ -4,8 +4,8 @@
  */
 export const FORRO_PVC_IMAGENS = {
   '2IB-P0W': {
-    url: 'https://cdn.awsli.com.br/800x800/2620/2620642/produto/232674636/forro-pvc-branco-frisado-gso6f9n302.jpg',
-    fonte_ref: 'forrotex:forro-frisado-200x8',
+    url: 'https://plasmeg.com.br/wp-content/uploads/2024/08/plasmeg-forro-de-pvc-frisado-ii-branco-pct-c18m215-laminas-6-metros-por-200x8mm.png',
+    fonte_ref: 'plasmeg:forro-frisado-ii-branco',
     label: 'Forro PVC branco frisado',
   },
   '683-4QL': {
