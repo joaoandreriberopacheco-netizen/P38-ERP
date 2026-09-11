@@ -155,7 +155,7 @@ async function upsertImagem(produtoId, imagem) {
       if (row.url !== imagem.url) {
         await sbFetch(`produto_imagem?id=eq.${row.id}`, {
           method: 'PATCH',
-          body: { principal: false },
+          body: { principal: false, ativo: false },
           prefer: 'return=minimal',
         });
       }
