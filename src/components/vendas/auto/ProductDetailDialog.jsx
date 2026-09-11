@@ -33,15 +33,18 @@ export default function ProductDetailDialog({ isOpen, onClose, product, onConfir
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg max-h-[92dvh] p-0 gap-0 flex flex-col overflow-hidden">
+      <DialogContent hideClose className="max-w-xl max-h-[92dvh] p-0 gap-0 flex flex-col overflow-hidden sm:rounded-2xl">
         <div className="flex-1 min-h-0 overflow-y-auto touch-pan-y">
           <div className="relative">
-            <AutoProductImageGallery product={product} />
+            <AutoProductImageGallery
+              product={product}
+              precoLabel={`R$ ${formatAutoMoney(unitPrice)} / ${displayUnit.unidade || 'UN'}`}
+            />
             <Button
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="absolute top-3 right-3 z-10 rounded-full bg-black/30 hover:bg-black/50 text-white"
+              className="absolute top-3 right-14 z-20 rounded-full bg-black/35 hover:bg-black/50 text-white sm:right-16"
             >
               <X className="w-5 h-5" />
             </Button>
