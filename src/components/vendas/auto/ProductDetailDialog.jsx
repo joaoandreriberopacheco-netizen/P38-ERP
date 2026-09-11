@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Minus, Plus, ShoppingCart, X } from 'lucide-react';
+import { Minus, Plus, X } from 'lucide-react';
 import { pickDefaultSaleUnit, getUnidadeExibicaoSigla } from '@/lib/productUnits';
+import AutoProductImageGallery from './AutoProductImageGallery';
 import {
   AUTO_PRIMARY_BTN,
   AUTO_SURFACE_CLASS,
-  AUTO_CARD_HOVER,
   AUTO_ACCENT_TEXT,
   AUTO_ACCENT_BG,
   AUTO_CITRUS_BORDER,
@@ -34,17 +34,13 @@ export default function ProductDetailDialog({ isOpen, onClose, product, onConfir
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-lg p-0 overflow-hidden gap-0">
-        <div className={`relative h-48 ${AUTO_ACCENT_BG} flex items-center justify-center`}>
-          {product.imagem_url ? (
-            <img src={product.imagem_url} alt="" className="w-full h-full object-cover" loading="lazy" />
-          ) : (
-            <ShoppingCart className="w-16 h-16 text-muted-foreground/30" />
-          )}
+        <div className="relative">
+          <AutoProductImageGallery product={product} />
           <Button
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="absolute top-3 right-3 rounded-full bg-black/30 hover:bg-black/50 text-white"
+            className="absolute top-3 right-3 z-10 rounded-full bg-black/30 hover:bg-black/50 text-white"
           >
             <X className="w-5 h-5" />
           </Button>
