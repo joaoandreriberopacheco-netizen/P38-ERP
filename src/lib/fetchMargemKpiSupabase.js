@@ -85,7 +85,11 @@ async function fetchItemsForPedidos(sb, ids) {
 
 export function createMargemKpiSupabaseClient() {
   const key = getServiceKey();
-  if (!key) throw new Error('SUPABASE_SERVICE_ROLE_KEY em falta para job KPI margem.');
+  if (!key) {
+    throw new Error(
+      'SUPABASE_SERVICE_ROLE_KEY ou VITE_SUPABASE_ANON_KEY em falta para job KPI margem.',
+    );
+  }
   return createClient(SUPABASE_URL, key);
 }
 

@@ -42,9 +42,15 @@ jobs:
       - name: Fechar KPI vendas (Relatório de Margem)
         env:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
+          if [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ] && [ -z "${VITE_SUPABASE_ANON_KEY:-}" ]; then
+            echo "::error::Grave SUPABASE_SERVICE_ROLE_KEY (recomendado) ou NEXT_PUBLIC_SUPABASE_ANON_KEY nos GitHub Actions secrets."
+            echo "Ver docs/migration/P38_SECRETS_CANONICOS.md"
+            exit 1
+          fi
           ARGS=""
           if [ -n "${{ github.event.inputs.month }}" ]; then
             ARGS="$ARGS --month ${{ github.event.inputs.month }}"
