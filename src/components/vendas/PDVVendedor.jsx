@@ -1166,9 +1166,9 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
         </div>
       </div>
 
-      <div className="flex-1 flex overflow-hidden pb-20 md:pb-0">
+      <div className="flex-1 flex overflow-hidden">
         {/* Área Principal */}
-        <div className={`flex-1 flex flex-col px-3 md:px-5 pb-28 md:pb-5 overflow-auto ${screenShellBg}`}>
+        <div className={`flex-1 flex flex-col px-3 md:px-5 p38-pdv-vendedor-scroll-pad desktop-layout:pb-5 overflow-auto ${screenShellBg}`}>
           {/* Busca de Produto */}
           <div className="mb-4 md:mb-6 flex-shrink-0" ref={suggestionsRef}>
             <div className="flex gap-2.5 w-full">
@@ -1822,7 +1822,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
           </div>
 
           {/* Lista de Itens */}
-          <div className="flex-1 overflow-auto p-3 space-y-2">
+          <div className="flex-1 overflow-auto p-3 space-y-2 pb-4">
             {carrinho.length === 0 ?
           <div className="flex flex-col items-center justify-center h-full text-center py-16">
                 <div className="w-16 h-16 rounded-2xl bg-card dark:bg-background shadow-sm flex items-center justify-center mb-4">
