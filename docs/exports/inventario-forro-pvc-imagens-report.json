@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-11T15:35:27.277Z",
+  "generated_at": "2026-09-11T15:36:37.253Z",
   "apply": true,
   "fonte": "Assets P38 + Forrotex/Oca/Plasmeg",
   "resolved": [
@@ -27,7 +27,15 @@
       "asset": null,
       "url": "https://cdn.awsli.com.br/800x800/2405/2405744/produto/367325457/255555-1000-1000-fn7psy7oxu.jpg",
       "fonte_ref": "oca-plasmeg:forro-canelado-gemini",
-      "galeria": []
+      "galeria": [
+        {
+          "label": "Forro PVC Gemini — ambiente",
+          "tipo": "ambiente",
+          "asset": "forro-gemini-ambiente.png",
+          "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/forro-pvc/forro-gemini-ambiente.png",
+          "fonte_ref": "p38:forro-gemini-ambiente"
+        }
+      ]
     },
     {
       "codigo_interno": "LSZ-65P",

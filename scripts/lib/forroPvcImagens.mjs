@@ -23,6 +23,15 @@ export const FORRO_PVC_IMAGENS = {
     url: 'https://cdn.awsli.com.br/800x800/2405/2405744/produto/367325457/255555-1000-1000-fn7psy7oxu.jpg',
     fonte_ref: 'oca-plasmeg:forro-canelado-gemini',
     label: 'Forro PVC branco canalado Gemini',
+    galeria: [
+      {
+        asset: 'forro-gemini-ambiente.png',
+        tipo: 'ambiente',
+        ordem: 10,
+        fonte_ref: 'p38:forro-gemini-ambiente',
+        label: 'Forro PVC Gemini — ambiente',
+      },
+    ],
   },
   'LSZ-65P': {
     url: 'https://cdn.awsli.com.br/800x800/2405/2405744/produto/367325500/255559-1000-1000-vrzw7b0fl0.jpg',
