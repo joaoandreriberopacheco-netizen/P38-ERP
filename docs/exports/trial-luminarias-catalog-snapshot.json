@@ -1,0 +1,447 @@
+{
+  "generated_at": "2026-09-11T16:39:22.951Z",
+  "fonte": "https://trialeletricos.com.br/wp-json/wc/store/products",
+  "count": 55,
+  "items": [
+    {
+      "id": 2553,
+      "slug": "quadro-de-distribuicao-18-polos-embutir",
+      "name": "Quadro de Distribuição 18 Pólos &#8211; Embutir",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Quad.-Distribuicao-18-polos_120514-scaled.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/quadro-de-distribuicao-18-polos-embutir/",
+      "description": "Quadro de Distribuição para Embutir &#8211; 18 Pólos. Ref: 623"
+    },
+    {
+      "id": 2552,
+      "slug": "quadro-de-distribuicao-2",
+      "name": "Quadro de Distribuição 12 Pólos",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Quad.-Distribuicao-12-polos_120511-scaled.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/quadro-de-distribuicao-2/",
+      "description": "Quadro de Distribuição para Embutir &#8211; 12 Pólos. Ref:622"
+    },
+    {
+      "id": 2551,
+      "slug": "quadro-de-distribuicao-8-polos",
+      "name": "Quadro de Distribuição 8 Pólos",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Quad.-Distribuicao-8-polos_120409-scaled.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/quadro-de-distribuicao-8-polos/",
+      "description": "Quadro de Distribuição para Sobrepor 8 Pólos. Ref: 625"
+    },
+    {
+      "id": 2546,
+      "slug": "quadro-de-distribuicao",
+      "name": "Quadro de Distribuição 4 Pólos",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Quad.-Distribuicao-4-Polos-Trial_120406-scaled.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/quadro-de-distribuicao/",
+      "description": "Quadro de Distribuição para Sobrepor- 4 Pólos Ref:624"
+    },
+    {
+      "id": 2544,
+      "slug": "conector-paralelo",
+      "name": "Conector Paralelo",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Conector-paralelo-Trial._122645-scaled.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/conector-paralelo/",
+      "description": "Conector Paralelo 1 parafuso 10 &#8211; 70mm 2 Parafusos 16-120mm JBL (Y) 10-70 10-70mm²"
+    },
+    {
+      "id": 2541,
+      "slug": "lampada-bulbo-a55",
+      "name": "Lâmpada Bulbo A55",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Trial-Lampada-de-Bulbo_120117-scaled.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/lampada-bulbo-a55/",
+      "description": "Luz branca 6.500K Bivolt LED 4,9W Tensão de Rede 127-220V Potência 4,9W Base: E27 Potência Equivalente Incandescente: 30W Potência Fluorescente: 09W Peso: 24g."
+    },
+    {
+      "id": 2538,
+      "slug": "luminaria-led-embutir-24w",
+      "name": "Luminária LED &#8211; Embutir 24W",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Lumin.-Embutir-24W_120853-scaled.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/luminaria-led-embutir-24w/",
+      "description": "Luz Branca 6.500K LED Bivolt Tensão da Rede 127-220V Potência 24W Formato: Quadrada Dimensões 300mm [L] X 18mm [A] Peso: 918g."
+    },
+    {
+      "id": 2535,
+      "slug": "luminaria-led-embutir-18w-2",
+      "name": "Luminária LED &#8211; Embutir 18W",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Luminaria-LED-embutir-18w01-scaled.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/luminaria-led-embutir-18w-2/",
+      "description": "Luz Branca 6.500K LED Bivolt Tensão da Rede 127-220V Potência 18W Formato: Redonda Dimensões 225mm [D] X 12mm [A] Peso: 376g."
+    },
+    {
+      "id": 2532,
+      "slug": "luminaria-led-embutir-18w",
+      "name": "Luminária LED &#8211; Embutir 18W",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Luminaria-Embutir-18w-01-scaled.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/luminaria-led-embutir-18w/",
+      "description": "Luz Branca 6.500K LED Bivolt Tensão da Rede 127-220V Potência 18W Formato: Quadrada Dimensões 225mm [L]X 12mm [A] Peso 491g."
+    },
+    {
+      "id": 2521,
+      "slug": "luminaria-led-embutir-12w-2",
+      "name": "Luminária LED &#8211; Embutir 12W",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Lum.-Embutir-12W_120645-scaled.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/luminaria-led-embutir-12w-2/",
+      "description": "Luz Branca 6.500K LED Bivolt Tensão da Rede 127-220V Potência 12W Formato: Quadrada Dimensões 170mm [L] X 12mm [A] Peso 290g"
+    },
+    {
+      "id": 2518,
+      "slug": "luminaria-led-embutir-12w",
+      "name": "Luminária LED &#8211; Embutir 12W",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Lumin.-Embutir-12W_121838-scaled.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/luminaria-led-embutir-12w/",
+      "description": "Luz Branca 6.500K LED Bivolt Tensão da Rede 127-220V Potência 12W Formato: Redonda Dimensões 170mm [D] X 12mm [A] Peso 230g"
+    },
+    {
+      "id": 2513,
+      "slug": "luminaria-led-sobrepor-24w-redonda",
+      "name": "Luminária LED Sobrepor &#8211; 24W (Redonda)",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Lumin.-Redonda-Sobrepor-24W_122418-scaled.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/luminaria-led-sobrepor-24w-redonda/",
+      "description": "Luz Branca6.000K LED Bivolt Sobrepor Formato: Redonda Tensão de Rede 127-220V Potência 24W Vida Média 25.000h Dimensões 300mm [D] X 24mm [A] Peso: 915g"
+    },
+    {
+      "id": 2510,
+      "slug": "luminaria-led-sobrepor-12w-redonda-2",
+      "name": "Luminária LED Sobrepor -18W (Redonda)",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Trial-LED-sobrepor-redon-18W-scaled.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/luminaria-led-sobrepor-12w-redonda-2/",
+      "description": "Luz Branca 6.000k LED Bivolt Sobrepor Formato: Redonda Tensão de Rede127-220V Potência 18W Vida Média 25.000h Dimensões 125mm [D] X 24mm [A] Peso: 490g."
+    },
+    {
+      "id": 2507,
+      "slug": "luminaria-led-sobrepor-18w-quadrada",
+      "name": "Luminária LED Sobrepor &#8211; 18W (Quadrada)",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Lumin.-Sobrepor-18W_121102-scaled.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/luminaria-led-sobrepor-18w-quadrada/",
+      "description": "Luz Branca 6.500K LED Bivolt Sobrepor Formato: Quadrada Tensão 127-220V Potência 18W Vida Média 25.000h Dimensões 225mm [L] X 24mm [A] Peso:540g."
+    },
+    {
+      "id": 2502,
+      "slug": "luminaria-led-sobrepor-12w-quadrada",
+      "name": "Luminária LED Sobrepor &#8211; 12W (Quadrada)",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Trial-12W-Quad-scaled.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/luminaria-led-sobrepor-12w-quadrada/",
+      "description": "Luz Branca 6.500K LED Bivolt Sobrepor Formato: Quadrada Tensão de Rede 127-220V Potência 12W Vida Média 25.000h Dimensões 170mm [L] e 12mm [A]"
+    },
+    {
+      "id": 2498,
+      "slug": "luminaria-led-sobrepor-24w-quadrada",
+      "name": "Luminária LED Sobrepor &#8211; 24W (Quadrada)",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Lumin.-Quadrada-Sobrepor-24W_122308-scaled.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/luminaria-led-sobrepor-24w-quadrada/",
+      "description": "Luz Branca 6.500K LED Bivolt Formato: Quadrada Tensão de Rede 127-220V Potência 24W Vida Média 25.000h Dimensões 300mm [L] X 24mm [A] Peso: 1.070g."
+    },
+    {
+      "id": 2495,
+      "slug": "luminaria-led-sobrepor-12w-redonda",
+      "name": "Luminária LED Sobrepor &#8211; 12W (Redonda)",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/11/Trial-12W-Red-scaled.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/luminaria-led-sobrepor-12w-redonda/",
+      "description": "Luz Branca 6.500K LED Bivolt Sobrepor Formato: Redonda Tensão de Rede 127-220V Potência 12W Vida Média 25.000h Dimensões 170mm [D] X 24mm [A] Peso: 390g"
+    },
+    {
+      "id": 2492,
+      "slug": "spot-led-auxiliar-redondo-luz-amarela",
+      "name": "Spot LED Auxiliar &#8211; Redondo (Luz amarela)",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/11/Sport-LED-Redondo-01_122549-scaled.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/spot-led-auxiliar-redondo-luz-amarela/",
+      "description": "Luz Amarela 3.000k LED Bivolt Tenção de Rede 127-220V Potência 03W Vida Média 15.000h Dimensões 75mm [D] X 40mm [A] Peso: 39g."
+    },
+    {
+      "id": 2490,
+      "slug": "spot-led-auxiliar-redondo-luz-branca",
+      "name": "Spot LED Auxiliar &#8211; Redondo (Luz Branca)",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/11/Sport-LED-redondo-02_122649-scaled.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/spot-led-auxiliar-redondo-luz-branca/",
+      "description": "Luz Branca 6.500K LED Bivolt Tensão da Rede 127-220V Potência 03W Vida Média 15.000 h Dimensões 75mm [D] X 40mm [A] Peso: 39g."
+    },
+    {
+      "id": 2488,
+      "slug": "spot-led-auxiliar-quadrado-luz-amarela",
+      "name": "Spot LED Auxiliar &#8211; Quadrado (Luz Amarela)",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/11/Sport-LED-quadrado--scaled.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/spot-led-auxiliar-quadrado-luz-amarela/",
+      "description": "Luz Amarela 3.000K LED Bivolt Tensão de Rede 127-220V Potência 03W Vida Média 15.000 h Dimensões 75mm [L] X 40mm [A] Peso: 39g."
+    },
+    {
+      "id": 2484,
+      "slug": "2484",
+      "name": "Spot LED Auxiliar &#8211; Quadrado (Luz Branca)",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/11/Sport-LED-quadrado-01_122543-scaled.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/2484/",
+      "description": "Luz Branca 6.500K LED Bivolt Tensão de Rede 127-220V Potência 03W Vida Média 15.000 h Dimensões 75mm [L] X 40mm [A] Peso: 39g."
+    },
+    {
+      "id": 2482,
+      "slug": "refletor-led-100w",
+      "name": "Refletor LED 100W",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/10/Refletor-100W_125555-scaled.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/refletor-led-100w/",
+      "description": "Luz Branca 6.500K LED Bivolt Tenção de Rede 127-220V Potência 100W Dimensões 178mm [L] X 150mm [A] X 28mm [P]"
+    },
+    {
+      "id": 2476,
+      "slug": "refletor-led-50w",
+      "name": "Refletor LED 50W",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/10/Refletor-50W-Trial_125758-scaled.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/refletor-led-50w/",
+      "description": "Luz Branca 6.500K LED Bivolt Tensão de Rede 127 &#8211; 220V Potência 50W Dimensões 145mm [L] X 25mm [P]"
+    },
+    {
+      "id": 2474,
+      "slug": "lampada-cilindrica-t150",
+      "name": "Lâmpada Cilíndrica T150",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/10/Trial-lampada-cilindrica_015247-scaled.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/lampada-cilindrica-t150/",
+      "description": "Luz Branca 6.500k LED Bivolt 100W Tensão de Rede 127-220V Fluxo Luminoso 7.650 Im Dimensões 271mm [D] X 150mm [C] Ref:557"
+    },
+    {
+      "id": 2323,
+      "slug": "r-20-93674-a-vista-kit-gerador-solar-6-600wp",
+      "name": "Kit Gerador Solar 7,3kWp",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2021/03/Kit-73kwp-site.png",
+      "permalink": "https://trialeletricos.com.br/produtos/r-20-93674-a-vista-kit-gerador-solar-6-600wp/",
+      "description": "On Grid"
+    },
+    {
+      "id": 2322,
+      "slug": "r-15-10714-a-vista-kit-gerador-solar-4-400wp",
+      "name": "Kit Gerador Solar 6,5kWp",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2021/03/Kit-65kWp-Site.png",
+      "permalink": "https://trialeletricos.com.br/produtos/r-15-10714-a-vista-kit-gerador-solar-4-400wp/",
+      "description": "On Grid"
+    },
+    {
+      "id": 2307,
+      "slug": "modulo-fotovoltaico-460w-monocristalino",
+      "name": "Módulo Fotovoltáico Monocristalino 460W DAH Full-screen",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2021/10/Painel-fotovoltaico-rx-460w-solar-450-sil-cio-monocristalino-380w-400w.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/modulo-fotovoltaico-460w-monocristalino/",
+      "description": ""
+    },
+    {
+      "id": 2276,
+      "slug": "microinversor-trial-2kw-au-1p20001g-on-grid",
+      "name": "Microinversor TRIAL 2kw (AU-1P20001G) ON-GRID",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2021/07/Microinversor.png",
+      "permalink": "https://trialeletricos.com.br/produtos/microinversor-trial-2kw-au-1p20001g-on-grid/",
+      "description": ""
+    },
+    {
+      "id": 2223,
+      "slug": "kit-gerador-solar-5-000w-8-100wp",
+      "name": "Kit Gerador Solar 4,3kWp",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2021/03/3kW-Site-KIT.png",
+      "permalink": "https://trialeletricos.com.br/produtos/kit-gerador-solar-5-000w-8-100wp/",
+      "description": "On Grid"
+    },
+    {
+      "id": 2221,
+      "slug": "produto-de-teste",
+      "name": "Produto de Teste",
+      "url": null,
+      "permalink": "https://trialeletricos.com.br/produtos/produto-de-teste/",
+      "description": ""
+    },
+    {
+      "id": 2195,
+      "slug": "juncao-reta-para-trilho-de-fixacao",
+      "name": "Junção Reta para Trilho de Fixação",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2021/02/imagem-1.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/juncao-reta-para-trilho-de-fixacao/",
+      "description": ""
+    },
+    {
+      "id": 2179,
+      "slug": "kit-gerador-solar-25-000w-32-400wp",
+      "name": "Kit Gerador Solar 11,9kWp",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2021/03/Canadian-SITE-9kwp.png",
+      "permalink": "https://trialeletricos.com.br/produtos/kit-gerador-solar-25-000w-32-400wp/",
+      "description": "On Grid"
+    },
+    {
+      "id": 2177,
+      "slug": "kit-gerador-solar-8-000w-10-350wp",
+      "name": "Kit Gerador Solar 9,2kWp",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2021/03/7kw-Canadian-SITE.png",
+      "permalink": "https://trialeletricos.com.br/produtos/kit-gerador-solar-8-000w-10-350wp/",
+      "description": "On Grid"
+    },
+    {
+      "id": 2148,
+      "slug": "suporte-c-telha-de-barro",
+      "name": "Suporte &#8220;C&#8221; &#8211; Telha de Barro",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2021/01/Imagem-1.jpeg",
+      "permalink": "https://trialeletricos.com.br/produtos/suporte-c-telha-de-barro/",
+      "description": ""
+    },
+    {
+      "id": 2145,
+      "slug": "inversor-growatt-8kw-8000mtl-s",
+      "name": "Inversor Growatt 8kw (8000MTL-S)",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2021/01/Imagem.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/inversor-growatt-8kw-8000mtl-s/",
+      "description": "On-Grid"
+    },
+    {
+      "id": 2127,
+      "slug": "inversor-growatt-6kw-min6000-tl-x",
+      "name": "Inversor Growatt 6kw (MIN6000 TL-X)",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2020/06/2-Inversor-5kw-1.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/inversor-growatt-6kw-min6000-tl-x/",
+      "description": "On-Grid"
+    },
+    {
+      "id": 2100,
+      "slug": "disjuntor-din-bipolar-25a-solar",
+      "name": "Disjuntor DIN QUADRIPOLAR 25A solar",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2020/12/Disjuntor-BIPOLAR-DC-Solar-25A.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/disjuntor-din-bipolar-25a-solar/",
+      "description": ""
+    },
+    {
+      "id": 2074,
+      "slug": "modulo-fotovoltaico-450w",
+      "name": "Módulo Fotovoltáico 450W Monocristalino",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2020/11/Imagem.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/modulo-fotovoltaico-450w/",
+      "description": ""
+    },
+    {
+      "id": 2035,
+      "slug": "inversor-growatt-5kw-spf5000es",
+      "name": "Inversor Growatt 5kw (SPF5000es)",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2020/09/SPF5000ES.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/inversor-growatt-5kw-spf5000es/",
+      "description": "Off-Grid"
+    },
+    {
+      "id": 2014,
+      "slug": "suporte-pivo-com-rosca-soberba",
+      "name": "Suporte &#8220;I&#8221; &#8211; Telha de Fibrocimento",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2020/08/Capturar-2.png",
+      "permalink": "https://trialeletricos.com.br/produtos/suporte-pivo-com-rosca-soberba/",
+      "description": ""
+    },
+    {
+      "id": 1893,
+      "slug": "fixador-intermediario-2",
+      "name": "Fixador Intermediário",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2020/06/10-Grampo-Intermediario-2.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/fixador-intermediario-2/",
+      "description": ""
+    },
+    {
+      "id": 1892,
+      "slug": "cabo-solar-4-mm-vermelho",
+      "name": "Cabo Solar 4 mm Vermelho",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2020/06/8-9-Cabo-solar-vermelho-3.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/cabo-solar-4-mm-vermelho/",
+      "description": ""
+    },
+    {
+      "id": 1891,
+      "slug": "cabo-solar-6-mm-vermelho",
+      "name": "Cabo Solar 6 mm Vermelho",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2020/06/8-9-Cabo-solar-vermelho-3.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/cabo-solar-6-mm-vermelho/",
+      "description": ""
+    },
+    {
+      "id": 1863,
+      "slug": "fusivel-cartucho-10x38-16a",
+      "name": "Fusivel cartucho 10&#215;38 16A",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2020/06/WhatsApp-Image-2020-07-09-at-16.15.00.jpeg",
+      "permalink": "https://trialeletricos.com.br/produtos/fusivel-cartucho-10x38-16a/",
+      "description": ""
+    },
+    {
+      "id": 1862,
+      "slug": "disjuntor-din-tripolar-32-a-curva-c-6ka",
+      "name": "Disjuntor DIN QUADRIPOLAR 32A",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2020/06/Disjuntor-Bipolar-DC-Solar-32A.jpeg",
+      "permalink": "https://trialeletricos.com.br/produtos/disjuntor-din-tripolar-32-a-curva-c-6ka/",
+      "description": ""
+    },
+    {
+      "id": 1861,
+      "slug": "disjuntor-din-bipolar-16a-solar",
+      "name": "Disjuntor DIN QUADRIPOLAR 16A solar",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2020/06/Capturar.png",
+      "permalink": "https://trialeletricos.com.br/produtos/disjuntor-din-bipolar-16a-solar/",
+      "description": ""
+    },
+    {
+      "id": 1860,
+      "slug": "dispositivo-de-protecao-ac-dps-solar",
+      "name": "Dispositivo de Proteção AC &#8211; DPS solar",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2020/06/WhatsApp-Image-2020-07-09-at-16.58.17.jpeg",
+      "permalink": "https://trialeletricos.com.br/produtos/dispositivo-de-protecao-ac-dps-solar/",
+      "description": ""
+    },
+    {
+      "id": 1859,
+      "slug": "dispositivo-de-protecao-dc-dps-solar",
+      "name": "Dispositivo de Proteção DC &#8211; DPS solar",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2020/06/WhatsApp-Image-2020-07-09-at-16.11.17.jpeg",
+      "permalink": "https://trialeletricos.com.br/produtos/dispositivo-de-protecao-dc-dps-solar/",
+      "description": ""
+    },
+    {
+      "id": 1858,
+      "slug": "fixador-final",
+      "name": "Fixador Final",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2020/06/11-Grampo-Final-1.jpeg",
+      "permalink": "https://trialeletricos.com.br/produtos/fixador-final/",
+      "description": ""
+    },
+    {
+      "id": 1857,
+      "slug": "cabo-solar-6-mm-preto",
+      "name": "Cabo Solar 6 mm Preto",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2020/06/6-7-Cabo-solar-preto-1.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/cabo-solar-6-mm-preto/",
+      "description": ""
+    },
+    {
+      "id": 1856,
+      "slug": "cabo-solar-4-mm-preto",
+      "name": "Cabo Solar 4 mm Preto",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2020/06/6-7-Cabo-solar-preto-1.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/cabo-solar-4-mm-preto/",
+      "description": ""
+    },
+    {
+      "id": 1855,
+      "slug": "inversor-growatt-20kw-mid-20ktl3-x",
+      "name": "Inversor Growatt 20kw (MID 20KTL3-X)",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2020/06/3-Inversor-20kw-1.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/inversor-growatt-20kw-mid-20ktl3-x/",
+      "description": "On-Grid"
+    },
+    {
+      "id": 1852,
+      "slug": "inversor-growatt-5kw-min5000-tl-x",
+      "name": "Inversor Growatt 5kw (MIN5000 TL-X)",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2020/06/2-Inversor-5kw-1.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/inversor-growatt-5kw-min5000-tl-x/",
+      "description": "On-Grid"
+    },
+    {
+      "id": 1851,
+      "slug": "modulo-fotovoltaico-380w-monocristalino",
+      "name": "Módulo Fotovoltaico 380W Monocristalino",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2020/06/1-Módulo-Solar-380Wp-Monocristalino-seria-bom-inverter-a-figura-para-o-modulo-se-voltar-para-direita-2.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/modulo-fotovoltaico-380w-monocristalino/",
+      "description": ""
+    },
+    {
+      "id": 1528,
+      "slug": "conector-mc4-macho-femea",
+      "name": "Conector MC4 (macho + fêmea)",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2020/06/9-Conector-MC4.jpg",
+      "permalink": "https://trialeletricos.com.br/produtos/conector-mc4-macho-femea/",
+      "description": ""
+    }
+  ]
+}

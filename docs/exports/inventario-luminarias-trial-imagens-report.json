@@ -1,0 +1,170 @@
+{
+  "generated_at": "2026-09-11T16:39:22.951Z",
+  "apply": true,
+  "fonte": "Trial Elétricos (trialeletricos.com.br)",
+  "snapshot": "/workspace/docs/exports/trial-luminarias-catalog-snapshot.json",
+  "resolved": [
+    {
+      "codigo_interno": "TA0-0YC",
+      "nome": "LUMINÁRIA LED P/EMBUTIR 6500K QUAD 06W (12CM)",
+      "trial_slug": "luminaria-led-embutir-12w-2",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/luminaria-led-embutir-12w-2/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Lum.-Embutir-12W_120645-scaled.jpg",
+      "fonte_ref": "trial:luminaria-led-embutir-12w-2",
+      "fallback": "12W quad embutir para 06W"
+    },
+    {
+      "codigo_interno": "VJG-A15",
+      "nome": "LUMINÁRIA LED P/EMBUTIR 6500K QUAD 12W (17CM)",
+      "trial_slug": "luminaria-led-embutir-12w-2",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/luminaria-led-embutir-12w-2/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Lum.-Embutir-12W_120645-scaled.jpg",
+      "fonte_ref": "trial:luminaria-led-embutir-12w-2",
+      "fallback": null
+    },
+    {
+      "codigo_interno": "7LC-G3M",
+      "nome": "LUMINÁRIA LED P/EMBUTIR 6500K QUAD 18W 22,5CM)",
+      "trial_slug": "luminaria-led-embutir-18w",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/luminaria-led-embutir-18w/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Luminaria-Embutir-18w-01-scaled.jpg",
+      "fonte_ref": "trial:luminaria-led-embutir-18w",
+      "fallback": null
+    },
+    {
+      "codigo_interno": "05G-YBN",
+      "nome": "LUMINÁRIA LED P/EMBUTIR 6500K QUAD 24W (30CM)",
+      "trial_slug": "luminaria-led-embutir-24w",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/luminaria-led-embutir-24w/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Lumin.-Embutir-24W_120853-scaled.jpg",
+      "fonte_ref": "trial:luminaria-led-embutir-24w",
+      "fallback": null
+    },
+    {
+      "codigo_interno": "T74-OVN",
+      "nome": "LUMINÁRIA LED P/EMBUTIR 6500K RED 06W (12CM)",
+      "trial_slug": "luminaria-led-embutir-12w",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/luminaria-led-embutir-12w/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Lumin.-Embutir-12W_121838-scaled.jpg",
+      "fonte_ref": "trial:luminaria-led-embutir-12w",
+      "fallback": "12W red embutir para 06W"
+    },
+    {
+      "codigo_interno": "H5V-MQZ",
+      "nome": "LUMINÁRIA LED P/EMBUTIR 6500K RED 12W (17CM)",
+      "trial_slug": "luminaria-led-embutir-12w",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/luminaria-led-embutir-12w/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Lumin.-Embutir-12W_121838-scaled.jpg",
+      "fonte_ref": "trial:luminaria-led-embutir-12w",
+      "fallback": null
+    },
+    {
+      "codigo_interno": "Q8U-N66",
+      "nome": "LUMINÁRIA LED P/EMBUTIR 6500K RED 18W 22,5CM)",
+      "trial_slug": "luminaria-led-embutir-18w-2",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/luminaria-led-embutir-18w-2/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Luminaria-LED-embutir-18w01-scaled.jpg",
+      "fonte_ref": "trial:luminaria-led-embutir-18w-2",
+      "fallback": null
+    },
+    {
+      "codigo_interno": "44R-E44",
+      "nome": "LUMINÁRIA LED P/EMBUTIR 6500K RED 24W (30CM)",
+      "trial_slug": "luminaria-led-sobrepor-24w-redonda",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/luminaria-led-sobrepor-24w-redonda/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Lumin.-Redonda-Sobrepor-24W_122418-scaled.jpg",
+      "fonte_ref": "trial:luminaria-led-sobrepor-24w-redonda",
+      "fallback": "Trial sem embutir 24W red"
+    },
+    {
+      "codigo_interno": "53E-5PA",
+      "nome": "LUMINÁRIA LED P/SOBREPOR 6500K QUAD 12W (17CM)",
+      "trial_slug": "luminaria-led-sobrepor-12w-quadrada",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/luminaria-led-sobrepor-12w-quadrada/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Trial-12W-Quad-scaled.jpg",
+      "fonte_ref": "trial:luminaria-led-sobrepor-12w-quadrada",
+      "fallback": null
+    },
+    {
+      "codigo_interno": "YVS-BW9",
+      "nome": "LUMINÁRIA LED P/SOBREPOR 6500K QUAD 18W (22,5CM)",
+      "trial_slug": "luminaria-led-sobrepor-18w-quadrada",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/luminaria-led-sobrepor-18w-quadrada/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Lumin.-Sobrepor-18W_121102-scaled.jpg",
+      "fonte_ref": "trial:luminaria-led-sobrepor-18w-quadrada",
+      "fallback": null
+    },
+    {
+      "codigo_interno": "J8G-MSA",
+      "nome": "LUMINÁRIA LED P/SOBREPOR 6500K QUAD 24W (30CM)",
+      "trial_slug": "luminaria-led-sobrepor-24w-quadrada",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/luminaria-led-sobrepor-24w-quadrada/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Lumin.-Quadrada-Sobrepor-24W_122308-scaled.jpg",
+      "fonte_ref": "trial:luminaria-led-sobrepor-24w-quadrada",
+      "fallback": null
+    },
+    {
+      "codigo_interno": "F1S-6ZD",
+      "nome": "LUMINÁRIA LED P/SOBREPOR 6500K RED 12W (17CM)",
+      "trial_slug": "luminaria-led-sobrepor-12w-redonda",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/luminaria-led-sobrepor-12w-redonda/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/11/Trial-12W-Red-scaled.jpg",
+      "fonte_ref": "trial:luminaria-led-sobrepor-12w-redonda",
+      "fallback": null
+    },
+    {
+      "codigo_interno": "XFX-A5F",
+      "nome": "LUMINÁRIA LED P/SOBREPOR 6500K RED 18W (22,5CM)",
+      "trial_slug": "luminaria-led-sobrepor-12w-redonda-2",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/luminaria-led-sobrepor-12w-redonda-2/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Trial-LED-sobrepor-redon-18W-scaled.jpg",
+      "fonte_ref": "trial:luminaria-led-sobrepor-12w-redonda-2",
+      "fallback": null
+    },
+    {
+      "codigo_interno": "Q82-4MJ",
+      "nome": "LUMINÁRIA LED P/SOBREPOR 6500K RED 24W (30CM)",
+      "trial_slug": "luminaria-led-sobrepor-24w-redonda",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/luminaria-led-sobrepor-24w-redonda/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Lumin.-Redonda-Sobrepor-24W_122418-scaled.jpg",
+      "fonte_ref": "trial:luminaria-led-sobrepor-24w-redonda",
+      "fallback": null
+    },
+    {
+      "codigo_interno": "Z28-TGZ",
+      "nome": "SPOT LED AUXILIAR PEQUENO 03W QUAD 6500K",
+      "trial_slug": "2484",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/2484/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/11/Sport-LED-quadrado-01_122543-scaled.jpg",
+      "fonte_ref": "trial:2484",
+      "fallback": null
+    },
+    {
+      "codigo_interno": "D7Q-QQ2",
+      "nome": "SPOT LED AUXILIAR PEQUENO 03W QUAD 3000K",
+      "trial_slug": "spot-led-auxiliar-quadrado-luz-amarela",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/spot-led-auxiliar-quadrado-luz-amarela/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/11/Sport-LED-quadrado--scaled.jpg",
+      "fonte_ref": "trial:spot-led-auxiliar-quadrado-luz-amarela",
+      "fallback": null
+    }
+  ],
+  "missing": [],
+  "skipped_no_trial": [
+    {
+      "codigo_interno": "7X7-W6L",
+      "nome": "LUMINÁRIA LED TATARTARUGA 6500K 12W",
+      "motivo": "não listada no catálogo Trial online"
+    },
+    {
+      "codigo_interno": "MNG-PX8",
+      "nome": "SPOT LED AUXILIAR GRANDE 06W QUAD 6500K",
+      "motivo": "Trial só tem spot 03W"
+    },
+    {
+      "codigo_interno": "W70-3U1",
+      "nome": "SPOT LED AUXILIAR GRANDE 06W RED 3000K",
+      "motivo": "Trial só tem spot 03W"
+    }
+  ]
+}

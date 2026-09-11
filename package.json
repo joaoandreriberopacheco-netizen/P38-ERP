@@ -121,6 +121,7 @@
     "split:imagem-argamassas-jbmix": "node scripts/split-imagem-argamassas-jbmix.mjs",
     "import:imagens-argamassas-jbmix": "node scripts/importar-imagens-argamassas-jbmix.mjs",
     "import:imagens-forro-pvc": "node scripts/importar-imagens-forro-pvc.mjs",
+    "import:imagens-luminarias-trial": "node scripts/importar-imagens-luminarias-trial.mjs",
     "esquenta:enriquecer": "node scripts/enriquecer-esquenta-fornecedor.mjs",
     "esquenta:pdf": "node scripts/gerar-pdf-esquenta-fornecedor.mjs",
     "esquenta:gerar": "npm run esquenta:enriquecer && npm run esquenta:pdf",
