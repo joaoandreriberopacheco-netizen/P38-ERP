@@ -5,42 +5,18 @@ import {
 } from '@/lib/supabaseBrowserClient';
 import { p38PublicEnv } from '@/lib/p38PublicEnv';
 
-function resolveFunctionUrls() {
-  const urls = [];
-  if (typeof window !== 'undefined' && window.location?.origin) {
-    // p38-edge funciona no deploy Next.js; /api/p38-core isolado falhava no gateway Supabase.
-    urls.push(`${window.location.origin}/api/p38-edge/p38-core`);
-    urls.push(`${window.location.origin}/api/p38-core`);
-  }
+function resolveFunctionUrl() {
   const base = normalizeSupabaseProjectUrl(p38PublicEnv('VITE_SUPABASE_URL') || '');
-  if (base) {
-    urls.push(`${base}/functions/v1/p38-core`);
-  }
-  return [...new Set(urls.filter(Boolean))];
-}
-
-function isSameOriginProxy(url) {
-  if (typeof window === 'undefined') return false;
-  try {
-    return new URL(url).origin === window.location.origin;
-  } catch {
-    return false;
-  }
+  if (!base) return null;
+  return `${base}/functions/v1/p38-core`;
 }
 
 function isJwtAnonKey(key) {
   return key.startsWith('eyJ');
 }
 
-function buildHeaders(url, { sessionToken, anonKey }) {
+function buildHeaders({ sessionToken, anonKey }) {
   const headers = { 'Content-Type': 'application/json' };
-
-  if (isSameOriginProxy(url)) {
-    if (sessionToken) {
-      headers.Authorization = `Bearer ${sessionToken}`;
-    }
-    return headers;
-  }
 
   if (anonKey && isJwtAnonKey(anonKey)) {
     headers.apikey = anonKey;
@@ -74,24 +50,15 @@ function humanizeP38CoreError(payload, status) {
   return `Erro na análise (${status || 'servidor'}).`;
 }
 
-function shouldRetryWithNextUrl(msg, status) {
-  return (
-    /invalid jwt|no api key found|no `apikey`|requested function was not found/i.test(msg) ||
-    status === 502 ||
-    status === 503 ||
-    status === 504
-  );
-}
-
 /**
- * Invoca `p38-core` com JWT do utilizador (paridade com `invokeP38Auth`).
+ * Invoca `p38-core` directamente no Supabase (sem proxy Vercel).
  */
 export async function invokeP38Core(body) {
   const supabase = getSupabaseBrowserClient();
-  const urls = resolveFunctionUrls();
+  const url = resolveFunctionUrl();
   const anonKey = String(p38PublicEnv('VITE_SUPABASE_ANON_KEY') || '').trim();
 
-  if (!urls.length) {
+  if (!url) {
     throw new Error('Supabase não configurado neste ambiente.');
   }
 
@@ -100,52 +67,36 @@ export async function invokeP38Core(body) {
     throw new Error('Sessão expirada ou ausente. Saia e entre novamente em /login.');
   }
 
-  let lastNetworkError = null;
-  let lastHttpError = null;
+  const headers = buildHeaders({ sessionToken, anonKey });
 
-  for (const url of urls) {
-    const headers = buildHeaders(url, { sessionToken, anonKey });
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body ?? {}),
+    });
+
+    let payload = null;
     try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(body ?? {}),
-      });
-
-      let payload = null;
-      try {
-        payload = await response.json();
-      } catch {
-        payload = null;
-      }
-
-      if (response.ok) {
-        if (payload?.error) throw new Error(humanizeP38CoreError(payload, response.status));
-        return payload;
-      }
-
-      const msg = humanizeP38CoreError(payload, response.status);
-      if (shouldRetryWithNextUrl(msg, response.status) && urls.length > 1) {
-        lastHttpError = new Error(msg);
-        continue;
-      }
-      throw new Error(msg);
-    } catch (err) {
-      if (err instanceof Error && err.message && !/failed to fetch/i.test(err.message)) {
-        if (shouldRetryWithNextUrl(err.message, 0) && urls.length > 1) {
-          lastHttpError = err;
-          continue;
-        }
-        throw err;
-      }
-      lastNetworkError = err;
+      payload = await response.json();
+    } catch {
+      payload = null;
     }
-  }
 
-  if (lastHttpError) throw lastHttpError;
-  throw new Error(
-    lastNetworkError?.message?.includes('Failed to fetch')
-      ? 'Sem ligação ao servidor de análise. Verifique a internet e tente novamente.'
-      : lastNetworkError?.message || 'Falha ao contactar o servidor de análise.'
-  );
+    if (response.ok) {
+      if (payload?.error) throw new Error(humanizeP38CoreError(payload, response.status));
+      return payload;
+    }
+
+    throw new Error(humanizeP38CoreError(payload, response.status));
+  } catch (err) {
+    if (err instanceof Error && err.message && !/failed to fetch/i.test(err.message)) {
+      throw err;
+    }
+    throw new Error(
+      err?.message?.includes('Failed to fetch')
+        ? 'Sem ligação ao servidor de análise. Verifique a internet e tente novamente.'
+        : err?.message || 'Falha ao contactar o servidor de análise.'
+    );
+  }
 }
