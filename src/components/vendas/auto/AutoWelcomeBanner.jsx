@@ -33,7 +33,7 @@ export default function AutoWelcomeBanner({ config, onUpdateConfig, visible }) {
 
   return (
     <div
-      className={`relative mx-4 mt-3 mb-2 rounded-2xl overflow-hidden ${AUTO_COVER_CLASS} shadow-md shrink-0`}
+      className={`relative mx-4 mt-3 mb-2 rounded-2xl overflow-hidden ${AUTO_COVER_CLASS} shadow-[0_12px_40px_rgba(36,36,36,0.12)] shrink-0`}
       style={{
         backgroundImage: config.imagem_fundo_url
           ? `linear-gradient(to bottom, rgba(36, 36, 36, 0.2), rgba(36, 36, 36, 0.88)), url(${config.imagem_fundo_url})`

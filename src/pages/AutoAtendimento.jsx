@@ -20,9 +20,10 @@ import {
   AUTO_DISPLAY,
   AUTO_EYEBROW,
   AUTO_PRIMARY_BTN,
-  AUTO_SHELL_BG,
+  AUTO_PAGE_CANVAS,
   AUTO_SUBHEADING,
-  AUTO_SURFACE_CLASS,
+  AUTO_EDITORIAL_PANEL,
+  AUTO_IMAGE_STAGE,
 } from '@/components/vendas/auto/autoAtendimentoUi';
 
 export default function AutoAtendimentoPage() {
@@ -182,7 +183,7 @@ export default function AutoAtendimentoPage() {
 
   if (loadingCatalog && step !== 'home') {
     return (
-      <AutoStorefrontShell className="items-center justify-center gap-4 bg-[#fafafa]">
+      <AutoStorefrontShell className="items-center justify-center gap-4">
         <Loader2 className={`w-10 h-10 animate-spin ${AUTO_ACCENT_TEXT}`} />
         <p className={AUTO_SUBHEADING}>Carregando catálogo...</p>
       </AutoStorefrontShell>
@@ -190,7 +191,7 @@ export default function AutoAtendimentoPage() {
   }
 
   return (
-    <AutoStorefrontShell className="overflow-hidden bg-[#fafafa]">
+    <AutoStorefrontShell className="overflow-hidden">
       <AnimatePresence mode="wait">
         {step === 'home' && <AutoHome key="home" onStart={handleStart} />}
         {step === 'identification' && (
@@ -237,9 +238,9 @@ export default function AutoAtendimentoPage() {
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
-            className={`flex-1 flex flex-col items-center justify-center p-8 text-center space-y-6 min-h-screen ${AUTO_SHELL_BG}`}
+            className={`flex-1 flex flex-col items-center justify-center p-8 text-center space-y-6 min-h-screen ${AUTO_PAGE_CANVAS}`}
           >
-            <div className={`w-24 h-24 rounded-full flex items-center justify-center text-4xl font-medium ${AUTO_SURFACE_CLASS} ${AUTO_ACCENT_TEXT}`}>
+            <div className={`w-24 h-24 rounded-full flex items-center justify-center text-4xl font-medium ${AUTO_IMAGE_STAGE} ${AUTO_ACCENT_TEXT}`}>
               ✓
             </div>
             <div className="space-y-2 max-w-md">
@@ -247,7 +248,7 @@ export default function AutoAtendimentoPage() {
               <h1 className={AUTO_DISPLAY}>Compra realizada</h1>
               <p className={AUTO_SUBHEADING}>Aguarde a chamada para retirada no balcão.</p>
             </div>
-            <div className={`${AUTO_SURFACE_CLASS} px-10 py-8 rounded-3xl`}>
+            <div className={`${AUTO_EDITORIAL_PANEL} px-10 py-8`}>
               <p className={AUTO_EYEBROW}>Número do pedido</p>
               <p className={`mt-2 text-5xl font-medium tabular-nums tracking-tight ${AUTO_CITRUS_TEXT}`}>
                 {pedidoFinalizado?.numero?.split('-')[1] || '—'}
@@ -256,7 +257,7 @@ export default function AutoAtendimentoPage() {
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className={`mt-4 px-10 py-3.5 text-base ${AUTO_PRIMARY_BTN}`}
+              className={`mt-4 px-10 max-w-xs ${AUTO_PRIMARY_BTN}`}
             >
               Nova compra
             </button>

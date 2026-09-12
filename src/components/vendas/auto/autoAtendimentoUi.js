@@ -15,29 +15,65 @@ import {
 /** Carvão — hero, faixa de avisos, capas de destaque. */
 export const AUTO_COVER_CLASS = 'bg-[#242424] text-white';
 
-/** Header operacional — branco com linha cítrica/oliva. */
+/** Header operacional — minimalista, como vitrine premium. */
 export const AUTO_HEADER_CLASS = cn(
-  'relative bg-card text-foreground px-4 py-3 flex items-center justify-between',
-  'border-b border-border/40 shadow-sm shrink-0',
+  'relative bg-white/95 backdrop-blur-sm text-foreground px-4 sm:px-6 py-4 flex items-center justify-between',
+  'border-b border-[#e8ecef]/80 shrink-0',
 );
 
 /** Barra fina no topo do header (detalhe P38). */
 export const AUTO_HEADER_ACCENT_BAR = P38_LIGHT_SUBTLE_ACCENT_BAR;
 
-/** Fundo interior — branco puro. */
+/** Fundo interior — branco editorial. */
 export const AUTO_SHELL_BG = P38_LIGHT_PAGE;
 
+/** Canvas da loja — leve tom studio (contagia o PDP pelo fluxo). */
+export const AUTO_PAGE_CANVAS = 'bg-[#f8fafb]';
+
 /** Superfície cinza muito clara (listas, faixas). */
-export const AUTO_MUTED_SURFACE = 'bg-[#f5f5f5]';
+export const AUTO_MUTED_SURFACE = 'bg-[#f3f6f8]';
 
 /** Cartões brancos com sombra leve. */
-export const AUTO_SURFACE_CLASS = cn(P38_LIGHT_CARD, 'rounded-xl border', P38_LIGHT_BORDER);
+export const AUTO_SURFACE_CLASS = cn(
+  'rounded-2xl border border-[#e8ecef]/90 bg-white shadow-[0_8px_30px_rgba(36,36,36,0.04)]',
+);
 
-/** Campos de busca / inputs operacionais. */
-export const AUTO_FIELD_CLASS = cn(P38_LIGHT_FIELD, 'rounded-xl');
+/** Painel editorial (formulários, modais) — sem caixa pesada. */
+export const AUTO_EDITORIAL_PANEL = cn(
+  'rounded-2xl bg-white p-6 sm:p-8 shadow-[0_12px_40px_rgba(36,36,36,0.06)]',
+);
 
-/** CTA principal — verde oliva P38. */
-export const AUTO_PRIMARY_BTN = cn(P38_LIGHT_OLIVE_BTN, 'font-bold rounded-xl');
+/** Palco studio PDP (referência e-commerce premium). */
+export const AUTO_PDP_STAGE_BG = 'bg-[#e8eef2]';
+
+/** Campo largo estilo dropdown PDP. */
+export const AUTO_PDP_FIELD =
+  'w-full rounded-lg border border-[#d4dde4] bg-[#eef4f8] px-4 py-3 text-sm font-medium text-[#242424]';
+
+/** CTA full-width PDP. */
+export const AUTO_PDP_CTA = cn(
+  P38_LIGHT_OLIVE_BTN,
+  'h-12 w-full rounded-lg text-sm font-bold uppercase tracking-[0.08em]',
+);
+
+/** Campos — mesmo estilo do PDP (dropdown largo). */
+export const AUTO_FIELD_CLASS = cn(
+  AUTO_PDP_FIELD,
+  'h-12 text-base placeholder:text-[#6b6b6b]/70',
+  'focus-visible:ring-2 focus-visible:ring-[#4a5240]/20 focus-visible:border-[#4a5240]/35',
+);
+
+/** CTA principal — oliva, uppercase, como no PDP. */
+export const AUTO_PRIMARY_BTN = AUTO_PDP_CTA;
+
+/** Botão secundário outline premium. */
+export const AUTO_GHOST_BTN = cn(
+  'h-12 w-full rounded-lg border border-[#d4dde4] bg-white text-sm font-semibold text-[#242424]',
+  'hover:bg-[#f8fafb] transition-colors',
+);
+
+/** Palco de imagem (cards produto/categoria). */
+export const AUTO_IMAGE_STAGE = AUTO_PDP_STAGE_BG;
 
 /** CTA secundário cítrico (destaque quente). */
 export const AUTO_CITRUS_BTN =
@@ -99,19 +135,6 @@ export const AUTO_PRICE_LARGE =
 export const AUTO_PRICE_PDP =
   'text-3xl sm:text-4xl font-medium tabular-nums tracking-tight text-[#242424]';
 
-/** Palco studio PDP (referência e-commerce premium). */
-export const AUTO_PDP_STAGE_BG = 'bg-[#e8eef2]';
-
-/** Campo largo estilo dropdown PDP. */
-export const AUTO_PDP_FIELD =
-  'w-full rounded-lg border border-[#d4dde4] bg-[#eef4f8] px-4 py-3 text-sm font-medium text-[#242424]';
-
-/** CTA full-width PDP. */
-export const AUTO_PDP_CTA = cn(
-  P38_LIGHT_OLIVE_BTN,
-  'h-12 w-full rounded-lg text-sm font-bold uppercase tracking-[0.08em]',
-);
-
 /** Tabs rodapé PDP. */
 export const AUTO_PDP_TAB =
   'text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6b6b6b] hover:text-[#242424] transition-colors';
@@ -122,18 +145,23 @@ export const AUTO_PRODUCT_NAME =
 export const AUTO_CARD_ROUNDED = 'rounded-2xl';
 export const AUTO_PANEL_ROUNDED = 'rounded-3xl';
 
-/** Cartão produto / categoria — vitrine. */
+/** Cartão produto / categoria — vitrine premium. */
 export const AUTO_VITRINE_CARD = cn(
   AUTO_SURFACE_CLASS,
   AUTO_CARD_ROUNDED,
   AUTO_CARD_HOVER,
-  'shadow-sm hover:shadow-md',
+  'hover:shadow-[0_14px_36px_rgba(36,36,36,0.08)]',
 );
 
 /** Barra fixa inferior (carrinho). */
 export const AUTO_STICKY_BAR = cn(
-  'fixed bottom-0 left-0 right-0 z-30 border-t border-border/40',
-  'bg-white/95 backdrop-blur-md shadow-[0_-12px_40px_rgba(36,36,36,0.08)]',
+  'fixed bottom-0 left-0 right-0 z-30 border-t border-[#e8ecef]/90',
+  'bg-white/96 backdrop-blur-md shadow-[0_-16px_48px_rgba(36,36,36,0.07)]',
+);
+
+/** Faixa de busca / filtros. */
+export const AUTO_TOOLBAR = cn(
+  'shrink-0 border-b border-[#e8ecef]/80 bg-white px-4 py-4',
 );
 
 export function formatAutoMoney(value) {
