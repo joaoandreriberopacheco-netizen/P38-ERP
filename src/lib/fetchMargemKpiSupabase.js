@@ -8,14 +8,22 @@ import {
   normalizeMargemPedidoVendaItem,
 } from '@/lib/margemKpiNormalize';
 import { competenciaParaIntervalo } from '@/lib/relatorioMargemCalculos';
+import { normalizeSupabaseProjectUrl } from '@/lib/supabaseBrowserClient';
 
-const SUPABASE_URL =
+const SUPABASE_URL = normalizeSupabaseProjectUrl(
   process.env.VITE_SUPABASE_URL ||
-  process.env.SUPABASE_URL ||
-  'https://zhonvxkkqabfdyehyxpu.supabase.co';
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.SUPABASE_URL ||
+    'https://zhonvxkkqabfdyehyxpu.supabase.co',
+);
 
 function getServiceKey() {
-  return process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
+  return (
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.VITE_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    ''
+  );
 }
 
 function competenciaBounds(competencia) {
