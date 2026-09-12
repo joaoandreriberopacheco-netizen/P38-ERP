@@ -3,25 +3,13 @@
  */
 
 export function resolveSupabaseProjectUrl() {
-  const direct = String(
+  const base = String(
     process.env.VITE_SUPABASE_URL ||
       process.env.NEXT_PUBLIC_SUPABASE_URL ||
       process.env.SUPABASE_URL ||
       ''
   ).trim();
-  if (direct) {
-    return direct.replace(/\/rest\/v1\/?$/i, '').replace(/\/+$/, '');
-  }
-
-  const databaseUrl = String(process.env.DATABASE_URL || '').trim();
-  if (databaseUrl) {
-    const dbHost = databaseUrl.match(/@db\.([a-z0-9]+)\.supabase\.co/i);
-    if (dbHost?.[1]) return `https://${dbHost[1]}.supabase.co`;
-    const pooler = databaseUrl.match(/postgres\.([a-z0-9]+)(?:\.|:|@)/i);
-    if (pooler?.[1]) return `https://${pooler[1]}.supabase.co`;
-  }
-
-  return '';
+  return base.replace(/\/rest\/v1\/?$/i, '').replace(/\/+$/, '');
 }
 
 export function resolveEdgeFunctionUrl(functionName) {
