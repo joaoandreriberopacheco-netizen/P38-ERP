@@ -23,6 +23,27 @@ export function getAbcdRank(letter) {
   return ABCD_RANK[String(letter || '').toUpperCase()] ?? 0;
 }
 
+/**
+ * Letra ABCD de um grupo (linha h2 ou h1 sem h2) no tree grid.
+ * A curva Pareto (A–D) é por subtipo (h1+h2, ou só h1); E é só SKU sem venda.
+ * Na agregação, não misturar os E dos filhos — usar a letra do grupo (A–D).
+ */
+export function resolveAbcdDominanteGrupo(skus) {
+  const letters = (skus || [])
+    .map((p) => resolveProdutoAbcdClasse(p))
+    .filter(Boolean);
+  const paretoLetters = letters.filter((l) => String(l).toUpperCase() !== 'E');
+  if (paretoLetters.length > 0) {
+    const freq = {};
+    for (const l of paretoLetters) {
+      const u = String(l).toUpperCase();
+      freq[u] = (freq[u] || 0) + 1;
+    }
+    return Object.entries(freq).sort((a, b) => b[1] - a[1])[0]?.[0] || '';
+  }
+  return letters.some((l) => String(l).toUpperCase() === 'E') ? 'E' : '';
+}
+
 export function getProdutoPerformanceValue(produto, fieldId) {
   if (!produto || !fieldId) return null;
   if (fieldId === 'abcd') return getAbcdRank(resolveProdutoAbcdClasse(produto));
@@ -75,13 +96,7 @@ export function aggregatePerformanceFromSkus(skus) {
   const ranks = skus.map((p) => getAbcdRank(resolveProdutoAbcdClasse(p)));
   const abcdRankMedio = ranks.reduce((s, v) => s + v, 0) / ranks.length;
 
-  const freq = {};
-  for (const p of skus) {
-    const letter = resolveProdutoAbcdClasse(p);
-    if (!letter) continue;
-    freq[letter] = (freq[letter] || 0) + 1;
-  }
-  const abcdDominante = Object.entries(freq).sort((a, b) => b[1] - a[1])[0]?.[0] || '';
+  const abcdDominante = resolveAbcdDominanteGrupo(skus);
   const perfFreq = {};
   for (const p of skus) {
     const code = String(p?.iep_codigo_comportamento || '').toUpperCase().trim();
