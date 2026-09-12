@@ -1,6 +1,5 @@
-import { cancelarPedidoVenda as cancelarPedidoVendaLocal } from '@/lib/cancelarPedidoVenda';
+import { invokeFunction } from './_invokeHelper';
 
-/** Wrapper legado — executa cancelamento via entidades (sem Edge Function). */
 export function cancelarPedidoVenda(body) {
-  return cancelarPedidoVendaLocal(body).then((data) => ({ data }));
+  return invokeFunction('cancelarPedidoVenda', body);
 }

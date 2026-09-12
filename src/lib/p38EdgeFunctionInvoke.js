@@ -151,6 +151,15 @@ export async function invokeP38EdgeFunction(functionName, body, { supabase: supa
         lastHttpError = new Error(msg);
         continue;
       }
+      const proxyConfigError =
+        isSameOriginProxy(url) &&
+        (response.status === 502 || response.status === 503) &&
+        /n[aã]o configurado|not configured/i.test(msg);
+      const proxyNotFound = isSameOriginProxy(url) && response.status === 404;
+      if ((proxyConfigError || proxyNotFound) && urls.length > 1) {
+        lastHttpError = new Error(msg);
+        continue;
+      }
       const enhanced = new Error(msg);
       enhanced.code = 'P38_SUPABASE_FUNCTION_ERROR';
       throw enhanced;
