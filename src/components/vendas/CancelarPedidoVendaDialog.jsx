@@ -3,18 +3,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { AlertTriangle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { cancelarPedidoVenda } from '@/lib/cancelarPedidoVenda';
 
 export default function CancelarPedidoVendaDialog({ open, onClose, pedido, onSuccess }) {
   const [motivo, setMotivo] = useState('');
+  const [senhaAutorizacao, setSenhaAutorizacao] = useState('');
   const [processando, setProcessando] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     if (!open) {
       setMotivo('');
+      setSenhaAutorizacao('');
       setProcessando(false);
     }
   }, [open]);
@@ -30,12 +33,22 @@ export default function CancelarPedidoVendaDialog({ open, onClose, pedido, onSuc
       });
       return;
     }
+    const senha = senhaAutorizacao.trim();
+    if (!senha) {
+      toast({
+        title: 'Informe a senha',
+        description: 'Digite a senha de autorização para confirmar o cancelamento.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     setProcessando(true);
     try {
       const resultado = await cancelarPedidoVenda({
         pedidoId: pedido.id,
         motivo: motivoLimpo,
+        senhaAutorizacao: senha,
       });
       toast({
         title: 'Venda cancelada',
@@ -83,6 +96,19 @@ export default function CancelarPedidoVendaDialog({ open, onClose, pedido, onSuc
               onChange={(e) => setMotivo(e.target.value)}
               placeholder="Ex.: venda duplicada, erro de operador, cliente desistiu..."
               rows={4}
+              disabled={processando}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="senha-cancelamento-venda">Senha de autorização</Label>
+            <Input
+              id="senha-cancelamento-venda"
+              type="password"
+              autoComplete="off"
+              value={senhaAutorizacao}
+              onChange={(e) => setSenhaAutorizacao(e.target.value)}
+              placeholder="Senha para autorizar o cancelamento"
               disabled={processando}
             />
           </div>

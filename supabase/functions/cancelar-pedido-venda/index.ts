@@ -1,7 +1,7 @@
 // Port de cancelarPedidoVenda → Edge + RPC transacional Supabase.
 // Contrato:
 //   POST /cancelar-pedido-venda  (Authorization: Bearer <jwt>)
-//   body: { pedidoId: string, motivo: string }
+//   body: { pedidoId: string, motivo: string, senhaAutorizacao: string }
 //   200 → { sucesso: true, pedido_id, numero, status, ... }
 import {
   requireUser,
@@ -10,6 +10,7 @@ import {
   badRequest,
   handleCorsPreflight,
 } from '../_shared/auth.ts';
+import { validarSenhaCancelarVenda } from '../_shared/operacaoSenha.ts';
 
 Deno.serve(async (req) => {
   const preflight = handleCorsPreflight(req);
@@ -19,7 +20,7 @@ Deno.serve(async (req) => {
   if (auth instanceof Response) return auth;
   const { user, client } = auth;
 
-  let body: { pedidoId?: string; motivo?: string };
+  let body: { pedidoId?: string; motivo?: string; senhaAutorizacao?: string; senha?: string };
   try {
     body = await req.json();
   } catch {
@@ -27,9 +28,16 @@ Deno.serve(async (req) => {
   }
 
   const { pedidoId, motivo } = body;
+  const senhaAutorizacao = String(body.senhaAutorizacao || body.senha || '').trim();
   if (!pedidoId) return badRequest('pedidoId obrigatório.');
   if (!String(motivo || '').trim()) {
     return badRequest('Informe o motivo do cancelamento.');
+  }
+  if (!senhaAutorizacao) {
+    return badRequest('Informe a senha de autorização.');
+  }
+  if (!validarSenhaCancelarVenda(senhaAutorizacao)) {
+    return jsonResponse({ error: 'Senha de autorização incorreta.' }, 403);
   }
 
   const userName = await resolveUserName(client, user.id, user.email);
