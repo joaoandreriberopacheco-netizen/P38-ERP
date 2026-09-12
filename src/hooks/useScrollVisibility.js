@@ -30,6 +30,18 @@ function isVerticallyScrollable(element) {
   return overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay';
 }
 
+function shouldIgnoreScrollTarget(target) {
+  if (!(target instanceof Element)) return false;
+  return Boolean(
+    target.closest('[data-vaul-drawer], [role="dialog"], [data-radix-popper-content-wrapper]')
+  );
+}
+
+function isExtratoHistoricoScroll(target) {
+  if (!(target instanceof Element)) return false;
+  return Boolean(target.closest('[data-p38-extrato-scroll]'));
+}
+
 /**
  * Igual a `useBottomNavScrollVisibility`, mas sem `useLocation` / `useSearchParams`.
  * Para overlays montados condicionalmente no Next.js (ex.: formulário de produto).
@@ -69,11 +81,16 @@ export function useScrollVisibility(enabled = true) {
         target === document.documentElement ||
         target === document.body;
 
+      if (shouldIgnoreScrollTarget(target)) {
+        return;
+      }
+
       if (!isDocument && !isVerticallyScrollable(target)) {
         return;
       }
 
       const y = getScrollTop(target);
+      const nestedExtrato = !isDocument && isExtratoHistoricoScroll(target);
 
       if (scrollTargetRef.current !== target) {
         scrollTargetRef.current = target;
@@ -84,7 +101,14 @@ export function useScrollVisibility(enabled = true) {
       const delta = y - lastYRef.current;
       if (Math.abs(delta) < MIN_DELTA) return;
 
-      if (y <= HIDE_AFTER_Y) {
+      if (nestedExtrato) {
+        // Extrato do produto: evita expandir no scroll-up a meio da lista (causa tremelique).
+        if (y <= 8) {
+          setVisible(true);
+        } else if (delta > 0 && y > HIDE_AFTER_Y) {
+          setVisible(false);
+        }
+      } else if (y <= HIDE_AFTER_Y) {
         setVisible(true);
       } else if (delta > 0) {
         setVisible(false);
