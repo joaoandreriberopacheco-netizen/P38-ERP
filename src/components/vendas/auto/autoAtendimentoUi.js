@@ -96,6 +96,27 @@ export const AUTO_PRICE =
   'text-lg sm:text-xl font-medium tabular-nums tracking-tight text-[#4a5240]';
 export const AUTO_PRICE_LARGE =
   'text-2xl sm:text-3xl font-medium tabular-nums tracking-tight text-[#4a5240]';
+export const AUTO_PRICE_PDP =
+  'text-3xl sm:text-4xl font-medium tabular-nums tracking-tight text-[#242424]';
+
+/** Palco studio PDP (referência e-commerce premium). */
+export const AUTO_PDP_STAGE_BG = 'bg-[#e8eef2]';
+
+/** Campo largo estilo dropdown PDP. */
+export const AUTO_PDP_FIELD =
+  'w-full rounded-lg border border-[#d4dde4] bg-[#eef4f8] px-4 py-3 text-sm font-medium text-[#242424]';
+
+/** CTA full-width PDP. */
+export const AUTO_PDP_CTA = cn(
+  P38_LIGHT_OLIVE_BTN,
+  'h-12 w-full rounded-lg text-sm font-bold uppercase tracking-[0.08em]',
+);
+
+/** Tabs rodapé PDP. */
+export const AUTO_PDP_TAB =
+  'text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6b6b6b] hover:text-[#242424] transition-colors';
+export const AUTO_PDP_TAB_ACTIVE =
+  'text-[11px] font-semibold uppercase tracking-[0.14em] text-[#242424]';
 export const AUTO_PRODUCT_NAME =
   'text-sm font-medium leading-snug text-[#242424] line-clamp-3';
 export const AUTO_CARD_ROUNDED = 'rounded-2xl';
