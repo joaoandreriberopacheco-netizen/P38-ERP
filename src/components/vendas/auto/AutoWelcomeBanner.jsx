@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
-import { AUTO_COVER_CLASS, AUTO_COVER_MUTED, AUTO_PRIMARY_BTN, AUTO_DISPLAY, AUTO_EYEBROW } from './autoAtendimentoUi';
+import { AUTO_COVER_CLASS, AUTO_PRIMARY_BTN } from './autoAtendimentoUi';
 
 export default function AutoWelcomeBanner({ config, onUpdateConfig, visible }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -33,21 +33,18 @@ export default function AutoWelcomeBanner({ config, onUpdateConfig, visible }) {
 
   return (
     <div
-      className={`relative mx-4 mt-3 mb-2 rounded-2xl overflow-hidden ${AUTO_COVER_CLASS} shadow-[0_12px_40px_rgba(36,36,36,0.12)] shrink-0`}
+      className={`relative mx-4 mt-3 mb-2 rounded-2xl overflow-hidden ${AUTO_COVER_CLASS} shadow-md shrink-0`}
       style={{
         backgroundImage: config.imagem_fundo_url
-          ? `linear-gradient(to bottom, rgba(36, 36, 36, 0.2), rgba(36, 36, 36, 0.88)), url(${config.imagem_fundo_url})`
+          ? `linear-gradient(to bottom, rgba(15, 23, 42, 0.15), rgba(15, 23, 42, 0.85)), url(${config.imagem_fundo_url})`
           : undefined,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
     >
       <div className="p-6 md:p-8 relative z-10">
-        <p className={AUTO_EYEBROW}>Loja</p>
-        <h2 className={`${AUTO_DISPLAY} text-white mt-1`}>{config.titulo_boas_vindas}</h2>
-        <p className={`text-sm md:text-base mt-2 max-w-2xl leading-relaxed ${AUTO_COVER_MUTED}`}>
-          {config.subtitulo_boas_vindas}
-        </p>
+        <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{config.titulo_boas_vindas}</h2>
+        <p className="text-sm md:text-base text-indigo-100 mt-1 max-w-2xl">{config.subtitulo_boas_vindas}</p>
       </div>
 
       <button

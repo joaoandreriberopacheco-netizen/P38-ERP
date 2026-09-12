@@ -13,18 +13,6 @@ import {
   isProdutoDisponivelPdv,
 } from '@/lib/hierarquiaPortal/produtoPdvDisponibilidade';
 import { Loader2 } from 'lucide-react';
-import AutoStorefrontShell from '@/components/vendas/auto/AutoStorefrontShell';
-import {
-  AUTO_ACCENT_TEXT,
-  AUTO_CITRUS_TEXT,
-  AUTO_DISPLAY,
-  AUTO_EYEBROW,
-  AUTO_PRIMARY_BTN,
-  AUTO_PAGE_CANVAS,
-  AUTO_SUBHEADING,
-  AUTO_EDITORIAL_PANEL,
-  AUTO_IMAGE_STAGE,
-} from '@/components/vendas/auto/autoAtendimentoUi';
 
 export default function AutoAtendimentoPage() {
   const [step, setStep] = useState('home');
@@ -183,15 +171,15 @@ export default function AutoAtendimentoPage() {
 
   if (loadingCatalog && step !== 'home') {
     return (
-      <AutoStorefrontShell className="items-center justify-center gap-4">
-        <Loader2 className={`w-10 h-10 animate-spin ${AUTO_ACCENT_TEXT}`} />
-        <p className={AUTO_SUBHEADING}>Carregando catálogo...</p>
-      </AutoStorefrontShell>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-muted/40 gap-3">
+        <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
+        <p className="text-muted-foreground">Carregando catálogo...</p>
+      </div>
     );
   }
 
   return (
-    <AutoStorefrontShell className="overflow-hidden">
+    <div className="min-h-screen bg-muted/40 dark:bg-background overflow-hidden flex flex-col">
       <AnimatePresence mode="wait">
         {step === 'home' && <AutoHome key="home" onStart={handleStart} />}
         {step === 'identification' && (
@@ -238,32 +226,29 @@ export default function AutoAtendimentoPage() {
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
-            className={`flex-1 flex flex-col items-center justify-center p-8 text-center space-y-6 min-h-screen ${AUTO_PAGE_CANVAS}`}
+            className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-6 bg-emerald-600 text-white min-h-screen"
           >
-            <div className={`w-24 h-24 rounded-full flex items-center justify-center text-4xl font-medium ${AUTO_IMAGE_STAGE} ${AUTO_ACCENT_TEXT}`}>
+            <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center text-emerald-600 text-5xl font-bold">
               ✓
             </div>
-            <div className="space-y-2 max-w-md">
-              <p className={AUTO_EYEBROW}>Pedido confirmado</p>
-              <h1 className={AUTO_DISPLAY}>Compra realizada</h1>
-              <p className={AUTO_SUBHEADING}>Aguarde a chamada para retirada no balcão.</p>
-            </div>
-            <div className={`${AUTO_EDITORIAL_PANEL} px-10 py-8`}>
-              <p className={AUTO_EYEBROW}>Número do pedido</p>
-              <p className={`mt-2 text-5xl font-medium tabular-nums tracking-tight ${AUTO_CITRUS_TEXT}`}>
+            <h1 className="text-3xl md:text-4xl font-bold">Compra realizada!</h1>
+            <p className="text-lg text-emerald-50">Aguarde a chamada para retirada.</p>
+            <div className="bg-white/15 px-8 py-6 rounded-2xl backdrop-blur-sm">
+              <p className="text-sm uppercase tracking-widest mb-2 opacity-90">Pedido</p>
+              <p className="text-5xl font-mono font-bold">
                 {pedidoFinalizado?.numero?.split('-')[1] || '—'}
               </p>
             </div>
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className={`mt-4 px-10 max-w-xs ${AUTO_PRIMARY_BTN}`}
+              className="mt-8 px-8 py-3 bg-white text-emerald-700 rounded-full font-bold text-lg hover:bg-emerald-50 transition-colors"
             >
               Nova compra
             </button>
           </motion.div>
         )}
       </AnimatePresence>
-    </AutoStorefrontShell>
+    </div>
   );
 }

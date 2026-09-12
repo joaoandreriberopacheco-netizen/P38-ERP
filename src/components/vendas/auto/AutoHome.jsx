@@ -1,51 +1,45 @@
-import { ArrowRight, ShoppingBag } from 'lucide-react';
-import AutoShellHeader from './AutoShellHeader';
+import { ShoppingBag, Touchpad } from 'lucide-react';
 import {
-  AUTO_PAGE_CANVAS,
-  AUTO_EDITORIAL_PANEL,
+  AUTO_HEADER_CLASS,
+  AUTO_SHELL_BG,
+  AUTO_SURFACE_CLASS,
+  AUTO_CARD_HOVER,
   AUTO_ACCENT_TEXT,
-  AUTO_IMAGE_STAGE,
-  AUTO_DISPLAY,
-  AUTO_SUBHEADING,
-  AUTO_EYEBROW,
-  AUTO_STORE_MAX,
-  AUTO_PRIMARY_BTN,
+  AUTO_ACCENT_BG,
+  AUTO_CITRUS_TEXT,
 } from './autoAtendimentoUi';
 
 export default function AutoHome({ onStart }) {
   return (
-    <div className={`flex-1 flex flex-col h-full min-h-0 ${AUTO_PAGE_CANVAS}`}>
-      <AutoShellHeader>
-        <div className="flex items-center gap-2.5">
-          <ShoppingBag className={`w-5 h-5 ${AUTO_ACCENT_TEXT}`} />
+    <div className={`flex-1 flex flex-col min-h-screen ${AUTO_SHELL_BG}`}>
+      <header className={AUTO_HEADER_CLASS}>
+        <div className="flex items-center gap-2">
+          <ShoppingBag className="w-6 h-6" />
           <div>
-            <p className="text-sm font-medium tracking-tight text-[#242424]">Auto-atendimento</p>
-            <p className={AUTO_EYEBROW}>Vitrine P38</p>
+            <p className="font-bold leading-tight">Auto-atendimento</p>
+            <p className="text-xs text-indigo-100">Toque para começar</p>
           </div>
         </div>
-      </AutoShellHeader>
+      </header>
 
-      <div className={`flex-1 flex flex-col ${AUTO_STORE_MAX} px-4 py-8 sm:py-12`}>
-        <button
-          type="button"
-          data-pulse-sensor="auto-atendimento.iniciar"
-          onClick={onStart}
-          className={`flex-1 flex flex-col items-center justify-center p-8 sm:p-14 text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4a5240]/25 ${AUTO_EDITORIAL_PANEL}`}
-        >
-          <div className={`w-28 h-28 rounded-3xl ${AUTO_IMAGE_STAGE} flex items-center justify-center mb-10 shadow-inner`}>
-            <ShoppingBag className={`w-14 h-14 ${AUTO_ACCENT_TEXT}`} />
-          </div>
-          <p className={AUTO_EYEBROW}>Bem-vindo</p>
-          <h1 className={`${AUTO_DISPLAY} mt-2 mb-4 max-w-lg`}>Comece sua compra</h1>
-          <p className={`${AUTO_SUBHEADING} max-w-md mb-10`}>
-            Escolha seus produtos e finalize no totem — rápido, claro e sem fila.
-          </p>
-          <span className={`inline-flex items-center justify-center gap-2 px-8 ${AUTO_PRIMARY_BTN} max-w-xs`}>
-            Iniciar
-            <ArrowRight className="w-4 h-4" />
-          </span>
-        </button>
-      </div>
+      <button
+        type="button"
+        data-pulse-sensor="auto-atendimento.iniciar"
+        onClick={onStart}
+        className={`flex-1 flex flex-col items-center justify-center p-8 text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4a5240]/40 rounded-2xl mx-4 my-6 ${AUTO_SURFACE_CLASS} ${AUTO_CARD_HOVER}`}
+      >
+        <div className={`w-24 h-24 rounded-2xl ${AUTO_ACCENT_BG} flex items-center justify-center mb-6`}>
+          <ShoppingBag className={`w-12 h-12 ${AUTO_ACCENT_TEXT}`} />
+        </div>
+        <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">Bem-vindo</h1>
+        <p className="text-muted-foreground text-lg max-w-md mb-8">
+          Escolha seus produtos e finalize no totem — rápido e simples.
+        </p>
+        <div className={`flex items-center gap-2 text-sm font-medium ${AUTO_CITRUS_TEXT}`}>
+          <Touchpad className="w-5 h-5" />
+          Toque em qualquer lugar para iniciar
+        </div>
+      </button>
     </div>
   );
 }

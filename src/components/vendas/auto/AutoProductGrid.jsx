@@ -17,7 +17,7 @@ function estimateRowHeight(breakpoint) {
   return 228;
 }
 
-export default function AutoProductGrid({ products, onSelect, emptyFallback, className }) {
+export default function AutoProductGrid({ products, onSelect, emptyFallback }) {
   const { breakpoint } = useViewport();
   const columns = gridColumnsForViewport(breakpoint);
   const rows = useMemo(() => chunkForGrid(products, columns), [products, columns]);
@@ -29,7 +29,7 @@ export default function AutoProductGrid({ products, onSelect, emptyFallback, cla
       estimateSize={rowEstimate}
       overscan={3}
       getItemKey={(row, index) => row?.[0]?.id ?? `row-${index}`}
-      className={className ?? 'flex-1 min-h-0'}
+      className="flex-1 min-h-0"
       emptyFallback={emptyFallback}
       renderItem={(rowProducts) => (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 pb-3">

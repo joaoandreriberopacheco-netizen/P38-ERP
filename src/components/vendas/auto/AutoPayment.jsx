@@ -5,21 +5,15 @@ import { CreditCard, Smartphone, ArrowLeft, Loader2, Printer, CheckCircle } from
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import SimuladorCartaoSheet from '@/components/vendas/SimuladorCartaoSheet';
-import AutoShellHeader from './AutoShellHeader';
 import {
+  AUTO_COVER_CLASS,
+  AUTO_HEADER_CLASS,
   AUTO_PRIMARY_BTN,
-  AUTO_PAGE_CANVAS,
-  AUTO_EDITORIAL_PANEL,
-  AUTO_GHOST_BTN,
+  AUTO_SHELL_BG,
+  AUTO_SURFACE_CLASS,
+  AUTO_CARD_HOVER,
   AUTO_ACCENT_TEXT,
-  AUTO_IMAGE_STAGE,
-  AUTO_DISPLAY,
-  AUTO_EYEBROW,
-  AUTO_HEADING,
-  AUTO_PRICE_LARGE,
-  AUTO_SECTION_TITLE,
-  AUTO_SUBHEADING,
-  AUTO_VITRINE_CARD,
+  AUTO_ACCENT_BG,
   formatAutoMoney,
 } from './autoAtendimentoUi';
 import { omitPedidoVendaEspelho } from '@/lib/omitEspelhoPersist';
@@ -100,20 +94,21 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
 
   if (pedidoFinalizado) {
     return (
-      <div className={`flex-1 flex flex-col items-center justify-center p-4 sm:p-8 ${AUTO_PAGE_CANVAS}`}>
-        <div className={`${AUTO_EDITORIAL_PANEL} max-w-md w-full relative overflow-hidden`}>
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#e8b824]/80 via-[#4a5240]/60 to-transparent" />
+      <div className="flex-1 flex flex-col items-center justify-center bg-background p-4">
+        <div className="bg-card p-8 rounded-3xl shadow-xl max-w-md w-full border border-border/40 relative overflow-hidden">
+            {/* Recibo Effect Top */}
+            <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
             
             <div className="text-center mb-8">
-              <div className={`w-20 h-20 ${AUTO_IMAGE_STAGE} rounded-full flex items-center justify-center mx-auto mb-4`}>
-                <CheckCircle className="w-10 h-10 text-[#4a5240]" />
+              <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-10 h-10 text-emerald-600 dark:text-emerald-400" />
               </div>
-              <p className={AUTO_EYEBROW}>Confirmado</p>
-              <h2 className={`${AUTO_DISPLAY} mt-1`}>Pagamento aprovado</h2>
-              <p className={AUTO_SUBHEADING}>Seu pedido foi enviado para separação.</p>
+              <h2 className="text-2xl font-bold text-foreground">Pagamento Aprovado!</h2>
+              <p className="text-muted-foreground">Seu pedido foi enviado para separação.</p>
             </div>
 
-            <div className="bg-[#f8fafb] p-6 rounded-xl border border-dashed border-[#d4dde4] mb-8 font-mono text-sm">
+            {/* Cupom Visual */}
+            <div className="bg-muted/40 dark:bg-muted/30 p-6 rounded-xl border border-dashed border-border/40 dark:border-border/40 mb-8 font-mono text-sm">
               <div className="text-center border-b border-dashed border-border/40 dark:border-border/40 pb-4 mb-4">
                 <h3 className="font-bold text-lg uppercase">VarejoSync</h3>
                 <p>Pedido #{pedidoFinalizado.numero}</p>
@@ -150,7 +145,7 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
              <Button 
               variant="ghost"
               onClick={() => onSuccess(pedidoFinalizado)}
-              className={`${AUTO_GHOST_BTN} mt-2 border-0 shadow-none`}
+              className="w-full text-muted-foreground"
             >
               Não imprimir
             </Button>
@@ -162,23 +157,23 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
   return (
     <>
     <motion.div 
-      className={`flex-1 flex flex-col h-full min-h-0 overflow-hidden ${AUTO_PAGE_CANVAS}`}
+      className={`flex-1 flex flex-col ${AUTO_SHELL_BG}`}
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
     >
-      <AutoShellHeader>
-        <Button variant="ghost" onClick={onBack} disabled={processing} className="text-[#242424] hover:bg-secondary/60">
+      <div className={AUTO_HEADER_CLASS}>
+        <Button variant="ghost" onClick={onBack} disabled={processing} className="text-white hover:bg-indigo-700 hover:text-white">
           <ArrowLeft className="w-5 h-5 mr-2" /> Voltar
         </Button>
-        <h2 className="text-sm font-medium tracking-tight text-[#242424]">Pagamento</h2>
+        <h2 className="text-lg font-bold">Pagamento</h2>
         <div className="w-16" />
-      </AutoShellHeader>
+      </div>
 
-      <div className="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row">
         {/* Resumo */}
-        <div className={`w-full md:w-1/3 p-6 sm:p-8 min-h-0 p38-stage-panel-scroll touch-pan-y bg-white border-r border-[#e8ecef]/80`}>
-          <h3 className={`${AUTO_SECTION_TITLE} mb-6`}>Resumo do pedido</h3>
+        <div className={`w-full md:w-1/3 p-8 ${AUTO_SURFACE_CLASS} border-r border-border/40 dark:border-border/40`}>
+          <h3 className="text-lg font-semibold mb-6">Resumo do Pedido</h3>
           <div className="space-y-4 mb-8">
             {carrinho.map(item => (
               <div key={item.produto_id} className="flex items-center gap-3 text-sm">
@@ -197,28 +192,27 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
             ))}
           </div>
           <div className="border-t border-border/40 pt-6">
-            <div className="flex justify-between items-center">
-              <span className={AUTO_SECTION_TITLE}>Total</span>
-              <span className={AUTO_PRICE_LARGE}>R$ {formatAutoMoney(total)}</span>
+            <div className="flex justify-between items-center text-2xl font-bold">
+              <span>Total</span>
+              <span className="text-[#4a5240] dark:text-[#a4ce33]">R$ {total.toFixed(2)}</span>
             </div>
           </div>
         </div>
 
         {/* Métodos de Pagamento */}
-        <div className={`flex-1 min-h-0 p-6 sm:p-8 flex flex-col justify-center items-center p38-stage-panel-scroll touch-pan-y ${AUTO_PAGE_CANVAS}`}>
+        <div className={`flex-1 p-8 flex flex-col justify-center items-center ${AUTO_SHELL_BG}`}>
           {processing ? (
             <div className="text-center">
               <div className="relative w-24 h-24 mx-auto mb-8">
                 <div className="absolute inset-0 border-4 border-border/40 rounded-full"></div>
                 <div className="absolute inset-0 border-4 border-[#4a5240] rounded-full border-t-transparent animate-spin"></div>
               </div>
-              <h3 className={`${AUTO_HEADING} mb-2`}>Processando pagamento</h3>
-              <p className={AUTO_SUBHEADING}>Siga as instruções na maquininha de cartão</p>
+              <h3 className="text-2xl font-bold mb-2">Processando Pagamento...</h3>
+              <p className="text-muted-foreground">Siga as instruções na maquininha de cartão</p>
             </div>
           ) : (
             <div className="w-full max-w-md space-y-4">
-              <p className={`${AUTO_EYEBROW} text-center mb-2`}>Pagamento</p>
-              <h3 className={`${AUTO_HEADING} mb-6 text-center`}>Escolha a forma</h3>
+              <h3 className="text-xl font-semibold mb-6 text-center">Escolha a forma de pagamento</h3>
 
               {/* Simulador de taxa */}
               <button
@@ -231,40 +225,40 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
               
               <button
                 onClick={() => handleProcessPayment('credit')}
-                className={`w-full p-6 ${AUTO_VITRINE_CARD} flex items-center gap-4 group`}
+                className={`w-full p-6 ${AUTO_SURFACE_CLASS} ${AUTO_CARD_HOVER} border-2 border-transparent flex items-center gap-4 group`}
               >
-                <div className={`w-12 h-12 ${AUTO_IMAGE_STAGE} rounded-full flex items-center justify-center`}>
+                <div className={`w-12 h-12 ${AUTO_ACCENT_BG} rounded-full flex items-center justify-center group-hover:bg-muted dark:group-hover:bg-[#383e47]`}>
                   <CreditCard className={`w-6 h-6 ${AUTO_ACCENT_TEXT}`} />
                 </div>
                 <div className="text-left">
-                  <p className="font-medium text-lg text-[#242424]">Cartão de Crédito</p>
-                  <p className={AUTO_SUBHEADING}>Visa, Mastercard, Elo...</p>
+                  <p className="font-bold text-lg">Cartão de Crédito</p>
+                  <p className="text-sm text-muted-foreground">Visa, Mastercard, Elo...</p>
                 </div>
               </button>
 
               <button
                 onClick={() => handleProcessPayment('debit')}
-                className={`w-full p-6 ${AUTO_VITRINE_CARD} flex items-center gap-4 group`}
+                className={`w-full p-6 ${AUTO_SURFACE_CLASS} ${AUTO_CARD_HOVER} border-2 border-transparent flex items-center gap-4 group`}
               >
                 <div className="w-12 h-12 bg-[#e8b824]/15 rounded-full flex items-center justify-center group-hover:bg-[#e8b824]/25">
                   <CreditCard className="w-6 h-6 text-[#c99710] dark:text-[#e8b824]" />
                 </div>
                 <div className="text-left">
-                  <p className="font-medium text-lg text-[#242424]">Cartão de Débito</p>
-                  <p className={AUTO_SUBHEADING}>Pagamento à vista</p>
+                  <p className="font-bold text-lg">Cartão de Débito</p>
+                  <p className="text-sm text-muted-foreground">Pagamento à vista</p>
                 </div>
               </button>
 
               <button
                 onClick={() => handleProcessPayment('pix')}
-                className={`w-full p-6 ${AUTO_VITRINE_CARD} flex items-center gap-4 group`}
+                className={`w-full p-6 ${AUTO_SURFACE_CLASS} ${AUTO_CARD_HOVER} border-2 border-transparent flex items-center gap-4 group`}
               >
-                <div className={`w-12 h-12 ${AUTO_IMAGE_STAGE} rounded-full flex items-center justify-center`}>
+                <div className={`w-12 h-12 ${AUTO_ACCENT_BG} rounded-full flex items-center justify-center group-hover:bg-muted dark:group-hover:bg-[#383e47]`}>
                   <Smartphone className={`w-6 h-6 ${AUTO_ACCENT_TEXT}`} />
                 </div>
                 <div className="text-left">
-                  <p className="font-medium text-lg text-[#242424]">PIX</p>
-                  <p className={AUTO_SUBHEADING}>QR Code instantâneo</p>
+                  <p className="font-bold text-lg">PIX</p>
+                  <p className="text-sm text-muted-foreground">QR Code instantâneo</p>
                 </div>
               </button>
             </div>

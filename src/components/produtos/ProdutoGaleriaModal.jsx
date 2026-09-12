@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { notifyProdutoGaleriaClosed } from '@/lib/produtoGaleriaGuard';
@@ -27,18 +27,13 @@ export default function ProdutoGaleriaModal({
   precoLabel = '',
   imagens = [],
   initialIndex = 0,
-  showThumbnails = false,
-  onIndexChange,
 }) {
   const [api, setApi] = useState(null);
   const [current, setCurrent] = useState(initialIndex);
-  const thumbStripRef = useRef(null);
 
   const onSelect = useCallback((emblaApi) => {
-    const idx = emblaApi.selectedScrollSnap();
-    setCurrent(idx);
-    onIndexChange?.(idx);
-  }, [onIndexChange]);
+    setCurrent(emblaApi.selectedScrollSnap());
+  }, []);
 
   useEffect(() => {
     if (!api) return undefined;
@@ -52,14 +47,6 @@ export default function ProdutoGaleriaModal({
     api.scrollTo(initialIndex, true);
     setCurrent(initialIndex);
   }, [open, api, initialIndex]);
-
-  useEffect(() => {
-    if (!showThumbnails || !open) return;
-    const strip = thumbStripRef.current;
-    const active = strip?.children?.[current];
-    if (!strip || !active) return;
-    active.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-  }, [current, showThumbnails, open]);
 
   const handleClose = useCallback(() => {
     notifyProdutoGaleriaClosed();
@@ -75,15 +62,6 @@ export default function ProdutoGaleriaModal({
   const stopFotoHit = useCallback((e) => {
     e.stopPropagation();
   }, []);
-
-  const goTo = useCallback(
-    (index) => {
-      api?.scrollTo(index);
-      setCurrent(index);
-      onIndexChange?.(index);
-    },
-    [api, onIndexChange],
-  );
 
   useEffect(() => {
     if (!open) return undefined;
@@ -115,6 +93,7 @@ export default function ProdutoGaleriaModal({
       onPointerDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
     >
+      {/* Fundo escuro: qualquer toque aqui fecha (área fora da foto). */}
       <div
         className="absolute inset-0 bg-black/95"
         onPointerDown={closeFromOverlay}
@@ -153,12 +132,7 @@ export default function ProdutoGaleriaModal({
           </button>
         </div>
 
-        <div
-          className={cn(
-            'flex-1 min-h-0 flex items-center justify-center px-2 pointer-events-none',
-            showThumbnails && imagens.length > 1 ? 'pb-2' : 'pb-6',
-          )}
-        >
+        <div className="flex-1 min-h-0 flex items-center justify-center px-2 pb-6 pointer-events-none">
           <Carousel
             setApi={setApi}
             opts={{ align: 'center', loop: imagens.length > 1, startIndex: initialIndex }}
@@ -167,7 +141,7 @@ export default function ProdutoGaleriaModal({
             <CarouselContent className="-ml-0">
               {imagens.map((img, idx) => (
                 <CarouselItem key={img.id || `${img.url}-${idx}`} className="pl-0 basis-full">
-                  <div className="flex items-center justify-center h-[min(62vh,640px)] w-full px-2 pointer-events-none">
+                  <div className="flex items-center justify-center h-[min(72vh,640px)] w-full px-2 pointer-events-none">
                     <img
                       src={img.url}
                       alt=""
@@ -186,53 +160,20 @@ export default function ProdutoGaleriaModal({
                   onPointerDown={stopFotoHit}
                   className={cn(
                     'pointer-events-auto left-2 border-white/20 bg-black/40 text-white hover:bg-black/60 hover:text-white',
-                    'disabled:opacity-30',
+                    'disabled:opacity-30'
                   )}
                 />
                 <CarouselNext
                   onPointerDown={stopFotoHit}
                   className={cn(
                     'pointer-events-auto right-2 border-white/20 bg-black/40 text-white hover:bg-black/60 hover:text-white',
-                    'disabled:opacity-30',
+                    'disabled:opacity-30'
                   )}
                 />
               </>
             )}
           </Carousel>
         </div>
-
-        {showThumbnails && imagens.length > 1 && (
-          <div className="pointer-events-auto flex-shrink-0 border-t border-white/10 bg-black/40 px-4 py-3">
-            <div
-              ref={thumbStripRef}
-              className="mx-auto flex max-w-3xl gap-2.5 overflow-x-auto touch-pan-x snap-x snap-mandatory pb-1"
-            >
-              {imagens.map((img, idx) => {
-                const tipo = TIPO_LABEL[img.tipo] || img.tipo;
-                return (
-                  <button
-                    key={img.id || `${img.url}-${idx}`}
-                    type="button"
-                    onPointerDown={stopFotoHit}
-                    onClick={() => goTo(idx)}
-                    aria-label={`${tipo || 'Imagem'} ${idx + 1}`}
-                    aria-current={current === idx ? 'true' : undefined}
-                    className={cn(
-                      'shrink-0 snap-start overflow-hidden rounded-lg border-2 transition-all',
-                      current === idx
-                        ? 'border-[#a4ce33] ring-2 ring-[#a4ce33]/30 opacity-100'
-                        : 'border-transparent opacity-60 hover:opacity-100',
-                    )}
-                  >
-                    <div className="h-14 w-14 sm:h-16 sm:w-16">
-                      <img src={img.url} alt="" className="h-full w-full object-cover" draggable={false} />
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
