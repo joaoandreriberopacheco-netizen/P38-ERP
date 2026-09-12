@@ -18,7 +18,10 @@ import { P38PageHeader } from '@/components/layout/P38PageHeader';
 import VendasRelatorisFAB from '@/components/vendas/VendasRelatorisFAB';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, P38TableShell } from '@/components/ui/table';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38StatusTone, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import CancelarPedidoVendaDialog from '@/components/vendas/CancelarPedidoVendaDialog';
+import { usePermissoesUsuario } from '@/hooks/usePermissoesUsuario';
+import { pedidoPodeSerCancelado } from '@/lib/cancelarPedidoVenda';
 import { Search, Edit, ShoppingCart, Eye, FileText, MoreHorizontal, RotateCcw, RefreshCw, CreditCard, Printer, SlidersHorizontal, Ban, Ticket, Receipt, UserRoundPen, ScrollText } from 'lucide-react';
 import DetalhesPedidoVenda from '@/components/vendas/DetalhesPedidoVenda';
 import AlterarPagamentoDialog from '@/components/vendas/AlterarPagamentoDialog';
@@ -109,7 +112,11 @@ function PedidoActionsMenu({
   onEdit,
   onReimprimir,
   onCorrigirCliente,
+  onCancelar,
+  podeCancelar = false,
 }) {
+  const exibirCancelar = podeCancelar && pedidoPodeSerCancelado(pedido);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -130,12 +137,23 @@ function PedidoActionsMenu({
         <DropdownMenuItem onClick={() => onReimprimir(pedido)}>
           <Printer className="w-4 h-4 mr-2" /> Reimprimir
         </DropdownMenuItem>
+        {exibirCancelar ? (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => onCancelar(pedido)}
+              className="text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400"
+            >
+              <Ban className="w-4 h-4 mr-2" /> Cancelar venda
+            </DropdownMenuItem>
+          </>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
 
-function PedidoMobileLine({ pedido, onVerDetalhes, onEdit, onReimprimir, onCorrigirCliente, striped }) {
+function PedidoMobileLine({ pedido, onVerDetalhes, onEdit, onReimprimir, onCorrigirCliente, onCancelar, podeCancelar, striped }) {
   const tone = p38StatusTone(pedido.status);
 
   return (
@@ -161,13 +179,15 @@ function PedidoMobileLine({ pedido, onVerDetalhes, onEdit, onReimprimir, onCorri
           onEdit={onEdit}
           onReimprimir={onReimprimir}
           onCorrigirCliente={onCorrigirCliente}
+          onCancelar={onCancelar}
+          podeCancelar={podeCancelar}
         />
       }
     />
   );
 }
 
-function VirtualizedPedidoCards({ pedidos, onVerDetalhes, onEdit, onReimprimir, onCorrigirCliente, pageScrollEl = null }) {
+function VirtualizedPedidoCards({ pedidos, onVerDetalhes, onEdit, onReimprimir, onCorrigirCliente, onCancelar, podeCancelar, pageScrollEl = null }) {
   const innerRef = useRef(null);
   const rowVirtualizer = useVirtualizer({
     count: pedidos.length,
@@ -209,6 +229,8 @@ function VirtualizedPedidoCards({ pedidos, onVerDetalhes, onEdit, onReimprimir, 
                 onEdit={onEdit}
                 onReimprimir={onReimprimir}
                 onCorrigirCliente={onCorrigirCliente}
+                onCancelar={onCancelar}
+                podeCancelar={podeCancelar}
               />
             </div>
           );
@@ -218,7 +240,7 @@ function VirtualizedPedidoCards({ pedidos, onVerDetalhes, onEdit, onReimprimir, 
   );
 }
 
-function VirtualizedPedidosTable({ pedidos, onVerDetalhes, onEdit, onReimprimir, onCorrigirCliente }) {
+function VirtualizedPedidosTable({ pedidos, onVerDetalhes, onEdit, onReimprimir, onCorrigirCliente, onCancelar, podeCancelar }) {
   const parentRef = useRef(null);
   const rowVirtualizer = useVirtualizer({
     count: pedidos.length,
@@ -267,6 +289,8 @@ function VirtualizedPedidosTable({ pedidos, onVerDetalhes, onEdit, onReimprimir,
                       onEdit={onEdit}
                       onReimprimir={onReimprimir}
                       onCorrigirCliente={onCorrigirCliente}
+                      onCancelar={onCancelar}
+                      podeCancelar={podeCancelar}
                     />
                   </TableCell>
                   <TableCell>
@@ -479,6 +503,8 @@ function VendasGestaoPage() {
   }
 
   const isPhone = useCompactShell();
+  const { tem: podePerm } = usePermissoesUsuario();
+  const podeCancelarPedido = podePerm('vendas.cancelar_pedido', 'vendas.acesso');
   const { chromeVisible, scrollRef, scrollEl } = useScrollChromeVisibility(isPhone, MOBILE_LIST_CHROME_OPTIONS);
   const { invalidateHomeKpis } = useP38QueryInvalidation();
   const [dataInicio, setDataInicio] = useState(() => getVendasGestaoPeriodoPadrao().start);
@@ -512,6 +538,8 @@ function VendasGestaoPage() {
   const [pedidoParaAlterarCliente, setPedidoParaAlterarCliente] = useState(null);
   const [showComprovante, setShowComprovante] = useState(false);
   const [pedidoParaImprimir, setPedidoParaImprimir] = useState(null);
+  const [showCancelarPedido, setShowCancelarPedido] = useState(false);
+  const [pedidoParaCancelar, setPedidoParaCancelar] = useState(null);
   const [showFiltros, setShowFiltros] = useState(false);
 
   const isLoading = pedidosLoading || rascunhosLoading || isRefreshing;
@@ -761,6 +789,11 @@ function VendasGestaoPage() {
   const handleCorrigirCliente = (pedido) => {
     setPedidoParaAlterarCliente(pedido);
     setShowAlterarCliente(true);
+  };
+
+  const handleCancelarPedido = (pedido) => {
+    setPedidoParaCancelar(pedido);
+    setShowCancelarPedido(true);
   };
 
   const handleInutilizarRascunho = async (rascunho) => {
@@ -1126,6 +1159,8 @@ function VendasGestaoPage() {
               onEdit={handleEdit}
               onReimprimir={handleReimprimir}
               onCorrigirCliente={handleCorrigirCliente}
+              onCancelar={handleCancelarPedido}
+              podeCancelar={podeCancelarPedido}
               pageScrollEl={isPhone ? scrollEl : null}
             />
             <VirtualizedPedidosTable
@@ -1134,6 +1169,8 @@ function VendasGestaoPage() {
               onEdit={handleEdit}
               onReimprimir={handleReimprimir}
               onCorrigirCliente={handleCorrigirCliente}
+              onCancelar={handleCancelarPedido}
+              podeCancelar={podeCancelarPedido}
             />
 
 
@@ -1242,6 +1279,20 @@ function VendasGestaoPage() {
           loadPedidos();
         }}
       />
+      ) : null}
+
+      {showCancelarPedido && pedidoParaCancelar ? (
+        <CancelarPedidoVendaDialog
+          open={showCancelarPedido}
+          pedido={pedidoParaCancelar}
+          onClose={() => {
+            setShowCancelarPedido(false);
+            setPedidoParaCancelar(null);
+          }}
+          onSuccess={() => {
+            loadPedidos();
+          }}
+        />
       ) : null}
 
       {/* Dialog de Detalhes — montar só quando aberto (evita loop de updates com outros dialogs) */}

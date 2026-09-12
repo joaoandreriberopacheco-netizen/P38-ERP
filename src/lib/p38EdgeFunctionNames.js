@@ -4,6 +4,7 @@ export const EDGE_FUNCTION_ALIASES = {
   p38Auth: 'p38-auth',
   processarVendaCaixa: 'processar-venda-caixa',
   cancelarLancamentoFinanceiro: 'cancelar-lancamento-financeiro',
+  cancelarPedidoVenda: 'cancelar-pedido-venda',
   auditarSaldosContas: 'auditar-saldos-contas',
   enviarFinanceiroLote: 'enviar-financeiro-lote',
   corrigirMovimentosRecepcaoRetroativos: 'corrigir-movimentos-recepcao-retroativos',
