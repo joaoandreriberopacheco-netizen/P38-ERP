@@ -46,8 +46,13 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "::error::DATABASE_URL em falta — necessário para gravar KPI margem (Postgres)."
+            echo "Ver docs/migration/P38_SECRETS_CANONICOS.md"
+            exit 1
+          fi
           if [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ] && [ -z "${VITE_SUPABASE_ANON_KEY:-}" ]; then
-            echo "::error::Grave SUPABASE_SERVICE_ROLE_KEY (recomendado) ou NEXT_PUBLIC_SUPABASE_ANON_KEY nos GitHub Actions secrets."
+            echo "::error::Grave NEXT_PUBLIC_SUPABASE_ANON_KEY (leituras) ou SUPABASE_SERVICE_ROLE_KEY nos GitHub Actions secrets."
             echo "Ver docs/migration/P38_SECRETS_CANONICOS.md"
             exit 1
           fi
