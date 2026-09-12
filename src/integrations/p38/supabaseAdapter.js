@@ -438,6 +438,7 @@ function buildFunctions(supabase) {
         const result = await deletarAnexoSupabase({ supabase, body });
         return normalizeBase44FunctionsResponse(result);
       }
+      // Proxy Vercel (/api/p38-edge/*) → Supabase Edge Functions (same-origin, sem CORS).
       const result = await invokeP38EdgeFunction(name, body, { supabase });
       return normalizeBase44FunctionsResponse(result);
     }
