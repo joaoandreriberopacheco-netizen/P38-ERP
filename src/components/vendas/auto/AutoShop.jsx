@@ -21,14 +21,25 @@ import AutoWelcomeBanner from './AutoWelcomeBanner';
 import AutoLostSales from './AutoLostSales';
 import AutoCategoryGrid from './AutoCategoryGrid';
 import AutoProductGrid from './AutoProductGrid';
+import AutoShellHeader from './AutoShellHeader';
 import {
-  AUTO_HEADER_CLASS,
+  AUTO_COVER_CLASS,
+  AUTO_COVER_MUTED,
   AUTO_PRIMARY_BTN,
   AUTO_SURFACE_CLASS,
   AUTO_SHELL_BG,
   AUTO_FIELD_CLASS,
   AUTO_ACCENT_TEXT,
   AUTO_ACCENT_BG,
+  AUTO_CITRUS_TEXT,
+  AUTO_SECTION_TITLE,
+  AUTO_SUBHEADING,
+  AUTO_PRICE,
+  AUTO_STICKY_BAR,
+  AUTO_STORE_MAX,
+  AUTO_LABEL,
+  AUTO_VITRINE_CARD,
+  AUTO_BORDER_CLASS,
   buildCategoryStructure,
   formatAutoMoney,
 } from './autoAtendimentoUi';
@@ -110,11 +121,11 @@ export default function AutoShop({
   return (
     <div className={`flex-1 flex flex-col h-full min-h-0 ${AUTO_SHELL_BG} overflow-hidden`}>
       {avisos.length > 0 && (
-        <div className="bg-indigo-600 text-white py-1.5 overflow-hidden shrink-0">
+        <div className={`${AUTO_COVER_CLASS} py-1.5 overflow-hidden shrink-0`}>
           <div className="animate-marquee whitespace-nowrap flex gap-8 text-sm">
             {avisos.map((aviso, i) => (
-              <span key={i} className="flex items-center gap-2 px-4 font-medium">
-                <Megaphone className="w-4 h-4 shrink-0" />
+              <span key={i} className={`flex items-center gap-2 px-4 font-medium ${AUTO_CITRUS_TEXT}`}>
+                <Megaphone className="w-4 h-4 shrink-0 text-[#e8b824]" />
                 {aviso.mensagem}
               </span>
             ))}
@@ -122,31 +133,33 @@ export default function AutoShop({
         </div>
       )}
 
-      <header className={AUTO_HEADER_CLASS}>
+      <AutoShellHeader>
         <Button
           variant="ghost"
           onClick={onBack}
-          className="text-white hover:bg-indigo-700 hover:text-white h-11 px-3"
+          className="h-11 px-3 text-[#242424] hover:bg-secondary/60"
         >
           <ArrowLeft className="w-5 h-5 mr-1" />
           Voltar
         </Button>
         <div className="flex items-center gap-2 min-w-0">
-          <ShoppingCart className="w-5 h-5 shrink-0" />
-          <span className="font-bold truncate">Auto-atendimento</span>
+          <ShoppingCart className={`w-5 h-5 shrink-0 ${AUTO_ACCENT_TEXT}`} />
+          <span className="font-bold truncate text-[#242424]">Auto-atendimento</span>
         </div>
         {cliente ? (
-          <div className="flex items-center gap-2 text-sm max-w-[40%]">
+          <div className="flex items-center gap-2 text-sm max-w-[40%] text-[#404040]">
             <User className="w-4 h-4 shrink-0" />
             <span className="truncate">{cliente.nome}</span>
           </div>
         ) : (
-          <span className="text-xs text-indigo-100">Consumidor final</span>
+          <span className={`text-xs ${AUTO_COVER_MUTED} bg-[#242424] px-2.5 py-1 rounded-full`}>
+            Consumidor final
+          </span>
         )}
-      </header>
+      </AutoShellHeader>
 
-      <div className="px-4 py-3 bg-background dark:bg-card border-b border-border/40 dark:border-border/40 shrink-0">
-        <div className="max-w-4xl mx-auto flex gap-2">
+      <div className="px-4 py-4 bg-white border-b border-border/40 shrink-0">
+        <div className={`${AUTO_STORE_MAX} flex gap-2`}>
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
@@ -163,8 +176,8 @@ export default function AutoShop({
           )}
         </div>
         {selectedCategory && (
-          <p className="text-sm text-muted-foreground mt-2 max-w-4xl mx-auto">
-            Departamento: <span className="font-medium text-foreground">{selectedCategory}</span>
+          <p className={`${AUTO_SUBHEADING} mt-2 ${AUTO_STORE_MAX}`}>
+            Departamento: <span className="font-medium text-[#242424]">{selectedCategory}</span>
           </p>
         )}
       </div>
@@ -176,12 +189,12 @@ export default function AutoShop({
       />
 
       <div className="flex-1 flex flex-col min-h-0 px-4 pb-28 md:pb-4">
-        <div className="max-w-6xl mx-auto w-full flex-1 flex flex-col min-h-0">
-          <div className="flex items-center justify-between py-3 shrink-0">
-            <h2 className="text-lg font-bold text-foreground">
-              {showCategoryPicker ? 'Escolha um departamento' : 'Produtos'}
+        <div className={`${AUTO_STORE_MAX} flex-1 flex flex-col min-h-0`}>
+          <div className="flex items-center justify-between py-4 shrink-0">
+            <h2 className={AUTO_SECTION_TITLE}>
+              {showCategoryPicker ? 'Departamentos' : 'Produtos'}
             </h2>
-            <Button variant="ghost" size="sm" onClick={() => setShowLostSales(true)} className="text-muted-foreground">
+            <Button variant="ghost" size="sm" onClick={() => setShowLostSales(true)} className="text-[#6b6b6b]">
               <Frown className="w-4 h-4 mr-1" />
               Não encontrou?
             </Button>
@@ -191,7 +204,7 @@ export default function AutoShop({
             {showCategoryPicker ? (
               <div className="flex-1 min-h-0 p38-stage-panel-scroll touch-pan-y">
                 <AutoCategoryGrid categories={categories} onSelect={setSelectedCategory} />
-                <p className="text-center text-sm text-muted-foreground mt-6 pb-4">
+                <p className={`text-center mt-8 pb-4 ${AUTO_SUBHEADING}`}>
                   Ou digite pelo menos 2 letras na busca para ver produtos em todas as categorias.
                 </p>
               </div>
@@ -214,8 +227,8 @@ export default function AutoShop({
       </div>
 
       {carrinho.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-30 bg-background dark:bg-card border-t border-border/40 dark:border-border/40 p-4 shadow-[0_-8px_30px_rgba(0,0,0,0.06)]">
-          <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
+        <div className={`${AUTO_STICKY_BAR} p-4`}>
+          <div className={`${AUTO_STORE_MAX} flex items-center justify-between gap-4`}>
             <button
               type="button"
               className="flex items-center gap-3 min-w-0"
@@ -230,8 +243,8 @@ export default function AutoShop({
                 </span>
               </div>
               <div className="text-left min-w-0">
-                <p className="text-xs text-muted-foreground">{totalItens} itens</p>
-                <p className="text-xl font-bold tabular-nums">R$ {formatAutoMoney(totalCarrinho)}</p>
+                <p className={AUTO_LABEL}>{totalItens} itens</p>
+                <p className={AUTO_PRICE}>R$ {formatAutoMoney(totalCarrinho)}</p>
               </div>
             </button>
             <Button
@@ -246,16 +259,16 @@ export default function AutoShop({
       )}
 
       <Dialog open={showCartModal} onOpenChange={setShowCartModal}>
-        <DialogContent className="max-w-lg max-h-[85vh] flex flex-col p-0 gap-0">
+        <DialogContent hideClose className="max-w-lg max-h-[85vh] flex flex-col p-0 gap-0 font-din-1451 rounded-2xl">
           <div className="p-4 border-b flex items-center justify-between">
-            <h3 className="font-bold text-lg">Seu carrinho</h3>
+            <h3 className={AUTO_SECTION_TITLE}>Seu carrinho</h3>
             <Button variant="ghost" size="icon" onClick={() => setShowCartModal(false)}>
               <X className="w-5 h-5" />
             </Button>
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {carrinho.map((item) => (
-              <div key={item.produto_id} className="flex items-center gap-3 border border-border/40 rounded-xl p-3">
+              <div key={item.produto_id} className={`flex items-center gap-3 rounded-xl p-3 ${AUTO_VITRINE_CARD}`}>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">{item.produto_nome}</p>
                   <p className="text-xs text-muted-foreground">
