@@ -99,8 +99,8 @@ async function parseResponsePayload(response) {
 }
 
 /**
- * Invoca Edge Function Supabase via proxy Vercel (same-origin) com fallback directo.
- * Backend: Supabase Edge Functions — não Base44. O proxy Vercel evita CORS no browser.
+ * Invoca uma Edge Function Supabase com proxy same-origin (Vercel) e fallback directo.
+ * Substitui `supabase.functions.invoke()` no browser — evita FunctionsFetchError por CORS/gateway.
  */
 export async function invokeP38EdgeFunction(functionName, body, { supabase: supabaseClient } = {}) {
   if (!functionName) {
@@ -148,15 +148,6 @@ export async function invokeP38EdgeFunction(functionName, body, { supabase: supa
 
       const msg = humanizeEdgeFunctionError(payload, response.status, functionName);
       if (/invalid jwt/i.test(msg) && urls.length > 1) {
-        lastHttpError = new Error(msg);
-        continue;
-      }
-      const proxyConfigError =
-        isSameOriginProxy(url) &&
-        (response.status === 502 || response.status === 503) &&
-        /n[aã]o configurado|not configured/i.test(msg);
-      const proxyNotFound = isSameOriginProxy(url) && response.status === 404;
-      if ((proxyConfigError || proxyNotFound) && urls.length > 1) {
         lastHttpError = new Error(msg);
         continue;
       }
