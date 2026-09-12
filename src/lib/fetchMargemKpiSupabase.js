@@ -8,14 +8,25 @@ import {
   normalizeMargemPedidoVendaItem,
 } from '@/lib/margemKpiNormalize';
 import { competenciaParaIntervalo } from '@/lib/relatorioMargemCalculos';
+import { normalizeSupabaseProjectUrl } from '@/lib/supabaseBrowserClient';
 
-const SUPABASE_URL =
-  process.env.VITE_SUPABASE_URL ||
-  process.env.SUPABASE_URL ||
-  'https://zhonvxkkqabfdyehyxpu.supabase.co';
+function resolveSupabaseUrl() {
+  const raw =
+    process.env.VITE_SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.SUPABASE_URL ||
+    '';
+  const normalized = normalizeSupabaseProjectUrl(raw);
+  return normalized || 'https://zhonvxkkqabfdyehyxpu.supabase.co';
+}
 
 function getServiceKey() {
-  return process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
+  return (
+    process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ||
+    process.env.VITE_SUPABASE_ANON_KEY?.trim() ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() ||
+    ''
+  );
 }
 
 function competenciaBounds(competencia) {
@@ -84,13 +95,24 @@ async function fetchItemsForPedidos(sb, ids) {
 }
 
 export function createMargemKpiSupabaseClient() {
+  const url = resolveSupabaseUrl();
   const key = getServiceKey();
   if (!key) {
     throw new Error(
       'SUPABASE_SERVICE_ROLE_KEY ou VITE_SUPABASE_ANON_KEY em falta para job KPI margem.',
     );
   }
-  return createClient(SUPABASE_URL, key);
+  const rawUrl =
+    process.env.VITE_SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.SUPABASE_URL ||
+    '';
+  if (rawUrl && /\/rest\/v1\/?$/i.test(String(rawUrl).trim())) {
+    console.warn(
+      '[fetchMargemKpiSupabase] URL normalizada (removido /rest/v1 acidental). Use só a raiz do projecto.',
+    );
+  }
+  return createClient(url, key);
 }
 
 /** @returns {Promise<string>} YYYY-MM-DD ontem Tabatinga via RPC */
