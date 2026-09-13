@@ -104,7 +104,7 @@ export async function fetchPedidosParaCaixaTurno({ turno, caixa, receitasTurno }
       STATUS_PEDIDO_CONTA_NO_TURNO_CAIXA.map((status) =>
         safeFilter(base44.entities.PedidoVenda, {
           status,
-          updated_date: { $gte: turno.data_abertura },
+          created_date: { $gte: turno.data_abertura },
         })
       )
     );

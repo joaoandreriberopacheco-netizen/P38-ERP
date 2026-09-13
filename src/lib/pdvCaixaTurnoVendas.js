@@ -13,6 +13,30 @@ export const STATUS_PEDIDO_CONTA_NO_TURNO_CAIXA = [
   "Em Rota de Entrega",
 ];
 
+/** Status com fallback em dados (coluna pode estar vazia após promoção JSONB). */
+export function resolvePedidoVendaStatus(pedido) {
+  return String(pedido?.status ?? pedido?.dados?.status ?? "").trim();
+}
+
+/**
+ * Momento em que a venda passou a contar para o turno (não usar updated_at —
+ * migrações/admin alteram updated_at sem mover a venda de turno).
+ */
+export function resolvePedidoInstanteParaTurno(pedido) {
+  const dados = pedido?.dados && typeof pedido.dados === "object" ? pedido.dados : {};
+  for (const field of ["data_venda", "data_emissao", "data_fechamento"]) {
+    const raw = pedido?.[field] ?? dados[field];
+    if (typeof raw === "string" && raw.trim()) {
+      const d = new Date(raw);
+      if (!Number.isNaN(d.getTime())) return d;
+    }
+  }
+  const raw = pedido?.created_date ?? pedido?.created_at;
+  if (!raw) return null;
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 /**
  * @param {Array<{ referencia_tipo?: string, referencia_id?: string }>} lancamentosReceita
  * @returns {Set<string>}
@@ -49,7 +73,7 @@ export function isPedidoVendaNoTurnoCaixa(pedido, opts) {
   } = opts || {};
 
   if (!pedido || !turno) return false;
-  if (!statusOk.includes(pedido.status)) return false;
+  if (!statusOk.includes(resolvePedidoVendaStatus(pedido))) return false;
 
   if (String(pedido.turno_caixa_id ?? "") === String(turno.id ?? "")) return true;
   if (String(pedido.dados?.turno_caixa_id ?? "") === String(turno.id ?? "")) return true;
@@ -75,9 +99,8 @@ export function isPedidoVendaNoTurnoCaixa(pedido, opts) {
   if (!contaTurno || contaTurno !== contaCaixa) return false;
 
   const dataAbertura = turno.data_abertura ? new Date(turno.data_abertura) : null;
-  const raw = pedido.updated_date || pedido.created_date;
-  const tPed = raw ? new Date(raw) : null;
-  if (!tPed || Number.isNaN(tPed.getTime())) return false;
+  const tPed = resolvePedidoInstanteParaTurno(pedido);
+  if (!tPed) return false;
   if (dataAbertura && !Number.isNaN(dataAbertura.getTime()) && tPed < dataAbertura) return false;
 
   return true;
