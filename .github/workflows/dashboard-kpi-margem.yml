@@ -51,6 +51,12 @@ jobs:
             echo "Ver docs/migration/P38_SECRETS_CANONICOS.md"
             exit 1
           fi
+          if [ -n "${VITE_SUPABASE_URL:-}" ]; then
+            VITE_SUPABASE_URL="${VITE_SUPABASE_URL%/}"
+            VITE_SUPABASE_URL="${VITE_SUPABASE_URL%/rest/v1}"
+            VITE_SUPABASE_URL="${VITE_SUPABASE_URL%/auth/v1}"
+            export VITE_SUPABASE_URL
+          fi
           ARGS=""
           if [ -n "${{ github.event.inputs.month }}" ]; then
             ARGS="$ARGS --month ${{ github.event.inputs.month }}"
