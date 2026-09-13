@@ -35,6 +35,8 @@ https://zhonvxkkqabfdyehyxpu.supabase.co
 
 **Dá acesso a:** o site e os scripts saberem **qual** projecto Supabase usar.
 
+**Importante:** usa só a raiz (`https://….supabase.co`). **Não** incluas `/rest/v1` no final — isso quebra jobs como o KPI margem (`Invalid path specified in request URL`).
+
 ---
 
 ### 1.2 `VITE_SUPABASE_ANON_KEY`
