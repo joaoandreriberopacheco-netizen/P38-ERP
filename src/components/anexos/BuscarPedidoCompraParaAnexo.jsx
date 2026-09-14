@@ -2,7 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Search, ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
-export default function BuscarPedidoCompraParaAnexo({ onSelecionar, onVoltar, uploadando }) {
+export default function BuscarPedidoCompraParaAnexo({
+  onSelecionar,
+  onVoltar,
+  uploadando,
+  temArquivo = true,
+}) {
   const [query, setQuery] = useState('');
   const [pedidos, setPedidos] = useState([]);
   const [carregando, setCarregando] = useState(false);
@@ -107,7 +112,13 @@ export default function BuscarPedidoCompraParaAnexo({ onSelecionar, onVoltar, up
         )}
       </div>
 
-      {selecionado && (
+      {selecionado && !temArquivo && (
+        <p className="mt-auto rounded-2xl bg-amber-50 px-4 py-3 text-center text-sm text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+          Nenhum arquivo pronto para enviar. Volte e selecione ou cole um PDF/imagem na Torre de controle.
+        </p>
+      )}
+
+      {selecionado && temArquivo && (
         <button
           type="button"
           onClick={() => onSelecionar(selecionado)}

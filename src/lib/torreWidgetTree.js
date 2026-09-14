@@ -40,6 +40,7 @@ export const TORRE_WIDGET_NODES = {
     descricao: 'Anexar comprovante a um pedido já criado',
     icon: 'link',
     action: TORRE_WIDGET_ACTIONS.PEDIDO_EXISTENTE,
+    requiresFile: true,
   },
   financeiro: {
     titulo: 'Financeiro',
@@ -96,6 +97,7 @@ export const TORRE_WIDGET_NODES = {
     descricao: 'Anexar a evento logístico (itinerário)',
     icon: 'anchor',
     action: TORRE_WIDGET_ACTIONS.LOGISTICA_EVENTO,
+    requiresFile: true,
   },
 };
 

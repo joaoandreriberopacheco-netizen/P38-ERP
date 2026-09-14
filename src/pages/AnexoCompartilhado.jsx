@@ -25,6 +25,7 @@ import { brandSurface } from '@/lib/brandSurfaces';
 import { cn } from '@/lib/utils';
 import { navegarParaNovoPedidoImport } from '@/lib/torrePedidoImportBridge';
 import { navegarParaNovoLancamentoTorre } from '@/lib/torreLancamentoBridge';
+import { uploadAnexoParaPedidoCompra } from '@/lib/uploadAnexoReferencia';
 import { extrairDadosComprovante } from '@/lib/extrairDadosComprovante';
 import {
   TORRE_WIDGET_ACTIONS,
@@ -43,6 +44,7 @@ export default function AnexoCompartilhado() {
   const [etapa, setEtapa] = useState('torre_controle');
   const [uploadando, setUploadando] = useState(false);
   const [lancamentoVinculado, setLancamentoVinculado] = useState(null);
+  const [pedidoVinculado, setPedidoVinculado] = useState(null);
   const pollingRef = useRef(null);
   const inputArquivoManualRef = useRef(null);
   const destinoDeepLinkHandled = useRef(false);
@@ -61,6 +63,7 @@ export default function AnexoCompartilhado() {
   const [lendoComprovante, setLendoComprovante] = useState(false);
   const extracaoComprovanteSeq = useRef(0);
   const [erroCompartilhamento, setErroCompartilhamento] = useState('');
+  const [feedbackVinculo, setFeedbackVinculo] = useState('');
 
   const tiposDocumentoDisponiveis = useMemo(
     () => Array.from(new Set([...TIPOS_DOCUMENTO_ANEXO, ...tiposDocumentoCustom])),
@@ -102,12 +105,24 @@ export default function AnexoCompartilhado() {
     if (etapa !== 'opcoes') setWidgetPath([]);
   }, [etapa]);
 
+  const avisarSemArquivo = () => {
+    const msg =
+      'Nenhum arquivo pronto para enviar. Volte à Torre de controle e selecione ou cole um PDF/imagem.';
+    setFeedbackVinculo(msg);
+    alert(msg);
+  };
+
   const handleWidgetAction = (action) => {
     switch (action) {
       case TORRE_WIDGET_ACTIONS.PEDIDO_NOVO:
         void navegarParaNovoPedidoImport(arquivo, tipoDocumento);
         break;
       case TORRE_WIDGET_ACTIONS.PEDIDO_EXISTENTE:
+        if (!arquivo?.file) {
+          avisarSemArquivo();
+          break;
+        }
+        setFeedbackVinculo('');
         setEtapa('vincular_pedido');
         break;
       case TORRE_WIDGET_ACTIONS.FINANCEIRO_NOVO:
@@ -127,6 +142,11 @@ export default function AnexoCompartilhado() {
         if (arquivo?.file) setEtapa('atualizar_boleto');
         break;
       case TORRE_WIDGET_ACTIONS.LOGISTICA_EVENTO:
+        if (!arquivo?.file) {
+          avisarSemArquivo();
+          break;
+        }
+        setFeedbackVinculo('');
         setEtapa('vincular_evento');
         break;
       default:
@@ -534,8 +554,15 @@ export default function AnexoCompartilhado() {
       etapa === 'importar_pdf_conta' ||
       etapa === 'atualizar_boleto' ||
       etapa === 'atualizar_boleto_import' ||
-      etapa === 'importar_pedido_novo';
+      etapa === 'importar_pedido_novo' ||
+      etapa === 'vincular_pedido' ||
+      etapa === 'vincular_evento';
     if (precisaArquivo && !arquivo?.file) {
+      if (etapa === 'vincular_pedido' || etapa === 'vincular_evento') {
+        setFeedbackVinculo(
+          'Nenhum arquivo pronto para enviar. Volte e selecione ou cole um PDF/imagem na Torre de controle.',
+        );
+      }
       setContaMesBoletoAlvo(null);
       setEtapa('opcoes');
     }
@@ -550,8 +577,12 @@ export default function AnexoCompartilhado() {
   }, [carregando, etapa, arquivo, tipoDocumento]);
 
   const handleVincular = async (lancamento) => {
-    if (!arquivo?.file) return;
+    if (!arquivo?.file) {
+      avisarSemArquivo();
+      return;
+    }
     setUploadando(true);
+    setFeedbackVinculo('');
     try {
       // Usa o conversor novo!
       const base64 = await converterParaBase64(arquivo.file);
@@ -568,6 +599,7 @@ export default function AnexoCompartilhado() {
         origem: 'compartilhamento_web',
       });
       setLancamentoVinculado(lancamento);
+      setPedidoVinculado(null);
       setEtapa('sucesso');
     } catch (error) {
       console.error("Erro no Upload:", error);
@@ -578,22 +610,22 @@ export default function AnexoCompartilhado() {
   };
 
   const handleVincularPedido = async (pedido) => {
-    if (!arquivo?.file) return;
+    if (!arquivo?.file) {
+      avisarSemArquivo();
+      return;
+    }
     setUploadando(true);
+    setFeedbackVinculo('');
     try {
-      const base64 = await converterParaBase64(arquivo.file);
-      await base44.functions.invoke('uploadAnexoDrive', {
-        file_base64: base64,
-        file_name: arquivo.nome,
-        file_type: arquivo.tipo || 'application/pdf',
-        file_size: arquivo.file.size,
-        referencia_tipo: 'PedidoCompra',
-        referencia_id: pedido.id,
-        referencia_numero: pedido.numero || '',
-        tipo_documento: tipoDocumento,
+      await uploadAnexoParaPedidoCompra(base44, {
+        file: arquivo.file,
+        pedidoId: pedido.id,
+        pedidoNumero: pedido.numero || '',
+        tipoDocumento,
         origem: 'compartilhamento_web',
       });
       setLancamentoVinculado(null);
+      setPedidoVinculado(pedido);
       setEtapa('sucesso');
     } catch (error) {
       console.error('Erro no Upload:', error);
@@ -604,8 +636,12 @@ export default function AnexoCompartilhado() {
   };
 
   const handleVincularEvento = async (evento) => {
-    if (!arquivo?.file) return;
+    if (!arquivo?.file) {
+      avisarSemArquivo();
+      return;
+    }
     setUploadando(true);
+    setFeedbackVinculo('');
     try {
       const base64 = await converterParaBase64(arquivo.file);
       await base44.functions.invoke('uploadAnexoDrive', {
@@ -620,6 +656,7 @@ export default function AnexoCompartilhado() {
         origem: 'compartilhamento_web',
       });
       setLancamentoVinculado(null);
+      setPedidoVinculado(null);
       setEtapa('sucesso');
     } catch (error) {
       console.error('Erro no Upload:', error);
@@ -639,16 +676,24 @@ export default function AnexoCompartilhado() {
   }
 
   if (etapa === 'sucesso' || etapa === 'sucesso_conta') {
-    const titulo = etapa === 'sucesso_conta' ? 'Conta a pagar atualizada!' : 'Comprovante salvo!';
+    const titulo = etapa === 'sucesso_conta'
+      ? 'Conta a pagar atualizada!'
+      : pedidoVinculado?.id
+        ? 'Anexo salvo no pedido!'
+        : 'Comprovante salvo!';
     const anexosLancamentoId = etapa === 'sucesso' && lancamentoVinculado?.id ? lancamentoVinculado.id : null;
     const href = anexosLancamentoId
       ? `${createPageUrl('LancamentoAnexos')}?id=${encodeURIComponent(anexosLancamentoId)}`
-      : createPageUrl(etapa === 'sucesso_conta' ? 'Financeiro' : 'FluxoCaixa');
+      : pedidoVinculado?.id
+        ? `${createPageUrl('PedidoCompraDetalhe')}?id=${encodeURIComponent(pedidoVinculado.id)}`
+        : createPageUrl(etapa === 'sucesso_conta' ? 'Financeiro' : 'FluxoCaixa');
     const ctaLabel = anexosLancamentoId
       ? 'Ver anexos do lançamento'
-      : etapa === 'sucesso_conta'
-        ? 'Ir para Financeiro'
-        : 'Ir para Fluxo de caixa';
+      : pedidoVinculado?.id
+        ? 'Ver pedido de compra'
+        : etapa === 'sucesso_conta'
+          ? 'Ir para Financeiro'
+          : 'Ir para Fluxo de caixa';
     return (
       <div className={`flex min-h-screen flex-col items-center justify-center px-6 gap-5 ${brandSurface.pageScreen}`}>
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-50 dark:bg-green-900/20">
@@ -727,6 +772,7 @@ export default function AnexoCompartilhado() {
                   onSelecionar={handleVincularPedido}
                   onVoltar={() => voltarWidgetOverlay('vincular_pedido')}
                   uploadando={uploadando}
+                  temArquivo={Boolean(arquivo?.file)}
                 />
               ) : (
                 <BuscarEventoLogisticoParaAnexo
@@ -1028,6 +1074,11 @@ export default function AnexoCompartilhado() {
               <p className="rounded-2xl bg-amber-50 px-4 py-3 text-center text-xs text-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
                 Algumas opções precisam de arquivo (PDF ou imagem). Use selecionar arquivo ou colar.
               </p>
+              {feedbackVinculo ? (
+                <p className="rounded-2xl bg-red-50 px-4 py-3 text-center text-xs text-red-700 dark:bg-red-950/40 dark:text-red-300">
+                  {feedbackVinculo}
+                </p>
+              ) : null}
             </div>
           )}
         </div>
