@@ -13,11 +13,8 @@
 import { computeDashboardKpiMargemForMonth } from '../src/lib/dashboardKpiMargemCompute.js';
 import { shouldFreezeMargemMonthPayload } from '../src/lib/margemCustoMode.js';
 import { getCurrentMonthKey } from '../src/lib/dashboardVendasPeriod.js';
-import {
-  createMargemKpiSupabaseClient,
-  fetchMargemKpiDataset,
-  fetchTabatingaOntem,
-} from '../src/lib/fetchMargemKpiSupabase.js';
+import { fetchMargemKpiDataset } from '../src/lib/fetchMargemKpiSupabase.js';
+import { createMargemKpiJobStore } from './lib/margemKpiJobStore.mjs';
 
 function parseArgs(argv) {
   const out = { month: null, through: null, force: false };
@@ -35,67 +32,19 @@ function parseArgs(argv) {
   return out;
 }
 
-async function readMonthlyRow(sb, monthKey) {
-  const { data, error } = await sb
-    .from('dashboard_kpi_mensal')
-    .select('month_key, closed_through, payload, computed_at')
-    .eq('domain', 'vendas')
-    .eq('month_key', monthKey)
-    .maybeSingle();
-  if (error) throw error;
-  return data;
-}
-
 function isMonthPayloadFrozen(row, monthKey) {
   if (!row?.payload) return shouldFreezeMargemMonthPayload(monthKey);
   if (row.payload.frozen === true) return true;
   return shouldFreezeMargemMonthPayload(monthKey) && Boolean(row.payload.monthlyTotals);
 }
 
-async function upsertDaily(sb, monthKey, refDate, payload) {
-  const { error } = await sb.from('dashboard_kpi_diario').upsert(
-    {
-      domain: 'vendas',
-      ref_date: refDate,
-      month_key: monthKey,
-      payload,
-      computed_at: new Date().toISOString(),
-    },
-    { onConflict: 'domain,ref_date' },
-  );
-  if (error) throw error;
-}
-
-async function upsertMonthly(sb, monthKey, closedThrough, payload) {
-  const { error } = await sb.from('dashboard_kpi_mensal').upsert(
-    {
-      domain: 'vendas',
-      month_key: monthKey,
-      closed_through: closedThrough,
-      payload,
-      computed_at: new Date().toISOString(),
-    },
-    { onConflict: 'domain,month_key' },
-  );
-  if (error) throw error;
-}
-
-async function syncCelulaVendas(sb, monthKey) {
-  const { data, error } = await sb.rpc('p38_celula_compute_vendas_mes', { p_month_key: monthKey });
-  if (error) {
-    console.warn(`[dashboard:kpi-margem-fechar] célula vendas:${monthKey}:`, error.message);
-    return null;
-  }
-  return data;
-}
-
-async function sealMonth(sb, monthKey, throughDateKey, { force = false } = {}) {
-  const existing = await readMonthlyRow(sb, monthKey);
+async function sealMonth(store, monthKey, throughDateKey, { force = false } = {}) {
+  const existing = await store.readMonthlyRow(monthKey);
   if (!force && isMonthPayloadFrozen(existing, monthKey)) {
     return { skipped: true, reason: 'frozen', monthKey, existing: existing?.payload?.monthlyTotals };
   }
 
-  const dataset = await fetchMargemKpiDataset(monthKey, sb);
+  const dataset = await fetchMargemKpiDataset(monthKey, store.supabase);
   const { daily, monthly } = computeDashboardKpiMargemForMonth({
     ...dataset,
     monthKey,
@@ -105,7 +54,7 @@ async function sealMonth(sb, monthKey, throughDateKey, { force = false } = {}) {
   const refDates = Object.keys(daily).sort();
   for (const refDate of refDates) {
     if (refDate > throughDateKey) continue;
-    await upsertDaily(sb, monthKey, refDate, daily[refDate]);
+    await store.upsertDaily(monthKey, refDate, daily[refDate]);
   }
 
   if (!monthly?.monthlyTotals) {
@@ -113,8 +62,8 @@ async function sealMonth(sb, monthKey, throughDateKey, { force = false } = {}) {
   }
 
   const closedThrough = monthly.closedThrough || throughDateKey;
-  await upsertMonthly(sb, monthKey, closedThrough, monthly);
-  await syncCelulaVendas(sb, monthKey);
+  await store.upsertMonthly(monthKey, closedThrough, monthly);
+  await store.syncCelulaVendas(monthKey);
 
   return {
     skipped: false,
@@ -130,78 +79,76 @@ async function sealMonth(sb, monthKey, throughDateKey, { force = false } = {}) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const sb = createMargemKpiSupabaseClient();
-  const ontem = await fetchTabatingaOntem(sb);
-  const currentMonth = getCurrentMonthKey();
-  const monthKey = args.month || ontem.slice(0, 7);
-  const throughDateKey = args.through || ontem;
+  const store = await createMargemKpiJobStore();
 
-  if (!throughDateKey.startsWith(monthKey)) {
-    console.error('[dashboard:kpi-margem-fechar] --through deve pertencer ao --month.');
-    process.exit(1);
-  }
+  try {
+    const ontem = await store.fetchOntem();
+    const currentMonth = getCurrentMonthKey();
+    const monthKey = args.month || ontem.slice(0, 7);
+    const throughDateKey = args.through || ontem;
 
-  const dynamic = monthKey >= currentMonth;
-  console.log(
-    `[dashboard:kpi-margem-fechar] month=${monthKey} through=${throughDateKey} mode=${dynamic ? 'cadastro_atual' : 'selo_momento_venda'}`,
-  );
+    if (!throughDateKey.startsWith(monthKey)) {
+      console.error('[dashboard:kpi-margem-fechar] --through deve pertencer ao --month.');
+      process.exit(1);
+    }
 
-  const result = await sealMonth(sb, monthKey, throughDateKey, { force: args.force });
-  if (result.skipped) {
+    const dynamic = monthKey >= currentMonth;
     console.log(
-      JSON.stringify(
-        {
-          success: true,
-          skipped: true,
-          reason: result.reason,
-          monthKey: result.monthKey,
-          monthlyTotals: result.existing || null,
-        },
-        null,
-        2,
-      ),
+      `[dashboard:kpi-margem-fechar] month=${monthKey} through=${throughDateKey} mode=${dynamic ? 'cadastro_atual' : 'selo_momento_venda'} writes=${store.usesPgWrites ? 'postgres' : 'supabase-rest'}`,
     );
-    return;
-  }
 
-  const { data: dirtyRows } = await sb
-    .from('dashboard_kpi_dirty')
-    .select('month_key')
-    .eq('domain', 'vendas');
-
-  const dirtyMonths = [...new Set((dirtyRows || []).map((r) => r.month_key).filter(Boolean))].filter(
-    (mk) => mk !== monthKey,
-  );
-
-  for (const dirtyMonth of dirtyMonths) {
-    const dirtyExisting = await readMonthlyRow(sb, dirtyMonth);
-    if (!args.force && isMonthPayloadFrozen(dirtyExisting, dirtyMonth)) {
-      console.warn(
-        `[dashboard:kpi-margem-fechar] dirty ignorado — ${dirtyMonth} congelado (verdade histórica)`,
+    const result = await sealMonth(store, monthKey, throughDateKey, { force: args.force });
+    if (result.skipped) {
+      console.log(
+        JSON.stringify(
+          {
+            success: true,
+            skipped: true,
+            reason: result.reason,
+            monthKey: result.monthKey,
+            monthlyTotals: result.existing || null,
+          },
+          null,
+          2,
+        ),
       );
-      await sb.from('dashboard_kpi_dirty').delete().eq('domain', 'vendas').eq('month_key', dirtyMonth);
-      continue;
+      return;
     }
 
-    if (dirtyMonth >= currentMonth) {
-      console.log(`[dashboard:kpi-margem-fechar] dirty rebuild ${dirtyMonth} (mês corrente)`);
-      const [dy, dm] = dirtyMonth.split('-').map(Number);
-      const lastDay = new Date(dy, dm, 0).getDate();
-      const dirtyThrough =
-        dirtyMonth < monthKey
-          ? `${dirtyMonth}-${String(lastDay).padStart(2, '0')}`
-          : throughDateKey;
-      await sealMonth(sb, dirtyMonth, dirtyThrough, { force: args.force });
-      await sb.from('dashboard_kpi_dirty').delete().eq('domain', 'vendas').eq('month_key', dirtyMonth);
-    } else {
-      console.warn(
-        `[dashboard:kpi-margem-fechar] dirty ignorado — ${dirtyMonth} passado sem --force`,
-      );
-      await sb.from('dashboard_kpi_dirty').delete().eq('domain', 'vendas').eq('month_key', dirtyMonth);
-    }
-  }
+    const dirtyMonths = (await store.listDirtyMonths()).filter((mk) => mk !== monthKey);
 
-  console.log(JSON.stringify({ success: true, ...result }, null, 2));
+    for (const dirtyMonth of dirtyMonths) {
+      const dirtyExisting = await store.readMonthlyRow(dirtyMonth);
+      if (!args.force && isMonthPayloadFrozen(dirtyExisting, dirtyMonth)) {
+        console.warn(
+          `[dashboard:kpi-margem-fechar] dirty ignorado — ${dirtyMonth} congelado (verdade histórica)`,
+        );
+        await store.deleteDirtyMonth(dirtyMonth);
+        continue;
+      }
+
+      if (dirtyMonth >= currentMonth) {
+        console.log(`[dashboard:kpi-margem-fechar] dirty rebuild ${dirtyMonth} (mês corrente)`);
+        const [dy, dm] = dirtyMonth.split('-').map(Number);
+        const lastDay = new Date(dy, dm, 0).getDate();
+        const dirtyThrough =
+          dirtyMonth < monthKey
+            ? `${dirtyMonth}-${String(lastDay).padStart(2, '0')}`
+            : throughDateKey;
+        await sealMonth(store, dirtyMonth, dirtyThrough, { force: args.force });
+        await store.deleteDirtyMonth(dirtyMonth);
+      } else {
+        console.warn(
+          `[dashboard:kpi-margem-fechar] dirty ignorado — ${dirtyMonth} passado sem --force`,
+        );
+        await store.deleteDirtyMonth(dirtyMonth);
+      }
+    }
+
+    console.log(JSON.stringify({ success: true, ...result }, null, 2));
+  } finally {
+    await store.destroy();
+  }
 }
 
 main().catch((err) => {
