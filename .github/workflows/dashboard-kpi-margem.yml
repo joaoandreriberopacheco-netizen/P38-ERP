@@ -46,10 +46,17 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          if [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ] && [ -z "${VITE_SUPABASE_ANON_KEY:-}" ]; then
-            echo "::error::Grave SUPABASE_SERVICE_ROLE_KEY (recomendado) ou NEXT_PUBLIC_SUPABASE_ANON_KEY nos GitHub Actions secrets."
-            echo "Ver docs/migration/P38_SECRETS_CANONICOS.md"
+          if [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY em falta — obrigatório para gravar dashboard_kpi_* (anon falha em RLS)."
+            echo "Supabase → API → service_role → GitHub Secrets."
+            echo "Guia: docs/migration/P38_CONFIGURAR_SECRETS_PASSO_A_PASSO.md §1.5"
             exit 1
+          fi
+          if [ -n "${VITE_SUPABASE_URL:-}" ]; then
+            VITE_SUPABASE_URL="${VITE_SUPABASE_URL%/}"
+            VITE_SUPABASE_URL="${VITE_SUPABASE_URL%/rest/v1}"
+            VITE_SUPABASE_URL="${VITE_SUPABASE_URL%/auth/v1}"
+            export VITE_SUPABASE_URL
           fi
           ARGS=""
           if [ -n "${{ github.event.inputs.month }}" ]; then
