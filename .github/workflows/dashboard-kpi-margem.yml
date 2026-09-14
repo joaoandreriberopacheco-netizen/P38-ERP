@@ -45,10 +45,15 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
-          if [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ] && [ -z "${VITE_SUPABASE_ANON_KEY:-}" ]; then
-            echo "::error::Grave SUPABASE_SERVICE_ROLE_KEY (recomendado) ou NEXT_PUBLIC_SUPABASE_ANON_KEY nos GitHub Actions secrets."
+          if [ -z "${VITE_SUPABASE_ANON_KEY:-}" ] && [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
+            echo "::error::Grave VITE_SUPABASE_ANON_KEY (leitura) ou SUPABASE_SERVICE_ROLE_KEY nos GitHub Actions secrets."
             echo "Ver docs/migration/P38_SECRETS_CANONICOS.md"
+            exit 1
+          fi
+          if [ -z "${DATABASE_URL:-}" ] && [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
+            echo "::error::Gravação KPI margem requer DATABASE_URL ou SUPABASE_SERVICE_ROLE_KEY."
             exit 1
           fi
           ARGS=""
