@@ -201,6 +201,7 @@ function ExtratoMobileScroll({ children, parentRef, className }) {
   return (
     <P38MobileLineList
       ref={parentRef}
+      data-p38-extrato-scroll
       className={`min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain rounded-none border-0 bg-transparent [-webkit-overflow-scrolling:touch] ${className || ''}`}
     >
       {children}
@@ -208,76 +209,90 @@ function ExtratoMobileScroll({ children, parentRef, className }) {
   );
 }
 
-function ExtratoMobileLista({ itensVirtuais, estoqueAuxiliar, fatorAuxiliar }) {
+function ExtratoMobileStickyChrome({ children }) {
   return (
-    <ExtratoMobileScroll>
-      {itensVirtuais.map((item, index) =>
-        item.kind === 'day' ? (
-          <ExtratoDiaHeader
-            key={item.key}
-            dia={item.dia}
-            count={item.count}
-            saldoFimDia={item.saldoFimDia}
-          />
-        ) : (
-          <ExtratoMovimentoLine
-            key={item.key}
-            mov={item.mov}
-            saldoApos={item.saldoApos}
-            striped={item.idx % 2 === 1}
-            estoqueAuxiliar={estoqueAuxiliar}
-            fatorAuxiliar={fatorAuxiliar}
-          />
-        )
-      )}
-    </ExtratoMobileScroll>
+    <div
+      className="sticky top-0 z-20 -mx-px border-b border-border/30 bg-background/95 pb-2 pt-1 backdrop-blur-sm dark:border-white/10 dark:bg-[#1f1d22]/95"
+    >
+      {children}
+    </div>
   );
 }
 
-function ExtratoMobileVirtualizado({ itensVirtuais, estoqueAuxiliar, fatorAuxiliar }) {
+function ExtratoMobileExtrato({
+  itensVirtuais,
+  estoqueAuxiliar,
+  fatorAuxiliar,
+  resumoPanel,
+  searchRow,
+  shouldVirtualize,
+}) {
   const parentRef = useRef(null);
   const rowVirtualizer = useVirtualizer({
     count: itensVirtuais.length,
     getScrollElement: () => parentRef.current,
     estimateSize: (index) => (itensVirtuais[index]?.kind === 'day' ? VIRTUAL_DAY_ESTIMATE : VIRTUAL_MOV_ESTIMATE),
     getItemKey: (index) => itensVirtuais[index]?.key ?? index,
-    measureElement: measureVirtualItem,
+    measureElement: shouldVirtualize ? measureVirtualItem : undefined,
     overscan: P38_VIRTUAL_OVERSCAN,
+    enabled: shouldVirtualize,
   });
-  const virtualItems = rowVirtualizer.getVirtualItems();
+  const virtualItems = shouldVirtualize ? rowVirtualizer.getVirtualItems() : [];
+
+  const listContent = shouldVirtualize ? (
+    <div className="relative w-full" style={{ height: `${rowVirtualizer.getTotalSize()}px` }}>
+      {virtualItems.map((virtualRow) => {
+        const item = itensVirtuais[virtualRow.index];
+        return (
+          <div
+            key={virtualRow.key}
+            data-index={virtualRow.index}
+            ref={rowVirtualizer.measureElement}
+            className="absolute left-0 top-0 w-full"
+            style={{ transform: `translateY(${virtualRow.start}px)` }}
+          >
+            {item.kind === 'day' ? (
+              <ExtratoDiaHeader dia={item.dia} count={item.count} saldoFimDia={item.saldoFimDia} />
+            ) : (
+              <ExtratoMovimentoLine
+                mov={item.mov}
+                saldoApos={item.saldoApos}
+                striped={item.idx % 2 === 1}
+                estoqueAuxiliar={estoqueAuxiliar}
+                fatorAuxiliar={fatorAuxiliar}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  ) : (
+    itensVirtuais.map((item) =>
+      item.kind === 'day' ? (
+        <ExtratoDiaHeader
+          key={item.key}
+          dia={item.dia}
+          count={item.count}
+          saldoFimDia={item.saldoFimDia}
+        />
+      ) : (
+        <ExtratoMovimentoLine
+          key={item.key}
+          mov={item.mov}
+          saldoApos={item.saldoApos}
+          striped={item.idx % 2 === 1}
+          estoqueAuxiliar={estoqueAuxiliar}
+          fatorAuxiliar={fatorAuxiliar}
+        />
+      )
+    )
+  );
 
   return (
     <ExtratoMobileScroll parentRef={parentRef}>
-      <div className="relative w-full" style={{ height: `${rowVirtualizer.getTotalSize()}px` }}>
-        {virtualItems.map((virtualRow) => {
-          const item = itensVirtuais[virtualRow.index];
-          return (
-            <div
-              key={virtualRow.key}
-              data-index={virtualRow.index}
-              ref={rowVirtualizer.measureElement}
-              className="absolute left-0 top-0 w-full"
-              style={{ transform: `translateY(${virtualRow.start}px)` }}
-            >
-              {item.kind === 'day' ? (
-                <ExtratoDiaHeader
-                  dia={item.dia}
-                  count={item.count}
-                  saldoFimDia={item.saldoFimDia}
-                />
-              ) : (
-                <ExtratoMovimentoLine
-                  mov={item.mov}
-                  saldoApos={item.saldoApos}
-                  striped={item.idx % 2 === 1}
-                  estoqueAuxiliar={estoqueAuxiliar}
-                  fatorAuxiliar={fatorAuxiliar}
-                />
-              )}
-            </div>
-          );
-        })}
-      </div>
+      {resumoPanel}
+      <ExtratoMobileStickyChrome>{searchRow}</ExtratoMobileStickyChrome>
+      {listContent}
     </ExtratoMobileScroll>
   );
 }
@@ -488,13 +503,78 @@ function ExtratoTabelaVirtualizada({ linhasParaExibir, estoqueAuxiliar, fatorAux
   );
 }
 
+function ExtratoResumoPanel({
+  estoqueAtual,
+  estoqueAuxiliar,
+  linhasCount,
+  movimentacoesCount,
+  saldoInicial,
+  divergencia,
+  loading,
+  onRefresh,
+}) {
+  return (
+    <div className="p38-panel">
+      <div className="p38-panel__accent-bar" aria-hidden />
+      <div className="p38-panel__body">
+        <div className="mb-3 flex items-start justify-end desktop-layout:hidden">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="h-10 w-10 shrink-0 rounded-xl"
+            onClick={() => onRefresh?.()}
+            disabled={loading}
+            aria-label="Atualizar extrato"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className="min-w-0">
+            <p className={p38Table.mobileMicroLabel}>Estoque (sistema)</p>
+            <p className={`mt-1 flex items-center gap-1.5 font-glacial text-xl font-semibold tabular-nums ${p38Accent.success.text}`}>
+              <Wallet className="h-4 w-4 shrink-0" />
+              {formatQtd(estoqueAtual)}
+            </p>
+            {estoqueAuxiliar ? (
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                ~{formatQtd(estoqueAuxiliar.quantidade)} {estoqueAuxiliar.sigla}
+                {estoqueAuxiliar.rotulo ? ` (${estoqueAuxiliar.rotulo})` : ''}
+              </p>
+            ) : null}
+          </div>
+          <div className="min-w-0">
+            <p className={p38Table.mobileMicroLabel}>Movimentos</p>
+            <p className="mt-1 font-glacial text-xl font-semibold tabular-nums text-foreground">
+              {linhasCount}
+              <span className="text-xs font-normal text-muted-foreground"> / {movimentacoesCount}</span>
+            </p>
+          </div>
+          <div className="col-span-2 min-w-0 sm:col-span-1">
+            <p className={p38Table.mobileMicroLabel}>Saldo antes (est.)</p>
+            <p className="mt-1 font-glacial text-xl font-semibold tabular-nums text-foreground">
+              {formatQtd(saldoInicial)}
+            </p>
+          </div>
+        </div>
+        {Math.abs(divergencia) > 0.0001 ? (
+          <p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] leading-snug text-amber-800 dark:text-amber-200">
+            Atenção: a soma das movimentações não fecha exatamente com o estoque atual. Pode haver
+            ajustes manuais ou registros antigos fora do histórico.
+          </p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export default function ProdutoHistoricoEstoqueTab({
   movimentacoes = [],
   estoqueAtual = 0,
   produto = null,
   loading = false,
   onRefresh,
-  chromeExpanded = true,
 }) {
   const [busca, setBusca] = useState('');
   const [tipoFiltro, setTipoFiltro] = useState('todos');
@@ -625,73 +705,23 @@ export default function ProdutoHistoricoEstoqueTab({
     </div>
   );
 
+  const resumoPanel = (
+    <ExtratoResumoPanel
+      estoqueAtual={estoqueAtual}
+      estoqueAuxiliar={estoqueAuxiliar}
+      linhasCount={linhasParaExibir.length}
+      movimentacoesCount={movimentacoes.length}
+      saldoInicial={extrato.saldoInicial}
+      divergencia={extrato.divergencia}
+      loading={loading}
+      onRefresh={onRefresh}
+    />
+  );
+
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
-      {/* Resumo P38 — colapsa no mobile ao descer a lista */}
-      <div
-        className={cn(
-          'shrink-0 overflow-hidden transition-[max-height,opacity] duration-300 ease-out',
-          'desktop-layout:max-h-none desktop-layout:opacity-100',
-          isMobile && (chromeExpanded ? 'max-h-[28rem] opacity-100' : 'max-h-0 opacity-0')
-        )}
-        aria-hidden={isMobile && !chromeExpanded}
-      >
-        <div className="p38-panel">
-          <div className="p38-panel__accent-bar" aria-hidden />
-          <div className="p38-panel__body">
-            <div className="mb-3 flex items-start justify-end desktop-layout:hidden">
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="h-10 w-10 shrink-0 rounded-xl"
-                onClick={() => onRefresh?.()}
-                disabled={loading}
-                aria-label="Atualizar extrato"
-              >
-                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-              </Button>
-            </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              <div className="min-w-0">
-                <p className={p38Table.mobileMicroLabel}>Estoque (sistema)</p>
-                <p className={`mt-1 flex items-center gap-1.5 font-glacial text-xl font-semibold tabular-nums ${p38Accent.success.text}`}>
-                  <Wallet className="h-4 w-4 shrink-0" />
-                  {formatQtd(estoqueAtual)}
-                </p>
-                {estoqueAuxiliar ? (
-                  <p className="mt-1 text-[10px] text-muted-foreground">
-                    ~{formatQtd(estoqueAuxiliar.quantidade)} {estoqueAuxiliar.sigla}
-                    {estoqueAuxiliar.rotulo ? ` (${estoqueAuxiliar.rotulo})` : ''}
-                  </p>
-                ) : null}
-              </div>
-              <div className="min-w-0">
-                <p className={p38Table.mobileMicroLabel}>Movimentos</p>
-                <p className="mt-1 font-glacial text-xl font-semibold tabular-nums text-foreground">
-                  {linhasParaExibir.length}
-                  <span className="text-xs font-normal text-muted-foreground"> / {movimentacoes.length}</span>
-                </p>
-              </div>
-              <div className="col-span-2 min-w-0 sm:col-span-1">
-                <p className={p38Table.mobileMicroLabel}>Saldo antes (est.)</p>
-                <p className="mt-1 font-glacial text-xl font-semibold tabular-nums text-foreground">
-                  {formatQtd(extrato.saldoInicial)}
-                </p>
-              </div>
-            </div>
-            {Math.abs(extrato.divergencia) > 0.0001 ? (
-              <p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] leading-snug text-amber-800 dark:text-amber-200">
-                Atenção: a soma das movimentações não fecha exatamente com o estoque atual. Pode haver
-                ajustes manuais ou registros antigos fora do histórico.
-              </p>
-            ) : null}
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile — busca + filtro + ordem sempre visíveis */}
-      <div className="desktop-layout:hidden shrink-0">{searchRowMobile}</div>
+      {/* Resumo — desktop (fixo acima da tabela) */}
+      <div className="hidden shrink-0 desktop-layout:block">{resumoPanel}</div>
 
       {/* Desktop — barra busca + ações */}
       <div className="hidden shrink-0 flex-col gap-2 sm:flex-row sm:items-center desktop-layout:flex">
@@ -813,21 +843,16 @@ export default function ProdutoHistoricoEstoqueTab({
         </div>
       ) : (
         <>
-          {/* Extrato mobile — único scroll (virtualizado quando ≥50 itens) */}
+          {/* Extrato mobile — scroll único (resumo + busca sticky + lista) */}
           <div className={`${p38Table.shellFlat} desktop-layout:hidden flex min-h-0 flex-1 flex-col overflow-hidden`}>
-            {shouldVirtualizeMobile ? (
-              <ExtratoMobileVirtualizado
-                itensVirtuais={itensVirtuaisMobile}
-                estoqueAuxiliar={estoqueAuxiliar}
-                fatorAuxiliar={fatorAuxiliar}
-              />
-            ) : (
-              <ExtratoMobileLista
-                itensVirtuais={itensVirtuaisMobile}
-                estoqueAuxiliar={estoqueAuxiliar}
-                fatorAuxiliar={fatorAuxiliar}
-              />
-            )}
+            <ExtratoMobileExtrato
+              itensVirtuais={itensVirtuaisMobile}
+              estoqueAuxiliar={estoqueAuxiliar}
+              fatorAuxiliar={fatorAuxiliar}
+              resumoPanel={resumoPanel}
+              searchRow={searchRowMobile}
+              shouldVirtualize={shouldVirtualizeMobile}
+            />
           </div>
 
           {/* Tabela desktop */}
