@@ -259,136 +259,130 @@ export default function AbaRecepção({ pedido, onPedidoUpdated }) {
           <button
             key={embarque.id || idx}
             onClick={() => setSelectedEmbarque(embarque)}
-            className="w-full text-left bg-muted/50/50 hover:bg-muted rounded-2xl p-5 transition-all duration-200 shadow-sm hover:shadow-md"
+            className="w-full text-left bg-muted/50/50 hover:bg-muted rounded-2xl p-4 sm:p-5 transition-all duration-200 shadow-sm hover:shadow-md"
           >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                {/* Cabeçalho */}
-                <div className="flex items-center gap-2 mb-3">
+            <div className="space-y-3">
+              {/* Cabeçalho + ação principal */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
                   <div className="w-6 h-6 rounded-lg bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center flex-shrink-0">
                     <Package className="w-4 h-4 text-teal-600 dark:text-teal-400" />
                   </div>
-                  <h3 className="text-base font-semibold text-foreground">
+                  <h3 className="text-base font-semibold text-foreground truncate">
                     Embarque {codigoExibicao}
                   </h3>
-                  <div className="flex-1" />
-                  {getStatusIcon(statusRecebimento)}
+                  <div className="shrink-0">{getStatusIcon(statusRecebimento)}</div>
                 </div>
 
-                {/* Info grid - 2 colunas */}
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-3">
-                  <div>
-                    <p className="text-xs text-muted-foreground font-medium mb-0.5">Transportadora</p>
-                    <p className="text-sm font-semibold text-foreground">{embarque.transportadora_nome || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground font-medium mb-0.5">Despacho</p>
-                    <p className="text-sm font-semibold text-foreground">{dataEmbarque}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground font-medium mb-0.5">ETA</p>
-                    <p className="text-sm font-semibold text-foreground">{eta}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground font-medium mb-0.5">Itens</p>
-                    <p className="text-sm font-semibold text-foreground">{qtdItens} produto(s)</p>
-                  </div>
-                </div>
-
-                {/* Status badge */}
-                <span className={`inline-block px-3 py-1.5 text-xs font-semibold rounded-full ${
-                  statusRecebimento === 'Pendente'
-                    ? 'bg-muted text-foreground/90'
-                    : statusRecebimento === 'Recebido OK'
-                    ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                    : statusRecebimento === 'Com Divergência'
-                    ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
-                    : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                }`}>
-                  {getStatusLabel(statusRecebimento)}
-                </span>
-
-                {alertaSemMovimentoAssociado && (
-                  <div className="mt-2 flex flex-col gap-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 px-3 py-2 text-left">
-                    <div className="flex items-start gap-2">
-                      <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                      <p className="text-xs text-amber-900 dark:text-amber-100 leading-snug">
-                        Este embarque já não está pendente, mas não há movimento de stock ligado ao código{' '}
-                        <span className="font-semibold">{codigoExibicao}</span>. Pode gerar as entradas a partir das
-                        quantidades <span className="font-medium">recebidas</span> já gravadas no embarque.
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="self-start border-amber-300 bg-card text-amber-950 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-50 dark:border-amber-700 dark:hover:bg-amber-900/50"
-                      disabled={retificandoEmbId === embarque.id}
-                      onClick={(e) => handleRetificarStockEmbarque(embarque, codigoExibicao, e)}
-                    >
-                      {retificandoEmbId === embarque.id ? (
-                        <>
-                          <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" /> A gerar…
-                        </>
-                      ) : (
-                        'Gerar entrada em stock (retificar)'
-                      )}
-                    </Button>
-                  </div>
-                )}
-
-                {movimentosDoEmbarque.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-border/40">
-                    <p className="text-xs text-muted-foreground font-medium mb-2 flex items-center gap-1">
-                      <Warehouse className="w-3 h-3" /> Movimento de Estoque
-                      {isLoadingMovimentos ? (
-                        <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" aria-hidden />
-                      ) : null}
-                    </p>
-                    {movimentosDoEmbarque.map((mov) => (
-                      <div key={mov.id} className="text-xs text-foreground/90 space-y-0.5">
-                        <div>
-                          <span className="font-medium">{mov.quantidade}</span> un. — {mov.produto_nome}
-                        </div>
-                        {mov.observacoes ? (
-                          <div className="text-[11px] text-muted-foreground dark:text-muted-foreground pl-0 leading-snug">
-                            {mov.observacoes}
-                          </div>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
-                )}
-                </div>
-
-                {statusRecebimento === 'Pendente' && podeEditarDespachoEmbarque(embarque) && (
-                  <div className="mt-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-9 rounded-xl border-0 shadow-sm bg-card text-foreground/90 hover:bg-muted"
-                      data-pulse-sensor="pedidos-compra.recepcao-corrigir-despacho"
-                      onClick={(e) => handleAbrirCorrigirDespacho(embarque, e)}
-                    >
-                      <Edit3 className="w-3.5 h-3.5 mr-2" />
-                      Corrigir quantidades embarcadas
-                    </Button>
-                  </div>
-                )}
-
-                {/* Ação - Play Icon */}
-                <div className="flex items-center justify-center">
                 {statusRecebimento === 'Pendente' ? (
-                  <div className="w-12 h-12 rounded-full bg-blue-600 dark:bg-blue-500 flex items-center justify-center shadow-md hover:shadow-lg transition-shadow">
+                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-blue-600 dark:bg-blue-500 flex items-center justify-center shadow-md hover:shadow-lg transition-shadow shrink-0">
                     <Play className="w-5 h-5 text-white fill-white" />
                   </div>
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center hover:bg-muted dark:hover:bg-muted transition-colors">
+                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-muted flex items-center justify-center hover:bg-muted dark:hover:bg-muted transition-colors shrink-0">
                     <Play className="w-5 h-5 text-muted-foreground fill-muted-foreground dark:fill-muted-foreground" />
                   </div>
                 )}
               </div>
+
+              {/* Info grid — coluna única no telemóvel */}
+              <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-x-4 gap-y-2.5">
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground font-medium mb-0.5">Transportadora</p>
+                  <p className="text-sm font-semibold text-foreground break-words">{embarque.transportadora_nome || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground font-medium mb-0.5">Despacho</p>
+                  <p className="text-sm font-semibold text-foreground">{dataEmbarque}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground font-medium mb-0.5">ETA</p>
+                  <p className="text-sm font-semibold text-foreground">{eta}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground font-medium mb-0.5">Itens</p>
+                  <p className="text-sm font-semibold text-foreground">{qtdItens} produto(s)</p>
+                </div>
+              </div>
+
+              {/* Status badge */}
+              <span className={`inline-block px-3 py-1.5 text-xs font-semibold rounded-full ${
+                statusRecebimento === 'Pendente'
+                  ? 'bg-muted text-foreground/90'
+                  : statusRecebimento === 'Recebido OK'
+                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                  : statusRecebimento === 'Com Divergência'
+                  ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
+                  : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+              }`}>
+                {getStatusLabel(statusRecebimento)}
+              </span>
+
+              {statusRecebimento === 'Pendente' && podeEditarDespachoEmbarque(embarque) && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-9 w-full sm:w-auto rounded-xl border-0 shadow-sm bg-card text-foreground/90 hover:bg-muted"
+                  data-pulse-sensor="pedidos-compra.recepcao-corrigir-despacho"
+                  onClick={(e) => handleAbrirCorrigirDespacho(embarque, e)}
+                >
+                  <Edit3 className="w-3.5 h-3.5 mr-2" />
+                  Corrigir quantidades embarcadas
+                </Button>
+              )}
+
+              {alertaSemMovimentoAssociado && (
+                <div className="flex flex-col gap-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 px-3 py-2 text-left">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                    <p className="text-xs text-amber-900 dark:text-amber-100 leading-snug">
+                      Este embarque já não está pendente, mas não há movimento de stock ligado ao código{' '}
+                      <span className="font-semibold">{codigoExibicao}</span>. Pode gerar as entradas a partir das
+                      quantidades <span className="font-medium">recebidas</span> já gravadas no embarque.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="self-start border-amber-300 bg-card text-amber-950 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-50 dark:border-amber-700 dark:hover:bg-amber-900/50"
+                    disabled={retificandoEmbId === embarque.id}
+                    onClick={(e) => handleRetificarStockEmbarque(embarque, codigoExibicao, e)}
+                  >
+                    {retificandoEmbId === embarque.id ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" /> A gerar…
+                      </>
+                    ) : (
+                      'Gerar entrada em stock (retificar)'
+                    )}
+                  </Button>
+                </div>
+              )}
+
+              {movimentosDoEmbarque.length > 0 && (
+                <div className="pt-3 border-t border-border/40">
+                  <p className="text-xs text-muted-foreground font-medium mb-2 flex items-center gap-1">
+                    <Warehouse className="w-3 h-3" /> Movimento de Estoque
+                    {isLoadingMovimentos ? (
+                      <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" aria-hidden />
+                    ) : null}
+                  </p>
+                  {movimentosDoEmbarque.map((mov) => (
+                    <div key={mov.id} className="text-xs text-foreground/90 space-y-0.5">
+                      <div>
+                        <span className="font-medium">{mov.quantidade}</span> un. — {mov.produto_nome}
+                      </div>
+                      {mov.observacoes ? (
+                        <div className="text-[11px] text-muted-foreground dark:text-muted-foreground pl-0 leading-snug">
+                          {mov.observacoes}
+                        </div>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </button>
         );
