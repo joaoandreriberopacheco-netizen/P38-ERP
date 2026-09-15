@@ -1,0 +1,2264 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Dossiê Tintas CCG — Iquine · Hidracor · Hipercor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #1e1e1e;
+      --fg: #e4e4e7;
+      --muted: #a1a1aa;
+      --line: #3f3f46;
+      --line-fine: #2d2d30;
+      --accent: #7dd3fc;
+      --iquine: #fbbf24;
+      --hidracor: #34d399;
+      --hipercor: #a78bfa;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 32px 40px 48px;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+      font-size: 11px;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+    }
+    h1 { font-size: 22px; font-weight: 600; margin: 0 0 6px; letter-spacing: -0.02em; }
+    h2 { font-size: 16px; font-weight: 600; margin: 0 0 12px; padding-top: 4px; border-top: 1px solid var(--line); }
+    h3 { font-size: 13px; font-weight: 600; margin: 20px 0 10px; color: var(--fg); }
+    h4 { font-size: 12px; font-weight: 600; margin: 0 0 6px; }
+    .cover { margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
+    .meta { color: var(--muted); font-size: 10px; }
+    .lede { color: var(--muted); margin: 0 0 14px; max-width: 72ch; }
+    .note { color: var(--muted); font-size: 9.5px; margin-top: 12px; }
+    .block { margin-bottom: 28px; }
+    .stats { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+    .stat { border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; min-width: 110px; }
+    .stat .n { display: block; font-size: 18px; font-weight: 600; }
+    .stat .l { color: var(--muted); font-size: 9px; }
+    table.tbl { width: 100%; border-collapse: collapse; margin: 0 0 8px; }
+    table.tbl th, table.tbl td {
+      border: 1px solid var(--line-fine);
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    table.tbl th {
+      font-weight: 500;
+      color: var(--muted);
+      font-size: 9.5px;
+      background: #252526;
+    }
+    table.tbl td.c, table.tbl th:nth-child(n+2):not(:last-child) { text-align: center; }
+    table.tbl.compact td, table.tbl.compact th { padding: 5px 7px; }
+    table.tbl.unfold td:first-child { font-weight: 500; white-space: nowrap; }
+    .shared { font-size: 9.5px; color: var(--muted); }
+    .mark { font-size: 10px; }
+    .mark.on { color: var(--accent); }
+    .mark.on.iquine { color: var(--iquine); }
+    .mark.on.hidracor { color: var(--hidracor); }
+    .mark.on.hipercor { color: var(--hipercor); }
+    .mark.off { color: #52525b; }
+    .line-block { margin: 18px 0 22px; page-break-inside: avoid; }
+    .faixa { color: var(--muted); font-size: 9.5px; margin: 0 0 8px; }
+    .unfold-title { margin-top: 24px; }
+    .muted { color: var(--muted); font-size: 9px; }
+    .page-break-before { page-break-before: always; }
+    .brand-section h2 { border-top: none; padding-top: 0; }
+  </style>
+</head>
+<body>
+  <header class="cover">
+    <h1>Dossiê Tintas CCG</h1>
+    <p class="meta">Iquine · Hidracor · Hipercor — CCG DISTRIBUIDORA — Relatório Produtos/Preço — Almoxarifado — 2026-09-15</p>
+    <p class="lede">Comparativo de linhas, cores e preços para abastecimento P-38. Apresentações: GL = galão · LT = lata · BD = balde.</p>
+  </header>
+  
+    <section class="block">
+      <h2>1. Superposição entre marcas</h2>
+      <p class="lede">Linhas de produto presentes na tabela CCG (15/09/2026). ● = marca tem SKUs na linha.</p>
+      <div class="stats">
+        <div class="stat"><span class="n">6</span><span class="l">linhas nas 3 marcas</span></div>
+        <div class="stat"><span class="n">5</span><span class="l">linhas em 2 marcas</span></div>
+        <div class="stat"><span class="n">4</span><span class="l">exclusivas Iquine</span></div>
+        <div class="stat"><span class="n">1</span><span class="l">exclusivas Hidracor</span></div>
+      </div>
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Linha</th>
+            <th>Iquine</th>
+            <th>Hidracor</th>
+            <th>Hipercor</th>
+            <th>Cores I</th>
+            <th>Cores H</th>
+            <th>Cores P</th>
+            <th>Cores em comum</th>
+          </tr>
+        </thead>
+        <tbody><tr>
+        <td>Acrílica econômica</td>
+        <td class="c"><span class="mark off">—</span></td>
+        <td class="c"><span class="mark on hidracor">●</span></td>
+        <td class="c"><span class="mark on hipercor">●</span></td>
+        <td class="c">—</td>
+        <td class="c">17</td>
+        <td class="c">18</td>
+        <td class="shared">14 cor(es): Amarelo, Areia, Branco gelo, Branco neve, Camurça, Cinza claro, Marfim, TINTA ECONOMICA AZUL PAVAO 15L HIPERCOR…</td>
+      </tr>
+<tr>
+        <td>Esmalte</td>
+        <td class="c"><span class="mark on iquine">●</span></td>
+        <td class="c"><span class="mark on hidracor">●</span></td>
+        <td class="c"><span class="mark off">—</span></td>
+        <td class="c">26</td>
+        <td class="c">—</td>
+        <td class="c">—</td>
+        <td class="shared">—</td>
+      </tr>
+<tr>
+        <td>Fundo preparador</td>
+        <td class="c"><span class="mark on iquine">●</span></td>
+        <td class="c"><span class="mark on hidracor">●</span></td>
+        <td class="c"><span class="mark off">—</span></td>
+        <td class="c">1</td>
+        <td class="c">1</td>
+        <td class="c">—</td>
+        <td class="shared">1 cor(es): Fundo preparador</td>
+      </tr>
+<tr>
+        <td>Massa acrílica</td>
+        <td class="c"><span class="mark on iquine">●</span></td>
+        <td class="c"><span class="mark on hidracor">●</span></td>
+        <td class="c"><span class="mark on hipercor">●</span></td>
+        <td class="c">2</td>
+        <td class="c">1</td>
+        <td class="c">2</td>
+        <td class="shared">1 cor(es): Massa acrílica (20 kg)</td>
+      </tr>
+<tr>
+        <td>Massa corrida</td>
+        <td class="c"><span class="mark on iquine">●</span></td>
+        <td class="c"><span class="mark on hidracor">●</span></td>
+        <td class="c"><span class="mark on hipercor">●</span></td>
+        <td class="c">4</td>
+        <td class="c">1</td>
+        <td class="c">1</td>
+        <td class="shared">—</td>
+      </tr>
+<tr>
+        <td>Outros</td>
+        <td class="c"><span class="mark on iquine">●</span></td>
+        <td class="c"><span class="mark on hidracor">●</span></td>
+        <td class="c"><span class="mark on hipercor">●</span></td>
+        <td class="c">20</td>
+        <td class="c">8</td>
+        <td class="c">9</td>
+        <td class="shared">1 cor(es): Amarelo</td>
+      </tr>
+<tr>
+        <td>Sela &amp; Pinta</td>
+        <td class="c"><span class="mark on iquine">●</span></td>
+        <td class="c"><span class="mark off">—</span></td>
+        <td class="c"><span class="mark off">—</span></td>
+        <td class="c">3</td>
+        <td class="c">—</td>
+        <td class="c">—</td>
+        <td class="shared">—</td>
+      </tr>
+<tr>
+        <td>Selador</td>
+        <td class="c"><span class="mark on iquine">●</span></td>
+        <td class="c"><span class="mark on hidracor">●</span></td>
+        <td class="c"><span class="mark on hipercor">●</span></td>
+        <td class="c">3</td>
+        <td class="c">1</td>
+        <td class="c">1</td>
+        <td class="shared">—</td>
+      </tr>
+<tr>
+        <td>Textura decorativa</td>
+        <td class="c"><span class="mark on iquine">●</span></td>
+        <td class="c"><span class="mark off">—</span></td>
+        <td class="c"><span class="mark off">—</span></td>
+        <td class="c">2</td>
+        <td class="c">—</td>
+        <td class="c">—</td>
+        <td class="shared">—</td>
+      </tr>
+<tr>
+        <td>Tinta (outras)</td>
+        <td class="c"><span class="mark on iquine">●</span></td>
+        <td class="c"><span class="mark on hidracor">●</span></td>
+        <td class="c"><span class="mark on hipercor">●</span></td>
+        <td class="c">3</td>
+        <td class="c">16</td>
+        <td class="c">10</td>
+        <td class="shared">—</td>
+      </tr>
+<tr>
+        <td>Tinta em pó</td>
+        <td class="c"><span class="mark off">—</span></td>
+        <td class="c"><span class="mark on hidracor">●</span></td>
+        <td class="c"><span class="mark off">—</span></td>
+        <td class="c">—</td>
+        <td class="c">1</td>
+        <td class="c">—</td>
+        <td class="shared">—</td>
+      </tr>
+<tr>
+        <td>Tinta piso</td>
+        <td class="c"><span class="mark on iquine">●</span></td>
+        <td class="c"><span class="mark on hidracor">●</span></td>
+        <td class="c"><span class="mark on hipercor">●</span></td>
+        <td class="c">7</td>
+        <td class="c">10</td>
+        <td class="c">2</td>
+        <td class="shared">1 cor(es): Vermelho</td>
+      </tr>
+<tr>
+        <td>Tinta semibrilho</td>
+        <td class="c"><span class="mark on iquine">●</span></td>
+        <td class="c"><span class="mark on hidracor">●</span></td>
+        <td class="c"><span class="mark off">—</span></td>
+        <td class="c">1</td>
+        <td class="c">30</td>
+        <td class="c">—</td>
+        <td class="shared">1 cor(es): Laranja</td>
+      </tr>
+<tr>
+        <td>Verniz</td>
+        <td class="c"><span class="mark on iquine">●</span></td>
+        <td class="c"><span class="mark off">—</span></td>
+        <td class="c"><span class="mark off">—</span></td>
+        <td class="c">10</td>
+        <td class="c">—</td>
+        <td class="c">—</td>
+        <td class="shared">—</td>
+      </tr>
+<tr>
+        <td>Zarcofer anticorrosivo</td>
+        <td class="c"><span class="mark on iquine">●</span></td>
+        <td class="c"><span class="mark off">—</span></td>
+        <td class="c"><span class="mark off">—</span></td>
+        <td class="c">2</td>
+        <td class="c">—</td>
+        <td class="c">—</td>
+        <td class="shared">—</td>
+      </tr>
+<tr>
+        <td>Zarcão</td>
+        <td class="c"><span class="mark on iquine">●</span></td>
+        <td class="c"><span class="mark on hidracor">●</span></td>
+        <td class="c"><span class="mark off">—</span></td>
+        <td class="c">1</td>
+        <td class="c">1</td>
+        <td class="c">—</td>
+        <td class="shared">1 cor(es): Preto</td>
+      </tr></tbody>
+      </table>
+      <p class="note">Preços = tabela CCG (preço distribuidor). Foco: planeamento de abastecimento (lotes 8–16 GL).</p>
+    </section>
+  
+    <section class="block brand-section page-break-before">
+      <h2>2. Iquine</h2>
+      <p class="lede">188 SKUs · 14 linhas de produto na CCG</p>
+      
+    <h3>Resumo das linhas — Iquine</h3>
+    <table class="tbl compact">
+      <thead>
+        <tr><th>Linha</th><th>Cores</th><th>SKUs</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD (15–22 L / kg)</th></tr>
+      </thead>
+      <tbody><tr>
+      <td>Esmalte</td>
+      <td class="c">26</td>
+      <td class="c">87</td>
+      <td>R$ 77,51 – R$ 130,91</td>
+      <td>R$ 6,43 – R$ 53,38</td>
+      <td>—</td>
+    </tr>
+<tr>
+      <td>Outros</td>
+      <td class="c">20</td>
+      <td class="c">32</td>
+      <td>R$ 54,27 – R$ 103,32</td>
+      <td>R$ 22,60 – R$ 163,72</td>
+      <td>R$ 17,52 – R$ 473,77</td>
+    </tr>
+<tr>
+      <td>Tinta (outras)</td>
+      <td class="c">3</td>
+      <td class="c">15</td>
+      <td>—</td>
+      <td>R$ 33,96 – R$ 36,72</td>
+      <td>R$ 53,42</td>
+    </tr>
+<tr>
+      <td>Verniz</td>
+      <td class="c">10</td>
+      <td class="c">14</td>
+      <td>R$ 82,58 – R$ 92,75</td>
+      <td>R$ 23,56 – R$ 28,31</td>
+      <td>—</td>
+    </tr>
+<tr>
+      <td>Tinta piso</td>
+      <td class="c">7</td>
+      <td class="c">13</td>
+      <td>R$ 47,24 – R$ 62,60</td>
+      <td>—</td>
+      <td>R$ 220,22 – R$ 240,00</td>
+    </tr>
+<tr>
+      <td>Selador</td>
+      <td class="c">3</td>
+      <td class="c">6</td>
+      <td>R$ 27,06 – R$ 105,06</td>
+      <td>R$ 27,15 – R$ 30,15</td>
+      <td>R$ 88,38</td>
+    </tr>
+<tr>
+      <td>Zarcofer anticorrosivo</td>
+      <td class="c">2</td>
+      <td class="c">5</td>
+      <td>R$ 91,44 – R$ 93,74</td>
+      <td>R$ 24,21 – R$ 25,06</td>
+      <td>—</td>
+    </tr>
+<tr>
+      <td>Massa corrida</td>
+      <td class="c">4</td>
+      <td class="c">4</td>
+      <td>—</td>
+      <td>R$ 12,07</td>
+      <td>R$ 17,48 – R$ 74,47</td>
+    </tr>
+<tr>
+      <td>Sela &amp; Pinta</td>
+      <td class="c">3</td>
+      <td class="c">3</td>
+      <td>R$ 43,46</td>
+      <td>—</td>
+      <td>R$ 174,29 – R$ 239,84</td>
+    </tr>
+<tr>
+      <td>Massa acrílica</td>
+      <td class="c">2</td>
+      <td class="c">2</td>
+      <td>—</td>
+      <td>—</td>
+      <td>R$ 26,09 – R$ 84,82</td>
+    </tr>
+<tr>
+      <td>Textura decorativa</td>
+      <td class="c">2</td>
+      <td class="c">2</td>
+      <td>—</td>
+      <td>—</td>
+      <td>R$ 239,99 – R$ 367,85</td>
+    </tr>
+<tr>
+      <td>Tinta semibrilho</td>
+      <td class="c">1</td>
+      <td class="c">2</td>
+      <td>R$ 62,61</td>
+      <td>—</td>
+      <td>R$ 219,40</td>
+    </tr>
+<tr>
+      <td>Zarcão</td>
+      <td class="c">1</td>
+      <td class="c">2</td>
+      <td>R$ 89,61</td>
+      <td>R$ 25,12</td>
+      <td>—</td>
+    </tr>
+<tr>
+      <td>Fundo preparador</td>
+      <td class="c">1</td>
+      <td class="c">1</td>
+      <td>R$ 92,78</td>
+      <td>—</td>
+      <td>—</td>
+    </tr></tbody>
+    </table>
+      <h3 class="unfold-title">Unfold por linha e cor</h3>
+      
+        <div class="line-block">
+          <h4>1. Esmalte — 26 cores · 87 SKUs</h4>
+          <p class="faixa">Faixa GL: R$ 77,51 – R$ 130,91 · LT: R$ 6,43 – R$ 53,38</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Alumínio</td>
+            <td>3 L R$ 130,91<br><span class="muted">5 ml R$ 8,89</span></td>
+            <td>750 ml R$ 35,77<br>0,9 L R$ 53,38</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Amarelo</td>
+            <td>3 L R$ 81,38<br>3,6 L R$ 101,10<br><span class="muted">225 ml R$ 11,84<br>5 ml R$ 4,83<br>5 ml R$ 7,44</span></td>
+            <td>750 ml R$ 24,20<br>0,9 L R$ 31,13</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Azul França</td>
+            <td>3 L R$ 82,20<br><span class="muted">225 ml R$ 12,05<br>5 ml R$ 8,80</span></td>
+            <td>750 ml R$ 24,20</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Azul celeste</td>
+            <td>—</td>
+            <td>0,9 L R$ 6,43<br>750 ml R$ 23,05<br>0,9 L R$ 34,07</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Azul del rey</td>
+            <td>3 L R$ 82,20<br>3,6 L R$ 107,30<br><span class="muted">225 ml R$ 12,52<br>5 ml R$ 8,11</span></td>
+            <td>750 ml R$ 22,71<br>0,9 L R$ 38,84</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Azul mar</td>
+            <td>—</td>
+            <td>0,9 L R$ 33,44</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Branco</td>
+            <td>—<br><span class="muted">5 ml R$ 8,67</span></td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Branco gelo</td>
+            <td>3 L R$ 81,38<br><span class="muted">5 ml R$ 7,11</span></td>
+            <td>750 ml R$ 23,05</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Branco neve</td>
+            <td>3 L R$ 82,20<br>3,6 L R$ 104,74<br><span class="muted">225 ml R$ 11,73</span></td>
+            <td>750 ml R$ 24,20<br>0,9 L R$ 33,44</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Caterpillar</td>
+            <td>3 L R$ 82,20</td>
+            <td>750 ml R$ 24,20</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Cerâmica</td>
+            <td>3 L R$ 77,51<br>3,6 L R$ 106,11</td>
+            <td>750 ml R$ 24,20<br>0,9 L R$ 35,58</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Cinza escuro</td>
+            <td>3 L R$ 81,38</td>
+            <td>750 ml R$ 23,95</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Cinza médio</td>
+            <td>3 L R$ 81,38<br><span class="muted">225 ml R$ 11,25<br>5 ml R$ 7,94</span></td>
+            <td>0,9 L R$ 33,05</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Conhaque</td>
+            <td>3 L R$ 81,38<br>3,6 L R$ 105,99</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>ESMAL. AZUL CEU 3LT DIALINE IQUINE</td>
+            <td>3 L R$ 83,46</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Laranja</td>
+            <td>3 L R$ 82,20<br>3,6 L R$ 113,72<br><span class="muted">5 ml R$ 8,17</span></td>
+            <td>750 ml R$ 24,20<br>0,9 L R$ 33,06<br>0,9 L R$ 44,74</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Marfim</td>
+            <td>—</td>
+            <td>750 ml R$ 23,95</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Marrom</td>
+            <td>3,6 L R$ 84,03</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Platina</td>
+            <td>3 L R$ 81,38<br><span class="muted">5 ml R$ 6,78</span></td>
+            <td>750 ml R$ 27,40<br>0,9 L R$ 30,28</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Preto</td>
+            <td>3,6 L R$ 107,30<br><span class="muted">225 ml R$ 12,61<br>5 ml R$ 7,93</span></td>
+            <td>750 ml R$ 24,20<br>0,9 L R$ 33,06</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Tabaco</td>
+            <td>3,6 L R$ 106,11</td>
+            <td>750 ml R$ 23,95<br>0,9 L R$ 36,27</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Verde folha</td>
+            <td>3,6 L R$ 97,51<br><span class="muted">225 ml R$ 11,65<br>5 ml R$ 7,49</span></td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Verde limão</td>
+            <td>3 L R$ 82,20<br>3,6 L R$ 97,52<br><span class="muted">225 ml R$ 11,18</span></td>
+            <td>750 ml R$ 24,20</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Verde nilo</td>
+            <td>3 L R$ 81,38<br>3,6 L R$ 105,93</td>
+            <td>0,9 L R$ 6,96</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Vermelho</td>
+            <td>3 L R$ 82,20<br>3,6 L R$ 106,96<br><span class="muted">225 ml R$ 12,05<br>5 ml R$ 7,89</span></td>
+            <td>750 ml R$ 24,20</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Vermelho vinho</td>
+            <td>3 L R$ 82,20</td>
+            <td>750 ml R$ 24,20</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Vinho</td>
+            <td>3,6 L R$ 81,14</td>
+            <td>—</td>
+            <td>—</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>2. Outros — 20 cores · 32 SKUs</h4>
+          <p class="faixa">Faixa GL: R$ 54,27 – R$ 103,32 · LT: R$ 22,60 – R$ 163,72 · BD: R$ 17,52 – R$ 473,77</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>13485 ICORES LIMPA FACIL P 3,2 LT IQUINE</td>
+            <td>3,2 L R$ 67,28</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>ALTO BRILHO</td>
+            <td>—<br><span class="muted">R$ 6,96</span></td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Amarelo</td>
+            <td>3,0 L R$ 57,27<br><span class="muted">50 ml R$ 2,92</span></td>
+            <td>750 ml R$ 22,60<br>900 ml R$ 132,22<br>900 ml R$ 163,72</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Azul celeste</td>
+            <td>3,0 L R$ 57,27</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Branco</td>
+            <td>—</td>
+            <td>900 ml R$ 148,02</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Branco neve</td>
+            <td>—<br><span class="muted">5 ml R$ 4,83</span></td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>COLA BRANCA 1KG DIKOLA IQUINE</td>
+            <td>—</td>
+            <td>—</td>
+            <td>1 kg R$ 23,80</td>
+          </tr>
+<tr>
+            <td>Cinza claro</td>
+            <td>—</td>
+            <td>0,9 L R$ 36,79</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>DECORATO PRIMER 3,6L  IQUINE</td>
+            <td>3,6 L R$ 54,27</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>ESM.SINT.AZ FRANÇA 112,5ML HIDRACOR</td>
+            <td>—<br><span class="muted">5 ml R$ 4,83</span></td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>ESM.SINT.BRA NEVE 750ML HIDRACOR</td>
+            <td>—</td>
+            <td>750 ml R$ 22,60</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>ESM.SINT.VD FOLHA 112,5ML HIDRACOR</td>
+            <td>—<br><span class="muted">5 ml R$ 4,83</span></td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>ESM.SINT.VD FOLHA 750ML HIDRACOR</td>
+            <td>—</td>
+            <td>750 ml R$ 22,60</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>FOSCO AVELUDADO</td>
+            <td>—<br><span class="muted">R$ 35,56</span></td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>ICORES LIMPA FACIL M 16 LT IQUINE</td>
+            <td>—</td>
+            <td>—</td>
+            <td>16 L R$ 319,73</td>
+          </tr>
+<tr>
+            <td>ICORES PREMIUM BASE P 3,2L IQUINE</td>
+            <td>3,2 L R$ 74,88</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>MASSA P/MADEIRA 1,5KG IQUINE</td>
+            <td>—</td>
+            <td>—</td>
+            <td>5 kg R$ 17,52</td>
+          </tr>
+<tr>
+            <td>MASSA P/MADEIRA 6KG IQUINE</td>
+            <td>—</td>
+            <td>—</td>
+            <td>6 kg R$ 46,41</td>
+          </tr>
+<tr>
+            <td>MASSA RAPIDA BRANCA 900ML IQUINE</td>
+            <td>—</td>
+            <td>900 ml R$ 43,06</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>PISTOLA PULV MULTIUSO 1620 110V IQUINE</td>
+            <td>—<br><span class="muted">R$ 457,64</span></td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Platina</td>
+            <td>3,0 L R$ 57,27</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Preto</td>
+            <td>—<br><span class="muted">R$ 27,85</span></td>
+            <td>900 ml R$ 105,40</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>RESINA ACRILICA CONCENTRADA 3,6L IQUINE</td>
+            <td>3,6 L R$ 103,32</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>SUPER PREMIUM BASE (P) 16L  IQUINE</td>
+            <td>—</td>
+            <td>—</td>
+            <td>16 L R$ 473,77</td>
+          </tr>
+<tr>
+            <td>Verde nilo</td>
+            <td>3,0 L R$ 57,27</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Vermelho</td>
+            <td>3,0 L R$ 75,79</td>
+            <td>750 ml R$ 22,60</td>
+            <td>—</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>3. Tinta (outras) — 3 cores · 15 SKUs</h4>
+          <p class="faixa">Faixa GL: — · LT: R$ 33,96 – R$ 36,72 · BD: R$ 53,42</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Amarelo</td>
+            <td>—<br><span class="muted">400 ml R$ 7,58</span></td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Azul França</td>
+            <td>—<br><span class="muted">400 ml R$ 8,04</span></td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Azul celeste</td>
+            <td>—<br><span class="muted">400 ml R$ 7,58</span></td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Dourado</td>
+            <td>—<br><span class="muted">400 ml R$ 12,57</span></td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Laranja</td>
+            <td>—<br><span class="muted">400 ml R$ 7,58<br>400 ml R$ 8,66</span></td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Platina</td>
+            <td>—<br><span class="muted">400 ml R$ 8,66</span></td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Preto</td>
+            <td>—</td>
+            <td>900 ml R$ 33,97<br>900 ml R$ 36,72</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA LACA NITRO BRANCA 900 ML IQUINE</td>
+            <td>—</td>
+            <td>900 ml R$ 33,96</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA SPRAY DIALINE METALICO PRATA  400ML IQUINE</td>
+            <td>—<br><span class="muted">400 ml R$ 12,57</span></td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA VINIL ACRIL.18LTS AZUL CEU PLURAL</td>
+            <td>—</td>
+            <td>—</td>
+            <td>18 L R$ 53,42</td>
+          </tr>
+<tr>
+            <td>Verde folha</td>
+            <td>—<br><span class="muted">400 ml R$ 8,67</span></td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Verde limão</td>
+            <td>—<br><span class="muted">400 ml R$ 9,12</span></td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Vermelho</td>
+            <td>—<br><span class="muted">400 ml R$ 9,12</span></td>
+            <td>—</td>
+            <td>—</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>4. Verniz — 10 cores · 14 SKUs</h4>
+          <p class="faixa">Faixa GL: R$ 82,58 – R$ 92,75 · LT: R$ 23,56 – R$ 28,31</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Cerejeira</td>
+            <td>3,6 L R$ 92,75</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Imbuia</td>
+            <td>3,6 L R$ 86,67</td>
+            <td>0,9 L R$ 27,33</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Incolor</td>
+            <td>—</td>
+            <td>0,9 L R$ 23,56</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Mogno</td>
+            <td>—</td>
+            <td>0,9 L R$ 27,13</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Mogno colonial</td>
+            <td>3,6 L R$ 88,58</td>
+            <td>0,9 L R$ 27,62</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Nogueira</td>
+            <td>3,6 L R$ 84,22</td>
+            <td>0,9 L R$ 28,28</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>VERNIZ COPAL BRILHANTE 0,9LTS IQUINE</td>
+            <td>—</td>
+            <td>0,9 L R$ 26,22</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>VERNIZ COPAL BRILHANTE 3,6LTS IQUINE</td>
+            <td>3,6 L R$ 84,86</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>VERNIZ EXTRA RAP.CEDRO 03,6LTS IQUINE</td>
+            <td>03,6 L R$ 82,58</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Vinho</td>
+            <td>3,6 L R$ 90,39</td>
+            <td>0,9 L R$ 28,31</td>
+            <td>—</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>5. Tinta piso — 7 cores · 13 SKUs</h4>
+          <p class="faixa">Faixa GL: R$ 47,24 – R$ 62,60 · LT: — · BD: R$ 220,22 – R$ 240,00</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Amarelo</td>
+            <td>3,6 L R$ 62,60</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Azul profundo</td>
+            <td>3,6 L R$ 48,77</td>
+            <td>—</td>
+            <td>18 L R$ 238,73</td>
+          </tr>
+<tr>
+            <td>Cinza escuro</td>
+            <td>3,6 L R$ 47,62</td>
+            <td>—</td>
+            <td>18 L R$ 220,22</td>
+          </tr>
+<tr>
+            <td>Cinza médio</td>
+            <td>3,6 L R$ 53,98</td>
+            <td>—</td>
+            <td>18 L R$ 231,22</td>
+          </tr>
+<tr>
+            <td>Concreto</td>
+            <td>3,6 L R$ 50,85</td>
+            <td>—</td>
+            <td>18 L R$ 231,22</td>
+          </tr>
+<tr>
+            <td>Verde folha</td>
+            <td>3,6 L R$ 47,24</td>
+            <td>—</td>
+            <td>18 L R$ 240,00</td>
+          </tr>
+<tr>
+            <td>Vermelho</td>
+            <td>3,6 L R$ 53,98</td>
+            <td>—</td>
+            <td>18 L R$ 234,55</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>6. Selador — 3 cores · 6 SKUs</h4>
+          <p class="faixa">Faixa GL: R$ 27,06 – R$ 105,06 · LT: R$ 27,15 – R$ 30,15 · BD: R$ 88,38</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Branco</td>
+            <td>3,6 L R$ 27,06</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Incolor</td>
+            <td>3,6 L R$ 88,63<br>3,6 L R$ 105,06</td>
+            <td>0,9 L R$ 27,15<br>0,9 L R$ 30,15</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>SELADOR ACRILICO 15L IQUINE</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 88,38</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>7. Zarcofer anticorrosivo — 2 cores · 5 SKUs</h4>
+          <p class="faixa">Faixa GL: R$ 91,44 – R$ 93,74 · LT: R$ 24,21 – R$ 25,06</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Laranja</td>
+            <td>3,6 L R$ 91,62</td>
+            <td>0,9 L R$ 24,21</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Preto</td>
+            <td>3,6 L R$ 91,44<br>3,6 L R$ 93,74</td>
+            <td>0,9 L R$ 25,06</td>
+            <td>—</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>8. Massa corrida — 4 cores · 4 SKUs</h4>
+          <p class="faixa">Faixa GL: — · LT: R$ 12,07 · BD: R$ 17,48 – R$ 74,47</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Massa corrida (20 kg)</td>
+            <td>—</td>
+            <td>—</td>
+            <td>20 kg R$ 57,62</td>
+          </tr>
+<tr>
+            <td>Massa corrida (25 kg)</td>
+            <td>—</td>
+            <td>—</td>
+            <td>25 kg R$ 74,47</td>
+          </tr>
+<tr>
+            <td>Massa corrida (4 kg)</td>
+            <td>—</td>
+            <td>—</td>
+            <td>4 kg R$ 17,48</td>
+          </tr>
+<tr>
+            <td>Massa corrida (900 ml)</td>
+            <td>—</td>
+            <td>900 ml R$ 12,07</td>
+            <td>—</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>9. Sela &amp; Pinta — 3 cores · 3 SKUs</h4>
+          <p class="faixa">Faixa GL: R$ 43,46 · LT: — · BD: R$ 174,29 – R$ 239,84</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Branco</td>
+            <td>3,6 L R$ 43,46</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Branco neve</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 174,29</td>
+          </tr>
+<tr>
+            <td>ICORES SELA/PINTA BASE P&quot; 16L IQUINE</td>
+            <td>—</td>
+            <td>—</td>
+            <td>16 L R$ 239,84</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>10. Massa acrílica — 2 cores · 2 SKUs</h4>
+          <p class="faixa">Faixa GL: — · LT: — · BD: R$ 26,09 – R$ 84,82</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Massa acrílica (20 kg)</td>
+            <td>—</td>
+            <td>—</td>
+            <td>20 kg R$ 84,82</td>
+          </tr>
+<tr>
+            <td>Massa acrílica (4 kg)</td>
+            <td>—</td>
+            <td>—</td>
+            <td>4 kg R$ 26,09</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>11. Textura decorativa — 2 cores · 2 SKUs</h4>
+          <p class="faixa">Faixa GL: — · LT: — · BD: R$ 239,99 – R$ 367,85</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Naturais</td>
+            <td>—</td>
+            <td>—</td>
+            <td>22 kg R$ 239,99</td>
+          </tr>
+<tr>
+            <td>Patacho</td>
+            <td>—</td>
+            <td>—</td>
+            <td>22 kg R$ 367,85</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>12. Tinta semibrilho — 1 cores · 2 SKUs</h4>
+          <p class="faixa">Faixa GL: R$ 62,61 · LT: — · BD: R$ 219,40</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Laranja</td>
+            <td>3,6 L R$ 62,61</td>
+            <td>—</td>
+            <td>15 L R$ 219,40</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>13. Zarcão — 1 cores · 2 SKUs</h4>
+          <p class="faixa">Faixa GL: R$ 89,61 · LT: R$ 25,12</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Preto</td>
+            <td>3,6 L R$ 89,61</td>
+            <td>900 ml R$ 25,12</td>
+            <td>—</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>14. Fundo preparador — 1 cores · 1 SKUs</h4>
+          <p class="faixa">Faixa GL: R$ 92,78 · LT: —</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Fundo preparador</td>
+            <td>3,6 L R$ 92,78</td>
+            <td>—</td>
+            <td>—</td>
+          </tr></tbody>
+          </table>
+        </div>
+    </section>
+
+    <section class="block brand-section page-break-before">
+      <h2>3. Hidracor</h2>
+      <p class="lede">123 SKUs · 12 linhas de produto na CCG</p>
+      
+    <h3>Resumo das linhas — Hidracor</h3>
+    <table class="tbl compact">
+      <thead>
+        <tr><th>Linha</th><th>Cores</th><th>SKUs</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD (15–22 L / kg)</th></tr>
+      </thead>
+      <tbody><tr>
+      <td>Tinta semibrilho</td>
+      <td class="c">30</td>
+      <td class="c">39</td>
+      <td>R$ 59,64 – R$ 62,61</td>
+      <td>—</td>
+      <td>R$ 219,40</td>
+    </tr>
+<tr>
+      <td>Acrílica econômica</td>
+      <td class="c">17</td>
+      <td class="c">24</td>
+      <td>R$ 26,33 – R$ 27,27</td>
+      <td>—</td>
+      <td>R$ 80,97 – R$ 86,18</td>
+    </tr>
+<tr>
+      <td>Tinta piso</td>
+      <td class="c">10</td>
+      <td class="c">20</td>
+      <td>R$ 46,45 – R$ 50,27</td>
+      <td>—</td>
+      <td>R$ 169,60 – R$ 174,84</td>
+    </tr>
+<tr>
+      <td>Tinta (outras)</td>
+      <td class="c">16</td>
+      <td class="c">17</td>
+      <td>R$ 27,48 – R$ 35,70</td>
+      <td>—</td>
+      <td>R$ 103,82 – R$ 119,13</td>
+    </tr>
+<tr>
+      <td>Outros</td>
+      <td class="c">8</td>
+      <td class="c">13</td>
+      <td>R$ 48,41 – R$ 75,79</td>
+      <td>R$ 16,65 – R$ 22,60</td>
+      <td>R$ 46,41</td>
+    </tr>
+<tr>
+      <td>Massa acrílica</td>
+      <td class="c">1</td>
+      <td class="c">2</td>
+      <td>—</td>
+      <td>—</td>
+      <td>R$ 95,94</td>
+    </tr>
+<tr>
+      <td>Massa corrida</td>
+      <td class="c">1</td>
+      <td class="c">2</td>
+      <td>—</td>
+      <td>—</td>
+      <td>R$ 16,45 – R$ 18,20</td>
+    </tr>
+<tr>
+      <td>Zarcão</td>
+      <td class="c">1</td>
+      <td class="c">2</td>
+      <td>R$ 89,61</td>
+      <td>R$ 25,12</td>
+      <td>—</td>
+    </tr>
+<tr>
+      <td>Esmalte</td>
+      <td class="c">0</td>
+      <td class="c">1</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+    </tr>
+<tr>
+      <td>Fundo preparador</td>
+      <td class="c">1</td>
+      <td class="c">1</td>
+      <td>R$ 92,78</td>
+      <td>—</td>
+      <td>—</td>
+    </tr>
+<tr>
+      <td>Selador</td>
+      <td class="c">1</td>
+      <td class="c">1</td>
+      <td>—</td>
+      <td>—</td>
+      <td>R$ 76,19</td>
+    </tr>
+<tr>
+      <td>Tinta em pó</td>
+      <td class="c">1</td>
+      <td class="c">1</td>
+      <td>—</td>
+      <td>—</td>
+      <td>R$ 7,64</td>
+    </tr></tbody>
+    </table>
+      <h3 class="unfold-title">Unfold por linha e cor</h3>
+      
+        <div class="line-block">
+          <h4>1. Tinta semibrilho — 30 cores · 39 SKUs</h4>
+          <p class="faixa">Faixa GL: R$ 59,64 – R$ 62,61 · LT: — · BD: R$ 219,40</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>16966 TINTA SEMI BRILHO AZUL MEDITERRANEO 3,6L HID</td>
+            <td>3,6 L R$ 62,61</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Amarelo</td>
+            <td>3,6 L R$ 62,61</td>
+            <td>—</td>
+            <td>15 L R$ 219,40</td>
+          </tr>
+<tr>
+            <td>Areia</td>
+            <td>3,6 L R$ 62,61</td>
+            <td>—</td>
+            <td>15 L R$ 219,40</td>
+          </tr>
+<tr>
+            <td>Azul turquesa</td>
+            <td>3,6 L R$ 59,64</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Branco gelo</td>
+            <td>3,6 L R$ 62,61</td>
+            <td>—</td>
+            <td>15 L R$ 219,40</td>
+          </tr>
+<tr>
+            <td>Branco neve</td>
+            <td>3,6 L R$ 62,61</td>
+            <td>—</td>
+            <td>15 L R$ 219,40</td>
+          </tr>
+<tr>
+            <td>Camurça</td>
+            <td>3,6 L R$ 62,61</td>
+            <td>—</td>
+            <td>15 L R$ 219,40</td>
+          </tr>
+<tr>
+            <td>Laranja</td>
+            <td>3,6 L R$ 62,61</td>
+            <td>—</td>
+            <td>15 L R$ 219,40</td>
+          </tr>
+<tr>
+            <td>Marfim</td>
+            <td>3,6 L R$ 62,61</td>
+            <td>—</td>
+            <td>15 L R$ 219,40</td>
+          </tr>
+<tr>
+            <td>Ocre</td>
+            <td>3,6 L R$ 62,61</td>
+            <td>—</td>
+            <td>15 L R$ 219,40</td>
+          </tr>
+<tr>
+            <td>TINTA SEMI BRILHO AZUL MEDITERRANEO 15L HIDRACOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 219,40</td>
+          </tr>
+<tr>
+            <td>TINTA SEMI BRILHO LILAS ATREVIDO 15L HIDRACOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 219,40</td>
+          </tr>
+<tr>
+            <td>TINTA SEMI BRILHO LILAS ATREVIDO 3,6L HIDRACOR</td>
+            <td>3,6 L R$ 62,61</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA SEMI BRILHO MELANCIA 15L HIDRACOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 219,40</td>
+          </tr>
+<tr>
+            <td>TINTA SEMI BRILHO MELANCIA 3,6L HIDRACOR</td>
+            <td>3,6 L R$ 62,61</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA SEMI BRILHO PALHA 3,6L HIDRACOR</td>
+            <td>3,6 L R$ 62,61</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA SEMI BRILHO PEROLA 15L HIDRACOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 219,40</td>
+          </tr>
+<tr>
+            <td>TINTA SEMI BRILHO PEROLA 3,6L HIDRACOR</td>
+            <td>3,6 L R$ 59,64</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA SEMI BRILHO PESSEGO 3,6L HIDRACOR</td>
+            <td>3,6 L R$ 61,85</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA SEMI BRILHO PITANGA 15L HIDRACOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 219,40</td>
+          </tr>
+<tr>
+            <td>TINTA SEMI BRILHO PITANGA 3,6L HIDRACOR</td>
+            <td>3,6 L R$ 59,64</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA SEMI BRILHO ROSA LOTUS 15L HIDRACOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 219,40</td>
+          </tr>
+<tr>
+            <td>TINTA SEMI BRILHO ROSA LOTUS 3,6L HIDRACOR</td>
+            <td>3,6 L R$ 62,61</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA SEMIBRILHO 15L CHOCOLATE  HIDRACOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 219,40</td>
+          </tr>
+<tr>
+            <td>TINTA SEMIBRILHO 3,6L  CHOCOLATE  HIDRACOR</td>
+            <td>3,6 L R$ 62,61</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA SEMIBRILHO CARIBE 15L HIDRACOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 219,40</td>
+          </tr>
+<tr>
+            <td>TINTA SEMIBRILHO PALHA 15L HIDRACOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 219,40</td>
+          </tr>
+<tr>
+            <td>TINTA SEMIBRILHO TURQUESA 15L HIDRACOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 219,40</td>
+          </tr>
+<tr>
+            <td>Verde limão</td>
+            <td>3,6 L R$ 62,61</td>
+            <td>—</td>
+            <td>15 L R$ 219,40</td>
+          </tr>
+<tr>
+            <td>Vermelho</td>
+            <td>3,6 L R$ 62,61</td>
+            <td>—</td>
+            <td>—</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>2. Acrílica econômica — 17 cores · 24 SKUs</h4>
+          <p class="faixa">Faixa GL: R$ 26,33 – R$ 27,27 · LT: — · BD: R$ 80,97 – R$ 86,18</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Amarelo</td>
+            <td>3,6 L R$ 26,33</td>
+            <td>—</td>
+            <td>15 L R$ 80,97</td>
+          </tr>
+<tr>
+            <td>Areia</td>
+            <td>3,6 L R$ 27,27</td>
+            <td>—</td>
+            <td>15 L R$ 86,17</td>
+          </tr>
+<tr>
+            <td>Branco gelo</td>
+            <td>3,6 L R$ 27,27</td>
+            <td>—</td>
+            <td>15 L R$ 86,17</td>
+          </tr>
+<tr>
+            <td>Branco neve</td>
+            <td>3,6 L R$ 27,27</td>
+            <td>—</td>
+            <td>15 L R$ 86,17</td>
+          </tr>
+<tr>
+            <td>Camurça</td>
+            <td>3,6 L R$ 27,27</td>
+            <td>—</td>
+            <td>15 L R$ 86,17</td>
+          </tr>
+<tr>
+            <td>Cinza claro</td>
+            <td>3,6 L R$ 26,84</td>
+            <td>—</td>
+            <td>15 L R$ 82,54</td>
+          </tr>
+<tr>
+            <td>Marfim</td>
+            <td>3,6 L R$ 27,27</td>
+            <td>—</td>
+            <td>15 L R$ 86,18</td>
+          </tr>
+<tr>
+            <td>TINTA ECONOMICA AZUL PAVAO 15L HIPERCOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 83,86</td>
+          </tr>
+<tr>
+            <td>TINTA ECONOMICA AZUL PAVAO 3,6L HIPERCOR</td>
+            <td>3,6 L R$ 27,27</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA ECONOMICA PALHA 15L HIPERCOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 86,17</td>
+          </tr>
+<tr>
+            <td>TINTA ECONOMICA PALHA 3,6L HIPERCOR</td>
+            <td>3,6 L R$ 27,27</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA ECONOMICA PEROLA 15L HIPERCOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 86,17</td>
+          </tr>
+<tr>
+            <td>TINTA ECONOMICA PEROLA 3,6L HIPERCOR</td>
+            <td>3,6 L R$ 27,27</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA ECONOMICA VD AMAZONAS 15L HIPERCOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 86,18</td>
+          </tr>
+<tr>
+            <td>TINTA ECONOMICA VD AMAZONAS 3,6L HIPERCOR</td>
+            <td>3,6 L R$ 27,27</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA ECONOMICA VD PRIMAVERA 15L HIPERCOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 86,17</td>
+          </tr>
+<tr>
+            <td>TINTA ECONOMICA VD PRIMAVERA 3,6L HIPERCOR</td>
+            <td>3,6 L R$ 27,27</td>
+            <td>—</td>
+            <td>—</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>3. Tinta piso — 10 cores · 20 SKUs</h4>
+          <p class="faixa">Faixa GL: R$ 46,45 – R$ 50,27 · LT: — · BD: R$ 169,60 – R$ 174,84</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Amarelo</td>
+            <td>3,6 L R$ 47,88</td>
+            <td>—</td>
+            <td>15 L R$ 169,60</td>
+          </tr>
+<tr>
+            <td>Branco neve</td>
+            <td>3,6 L R$ 50,27</td>
+            <td>—</td>
+            <td>15 L R$ 169,60</td>
+          </tr>
+<tr>
+            <td>Cinza</td>
+            <td>3,6 L R$ 50,27</td>
+            <td>—</td>
+            <td>15 L R$ 169,60</td>
+          </tr>
+<tr>
+            <td>Cinza escuro</td>
+            <td>3,6 L R$ 50,27</td>
+            <td>—</td>
+            <td>15 L R$ 169,60</td>
+          </tr>
+<tr>
+            <td>Concreto</td>
+            <td>3,6 L R$ 50,27</td>
+            <td>—</td>
+            <td>15 L R$ 169,60</td>
+          </tr>
+<tr>
+            <td>Preto</td>
+            <td>3,6 L R$ 47,89</td>
+            <td>—</td>
+            <td>15 L R$ 169,60</td>
+          </tr>
+<tr>
+            <td>TINTA PISO AZUL 15L HIDRACOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 169,60</td>
+          </tr>
+<tr>
+            <td>TINTA PISO AZUL 3,6L HIDRACOR</td>
+            <td>3,6 L R$ 46,45</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Verde</td>
+            <td>3,6 L R$ 50,27</td>
+            <td>—</td>
+            <td>15 L R$ 169,60</td>
+          </tr>
+<tr>
+            <td>Vermelho</td>
+            <td>3,6 L R$ 47,89<br>3,6 L R$ 50,27</td>
+            <td>—</td>
+            <td>15 L R$ 174,84<br>15 L R$ 174,84</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>4. Tinta (outras) — 16 cores · 17 SKUs</h4>
+          <p class="faixa">Faixa GL: R$ 27,48 – R$ 35,70 · LT: — · BD: R$ 103,82 – R$ 119,13</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Amarelo</td>
+            <td>3,6 L R$ 28,85</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Azul turquesa</td>
+            <td>3,6 L R$ 28,85</td>
+            <td>—</td>
+            <td>15 L R$ 108,66</td>
+          </tr>
+<tr>
+            <td>Branco gelo</td>
+            <td>3,6 L R$ 29,70</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Branco neve</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 119,13</td>
+          </tr>
+<tr>
+            <td>Camurça</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 109,55</td>
+          </tr>
+<tr>
+            <td>Canário</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 108,01</td>
+          </tr>
+<tr>
+            <td>TINTA ACRIL ECO AZUL CEU 15L HIDRACOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 110,39</td>
+          </tr>
+<tr>
+            <td>TINTA ACRIL ECO CROMO SUAVE 3,6L HIDRACOR</td>
+            <td>3,6 L R$ 28,45</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA ACRIL ECO FRAMBOESA 3,6L HIDRACOR</td>
+            <td>3,6 L R$ 35,70</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA ACRIL ECO LJ PROPAGANDA 3,6L HIDRACOR</td>
+            <td>3,6 L R$ 28,85</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA ACRIL ECO PALHA 3,6L HIDRACOR</td>
+            <td>3,6 L R$ 28,85</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA ACRIL ECO PEROLA 3,6L HIDRACOR</td>
+            <td>3,6 L R$ 28,45</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA ACRIL ECO VERAO INTENSO 3,6L HIDRACOR</td>
+            <td>3,6 L R$ 28,85</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA ACRILICA STANDARD BARCELONA 3,6L HIPERCOR</td>
+            <td>3,6 L R$ 27,56</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA ACRILICA STANDARD VD LIMAO 15L HIPERCOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 103,82</td>
+          </tr>
+<tr>
+            <td>Vermelho</td>
+            <td>3,6 L R$ 27,48</td>
+            <td>—</td>
+            <td>—</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>5. Outros — 8 cores · 13 SKUs</h4>
+          <p class="faixa">Faixa GL: R$ 48,41 – R$ 75,79 · LT: R$ 16,65 – R$ 22,60 · BD: R$ 46,41</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Amarelo</td>
+            <td>3,6 L R$ 48,41</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Azul França</td>
+            <td>—</td>
+            <td>0,9 L R$ 16,65</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Branco neve</td>
+            <td>—<br><span class="muted">5 ml R$ 4,83</span></td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>ESM SINT AZ DEL REY 0,9L HIPERCOR</td>
+            <td>—</td>
+            <td>0,9 L R$ 16,65</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>ESM.SINT.AZ FRANÇA 112,5ML HIDRACOR</td>
+            <td>—<br><span class="muted">5 ml R$ 4,83</span></td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>ESM.SINT.BRA NEVE 750ML HIDRACOR</td>
+            <td>—</td>
+            <td>750 ml R$ 22,60</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>ESM.SINT.VD FOLHA 112,5ML HIDRACOR</td>
+            <td>—<br><span class="muted">5 ml R$ 4,83</span></td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>ESM.SINT.VD FOLHA 750ML HIDRACOR</td>
+            <td>—</td>
+            <td>750 ml R$ 22,60</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>MASSA P/MADEIRA 6KG IQUINE</td>
+            <td>—</td>
+            <td>—</td>
+            <td>6 kg R$ 46,41</td>
+          </tr>
+<tr>
+            <td>Marfim</td>
+            <td>—</td>
+            <td>0,9 L R$ 16,65</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>SERRA TICOTICO GST 75 E 127V BOSCH</td>
+            <td>—<br><span class="muted">R$ 717,21</span></td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Vermelho</td>
+            <td>3,0 L R$ 75,79</td>
+            <td>750 ml R$ 22,60</td>
+            <td>—</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>6. Massa acrílica — 1 cores · 2 SKUs</h4>
+          <p class="faixa">Faixa GL: — · LT: — · BD: R$ 95,94</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Massa acrílica</td>
+            <td>—<br><span class="muted">R$ 22,35</span></td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Massa acrílica (20 kg)</td>
+            <td>—</td>
+            <td>—</td>
+            <td>20 kg R$ 95,94</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>7. Massa corrida — 1 cores · 2 SKUs</h4>
+          <p class="faixa">Faixa GL: — · LT: — · BD: R$ 16,45 – R$ 18,20</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Massa corrida (5 kg)</td>
+            <td>—</td>
+            <td>—</td>
+            <td>5 kg R$ 16,45<br>5 kg R$ 18,20</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>8. Zarcão — 1 cores · 2 SKUs</h4>
+          <p class="faixa">Faixa GL: R$ 89,61 · LT: R$ 25,12</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Preto</td>
+            <td>3,6 L R$ 89,61</td>
+            <td>900 ml R$ 25,12</td>
+            <td>—</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>9. Esmalte — 0 cores · 1 SKUs</h4>
+          <p class="faixa">Faixa GL: — · LT: —</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Amarelo</td>
+            <td>—<br><span class="muted">5 ml R$ 4,83</span></td>
+            <td>—</td>
+            <td>—</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>10. Fundo preparador — 1 cores · 1 SKUs</h4>
+          <p class="faixa">Faixa GL: R$ 92,78 · LT: —</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Fundo preparador</td>
+            <td>3,6 L R$ 92,78</td>
+            <td>—</td>
+            <td>—</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>11. Selador — 1 cores · 1 SKUs</h4>
+          <p class="faixa">Faixa GL: — · LT: — · BD: R$ 76,19</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>SELADOR ACRILICO 15L HIPERCOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 76,19</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>12. Tinta em pó — 1 cores · 1 SKUs</h4>
+          <p class="faixa">Faixa GL: — · LT: — · BD: R$ 7,64</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Cinza</td>
+            <td>—</td>
+            <td>—</td>
+            <td>2 kg R$ 7,64</td>
+          </tr></tbody>
+          </table>
+        </div>
+    </section>
+
+    <section class="block brand-section page-break-before">
+      <h2>4. Hipercor</h2>
+      <p class="lede">55 SKUs · 7 linhas de produto na CCG</p>
+      
+    <h3>Resumo das linhas — Hipercor</h3>
+    <table class="tbl compact">
+      <thead>
+        <tr><th>Linha</th><th>Cores</th><th>SKUs</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD (15–22 L / kg)</th></tr>
+      </thead>
+      <tbody><tr>
+      <td>Acrílica econômica</td>
+      <td class="c">18</td>
+      <td class="c">25</td>
+      <td>R$ 26,33 – R$ 27,27</td>
+      <td>—</td>
+      <td>R$ 80,97 – R$ 86,18</td>
+    </tr>
+<tr>
+      <td>Outros</td>
+      <td class="c">9</td>
+      <td class="c">12</td>
+      <td>R$ 57,27</td>
+      <td>R$ 15,30 – R$ 22,60</td>
+      <td>—</td>
+    </tr>
+<tr>
+      <td>Tinta (outras)</td>
+      <td class="c">10</td>
+      <td class="c">11</td>
+      <td>R$ 27,27 – R$ 28,85</td>
+      <td>—</td>
+      <td>R$ 86,17 – R$ 108,66</td>
+    </tr>
+<tr>
+      <td>Tinta piso</td>
+      <td class="c">2</td>
+      <td class="c">3</td>
+      <td>R$ 50,27</td>
+      <td>—</td>
+      <td>R$ 169,60 – R$ 174,84</td>
+    </tr>
+<tr>
+      <td>Massa acrílica</td>
+      <td class="c">2</td>
+      <td class="c">2</td>
+      <td>—</td>
+      <td>—</td>
+      <td>R$ 23,01 – R$ 95,94</td>
+    </tr>
+<tr>
+      <td>Massa corrida</td>
+      <td class="c">1</td>
+      <td class="c">1</td>
+      <td>—</td>
+      <td>—</td>
+      <td>R$ 18,20</td>
+    </tr>
+<tr>
+      <td>Selador</td>
+      <td class="c">1</td>
+      <td class="c">1</td>
+      <td>—</td>
+      <td>—</td>
+      <td>R$ 76,19</td>
+    </tr></tbody>
+    </table>
+      <h3 class="unfold-title">Unfold por linha e cor</h3>
+      
+        <div class="line-block">
+          <h4>1. Acrílica econômica — 18 cores · 25 SKUs</h4>
+          <p class="faixa">Faixa GL: R$ 26,33 – R$ 27,27 · LT: — · BD: R$ 80,97 – R$ 86,18</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Amarelo</td>
+            <td>3,6 L R$ 26,33</td>
+            <td>—</td>
+            <td>15 L R$ 80,97</td>
+          </tr>
+<tr>
+            <td>Areia</td>
+            <td>3,6 L R$ 27,27</td>
+            <td>—</td>
+            <td>15 L R$ 86,17</td>
+          </tr>
+<tr>
+            <td>Branco gelo</td>
+            <td>3,6 L R$ 27,27</td>
+            <td>—</td>
+            <td>15 L R$ 86,17</td>
+          </tr>
+<tr>
+            <td>Branco neve</td>
+            <td>3,6 L R$ 27,27</td>
+            <td>—</td>
+            <td>15 L R$ 86,17</td>
+          </tr>
+<tr>
+            <td>Camurça</td>
+            <td>3,6 L R$ 27,27</td>
+            <td>—</td>
+            <td>15 L R$ 86,17</td>
+          </tr>
+<tr>
+            <td>Cinza claro</td>
+            <td>3,6 L R$ 26,84</td>
+            <td>—</td>
+            <td>15 L R$ 82,54</td>
+          </tr>
+<tr>
+            <td>Marfim</td>
+            <td>3,6 L R$ 27,27</td>
+            <td>—</td>
+            <td>15 L R$ 86,18</td>
+          </tr>
+<tr>
+            <td>TINTA ECONOMICA AZUL PAVAO 15L HIPERCOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 83,86</td>
+          </tr>
+<tr>
+            <td>TINTA ECONOMICA AZUL PAVAO 3,6L HIPERCOR</td>
+            <td>3,6 L R$ 27,27</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA ECONOMICA PALHA 15L HIPERCOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 86,17</td>
+          </tr>
+<tr>
+            <td>TINTA ECONOMICA PALHA 3,6L HIPERCOR</td>
+            <td>3,6 L R$ 27,27</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA ECONOMICA PEROLA 15L HIPERCOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 86,17</td>
+          </tr>
+<tr>
+            <td>TINTA ECONOMICA PEROLA 3,6L HIPERCOR</td>
+            <td>3,6 L R$ 27,27</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA ECONOMICA PESSEGO 15L HIPERCOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 83,86</td>
+          </tr>
+<tr>
+            <td>TINTA ECONOMICA VD AMAZONAS 15L HIPERCOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 86,18</td>
+          </tr>
+<tr>
+            <td>TINTA ECONOMICA VD AMAZONAS 3,6L HIPERCOR</td>
+            <td>3,6 L R$ 27,27</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA ECONOMICA VD PRIMAVERA 15L HIPERCOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 86,17</td>
+          </tr>
+<tr>
+            <td>TINTA ECONOMICA VD PRIMAVERA 3,6L HIPERCOR</td>
+            <td>3,6 L R$ 27,27</td>
+            <td>—</td>
+            <td>—</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>2. Outros — 9 cores · 12 SKUs</h4>
+          <p class="faixa">Faixa GL: R$ 57,27 · LT: R$ 15,30 – R$ 22,60</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Amarelo</td>
+            <td>3,0 L R$ 57,27</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Azul França</td>
+            <td>—</td>
+            <td>750 ml R$ 15,30<br>0,9 L R$ 16,65</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Azul celeste</td>
+            <td>3,0 L R$ 57,27</td>
+            <td>750 ml R$ 15,30</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Azul del rey</td>
+            <td>—</td>
+            <td>750 ml R$ 15,30</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>ESM SINT AZ DEL REY 0,9L HIPERCOR</td>
+            <td>—</td>
+            <td>0,9 L R$ 16,65</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Marfim</td>
+            <td>—</td>
+            <td>0,9 L R$ 16,65</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Platina</td>
+            <td>3,0 L R$ 57,27</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Preto</td>
+            <td>—</td>
+            <td>750 ml R$ 22,60</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Verde nilo</td>
+            <td>3,0 L R$ 57,27</td>
+            <td>750 ml R$ 15,30</td>
+            <td>—</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>3. Tinta (outras) — 10 cores · 11 SKUs</h4>
+          <p class="faixa">Faixa GL: R$ 27,27 – R$ 28,85 · LT: — · BD: R$ 86,17 – R$ 108,66</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Amarelo</td>
+            <td>3,6 L R$ 28,85</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Azul turquesa</td>
+            <td>3,6 L R$ 28,85</td>
+            <td>—</td>
+            <td>15 L R$ 108,66</td>
+          </tr>
+<tr>
+            <td>TINTA ACRILICA FLAMINGO 15L HIPERCOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 86,17</td>
+          </tr>
+<tr>
+            <td>TINTA ACRILICA FLAMINGO 3,6L HIPERCOR</td>
+            <td>3,6 L R$ 27,27</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA ACRILICA PESSEGO 3,6L HIPERCOR</td>
+            <td>3,6 L R$ 27,27</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA ACRILICA STANDARD BARCELONA 3,6L HIPERCOR</td>
+            <td>3,6 L R$ 27,56</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>TINTA ACRILICA STANDARD VD LIMAO 15L HIPERCOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 103,82</td>
+          </tr>
+<tr>
+            <td>TINTA ACRILICA VIOLETA CLARO 15L HIPERCOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 90,10</td>
+          </tr>
+<tr>
+            <td>TINTA ACRILICA VIOLETA CLARO 3,6L HIPERCOR</td>
+            <td>3,6 L R$ 27,27</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+<tr>
+            <td>Vermelho</td>
+            <td>3,6 L R$ 27,48</td>
+            <td>—</td>
+            <td>—</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>4. Tinta piso — 2 cores · 3 SKUs</h4>
+          <p class="faixa">Faixa GL: R$ 50,27 · LT: — · BD: R$ 169,60 – R$ 174,84</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Preto</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 169,60</td>
+          </tr>
+<tr>
+            <td>Vermelho</td>
+            <td>3,6 L R$ 50,27</td>
+            <td>—</td>
+            <td>15 L R$ 174,84</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>5. Massa acrílica — 2 cores · 2 SKUs</h4>
+          <p class="faixa">Faixa GL: — · LT: — · BD: R$ 23,01 – R$ 95,94</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Massa acrílica (20 kg)</td>
+            <td>—</td>
+            <td>—</td>
+            <td>20 kg R$ 95,94</td>
+          </tr>
+<tr>
+            <td>Massa acrílica (5 kg)</td>
+            <td>—</td>
+            <td>—</td>
+            <td>5 kg R$ 23,01</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>6. Massa corrida — 1 cores · 1 SKUs</h4>
+          <p class="faixa">Faixa GL: — · LT: — · BD: R$ 18,20</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>Massa corrida (5 kg)</td>
+            <td>—</td>
+            <td>—</td>
+            <td>5 kg R$ 18,20</td>
+          </tr></tbody>
+          </table>
+        </div>
+
+        <div class="line-block">
+          <h4>7. Selador — 1 cores · 1 SKUs</h4>
+          <p class="faixa">Faixa GL: — · LT: — · BD: R$ 76,19</p>
+          <table class="tbl unfold">
+            <thead><tr><th>Cor</th><th>GL (3–3,6 L)</th><th>LT (0,75–0,9 L)</th><th>BD / kg</th></tr></thead>
+            <tbody><tr>
+            <td>SELADOR ACRILICO 15L HIPERCOR</td>
+            <td>—</td>
+            <td>—</td>
+            <td>15 L R$ 76,19</td>
+          </tr></tbody>
+          </table>
+        </div>
+    </section>
+</body>
+</html>
