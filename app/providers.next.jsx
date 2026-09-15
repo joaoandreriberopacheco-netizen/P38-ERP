@@ -10,6 +10,7 @@ import { Toaster } from '@/components/ui/sonner';
 import DeferredMount from '@/lib/DeferredMount';
 import { initP38Monitoring } from '@/lib/p38Monitoring';
 import { installPortraitOrientationLock } from '@/lib/portraitOrientationLock';
+import { shouldRegisterServiceWorker } from '@/lib/pwaServiceWorkerEnv';
 
 const SpeedInsights = dynamic(
   () => import('@vercel/speed-insights/react').then((mod) => ({ default: mod.SpeedInsights })),
@@ -33,6 +34,18 @@ function P38OrientationBoot() {
   return null;
 }
 
+function P38ServiceWorkerBoot() {
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
+    if (!shouldRegisterServiceWorker()) {
+      navigator.serviceWorker.getRegistrations().then((regs) => {
+        regs.forEach((reg) => reg.unregister());
+      }).catch(() => {});
+    }
+  }, []);
+  return null;
+}
+
 export function Providers({ children }) {
   return (
     <AuthProvider>
@@ -41,6 +54,7 @@ export function Providers({ children }) {
         <Toaster />
         <P38MonitoringBoot />
         <P38OrientationBoot />
+        <P38ServiceWorkerBoot />
         <DeferredMount waitForIdle>
           <Analytics />
           <SpeedInsights />

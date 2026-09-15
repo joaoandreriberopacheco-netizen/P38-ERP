@@ -1,4 +1,4 @@
-const CACHE_NAME = 'p38-erp-v18';
+const CACHE_NAME = 'p38-erp-v19';
 const SHARED_CACHE = 'VarejoSync-shared-files';
 /** Ícone P38 (raio) — alinhado ao manifest; pré-cache para instalação PWA / notificações. */
 const APP_ICON_PATH = '/brand/p38-app-icon.png';
@@ -80,10 +80,12 @@ async function handleShareTargetPost(request) {
 
   const cache = await caches.open(SHARED_CACHE);
   const files = collectFilesFromFormData(formData);
+  let lastCachePath = '';
 
   for (const file of files) {
     const safeName = (file.name || 'arquivo').replace(/[^\w.\-()+ ]/g, '_');
     const cachePath = `/shared/${Date.now()}-${safeName}`;
+    lastCachePath = cachePath;
     const cacheUrl = `${self.location.origin}${cachePath}`;
     const req = new Request(cacheUrl, { method: 'GET' });
     const res = new Response(file, {
@@ -106,6 +108,7 @@ async function handleShareTargetPost(request) {
   if (urlParam) redirectParams.set('url', urlParam);
   redirectParams.set('share-target', '1');
   if (files.length === 0) redirectParams.set('share-error', 'no-files');
+  else if (lastCachePath) redirectParams.set('shared', lastCachePath);
 
   const destPath = normalizePathname(url.pathname) || '/AnexoCompartilhado';
   const dest = `${self.location.origin}${destPath}?${redirectParams.toString()}`;

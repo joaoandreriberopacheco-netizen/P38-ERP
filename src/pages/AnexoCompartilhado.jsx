@@ -286,19 +286,78 @@ export default function AnexoCompartilhado() {
   const carregarArquivoDoCache = async (fileUrl) => {
     try {
       const cache = await caches.open(SHARED_FILES_CACHE);
-      const req = typeof fileUrl === 'string' ? new Request(fileUrl) : fileUrl;
-      const resp = await cache.match(req);
+      const normalizedUrl =
+        typeof fileUrl === 'string' && fileUrl.startsWith('/')
+          ? `${window.location.origin}${fileUrl}`
+          : fileUrl;
+      const req = typeof normalizedUrl === 'string' ? new Request(normalizedUrl) : normalizedUrl;
+      let resp = await cache.match(req);
+      if (!resp && typeof normalizedUrl === 'string') {
+        resp = await cache.match(new Request(normalizedUrl, { method: 'GET' }));
+      }
       if (!resp) return false;
       const blob = await resp.blob();
       if (blob.size === 0) return false;
       await cache.delete(req);
-      const fileName = String(fileUrl).split('/').pop().replace(/^\d+-/, '') || 'arquivo';
+      const fileName =
+        String(normalizedUrl)
+          .split('/')
+          .pop()
+          .replace(/^\d+-/, '') || 'arquivo';
       prepararArquivo(blob, fileName);
       await limparTodoCacheCompartilhados();
       return true;
     } catch (e) {
       return false;
     }
+  };
+
+  const aguardarServiceWorkerPronto = async () => {
+    if (!('serviceWorker' in navigator)) return;
+    try {
+      await navigator.serviceWorker.ready;
+    } catch (_) {
+      /* ignore */
+    }
+  };
+
+  const tentarCarregarArquivoCompartilhado = async (params) => {
+    const shareTarget = params.get('share-target') === '1';
+    const sharedPath = params.get('shared');
+
+    if (shareTarget) {
+      await aguardarServiceWorkerPronto();
+    }
+
+    if (sharedPath) {
+      const achouPorPath = await carregarArquivoDoCache(sharedPath);
+      if (achouPorPath) return true;
+
+      try {
+        const fetchUrl = sharedPath.startsWith('/')
+          ? `${window.location.origin}${sharedPath}`
+          : sharedPath;
+        const resp = await fetch(fetchUrl);
+        if (resp.ok) {
+          const blob = await resp.blob();
+          if (blob.size > 0) {
+            const fileName = String(sharedPath).split('/').pop().replace(/^\d+-/, '') || 'arquivo';
+            prepararArquivo(blob, fileName);
+            await limparTodoCacheCompartilhados();
+            return true;
+          }
+        }
+      } catch (_) {
+        /* fallback via cache acima */
+      }
+    }
+
+    if (shareTarget) {
+      const achouNoCache = await consumirArquivoMaisRecenteDoCache();
+      if (achouNoCache) return true;
+    }
+
+    return false;
   };
 
   /** SW grava `/shared/${Date.now()}-nome`; sem isso o primeiro da lista pode ser PDF antigo ainda na cache. */
@@ -401,13 +460,19 @@ export default function AnexoCompartilhado() {
         }
       }
 
-      if (shareTarget) {
-        const achouNoCache = await consumirArquivoMaisRecenteDoCache();
-        if (achouNoCache) {
-          setCarregando(false);
-          clearTimeout(pollingRef.current);
-          return;
-        }
+      const achouCompartilhado = await tentarCarregarArquivoCompartilhado(params);
+      if (achouCompartilhado) {
+        setCarregando(false);
+        clearTimeout(pollingRef.current);
+        return;
+      }
+
+      if (shareTarget && tentativas >= MAX_TENTATIVAS - 1) {
+        setErroCompartilhamento(
+          (prev) =>
+            prev ||
+            'Não foi possível carregar o arquivo partilhado. Abra o P38 uma vez, actualize o ícone na tela inicial e tente partilhar de novo.',
+        );
       }
 
       if (focoClipboard || String(destino || '').toLowerCase() === 'torre') {

@@ -1,6 +1,7 @@
 'use client';
 
 import '@/index.css';
+import Script from 'next/script';
 import { Providers } from './providers.next';
 
 const themeBootScript = `
@@ -25,6 +26,7 @@ export default function RootLayoutClient({ children }) {
         <link rel="shortcut icon" href="/brand/p38-app-icon.png" />
         <link rel="apple-touch-icon" href="/brand/p38-app-icon.png" />
         <link rel="manifest" href="/manifest.json" />
+        <Script src="/pwa-sw-register.js" strategy="beforeInteractive" />
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
       </head>
       <body className="min-h-screen bg-background text-foreground antialiased">

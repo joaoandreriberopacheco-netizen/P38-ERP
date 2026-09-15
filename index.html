@@ -20,10 +20,7 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module">
-      import { registerServiceWorkerIfNeeded } from '/src/lib/pwaServiceWorkerRegister.js';
-      registerServiceWorkerIfNeeded();
-    </script>
+    <script src="/pwa-sw-register.js"></script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
