@@ -1,7 +1,7 @@
 import { jsPDF } from 'jspdf';
 import { registerJsPdfBarlowFonts, normalizePdfText } from '@/lib/jspdfNotoFont';
 
-export const PDF_BUILD = 'dossie-tintas-ccg-v1';
+export const PDF_BUILD = 'dossie-tintas-ccg-v2';
 
 const BRL = new Intl.NumberFormat('pt-BR', {
   minimumFractionDigits: 2,
@@ -23,15 +23,15 @@ const FONT = {
   kpi: 14.5,
   kpiLabel: 8.2,
   section: 11.5,
-  tableHead: 9,
-  tableRow: 9,
+  tableHead: 8.5,
+  tableRow: 8.5,
   footer: 8.5,
 };
 
 const GRID = {
   lineWidth: 0.1,
   rowH: 7.4,
-  headerH: 8.6,
+  headerH: 9.2,
   padX: 2.2,
   padY: 1.6,
 };
@@ -45,6 +45,26 @@ const LAYOUT = {
 
 const FOOTER_RESERVE = 10;
 const FOOTER_TEXT_OFFSET = 6.5;
+
+const LINE_ORDER = [
+  'Esmalte',
+  'Tinta semibrilho',
+  'Acrílica econômica',
+  'Tinta piso',
+  'Tinta (outras)',
+  'Verniz',
+  'Selador',
+  'Fundo preparador',
+  'Zarcão',
+  'Zarcofer anticorrosivo',
+  'Sela & Pinta',
+  'Massa corrida',
+  'Massa acrílica',
+  'Textura decorativa',
+  'Tinta em pó',
+];
+
+const AP_RANK = { GL: 0, LT: 1, BD: 2, Fr: 3, Out: 4 };
 
 function brl(value) {
   if (value == null || Number.isNaN(value)) return '—';
@@ -65,21 +85,110 @@ function lineHeightMm(fontSize) {
   return fontSize * 0.3528;
 }
 
-function cellTextY(cellTop, cellHeight, fontSize) {
-  const lh = lineHeightMm(fontSize);
-  return cellTop + Math.max(GRID.padY, (cellHeight - lh) / 2);
+function getPageLayout(doc, margin = 12) {
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  return { M: margin, CW: pageW - margin * 2, pageH };
 }
 
-function truncateTextToFit(doc, text, maxWidth) {
-  const raw = String(text ?? '—');
-  if (maxWidth <= 0) return '';
-  if (doc.getTextWidth(raw) <= maxWidth) return raw;
-  let clipped = raw;
-  const ellipsis = '…';
-  while (clipped.length > 0 && doc.getTextWidth(`${clipped}${ellipsis}`) > maxWidth) {
-    clipped = clipped.slice(0, -1);
+function presentationKey(ap, vol) {
+  const v = String(vol ?? '').trim();
+  return v ? `${ap}|${v}` : String(ap);
+}
+
+function compactVolume(vol) {
+  return String(vol ?? '')
+    .trim()
+    .replace(/\s+/g, '')
+    .replace(/litros?/gi, 'L');
+}
+
+function presentationLabel(key) {
+  const [ap, vol] = key.split('|');
+  const v = compactVolume(vol);
+  return v ? `${ap}\n${v}` : ap;
+}
+
+function sortPresentationKeys(keys) {
+  return [...keys].sort((a, b) => {
+    const [apA, volA] = a.split('|');
+    const [apB, volB] = b.split('|');
+    const rA = AP_RANK[apA] ?? 9;
+    const rB = AP_RANK[apB] ?? 9;
+    if (rA !== rB) return rA - rB;
+    return String(volA || '').localeCompare(String(volB || ''), 'pt-BR', { numeric: true });
+  });
+}
+
+function collectPresentations(colorsDetail) {
+  const keys = new Set();
+  for (const entry of colorsDetail || []) {
+    for (const f of entry.formats || []) {
+      keys.add(presentationKey(f.ap, f.vol));
+    }
   }
-  return clipped ? `${clipped}${ellipsis}` : ellipsis;
+  return sortPresentationKeys(keys);
+}
+
+function sortLines(linesData, { excludeOutros = false } = {}) {
+  const lines = excludeOutros
+    ? (linesData || []).filter((l) => l.name !== 'Outros')
+    : [...(linesData || [])];
+  const rank = (name) => {
+    const i = LINE_ORDER.indexOf(name);
+    return i >= 0 ? i : 999;
+  };
+  return lines.sort(
+    (a, b) => rank(a.name) - rank(b.name) || a.name.localeCompare(b.name, 'pt-BR'),
+  );
+}
+
+function sortColors(colorsDetail) {
+  return [...(colorsDetail || [])].sort((a, b) =>
+    String(a.color).localeCompare(String(b.color), 'pt-BR', { sensitivity: 'base' }),
+  );
+}
+
+function wrapLines(doc, fontFamily, text, maxWidth, fontSize, style = 'normal') {
+  doc.setFont(fontFamily, style);
+  doc.setFontSize(fontSize);
+  const raw = String(text ?? '—');
+  if (maxWidth <= 0) return [raw];
+  return doc.splitTextToSize(raw, maxWidth);
+}
+
+function measureCellLines(doc, fontFamily, text, maxWidth, fontSize, style, wrap) {
+  if (!wrap) return 1;
+  return wrapLines(doc, fontFamily, text, maxWidth, fontSize, style).length;
+}
+
+function rowHeightFromLineCount(lineCount, fontSize) {
+  const lh = lineHeightMm(fontSize);
+  return GRID.padY * 2 + Math.max(1, lineCount) * lh;
+}
+
+function drawWrappedCellText(doc, fontFamily, {
+  text, x, y, width, cellHeight, align = 'left', style = 'normal',
+  fontSize = FONT.tableRow, color = COLORS.ink, bold = false, wrap = true,
+}) {
+  doc.setFont(fontFamily, bold ? 'bold' : style);
+  doc.setFontSize(fontSize);
+  setTextColor(doc, color);
+  const maxW = Math.max(0, width - GRID.padX * 2);
+  const lines = wrap
+    ? wrapLines(doc, fontFamily, text, maxW, fontSize, bold ? 'bold' : style)
+    : [String(text ?? '—')];
+  const lh = lineHeightMm(fontSize);
+  let textY = y + GRID.padY;
+  for (const line of lines) {
+    const cellX = align === 'right'
+      ? x + width - GRID.padX
+      : align === 'center'
+        ? x + width / 2
+        : x + GRID.padX;
+    doc.text(line, cellX, textY, { align, baseline: 'top' });
+    textY += lh;
+  }
 }
 
 function drawGridLines(doc, x, y, width, rowHeights, colWidths) {
@@ -98,77 +207,147 @@ function drawGridLines(doc, x, y, width, rowHeights, colWidths) {
   }
 }
 
-function drawCellText(doc, fontFamily, {
-  text, x, y, width, cellHeight = GRID.rowH, align = 'left', style = 'normal',
-  fontSize = FONT.tableRow, color = COLORS.ink, bold = false,
-}) {
-  doc.setFont(fontFamily, bold ? 'bold' : style);
-  doc.setFontSize(fontSize);
-  setTextColor(doc, color);
-  const maxW = Math.max(0, width - GRID.padX * 2);
-  const fitted = truncateTextToFit(doc, text, maxW);
-  const cellX = align === 'right'
-    ? x + width - GRID.padX
-    : align === 'center'
-      ? x + width / 2
-      : x + GRID.padX;
-  doc.text(fitted, cellX, cellTextY(y, cellHeight, fontSize), { align, baseline: 'top' });
-}
-
-function drawGridTable(doc, fontFamily, { x, y, width, columns, rows }) {
+function drawWrappedGridTable(doc, fontFamily, { x, y, width, columns, rows }) {
   const colWidths = columns.map((c) => width * c.width);
-  const rowHeights = [GRID.headerH, ...rows.map(() => GRID.rowH)];
+
+  const headerLineCounts = columns.map((col, i) =>
+    measureCellLines(
+      doc,
+      fontFamily,
+      col.label,
+      colWidths[i] - GRID.padX * 2,
+      FONT.tableHead,
+      'bold',
+      true,
+    ),
+  );
+  const headerH = rowHeightFromLineCount(Math.max(...headerLineCounts, 1), FONT.tableHead);
+
+  const bodyHeights = rows.map((row) => {
+    let maxLines = 1;
+    columns.forEach((col, i) => {
+      const lines = measureCellLines(
+        doc,
+        fontFamily,
+        row[col.key] ?? '—',
+        colWidths[i] - GRID.padX * 2,
+        FONT.tableRow,
+        'normal',
+        col.wrap !== false,
+      );
+      maxLines = Math.max(maxLines, lines);
+    });
+    return rowHeightFromLineCount(maxLines, FONT.tableRow);
+  });
+
+  const rowHeights = [headerH, ...bodyHeights];
   const tableH = rowHeights.reduce((s, h) => s + h, 0);
   drawGridLines(doc, x, y, width, rowHeights, colWidths);
 
-  doc.setFont(fontFamily, 'bold');
-  doc.setFontSize(FONT.tableHead);
-  setTextColor(doc, COLORS.muted);
   let cursorX = x;
   for (let i = 0; i < columns.length; i += 1) {
-    drawCellText(doc, fontFamily, {
-      text: columns[i].label,
+    const col = columns[i];
+    drawWrappedCellText(doc, fontFamily, {
+      text: col.label,
       x: cursorX,
       y,
       width: colWidths[i],
-      cellHeight: GRID.headerH,
-      align: columns[i].align || 'left',
+      cellHeight: headerH,
+      align: col.align || 'left',
       style: 'bold',
       fontSize: FONT.tableHead,
       color: COLORS.muted,
+      wrap: true,
     });
     cursorX += colWidths[i];
   }
 
-  let cursorY = y + GRID.headerH;
-  for (const row of rows) {
+  let cursorY = y + headerH;
+  rows.forEach((row, rowIdx) => {
     cursorX = x;
     for (let i = 0; i < columns.length; i += 1) {
       const col = columns[i];
-      drawCellText(doc, fontFamily, {
+      drawWrappedCellText(doc, fontFamily, {
         text: row[col.key] ?? '—',
         x: cursorX,
         y: cursorY,
         width: colWidths[i],
-        cellHeight: GRID.rowH,
+        cellHeight: bodyHeights[rowIdx],
         align: col.align || 'left',
-        color: col.key === 'valor' || col.key === 'gl' || col.key === 'lt' || col.key === 'bd'
-          ? COLORS.accent
-          : COLORS.ink,
-        bold: ['valor', 'gl', 'lt', 'bd'].includes(col.key),
+        fontSize: FONT.tableRow,
+        color: col.price ? COLORS.accent : COLORS.ink,
+        bold: Boolean(col.price),
+        wrap: col.wrap !== false,
       });
       cursorX += colWidths[i];
     }
-    cursorY += GRID.rowH;
-  }
+    cursorY += bodyHeights[rowIdx];
+  });
+
   return y + tableH;
 }
 
-function estimateTableHeight(rowCount) {
-  return GRID.headerH + rowCount * GRID.rowH;
+function estimateWrappedTableHeight(doc, fontFamily, columns, rows, width) {
+  const colWidths = columns.map((c) => width * c.width);
+  const headerLineCounts = columns.map((col, i) =>
+    measureCellLines(doc, fontFamily, col.label, colWidths[i] - GRID.padX * 2, FONT.tableHead, 'bold', true),
+  );
+  const headerH = rowHeightFromLineCount(Math.max(...headerLineCounts, 1), FONT.tableHead);
+  const bodyH = rows.reduce((sum, row) => {
+    let maxLines = 1;
+    columns.forEach((col, i) => {
+      maxLines = Math.max(
+        maxLines,
+        measureCellLines(
+          doc,
+          fontFamily,
+          row[col.key] ?? '—',
+          colWidths[i] - GRID.padX * 2,
+          FONT.tableRow,
+          'normal',
+          col.wrap !== false,
+        ),
+      );
+    });
+    return sum + rowHeightFromLineCount(maxLines, FONT.tableRow);
+  }, 0);
+  return headerH + bodyH;
 }
 
-function drawPageFooter(doc, fontFamily, normalize, M, CW, pageH, pageNum, totalPages, label) {
+function buildPresentationColumns(presentations, { descWidth = 0.30 } = {}) {
+  const n = presentations.length || 1;
+  const priceWidth = (1 - descWidth) / n;
+  return [
+    { key: 'descricao', label: 'DESCRIÇÃO / COR', width: descWidth, align: 'left', wrap: true },
+    ...presentations.map((key) => ({
+      key,
+      label: presentationLabel(key),
+      width: priceWidth,
+      align: 'right',
+      wrap: true,
+      price: true,
+    })),
+  ];
+}
+
+function buildPresentationRows(colorsDetail, presentations) {
+  return sortColors(colorsDetail).map((entry) => {
+    const byKey = {};
+    for (const f of entry.formats || []) {
+      const k = presentationKey(f.ap, f.vol);
+      if (!byKey[k]) byKey[k] = [];
+      byKey[k].push(brl(f.price));
+    }
+    const row = { descricao: entry.color };
+    for (const k of presentations) {
+      row[k] = byKey[k]?.length ? byKey[k].join('\n') : '—';
+    }
+    return row;
+  });
+}
+
+function drawPageFooter(doc, fontFamily, normalize, pageNum, totalPages, label) {
+  const { M, CW, pageH } = getPageLayout(doc);
   const footerY = pageH - FOOTER_TEXT_OFFSET;
   doc.setDrawColor(...COLORS.line);
   doc.setLineWidth(GRID.lineWidth);
@@ -256,19 +435,6 @@ function sharedColorsList(entry) {
   return [...new Set(raw.map(cleanSharedColorName).filter(Boolean))];
 }
 
-function formatsToCells(formats) {
-  const byAp = { GL: [], LT: [], BD: [], Fr: [], Out: [] };
-  for (const f of formats) {
-    (byAp[f.ap] ?? byAp.Out).push(`${f.vol ? `${f.vol} ` : ''}${brl(f.price)}`);
-  }
-  return {
-    gl: byAp.GL.length ? byAp.GL.join(' / ') : '—',
-    lt: byAp.LT.length ? byAp.LT.join(' / ') : '—',
-    bd: byAp.BD.length ? byAp.BD.join(' / ') : '—',
-    extra: [...byAp.Fr, ...byAp.Out].join(' / '),
-  };
-}
-
 function yesNo(flag) {
   return flag ? 'Sim' : '—';
 }
@@ -287,21 +453,30 @@ function buildPages(data) {
     ],
     kpiLabel: 'SKUs NA TABELA CCG',
     kpiValue: QTD.format(totalSkus),
-    kpiNotes: ['Preços = tabela distribuidor · GL / LT / BD'],
+    kpiNotes: ['Preços = tabela distribuidor · uma coluna por apresentação'],
     overlap: data.overlap,
   });
 
   for (const brand of brands) {
     const info = data.brands[brand];
     if (!info) continue;
+    const outros = info.lines_data?.find((l) => l.name === 'Outros');
     pages.push({
       type: 'brand',
       brand,
       skus: info.skus,
       lines: info.lines,
       lines_data: info.lines_data,
+      excludeOutros: brand === 'Iquine',
+      outrosSkus: brand === 'Iquine' && outros ? outros.skus : 0,
     });
   }
+
+  const iquineOutros = data.brands?.Iquine?.lines_data?.find((l) => l.name === 'Outros');
+  if (iquineOutros) {
+    pages.push({ type: 'iquine_anexo', line: iquineOutros });
+  }
+
   return pages;
 }
 
@@ -323,7 +498,7 @@ function renderOverlapPage(doc, fontFamily, normalize, layout, page) {
     .map((l) => {
       const shared = sharedColorsList(l);
       const sharedText = shared.length
-        ? `${shared.length}: ${shared.slice(0, 6).join(', ')}${shared.length > 6 ? '…' : ''}`
+        ? shared.join(', ')
         : '—';
       return {
         linha: l.line,
@@ -348,53 +523,127 @@ function renderOverlapPage(doc, fontFamily, normalize, layout, page) {
   );
   y += 3;
 
-  drawGridTable(doc, fontFamily, {
+  drawWrappedGridTable(doc, fontFamily, {
     x: M,
     y,
     width: CW,
     columns: [
-      { key: 'linha', label: 'LINHA', width: 0.22, align: 'left' },
-      { key: 'iquine', label: 'IQUINE', width: 0.08, align: 'center' },
-      { key: 'hidracor', label: 'HIDRACOR', width: 0.09, align: 'center' },
-      { key: 'hipercor', label: 'HIPERCOR', width: 0.09, align: 'center' },
-      { key: 'ci', label: 'C.I', width: 0.06, align: 'center' },
-      { key: 'ch', label: 'C.H', width: 0.06, align: 'center' },
-      { key: 'cp', label: 'C.P', width: 0.06, align: 'center' },
-      { key: 'comum', label: 'CORES EM COMUM', width: 0.34, align: 'left' },
+      { key: 'linha', label: 'LINHA', width: 0.18, align: 'left', wrap: true },
+      { key: 'iquine', label: 'IQUINE', width: 0.07, align: 'center', wrap: false },
+      { key: 'hidracor', label: 'HIDRACOR', width: 0.08, align: 'center', wrap: false },
+      { key: 'hipercor', label: 'HIPERCOR', width: 0.08, align: 'center', wrap: false },
+      { key: 'ci', label: 'C.I', width: 0.05, align: 'center', wrap: false },
+      { key: 'ch', label: 'C.H', width: 0.05, align: 'center', wrap: false },
+      { key: 'cp', label: 'C.P', width: 0.05, align: 'center', wrap: false },
+      { key: 'comum', label: 'CORES EM COMUM', width: 0.44, align: 'left', wrap: true },
     ],
     rows: overlapRows,
   });
 }
 
-function ensureSpace(doc, layout, y, needed, onNewPage) {
-  const { pageH } = layout;
+function ensureSpace(doc, y, needed, onNewPage) {
+  const { pageH, M } = getPageLayout(doc);
   if (y + needed <= pageH - FOOTER_RESERVE) return y;
   onNewPage();
-  return layout.M;
+  return M;
 }
 
-function renderBrandPages(doc, fontFamily, normalize, layout, page) {
+function addPageSameOrientation(doc) {
+  const w = doc.internal.pageSize.getWidth();
+  const orientation = w > 210 ? 'landscape' : 'portrait';
+  doc.addPage('a4', orientation);
+}
+
+function renderLineUnfold(doc, fontFamily, normalize, line, lineIndex, ctx) {
+  const presentations = collectPresentations(line.colors_detail);
+  if (!presentations.length) return;
+
+  const useLandscape = presentations.length > 4;
+  if (useLandscape && !ctx.landscape) {
+    doc.addPage('a4', 'landscape');
+    ctx.landscape = true;
+    ctx.y = getPageLayout(doc).M;
+  } else if (!useLandscape && ctx.landscape) {
+    doc.addPage('a4', 'portrait');
+    ctx.landscape = false;
+    ctx.y = getPageLayout(doc).M;
+  }
+
+  const layout = getPageLayout(doc);
+  const { M, CW } = layout;
+  let y = ctx.y;
+
+  const descWidth = presentations.length > 6 ? 0.26 : presentations.length > 4 ? 0.28 : 0.32;
+  const columns = buildPresentationColumns(presentations, { descWidth });
+  const rows = buildPresentationRows(line.colors_detail, presentations);
+
+  const titleBlock = LAYOUT.blockGapBefore + LAYOUT.sectionTitleH + 5 + LAYOUT.titleToTable;
+  const tableH = estimateWrappedTableHeight(doc, fontFamily, columns, rows, CW);
+  y = ensureSpace(doc, y, titleBlock + tableH, () => {
+    addPageSameOrientation(doc);
+    ctx.landscape = doc.internal.pageSize.getWidth() > 210;
+    y = getPageLayout(doc).M;
+  });
+
+  y += LAYOUT.blockGapBefore;
+  const faixa = `Faixa GL: ${priceRange(line.price_gl)} · LT: ${priceRange(line.price_lt)}${line.price_bd ? ` · BD: ${priceRange(line.price_bd)}` : ''}`;
+  y = drawSectionTitle(
+    doc,
+    fontFamily,
+    normalize,
+    M,
+    y,
+    `${lineIndex + 1}. ${line.name} — ${line.colors} itens · ${line.skus} SKUs`,
+  );
+  doc.setFont(fontFamily, 'normal');
+  doc.setFontSize(FONT.subtitle);
+  setTextColor(doc, COLORS.muted);
+  doc.text(normalize(faixa), M, y, { maxWidth: CW });
+  y += LAYOUT.titleToTable;
+
+  y = drawWrappedGridTable(doc, fontFamily, {
+    x: M,
+    y,
+    width: CW,
+    columns,
+    rows,
+  }) + LAYOUT.sectionGapBetween;
+
+  ctx.y = y;
+}
+
+function renderBrandPages(doc, fontFamily, normalize, page) {
+  const layout = getPageLayout(doc);
   const { M, CW } = layout;
   let y = M;
+  const ctx = { y, landscape: false };
+
+  const mainLines = sortLines(page.lines_data, { excludeOutros: page.excludeOutros });
+  const outrosNote = page.outrosSkus
+    ? ` · ${page.outrosSkus} SKUs em anexo (colas, massas, etc.)`
+    : '';
 
   const newPage = () => {
-    doc.addPage();
-    y = M;
+    doc.addPage('a4', 'portrait');
+    ctx.landscape = false;
+    y = getPageLayout(doc).M;
+    ctx.y = y;
   };
 
   y = drawPageHeroHeader(doc, fontFamily, normalize, layout, y, {
     title: page.brand,
     subtitleLines: [
-      'Linhas, cores e preços na tabela CCG',
-      `${page.skus} SKUs · ${page.lines} linhas de produto`,
+      'Linhas ordenadas · uma coluna por apresentação (GL, LT, BD…)',
+      `${mainLines.length} linhas · ${mainLines.reduce((s, l) => s + l.skus, 0)} SKUs${outrosNote}`,
     ],
     kpiLabel: 'MARCA',
     kpiValue: page.brand,
-    kpiNotes: ['Unfold por cor na sequência'],
+    kpiNotes: ['Descrições completas · sem corte'],
   });
+  ctx.y = y;
 
   y = drawSectionTitle(doc, fontFamily, normalize, M, y + LAYOUT.blockGapBefore, 'Resumo das linhas') + LAYOUT.titleToTable;
-  const summaryRows = (page.lines_data || []).map((l) => ({
+  const summaryRows = mainLines.map((l) => ({
     linha: l.name,
     cores: String(l.colors),
     skus: String(l.skus),
@@ -403,66 +652,73 @@ function renderBrandPages(doc, fontFamily, normalize, layout, page) {
     bd: priceRange(l.price_bd),
   }));
 
-  const summaryH = estimateTableHeight(summaryRows.length);
-  y = ensureSpace(doc, layout, y, summaryH + 10, newPage);
-  y = drawGridTable(doc, fontFamily, {
+  const summaryColumns = [
+    { key: 'linha', label: 'LINHA', width: 0.28, align: 'left', wrap: true },
+    { key: 'cores', label: 'ITENS', width: 0.08, align: 'center', wrap: false },
+    { key: 'skus', label: 'SKUs', width: 0.08, align: 'center', wrap: false },
+    { key: 'gl', label: 'GL', width: 0.18, align: 'right', wrap: false, price: true },
+    { key: 'lt', label: 'LT', width: 0.18, align: 'right', wrap: false, price: true },
+    { key: 'bd', label: 'BD / kg', width: 0.20, align: 'right', wrap: false, price: true },
+  ];
+  const summaryH = estimateWrappedTableHeight(doc, fontFamily, summaryColumns, summaryRows, CW);
+  y = ensureSpace(doc, y, summaryH + 10, newPage);
+  y = drawWrappedGridTable(doc, fontFamily, {
     x: M,
     y,
     width: CW,
-    columns: [
-      { key: 'linha', label: 'LINHA', width: 0.28, align: 'left' },
-      { key: 'cores', label: 'CORES', width: 0.08, align: 'center' },
-      { key: 'skus', label: 'SKUs', width: 0.08, align: 'center' },
-      { key: 'gl', label: 'GL (3–3,6 L)', width: 0.18, align: 'right' },
-      { key: 'lt', label: 'LT (0,75–0,9 L)', width: 0.18, align: 'right' },
-      { key: 'bd', label: 'BD / kg', width: 0.20, align: 'right' },
-    ],
+    columns: summaryColumns,
     rows: summaryRows,
   }) + LAYOUT.sectionGapBetween;
+  ctx.y = y;
 
-  for (const [idx, line] of (page.lines_data || []).entries()) {
-    const colorRows = (line.colors_detail || []).map((c) => {
-      const cells = formatsToCells(c.formats);
-      const extra = cells.extra && cells.extra !== '—' ? ` · ${cells.extra}` : '';
-      return {
-        cor: c.color,
-        gl: cells.gl + (cells.gl !== '—' && extra ? '' : ''),
-        lt: cells.lt,
-        bd: cells.bd + extra,
-      };
-    });
+  mainLines.forEach((line, idx) => {
+    renderLineUnfold(doc, fontFamily, normalize, line, idx, ctx);
+  });
+}
 
-    const blockH = LAYOUT.blockGapBefore + LAYOUT.sectionTitleH + LAYOUT.titleToTable
-      + estimateTableHeight(colorRows.length) + 6;
-    y = ensureSpace(doc, layout, y, blockH, newPage);
+function renderIquineAnexo(doc, fontFamily, normalize, line) {
+  doc.addPage('a4', 'landscape');
+  const layout = getPageLayout(doc);
+  const { M, CW } = layout;
+  let y = M;
 
-    y += LAYOUT.blockGapBefore;
-    const faixa = `Faixa GL: ${priceRange(line.price_gl)} · LT: ${priceRange(line.price_lt)}${line.price_bd ? ` · BD: ${priceRange(line.price_bd)}` : ''}`;
-    y = drawSectionTitle(
-      doc,
-      fontFamily,
-      normalize,
-      M,
+  y = drawPageHeroHeader(doc, fontFamily, normalize, layout, y, {
+    title: 'Anexo — Iquine · outros produtos',
+    subtitleLines: [
+      'Colas, massas, bases, limpa fácil e demais itens fora das linhas de tinta',
+      `${line.skus} SKUs · ${line.colors} itens na tabela CCG`,
+    ],
+    kpiLabel: 'SEÇÃO',
+    kpiValue: 'Outros',
+    kpiNotes: ['Ordenado por descrição · coluna por apresentação'],
+  });
+
+  const presentations = collectPresentations(line.colors_detail);
+  const descWidth = presentations.length > 7 ? 0.34 : 0.30;
+  const columns = buildPresentationColumns(presentations, { descWidth });
+  const rows = buildPresentationRows(line.colors_detail, presentations);
+
+  y = drawSectionTitle(doc, fontFamily, normalize, M, y + LAYOUT.blockGapBefore, 'Lista completa') + LAYOUT.titleToTable;
+
+  const chunkSize = 14;
+  for (let i = 0; i < rows.length; i += chunkSize) {
+    const chunk = rows.slice(i, i + chunkSize);
+    let layoutNow = getPageLayout(doc);
+    const tableH = estimateWrappedTableHeight(doc, fontFamily, columns, chunk, layoutNow.CW);
+    if (y + tableH > layoutNow.pageH - FOOTER_RESERVE) {
+      doc.addPage('a4', 'landscape');
+      layoutNow = getPageLayout(doc);
+      y = layoutNow.M;
+      if (i > 0) {
+        y = drawSectionTitle(doc, fontFamily, normalize, layoutNow.M, y, 'Lista completa (continuação)') + LAYOUT.titleToTable;
+      }
+    }
+    y = drawWrappedGridTable(doc, fontFamily, {
+      x: layoutNow.M,
       y,
-      `${idx + 1}. ${line.name} — ${line.colors} cores · ${line.skus} SKUs`,
-    );
-    doc.setFont(fontFamily, 'normal');
-    doc.setFontSize(FONT.subtitle);
-    setTextColor(doc, COLORS.muted);
-    doc.text(normalize(faixa), M, y);
-    y += LAYOUT.titleToTable;
-
-    y = drawGridTable(doc, fontFamily, {
-      x: M,
-      y,
-      width: CW,
-      columns: [
-        { key: 'cor', label: 'COR', width: 0.24, align: 'left' },
-        { key: 'gl', label: 'GL (3–3,6 L)', width: 0.25, align: 'left' },
-        { key: 'lt', label: 'LT (0,75–0,9 L)', width: 0.25, align: 'left' },
-        { key: 'bd', label: 'BD / kg / fr.', width: 0.26, align: 'left' },
-      ],
-      rows: colorRows,
+      width: layoutNow.CW,
+      columns,
+      rows: chunk,
     }) + LAYOUT.sectionGapBetween;
   }
 }
@@ -471,22 +727,22 @@ export async function generateDossieTintasCcgPdf(data) {
   const pagePlan = buildPages(data);
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const fontFamily = await registerJsPdfBarlowFonts(doc);
-  const pageW = doc.internal.pageSize.getWidth();
-  const pageH = doc.internal.pageSize.getHeight();
-  const layout = { M: 12, CW: pageW - 24, pageH };
 
-  renderOverlapPage(doc, fontFamily, normalizePdfText, layout, pagePlan[0]);
+  renderOverlapPage(doc, fontFamily, normalizePdfText, getPageLayout(doc), pagePlan[0]);
 
   for (const plan of pagePlan.slice(1)) {
-    doc.addPage();
-    renderBrandPages(doc, fontFamily, normalizePdfText, layout, plan);
+    if (plan.type === 'brand') {
+      doc.addPage('a4', 'portrait');
+      renderBrandPages(doc, fontFamily, normalizePdfText, plan);
+    } else if (plan.type === 'iquine_anexo') {
+      renderIquineAnexo(doc, fontFamily, normalizePdfText, plan.line);
+    }
   }
 
   const finalTotal = doc.getNumberOfPages();
   for (let p = 1; p <= finalTotal; p += 1) {
     doc.setPage(p);
-    const { M, CW } = layout;
-    drawPageFooter(doc, fontFamily, normalizePdfText, M, CW, pageH, p, finalTotal, 'Dossiê tintas CCG');
+    drawPageFooter(doc, fontFamily, normalizePdfText, p, finalTotal, 'Dossiê tintas CCG');
   }
 
   const bytes = doc.output('arraybuffer');
