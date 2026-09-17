@@ -1,20 +1,28 @@
 import React, { useMemo } from 'react';
-import { Anchor } from 'lucide-react';
-import { buildRiverPathD } from '@/lib/fluvialRiverProjection';
+import {
+  buildOvalBottomArcD,
+  buildOvalTopArcD,
+  FLUVIAL_OVAL,
+} from '@/lib/fluvialRiverProjection';
+import { fluvialBoatIconPath } from '@/components/logistica-sandbox/FluvialBoatIcon';
 
-const VIEWBOX = '0 0 100 70';
+const FONT = "'Barlow', sans-serif";
+const VIEWBOX = '0 0 100 62';
 
 function BoatMarker({ evento, selected, offsetIndex = 0, onSelect }) {
   const projection = evento.riverProjection;
   if (!projection) return null;
 
-  const jitterX = (offsetIndex % 3) * 1.8 - 1.8;
-  const jitterY = Math.floor(offsetIndex / 3) * 1.6 - 0.8;
+  const jitterX = (offsetIndex % 3) * 2.2 - 2.2;
+  const jitterY = (Math.floor(offsetIndex / 3) % 2) * 1.8 - 0.9;
   const x = projection.x + jitterX;
   const y = projection.y + jitterY;
   const isSelected = selected === evento.id;
-  const glow = projection.vinculo?.color || '#e4e4e7';
-  const glowOpacity = projection.temVinculoAtivo ? 0.95 : projection.vinculo?.kind === 'concluido' ? 0.55 : 0.35;
+  const { vinculo } = projection;
+  const stroke = vinculo?.stroke || '#ffffff';
+  const fill = vinculo?.kind === 'sem' ? '#000000' : (vinculo?.fill || '#ffffff');
+  const label = projection.shortCode || '---';
+  const labelY = projection.segment === 'retorno' ? y + 4.8 : y - 4.2;
 
   return (
     <g
@@ -25,35 +33,50 @@ function BoatMarker({ evento, selected, offsetIndex = 0, onSelect }) {
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') onSelect?.(evento);
       }}
-      aria-label={`${evento.embarcacao_nome || evento.transportadora_nome} — ${projection.statusLabel}`}
+      aria-label={`${evento.embarcacao_nome || evento.transportadora_nome} (${label}) — ${projection.statusLabel}`}
     >
       {projection.temVinculoAtivo && (
-        <circle cx={x} cy={y} r={isSelected ? 5.2 : 4.4} fill={glow} opacity={0.35}>
-          <animate attributeName="r" values="4;5.2;4" dur="2.4s" repeatCount="indefinite" />
-        </circle>
+        <circle
+          cx={x}
+          cy={y}
+          r={isSelected ? 4.8 : 4}
+          fill="none"
+          stroke="#ffffff"
+          strokeWidth={0.25}
+          opacity={0.85}
+        />
       )}
-      <circle
-        cx={x}
-        cy={y}
-        r={isSelected ? 3.6 : 3}
-        fill={glow}
-        stroke={isSelected ? '#fafafa' : 'rgba(255,255,255,0.5)'}
-        strokeWidth={isSelected ? 0.6 : 0.35}
-        opacity={glowOpacity}
-      />
-      {projection.atrasado && (
-        <circle cx={x + 2.2} cy={y - 2.2} r={1.1} fill="#facc15" stroke="#0a0a0a" strokeWidth={0.2} />
-      )}
-      <path
-        d={`M ${x - 1.1} ${y + 0.6} L ${x} ${y - 1.2} L ${x + 1.1} ${y + 0.6} Z`}
-        fill="#0a0a0a"
-        opacity={0.85}
-      />
       {isSelected && (
-        <text x={x} y={y + 6.5} textAnchor="middle" className="fill-white text-[2.8px] font-medium">
-          {evento.codigo || evento.embarcacao_nome?.slice(0, 10)}
-        </text>
+        <circle
+          cx={x}
+          cy={y}
+          r={5.6}
+          fill="none"
+          stroke="#ffffff"
+          strokeWidth={0.35}
+        />
       )}
+      <g transform={`translate(${x} ${y}) rotate(${projection.rotation || 0})`}>
+        <path
+          d={fluvialBoatIconPath(1)}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={isSelected ? 0.45 : 0.32}
+          strokeLinejoin="round"
+        />
+      </g>
+      <text
+        x={x}
+        y={labelY}
+        textAnchor="middle"
+        fill="#ffffff"
+        fontSize="3.2"
+        fontFamily={FONT}
+        fontWeight="400"
+        letterSpacing="0.08em"
+      >
+        {label}
+      </text>
     </g>
   );
 }
@@ -84,69 +107,83 @@ export default function FluvialRiverMap({
   simulationDate,
   loading = false,
 }) {
-  const riverPath = useMemo(() => buildRiverPathD(), []);
+  const topArc = useMemo(() => buildOvalTopArcD(), []);
+  const bottomArc = useMemo(() => buildOvalBottomArcD(), []);
   const markers = useMemo(() => clusterMarkers(eventos), [eventos]);
 
-  return (
-    <div className="relative overflow-hidden rounded-3xl border border-border/30 bg-[#0c0f14] shadow-sm min-h-[420px] md:min-h-[520px]">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(30,58,95,0.35),transparent_55%),radial-gradient(ellipse_at_80%_70%,rgba(15,40,30,0.25),transparent_50%)]" />
+  const manausX = FLUVIAL_OVAL.cx + FLUVIAL_OVAL.rx;
+  const tabatingaX = FLUVIAL_OVAL.cx - FLUVIAL_OVAL.rx;
+  const anchorY = FLUVIAL_OVAL.cy;
 
-      <div className="relative z-10 flex items-center justify-between px-4 py-3 border-b border-white/5">
+  return (
+    <div
+      className="relative min-h-[420px] overflow-hidden rounded-3xl border border-white/10 bg-black shadow-sm md:min-h-[500px] font-['Barlow',sans-serif]"
+      style={{ fontWeight: 400 }}
+    >
+      <div className="relative z-10 flex items-center justify-between border-b border-white/10 px-4 py-3">
         <div>
-          <p className="text-xs uppercase tracking-wider text-zinc-400">Mapa fluvial</p>
-          <p className="text-sm font-medium text-zinc-100 font-glacial">Posição projetada no rio</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-white/50">Mapa fluvial</p>
+          <p className="text-sm text-white">Posição projetada</p>
         </div>
-        <div className="rounded-full bg-white/5 px-3 py-1 text-[11px] text-zinc-300">
-          Simulação: {simulationDate || 'hoje'}
+        <div className="rounded-full border border-white/15 px-3 py-1 text-[11px] text-white/70">
+          {simulationDate || 'hoje'}
         </div>
       </div>
 
-      <div className="relative z-10 px-2 pb-3">
+      <div className="relative z-10 px-2 pb-2">
         {loading ? (
-          <div className="flex h-[360px] md:h-[460px] items-center justify-center text-sm text-zinc-400">
+          <div className="flex h-[360px] items-center justify-center text-sm text-white/50 md:h-[440px]">
             Carregando barcos…
           </div>
         ) : (
-          <svg viewBox={VIEWBOX} className="h-[360px] w-full md:h-[460px]" aria-label="Mapa do rio Amazonas">
+          <svg viewBox={VIEWBOX} className="h-[360px] w-full md:h-[440px]" aria-label="Mapa fluvial Manaus Tabatinga">
             <defs>
-              <linearGradient id="riverGlow" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.15" />
-                <stop offset="50%" stopColor="#22d3ee" stopOpacity="0.35" />
-                <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.15" />
-              </linearGradient>
-              <filter id="riverBlur">
-                <feGaussianBlur stdDeviation="0.8" />
-              </filter>
+              <marker id="arrow-head" markerWidth="4" markerHeight="4" refX="3" refY="2" orient="auto">
+                <path d="M0,0 L4,2 L0,4 Z" fill="#ffffff" opacity="0.7" />
+              </marker>
             </defs>
 
             <path
-              d={riverPath}
+              d={topArc}
               fill="none"
-              stroke="url(#riverGlow)"
-              strokeWidth="4"
+              stroke="#ffffff"
+              strokeWidth="0.35"
               strokeLinecap="round"
-              filter="url(#riverBlur)"
-              opacity={0.55}
+              markerEnd="url(#arrow-head)"
+              opacity="0.9"
             />
             <path
-              d={riverPath}
+              d={bottomArc}
               fill="none"
-              stroke="rgba(255,255,255,0.22)"
-              strokeWidth="0.55"
+              stroke="#ffffff"
+              strokeWidth="0.35"
               strokeLinecap="round"
-              strokeDasharray="1.5 2"
+              markerEnd="url(#arrow-head)"
+              opacity="0.9"
             />
 
-            <g>
-              <circle cx={AMAZON_ANCHOR_MANAUS.x} cy={AMAZON_ANCHOR_MANAUS.y} r={2.2} fill="#fafafa" opacity={0.9} />
-              <text x={AMAZON_ANCHOR_MANAUS.x} y={AMAZON_ANCHOR_MANAUS.y + 5.5} textAnchor="middle" className="fill-zinc-300 text-[3px]">
-                Manaus
-              </text>
-              <circle cx={AMAZON_ANCHOR_TABATINGA.x} cy={AMAZON_ANCHOR_TABATINGA.y} r={2.2} fill="#fafafa" opacity={0.9} />
-              <text x={AMAZON_ANCHOR_TABATINGA.x} y={AMAZON_ANCHOR_TABATINGA.y + 5.5} textAnchor="middle" className="fill-zinc-300 text-[3px]">
-                Tabatinga
-              </text>
-            </g>
+            <text
+              x={tabatingaX - 2}
+              y={anchorY - 14}
+              textAnchor="middle"
+              fill="#ffffff"
+              fontSize="4"
+              fontFamily={FONT}
+              fontWeight="400"
+            >
+              Tabatinga
+            </text>
+            <text
+              x={manausX + 2}
+              y={anchorY - 14}
+              textAnchor="middle"
+              fill="#ffffff"
+              fontSize="4"
+              fontFamily={FONT}
+              fontWeight="400"
+            >
+              Manaus
+            </text>
 
             {markers.map(({ evento, offsetIndex }) => (
               <BoatMarker
@@ -159,35 +196,36 @@ export default function FluvialRiverMap({
             ))}
 
             {eventos.length === 0 && (
-              <text x="50" y="35" textAnchor="middle" className="fill-zinc-500 text-[3.5px]">
-                Nenhum barco no período / data simulada
+              <text
+                x="50"
+                y="31"
+                textAnchor="middle"
+                fill="#ffffff"
+                opacity="0.45"
+                fontSize="3.5"
+                fontFamily={FONT}
+              >
+                Nenhum barco na data simulada
               </text>
             )}
           </svg>
         )}
       </div>
 
-      <div className="relative z-10 flex flex-wrap items-center gap-3 px-4 pb-4 text-[11px] text-zinc-400">
-        <span className="inline-flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-lime-300 shadow-[0_0_8px_rgba(190,242,100,0.8)]" />
-          Com vínculo ativo
+      <div className="relative z-10 flex flex-wrap items-center gap-4 px-4 pb-4 text-[10px] uppercase tracking-wider text-white/45">
+        <span className="inline-flex items-center gap-2">
+          <span className="inline-block h-2 w-3 border border-white bg-white" />
+          Vínculo ativo
         </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-zinc-400" />
-          Vínculo concluído
+        <span className="inline-flex items-center gap-2">
+          <span className="inline-block h-2 w-3 border border-white/50 bg-white/40" />
+          Concluído
         </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-zinc-200" />
+        <span className="inline-flex items-center gap-2">
+          <span className="inline-block h-2 w-3 border border-white bg-black" />
           Sem vínculo
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <Anchor className="h-3 w-3" />
-          Posição estimada — não é GPS
         </span>
       </div>
     </div>
   );
 }
-
-const AMAZON_ANCHOR_MANAUS = { x: 6, y: 58 };
-const AMAZON_ANCHOR_TABATINGA = { x: 94, y: 52 };

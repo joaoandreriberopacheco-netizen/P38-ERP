@@ -1,24 +1,8 @@
 import { differenceInCalendarDays, format } from 'date-fns';
 import { normalizeFluvialDateKey } from '@/components/logistica-sandbox/fluvialDataUtils';
 
-/**
- * Waypoints simplificados Manaus → Tabatinga (coordenadas normalizadas 0–100 para SVG).
- * Não é geografia exata — transmite o fluxo do rio.
- */
-export const AMAZON_ROUTE_WAYPOINTS = [
-  { t: 0, x: 6, y: 58, label: 'Manaus' },
-  { t: 0.08, x: 12, y: 54 },
-  { t: 0.16, x: 20, y: 50 },
-  { t: 0.24, x: 28, y: 48 },
-  { t: 0.32, x: 36, y: 46 },
-  { t: 0.4, x: 44, y: 44 },
-  { t: 0.48, x: 52, y: 43 },
-  { t: 0.56, x: 60, y: 44 },
-  { t: 0.64, x: 68, y: 46 },
-  { t: 0.72, x: 76, y: 48 },
-  { t: 0.84, x: 86, y: 50 },
-  { t: 1, x: 94, y: 52, label: 'Tabatinga' },
-];
+/** Oval Manaus (direita) ↔ Tabatinga (esquerda) — viewBox 0 0 100 62 */
+export const FLUVIAL_OVAL = { cx: 50, cy: 31, rx: 40, ry: 22 };
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
@@ -33,44 +17,101 @@ function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
+function normalizeBoatName(value = '') {
+  return String(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9\s]/g, ' ')
+    .trim();
+}
+
+function firstConsonantFrom(word, start = 1) {
+  for (let i = start; i < word.length; i += 1) {
+    const char = word[i];
+    if (/[BCDFGHJKLMNPQRSTVWXYZ]/.test(char)) return char;
+  }
+  return word[Math.min(start, word.length - 1)] || 'X';
+}
+
+function lastConsonant(word) {
+  for (let i = word.length - 1; i >= 0; i -= 1) {
+    const char = word[i];
+    if (/[BCDFGHJKLMNPQRSTVWXYZ]/.test(char)) return char;
+  }
+  return word[word.length - 1] || 'X';
+}
+
+/**
+ * Sigla de 3 letras — ex.: Vitória Regia → VRG, Rio Negro → RNG.
+ */
+export function getBoatShortCode(evento = {}) {
+  const codigo = String(evento.codigo || '').replace(/[^a-zA-Z0-9]/g, '');
+  if (codigo.length >= 3) return codigo.slice(0, 3).toUpperCase();
+
+  const nome = normalizeBoatName(evento.embarcacao_nome || evento.transportadora_nome || '');
+  const words = nome.split(/\s+/).filter(Boolean);
+
+  if (words.length >= 3) {
+    return words.slice(0, 3).map((word) => word[0]).join('');
+  }
+
+  if (words.length === 2) {
+    const [first, second] = words;
+    return `${first[0] || 'X'}${second[0] || 'X'}${firstConsonantFrom(second, 1)}`;
+  }
+
+  if (words.length === 1) {
+    const word = words[0];
+    if (word.length <= 3) return word.padEnd(3, 'X');
+    const mid = word[Math.floor(word.length / 2)] || word[1];
+    return `${word[0]}${mid}${lastConsonant(word)}`;
+  }
+
+  return '---';
+}
+
+function pointOnOval(theta) {
+  return {
+    x: FLUVIAL_OVAL.cx + FLUVIAL_OVAL.rx * Math.cos(theta),
+    y: FLUVIAL_OVAL.cy + FLUVIAL_OVAL.ry * Math.sin(theta),
+    theta,
+  };
+}
+
+/** Arco superior: Manaus (θ=0) → Tabatinga (θ=−π) */
+export function interpolateIdaArc(progress) {
+  const theta = -Math.PI * clamp(progress, 0, 1);
+  return pointOnOval(theta);
+}
+
+/** Arco inferior: Tabatinga (θ=π) → Manaus (θ=0) */
+export function interpolateRetornoArc(progress) {
+  const theta = Math.PI + Math.PI * clamp(progress, 0, 1);
+  return pointOnOval(theta);
+}
+
+export function buildOvalTopArcD() {
+  const { cx, cy, rx, ry } = FLUVIAL_OVAL;
+  return `M ${cx + rx} ${cy} A ${rx} ${ry} 0 0 0 ${cx - rx} ${cy}`;
+}
+
+export function buildOvalBottomArcD() {
+  const { cx, cy, rx, ry } = FLUVIAL_OVAL;
+  return `M ${cx - rx} ${cy} A ${rx} ${ry} 0 0 0 ${cx + rx} ${cy}`;
+}
+
+function tangentDegrees(theta) {
+  const dx = -FLUVIAL_OVAL.rx * Math.sin(theta);
+  const dy = FLUVIAL_OVAL.ry * Math.cos(theta);
+  return (Math.atan2(dy, dx) * 180) / Math.PI;
+}
+
 function computeSegmentProgress(simulationDate, startDate, endDate) {
   if (!simulationDate || !startDate || !endDate) return 0;
   const total = Math.max(1, Math.round((endDate - startDate) / MS_PER_DAY));
   const elapsed = Math.max(0, Math.round((simulationDate - startDate) / MS_PER_DAY));
   return clamp(elapsed / total, 0, 1);
-}
-
-export function interpolateRiverPoint(pathProgress) {
-  const t = clamp(pathProgress, 0, 1);
-  const points = AMAZON_ROUTE_WAYPOINTS;
-  if (t <= points[0].t) return { x: points[0].x, y: points[0].y };
-  if (t >= points[points.length - 1].t) {
-    const last = points[points.length - 1];
-    return { x: last.x, y: last.y };
-  }
-
-  for (let i = 0; i < points.length - 1; i += 1) {
-    const a = points[i];
-    const b = points[i + 1];
-    if (t >= a.t && t <= b.t) {
-      const span = b.t - a.t || 1;
-      const ratio = (t - a.t) / span;
-      return {
-        x: a.x + (b.x - a.x) * ratio,
-        y: a.y + (b.y - a.y) * ratio,
-      };
-    }
-  }
-
-  const last = points[points.length - 1];
-  return { x: last.x, y: last.y };
-}
-
-export function buildRiverPathD() {
-  const points = AMAZON_ROUTE_WAYPOINTS;
-  if (!points.length) return '';
-  const [first, ...rest] = points;
-  return `M ${first.x} ${first.y} ${rest.map((p) => `L ${p.x} ${p.y}`).join(' ')}`;
 }
 
 function formatRemainingDays(days) {
@@ -86,27 +127,27 @@ export function resolveVinculoGlow(evento = {}) {
   if (ativos > 0) {
     return {
       kind: 'ativo',
-      color: '#bef264',
+      stroke: '#ffffff',
+      fill: '#ffffff',
       label: `${ativos} vínculo${ativos !== 1 ? 's' : ''} ativo${ativos !== 1 ? 's' : ''}`,
     };
   }
   if (total > 0) {
     return {
       kind: 'concluido',
-      color: '#a1a1aa',
+      stroke: '#a3a3a3',
+      fill: '#737373',
       label: `${total} vínculo${total !== 1 ? 's' : ''} concluído${total !== 1 ? 's' : ''}`,
     };
   }
   return {
     kind: 'sem',
-    color: '#e4e4e7',
+    stroke: '#ffffff',
+    fill: 'transparent',
     label: 'Sem vínculos',
   };
 }
 
-/**
- * Projeta posição do barco no rio a partir das datas da viagem e da data simulada.
- */
 export function projectBoatPositionOnRiver(evento, simulationDateKey) {
   const simulationDate = parseStableDate(simulationDateKey);
   const chegadaManaus = parseStableDate(evento?.data_chegada_manaus);
@@ -116,19 +157,24 @@ export function projectBoatPositionOnRiver(evento, simulationDateKey) {
 
   const vinculo = resolveVinculoGlow(evento);
   const atraso = Number(evento?.dias_atraso) || 0;
+  const shortCode = getBoatShortCode(evento);
+  const manausPoint = pointOnOval(0);
 
   if (!simulationDate || !chegadaManaus) {
     return {
       segment: 'fora_ciclo',
       pathProgress: 0,
       segmentProgress: 0,
-      x: AMAZON_ROUTE_WAYPOINTS[0].x,
-      y: AMAZON_ROUTE_WAYPOINTS[0].y,
+      x: manausPoint.x,
+      y: manausPoint.y,
+      rotation: 0,
+      shortCode,
       statusLabel: 'Sem datas',
       remainingLabel: '',
       temVinculoAtivo: vinculo.kind === 'ativo',
       vinculo,
       atrasado: atraso > 0,
+      cycleProgress: 0,
     };
   }
 
@@ -138,42 +184,54 @@ export function projectBoatPositionOnRiver(evento, simulationDateKey) {
   let statusLabel = 'Fora do ciclo';
   let remainingLabel = '';
   let nextMilestone = null;
+  let point = manausPoint;
+  let rotation = 180;
 
   if (simulationDate < chegadaManaus) {
     segment = 'aguardando';
-    pathProgress = 0;
+    point = manausPoint;
+    rotation = 180;
     statusLabel = 'Aguardando chegada em Manaus';
     nextMilestone = chegadaManaus;
   } else if (saidaManaus && simulationDate < saidaManaus) {
     segment = 'atracado_manaus';
-    pathProgress = 0;
     segmentProgress = computeSegmentProgress(simulationDate, chegadaManaus, saidaManaus);
+    point = manausPoint;
+    rotation = 180;
     statusLabel = 'Atracado em Manaus';
     nextMilestone = saidaManaus;
   } else if (chegadaTabatinga && saidaManaus && simulationDate < chegadaTabatinga) {
     segment = 'ida';
     segmentProgress = computeSegmentProgress(simulationDate, saidaManaus, chegadaTabatinga);
     pathProgress = segmentProgress;
+    point = interpolateIdaArc(segmentProgress);
+    rotation = tangentDegrees(point.theta) - 90;
     statusLabel = 'Em viagem → Tabatinga';
     nextMilestone = chegadaTabatinga;
   } else if (proximaChegadaManaus && chegadaTabatinga && simulationDate < proximaChegadaManaus) {
     segment = 'retorno';
     segmentProgress = computeSegmentProgress(simulationDate, chegadaTabatinga, proximaChegadaManaus);
-    pathProgress = 1 - segmentProgress; // volta de Tabatinga para Manaus
+    pathProgress = segmentProgress;
+    point = interpolateRetornoArc(segmentProgress);
+    rotation = tangentDegrees(point.theta) - 90;
     statusLabel = 'Retornando → Manaus';
     nextMilestone = proximaChegadaManaus;
   } else if (proximaChegadaManaus && simulationDate >= proximaChegadaManaus) {
     segment = 'atracado_manaus';
-    pathProgress = 0;
+    point = manausPoint;
+    rotation = 0;
     statusLabel = 'Atracado em Manaus';
     remainingLabel = 'Ciclo concluído';
   } else if (chegadaTabatinga && simulationDate >= chegadaTabatinga) {
     segment = 'atracado_tabatinga';
-    pathProgress = 1;
+    point = pointOnOval(Math.PI);
+    rotation = 0;
     statusLabel = 'Atracado em Tabatinga';
   } else {
     segment = 'ida';
     pathProgress = 0.5;
+    point = interpolateIdaArc(0.5);
+    rotation = tangentDegrees(point.theta) - 90;
     statusLabel = evento?.status_operacao || 'Em viagem';
   }
 
@@ -182,7 +240,15 @@ export function projectBoatPositionOnRiver(evento, simulationDateKey) {
     remainingLabel = formatRemainingDays(days);
   }
 
-  const point = interpolateRiverPoint(pathProgress);
+  const cycleProgress = segment === 'ida'
+    ? pathProgress * 0.5
+    : segment === 'retorno'
+      ? 0.5 + segmentProgress * 0.5
+      : segment === 'atracado_tabatinga'
+        ? 0.5
+        : segment === 'atracado_manaus' || segment === 'aguardando'
+          ? 0
+          : pathProgress * 0.25;
 
   return {
     segment,
@@ -190,20 +256,14 @@ export function projectBoatPositionOnRiver(evento, simulationDateKey) {
     segmentProgress,
     x: point.x,
     y: point.y,
+    rotation,
+    shortCode,
     statusLabel,
     remainingLabel,
     temVinculoAtivo: vinculo.kind === 'ativo',
     vinculo,
     atrasado: atraso > 0,
-    cycleProgress: segment === 'ida'
-      ? pathProgress * 0.5
-      : segment === 'retorno'
-        ? 0.5 + segmentProgress * 0.5
-        : segment === 'atracado_tabatinga'
-          ? 0.5
-          : segment === 'atracado_manaus'
-            ? 0
-            : pathProgress * 0.25,
+    cycleProgress,
   };
 }
 

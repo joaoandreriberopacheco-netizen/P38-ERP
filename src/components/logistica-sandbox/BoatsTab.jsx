@@ -105,38 +105,33 @@ function BoatsMapLayer({
   );
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,200px)_minmax(0,1fr)] 2xl:grid-cols-[minmax(0,200px)_minmax(0,1fr)_minmax(0,320px)]">
-        <div className="space-y-3">
+    <div className="space-y-4 font-['Barlow',sans-serif]">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div className="min-w-[220px] flex-1">
           <TimelineDatePicker value={simulationDate} onChange={onSimulationDateChange} compact />
-          <div className="rounded-3xl border border-border/40 bg-card p-3 shadow-sm">
-            <p className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">Vínculos</p>
-            <div className="flex flex-wrap gap-2">
-              {[
-                { value: 'todos', label: 'Todos' },
-                { value: 'com_vinculo', label: 'Com vínculo' },
-                { value: 'sem_vinculo', label: 'Sem vínculo' },
-              ].map((item) => (
-                <button
-                  key={item.value}
-                  type="button"
-                  onClick={() => onEmbarqueLinkFilterChange(item.value)}
-                  className={`rounded-2xl px-3 py-1.5 text-xs transition ${embarqueLinkFilter === item.value ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground' : 'bg-muted/50 text-muted-foreground'}`}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="hidden xl:block">
-            <FluvialBoatListSidebar
-              eventos={eventos}
-              selectedEventoId={selectedEvento?.id}
-              onSelect={(evento) => setSelectedEventoId(evento.id)}
-            />
+        </div>
+        <div className="rounded-3xl border border-white/10 bg-black p-3">
+          <p className="mb-2 text-[10px] uppercase tracking-[0.18em] text-white/45">Vínculos</p>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { value: 'todos', label: 'Todos' },
+              { value: 'com_vinculo', label: 'Com vínculo' },
+              { value: 'sem_vinculo', label: 'Sem vínculo' },
+            ].map((item) => (
+              <button
+                key={item.value}
+                type="button"
+                onClick={() => onEmbarqueLinkFilterChange(item.value)}
+                className={`rounded-full border px-3 py-1.5 text-xs transition ${embarqueLinkFilter === item.value ? 'border-white bg-white text-black' : 'border-white/20 text-white/60'}`}
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
         </div>
+      </div>
 
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_220px]">
         <FluvialRiverMap
           eventos={eventos}
           selectedEventoId={selectedEvento?.id}
@@ -144,20 +139,24 @@ function BoatsMapLayer({
           simulationDate={simulationDate}
           loading={loading}
         />
-
-        <div className="2xl:block hidden">
-          <FluvialMapDetailPanel evento={selectedEvento} />
+        <div className="hidden lg:block">
+          <FluvialBoatListSidebar
+            eventos={eventos}
+            selectedEventoId={selectedEvento?.id}
+            onSelect={(evento) => setSelectedEventoId(evento.id)}
+          />
         </div>
       </div>
 
-      <div className="space-y-4 2xl:hidden">
+      <div className="space-y-4 lg:hidden">
         <FluvialBoatListSidebar
           eventos={eventos}
           selectedEventoId={selectedEvento?.id}
           onSelect={(evento) => setSelectedEventoId(evento.id)}
         />
-        <FluvialMapDetailPanel evento={selectedEvento} />
       </div>
+
+      <FluvialMapDetailPanel evento={selectedEvento} />
     </div>
   );
 }
