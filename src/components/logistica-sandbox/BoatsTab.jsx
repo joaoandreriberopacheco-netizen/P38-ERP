@@ -13,13 +13,8 @@ import {
   applyFluvialOcupacaoProjection,
   buildBoatViewModels,
   buildFluvialEvents,
-  eventoTemDataNoPeriodo,
-  FLUVIAL_DEFAULT_PERIOD,
 } from '@/components/logistica-sandbox/fluvialDataUtils';
-import {
-  enrichEventosWithRiverProjection,
-  isEventoActiveAtSimulation,
-} from '@/lib/fluvialRiverProjection';
+import { buildFluvialFleetMapModels } from '@/lib/fluvialRiverProjection';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,7 +23,6 @@ import NewTransportadoraDialog from '@/components/logistica-sandbox/NewTransport
 import FluvialRiverMap from '@/components/logistica-sandbox/FluvialRiverMap';
 import FluvialBoatListSidebar from '@/components/logistica-sandbox/FluvialBoatListSidebar';
 import FluvialMapDetailPanel from '@/components/logistica-sandbox/FluvialMapDetailPanel';
-import TimelineDatePicker from '@/components/logistica-sandbox/TimelineDatePicker';
 
 const LAYER_OPTIONS = [
   { value: 'lista', label: 'Lista', icon: List },
@@ -90,73 +84,96 @@ function BoatListSkeleton() {
 }
 
 function BoatsMapLayer({
-  eventos,
+  fleet,
   loading,
   simulationDate,
   onSimulationDateChange,
   embarqueLinkFilter,
   onEmbarqueLinkFilterChange,
+  onClose,
 }) {
-  const [selectedEventoId, setSelectedEventoId] = useState(null);
+  const [selectedFleetKey, setSelectedFleetKey] = useState(null);
+  const [detailOpen, setDetailOpen] = useState(false);
 
-  const selectedEvento = useMemo(
-    () => eventos.find((item) => item.id === selectedEventoId) || eventos[0] || null,
-    [eventos, selectedEventoId],
-  );
+  const selectedEvento = useMemo(() => {
+    if (!fleet.length) return null;
+    return fleet.find((item) => (item.fleetKey || item.id) === selectedFleetKey) || fleet[0];
+  }, [fleet, selectedFleetKey]);
+
+  const handleSelect = (evento) => {
+    const key = evento.fleetKey || evento.id;
+    setSelectedFleetKey(key);
+    setDetailOpen(true);
+  };
 
   return (
-    <div className="space-y-4 font-['Barlow',sans-serif]">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div className="min-w-[220px] flex-1">
-          <TimelineDatePicker value={simulationDate} onChange={onSimulationDateChange} compact />
-        </div>
-        <div className="rounded-3xl border border-white/10 bg-black p-3">
-          <p className="mb-2 text-[10px] uppercase tracking-[0.18em] text-white/45">Vínculos</p>
-          <div className="flex flex-wrap gap-2">
-            {[
-              { value: 'todos', label: 'Todos' },
-              { value: 'com_vinculo', label: 'Com vínculo' },
-              { value: 'sem_vinculo', label: 'Sem vínculo' },
-            ].map((item) => (
-              <button
-                key={item.value}
-                type="button"
-                onClick={() => onEmbarqueLinkFilterChange(item.value)}
-                className={`rounded-full border px-3 py-1.5 text-xs transition ${embarqueLinkFilter === item.value ? 'border-white bg-white text-black' : 'border-white/20 text-white/60'}`}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_220px]">
-        <FluvialRiverMap
-          eventos={eventos}
-          selectedEventoId={selectedEvento?.id}
-          onSelect={(evento) => setSelectedEventoId(evento.id)}
-          simulationDate={simulationDate}
-          loading={loading}
-        />
-        <div className="hidden lg:block">
-          <FluvialBoatListSidebar
-            eventos={eventos}
-            selectedEventoId={selectedEvento?.id}
-            onSelect={(evento) => setSelectedEventoId(evento.id)}
+    <div className="fixed inset-0 z-50 flex flex-col bg-black font-['Barlow',sans-serif]">
+      <div className="flex flex-wrap items-center gap-3 border-b border-white/10 bg-[#050505] px-4 py-3">
+        <div className="min-w-[180px] flex-1">
+          <label className="mb-1 block text-[10px] uppercase tracking-[0.18em] text-white/40">Data simulada</label>
+          <input
+            type="date"
+            value={simulationDate}
+            onChange={(e) => onSimulationDateChange(e.target.value)}
+            className="w-full rounded-xl border border-white/15 bg-black px-3 py-2 text-sm text-white"
           />
         </div>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { value: 'todos', label: 'Todos' },
+            { value: 'com_vinculo', label: 'Com vínculo' },
+            { value: 'sem_vinculo', label: 'Sem vínculo' },
+          ].map((item) => (
+            <button
+              key={item.value}
+              type="button"
+              onClick={() => onEmbarqueLinkFilterChange(item.value)}
+              className={`rounded-full border px-3 py-1.5 text-xs transition ${embarqueLinkFilter === item.value ? 'border-white bg-white text-black' : 'border-white/20 text-white/60'}`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="space-y-4 lg:hidden">
-        <FluvialBoatListSidebar
-          eventos={eventos}
-          selectedEventoId={selectedEvento?.id}
-          onSelect={(evento) => setSelectedEventoId(evento.id)}
-        />
+      <div className="flex min-h-0 flex-1">
+        <aside className="hidden w-[220px] shrink-0 md:block">
+          <FluvialBoatListSidebar
+            eventos={fleet}
+            selectedFleetKey={selectedEvento?.fleetKey || selectedEvento?.id}
+            onSelect={handleSelect}
+          />
+        </aside>
+
+        <main className="min-w-0 flex-1">
+          <FluvialRiverMap
+            eventos={fleet}
+            selectedFleetKey={selectedEvento?.fleetKey || selectedEvento?.id}
+            onSelect={handleSelect}
+            simulationDate={simulationDate}
+            loading={loading}
+            onClose={onClose}
+          />
+        </main>
+
+        {detailOpen && selectedEvento ? (
+          <aside className="hidden w-[min(360px,34vw)] shrink-0 lg:block">
+            <FluvialMapDetailPanel
+              evento={selectedEvento}
+              onClose={() => setDetailOpen(false)}
+            />
+          </aside>
+        ) : null}
       </div>
 
-      <FluvialMapDetailPanel evento={selectedEvento} />
+      {detailOpen && selectedEvento ? (
+        <div className="border-t border-white/10 lg:hidden">
+          <FluvialMapDetailPanel
+            evento={selectedEvento}
+            onClose={() => setDetailOpen(false)}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -169,7 +186,6 @@ export default function BoatsTab() {
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [simulationDate, setSimulationDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [embarqueLinkFilter, setEmbarqueLinkFilter] = useState('todos');
-  const [periodoFiltro] = useState(FLUVIAL_DEFAULT_PERIOD);
   const queryClient = useQueryClient();
 
   const {
@@ -197,24 +213,27 @@ export default function BoatsTab() {
     [eventosEnriquecidos, simulationDate],
   );
 
-  const mapEventos = useMemo(() => {
+  const mapFleet = useMemo(() => {
     const eventosComEmbarque = new Set(
       embarquesData.map((emb) => emb.evento_logistico_id).filter(Boolean),
     );
+    const transportadorasAtivas = new Set(
+      transportadorasData.filter((item) => item.ativo !== false).map((item) => item.id),
+    );
 
-    const filtrados = eventosProjetados
-      .filter((evento) => eventoTemDataNoPeriodo(evento, periodoFiltro))
-      .filter((evento) => isEventoActiveAtSimulation(evento, simulationDate))
-      .filter((evento) => {
-        const temVinculoEmbarque = eventosComEmbarque.has(evento.id);
-        if (embarqueLinkFilter === 'com_vinculo' && !temVinculoEmbarque) return false;
-        if (embarqueLinkFilter === 'sem_vinculo' && temVinculoEmbarque) return false;
-        return true;
-      });
+    const filtrados = eventosProjetados.filter((evento) => {
+      const transportadoraId = evento.transportadora_id || evento.embarcacao_template_id;
+      if (!transportadorasAtivas.has(transportadoraId)) return false;
 
-    return enrichEventosWithRiverProjection(filtrados, simulationDate)
-      .sort((a, b) => (a.embarcacao_nome || '').localeCompare(b.embarcacao_nome || '', 'pt-BR'));
-  }, [eventosProjetados, embarquesData, periodoFiltro, simulationDate, embarqueLinkFilter]);
+      const temVinculoEmbarque = eventosComEmbarque.has(evento.id)
+        || (evento.total_embarques_relacionados || 0) > 0;
+      if (embarqueLinkFilter === 'com_vinculo' && !temVinculoEmbarque) return false;
+      if (embarqueLinkFilter === 'sem_vinculo' && temVinculoEmbarque) return false;
+      return true;
+    });
+
+    return buildFluvialFleetMapModels(filtrados, simulationDate);
+  }, [eventosProjetados, embarquesData, transportadorasData, simulationDate, embarqueLinkFilter]);
 
   const transportadorasNormalizadas = useMemo(() => {
     return buildBoatViewModels({
@@ -299,12 +318,13 @@ export default function BoatsTab() {
 
       {viewLayer === 'mapa' ? (
         <BoatsMapLayer
-          eventos={mapEventos}
+          fleet={mapFleet}
           loading={viagensCarregando}
           simulationDate={simulationDate}
           onSimulationDateChange={setSimulationDate}
           embarqueLinkFilter={embarqueLinkFilter}
           onEmbarqueLinkFilterChange={setEmbarqueLinkFilter}
+          onClose={() => setViewLayer('lista')}
         />
       ) : (
         <>

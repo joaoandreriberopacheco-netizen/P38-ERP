@@ -1,8 +1,19 @@
 import { differenceInCalendarDays, format } from 'date-fns';
-import { normalizeFluvialDateKey } from '@/components/logistica-sandbox/fluvialDataUtils';
+import { normalizeFluvialDateKey, projectFluvialOcupacaoPercentual } from '@/components/logistica-sandbox/fluvialDataUtils';
 
-/** Oval Manaus (direita) ↔ Tabatinga (esquerda) — viewBox 0 0 100 62 */
-export const FLUVIAL_OVAL = { cx: 50, cy: 31, rx: 40, ry: 22 };
+export const FLUVIAL_DOCK_TABATINGA_DAYS = 4;
+export const FLUVIAL_RETURN_DAYS = 3;
+
+/** Layout normalizado 0–100. Manaus = leste (direita), Tabatinga = oeste (esquerda). */
+export const FLUVIAL_MAP_LAYOUT = {
+  manausX: 90,
+  tabatingaX: 10,
+  routeY: 48,
+  manausDockX: 93,
+  tabatingaDockX: 7,
+  dockTopY: 22,
+  dockSpacing: 7,
+};
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
@@ -11,6 +22,12 @@ function parseStableDate(value) {
   if (!key) return null;
   const [year, month, day] = key.split('-').map(Number);
   return new Date(year, month - 1, day, 12, 0, 0, 0);
+}
+
+function addDaysDate(date, days) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
 }
 
 function clamp(value, min, max) {
@@ -42,13 +59,8 @@ function lastConsonant(word) {
   return word[word.length - 1] || 'X';
 }
 
-/**
- * Sigla de 3 letras — ex.: Vitória Regia → VRG, Rio Negro → RNG.
- */
-export function getBoatShortCode(evento = {}) {
-  const codigo = String(evento.codigo || '').replace(/[^a-zA-Z0-9]/g, '');
-  if (codigo.length >= 3) return codigo.slice(0, 3).toUpperCase();
-
+/** Iniciais da embarcação (nunca código da viagem). Ex.: Vitória Regia → VRG */
+export function getEmbarcacaoInitials(evento = {}) {
   const nome = normalizeBoatName(evento.embarcacao_nome || evento.transportadora_nome || '');
   const words = nome.split(/\s+/).filter(Boolean);
 
@@ -69,42 +81,6 @@ export function getBoatShortCode(evento = {}) {
   }
 
   return '---';
-}
-
-function pointOnOval(theta) {
-  return {
-    x: FLUVIAL_OVAL.cx + FLUVIAL_OVAL.rx * Math.cos(theta),
-    y: FLUVIAL_OVAL.cy + FLUVIAL_OVAL.ry * Math.sin(theta),
-    theta,
-  };
-}
-
-/** Arco superior: Manaus (θ=0) → Tabatinga (θ=−π) */
-export function interpolateIdaArc(progress) {
-  const theta = -Math.PI * clamp(progress, 0, 1);
-  return pointOnOval(theta);
-}
-
-/** Arco inferior: Tabatinga (θ=π) → Manaus (θ=0) */
-export function interpolateRetornoArc(progress) {
-  const theta = Math.PI + Math.PI * clamp(progress, 0, 1);
-  return pointOnOval(theta);
-}
-
-export function buildOvalTopArcD() {
-  const { cx, cy, rx, ry } = FLUVIAL_OVAL;
-  return `M ${cx + rx} ${cy} A ${rx} ${ry} 0 0 0 ${cx - rx} ${cy}`;
-}
-
-export function buildOvalBottomArcD() {
-  const { cx, cy, rx, ry } = FLUVIAL_OVAL;
-  return `M ${cx - rx} ${cy} A ${rx} ${ry} 0 0 0 ${cx + rx} ${cy}`;
-}
-
-function tangentDegrees(theta) {
-  const dx = -FLUVIAL_OVAL.rx * Math.sin(theta);
-  const dy = FLUVIAL_OVAL.ry * Math.cos(theta);
-  return (Math.atan2(dy, dx) * 180) / Math.PI;
 }
 
 function computeSegmentProgress(simulationDate, startDate, endDate) {
@@ -129,6 +105,7 @@ export function resolveVinculoGlow(evento = {}) {
       kind: 'ativo',
       stroke: '#ffffff',
       fill: '#ffffff',
+      glow: true,
       label: `${ativos} vínculo${ativos !== 1 ? 's' : ''} ativo${ativos !== 1 ? 's' : ''}`,
     };
   }
@@ -136,103 +113,190 @@ export function resolveVinculoGlow(evento = {}) {
     return {
       kind: 'concluido',
       stroke: '#a3a3a3',
-      fill: '#737373',
+      fill: '#525252',
+      glow: false,
       label: `${total} vínculo${total !== 1 ? 's' : ''} concluído${total !== 1 ? 's' : ''}`,
     };
   }
   return {
     kind: 'sem',
-    stroke: '#ffffff',
+    stroke: 'rgba(255,255,255,0.55)',
     fill: 'transparent',
+    glow: false,
     label: 'Sem vínculos',
   };
 }
 
-export function projectBoatPositionOnRiver(evento, simulationDateKey) {
-  const simulationDate = parseStableDate(simulationDateKey);
-  const chegadaManaus = parseStableDate(evento?.data_chegada_manaus);
-  const saidaManaus = parseStableDate(evento?.data_saida_origem);
-  const chegadaTabatinga = parseStableDate(evento?.data_chegada_destino || evento?.previsao_chegada);
-  const proximaChegadaManaus = parseStableDate(evento?.proxima_chegada_manaus);
+function resolveDepartureLoad(evento) {
+  const stored = Number(evento.ocupacao_percentual);
+  if (Number.isFinite(stored) && stored > 0) return Math.min(100, Math.round(stored));
+  if (Number(evento.ocupacao_percentual_dinamica) > 0) {
+    return Math.min(100, Math.round(evento.ocupacao_percentual_dinamica));
+  }
+  return 100;
+}
 
-  const vinculo = resolveVinculoGlow(evento);
-  const atraso = Number(evento?.dias_atraso) || 0;
-  const shortCode = getBoatShortCode(evento);
-  const manausPoint = pointOnOval(0);
+function projectTabatingaUnloadPercent(evento, simulationDate) {
+  const chegadaTabatinga = parseStableDate(evento.data_chegada_destino || evento.previsao_chegada);
+  if (!chegadaTabatinga || simulationDate < chegadaTabatinga) return null;
+
+  const fimDescarga = addDaysDate(chegadaTabatinga, FLUVIAL_DOCK_TABATINGA_DAYS);
+  if (simulationDate >= fimDescarga) return 0;
+
+  const startLoad = resolveDepartureLoad(evento);
+  const progress = computeSegmentProgress(simulationDate, chegadaTabatinga, fimDescarga);
+  return Math.max(0, Math.round(startLoad * (1 - progress)));
+}
+
+function detectOperationalState(evento, simulationDate) {
+  const chegadaManaus = parseStableDate(evento.data_chegada_manaus);
+  const saidaManaus = parseStableDate(evento.data_saida_origem);
+  const chegadaTabatinga = parseStableDate(evento.data_chegada_destino || evento.previsao_chegada);
+  const proximaChegadaManaus = parseStableDate(evento.proxima_chegada_manaus);
 
   if (!simulationDate || !chegadaManaus) {
-    return {
-      segment: 'fora_ciclo',
-      pathProgress: 0,
-      segmentProgress: 0,
-      x: manausPoint.x,
-      y: manausPoint.y,
-      rotation: 0,
-      shortCode,
-      statusLabel: 'Sem datas',
-      remainingLabel: '',
-      temVinculoAtivo: vinculo.kind === 'ativo',
-      vinculo,
-      atrasado: atraso > 0,
-      cycleProgress: 0,
-    };
+    return { state: 'indefinido', chegadaManaus, saidaManaus, chegadaTabatinga, proximaChegadaManaus };
   }
 
-  let segment = 'fora_ciclo';
-  let pathProgress = 0;
-  let segmentProgress = 0;
-  let statusLabel = 'Fora do ciclo';
+  if (simulationDate < chegadaManaus) {
+    return { state: 'aguardando', chegadaManaus, saidaManaus, chegadaTabatinga, proximaChegadaManaus };
+  }
+
+  if (saidaManaus && simulationDate < saidaManaus) {
+    return { state: 'doca_manaus', chegadaManaus, saidaManaus, chegadaTabatinga, proximaChegadaManaus };
+  }
+
+  if (chegadaTabatinga && saidaManaus && simulationDate < chegadaTabatinga) {
+    return { state: 'viagem_ida', chegadaManaus, saidaManaus, chegadaTabatinga, proximaChegadaManaus };
+  }
+
+  if (chegadaTabatinga) {
+    const fimDescarga = addDaysDate(chegadaTabatinga, FLUVIAL_DOCK_TABATINGA_DAYS);
+    if (simulationDate < fimDescarga) {
+      return { state: 'doca_tabatinga', chegadaManaus, saidaManaus, chegadaTabatinga, proximaChegadaManaus };
+    }
+
+    const fimRetorno = addDaysDate(chegadaTabatinga, FLUVIAL_DOCK_TABATINGA_DAYS + FLUVIAL_RETURN_DAYS);
+    if (simulationDate < fimRetorno) {
+      return { state: 'viagem_retorno', chegadaManaus, saidaManaus, chegadaTabatinga, proximaChegadaManaus };
+    }
+  }
+
+  if (proximaChegadaManaus && simulationDate < proximaChegadaManaus) {
+    return { state: 'doca_manaus_final', chegadaManaus, saidaManaus, chegadaTabatinga, proximaChegadaManaus };
+  }
+
+  return { state: 'ciclo_concluido', chegadaManaus, saidaManaus, chegadaTabatinga, proximaChegadaManaus };
+}
+
+function isEventoInCycle(evento, simulationDate) {
+  const simulation = parseStableDate(simulationDate);
+  const inicio = parseStableDate(evento.data_chegada_manaus);
+  const fim = parseStableDate(evento.proxima_chegada_manaus)
+    || parseStableDate(evento.data_chegada_destino);
+
+  if (!simulation || !inicio) return false;
+  if (!fim) return simulation >= inicio;
+  return simulation >= inicio && simulation <= fim;
+}
+
+function pickActiveEventoForTransportadora(eventos, simulationDateKey) {
+  const simulation = parseStableDate(simulationDateKey);
+  const candidatos = (eventos || []).filter((evento) => isEventoInCycle(evento, simulationDateKey));
+
+  if (!candidatos.length) return null;
+
+  candidatos.sort((a, b) => {
+    const aStart = parseStableDate(a.data_chegada_manaus)?.getTime() || 0;
+    const bStart = parseStableDate(b.data_chegada_manaus)?.getTime() || 0;
+    return Math.abs(aStart - simulation.getTime()) - Math.abs(bStart - simulation.getTime());
+  });
+
+  return candidatos[0];
+}
+
+function interpolateRouteX(progress, direction = 'oeste') {
+  const { manausX, tabatingaX } = FLUVIAL_MAP_LAYOUT;
+  const t = clamp(progress, 0, 1);
+  if (direction === 'oeste') {
+    return manausX - (manausX - tabatingaX) * t;
+  }
+  return tabatingaX + (manausX - tabatingaX) * t;
+}
+
+export function projectBoatPositionOnRiver(evento, simulationDateKey, { queueIndex = 0 } = {}) {
+  const simulationDate = parseStableDate(simulationDateKey);
+  const { state, chegadaManaus, saidaManaus, chegadaTabatinga, proximaChegadaManaus } = detectOperationalState(evento, simulationDate);
+  const vinculo = resolveVinculoGlow(evento);
+  const atraso = Number(evento?.dias_atraso) || 0;
+  const initials = getEmbarcacaoInitials(evento);
+  const layout = FLUVIAL_MAP_LAYOUT;
+
+  let x = layout.manausDockX;
+  let y = layout.routeY;
+  let rotation = -90;
+  let statusLabel = 'Indefinido';
   let remainingLabel = '';
   let nextMilestone = null;
-  let point = manausPoint;
-  let rotation = 180;
+  let ocupacao = projectFluvialOcupacaoPercentual(evento, simulationDateKey);
+  let segmentProgress = 0;
 
-  if (simulationDate < chegadaManaus) {
-    segment = 'aguardando';
-    point = manausPoint;
+  if (state === 'doca_manaus' || state === 'doca_manaus_final') {
+    x = layout.manausDockX;
+    y = layout.dockTopY + queueIndex * layout.dockSpacing;
     rotation = 180;
-    statusLabel = 'Aguardando chegada em Manaus';
-    nextMilestone = chegadaManaus;
-  } else if (saidaManaus && simulationDate < saidaManaus) {
-    segment = 'atracado_manaus';
-    segmentProgress = computeSegmentProgress(simulationDate, chegadaManaus, saidaManaus);
-    point = manausPoint;
-    rotation = 180;
-    statusLabel = 'Atracado em Manaus';
-    nextMilestone = saidaManaus;
-  } else if (chegadaTabatinga && saidaManaus && simulationDate < chegadaTabatinga) {
-    segment = 'ida';
+    statusLabel = state === 'doca_manaus_final' ? 'Doca Manaus — fila de chegada' : 'Doca Manaus — carregando';
+    ocupacao = projectFluvialOcupacaoPercentual(evento, simulationDateKey);
+    nextMilestone = state === 'doca_manaus' ? saidaManaus : proximaChegadaManaus;
+    segmentProgress = state === 'doca_manaus'
+      ? computeSegmentProgress(simulationDate, chegadaManaus, saidaManaus)
+      : computeSegmentProgress(
+        simulationDate,
+        chegadaTabatinga ? addDaysDate(chegadaTabatinga, FLUVIAL_DOCK_TABATINGA_DAYS + FLUVIAL_RETURN_DAYS) : null,
+        proximaChegadaManaus,
+      );
+  } else if (state === 'viagem_ida') {
     segmentProgress = computeSegmentProgress(simulationDate, saidaManaus, chegadaTabatinga);
-    pathProgress = segmentProgress;
-    point = interpolateIdaArc(segmentProgress);
-    rotation = tangentDegrees(point.theta) - 90;
+    x = interpolateRouteX(segmentProgress, 'oeste');
+    y = layout.routeY - 4;
+    rotation = -90;
     statusLabel = 'Em viagem → Tabatinga';
     nextMilestone = chegadaTabatinga;
-  } else if (proximaChegadaManaus && chegadaTabatinga && simulationDate < proximaChegadaManaus) {
-    segment = 'retorno';
-    segmentProgress = computeSegmentProgress(simulationDate, chegadaTabatinga, proximaChegadaManaus);
-    pathProgress = segmentProgress;
-    point = interpolateRetornoArc(segmentProgress);
-    rotation = tangentDegrees(point.theta) - 90;
+    ocupacao = resolveDepartureLoad(evento);
+  } else if (state === 'doca_tabatinga') {
+    x = layout.tabatingaDockX;
+    y = layout.dockTopY + 2;
+    rotation = 0;
+    statusLabel = 'Doca Tabatinga — descarregando';
+    ocupacao = projectTabatingaUnloadPercent(evento, simulationDate) ?? 0;
+    nextMilestone = addDaysDate(chegadaTabatinga, FLUVIAL_DOCK_TABATINGA_DAYS);
+    segmentProgress = computeSegmentProgress(
+      simulationDate,
+      chegadaTabatinga,
+      addDaysDate(chegadaTabatinga, FLUVIAL_DOCK_TABATINGA_DAYS),
+    );
+  } else if (state === 'viagem_retorno') {
+    const retornoInicio = addDaysDate(chegadaTabatinga, FLUVIAL_DOCK_TABATINGA_DAYS);
+    const retornoFim = addDaysDate(chegadaTabatinga, FLUVIAL_DOCK_TABATINGA_DAYS + FLUVIAL_RETURN_DAYS);
+    segmentProgress = computeSegmentProgress(simulationDate, retornoInicio, retornoFim);
+    x = interpolateRouteX(segmentProgress, 'leste');
+    y = layout.routeY + 5;
+    rotation = 90;
     statusLabel = 'Retornando → Manaus';
-    nextMilestone = proximaChegadaManaus;
-  } else if (proximaChegadaManaus && simulationDate >= proximaChegadaManaus) {
-    segment = 'atracado_manaus';
-    point = manausPoint;
-    rotation = 0;
-    statusLabel = 'Atracado em Manaus';
-    remainingLabel = 'Ciclo concluído';
-  } else if (chegadaTabatinga && simulationDate >= chegadaTabatinga) {
-    segment = 'atracado_tabatinga';
-    point = pointOnOval(Math.PI);
-    rotation = 0;
-    statusLabel = 'Atracado em Tabatinga';
+    nextMilestone = retornoFim;
+    ocupacao = 0;
+  } else if (state === 'aguardando') {
+    x = layout.manausDockX;
+    y = layout.dockTopY + queueIndex * layout.dockSpacing + 12;
+    rotation = 180;
+    statusLabel = 'Aguardando ciclo';
+    nextMilestone = chegadaManaus;
+    ocupacao = 0;
   } else {
-    segment = 'ida';
-    pathProgress = 0.5;
-    point = interpolateIdaArc(0.5);
-    rotation = tangentDegrees(point.theta) - 90;
-    statusLabel = evento?.status_operacao || 'Em viagem';
+    x = layout.manausDockX;
+    y = layout.routeY;
+    statusLabel = evento?.status_operacao || 'Fora do ciclo';
+    ocupacao = 0;
   }
 
   if (nextMilestone) {
@@ -240,60 +304,107 @@ export function projectBoatPositionOnRiver(evento, simulationDateKey) {
     remainingLabel = formatRemainingDays(days);
   }
 
-  const cycleProgress = segment === 'ida'
-    ? pathProgress * 0.5
-    : segment === 'retorno'
-      ? 0.5 + segmentProgress * 0.5
-      : segment === 'atracado_tabatinga'
-        ? 0.5
-        : segment === 'atracado_manaus' || segment === 'aguardando'
-          ? 0
-          : pathProgress * 0.25;
+  const cycleProgress = state === 'viagem_ida'
+    ? 0.15 + segmentProgress * 0.35
+    : state === 'doca_tabatinga'
+      ? 0.52
+      : state === 'viagem_retorno'
+        ? 0.55 + segmentProgress * 0.3
+        : state === 'doca_manaus' || state === 'doca_manaus_final'
+          ? segmentProgress * 0.12
+          : 0;
 
   return {
-    segment,
-    pathProgress,
+    state,
     segmentProgress,
-    x: point.x,
-    y: point.y,
+    pathProgress: segmentProgress,
+    x,
+    y,
     rotation,
-    shortCode,
+    initials,
+    shortCode: initials,
     statusLabel,
     remainingLabel,
+    ocupacao,
     temVinculoAtivo: vinculo.kind === 'ativo',
     vinculo,
     atrasado: atraso > 0,
     cycleProgress,
+    queueIndex,
   };
 }
 
-export function isEventoActiveAtSimulation(evento, simulationDateKey) {
-  const simulationDate = parseStableDate(simulationDateKey);
-  const chegadaManaus = parseStableDate(evento?.data_chegada_manaus);
-  const proximaChegadaManaus = parseStableDate(evento?.proxima_chegada_manaus);
-  const saidaManaus = parseStableDate(evento?.data_saida_origem);
+export function buildFluvialFleetMapModels(eventos = [], simulationDateKey) {
+  const porTransportadora = new Map();
 
-  if (!simulationDate) return false;
+  (eventos || []).forEach((evento) => {
+    const transportadoraId = evento.transportadora_id || evento.embarcacao_template_id;
+    if (!transportadoraId) return;
+    if (!porTransportadora.has(transportadoraId)) {
+      porTransportadora.set(transportadoraId, []);
+    }
+    porTransportadora.get(transportadoraId).push(evento);
+  });
 
-  const cycleStart = chegadaManaus || saidaManaus;
-  if (!cycleStart) return false;
+  const fleet = [];
 
-  const cycleEnd = proximaChegadaManaus
-    || parseStableDate(evento?.data_chegada_destino)
-    || saidaManaus;
+  porTransportadora.forEach((viagens, transportadoraId) => {
+    const ativa = pickActiveEventoForTransportadora(viagens, simulationDateKey);
+    if (!ativa) return;
 
-  if (!cycleEnd) return simulationDate >= cycleStart;
-  return simulationDate >= cycleStart && simulationDate <= cycleEnd;
+    const projectionPreview = projectBoatPositionOnRiver(ativa, simulationDateKey);
+    if (!projectionPreview.state || projectionPreview.state === 'ciclo_concluido' || projectionPreview.state === 'indefinido') {
+      return;
+    }
+
+    fleet.push({
+      ...ativa,
+      transportadora_id: transportadoraId,
+      fleetKey: transportadoraId,
+    });
+  });
+
+  const docaManaus = fleet
+    .map((evento) => ({
+      evento,
+      projection: projectBoatPositionOnRiver(evento, simulationDateKey),
+    }))
+    .filter(({ projection }) => projection.state === 'doca_manaus' || projection.state === 'doca_manaus_final' || projection.state === 'aguardando')
+    .sort((a, b) => {
+      const aDate = parseStableDate(a.evento.data_chegada_manaus)?.getTime() || 0;
+      const bDate = parseStableDate(b.evento.data_chegada_manaus)?.getTime() || 0;
+      return aDate - bDate;
+    });
+
+  const queueRank = new Map();
+  docaManaus.forEach(({ evento }, index) => {
+    queueRank.set(evento.fleetKey, index);
+  });
+
+  return fleet
+    .map((evento) => ({
+      ...evento,
+      riverProjection: projectBoatPositionOnRiver(evento, simulationDateKey, {
+        queueIndex: queueRank.get(evento.fleetKey) || 0,
+      }),
+    }))
+    .sort((a, b) => (a.embarcacao_nome || '').localeCompare(b.embarcacao_nome || '', 'pt-BR'));
 }
 
 export function enrichEventosWithRiverProjection(eventos, simulationDateKey) {
-  return (eventos || []).map((evento) => ({
-    ...evento,
-    riverProjection: projectBoatPositionOnRiver(evento, simulationDateKey),
-  }));
+  return buildFluvialFleetMapModels(eventos, simulationDateKey);
+}
+
+export function isEventoActiveAtSimulation(evento, simulationDateKey) {
+  return isEventoInCycle(evento, simulationDateKey);
 }
 
 export function formatSimulationDateLabel(simulationDateKey) {
   const parsed = parseStableDate(simulationDateKey);
   return parsed ? format(parsed, 'dd/MM/yyyy') : '-';
+}
+
+/** @deprecated use getEmbarcacaoInitials */
+export function getBoatShortCode(evento) {
+  return getEmbarcacaoInitials(evento);
 }
