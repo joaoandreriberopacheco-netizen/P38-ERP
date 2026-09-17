@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Anchor, ChevronDown, Plus, Search } from 'lucide-react';
+import { format } from 'date-fns';
+import { Anchor, ChevronDown, List, Map, Plus, Search } from 'lucide-react';
 import {
   useLogisticaEmbarquesQuery,
   useLogisticaEventosQuery,
@@ -8,12 +9,31 @@ import {
   useTransportadorasFluvialQuery,
 } from '@/hooks/useP38Entities';
 import { p38Keys } from '@/lib/p38QueryConfig';
-import { buildBoatViewModels, buildFluvialEvents } from '@/components/logistica-sandbox/fluvialDataUtils';
+import {
+  applyFluvialOcupacaoProjection,
+  buildBoatViewModels,
+  buildFluvialEvents,
+  eventoTemDataNoPeriodo,
+  FLUVIAL_DEFAULT_PERIOD,
+} from '@/components/logistica-sandbox/fluvialDataUtils';
+import {
+  enrichEventosWithRiverProjection,
+  isEventoActiveAtSimulation,
+} from '@/lib/fluvialRiverProjection';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import BoatDetailsDialog from '@/components/logistica-sandbox/BoatDetailsDialog';
 import NewTransportadoraDialog from '@/components/logistica-sandbox/NewTransportadoraDialog';
+import FluvialRiverMap from '@/components/logistica-sandbox/FluvialRiverMap';
+import FluvialBoatListSidebar from '@/components/logistica-sandbox/FluvialBoatListSidebar';
+import FluvialMapDetailPanel from '@/components/logistica-sandbox/FluvialMapDetailPanel';
+import TimelineDatePicker from '@/components/logistica-sandbox/TimelineDatePicker';
+
+const LAYER_OPTIONS = [
+  { value: 'lista', label: 'Lista', icon: List },
+  { value: 'mapa', label: 'Mapa', icon: Map },
+];
 
 function StatusBadge({ status }) {
   const classes = status === 'ativa'
@@ -69,11 +89,88 @@ function BoatListSkeleton() {
   );
 }
 
+function BoatsMapLayer({
+  eventos,
+  loading,
+  simulationDate,
+  onSimulationDateChange,
+  embarqueLinkFilter,
+  onEmbarqueLinkFilterChange,
+}) {
+  const [selectedEventoId, setSelectedEventoId] = useState(null);
+
+  const selectedEvento = useMemo(
+    () => eventos.find((item) => item.id === selectedEventoId) || eventos[0] || null,
+    [eventos, selectedEventoId],
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,200px)_minmax(0,1fr)] 2xl:grid-cols-[minmax(0,200px)_minmax(0,1fr)_minmax(0,320px)]">
+        <div className="space-y-3">
+          <TimelineDatePicker value={simulationDate} onChange={onSimulationDateChange} compact />
+          <div className="rounded-3xl border border-border/40 bg-card p-3 shadow-sm">
+            <p className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">Vínculos</p>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: 'todos', label: 'Todos' },
+                { value: 'com_vinculo', label: 'Com vínculo' },
+                { value: 'sem_vinculo', label: 'Sem vínculo' },
+              ].map((item) => (
+                <button
+                  key={item.value}
+                  type="button"
+                  onClick={() => onEmbarqueLinkFilterChange(item.value)}
+                  className={`rounded-2xl px-3 py-1.5 text-xs transition ${embarqueLinkFilter === item.value ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground' : 'bg-muted/50 text-muted-foreground'}`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="hidden xl:block">
+            <FluvialBoatListSidebar
+              eventos={eventos}
+              selectedEventoId={selectedEvento?.id}
+              onSelect={(evento) => setSelectedEventoId(evento.id)}
+            />
+          </div>
+        </div>
+
+        <FluvialRiverMap
+          eventos={eventos}
+          selectedEventoId={selectedEvento?.id}
+          onSelect={(evento) => setSelectedEventoId(evento.id)}
+          simulationDate={simulationDate}
+          loading={loading}
+        />
+
+        <div className="2xl:block hidden">
+          <FluvialMapDetailPanel evento={selectedEvento} />
+        </div>
+      </div>
+
+      <div className="space-y-4 2xl:hidden">
+        <FluvialBoatListSidebar
+          eventos={eventos}
+          selectedEventoId={selectedEvento?.id}
+          onSelect={(evento) => setSelectedEventoId(evento.id)}
+        />
+        <FluvialMapDetailPanel evento={selectedEvento} />
+      </div>
+    </div>
+  );
+}
+
 export default function BoatsTab() {
+  const [viewLayer, setViewLayer] = useState('lista');
   const [filter, setFilter] = useState('todas');
   const [search, setSearch] = useState('');
   const [selectedBoatId, setSelectedBoatId] = useState(null);
   const [showNewDialog, setShowNewDialog] = useState(false);
+  const [simulationDate, setSimulationDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [embarqueLinkFilter, setEmbarqueLinkFilter] = useState('todos');
+  const [periodoFiltro] = useState(FLUVIAL_DEFAULT_PERIOD);
   const queryClient = useQueryClient();
 
   const {
@@ -95,6 +192,30 @@ export default function BoatsTab() {
     embarques: embarquesData,
     lancamentosFinanceiros: lancamentosFretesData,
   }), [eventosData, embarquesData, lancamentosFretesData]);
+
+  const eventosProjetados = useMemo(
+    () => applyFluvialOcupacaoProjection(eventosEnriquecidos, simulationDate),
+    [eventosEnriquecidos, simulationDate],
+  );
+
+  const mapEventos = useMemo(() => {
+    const eventosComEmbarque = new Set(
+      embarquesData.map((emb) => emb.evento_logistico_id).filter(Boolean),
+    );
+
+    const filtrados = eventosProjetados
+      .filter((evento) => eventoTemDataNoPeriodo(evento, periodoFiltro))
+      .filter((evento) => isEventoActiveAtSimulation(evento, simulationDate))
+      .filter((evento) => {
+        const temVinculoEmbarque = eventosComEmbarque.has(evento.id);
+        if (embarqueLinkFilter === 'com_vinculo' && !temVinculoEmbarque) return false;
+        if (embarqueLinkFilter === 'sem_vinculo' && temVinculoEmbarque) return false;
+        return true;
+      });
+
+    return enrichEventosWithRiverProjection(filtrados, simulationDate)
+      .sort((a, b) => (a.embarcacao_nome || '').localeCompare(b.embarcacao_nome || '', 'pt-BR'));
+  }, [eventosProjetados, embarquesData, periodoFiltro, simulationDate, embarqueLinkFilter]);
 
   const transportadorasNormalizadas = useMemo(() => {
     return buildBoatViewModels({
@@ -154,71 +275,106 @@ export default function BoatsTab() {
     <div className="space-y-4 relative z-0">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex flex-wrap gap-2">
-        {[
-          { value: 'todas', label: 'Todas' },
-          { value: 'ativas', label: 'Ativas' },
-          { value: 'inativas', label: 'Inativas' },
-        ].map((item) => (
-          <button
-            key={item.value}
-            onClick={() => setFilter(item.value)}
-            className={`px-4 py-2 rounded-2xl text-sm shadow-sm transition ${filter === item.value ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground' : 'bg-card text-muted-foreground'}`}
-          >
-            {item.label}
-          </button>
-        ))}
+          {LAYER_OPTIONS.map((item) => {
+            const Icon = item.icon;
+            const active = viewLayer === item.value;
+            return (
+              <button
+                key={item.value}
+                type="button"
+                onClick={() => setViewLayer(item.value)}
+                className={`flex items-center gap-2 rounded-2xl px-4 py-2 text-sm shadow-sm transition ${active ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground' : 'bg-card text-muted-foreground'}`}
+              >
+                <Icon className="h-4 w-4" />
+                {item.label}
+              </button>
+            );
+          })}
         </div>
-        <Button onClick={() => setShowNewDialog(true)} className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
-          <Plus className="w-4 h-4" /> Nova transportadora
-        </Button>
-      </div>
-
-      <div className="rounded-3xl bg-card border border-border/40 shadow-sm p-3 flex items-center gap-3">
-        <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar transportadora" className="border-0 bg-transparent shadow-none h-10 px-0" />
-      </div>
-
-      {!isPending && !isError && totalCadastradas > 0 ? (
-        <p className="text-xs text-muted-foreground px-1">
-          {transportadoras.length} de {totalCadastradas} transportadora{totalCadastradas !== 1 ? 's' : ''}
-          {isFetching || eventosFetching ? ' · atualizando…' : ''}
-          {viagensCarregando ? ' · carregando viagens…' : ''}
-        </p>
-      ) : null}
-
-      {isPending ? (
-        <BoatListSkeleton />
-      ) : isError ? (
-        <div className="rounded-3xl bg-card border border-destructive/30 shadow-sm p-6 space-y-3">
-          <p className="text-sm text-foreground">Não foi possível carregar as transportadoras.</p>
-          <p className="text-xs text-muted-foreground">{error?.message || 'Erro desconhecido ao buscar dados.'}</p>
-          <Button type="button" variant="outline" className="rounded-2xl" onClick={() => refetch()}>
-            Tentar novamente
+        {viewLayer === 'lista' ? (
+          <Button onClick={() => setShowNewDialog(true)} className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
+            <Plus className="w-4 h-4" /> Nova transportadora
           </Button>
-        </div>
+        ) : null}
+      </div>
+
+      {viewLayer === 'mapa' ? (
+        <BoatsMapLayer
+          eventos={mapEventos}
+          loading={viagensCarregando}
+          simulationDate={simulationDate}
+          onSimulationDateChange={setSimulationDate}
+          embarqueLinkFilter={embarqueLinkFilter}
+          onEmbarqueLinkFilterChange={setEmbarqueLinkFilter}
+        />
       ) : (
-        <div className="space-y-4">
-          {transportadoras.length === 0 ? (
-            <div className="rounded-3xl bg-card border border-border/40 shadow-sm p-6 text-sm text-muted-foreground">
-              {emptyMessage}
-              {hasActiveFilters ? (
+        <>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: 'todas', label: 'Todas' },
+                { value: 'ativas', label: 'Ativas' },
+                { value: 'inativas', label: 'Inativas' },
+              ].map((item) => (
                 <button
-                  type="button"
-                  onClick={() => { setFilter('todas'); setSearch(''); }}
-                  className="mt-3 block text-sm font-medium text-primary hover:underline"
+                  key={item.value}
+                  onClick={() => setFilter(item.value)}
+                  className={`px-4 py-2 rounded-2xl text-sm shadow-sm transition ${filter === item.value ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground' : 'bg-card text-muted-foreground'}`}
                 >
-                  Limpar filtros
+                  {item.label}
                 </button>
-              ) : null}
+              ))}
             </div>
-          ) : transportadoras.map((transportadora) => (
-            <BoatListCard
-              key={transportadora.id}
-              transportadora={transportadora}
-              onClick={() => setSelectedBoatId(transportadora.id)}
-            />
-          ))}
-        </div>
+          </div>
+
+          <div className="rounded-3xl bg-card border border-border/40 shadow-sm p-3 flex items-center gap-3">
+            <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar transportadora" className="border-0 bg-transparent shadow-none h-10 px-0" />
+          </div>
+
+          {!isPending && !isError && totalCadastradas > 0 ? (
+            <p className="text-xs text-muted-foreground px-1">
+              {transportadoras.length} de {totalCadastradas} transportadora{totalCadastradas !== 1 ? 's' : ''}
+              {isFetching || eventosFetching ? ' · atualizando…' : ''}
+              {viagensCarregando ? ' · carregando viagens…' : ''}
+            </p>
+          ) : null}
+
+          {isPending ? (
+            <BoatListSkeleton />
+          ) : isError ? (
+            <div className="rounded-3xl bg-card border border-destructive/30 shadow-sm p-6 space-y-3">
+              <p className="text-sm text-foreground">Não foi possível carregar as transportadoras.</p>
+              <p className="text-xs text-muted-foreground">{error?.message || 'Erro desconhecido ao buscar dados.'}</p>
+              <Button type="button" variant="outline" className="rounded-2xl" onClick={() => refetch()}>
+                Tentar novamente
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {transportadoras.length === 0 ? (
+                <div className="rounded-3xl bg-card border border-border/40 shadow-sm p-6 text-sm text-muted-foreground">
+                  {emptyMessage}
+                  {hasActiveFilters ? (
+                    <button
+                      type="button"
+                      onClick={() => { setFilter('todas'); setSearch(''); }}
+                      className="mt-3 block text-sm font-medium text-primary hover:underline"
+                    >
+                      Limpar filtros
+                    </button>
+                  ) : null}
+                </div>
+              ) : transportadoras.map((transportadora) => (
+                <BoatListCard
+                  key={transportadora.id}
+                  transportadora={transportadora}
+                  onClick={() => setSelectedBoatId(transportadora.id)}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       <BoatDetailsDialog
