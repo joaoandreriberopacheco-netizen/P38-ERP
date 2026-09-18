@@ -38,7 +38,7 @@ export function codigoEmbarqueExcluidoOperacional(codigo = '') {
 
 export function resolverCodigoEmbarqueExibicao(pedido, embarque) {
   if (!embarque) return '';
-  const direto = embarque.codigo_exibicao || embarque.numero || '';
+  const direto = embarque.codigo_exibicao || embarque?.dados?.codigo_exibicao || embarque.numero || '';
   if (direto) return String(direto).trim();
   const base = String(pedido?.numero || '').replace(/\s+/g, '');
   return base;

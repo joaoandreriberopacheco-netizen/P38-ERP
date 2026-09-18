@@ -22,8 +22,11 @@ import { resolveEmbarqueQuantidadeBase, resolveEmbarqueQuantidadeComercial } fro
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { getItemCompraExibicaoVitrine } from '@/lib/productUnits';
 import { buildConsultaItensEmbarque, calcConsultaValorEmbarque } from '@/lib/consultaComprasEmbarques';
-
-const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+import {
+  ordinalEmbarqueLabel,
+  resolveEmbarqueCodigoExibicao,
+  sortEmbarquesParaExibicao,
+} from '@/lib/embarqueDisplayUtils';
 
 const STATUS_AGUARDANDO_PAGAMENTO = new Set([
   'Aguardando Aprovação Financeira',
@@ -42,25 +45,12 @@ function hasDespachoVinculado(embarque) {
   return !!(embarque?.data_embarque || embarque?.eta || embarque?.transportadora_id || embarque?.transportadora_nome);
 }
 
-function getEmbarqueSuffixIndex(embarque, pedido) {
-  const embarquesDoPedido = (pedido?._embarques || [])
-    .slice()
-    .sort((a, b) => new Date(a.created_date || 0) - new Date(b.created_date || 0));
-  const idxPorOrdem = embarquesDoPedido.findIndex((item) => item.id === embarque?.id);
-  return idxPorOrdem >= 0 ? idxPorOrdem : 0;
-}
-
-function getEmbarqueSuffix(embarque, pedido) {
-  return LETTERS[getEmbarqueSuffixIndex(embarque, pedido)] || 'A';
-}
-
 function getDisplayEmbarqueCode(pedido, embarque) {
-  const baseCode = String(pedido?.numero || '').replace(/\s+/g, '');
-  return `${baseCode}-${getEmbarqueSuffix(embarque, pedido)}`;
+  return resolveEmbarqueCodigoExibicao(pedido, embarque);
 }
 
 function getDisplayEmbarqueOrdinal(embarque, pedido) {
-  return `#${String(getEmbarqueSuffixIndex(embarque, pedido) + 1).padStart(2, '0')}`;
+  return ordinalEmbarqueLabel(embarque, pedido);
 }
 
 export function pedidoNaoConcluido(pedido = {}) {
@@ -74,7 +64,10 @@ export function getBorrowedStatus(pedido, embarque, produtosMap = {}, embarquesD
   if (!embarque) return pedido?.status || 'Rascunho';
 
   const temDespachoVinculado = hasDespachoVinculado(embarque);
-  const statusRecebimento = embarque.status_recebimento;
+  const statusRecebimento = String(
+    embarque?.status_recebimento || embarque?.status_recebimento_embarque || '',
+  ).trim();
+  const recepcaoPendente = !statusRecebimento || statusRecebimento === 'Pendente';
   const temItensAssociados = hasLinkedItems(embarque);
   const exibirNecessidade = pedidoDeveExibirCardNecessidade(pedido, embarquesDoPedido, produtosMap);
   const quantidadePendente = isNecessidadeRenderizada(embarque)
@@ -91,6 +84,15 @@ export function getBorrowedStatus(pedido, embarque, produtosMap = {}, embarquesD
     return 'Concluído';
   }
 
+  // Despachado aguardando recepção (inclui split Necessidade com itens já lançados).
+  if (
+    recepcaoPendente
+    && embarqueTemSaldoPendente(embarque)
+    && (temDespachoVinculado || (ehNecessidade && temItensAssociados) || temItensAssociados)
+  ) {
+    return 'Despachado';
+  }
+
   if (embarqueExcluidoDeNecessidade(pedido, embarque)) {
     if (temDespachoVinculado || temItensAssociados) {
       return embarqueTemSaldoPendente(embarque) ? 'Despachado' : 'Concluído';
@@ -98,11 +100,12 @@ export function getBorrowedStatus(pedido, embarque, produtosMap = {}, embarquesD
     return 'Aguardando';
   }
 
-  if (statusRecebimento === 'Recebido OK' || statusRecebimento === 'Com Divergência' || embarque.status === 'Concluído') {
-    return embarqueTemSaldoPendente(embarque) ? 'Despachado' : 'Concluído';
-  }
-
-  if (statusRecebimento === 'Recebido Parcial') {
+  if (
+    statusRecebimento === 'Recebido OK'
+    || statusRecebimento === 'Com Divergência'
+    || statusRecebimento === 'Recebido Parcial'
+    || (!recepcaoPendente && embarque.status === 'Concluído')
+  ) {
     return embarqueTemSaldoPendente(embarque) ? 'Despachado' : 'Concluído';
   }
 
@@ -222,7 +225,7 @@ export function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {})
   }, {});
 
   const pedidosComResumoReal = pcs.map((pedido) => {
-    const embarquesDoPedido = embarquesPorPedido[pedido.id] || [];
+    const embarquesDoPedido = sortEmbarquesParaExibicao(embarquesPorPedido[pedido.id] || [], pedido);
     const totalPedido = calcValorTotalPedidoCompra(pedido);
     const valorEmbarcado = calcValorEmbarcadoPedido(pedido, embarquesDoPedido, produtosMap);
     const percentualReal = totalPedido > 0 ? Math.min(100, (valorEmbarcado / totalPedido) * 100) : 0;
@@ -273,8 +276,10 @@ export function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {})
   }));
 
   const cardsDeEmbarque = pedidosComCascata.flatMap((pedido) => {
-    const embarquesDoPedido = (embarquesPorPedido[pedido.id] || []).slice()
-      .sort((a, b) => new Date(a.created_date || 0) - new Date(b.created_date || 0));
+    const embarquesDoPedido = sortEmbarquesParaExibicao(
+      embarquesPorPedido[pedido.id] || [],
+      pedido,
+    );
 
     const embarquesReais = embarquesDoPedido.filter((embarque) => !isNecessidadeRenderizada(embarque));
     const embarquesNecessidade = embarquesDoPedido.filter((embarque) => isNecessidadeRenderizada(embarque));
@@ -335,7 +340,7 @@ export function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {})
         _virtual_key: `${pedido.id}_${embarque.id}`,
         _embarque: embarque,
         _display_code: displayCode,
-        _display_ordinal: getDisplayEmbarqueOrdinal(embarque, { ...pedido, _embarques: embarquesRenderizados }),
+        _display_ordinal: getDisplayEmbarqueOrdinal(embarque, { ...pedido, _embarques: embarquesDoPedido }),
         _display_status: displayStatus,
         _display_valor: hasLinkedItems(embarque) || ehNecessidade
           ? getDisplayValorEmbarque(pedido, embarque, produtosMap, embarquesDoPedido)

@@ -18,6 +18,7 @@ import { buildItensCanonicosEmbarque } from '@/lib/buildEmbarqueItensCanonicos';
 import { getEmbarqueItensLinhas, hydrateEmbarquesFromSql } from '@/lib/fetchEmbarqueItens';
 import { ensurePedidoCompraItensCanonico } from '@/lib/fetchPedidoCompraItens';
 import { invokeRecalcularConclusaoPedidoCompra } from '@/lib/p38StockRecalc';
+import { proximaLetraEmbarquePedido } from '@/lib/embarqueDisplayUtils';
 import {
   buildTransportadoraPersistPayload,
   resolveAndMatchTransportadora,
@@ -531,7 +532,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
         transportadoras,
       );
       const embarquesExistentes = Array.isArray(pedidoAtual._embarques) ? pedidoAtual._embarques : [];
-      const letraExibicao = String.fromCharCode(65 + embarquesExistentes.length);
+      const letraExibicao = proximaLetraEmbarquePedido(embarquesExistentes, pedidoAtual);
       const itensEmbarcados = (itensPedido || [])
         .filter(item => selectedItems[item.produto_id])
         .map(item => {

@@ -16,6 +16,7 @@ import {
   calcularItensOrfaosAguardandoDespacho,
   calcularTotalDespachadoBasePorProduto,
 } from '@/lib/embarqueLogisticaHelpers';
+import { resolveEmbarqueCodigoExibicao, sortEmbarquesParaExibicao } from '@/lib/embarqueDisplayUtils';
 import { toast } from 'sonner';
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 
@@ -37,7 +38,7 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
   const totalItens = roundToTwoDecimals(
     itensEmbarque.reduce((s, i) => s + qtyEmbarcadaComercialLinha(i), 0)
   );
-  const codigoExibicao = embarque.codigo_exibicao || `${pedido?.numero || '-----'}-${String.fromCharCode(64 + nivel)}`;
+  const codigoExibicao = resolveEmbarqueCodigoExibicao(pedido, embarque);
   const statusRecebimento = embarque.status_recebimento || embarque.status_recebimento_embarque || 'Pendente';
   const podeExcluir = !['Recebido OK', 'Recebido Parcial', 'Concluído', 'Concluído OK', 'Concluído com Divergência'].includes(statusRecebimento);
   const podeEditarDespacho = podeEditarDespachoEmbarque(embarque);
@@ -221,7 +222,10 @@ export default function PedidoCompraLogisticaTab({ pedido, produtosMap = {}, onP
   const [embarqueEditando, setEmbarqueEditando] = useState(null);
   const [acordoOpen, setAcordoOpen] = useState(false);
 
-  const embarques = Array.isArray(pedido?._embarques) ? pedido._embarques : [];
+  const embarques = useMemo(
+    () => sortEmbarquesParaExibicao(pedido?._embarques || [], pedido),
+    [pedido, pedido?._embarques],
+  );
   const embarquesComDespacho = embarques.filter((emb) => !!(emb?.data_embarque || emb?.eta || emb?.transportadora_id || emb?.transportadora_nome));
   const embarquesComItensAssociados = embarquesComDespacho.filter((emb) => getEmbarqueItensLinhas(emb).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0));
   const percentuaisCalculados = useMemo(
