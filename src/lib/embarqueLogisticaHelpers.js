@@ -24,8 +24,19 @@ export function qtyEmbarcadaBaseLinha(item = {}) {
   return resolveEmbarqueQuantidadeBase(item, 'embarcada');
 }
 
-function qtyRecebidaBaseLinha(item = {}) {
+export function qtyRecebidaBaseLinha(item = {}) {
   return resolveEmbarqueQuantidadeBase(item, 'recebida');
+}
+
+/**
+ * Quantidade já despachada em base (M², UN…).
+ * Se a linha já foi recepcionada, conta como despachada mesmo quando o espelho
+ * SQL só preencheu `quantidade_recebida` (evita falso órfão pós-recepção).
+ */
+export function qtyDespachadaEfetivaBaseLinha(item = {}) {
+  const emb = qtyEmbarcadaBaseLinha(item);
+  const rec = qtyRecebidaBaseLinha(item);
+  return roundToTwoDecimals(Math.max(emb, rec));
 }
 
 /** Mínimo em unidade base (M², UN fator 1…) para contar saldo pendente real. */
@@ -89,7 +100,7 @@ export function calcularPercentuaisLogistica(pedido, embarques = []) {
     getEmbarqueItensLinhas(emb).forEach((item) => {
       const pid = item.produto_id;
       if (!pid) return;
-      porProdutoEmb[pid] = (porProdutoEmb[pid] || 0) + qtyEmbarcadaBaseLinha(item);
+      porProdutoEmb[pid] = (porProdutoEmb[pid] || 0) + qtyDespachadaEfetivaBaseLinha(item);
       porProdutoRec[pid] = (porProdutoRec[pid] || 0) + qtyRecebidaBaseLinha(item);
     });
   });
@@ -193,7 +204,8 @@ export function calcularItensOrfaosAguardandoDespacho(
     .filter((item) => item.qtd_pendente > 0.009);
 }
 
-function calcularTotalEmbarcadoBase(embarques = []) {
+/** Total despachado por produto (base), alinhado a órfãos e percentuais. */
+export function calcularTotalDespachadoBasePorProduto(embarques = []) {
   const map = {};
   (embarques || []).forEach((emb) => {
     if (emb?.tipo === 'Necessidade') return;
@@ -201,7 +213,7 @@ function calcularTotalEmbarcadoBase(embarques = []) {
     getEmbarqueItensLinhas(emb).forEach((item) => {
       const pid = item?.produto_id;
       if (!pid) return;
-      const add = qtyEmbarcadaBaseLinha(item);
+      const add = qtyDespachadaEfetivaBaseLinha(item);
       map[pid] = roundToTwoDecimals((map[pid] || 0) + add);
     });
   });
@@ -213,7 +225,7 @@ export function calcularItensOrfaosPedido(pedido, embarques = [], produtosMap = 
   return calcularItensOrfaosAguardandoDespacho(
     pedido,
     embarques,
-    calcularTotalEmbarcadoBase(embarques),
+    calcularTotalDespachadoBasePorProduto(embarques),
     produtosMap,
   );
 }

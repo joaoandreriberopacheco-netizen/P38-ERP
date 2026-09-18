@@ -8,22 +8,16 @@ import InformarEmbarque from './InformarEmbarque';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { roundToTwoDecimals, formatQuantity } from '@/lib/financialUtils';
-import { calcularPercentuaisLogistica, derivarStatusEmbarqueAgregado, podeEditarDespachoEmbarque, qtyEmbarcadaBaseLinha, qtyEmbarcadaComercialLinha, calcularItensOrfaosAguardandoDespacho } from '@/lib/embarqueLogisticaHelpers';
+import {
+  calcularPercentuaisLogistica,
+  derivarStatusEmbarqueAgregado,
+  podeEditarDespachoEmbarque,
+  qtyEmbarcadaComercialLinha,
+  calcularItensOrfaosAguardandoDespacho,
+  calcularTotalDespachadoBasePorProduto,
+} from '@/lib/embarqueLogisticaHelpers';
 import { toast } from 'sonner';
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
-
-// Calcula total embarcado por produto em TODOS os embarques
-function calcularTotalEmbarcado(embarques) {
-  const map = {};
-  (embarques || []).forEach((emb) => {
-    getEmbarqueItensLinhas(emb).forEach((item) => {
-      const prev = map[item.produto_id] || 0;
-      const add = qtyEmbarcadaBaseLinha(item);
-      map[item.produto_id] = roundToTwoDecimals(prev + add);
-    });
-  });
-  return map;
-}
 
 function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
   const [expanded, setExpanded] = useState(false);
@@ -244,7 +238,10 @@ export default function PedidoCompraLogisticaTab({ pedido, produtosMap = {}, onP
     if (derivado !== 'Nenhum') return derivado;
     return pedido?.status_embarque || 'Nenhum';
   }, [temEmbarqueReal, percentualEmbarcado, pedido?.status_embarque]);
-  const totalEmbarcado = useMemo(() => calcularTotalEmbarcado(embarquesComItensAssociados), [embarquesComItensAssociados]);
+  const totalEmbarcado = useMemo(
+    () => calcularTotalDespachadoBasePorProduto(embarquesComItensAssociados),
+    [embarquesComItensAssociados],
+  );
 
   // Itens órfãos: Necessidade (saldo pós-recepção) + pedido ainda não despachado
   const itensOrfaos = useMemo(
