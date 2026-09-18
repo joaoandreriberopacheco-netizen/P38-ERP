@@ -1,8 +1,7 @@
 import React from 'react';
-import boatMarkerUrl from '@/assets/fluvial/boat-marker.svg';
 
 /**
- * Ícone de embarcação partilhado (mapa + painéis).
+ * Ícone de embarcação — SVG inline (sem URL externa).
  */
 export default function FluvialBoatIcon({
   size = 16,
@@ -12,21 +11,8 @@ export default function FluvialBoatIcon({
   fill = 'transparent',
   className = '',
 }) {
-  if (fill === 'transparent' && stroke) {
-    return (
-      <img
-        src={boatMarkerUrl}
-        alt=""
-        width={size}
-        height={size}
-        className={className}
-        aria-hidden="true"
-        style={{ transform: `rotate(${rotation}deg)`, opacity: 0.9 }}
-      />
-    );
-  }
-
   const half = size / 2;
+
   return (
     <svg
       width={size}
@@ -48,7 +34,6 @@ export default function FluvialBoatIcon({
   );
 }
 
-/** Versão SVG pura para uso legado dentro de <svg> do mapa. */
 export function fluvialBoatIconPath(scale = 1) {
   const s = scale;
   return [

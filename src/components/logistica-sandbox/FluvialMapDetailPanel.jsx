@@ -1,6 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
-import FluvialBoatIcon from '@/components/logistica-sandbox/FluvialBoatIcon';
+import { getEmbarcacaoDisplayName } from '@/lib/fluvialDisplayUtils';
+import FluvialVesselAvatar from '@/components/logistica-sandbox/FluvialVesselAvatar';
 import EventoEmbarquesPanel from '@/components/logistica-sandbox/EventoEmbarquesPanel';
 import '@/components/logistica-sandbox/fluvial-map-premium.css';
 
@@ -22,27 +23,24 @@ const STATE_SUB = {
   aguardando: 'Aguardando ciclo',
 };
 
-export default function FluvialMapDetailPanel({ evento, onClose }) {
+export default function FluvialMapDetailPanel({ evento, onClose, mapTheme = 'dark' }) {
   if (!evento) return null;
 
   const projection = evento.riverProjection;
-  const nome = evento.transportadora_nome || evento.embarcacao_nome;
+  const nome = getEmbarcacaoDisplayName(evento);
   const ocupacao = Math.round(projection?.ocupacao ?? evento.ocupacao_percentual_dinamica ?? 0);
   const cyclePercent = Math.round((projection?.cycleProgress || 0) * 100);
   const stateKey = projection?.state || 'aguardando';
 
   return (
-    <div className="fluvial-float-panel fluvial-detail-panel">
+    <div className={`fluvial-float-panel fluvial-detail-panel fluvial-theme-${mapTheme}`}>
       <div className="fluvial-detail-hero">
         <div className="fluvial-detail-hero__top">
-          <div className="fluvial-detail-hero__icon">
-            <FluvialBoatIcon
-              size={24}
-              stroke="rgba(255,255,255,0.85)"
-              strokeWidth={1.2}
-              fill={projection?.temVinculoAtivo ? 'rgba(255,255,255,0.9)' : 'transparent'}
-            />
-          </div>
+          <FluvialVesselAvatar
+            size={56}
+            initials={projection?.initials || '—'}
+            active
+          />
           {onClose ? (
             <button type="button" onClick={onClose} className="fluvial-icon-btn" aria-label="Fechar ficha">
               <X className="h-4 w-4" />

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { Anchor, ChevronDown, List, Map, Plus, Search } from 'lucide-react';
+import { Anchor, ChevronDown, List, Map, Moon, Plus, Search, Sun } from 'lucide-react';
 import {
   useLogisticaEmbarquesQuery,
   useLogisticaEventosQuery,
@@ -15,13 +15,14 @@ import {
   buildFluvialEvents,
 } from '@/components/logistica-sandbox/fluvialDataUtils';
 import { buildFluvialFleetMapModels } from '@/lib/fluvialRiverProjection';
+import { isManausDock, isTabatingaDock } from '@/lib/fluvialGeoCoords';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import BoatDetailsDialog from '@/components/logistica-sandbox/BoatDetailsDialog';
 import NewTransportadoraDialog from '@/components/logistica-sandbox/NewTransportadoraDialog';
-import FluvialRiverMap from '@/components/logistica-sandbox/FluvialRiverMap';
-import FluvialBoatListSidebar from '@/components/logistica-sandbox/FluvialBoatListSidebar';
+import FluvialGeoMap from '@/components/logistica-sandbox/FluvialGeoMap';
+import FluvialDockStrip from '@/components/logistica-sandbox/FluvialDockStrip';
 import FluvialMapDetailPanel from '@/components/logistica-sandbox/FluvialMapDetailPanel';
 import '@/components/logistica-sandbox/fluvial-map-premium.css';
 
@@ -94,12 +95,22 @@ function BoatsMapLayer({
   onClose,
 }) {
   const [selectedFleetKey, setSelectedFleetKey] = useState(null);
-  const [hoveredFleetKey, setHoveredFleetKey] = useState(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [mapTheme, setMapTheme] = useState('dark');
 
   const selectedEvento = useMemo(() => {
     if (!fleet.length || !selectedFleetKey) return null;
     return fleet.find((item) => (item.fleetKey || item.id) === selectedFleetKey) || null;
   }, [fleet, selectedFleetKey]);
+
+  const tabatingaDock = useMemo(
+    () => fleet.filter((e) => isTabatingaDock(e.riverProjection?.state)),
+    [fleet],
+  );
+  const manausDock = useMemo(
+    () => fleet.filter((e) => isManausDock(e.riverProjection?.state)),
+    [fleet],
+  );
 
   useEffect(() => {
     if (!fleet.length) {
@@ -113,12 +124,15 @@ function BoatsMapLayer({
     }
   }, [fleet, selectedFleetKey]);
 
-  const handleSelect = (evento) => {
+  const handleSelect = (evento, openDetail = true) => {
     if (!evento) {
       setSelectedFleetKey(null);
+      setDetailOpen(false);
       return;
     }
-    setSelectedFleetKey(evento.fleetKey || evento.id);
+    const key = evento.fleetKey || evento.id;
+    setSelectedFleetKey(key);
+    if (openDetail) setDetailOpen(true);
   };
 
   const formattedDate = useMemo(() => {
@@ -129,18 +143,34 @@ function BoatsMapLayer({
   }, [simulationDate]);
 
   return (
-    <div className="fluvial-command-center fluvial-premium-root">
+    <div className={`fluvial-command-center fluvial-premium-root fluvial-theme-${mapTheme}`}>
       <div className="fluvial-command-map">
-        <FluvialRiverMap
-          eventos={fleet}
-          selectedFleetKey={selectedFleetKey}
-          hoveredFleetKey={hoveredFleetKey}
-          onSelect={handleSelect}
-          onHover={setHoveredFleetKey}
-          loading={loading}
-          embedded
-        />
+        {loading ? (
+          <div className="fluvial-map-loading">Carregando frota…</div>
+        ) : (
+          <FluvialGeoMap
+            eventos={fleet}
+            selectedFleetKey={selectedFleetKey}
+            onSelect={(evento) => handleSelect(evento, true)}
+            mapTheme={mapTheme}
+          />
+        )}
       </div>
+
+      <FluvialDockStrip
+        title="Tabatinga"
+        side="left"
+        eventos={tabatingaDock}
+        selectedFleetKey={selectedFleetKey}
+        onSelect={(e) => handleSelect(e, true)}
+      />
+      <FluvialDockStrip
+        title="Manaus"
+        side="right"
+        eventos={manausDock}
+        selectedFleetKey={selectedFleetKey}
+        onSelect={(e) => handleSelect(e, true)}
+      />
 
       <div className="fluvial-command-chrome">
         <div className="fluvial-command-chrome__left">
@@ -159,6 +189,15 @@ function BoatsMapLayer({
         </div>
 
         <div className="fluvial-command-chrome__right">
+          <button
+            type="button"
+            className="fluvial-ghost-btn flex items-center gap-1.5"
+            onClick={() => setMapTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+            aria-label={mapTheme === 'dark' ? 'Modo claro' : 'Modo escuro'}
+          >
+            {mapTheme === 'dark' ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+            {mapTheme === 'dark' ? 'Claro' : 'Escuro'}
+          </button>
           <div className="fluvial-segment">
             {[
               { value: 'todos', label: 'Todos' },
@@ -183,26 +222,15 @@ function BoatsMapLayer({
         </div>
       </div>
 
-      <div className="fluvial-command-rail fluvial-command-rail--left">
-        {selectedEvento ? (
-          <div className="fluvial-command-detail-slot">
-            <FluvialMapDetailPanel
-              evento={selectedEvento}
-              onClose={() => setSelectedFleetKey(null)}
-            />
-          </div>
-        ) : null}
-      </div>
-
-      <div className="fluvial-command-rail fluvial-command-rail--right hidden lg:block">
-        <div className="fluvial-command-list-slot">
-          <FluvialBoatListSidebar
-            eventos={fleet}
-            selectedFleetKey={selectedFleetKey}
-            onSelect={handleSelect}
+      {detailOpen && selectedEvento ? (
+        <div className="fluvial-command-detail">
+          <FluvialMapDetailPanel
+            evento={selectedEvento}
+            mapTheme={mapTheme}
+            onClose={() => setDetailOpen(false)}
           />
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { differenceInCalendarDays, format } from 'date-fns';
 import { normalizeFluvialDateKey, projectFluvialOcupacaoPercentual } from '@/components/logistica-sandbox/fluvialDataUtils';
+import { normalizeEmbarcacaoDisplayName } from '@/lib/fluvialDisplayUtils';
 
 export const FLUVIAL_DOCK_TABATINGA_DAYS = 4;
 export const FLUVIAL_RETURN_DAYS = 3;
@@ -89,7 +90,8 @@ function lastConsonant(word) {
 }
 
 export function getEmbarcacaoInitials(evento = {}) {
-  const nome = normalizeBoatName(evento.embarcacao_nome || evento.transportadora_nome || '');
+  const rawName = evento.embarcacao_nome || evento.transportadora_nome || '';
+  const nome = normalizeBoatName(normalizeEmbarcacaoDisplayName(rawName) || rawName);
   const words = nome.split(/\s+/).filter(Boolean);
 
   if (words.length >= 3) {
