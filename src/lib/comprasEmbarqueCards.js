@@ -33,11 +33,13 @@ import {
   sortEmbarquesParaExibicao,
 } from '@/lib/embarqueDisplayUtils';
 
+import { COMPRAS_STATUS_FILTRO_AGUARDANDO_PGTO } from '@/lib/comprasEmbarquesPalette';
+
 const STATUS_AGUARDANDO_PAGAMENTO = new Set([
+  COMPRAS_STATUS_FILTRO_AGUARDANDO_PGTO,
   'Aguardando Aprovação Financeira',
   'Aguardando Liberação Financeira',
   'Aguardando Liberação',
-  'Aguardando',
 ]);
 
 function hasLinkedItems(embarque) {
@@ -102,7 +104,7 @@ export function getBorrowedStatus(pedido, embarque, produtosMap = {}, embarquesD
     const temPendencia =
       (exibirNecessidade && quantidadePendente > 0)
       || embarqueNecessidadeTemItensPendentes(embarque);
-    return temPendencia ? 'Pendente' : 'Aguardando';
+    return temPendencia ? 'Pendente' : 'Aprovado';
   }
 
   // Embarque real com despacho informado, aguardando recepção (ex.: AB6-PPQ-B).
@@ -119,7 +121,7 @@ export function getBorrowedStatus(pedido, embarque, produtosMap = {}, embarquesD
     if (temDespachoVinculado) {
       return resolveStatusTransitoOuConclusao(embarque);
     }
-    return 'Aguardando';
+    return 'Aprovado';
   }
 
   if (
@@ -143,9 +145,11 @@ export function getBorrowedStatus(pedido, embarque, produtosMap = {}, embarquesD
     if (
       pedido?.status === 'Aguardando Aprovação Financeira'
       || pedido?.status === 'Aguardando Liberação'
+      || pedido?.status === 'Aguardando Liberação Financeira'
       || saf === 'Aguardando Aprovação Financeira'
+      || saf === 'Aguardando Liberação Financeira'
     ) {
-      return 'Aguardando Liberação Financeira';
+      return COMPRAS_STATUS_FILTRO_AGUARDANDO_PGTO;
     }
 
     if (pedidoLiberadoParaLogistica(pedido)) {
@@ -160,7 +164,7 @@ export function getBorrowedStatus(pedido, embarque, produtosMap = {}, embarquesD
   }
 
   if (precisaPreenchimento) {
-    return 'Aguardando';
+    return 'Pendente';
   }
 
   return 'Rascunho';

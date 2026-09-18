@@ -34,7 +34,11 @@ import {
 import { compareEmbarquesConsulta, enrichEmbarqueParaConsulta, buildConsultaItensPendentes, calcConsultaValorEmbarque, buildGruposConsultaEmbarques } from '@/lib/consultaComprasEmbarques';
 import { calcValorEmbarqueCard, calcValorEmbarcadoPedido } from '@/lib/embarqueValorFinanceiro';
 import { pedidoNaoConcluido } from '@/lib/comprasEmbarqueCards';
-import { cardEmbarqueMatchStatusFiltro } from '@/lib/comprasEmbarquesPalette';
+import {
+  cardEmbarqueMatchStatusFiltro,
+  COMPRAS_STATUS_FILTRO_AGUARDANDO_PGTO,
+  normalizeComprasStatusFiltroCodigo,
+} from '@/lib/comprasEmbarquesPalette';
 import { omitPedidoCompraEspelho } from '@/lib/omitEspelhoPersist';
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
 import FiltrosCompras from '@/components/compras/FiltrosCompras';
@@ -104,22 +108,14 @@ const etaMatchesFilter = (embarque, modo, dataRef, inicial, final) => {
 
 const STATUS_EMBARQUE_VIRTUAIS = [
   'Rascunho',
-  'Aguardando',
-  'Aguardando Aprovação Financeira',
-  'Aguardando Liberação Financeira',
-  'Aguardando Liberação',
+  'Aguardando Pagamento',
   'Aprovado',
-  'Pendente',
   'Despachado',
   'Concluído',
+  'Pendente',
 ];
 
-const normalizeStatusFiltro = (status) => {
-  if (status === 'Aguardando Liberação') {
-    return ['Aguardando Liberação', 'Aguardando Aprovação Financeira', 'Aguardando Liberação Financeira'];
-  }
-  return [status];
-};
+const normalizeStatusFiltro = (status) => [normalizeComprasStatusFiltroCodigo(status)];
 
 const cardMatchesSearch = (card, searchLower, { includeProdutos = false } = {}) => {
   const embarque = card._embarque;
@@ -183,12 +179,7 @@ const passaFiltrosEmbarqueCard = (
     const statusPaiExpandido = statusPaiSel.flatMap(normalizeStatusFiltro);
     const statusEmbExpandido = statusEmbSel.flatMap(normalizeStatusFiltro);
     const matchPai = statusPaiExpandido.includes(card.status) || statusPaiExpandido.includes(card._display_status);
-    const matchEmbarque = statusEmbExpandido.some((s) => {
-      if (s === 'Aguardando Embarque') return !embarque?.transportadora_nome && !embarque?.eta;
-      if (s === 'Original') return false;
-      if (cardEmbarqueMatchStatusFiltro(card._display_status, s)) return true;
-      return embarque?.status_recebimento === s || embarque?.status === s;
-    });
+    const matchEmbarque = statusEmbExpandido.some((s) => cardEmbarqueMatchStatusFiltro(card._display_status, s));
     if (!matchPai && !matchEmbarque) return false;
   }
 
@@ -505,7 +496,12 @@ export default function PedidosCompraPage() {
         pedido._display_status === 'Aprovado';
       const ehNecessidade = !!pedido._is_necessidade || pedido._embarque?.tipo === 'Necessidade';
       const aindaNaoRecebido = pedido._display_status !== 'Concluído';
-      const aindaNaoEhAguardandoPagamento = ehNecessidade || !['Aguardando Aprovação Financeira', 'Aguardando Liberação Financeira', 'Aguardando Liberação', 'Aguardando'].includes(pedido._display_status);
+      const aindaNaoEhAguardandoPagamento = ehNecessidade || ![
+        COMPRAS_STATUS_FILTRO_AGUARDANDO_PGTO,
+        'Aguardando Aprovação Financeira',
+        'Aguardando Liberação Financeira',
+        'Aguardando Liberação',
+      ].includes(pedido._display_status);
       return aprovadoFinanceiro && aindaNaoRecebido && aindaNaoEhAguardandoPagamento;
     });
   }, [filtrados]);
