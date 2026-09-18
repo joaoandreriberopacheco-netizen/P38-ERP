@@ -73,4 +73,37 @@ const orfaosParcial = calcularItensOrfaosPedido(pedidoParcial, [embarqueParcial]
 assert.equal(orfaosParcial.length, 1);
 assert.equal(orfaosParcial[0].qtd_pendente, 6);
 
+const pedidoEmTransito = {
+  id: 'p3',
+  itens: [{
+    produto_id: 'prod3',
+    quantidade: 6,
+    quantidade_base: 6,
+    unidade_medida: 'UN',
+    fator_conversao: 1,
+  }],
+};
+
+const embarqueEmTransito = {
+  eta: '2026-09-15',
+  transportadora_nome: 'F/B SOLIMÕES',
+  status_recebimento: 'Pendente',
+  _linhas: [{
+    produto_id: 'prod3',
+    quantidade_embarcada: 6,
+    quantidade_embarcada_base: 6,
+    quantidade_embarcada_apresentacao: 6,
+    quantidade_recebida: 0,
+    fator_conversao: 1,
+    unidade_medida: 'UN',
+  }],
+};
+
+const pctTransito = calcularPercentuaisLogistica(pedidoEmTransito, [embarqueEmTransito]);
+assert.equal(pctTransito.despachado, 100);
+assert.equal(pctTransito.concluido, 0);
+
+const orfaosTransito = calcularItensOrfaosPedido(pedidoEmTransito, [embarqueEmTransito], {});
+assert.equal(orfaosTransito.length, 0, '6/6 despachado sem recepção não é órfão');
+
 console.log('OK — órfãos distinguem despacho de recepção (max embarcado/recebido).');

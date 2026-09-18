@@ -22,7 +22,11 @@ import {
   embarqueExcluidoOperacional as embarqueExcluidoDeNecessidade,
   resolverCodigoEmbarqueExibicao as resolverCodigoEmbarqueNecessidade,
 } from '@/lib/embarqueCodigosExcluidos';
-import { calcularItensOrfaosPedido, qtyEmbarcadaComercialLinha } from '@/lib/embarqueLogisticaHelpers';
+import {
+  calcularItensOrfaosPedido,
+  calcularPercentuaisLogistica,
+  qtyEmbarcadaComercialLinha,
+} from '@/lib/embarqueLogisticaHelpers';
 import { calcValorItensPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { calculateBaseQuantity, commercialQuantityFromBase, getItemCompraExibicaoVitrine } from '@/lib/productUnits';
@@ -228,8 +232,20 @@ export function avaliarNecessidadeComercialPedido(
     : (liberadoPorCascata
       ? calcularPendenciaOrfaosItens(pedido, embarquesDoPedido, produtosMap)
       : []);
-  const pendencias = pendenciasComerciaisRelevantes(pendenciasBrutas);
-  const somaPendente = somaPendenciaComercial(pendencias);
+  let pendencias = pendenciasComerciaisRelevantes(pendenciasBrutas);
+  let somaPendente = somaPendenciaComercial(pendencias);
+
+  // Pedido 100% despachado (ex.: VD9-SQ2 6/6 UN em trânsito) não deve gerar card Necessidade
+  // por falso órfão de unidade — só embarques tipo Necessidade reais mantêm pendência.
+  if (temDespachoReal && pendencias.length > 0) {
+    const { despachado } = calcularPercentuaisLogistica(pedido, embarquesConsiderados);
+    const temSaldoEmbarqueNecessidade = embarquesConsiderados.some(embarqueNecessidadeTemItensPendentes);
+    if (despachado >= 100 && !temSaldoEmbarqueNecessidade) {
+      pendencias = [];
+      somaPendente = 0;
+    }
+  }
+
   const exibir = (temDespachoReal || liberadoPorCascata) && faltaComercialRelevante(pendencias);
 
   return { exibir, pendencias, somaPendente, temDespachoReal, liberadoPorCascata };
