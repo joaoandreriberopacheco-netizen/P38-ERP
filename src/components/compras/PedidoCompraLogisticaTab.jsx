@@ -195,7 +195,7 @@ function ItensOrfaos({ itens, onAcordo }) {
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
           <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
         </span>
-        <span className="text-sm font-medium text-amber-600 dark:text-amber-400">Itens aguardando despacho</span>
+        <span className="text-sm font-medium text-amber-600 dark:text-amber-400">Itens aguardando despacho ou recepção</span>
         <span className="ml-auto text-xs text-muted-foreground">{itens.length} produto(s)</span>
       </div>
       <div className="px-4 py-3 space-y-2.5">
@@ -222,7 +222,7 @@ function ItensOrfaos({ itens, onAcordo }) {
 
 }
 
-export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated, onIrParaRecepcao }) {
+export default function PedidoCompraLogisticaTab({ pedido, produtosMap = {}, onPedidoUpdated, onIrParaRecepcao }) {
   const [embarqueOpen, setEmbarqueOpen] = useState(false);
   const [embarqueEditando, setEmbarqueEditando] = useState(null);
   const [acordoOpen, setAcordoOpen] = useState(false);
@@ -248,8 +248,8 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated, onIr
 
   // Itens órfãos: Necessidade (saldo pós-recepção) + pedido ainda não despachado
   const itensOrfaos = useMemo(
-    () => calcularItensOrfaosAguardandoDespacho(pedido, embarques, totalEmbarcado),
-    [pedido, embarques, totalEmbarcado],
+    () => calcularItensOrfaosAguardandoDespacho(pedido, embarques, totalEmbarcado, produtosMap),
+    [pedido, embarques, totalEmbarcado, produtosMap],
   );
 
   const temOrfaos = itensOrfaos.length > 0;

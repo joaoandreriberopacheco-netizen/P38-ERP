@@ -10,8 +10,6 @@ import {
   calculateBaseQuantity,
   commercialQuantityFromBase,
   getItemCompraExibicaoVitrine,
-  getUnidadeBySiglaCanonical,
-  resolveBoatLogisticsUnit,
 } from '@/lib/productUnits';
 
 function qtyPedidaBaseItem(item = {}) {
@@ -135,30 +133,13 @@ export function qtyEmbarcadaComercialLinha(item = {}) {
  * 2) quantidade do pedido ainda não coberta por despachos reais.
  */
 /**
- * Converte pendência em base (M²) para unidade vitrine/logística (ex.: CX).
+ * Converte pendência em base (M²) para unidade vitrine (CX, PAC…).
  * `qtd_pendente` nos órfãos é sempre em base — evita comparar CX com M².
  */
-function resolveFatorUnidadeLogistica(produto = null, item = {}, unidadeLogistica = 'UN') {
-  const canon = produto ? getUnidadeBySiglaCanonical(produto, unidadeLogistica) : null;
-  return Number(canon?.fator_conversao) || Number(item?.fator_conversao) || 1;
-}
-
 export function qtyPendenteComercialParaExibicao(item = {}, produto = null) {
   const pendenteBase = Number(item.qtd_pendente) || 0;
   if (pendenteBase <= 0.009) {
     return { quantidade: 0, unidade: item.unidade_medida || 'UN' };
-  }
-
-  if (produto) {
-    const unidadeLogistica = resolveBoatLogisticsUnit(
-      produto,
-      item?.unidade_apresentacao || item?.unidade_medida || 'UN',
-    );
-    const fatorLogistica = resolveFatorUnidadeLogistica(produto, item, unidadeLogistica);
-    return {
-      quantidade: commercialQuantityFromBase(pendenteBase, fatorLogistica, unidadeLogistica),
-      unidade: unidadeLogistica,
-    };
   }
 
   const exib = getItemCompraExibicaoVitrine(item, produto);

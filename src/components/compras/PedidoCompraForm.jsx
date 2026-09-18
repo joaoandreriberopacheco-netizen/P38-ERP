@@ -1801,6 +1801,7 @@ export default function PedidoCompraForm({
             {pedido?.id ? (
               <PedidoCompraLogisticaTab
                 pedido={pedidoLogistica || pedido}
+                produtosMap={produtosMapBasico}
                 onIrParaRecepcao={() => setAbaPedidoDesktop('recepcao')}
                 onPedidoUpdated={async () => {
                   const pedidoId = (pedidoLogistica || pedido)?.id;
@@ -1846,7 +1847,7 @@ export default function PedidoCompraForm({
 
             {/* ABA: LOGS */}
             <TabsContent value="logs" className="mt-0">
-              <LogsPedidoCompra pedidoId={pedido?.id} pedido={pedido} />
+              <LogsPedidoCompra pedidoId={pedido?.id} pedido={pedido} produtosMap={produtosMapBasico} />
             </TabsContent>
           </div>
         </Tabs>

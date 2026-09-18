@@ -28,7 +28,7 @@ const TIPO_ICON = {
   'Sistema':      Bot,
 };
 
-export default function LogsPedidoCompra({ pedidoId, pedido }) {
+export default function LogsPedidoCompra({ pedidoId, pedido, produtosMap = {} }) {
   const [logs, setLogs] = useState([]);
   const [embarques, setEmbarques] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -52,7 +52,7 @@ export default function LogsPedidoCompra({ pedidoId, pedido }) {
   }, [pedidoId]);
 
   const embarquesComDivergencia = listarEmbarquesComDivergenciaRecepcao(embarques);
-  const itensOrfaos = pedido ? calcularItensOrfaosPedido(pedido, embarques) : [];
+  const itensOrfaos = pedido ? calcularItensOrfaosPedido(pedido, embarques, produtosMap) : [];
   const temConteudo = logs.length > 0 || embarquesComDivergencia.length > 0 || itensOrfaos.length > 0;
 
   if (loading) {

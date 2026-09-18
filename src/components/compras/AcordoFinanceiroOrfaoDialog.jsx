@@ -30,7 +30,11 @@ export default function AcordoFinanceiroOrfaoDialog({ isOpen, onClose, pedido, i
 
     setLoading(true);
     try {
-      const descricaoItens = itensOrfaos.map(i => `${i.qtd_pendente} ${i.unidade_medida} ${i.produto_nome}`).join(', ');
+      const descricaoItens = itensOrfaos.map((i) => {
+        const qtd = i.qtd_pendente_comercial ?? i.qtd_pendente;
+        const un = i.unidade_pendente_exibicao || i.unidade_medida;
+        return `${qtd} ${un} ${i.produto_nome}`;
+      }).join(', ');
 
       if (tipo === 'saldo_fornecedor') {
         // Cria crédito (receita) vinculado ao fornecedor — saldo a favor da empresa
@@ -102,7 +106,8 @@ export default function AcordoFinanceiroOrfaoDialog({ isOpen, onClose, pedido, i
               <ul className="space-y-0.5">
                 {itensOrfaos.map(item => (
                   <li key={item.produto_id} className="text-[10px] text-amber-600 dark:text-amber-400">
-                    {item.qtd_pendente} {item.unidade_medida} · {item.produto_nome}
+                    {item.qtd_pendente_comercial ?? item.qtd_pendente}{' '}
+                    {item.unidade_pendente_exibicao || item.unidade_medida} · {item.produto_nome}
                   </li>
                 ))}
               </ul>
