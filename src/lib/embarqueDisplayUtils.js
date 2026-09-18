@@ -1,34 +1,12 @@
 /**
  * Código de exibição (AB6-PPQ-A) e ordenação cronológica dos splits.
- * A = primeiro despacho; B, C… seguem a ordem de criação/despacho.
+ * A = primeiro despacho; B, C… seguem a ordem de criação/despacho (nunca o mais recente).
  */
 
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 function normCodigo(value = '') {
   return String(value || '').trim().replace(/\s+/g, '');
-}
-
-/** Código gravado no embarque ou fallback pelo pedido. */
-export function resolveEmbarqueCodigoExibicao(pedido, embarque) {
-  const direto = embarque?.codigo_exibicao || embarque?.dados?.codigo_exibicao;
-  if (direto && normCodigo(direto)) return normCodigo(direto);
-
-  const base = String(pedido?.numero || '').replace(/\s+/g, '');
-  const sufixo = parseSufixoCodigoEmbarque(embarque, pedido);
-  return sufixo ? `${base}-${sufixo}` : base;
-}
-
-/** Letra final do código (A, B, C…). */
-export function parseSufixoCodigoEmbarque(embarque, pedido = {}) {
-  const codigo = embarque?.codigo_exibicao || embarque?.dados?.codigo_exibicao;
-  if (codigo) {
-    const m = normCodigo(codigo).match(/-([A-Z])$/i);
-    if (m) return m[1].toUpperCase();
-  }
-
-  const idx = indiceOrdinalEmbarque(embarque, pedido);
-  return LETTERS[idx] || 'A';
 }
 
 function timestampEmbarque(embarque = {}) {
@@ -41,25 +19,27 @@ function isEmbarqueNecessidadeTipo(embarque = {}) {
   return embarque?.tipo === 'Necessidade';
 }
 
-/** Índice 0-based na sequência A,B,C… (reais primeiro, depois Necessidade). */
-export function indiceOrdinalEmbarque(embarque, pedido = {}) {
-  const ordenados = sortEmbarquesParaExibicao(pedido?._embarques || [], pedido);
-  const idx = ordenados.findIndex((item) => item.id === embarque?.id);
-  return idx >= 0 ? idx : 0;
+function embarqueIdKey(embarque = {}) {
+  return String(embarque?.id || '');
+}
+
+function pedidoComEmbarques(pedido = {}, embarques = []) {
+  const lista = embarques.length ? embarques : (pedido?._embarques || []);
+  return { ...pedido, _embarques: lista };
+}
+
+function sufixoGravadoEmbarque(embarque = {}) {
+  const codigo = embarque?.codigo_exibicao || embarque?.dados?.codigo_exibicao;
+  if (!codigo) return '';
+  const m = normCodigo(codigo).match(/-([A-Z])$/i);
+  return m ? m[1].toUpperCase() : '';
 }
 
 /**
- * Ordena splits para UI: sufixo A→Z quando existir; senão data_embarque/created.
- * Embarques reais antes de Necessidade quando empate de data.
+ * Ordena splits para UI: mais antigo primeiro (A), Necessidade após embarques reais no mesmo instante.
  */
 export function sortEmbarquesParaExibicao(embarques = [], pedido = {}) {
   return [...(embarques || [])].sort((a, b) => {
-    const sa = parseSufixoCodigoEmbarque(a, { ...pedido, _embarques: embarques });
-    const sb = parseSufixoCodigoEmbarque(b, { ...pedido, _embarques: embarques });
-    const na = sa ? sa.charCodeAt(0) : null;
-    const nb = sb ? sb.charCodeAt(0) : null;
-    if (na != null && nb != null && na !== nb) return na - nb;
-
     const ta = timestampEmbarque(a);
     const tb = timestampEmbarque(b);
     if (ta !== tb) return ta - tb;
@@ -68,15 +48,42 @@ export function sortEmbarquesParaExibicao(embarques = [], pedido = {}) {
     const necB = isEmbarqueNecessidadeTipo(b) ? 1 : 0;
     if (necA !== necB) return necA - necB;
 
-    return String(a.id || '').localeCompare(String(b.id || ''));
+    return embarqueIdKey(a).localeCompare(embarqueIdKey(b));
   });
+}
+
+/** Índice 0-based na sequência A,B,C… (cronológico entre todos os splits do pedido). */
+export function indiceOrdinalEmbarque(embarque, pedido = {}) {
+  const embarques = pedido?._embarques || [];
+  if (!embarques.length || !embarqueIdKey(embarque)) return 0;
+  const ordenados = sortEmbarquesParaExibicao(embarques, pedido);
+  const idx = ordenados.findIndex((item) => embarqueIdKey(item) === embarqueIdKey(embarque));
+  return idx >= 0 ? idx : ordenados.length;
+}
+
+/** Letra final do código (A, B, C…) — posição cronológica, não o sufixo gravado errado. */
+export function parseSufixoCodigoEmbarque(embarque, pedido = {}) {
+  const embarques = pedido?._embarques || [];
+  if (embarques.length && embarqueIdKey(embarque)) {
+    const idx = indiceOrdinalEmbarque(embarque, pedidoComEmbarques(pedido, embarques));
+    return LETTERS[idx] || sufixoGravadoEmbarque(embarque) || 'A';
+  }
+  return sufixoGravadoEmbarque(embarque) || 'A';
+}
+
+/** Código de exibição — requer pedido._embarques com todos os splits para sufixo correcto. */
+export function resolveEmbarqueCodigoExibicao(pedido, embarque) {
+  const base = String(pedido?.numero || '').replace(/\s+/g, '');
+  const sufixo = parseSufixoCodigoEmbarque(embarque, pedido);
+  return sufixo ? `${base}-${sufixo}` : base;
 }
 
 /** Próxima letra para novo despacho (ignora duplicados de sufixo). */
 export function proximaLetraEmbarquePedido(embarques = [], pedido = {}) {
+  const ctx = pedidoComEmbarques(pedido, embarques);
   const usadas = new Set(
-    (embarques || [])
-      .map((emb) => parseSufixoCodigoEmbarque(emb, { ...pedido, _embarques: embarques }))
+    sortEmbarquesParaExibicao(embarques, ctx)
+      .map((emb) => parseSufixoCodigoEmbarque(emb, ctx))
       .filter(Boolean),
   );
   for (const letter of LETTERS) {

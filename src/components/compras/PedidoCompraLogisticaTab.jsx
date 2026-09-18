@@ -39,7 +39,10 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
   const totalItens = roundToTwoDecimals(
     itensEmbarque.reduce((s, i) => s + qtyEmbarcadaComercialLinha(i), 0)
   );
-  const codigoExibicao = resolveEmbarqueCodigoExibicao(pedido, embarque);
+  const codigoExibicao = resolveEmbarqueCodigoExibicao(
+    { ...pedido, _embarques: pedido?._embarques || [] },
+    embarque,
+  );
   const statusRecebimento = embarque.status_recebimento || embarque.status_recebimento_embarque || 'Pendente';
   const podeExcluir = !['Recebido OK', 'Recebido Parcial', 'Concluído', 'Concluído OK', 'Concluído com Divergência'].includes(statusRecebimento);
   const podeEditarDespacho = podeEditarDespachoEmbarque(embarque);

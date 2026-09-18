@@ -12,6 +12,7 @@ import { hydrateEmbarquesPedidoFromSql, getEmbarqueItensLinhas, hydrateEmbarques
 import { refreshPedidoCompraComLogistica } from '@/lib/fetchPedidoCompraItens';
 import { filterEmbarquesVisiveisParaPedido } from '@/components/compras/embarqueFilters';
 import { podeEditarDespachoEmbarque } from '@/lib/embarqueLogisticaHelpers';
+import { resolveEmbarqueCodigoExibicao, sortEmbarquesParaExibicao } from '@/lib/embarqueDisplayUtils';
 import RecepcionarEmbarque from '@/components/compras/RecepcionarEmbarque';
 import InformarEmbarque from '@/components/compras/InformarEmbarque';
 
@@ -180,9 +181,10 @@ export default function AbaRecepção({ pedido, onPedidoUpdated }) {
   );
 
   const embarques = useMemo(() => {
-    if (Array.isArray(pedidoAtual?._embarques)) return pedidoAtual._embarques.filter(Boolean);
-    return [];
-  }, [pedidoAtual?._embarques]);
+    if (!Array.isArray(pedidoAtual?._embarques)) return [];
+    const lista = pedidoAtual._embarques.filter(Boolean);
+    return sortEmbarquesParaExibicao(lista, pedidoAtual);
+  }, [pedidoAtual]);
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -225,13 +227,16 @@ export default function AbaRecepção({ pedido, onPedidoUpdated }) {
 
   return (
     <div className="space-y-3">
-      {embarques.map((embarque, idx) => {
+      {embarques.map((embarque) => {
         const statusRecebimento = embarque.status_recebimento || embarque.status_recebimento_embarque || 'Pendente';
         const dataEmbarque = embarque.data_embarque ? new Date(embarque.data_embarque).toLocaleDateString('pt-BR') : '-';
         const eta = embarque.eta ? new Date(embarque.eta).toLocaleDateString('pt-BR') : '-';
         const itensEmbarque = getEmbarqueItensLinhas(embarque);
         const qtdItens = itensEmbarque.length || 0;
-        const codigoExibicao = embarque.codigo_exibicao || `${pedidoAtual?.numero || pedido?.numero || '-----'}-${String.fromCharCode(65 + idx)}`;
+        const codigoExibicao = resolveEmbarqueCodigoExibicao(
+          { ...pedidoAtual, _embarques: embarques },
+          embarque,
+        );
 
         const movimentosDoEmbarque = movimentos.filter((mov) => {
           const porCodigoEmbarque =

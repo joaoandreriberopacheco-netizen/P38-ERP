@@ -532,7 +532,10 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
         transportadoras,
       );
       const embarquesExistentes = Array.isArray(pedidoAtual._embarques) ? pedidoAtual._embarques : [];
-      const letraExibicao = proximaLetraEmbarquePedido(embarquesExistentes, pedidoAtual);
+      const letraExibicao = proximaLetraEmbarquePedido(
+        embarquesExistentes,
+        { ...pedidoAtual, _embarques: embarquesExistentes },
+      );
       const itensEmbarcados = (itensPedido || [])
         .filter(item => selectedItems[item.produto_id])
         .map(item => {

@@ -60,12 +60,15 @@ function resolveStatusTransitoOuConclusao(embarque) {
   return embarqueTemSaldoPendente(embarque) ? 'Despachado' : 'Concluído';
 }
 
-function getDisplayEmbarqueCode(pedido, embarque) {
-  return resolveEmbarqueCodigoExibicao(pedido, embarque);
+function getDisplayEmbarqueCode(pedido, embarque, embarquesDoPedido = []) {
+  return resolveEmbarqueCodigoExibicao(
+    { ...pedido, _embarques: embarquesDoPedido.length ? embarquesDoPedido : (pedido?._embarques || []) },
+    embarque,
+  );
 }
 
-function getDisplayEmbarqueOrdinal(embarque, pedido) {
-  return ordinalEmbarqueLabel(embarque, pedido);
+function getDisplayEmbarqueOrdinal(embarque, pedido, embarquesDoPedido = []) {
+  return ordinalEmbarqueLabel(embarque, { ...pedido, _embarques: embarquesDoPedido });
 }
 
 export function pedidoNaoConcluido(pedido = {}) {
@@ -363,14 +366,14 @@ export function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {})
             });
           }));
 
-      const displayCode = getDisplayEmbarqueCode(pedido, embarque);
+      const displayCode = getDisplayEmbarqueCode(pedido, embarque, embarquesDoPedido);
       const displayStatus = getBorrowedStatus(pedido, embarque, produtosMap, embarquesDoPedido);
       const cardBase = {
         ...pedido,
         _virtual_key: `${pedido.id}_${embarque.id}`,
         _embarque: embarque,
         _display_code: displayCode,
-        _display_ordinal: getDisplayEmbarqueOrdinal(embarque, { ...pedido, _embarques: embarquesDoPedido }),
+        _display_ordinal: getDisplayEmbarqueOrdinal(embarque, pedido, embarquesDoPedido),
         _display_status: displayStatus,
         _display_valor: hasLinkedItems(embarque) || ehNecessidade
           ? getDisplayValorEmbarque(pedido, embarque, produtosMap, embarquesDoPedido)
