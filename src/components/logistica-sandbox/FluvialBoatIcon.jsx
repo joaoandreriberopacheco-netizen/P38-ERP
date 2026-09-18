@@ -1,19 +1,17 @@
 import React from 'react';
 
 /**
- * Silhueta de barco vista de cima — estilo do rascunho (trapézio fino).
- * rotation em graus; aponta na direção do fluxo no mapa.
+ * Silhueta de barco vista de cima — traço fino, estilo radar/tracking.
  */
 export default function FluvialBoatIcon({
   size = 16,
   rotation = 0,
   stroke = '#ffffff',
   strokeWidth = 1,
-  fill = '#000000',
+  fill = 'transparent',
   className = '',
 }) {
   const half = size / 2;
-  const bow = half * 0.55;
 
   return (
     <svg
@@ -25,18 +23,26 @@ export default function FluvialBoatIcon({
       style={{ transform: `rotate(${rotation}deg)` }}
     >
       <path
-        d={`M 0 ${-bow} L ${half * 0.72} ${bow * 0.55} L ${half * 0.38} ${bow} L ${-half * 0.38} ${bow} L ${-half * 0.72} ${bow * 0.55} Z`}
+        d={fluvialBoatIconPath(1)}
         fill={fill}
         stroke={stroke}
         strokeWidth={strokeWidth}
         strokeLinejoin="round"
+        strokeLinecap="round"
       />
     </svg>
   );
 }
 
-/** Versão SVG pura para uso dentro de <svg> do mapa (sem wrapper). */
+/** Versão SVG pura para uso dentro de <svg> do mapa. Casco fino, não “sprite” de jogo. */
 export function fluvialBoatIconPath(scale = 1) {
   const s = scale;
-  return `M 0 ${-2.8 * s} L ${2 * s} ${1.5 * s} L ${1 * s} ${2.8 * s} L ${-1 * s} ${2.8 * s} L ${-2 * s} ${1.5 * s} Z`;
+  return [
+    `M 0 ${-3.2 * s}`,
+    `C ${0.9 * s} ${-1.4 * s} ${1.1 * s} ${0.8 * s} ${0.55 * s} ${2.4 * s}`,
+    `L 0 ${1.9 * s}`,
+    `L ${-0.55 * s} ${2.4 * s}`,
+    `C ${-1.1 * s} ${0.8 * s} ${-0.9 * s} ${-1.4 * s} 0 ${-3.2 * s}`,
+    'Z',
+  ].join(' ');
 }

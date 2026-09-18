@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { Anchor, ChevronDown, List, Map, Plus, Search } from 'lucide-react';
@@ -95,26 +95,38 @@ function BoatsMapLayer({
 }) {
   const [selectedFleetKey, setSelectedFleetKey] = useState(null);
   const [hoveredFleetKey, setHoveredFleetKey] = useState(null);
-  const [detailOpen, setDetailOpen] = useState(false);
 
   const selectedEvento = useMemo(() => {
-    if (!fleet.length) return null;
-    if (selectedFleetKey) {
-      return fleet.find((item) => (item.fleetKey || item.id) === selectedFleetKey) || null;
+    if (!fleet.length || !selectedFleetKey) return null;
+    return fleet.find((item) => (item.fleetKey || item.id) === selectedFleetKey) || null;
+  }, [fleet, selectedFleetKey]);
+
+  useEffect(() => {
+    if (!fleet.length) {
+      setSelectedFleetKey(null);
+      return;
     }
-    return null;
+    const stillVisible = fleet.some((item) => (item.fleetKey || item.id) === selectedFleetKey);
+    if (!stillVisible) {
+      const first = fleet[0];
+      setSelectedFleetKey(first.fleetKey || first.id);
+    }
   }, [fleet, selectedFleetKey]);
 
   const handleSelect = (evento) => {
     if (!evento) {
       setSelectedFleetKey(null);
-      setDetailOpen(false);
       return;
     }
-    const key = evento.fleetKey || evento.id;
-    setSelectedFleetKey(key);
-    setDetailOpen(true);
+    setSelectedFleetKey(evento.fleetKey || evento.id);
   };
+
+  const formattedDate = useMemo(() => {
+    if (!simulationDate) return 'Hoje';
+    const [year, month, day] = simulationDate.split('-');
+    if (!year || !month || !day) return simulationDate;
+    return `${day}/${month}/${year}`;
+  }, [simulationDate]);
 
   return (
     <div className="fluvial-command-center fluvial-premium-root">
@@ -125,75 +137,72 @@ function BoatsMapLayer({
           hoveredFleetKey={hoveredFleetKey}
           onSelect={handleSelect}
           onHover={setHoveredFleetKey}
-          simulationDate={simulationDate}
           loading={loading}
           embedded
         />
       </div>
 
-      <div className="fluvial-command-toolbar fluvial-premium-glass">
-        <div className="min-w-[160px] flex-1">
-          <label className="mb-1 block text-[10px] uppercase tracking-[0.18em] text-white/38">Data simulada</label>
-          <input
-            type="date"
-            value={simulationDate}
-            onChange={(e) => onSimulationDateChange(e.target.value)}
-            className="w-full rounded-lg border border-white/12 bg-black/40 px-3 py-1.5 text-sm text-white outline-none"
-          />
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {[
-            { value: 'todos', label: 'Todos' },
-            { value: 'com_vinculo', label: 'Com vínculo' },
-            { value: 'sem_vinculo', label: 'Sem vínculo' },
-          ].map((item) => (
-            <button
-              key={item.value}
-              type="button"
-              onClick={() => onEmbarqueLinkFilterChange(item.value)}
-              className={`rounded-full border px-3 py-1.5 text-xs tracking-wide transition ${embarqueLinkFilter === item.value ? 'border-white bg-white text-black' : 'border-white/18 text-white/55 hover:border-white/35'}`}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-2 pb-0.5">
-          <span className="hidden text-[10px] uppercase tracking-[0.14em] text-white/35 sm:inline">
+      <div className="fluvial-command-chrome">
+        <div className="fluvial-command-chrome__left">
+          <label className="fluvial-date-chip relative">
+            <span>{formattedDate}</span>
+            <input
+              type="date"
+              value={simulationDate}
+              onChange={(e) => onSimulationDateChange(e.target.value)}
+              aria-label="Data simulada"
+            />
+          </label>
+          <span className="fluvial-command-chrome__meta hidden sm:inline">
             {fleet.length} embarcação{fleet.length !== 1 ? 'ões' : ''}
           </span>
+        </div>
+
+        <div className="fluvial-command-chrome__right">
+          <div className="fluvial-segment">
+            {[
+              { value: 'todos', label: 'Todos' },
+              { value: 'com_vinculo', label: 'Com vínculo' },
+              { value: 'sem_vinculo', label: 'Sem vínculo' },
+            ].map((item) => (
+              <button
+                key={item.value}
+                type="button"
+                onClick={() => onEmbarqueLinkFilterChange(item.value)}
+                className={`fluvial-segment__btn ${embarqueLinkFilter === item.value ? 'fluvial-segment__btn--active' : ''}`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
           {onClose ? (
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-full border border-white/18 px-3 py-1.5 text-xs text-white/70 transition hover:border-white/35 hover:text-white"
-            >
+            <button type="button" onClick={onClose} className="fluvial-ghost-btn">
               Voltar à lista
             </button>
           ) : null}
         </div>
       </div>
 
-      <div className="fluvial-command-sidebar hidden md:block">
-        <FluvialBoatListSidebar
-          eventos={fleet}
-          selectedFleetKey={selectedFleetKey}
-          onSelect={handleSelect}
-          floating
-        />
+      <div className="fluvial-command-rail fluvial-command-rail--left">
+        {selectedEvento ? (
+          <div className="fluvial-command-detail-slot">
+            <FluvialMapDetailPanel
+              evento={selectedEvento}
+              onClose={() => setSelectedFleetKey(null)}
+            />
+          </div>
+        ) : null}
       </div>
 
-      {detailOpen && selectedEvento ? (
-        <div className="fluvial-command-detail">
-          <FluvialMapDetailPanel
-            evento={selectedEvento}
-            onClose={() => {
-              setDetailOpen(false);
-              setSelectedFleetKey(null);
-            }}
-            floating
+      <div className="fluvial-command-rail fluvial-command-rail--right hidden lg:block">
+        <div className="fluvial-command-list-slot">
+          <FluvialBoatListSidebar
+            eventos={fleet}
+            selectedFleetKey={selectedFleetKey}
+            onSelect={handleSelect}
           />
         </div>
-      ) : null}
+      </div>
     </div>
   );
 }
