@@ -1,0 +1,68 @@
+@keyframes fluvial-route-flow {
+  to {
+    stroke-dashoffset: -12;
+  }
+}
+
+@keyframes fluvial-pulse-ring {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.18);
+  }
+}
+
+@keyframes fluvial-panel-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.fluvial-premium-root {
+  font-family: 'Barlow', sans-serif;
+  font-weight: 400;
+  color: #f5f5f5;
+}
+
+.fluvial-premium-glass {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(18px);
+}
+
+.fluvial-premium-toolbar {
+  background: linear-gradient(180deg, rgba(8, 8, 8, 0.92), rgba(8, 8, 8, 0.72));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+}
+
+.fluvial-route-animated {
+  stroke-dasharray: 3 2;
+  animation: fluvial-route-flow 14s linear infinite;
+}
+
+.fluvial-marker-pulse {
+  animation: fluvial-pulse-ring 2.8s ease-in-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+.fluvial-detail-panel {
+  animation: fluvial-panel-in 0.28s ease-out;
+}
+
+.fluvial-map-vignette {
+  background: radial-gradient(ellipse at center, transparent 42%, rgba(0, 0, 0, 0.72) 100%);
+}

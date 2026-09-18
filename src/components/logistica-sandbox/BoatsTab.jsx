@@ -23,6 +23,7 @@ import NewTransportadoraDialog from '@/components/logistica-sandbox/NewTransport
 import FluvialRiverMap from '@/components/logistica-sandbox/FluvialRiverMap';
 import FluvialBoatListSidebar from '@/components/logistica-sandbox/FluvialBoatListSidebar';
 import FluvialMapDetailPanel from '@/components/logistica-sandbox/FluvialMapDetailPanel';
+import '@/components/logistica-sandbox/fluvial-map-premium.css';
 
 const LAYER_OPTIONS = [
   { value: 'lista', label: 'Lista', icon: List },
@@ -107,18 +108,18 @@ function BoatsMapLayer({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-black font-['Barlow',sans-serif]">
-      <div className="flex flex-wrap items-center gap-3 border-b border-white/10 bg-[#050505] px-4 py-3">
+    <div className="fluvial-premium-root fixed inset-0 z-50 flex flex-col bg-[#020202]">
+      <div className="fluvial-premium-toolbar flex flex-wrap items-end gap-3 px-4 py-3">
         <div className="min-w-[180px] flex-1">
-          <label className="mb-1 block text-[10px] uppercase tracking-[0.18em] text-white/40">Data simulada</label>
+          <label className="mb-1 block text-[10px] uppercase tracking-[0.2em] text-white/38">Data simulada</label>
           <input
             type="date"
             value={simulationDate}
             onChange={(e) => onSimulationDateChange(e.target.value)}
-            className="w-full rounded-xl border border-white/15 bg-black px-3 py-2 text-sm text-white"
+            className="fluvial-premium-glass w-full rounded-xl px-3 py-2 text-sm text-white outline-none"
           />
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 pb-0.5">
           {[
             { value: 'todos', label: 'Todos' },
             { value: 'com_vinculo', label: 'Com vínculo' },
@@ -128,7 +129,7 @@ function BoatsMapLayer({
               key={item.value}
               type="button"
               onClick={() => onEmbarqueLinkFilterChange(item.value)}
-              className={`rounded-full border px-3 py-1.5 text-xs transition ${embarqueLinkFilter === item.value ? 'border-white bg-white text-black' : 'border-white/20 text-white/60'}`}
+              className={`rounded-full border px-3 py-1.5 text-xs tracking-wide transition ${embarqueLinkFilter === item.value ? 'border-white bg-white text-black' : 'border-white/18 text-white/55 hover:border-white/35'}`}
             >
               {item.label}
             </button>
