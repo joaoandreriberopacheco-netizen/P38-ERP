@@ -681,18 +681,19 @@ export default function FiltrosCompras({
 
         <Drawer open={showFilters} onOpenChange={setShowFilters}>
           <DrawerContent className="max-h-[92vh] border-0 rounded-t-[28px] bg-card px-4 pb-0 dark:bg-card">
-            <DrawerHeader className="px-0 pb-1 text-left shrink-0">
+            <DrawerHeader className="px-0 pb-1 text-left">
               <DrawerTitle className="font-glacial font-light uppercase tracking-wide text-foreground">Filtros</DrawerTitle>
               {activeFilterCount > 0 ? (
                 <p className="text-xs font-light text-muted-foreground">{activeFilterCount} filtro(s) ativo(s)</p>
               ) : null}
             </DrawerHeader>
 
-            <div className="p38-stage-panel-scroll overflow-y-auto pb-4 -mx-1 px-1 max-h-[calc(92vh-9rem)]">
+            {/* Evitar p38-stage-panel-scroll aqui: flex+min-h-0 colapsava o painel a altura 0 no drawer mobile */}
+            <div className="overflow-y-auto overscroll-contain pb-4 -mx-1 px-1 max-h-[calc(92vh-10.5rem)]">
               <FiltrosComprasPainel {...painelProps} layout="drawer" />
             </div>
 
-            <div className={cn('sticky bottom-0 -mx-4 bg-card/95 px-4 py-3 backdrop-blur-sm dark:bg-card/95', COMPRAS_DIVIDER_TOP)}>
+            <div className={cn('-mx-4 bg-card/95 px-4 py-3 backdrop-blur-sm dark:bg-card/95', COMPRAS_DIVIDER_TOP)}>
               <div className="flex gap-2">
                 <button
                   type="button"
