@@ -1,16 +1,11 @@
 import { rebuildEmbarqueItensMirror } from '@/lib/embarqueItemContract';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import {
-  resolveEmbarqueLinhaFator,
   resolveEmbarqueQuantidadeBase,
   resolveEmbarqueQuantidadeComercial,
 } from '@/lib/embarqueQuantityResolve';
 import { getEmbarqueItensLinhas, hydrateEmbarquesPedidoFromSql } from '@/lib/fetchEmbarqueItens';
-import {
-  calculateBaseQuantity,
-  commercialQuantityFromBase,
-  getItemCompraExibicaoVitrine,
-} from '@/lib/productUnits';
+import { commercialQuantityFromBase, getItemCompraExibicaoVitrine } from '@/lib/productUnits';
 
 function qtyPedidaBaseItem(item = {}) {
   return resolveEmbarqueQuantidadeBase(
@@ -149,25 +144,6 @@ export function qtyPendenteComercialParaExibicao(item = {}, produto = null) {
   };
 }
 
-function embarqueTemDespachoVinculado(embarque = {}) {
-  return !!(
-    embarque?.data_embarque ||
-    embarque?.eta ||
-    embarque?.transportadora_id ||
-    embarque?.transportadora_nome
-  );
-}
-
-function qtyPendenteBaseLinhaEmbarque(linha = {}) {
-  const qBase = qtyEmbarcadaBaseLinha(linha);
-  if (qBase > MIN_SALDO_PENDENTE_BASE) return qBase;
-
-  const qCom = qtyEmbarcadaComercialLinha(linha);
-  if (qCom <= MIN_SALDO_PENDENTE_BASE) return 0;
-
-  return roundToTwoDecimals(calculateBaseQuantity(qCom, resolveEmbarqueLinhaFator(linha)));
-}
-
 export function calcularItensOrfaosAguardandoDespacho(
   pedido,
   embarques = [],
@@ -175,7 +151,6 @@ export function calcularItensOrfaosAguardandoDespacho(
   produtosMap = {},
 ) {
   const pendentePorProduto = {};
-  const produtosComNecessidade = new Set();
 
   (embarques || [])
     .filter((emb) => emb?.tipo === 'Necessidade')
@@ -183,23 +158,10 @@ export function calcularItensOrfaosAguardandoDespacho(
       getEmbarqueItensLinhas(emb).forEach((linha) => {
         const pid = linha?.produto_id;
         if (!pid) return;
-        const q = qtyPendenteBaseLinhaEmbarque(linha);
-        if (q > MIN_SALDO_PENDENTE_BASE) {
-          produtosComNecessidade.add(pid);
+        const q = qtyEmbarcadaBaseLinha(linha);
+        if (q > 0) {
           pendentePorProduto[pid] = roundToTwoDecimals((pendentePorProduto[pid] || 0) + q);
         }
-      });
-    });
-
-  (embarques || [])
-    .filter((emb) => emb?.tipo !== 'Necessidade' && embarqueTemDespachoVinculado(emb))
-    .forEach((emb) => {
-      getEmbarqueItensLinhas(emb).forEach((linha) => {
-        const pid = linha?.produto_id;
-        if (!pid || produtosComNecessidade.has(pid)) return;
-        const saldoRecepcao = resolveSaldoPendenteEmbarqueBase(linha);
-        if (saldoRecepcao <= MIN_SALDO_PENDENTE_BASE) return;
-        pendentePorProduto[pid] = roundToTwoDecimals((pendentePorProduto[pid] || 0) + saldoRecepcao);
       });
     });
 
