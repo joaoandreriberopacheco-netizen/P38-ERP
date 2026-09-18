@@ -168,7 +168,7 @@ export default function ItinerarioFluvial() {
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-6 overflow-x-hidden">
-      <div className="max-w-4xl mx-auto w-full px-3 py-4 md:p-6 space-y-4 md:space-y-6 overflow-x-hidden">
+      <div className={`mx-auto w-full px-3 py-4 md:p-6 space-y-4 md:space-y-6 overflow-x-hidden ${routeType === 'Boats' ? 'max-w-7xl' : 'max-w-4xl'}`}>
         <LogisticaSandboxHeader />
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
