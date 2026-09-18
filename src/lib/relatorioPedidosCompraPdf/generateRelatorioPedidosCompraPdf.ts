@@ -299,7 +299,8 @@ const comprasAccentFromDisplayStatusPdf = (displayStatus) => {
   if (status === 'Concluído' || status === 'Concluido') return 'success';
   if (status === 'Despachado') return 'citrus';
   if (status === 'Aguardando' || status.includes('Aguard') || status.includes('Aprova')) return 'warning';
-  if (status === 'Necessidade' || status === 'Cancelado') return 'danger';
+  if (status === 'Pendente' || status === 'Necessidade') return 'warning';
+  if (status === 'Cancelado') return 'danger';
   return 'muted';
 };
 
@@ -307,7 +308,7 @@ const getComprasDisplayStatusLabelPdf = (displayStatus) => {
   if (displayStatus === 'Aguardando Liberação Financeira' || displayStatus === 'Aguardando Aprovação Financeira') {
     return 'Aguard. Pgto';
   }
-  if (displayStatus === 'Necessidade') return 'Necessidade';
+  if (displayStatus === 'Pendente' || displayStatus === 'Necessidade') return 'Pendente';
   return displayStatus || '-';
 };
 const getDataRelatorio = (pedido) => pedido._display_date || pedido.data_prevista_entrega || pedido.data_emissao || pedido.created_date;
@@ -901,7 +902,8 @@ const STATUS_PDF_COLORS = {
   'Aguardando Pagamento':  { dot: [217,111,85],  pillBg: [250,230,225], pillText: [156,66,40]   },
   'Aprovado':              { dot: [132,204,22],  pillBg: [236,252,203], pillText: [77,124,15]   },
   'Despachado':            { dot: [78,189,180],  pillBg: [224,247,245], pillText: [26,122,115]  },
-  'Necessidade':           { dot: [239,68,68],   pillBg: [254,226,226], pillText: [185,28,28]   },
+  'Pendente':              { dot: [217,111,85],  pillBg: [250,230,225], pillText: [156,66,40]   },
+  'Necessidade':           { dot: [217,111,85],  pillBg: [250,230,225], pillText: [156,66,40]   },
   'Em Recepcao':           { dot: [78,189,180],  pillBg: [224,247,245], pillText: [26,122,115]  },
   'Em Conferencia':        { dot: [78,189,180],  pillBg: [224,247,245], pillText: [26,122,115]  },
   'Em Transito':           { dot: [78,189,180],  pillBg: [224,247,245], pillText: [26,122,115]  },

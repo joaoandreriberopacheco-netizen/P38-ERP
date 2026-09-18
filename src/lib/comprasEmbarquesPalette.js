@@ -53,21 +53,24 @@ export const COMPRAS_STATUS_CONFIG = {
   'Aguardando Liberação Financeira': COMPRAS_STATUS_STYLE.aguardando,
   'Aguardando Liberação': COMPRAS_STATUS_STYLE.aguardando,
   Aprovado: COMPRAS_APROVADO_STYLE,
-  Necessidade: { dot: 'bg-red-500 dark:bg-red-500/70', pill: COMPRAS_PILL.danger },
+  Pendente: COMPRAS_STATUS_STYLE.aguardando,
+  Necessidade: COMPRAS_STATUS_STYLE.aguardando,
   Despachado: COMPRAS_STATUS_STYLE.despachado,
   Concluído: { dot: 'bg-emerald-600 dark:bg-emerald-600/70', pill: 'bg-emerald-50 dark:bg-emerald-900/25 text-emerald-700 dark:text-emerald-500' },
   Cancelado: { dot: 'bg-rose-600 dark:bg-rose-600/70', pill: 'bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-500' },
 };
 
 export function resolveComprasStatusConfig(displayStatus, fallbackStatus) {
-  return COMPRAS_STATUS_CONFIG[displayStatus] || COMPRAS_STATUS_CONFIG[fallbackStatus] || COMPRAS_STATUS_CONFIG.Rascunho;
+  const normalized = displayStatus === 'Necessidade' ? 'Pendente' : displayStatus;
+  const normalizedFallback = fallbackStatus === 'Necessidade' ? 'Pendente' : fallbackStatus;
+  return COMPRAS_STATUS_CONFIG[normalized] || COMPRAS_STATUS_CONFIG[normalizedFallback] || COMPRAS_STATUS_CONFIG.Rascunho;
 }
 
 export function getComprasDisplayStatusLabel(displayStatus) {
   if (displayStatus === 'Aguardando Liberação Financeira' || displayStatus === 'Aguardando Aprovação Financeira') {
     return 'Aguard. Pgto';
   }
-  if (displayStatus === 'Necessidade') return 'Necessidade';
+  if (displayStatus === 'Pendente' || displayStatus === 'Necessidade') return 'Pendente';
   return displayStatus;
 }
 
@@ -88,7 +91,8 @@ export const COMPRAS_STATUS_BORDER = {
   'Aguardando Liberação Financeira': 'border-l-[#D96F55] dark:border-l-[#D96F55]',
   'Aguardando Liberação': 'border-l-[#D96F55] dark:border-l-[#D96F55]',
   Aprovado: 'border-l-lime-500 dark:border-l-[#636B2F]/55',
-  Necessidade: 'border-l-red-600 dark:border-l-red-600/70',
+  Pendente: 'border-l-[#D96F55] dark:border-l-[#D96F55]',
+  Necessidade: 'border-l-[#D96F55] dark:border-l-[#D96F55]',
   Despachado: 'border-l-[#e8b824] dark:border-l-[#4ECDC4]',
   Concluído: 'border-l-emerald-600 dark:border-l-emerald-500',
   Cancelado: 'border-l-rose-600 dark:border-l-rose-500',
@@ -96,7 +100,8 @@ export const COMPRAS_STATUS_BORDER = {
 };
 
 export function comprasStatusBorderClass(displayStatus, fallbackStatus) {
-  const status = String(displayStatus || fallbackStatus || '').trim();
+  const raw = String(displayStatus || fallbackStatus || '').trim();
+  const status = raw === 'Necessidade' ? 'Pendente' : raw;
   if (COMPRAS_STATUS_BORDER[status]) return COMPRAS_STATUS_BORDER[status];
   return comprasAccentBorderClass(comprasAccentFromDisplayStatus(status));
 }
@@ -108,7 +113,7 @@ export function comprasAccentFromDisplayStatus(displayStatus) {
   if (status === 'Concluído') return 'success';
   if (status === 'Despachado') return 'citrus';
   if (status === 'Aguardando' || status.includes('Aguard') || status.includes('Aprovação')) return 'warning';
-  if (status === 'Necessidade') return 'danger';
+  if (status === 'Pendente' || status === 'Necessidade') return 'warning';
   if (status === 'Cancelado') return 'danger';
   return 'muted';
 }
@@ -119,7 +124,8 @@ export const COMPRAS_FILTRO_STATUS_PEDIDO = [
   { codigo: 'Aguardando Liberação', label: 'Aguard. pagamento', chip: 'bg-[#D96F55]/15 text-[#9c4228] dark:bg-[#D96F55]/20 dark:text-[#D96F55]' },
   { codigo: 'Aguardando', label: 'Aguard. embarque', chip: 'bg-[#D96F55]/15 text-[#9c4228] dark:bg-[#D96F55]/20 dark:text-[#D96F55]' },
   { codigo: 'Aprovado', label: 'Aprovado', chip: COMPRAS_PILL.aprovado },
-  { codigo: 'Necessidade', label: 'Necessidade', chip: 'bg-red-50 text-red-800 dark:bg-red-950/30 dark:text-red-400' },
+  { codigo: 'Pendente', label: 'Pendente', chip: 'bg-[#D96F55]/15 text-[#9c4228] dark:bg-[#D96F55]/20 dark:text-[#D96F55]' },
+  { codigo: 'Necessidade', label: 'Pendente', chip: 'bg-[#D96F55]/15 text-[#9c4228] dark:bg-[#D96F55]/20 dark:text-[#D96F55]' },
   { codigo: 'Despachado', label: 'Despachado', chip: 'bg-[#e8b824]/15 text-[#a8942e] dark:bg-[#4ECDC4]/20 dark:text-[#4ECDC4]' },
   { codigo: 'Concluído', label: 'Concluído', chip: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/25 dark:text-emerald-500' },
   { codigo: 'Cancelado', label: 'Cancelado', chip: 'bg-red-50 text-red-800 dark:bg-red-950/30 dark:text-red-500' },
@@ -130,7 +136,8 @@ export const COMPRAS_FILTRO_STATUS_PICKER = [
   { codigo: 'Rascunho', label: 'Rascunho', chip: 'bg-muted text-foreground/90' },
   { codigo: 'Aguardando Liberação', label: 'Aguard. pagamento', chip: 'bg-[#D96F55]/15 text-[#9c4228] dark:bg-[#D96F55]/20 dark:text-[#D96F55]' },
   { codigo: 'Aprovado', label: 'Aprovado', chip: COMPRAS_PILL.aprovado },
-  { codigo: 'Necessidade', label: 'Necessidade', chip: 'bg-red-50 text-red-800 dark:bg-red-950/30 dark:text-red-400' },
+  { codigo: 'Pendente', label: 'Pendente', chip: 'bg-[#D96F55]/15 text-[#9c4228] dark:bg-[#D96F55]/20 dark:text-[#D96F55]' },
+  { codigo: 'Necessidade', label: 'Pendente', chip: 'bg-[#D96F55]/15 text-[#9c4228] dark:bg-[#D96F55]/20 dark:text-[#D96F55]' },
   { codigo: 'Aguardando', label: 'Pend. entrega', chip: 'bg-[#D96F55]/15 text-[#9c4228] dark:bg-[#D96F55]/20 dark:text-[#D96F55]' },
   { codigo: 'Despachado', label: 'Despachado', chip: 'bg-[#e8b824]/15 text-[#a8942e] dark:bg-[#4ECDC4]/20 dark:text-[#4ECDC4]' },
   { codigo: 'Concluído', label: 'Concluído', chip: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/25 dark:text-emerald-500' },

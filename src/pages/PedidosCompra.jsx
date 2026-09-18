@@ -108,6 +108,7 @@ const STATUS_EMBARQUE_VIRTUAIS = [
   'Aguardando Liberação Financeira',
   'Aguardando Liberação',
   'Aprovado',
+  'Pendente',
   'Necessidade',
   'Despachado',
   'Concluído',

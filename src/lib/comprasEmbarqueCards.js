@@ -50,6 +50,14 @@ function hasDespachoVinculado(embarque) {
   return embarqueTemDespachoInformado(embarque);
 }
 
+/** Despachado só com transporte/datas; sem despacho → Pendente (saldo a embarcar). */
+function resolveStatusTransitoOuConclusao(embarque) {
+  if (!hasDespachoVinculado(embarque)) {
+    return embarqueTemSaldoPendente(embarque) || hasLinkedItems(embarque) ? 'Pendente' : 'Concluído';
+  }
+  return embarqueTemSaldoPendente(embarque) ? 'Despachado' : 'Concluído';
+}
+
 function getDisplayEmbarqueCode(pedido, embarque) {
   return resolveEmbarqueCodigoExibicao(pedido, embarque);
 }
@@ -89,9 +97,12 @@ export function getBorrowedStatus(pedido, embarque, produtosMap = {}, embarquesD
     return 'Concluído';
   }
 
-  // Split Necessidade sem transporte/datas (ex.: AB6-PPQ-C) — pendente de novo despacho, não "Despachado".
+  // Split Necessidade sem transporte/datas — aguardando novo despacho (label: Pendente).
   if (ehNecessidade && !temDespachoVinculado) {
-    return exibirNecessidade && quantidadePendente > 0 ? 'Necessidade' : 'Aguardando';
+    const temPendencia =
+      (exibirNecessidade && quantidadePendente > 0)
+      || embarqueNecessidadeTemItensPendentes(embarque);
+    return temPendencia ? 'Pendente' : 'Aguardando';
   }
 
   // Embarque real com despacho informado, aguardando recepção (ex.: AB6-PPQ-B).
@@ -106,7 +117,7 @@ export function getBorrowedStatus(pedido, embarque, produtosMap = {}, embarquesD
 
   if (embarqueExcluidoDeNecessidade(pedido, embarque)) {
     if (temDespachoVinculado) {
-      return embarqueTemSaldoPendente(embarque) ? 'Despachado' : 'Concluído';
+      return resolveStatusTransitoOuConclusao(embarque);
     }
     return 'Aguardando';
   }
@@ -117,7 +128,7 @@ export function getBorrowedStatus(pedido, embarque, produtosMap = {}, embarquesD
     || statusRecebimento === 'Recebido Parcial'
     || (!recepcaoPendente && embarque.status === 'Concluído')
   ) {
-    return embarqueTemSaldoPendente(embarque) ? 'Despachado' : 'Concluído';
+    return resolveStatusTransitoOuConclusao(embarque);
   }
 
   if (!ehNecessidade && !temDespachoVinculado) {
@@ -389,6 +400,7 @@ export function cardEmbarqueContaEmTransito(card = {}) {
     pedidoLiberadoParaLogistica(card)
     || status === 'Aprovado'
     || status === 'Despachado'
+    || status === 'Pendente'
     || status === 'Necessidade';
   if (!aprovadoFinanceiro) return false;
 
