@@ -39,6 +39,16 @@ export function qtyDespachadaEfetivaBaseLinha(item = {}) {
   return roundToTwoDecimals(Math.max(emb, rec));
 }
 
+/** Despacho informado (transporte e/ou datas) — sem isto não é «Despachado». */
+export function embarqueTemDespachoInformado(embarque = {}) {
+  return !!(
+    embarque?.data_embarque
+    || embarque?.eta
+    || embarque?.transportadora_id
+    || embarque?.transportadora_nome
+  );
+}
+
 /** Mínimo em unidade base (M², UN fator 1…) para contar saldo pendente real. */
 export const MIN_SALDO_PENDENTE_BASE = 0.009;
 

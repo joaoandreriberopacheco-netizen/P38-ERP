@@ -5,7 +5,12 @@ import {
   getTotalLinhaPedidoCompra,
 } from '@/lib/pedidoCompraFinanceiro';
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
-import { calcularPercentuaisLogistica, embarqueRecepcaoDocumentalCompleta, embarqueTemSaldoPendente } from '@/lib/embarqueLogisticaHelpers';
+import {
+  calcularPercentuaisLogistica,
+  embarqueRecepcaoDocumentalCompleta,
+  embarqueTemDespachoInformado,
+  embarqueTemSaldoPendente,
+} from '@/lib/embarqueLogisticaHelpers';
 import { getEmbarqueDataRecebimento } from '@/lib/embarqueRecebimentoDate';
 import {
   buildEmbarqueVirtualNecessidade,
@@ -42,7 +47,7 @@ function hasLinkedItems(embarque) {
 }
 
 function hasDespachoVinculado(embarque) {
-  return !!(embarque?.data_embarque || embarque?.eta || embarque?.transportadora_id || embarque?.transportadora_nome);
+  return embarqueTemDespachoInformado(embarque);
 }
 
 function getDisplayEmbarqueCode(pedido, embarque) {
@@ -84,17 +89,23 @@ export function getBorrowedStatus(pedido, embarque, produtosMap = {}, embarquesD
     return 'Concluído';
   }
 
-  // Despachado aguardando recepção (inclui split Necessidade com itens já lançados).
+  // Split Necessidade sem transporte/datas (ex.: AB6-PPQ-C) — pendente de novo despacho, não "Despachado".
+  if (ehNecessidade && !temDespachoVinculado) {
+    return exibirNecessidade && quantidadePendente > 0 ? 'Necessidade' : 'Aguardando';
+  }
+
+  // Embarque real com despacho informado, aguardando recepção (ex.: AB6-PPQ-B).
   if (
-    recepcaoPendente
+    !ehNecessidade
+    && recepcaoPendente
     && embarqueTemSaldoPendente(embarque)
-    && (temDespachoVinculado || (ehNecessidade && temItensAssociados) || temItensAssociados)
+    && temDespachoVinculado
   ) {
     return 'Despachado';
   }
 
   if (embarqueExcluidoDeNecessidade(pedido, embarque)) {
-    if (temDespachoVinculado || temItensAssociados) {
+    if (temDespachoVinculado) {
       return embarqueTemSaldoPendente(embarque) ? 'Despachado' : 'Concluído';
     }
     return 'Aguardando';
@@ -107,10 +118,6 @@ export function getBorrowedStatus(pedido, embarque, produtosMap = {}, embarquesD
     || (!recepcaoPendente && embarque.status === 'Concluído')
   ) {
     return embarqueTemSaldoPendente(embarque) ? 'Despachado' : 'Concluído';
-  }
-
-  if (ehNecessidade && !temDespachoVinculado) {
-    return exibirNecessidade && quantidadePendente > 0 ? 'Necessidade' : 'Aguardando';
   }
 
   if (!ehNecessidade && !temDespachoVinculado) {
@@ -137,7 +144,7 @@ export function getBorrowedStatus(pedido, embarque, produtosMap = {}, embarquesD
     return 'Rascunho';
   }
 
-  if (temDespachoVinculado || temItensAssociados) {
+  if (temDespachoVinculado) {
     return 'Despachado';
   }
 
@@ -290,13 +297,21 @@ export function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {})
       ? buildEmbarqueVirtualNecessidade(pedido, embarquesDoPedido, produtosMap)
       : null;
 
+    const embarquesNecessidadeLista = embarquesNecessidade.filter(
+      (embarque) => embarqueTemDespachoInformado(embarque) || embarqueNecessidadeTemItensPendentes(embarque),
+    );
+
     const embarquesRenderizados = embarquesDoPedido.length > 0
-      ? [...embarquesReais, ...embarquesNecessidade, ...(necessidadeVirtual ? [necessidadeVirtual] : [])]
+      ? [...embarquesReais, ...embarquesNecessidadeLista, ...(necessidadeVirtual ? [necessidadeVirtual] : [])]
         .filter((embarque) => {
           if (embarqueExcluidoDeNecessidade(pedido, embarque)) {
             return !isNecessidadeRenderizada(embarque);
           }
           if (!isNecessidadeRenderizada(embarque)) return true;
+          // Split Necessidade sem despacho informado → card Necessidade (não despacho vazio).
+          if (!embarqueTemDespachoInformado(embarque) && !embarqueNecessidadeTemItensPendentes(embarque)) {
+            return false;
+          }
           if (!pedidoPermiteCardNecessidade(pedido)) return false;
           return pedidoDeveExibirCardNecessidade(pedido, embarquesDoPedido, produtosMap);
         })

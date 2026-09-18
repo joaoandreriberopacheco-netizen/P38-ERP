@@ -373,7 +373,8 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
         })
         .filter(Boolean);
 
-      const proximaLetra = String.fromCharCode(65 + outrosEmbarques.length + 1);
+      const { proximaLetraEmbarquePedido } = await import('@/lib/embarqueDisplayUtils');
+      const proximaLetra = proximaLetraEmbarquePedido(outrosEmbarques, pedido);
       const embarqueOrfaoMeta = itensOrfaosNorm.length > 0 ? {
         pedido_compra_id: pedido.id,
         pedido_compra_numero: pedido.numero,

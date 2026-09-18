@@ -15,6 +15,7 @@ import {
   qtyEmbarcadaComercialLinha,
   calcularItensOrfaosAguardandoDespacho,
   calcularTotalDespachadoBasePorProduto,
+  embarqueTemDespachoInformado,
 } from '@/lib/embarqueLogisticaHelpers';
 import { resolveEmbarqueCodigoExibicao, sortEmbarquesParaExibicao } from '@/lib/embarqueDisplayUtils';
 import { toast } from 'sonner';
@@ -226,7 +227,7 @@ export default function PedidoCompraLogisticaTab({ pedido, produtosMap = {}, onP
     () => sortEmbarquesParaExibicao(pedido?._embarques || [], pedido),
     [pedido, pedido?._embarques],
   );
-  const embarquesComDespacho = embarques.filter((emb) => !!(emb?.data_embarque || emb?.eta || emb?.transportadora_id || emb?.transportadora_nome));
+  const embarquesComDespacho = embarques.filter((emb) => embarqueTemDespachoInformado(emb));
   const embarquesComItensAssociados = embarquesComDespacho.filter((emb) => getEmbarqueItensLinhas(emb).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0));
   const percentuaisCalculados = useMemo(
     () => calcularPercentuaisLogistica(pedido, embarques),
@@ -254,7 +255,7 @@ export default function PedidoCompraLogisticaTab({ pedido, produtosMap = {}, onP
   );
 
   const temOrfaos = itensOrfaos.length > 0;
-  const semEmbarques = embarques.length === 0;
+  const semDespachosInformados = embarquesComDespacho.length === 0;
 
   const handleNovoEmbarque = () => {
     setEmbarqueEditando(null);
@@ -303,9 +304,9 @@ export default function PedidoCompraLogisticaTab({ pedido, produtosMap = {}, onP
           <span className="text-sm font-semibold text-foreground/90 font-quicksand">
             Despachos
           </span>
-          {embarques.length > 0 &&
+          {embarquesComDespacho.length > 0 &&
           <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-              {embarques.length} nível(is)
+              {embarquesComDespacho.length} nível(is)
             </span>
           }
           {/* LED âmbar se houver órfãos */}
@@ -315,7 +316,7 @@ export default function PedidoCompraLogisticaTab({ pedido, produtosMap = {}, onP
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
             </span>
           }
-          {!temOrfaos && embarques.length > 0 &&
+          {!temOrfaos && embarquesComDespacho.length > 0 &&
           <CheckCircle2 className="w-3.5 h-3.5 text-teal-500" />
           }
         </div>
@@ -335,7 +336,7 @@ export default function PedidoCompraLogisticaTab({ pedido, produtosMap = {}, onP
       </div>
 
       {/* Estado vazio */}
-      {semEmbarques &&
+      {semDespachosInformados &&
       <div className="flex flex-col items-center justify-center py-10 rounded-2xl bg-muted/50 text-center space-y-2">
           <Clock className="w-8 h-8 text-muted-foreground dark:text-muted-foreground" />
           <p className="text-sm text-muted-foreground">Nenhum despacho registrado</p>
@@ -343,8 +344,8 @@ export default function PedidoCompraLogisticaTab({ pedido, produtosMap = {}, onP
         </div>
       }
 
-      {/* Cards de embarques por nível */}
-      {embarques.map((emb, idx) =>
+      {/* Cards de embarques por nível — só splits com transporte/ETA informados */}
+      {embarquesComDespacho.map((emb, idx) =>
       <EmbarqueCard
         key={emb.id}
         embarque={emb}
@@ -355,11 +356,11 @@ export default function PedidoCompraLogisticaTab({ pedido, produtosMap = {}, onP
 
       )}
 
-      {/* Itens órfãos — exibidos abaixo dos cards */}
-      {!semEmbarques && temEmbarqueReal && <ItensOrfaos itens={itensOrfaos} onAcordo={temOrfaos ? () => setAcordoOpen(true) : undefined} />}
+      {/* Itens órfãos / necessidade sem despacho (ex.: saldo AB6-PPQ-C) */}
+      {(temEmbarqueReal || temOrfaos) && <ItensOrfaos itens={itensOrfaos} onAcordo={temOrfaos ? () => setAcordoOpen(true) : undefined} />}
 
       {/* Todos despachados */}
-      {!semEmbarques && !temOrfaos &&
+      {!semDespachosInformados && !temOrfaos &&
       <div className="flex items-center gap-2 rounded-2xl px-4 py-3 bg-teal-50 dark:bg-teal-900/20">
           <CheckCircle2 className="w-4 h-4 text-teal-500 flex-shrink-0" />
           <span className="text-xs font-medium text-teal-700 dark:text-teal-300">
