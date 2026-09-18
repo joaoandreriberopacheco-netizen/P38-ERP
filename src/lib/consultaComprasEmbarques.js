@@ -222,9 +222,9 @@ export function calcConsultaValorEmbarque(card, itens, { modo = 'pendente' } = {
 export const calcConsultaValorPendenteEmbarque = calcConsultaValorEmbarque;
 
 export function enrichEmbarqueParaConsulta(card, produtosMap = {}) {
-  const itensDisplay = Array.isArray(card._display_itens) ? card._display_itens : [];
-  const itensIntegral = buildConsultaItensEmbarque(card, produtosMap, { modo: 'integral' });
-  const itens = itensDisplay.length > 0 ? itensDisplay : itensIntegral;
+  // Sempre recalcula itens (qtd + valor proporcional ao split) — não reutilizar _display_itens,
+  // que traz o total integral da linha do pedido e desalinha do cabeçalho do card.
+  const itens = buildConsultaItensEmbarque(card, produtosMap, { modo: 'integral' });
   const displayValor = Number(card._display_valor);
   const valorIntegral = Number.isFinite(displayValor) && displayValor >= 0
     ? roundToTwoDecimals(displayValor)

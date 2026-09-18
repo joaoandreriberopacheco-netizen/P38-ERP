@@ -17,8 +17,9 @@ import {
   pedidoPermiteCardNecessidade,
   quantidadePendenteNecessidadePedido,
 } from '@/lib/pedidoCompraNecessidade';
-import { calcValorEmbarqueCard, calcValorEmbarcadoPedido } from '@/lib/embarqueValorFinanceiro';
-import { resolveEmbarqueQuantidadeComercial } from '@/lib/embarqueQuantityResolve';
+import { calcValorEmbarqueCard, calcValorEmbarcadoPedido, resolveValorLinhaEmbarqueProporcional } from '@/lib/embarqueValorFinanceiro';
+import { resolveEmbarqueQuantidadeBase, resolveEmbarqueQuantidadeComercial } from '@/lib/embarqueQuantityResolve';
+import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { getItemCompraExibicaoVitrine } from '@/lib/productUnits';
 import { buildConsultaItensEmbarque, calcConsultaValorEmbarque } from '@/lib/consultaComprasEmbarques';
 
@@ -150,25 +151,45 @@ function getEmbarqueDisplayDate(pedido) {
 
 function normalizeDisplayItemCommercial(produto = null, pedidoItem = {}, item = {}) {
   const linhaMerged = { ...pedidoItem, ...item };
+  const exibPedido = getItemCompraExibicaoVitrine(pedidoItem, produto);
   const exib = getItemCompraExibicaoVitrine(linhaMerged, produto);
-  const totalLinha = getTotalLinhaPedidoCompra(linhaMerged);
+  const lineTotalFull = getTotalLinhaPedidoCompra(pedidoItem || {});
   const quantidadeEmbarcada = resolveEmbarqueQuantidadeComercial(linhaMerged, 'embarcada');
   const quantidadePedida = resolveEmbarqueQuantidadeComercial(
     { ...pedidoItem, ...item },
     'pedida',
-  ) || exib.quantidade;
+  ) || exibPedido.quantidade;
+
+  const qtyKind = quantidadeEmbarcada > 0 ? 'embarcada' : 'pedida';
+  const temFatiaEmbarque = quantidadeEmbarcada > 0;
+  const quantidadeExibir = temFatiaEmbarque ? quantidadeEmbarcada : exibPedido.quantidade;
+  const valorLinha = temFatiaEmbarque
+    ? resolveValorLinhaEmbarqueProporcional(
+      pedidoItem || {},
+      { ...(pedidoItem || {}), ...item },
+      lineTotalFull,
+      qtyKind,
+      produto,
+    )
+    : lineTotalFull;
+  const qtyBaseEmbarque = temFatiaEmbarque
+    ? resolveEmbarqueQuantidadeBase(linhaMerged, qtyKind)
+    : exibPedido.quantidade_base;
 
   return {
     produto_id: item.produto_id || pedidoItem?.produto_id,
     produto_nome: item.produto_nome || pedidoItem?.produto_nome,
-    quantidade: exib.quantidade,
+    quantidade: quantidadeExibir,
     quantidade_embarcada: quantidadeEmbarcada,
     quantidade_pedida: quantidadePedida,
-    quantidade_base: exib.quantidade_base,
+    quantidade_base: qtyBaseEmbarque > 0 ? qtyBaseEmbarque : exib.quantidade_base,
     fator_conversao: exib.fator_conversao,
     unidade_medida: exib.unidade_medida,
-    total: totalLinha,
-    valor_total_item: totalLinha,
+    total: valorLinha,
+    valor_total_item: valorLinha,
+    preco_unitario: quantidadeExibir > 0
+      ? roundToTwoDecimals(valorLinha / quantidadeExibir)
+      : exib.preco_unitario,
   };
 }
 
