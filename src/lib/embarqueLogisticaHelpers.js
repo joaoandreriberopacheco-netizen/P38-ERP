@@ -1,11 +1,18 @@
 import { rebuildEmbarqueItensMirror } from '@/lib/embarqueItemContract';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import {
+  resolveEmbarqueLinhaFator,
   resolveEmbarqueQuantidadeBase,
   resolveEmbarqueQuantidadeComercial,
 } from '@/lib/embarqueQuantityResolve';
 import { getEmbarqueItensLinhas, hydrateEmbarquesPedidoFromSql } from '@/lib/fetchEmbarqueItens';
-import { commercialQuantityFromBase, getItemCompraExibicaoVitrine } from '@/lib/productUnits';
+import {
+  calculateBaseQuantity,
+  commercialQuantityFromBase,
+  getItemCompraExibicaoVitrine,
+  getUnidadeBySiglaCanonical,
+  resolveBoatLogisticsUnit,
+} from '@/lib/productUnits';
 
 function qtyPedidaBaseItem(item = {}) {
   return resolveEmbarqueQuantidadeBase(
@@ -131,16 +138,53 @@ export function qtyEmbarcadaComercialLinha(item = {}) {
  * Converte pendência em base (M²) para unidade vitrine/logística (ex.: CX).
  * `qtd_pendente` nos órfãos é sempre em base — evita comparar CX com M².
  */
+function resolveFatorUnidadeLogistica(produto = null, item = {}, unidadeLogistica = 'UN') {
+  const canon = produto ? getUnidadeBySiglaCanonical(produto, unidadeLogistica) : null;
+  return Number(canon?.fator_conversao) || Number(item?.fator_conversao) || 1;
+}
+
 export function qtyPendenteComercialParaExibicao(item = {}, produto = null) {
   const pendenteBase = Number(item.qtd_pendente) || 0;
   if (pendenteBase <= 0.009) {
     return { quantidade: 0, unidade: item.unidade_medida || 'UN' };
   }
+
+  if (produto) {
+    const unidadeLogistica = resolveBoatLogisticsUnit(
+      produto,
+      item?.unidade_apresentacao || item?.unidade_medida || 'UN',
+    );
+    const fatorLogistica = resolveFatorUnidadeLogistica(produto, item, unidadeLogistica);
+    return {
+      quantidade: commercialQuantityFromBase(pendenteBase, fatorLogistica, unidadeLogistica),
+      unidade: unidadeLogistica,
+    };
+  }
+
   const exib = getItemCompraExibicaoVitrine(item, produto);
   return {
     quantidade: commercialQuantityFromBase(pendenteBase, exib.fator_conversao, exib.unidade_medida),
     unidade: exib.unidade_medida || item.unidade_medida || 'UN',
   };
+}
+
+function embarqueTemDespachoVinculado(embarque = {}) {
+  return !!(
+    embarque?.data_embarque ||
+    embarque?.eta ||
+    embarque?.transportadora_id ||
+    embarque?.transportadora_nome
+  );
+}
+
+function qtyPendenteBaseLinhaEmbarque(linha = {}) {
+  const qBase = qtyEmbarcadaBaseLinha(linha);
+  if (qBase > MIN_SALDO_PENDENTE_BASE) return qBase;
+
+  const qCom = qtyEmbarcadaComercialLinha(linha);
+  if (qCom <= MIN_SALDO_PENDENTE_BASE) return 0;
+
+  return roundToTwoDecimals(calculateBaseQuantity(qCom, resolveEmbarqueLinhaFator(linha)));
 }
 
 export function calcularItensOrfaosAguardandoDespacho(
@@ -150,6 +194,7 @@ export function calcularItensOrfaosAguardandoDespacho(
   produtosMap = {},
 ) {
   const pendentePorProduto = {};
+  const produtosComNecessidade = new Set();
 
   (embarques || [])
     .filter((emb) => emb?.tipo === 'Necessidade')
@@ -157,10 +202,23 @@ export function calcularItensOrfaosAguardandoDespacho(
       getEmbarqueItensLinhas(emb).forEach((linha) => {
         const pid = linha?.produto_id;
         if (!pid) return;
-        const q = qtyEmbarcadaBaseLinha(linha);
-        if (q > 0) {
+        const q = qtyPendenteBaseLinhaEmbarque(linha);
+        if (q > MIN_SALDO_PENDENTE_BASE) {
+          produtosComNecessidade.add(pid);
           pendentePorProduto[pid] = roundToTwoDecimals((pendentePorProduto[pid] || 0) + q);
         }
+      });
+    });
+
+  (embarques || [])
+    .filter((emb) => emb?.tipo !== 'Necessidade' && embarqueTemDespachoVinculado(emb))
+    .forEach((emb) => {
+      getEmbarqueItensLinhas(emb).forEach((linha) => {
+        const pid = linha?.produto_id;
+        if (!pid || produtosComNecessidade.has(pid)) return;
+        const saldoRecepcao = resolveSaldoPendenteEmbarqueBase(linha);
+        if (saldoRecepcao <= MIN_SALDO_PENDENTE_BASE) return;
+        pendentePorProduto[pid] = roundToTwoDecimals((pendentePorProduto[pid] || 0) + saldoRecepcao);
       });
     });
 
