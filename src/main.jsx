@@ -59,13 +59,18 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   // </React.StrictMode>,
 )
 
-/** Remover após executar `await window.__corrigirRecepcaoWX7A5N(true)` com sessão Base44 (stock WX7-A5N). */
+/** Remover após executar one-offs com sessão Base44. */
 if (import.meta.env.DEV) {
   import('@/api/base44Client').then(({ base44 }) =>
-    import('@/lib/oneOffCorrigirRecepcaoPedido.js').then((m) => {
-      window.__corrigirRecepcaoPedido = (opts) => m.corrigirRecepcaoPedido(base44, opts);
+    Promise.all([
+      import('@/lib/oneOffCorrigirRecepcaoPedido.js'),
+      import('@/lib/oneOffRecepcionarPedidoArbitrario.js'),
+    ]).then(([corr, recep]) => {
+      window.__corrigirRecepcaoPedido = (opts) => corr.corrigirRecepcaoPedido(base44, opts);
       window.__corrigirRecepcaoWX7A5N = (apply = false) =>
-        m.corrigirRecepcaoPedido(base44, { numero: 'WX7-A5N', apply: Boolean(apply) });
+        corr.corrigirRecepcaoPedido(base44, { numero: 'WX7-A5N', apply: Boolean(apply) });
+      window.__recepcionarPedidoArbitrario = (opts) => recep.recepcionarPedidoArbitrario(base44, opts);
+      window.__recepcionarDT88B8 = (apply = false) => recep.recepcionarDT88B8(base44, apply);
     })
   );
 }

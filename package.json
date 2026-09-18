@@ -77,6 +77,7 @@
     "auth:enable-google": "node scripts/enable-supabase-google-auth.mjs",
     "retificar:5r8b3": "node scripts/retificar-embarque-5r8b3-once.mjs",
     "corrigir:recepcao": "node scripts/corrigir-recepcao-pedido.mjs",
+    "recepcionar:pedido": "node scripts/recepcionar-pedido-arbitrario.mjs",
     "compras:normalizar-rascunho-desconto": "node scripts/normalizar-pedidos-compra-rascunho-desconto.mjs",
     "compras:audit-linhas-sql": "node scripts/audit-compras-linhas-sql.mjs",
     "compras:migrar-pci-legacy": "node scripts/migrar-pedido-compra-itens-legacy.mjs",
