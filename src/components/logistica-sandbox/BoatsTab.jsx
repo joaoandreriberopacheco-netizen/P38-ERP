@@ -159,6 +159,7 @@ function BoatsMapLayer({
 
       <FluvialDockStrip
         title="Tabatinga"
+        subtitle="Porto Voyager"
         side="left"
         eventos={tabatingaDock}
         selectedFleetKey={selectedFleetKey}
@@ -166,6 +167,7 @@ function BoatsMapLayer({
       />
       <FluvialDockStrip
         title="Manaus"
+        subtitle="Terminal leste"
         side="right"
         eventos={manausDock}
         selectedFleetKey={selectedFleetKey}

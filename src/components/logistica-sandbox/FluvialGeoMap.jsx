@@ -55,7 +55,8 @@ export default function FluvialGeoMap({
     layerRef.current = L.tileLayer(tile.url, {
       attribution: tile.attribution,
       maxZoom: 12,
-      subdomains: 'abcd',
+      subdomains: tile.subdomains || 'abc',
+      className: tile.darkFilter ? 'fluvial-osm-tiles--dark' : '',
     }).addTo(map);
 
     routeRef.current = L.polyline(FLUVIAL_SOLIMOES_WAYPOINTS, {
@@ -71,7 +72,7 @@ export default function FluvialGeoMap({
       weight: 1,
       fillColor: mapTheme === 'dark' ? '#111' : '#fff',
       fillOpacity: 0.9,
-    }).bindTooltip('Tabatinga', { permanent: false, direction: 'top' }).addTo(map);
+    }).bindTooltip('Tabatinga · Porto Voyager', { permanent: false, direction: 'top' }).addTo(map);
 
     L.circleMarker([FLUVIAL_MANAUS.lat, FLUVIAL_MANAUS.lng], {
       radius: 5,
@@ -101,7 +102,8 @@ export default function FluvialGeoMap({
     layerRef.current = L.tileLayer(tile.url, {
       attribution: tile.attribution,
       maxZoom: 12,
-      subdomains: 'abcd',
+      subdomains: tile.subdomains || 'abc',
+      className: tile.darkFilter ? 'fluvial-osm-tiles--dark' : '',
     }).addTo(map);
 
     if (routeRef.current) {

@@ -4,6 +4,7 @@ import FluvialVesselAvatar from '@/components/logistica-sandbox/FluvialVesselAva
 
 export default function FluvialDockStrip({
   title,
+  subtitle,
   eventos = [],
   selectedFleetKey,
   onSelect,
@@ -11,7 +12,10 @@ export default function FluvialDockStrip({
 }) {
   return (
     <div className={`fluvial-dock-strip fluvial-dock-strip--${side}`}>
-      <p className="fluvial-dock-strip__title">{title}</p>
+      <div className="fluvial-dock-strip__header">
+        <p className="fluvial-dock-strip__title">{title}</p>
+        {subtitle ? <p className="fluvial-dock-strip__subtitle">{subtitle}</p> : null}
+      </div>
       <div className="fluvial-dock-strip__slots">
         {eventos.length === 0 ? (
           <p className="fluvial-dock-strip__empty">Vazio</p>

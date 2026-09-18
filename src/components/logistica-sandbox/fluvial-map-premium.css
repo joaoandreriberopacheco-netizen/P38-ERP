@@ -247,6 +247,10 @@
   z-index: 1;
 }
 
+.fluvial-geo-map .fluvial-osm-tiles--dark {
+  filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.95) saturate(0.85);
+}
+
 .fluvial-geo-map .leaflet-control-zoom a {
   background: rgba(10, 10, 10, 0.72);
   color: #fff;
@@ -285,25 +289,32 @@
   color: #111;
 }
 
-/* Docas laterais */
+/* Docas laterais — inspiração terminal fluvial (píer / pátio) */
 .fluvial-dock-strip {
   position: absolute;
   top: 72px;
   bottom: 16px;
   z-index: 30;
-  width: 52px;
+  width: 58px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 8px 6px;
-  border-radius: 12px;
-  background: rgba(8, 8, 8, 0.55);
+  padding: 10px 6px;
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(42, 34, 28, 0.78) 0%, rgba(24, 20, 17, 0.82) 100%);
+  border: 1px solid rgba(180, 150, 110, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
 
 .fluvial-theme-light .fluvial-dock-strip {
-  background: rgba(255, 255, 255, 0.82);
+  background:
+    linear-gradient(180deg, rgba(232, 220, 200, 0.92) 0%, rgba(210, 195, 175, 0.88) 100%);
+  border-color: rgba(120, 95, 70, 0.2);
 }
 
 .fluvial-dock-strip--left {
@@ -314,19 +325,46 @@
   right: 12px;
 }
 
+.fluvial-dock-strip__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(180, 150, 110, 0.18);
+}
+
 .fluvial-dock-strip__title {
   font-size: 9px;
   text-align: center;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.72);
   writing-mode: vertical-rl;
   transform: rotate(180deg);
   margin: 0 auto;
+  font-weight: 500;
+}
+
+.fluvial-dock-strip__subtitle {
+  font-size: 7px;
+  text-align: center;
+  letter-spacing: 0.04em;
+  color: rgba(210, 185, 150, 0.55);
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  margin: 0 auto;
+  max-height: 72px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .fluvial-theme-light .fluvial-dock-strip__title {
-  color: rgba(0, 0, 0, 0.45);
+  color: rgba(40, 32, 24, 0.75);
+}
+
+.fluvial-theme-light .fluvial-dock-strip__subtitle {
+  color: rgba(80, 65, 48, 0.55);
 }
 
 .fluvial-dock-strip__slots {

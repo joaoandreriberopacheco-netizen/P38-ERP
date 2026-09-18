@@ -81,36 +81,49 @@ function firstConsonantFrom(word, start = 1) {
   return word[Math.min(start, word.length - 1)] || 'X';
 }
 
-function lastConsonant(word) {
-  for (let i = word.length - 1; i >= 0; i -= 1) {
-    const char = word[i];
-    if (/[BCDFGHJKLMNPQRSTVWXYZ]/.test(char)) return char;
-  }
-  return word[word.length - 1] || 'X';
+function isShortLeadWord(word = '') {
+  const clean = String(word).replace(/\./g, '');
+  return clean.length > 0 && clean.length <= 3;
 }
 
+/**
+ * Siglas operacionais da frota (3 caracteres).
+ * Ex.: Vitória Regia → VIT; Banzeiro → BAN; M. Monteiro 2 → MM2; Rio Negro → RNG.
+ */
 export function getEmbarcacaoInitials(evento = {}) {
   const rawName = evento.embarcacao_nome || evento.transportadora_nome || '';
   const nome = normalizeBoatName(normalizeEmbarcacaoDisplayName(rawName) || rawName);
-  const words = nome.split(/\s+/).filter(Boolean);
+  const tokens = nome.split(/\s+/).filter(Boolean);
 
-  if (words.length >= 3) {
-    return words.slice(0, 3).map((word) => word[0]).join('');
+  let suffixNum = '';
+  const words = [...tokens];
+  if (words.length > 0 && /^\d+$/.test(words[words.length - 1])) {
+    suffixNum = words.pop();
   }
 
-  if (words.length === 2) {
-    const [first, second] = words;
-    return `${first[0] || 'X'}${second[0] || 'X'}${firstConsonantFrom(second, 1)}`;
+  if (words.length === 0) {
+    return suffixNum ? suffixNum.padStart(3, '0').slice(0, 3) : '---';
   }
 
   if (words.length === 1) {
-    const word = words[0];
-    if (word.length <= 3) return word.padEnd(3, 'X');
-    const mid = word[Math.floor(word.length / 2)] || word[1];
-    return `${word[0]}${mid}${lastConsonant(word)}`;
+    return words[0].slice(0, 3).padEnd(3, 'X');
   }
 
-  return '---';
+  const [first, second] = words;
+
+  if (isShortLeadWord(first) && second) {
+    const lead = first.replace(/\./g, '');
+    const a = lead[0] || 'X';
+    const b = second[0] || 'X';
+    if (suffixNum) return `${a}${b}${suffixNum}`.slice(0, 3);
+    return `${a}${b}${firstConsonantFrom(second, 1)}`;
+  }
+
+  if (suffixNum) {
+    return `${first.slice(0, 2)}${suffixNum}`.slice(0, 3);
+  }
+
+  return first.slice(0, 3).padEnd(3, 'X');
 }
 
 export function pointOnQuadraticBezier(t, { x1, y1, cx, cy, x2, y2 }) {

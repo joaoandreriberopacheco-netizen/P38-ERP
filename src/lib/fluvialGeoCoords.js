@@ -18,14 +18,19 @@ export const FLUVIAL_MAP_BOUNDS = [
   [FLUVIAL_MANAUS.lat + 0.35, FLUVIAL_MANAUS.lng + 0.45],
 ];
 
+/** Tiles OSM raster — sem API key (opção B). */
 export const FLUVIAL_TILE_URLS = {
   dark: {
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; OpenStreetMap &copy; CARTO',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    subdomains: 'abc',
+    darkFilter: true,
   },
   light: {
-    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; OpenStreetMap &copy; CARTO',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    subdomains: 'abc',
+    darkFilter: false,
   },
 };
 
