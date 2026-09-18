@@ -266,9 +266,17 @@ function pedidoNaoConcluido(pedido = {}) {
   return status !== 'Concluído' && !statusReceb.startsWith('Concluído');
 }
 
+/**
+ * Card Necessidade pode existir mesmo com recepção "Concluída OK" no embarque principal,
+ * enquanto o pedido não estiver encerrado (status Concluído) e houver órfãos relevantes.
+ */
+export function pedidoPermiteCardNecessidade(pedido = {}) {
+  return String(pedido?.status || '').trim() !== 'Concluído';
+}
+
 /** Embarque virtual quando ainda não existe registro tipo Necessidade no BD. */
 export function buildEmbarqueVirtualNecessidade(pedido, embarquesDoPedido = [], produtosMap = {}) {
-  if (!pedidoNaoConcluido(pedido)) return null;
+  if (!pedidoPermiteCardNecessidade(pedido)) return null;
 
   const { exibir, pendencias } = avaliarNecessidadeComercialPedido(pedido, embarquesDoPedido, produtosMap);
   if (!exibir || !pendencias.length) return null;

@@ -14,10 +14,12 @@ import {
   embarqueNecessidadeTemItensPendentes,
   isNecessidadeRenderizada,
   pedidoDeveExibirCardNecessidade,
+  pedidoPermiteCardNecessidade,
   quantidadePendenteNecessidadePedido,
 } from '@/lib/pedidoCompraNecessidade';
 import { calcValorEmbarqueCard, calcValorEmbarcadoPedido } from '@/lib/embarqueValorFinanceiro';
-import { commercialQuantityFromBase, getItemCompraExibicaoVitrine } from '@/lib/productUnits';
+import { resolveEmbarqueQuantidadeComercial } from '@/lib/embarqueQuantityResolve';
+import { getItemCompraExibicaoVitrine } from '@/lib/productUnits';
 import { buildConsultaItensEmbarque, calcConsultaValorEmbarque } from '@/lib/consultaComprasEmbarques';
 
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -70,10 +72,6 @@ export function pedidoNaoConcluido(pedido = {}) {
 export function getBorrowedStatus(pedido, embarque, produtosMap = {}, embarquesDoPedido = []) {
   if (!embarque) return pedido?.status || 'Rascunho';
 
-  if (!pedidoNaoConcluido(pedido)) {
-    return 'Concluído';
-  }
-
   const temDespachoVinculado = hasDespachoVinculado(embarque);
   const statusRecebimento = embarque.status_recebimento;
   const temItensAssociados = hasLinkedItems(embarque);
@@ -83,6 +81,10 @@ export function getBorrowedStatus(pedido, embarque, produtosMap = {}, embarquesD
     : 0;
   const ehNecessidade = isNecessidadeRenderizada(embarque);
   const precisaPreenchimento = ehNecessidade && !temDespachoVinculado && exibirNecessidade && quantidadePendente > 0;
+
+  if (!pedidoNaoConcluido(pedido) && !(ehNecessidade && exibirNecessidade && quantidadePendente > 0)) {
+    return 'Concluído';
+  }
 
   if (embarqueRecepcaoDocumentalCompleta(embarque)) {
     return 'Concluído';
@@ -150,33 +152,18 @@ function normalizeDisplayItemCommercial(produto = null, pedidoItem = {}, item = 
   const linhaMerged = { ...pedidoItem, ...item };
   const exib = getItemCompraExibicaoVitrine(linhaMerged, produto);
   const totalLinha = getTotalLinhaPedidoCompra(linhaMerged);
-
-  const qEmbInput = Number(item?.quantidade_embarcada);
-  const hasEmbarqueQty = Number.isFinite(qEmbInput) && qEmbInput > 0;
-  let quantidadeEmbarcada = 0;
-  if (hasEmbarqueQty) {
-    const embBase = Number(item?.quantidade_base);
-    const basePedido = Number(linhaMerged.quantidade_base) || 0;
-    const qtyPedidoLinha = Number(pedidoItem?.quantidade) || 0;
-    let baseEmb = embBase;
-    if (!(baseEmb > 0) && basePedido > 0 && qtyPedidoLinha > 0) {
-      baseEmb = (qEmbInput / qtyPedidoLinha) * basePedido;
-    } else if (!(baseEmb > 0)) {
-      baseEmb = qEmbInput * (Number(pedidoItem?.fator_conversao) || 1);
-    }
-    quantidadeEmbarcada = commercialQuantityFromBase(
-      baseEmb,
-      exib.fator_conversao,
-      exib.unidade_medida,
-    );
-  }
+  const quantidadeEmbarcada = resolveEmbarqueQuantidadeComercial(linhaMerged, 'embarcada');
+  const quantidadePedida = resolveEmbarqueQuantidadeComercial(
+    { ...pedidoItem, ...item },
+    'pedida',
+  ) || exib.quantidade;
 
   return {
     produto_id: item.produto_id || pedidoItem?.produto_id,
     produto_nome: item.produto_nome || pedidoItem?.produto_nome,
     quantidade: exib.quantidade,
     quantidade_embarcada: quantidadeEmbarcada,
-    quantidade_pedida: exib.quantidade,
+    quantidade_pedida: quantidadePedida,
     quantidade_base: exib.quantidade_base,
     fator_conversao: exib.fator_conversao,
     unidade_medida: exib.unidade_medida,
@@ -273,7 +260,7 @@ export function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {})
     const embarqueOriginal = embarquesReais[0] || null;
     const exibirNecessidadeCard = pedidoDeveExibirCardNecessidade(pedido, embarquesDoPedido, produtosMap);
     const embarquesNecessidadeComItens = embarquesNecessidade.filter((embarque) => embarqueNecessidadeTemItensPendentes(embarque));
-    const necessidadeVirtual = exibirNecessidadeCard && pedidoNaoConcluido(pedido) && embarquesNecessidadeComItens.length === 0
+    const necessidadeVirtual = exibirNecessidadeCard && pedidoPermiteCardNecessidade(pedido) && embarquesNecessidadeComItens.length === 0
       ? buildEmbarqueVirtualNecessidade(pedido, embarquesDoPedido, produtosMap)
       : null;
 
@@ -284,7 +271,7 @@ export function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {})
             return !isNecessidadeRenderizada(embarque);
           }
           if (!isNecessidadeRenderizada(embarque)) return true;
-          if (!pedidoNaoConcluido(pedido)) return false;
+          if (!pedidoPermiteCardNecessidade(pedido)) return false;
           return pedidoDeveExibirCardNecessidade(pedido, embarquesDoPedido, produtosMap);
         })
       : [{
