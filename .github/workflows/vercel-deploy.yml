@@ -17,7 +17,8 @@ name: Vercel Deploy
 
 concurrency:
   group: vercel-deploy-production
-  cancel-in-progress: false
+  # Só o último push em main — evita fila e timeout quando há vários commits seguidos.
+  cancel-in-progress: true
 
 on:
   workflow_dispatch:
@@ -27,7 +28,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 45
     outputs:
       url: ${{ steps.deploy.outputs.url }}
     env:
