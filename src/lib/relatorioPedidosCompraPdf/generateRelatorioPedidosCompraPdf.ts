@@ -2,6 +2,10 @@ import { jsPDF } from 'jspdf';
 import { registerJsPdfDin1451Fonts } from '@/lib/jspdfNotoFont';
 import { appendAnexosToPdfDoc } from '@/lib/appendAnexosToPdfDoc';
 import { resolveAvariaLinhaCompraFator1 } from '@/lib/productUnits';
+import {
+  buildEmbarqueCardCountLabelRelatorio,
+  resolveQuantidadeEmbarcadaCard,
+} from '@/lib/comprasEmbarqueCardResumo';
 
 /** Escala só no eixo Y (glifos mais altos, largura inalterada). PDF Tm: sx=1, sy>1. */
 const PDF_GLYPH_STRETCH_Y = 1.1;
@@ -307,10 +311,6 @@ const getComprasDisplayStatusLabelPdf = (displayStatus) => {
   return displayStatus || '-';
 };
 const getDataRelatorio = (pedido) => pedido._display_date || pedido.data_prevista_entrega || pedido.data_emissao || pedido.created_date;
-const getQuantidadeRelatorio = (pedido) => {
-  const itens = pedido._display_itens || pedido.itens || [];
-  return itens.reduce((a, i) => a + (Number(i.quantidade) || Number(i.quantidade_embarcada) || Number(i.quantidade_pedida) || 0), 0);
-};
 const getItensRelatorio = (pedido) => pedido._consulta_itens || pedido._display_itens || pedido.itens || [];
 /** Ordem alfabética estável por descrição do item (ou nome do produto em cache). */
 const sortItensAlfabeticamente = (itens, produtosMap) =>
@@ -1588,12 +1588,19 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       doc.setFontSize(10);
       doc.setTextColor(...C.text);
       doc.text(moeda(getValorRelatorio(pedido, produtosMap)), M + CW - 4, y + 10, { align: 'right' });
-      const totalLinhas = (pedido._display_itens || pedido.itens || []).length;
-      const totalQtd = getQuantidadeRelatorio(pedido);
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize(7.5);
       doc.setTextColor(...C.muted);
-      doc.text(`${totalLinhas} itens - ${fmtQuantidadePdf(totalQtd)} un.`, M + CW - 4, y + 16, { align: 'right' });
+      doc.text(
+        buildEmbarqueCardCountLabelRelatorio(pedido, {
+          fmtQty: fmtQuantidadePdf,
+          itemWord: 'itens',
+          separator: ' - ',
+        }),
+        M + CW - 4,
+        y + 16,
+        { align: 'right' },
+      );
       y += 32;
     };
 
@@ -2316,10 +2323,12 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
           }, 0))
         : moeda(getValorRelatorio(pedido, produtosMap));
 
-      const totalQtdExp = itens.reduce((a, i) => a + (Number(i._qtdEfetiva) || 0), 0);
       const countLabel = isPendencia
         ? `${itens.length} item(ns) pendente(s)`
-        : `${itens.length} item(ns) - ${fmtQuantidadePdf(totalQtdExp)} (un. comerc.)`;
+        : buildEmbarqueCardCountLabelRelatorio(pedido, {
+          fmtQty: fmtQuantidadePdf,
+          separator: ' - ',
+        });
 
       const t = EXPANDED_A4_TIGHT;
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
@@ -2457,9 +2466,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
       doc.setFontSize(9);
       const fornLines = doc.splitTextToSize(getFornecedorRelatorio(pedido), CW - 6).slice(0, 3);
-      const countLabel = isNecessidadeRelatorio(pedido)
-        ? `${itens.length} item(ns) pendente(s)`
-        : `${itens.length} item(ns)`;
+      const countLabel = buildEmbarqueCardCountLabelRelatorio(pedido, { fmtQty: fmtQuantidadePdf });
       const metaTexto = `${dataFmt(getDataRelatorio(pedido))} · ETA ${dataFmt(getEtaRelatorio(pedido))} · ${getOrdinalRelatorio(pedido)} · ${countLabel}`;
       const metaLines = doc.splitTextToSize(metaTexto, CW - 6).slice(0, 2);
 
@@ -2687,9 +2694,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       const fornMaxLines = isAnexosMobile ? 4 : 3;
       const fornFontSize = isAnexosMobile ? 8.6 : 8.2;
       const fornLines = doc.splitTextToSize(getFornecedorRelatorio(pedido), CW - 4).slice(0, fornMaxLines);
-      const countLabel = isNecessidadeRelatorio(pedido)
-        ? `${itens.length} item(ns) pendente(s)`
-        : `${itens.length} item(ns)`;
+      const countLabel = buildEmbarqueCardCountLabelRelatorio(pedido, { fmtQty: fmtQuantidadePdf });
       const metaParts = [
         dataFmt(getDataRelatorio(pedido)),
         `ETA ${dataFmt(getEtaRelatorio(pedido))}`,
@@ -2825,10 +2830,12 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
           }, 0))
         : moeda(getValorRelatorio(pedido, produtosMap));
 
-      const totalQtdExp = itens.reduce((a, i) => a + (Number(i._qtdEfetiva) || 0), 0);
       const countLabel = isPendencia
         ? `${itens.length} item(ns) pendente(s)`
-        : `${itens.length} item(ns)   ${fmtQuantidadePdf(totalQtdExp)} un.`;
+        : buildEmbarqueCardCountLabelRelatorio(pedido, {
+          fmtQty: fmtQuantidadePdf,
+          separator: '   ',
+        });
 
       const embarqueCodigo = safe(getPedidoNumeroRelatorio(pedido)).toUpperCase();
       const pedidoNumeroBase = safe(pedido.numero || embarqueCodigo);
@@ -3032,10 +3039,12 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
           }, 0))
         : moeda(getValorRelatorio(pedido, produtosMap));
 
-      const totalQtdExp = itens.reduce((a, i) => a + (Number(i._qtdEfetiva) || 0), 0);
       const countLabel = isPendencia
         ? `${itens.length} item(ns) pendente(s)`
-        : `${itens.length} item(ns)   ${fmtQuantidadePdf(totalQtdExp)} un.`;
+        : buildEmbarqueCardCountLabelRelatorio(pedido, {
+          fmtQty: fmtQuantidadePdf,
+          separator: '   ',
+        });
 
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize(minutaFont.pedidoCodigo);

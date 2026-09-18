@@ -4,6 +4,7 @@ import { ChevronDown, Trash2, Check, Package2, CalendarClock } from 'lucide-reac
 import { base44 } from '@/api/base44Client';
 import { formatQuantity } from '@/lib/financialUtils';
 import { formatCommercialQuantity } from '@/lib/productUnits';
+import { buildEmbarqueCardQtdResumo } from '@/lib/comprasEmbarqueCardResumo';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -125,23 +126,11 @@ function getPedidoDisplayData(pedido) {
   const itensDisplay = pedido._display_itens || (pedido.status === 'Pendência'
     ? (pedido.itens || []).filter(i => ((Number(i.quantidade) || 0) - (Number(i.quantidade_vinculada) || 0)) > 0)
     : (pedido.itens || []));
-  const totalLinhas = itensDisplay.length;
-  const totalQtd = itensDisplay.reduce((a, i) => a + (Number(i.quantidade) || 0), 0);
-  const totalQtdEmbarcada = itensDisplay.reduce((a, i) => a + (Number(i.quantidade_embarcada) || 0), 0);
-  const totalQtdPedidaCard = itensDisplay.reduce((a, i) => a + (Number(i.quantidade_pedida) || Number(i.quantidade) || 0), 0);
-  const unidadesCard = [...new Set(itensDisplay.map((i) => String(i.unidade_medida || '').trim()).filter(Boolean))];
-  const sufixoUnidade = unidadesCard.length === 1 ? unidadesCard[0] : 'un.';
+  const { totalLinhas, qtdLabel } = buildEmbarqueCardQtdResumo(pedido);
   const valorExibido = pedido._display_valor ?? (pedido.status === 'Pendência'
     ? (pedido.valor_pendente_entrega ?? pedido.valor_total)
     : pedido.valor_total);
   const codigo = String(pedido._display_code || pedido.numero || '').replace(' - ', '-').replace(/\s+/g, '');
-
-  const qtdPendNec = Number(pedido._quantidade_pendente) || 0;
-  const qtdLabel = pedido._is_necessidade
-    ? (qtdPendNec > 0 ? `${formatCardQuantity(qtdPendNec, sufixoUnidade)} ${sufixoUnidade} pend.` : '')
-    : totalQtdEmbarcada > 0
-      ? `${formatCardQuantity(totalQtdEmbarcada, sufixoUnidade)} / ${formatCardQuantity(totalQtdPedidaCard, sufixoUnidade)} ${sufixoUnidade}`
-      : (totalQtd > 0 ? `${formatCardQuantity(totalQtd, sufixoUnidade)} ${sufixoUnidade}` : '');
 
   return {
     displayStatus,
