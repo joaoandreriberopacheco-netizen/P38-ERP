@@ -34,6 +34,7 @@ import {
 import { compareEmbarquesConsulta, enrichEmbarqueParaConsulta, buildConsultaItensPendentes, calcConsultaValorEmbarque, buildGruposConsultaEmbarques } from '@/lib/consultaComprasEmbarques';
 import { calcValorEmbarqueCard, calcValorEmbarcadoPedido } from '@/lib/embarqueValorFinanceiro';
 import { pedidoNaoConcluido } from '@/lib/comprasEmbarqueCards';
+import { cardEmbarqueMatchStatusFiltro } from '@/lib/comprasEmbarquesPalette';
 import { omitPedidoCompraEspelho } from '@/lib/omitEspelhoPersist';
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
 import FiltrosCompras from '@/components/compras/FiltrosCompras';
@@ -109,7 +110,6 @@ const STATUS_EMBARQUE_VIRTUAIS = [
   'Aguardando Liberação',
   'Aprovado',
   'Pendente',
-  'Necessidade',
   'Despachado',
   'Concluído',
 ];
@@ -186,7 +186,8 @@ const passaFiltrosEmbarqueCard = (
     const matchEmbarque = statusEmbExpandido.some((s) => {
       if (s === 'Aguardando Embarque') return !embarque?.transportadora_nome && !embarque?.eta;
       if (s === 'Original') return false;
-      return embarque?.status_recebimento === s || embarque?.status === s || card._display_status === s;
+      if (cardEmbarqueMatchStatusFiltro(card._display_status, s)) return true;
+      return embarque?.status_recebimento === s || embarque?.status === s;
     });
     if (!matchPai && !matchEmbarque) return false;
   }

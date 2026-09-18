@@ -118,6 +118,33 @@ export function comprasAccentFromDisplayStatus(displayStatus) {
   return 'muted';
 }
 
+/** Código legado «Necessidade» → «Pendente» nos filtros e chips. */
+export function normalizeComprasStatusFiltroCodigo(codigo) {
+  return codigo === 'Necessidade' ? 'Pendente' : codigo;
+}
+
+/** Status explícitos do filtro (sem __nao_concluido__), deduplicados. */
+export function comprasStatusFiltroExplicitos(statusSel = []) {
+  const seen = new Set();
+  const out = [];
+  for (const raw of statusSel || []) {
+    if (raw === '__nao_concluido__') continue;
+    const codigo = normalizeComprasStatusFiltroCodigo(raw);
+    if (!seen.has(codigo)) {
+      seen.add(codigo);
+      out.push(codigo);
+    }
+  }
+  return out;
+}
+
+/** Card passa no filtro de status virtual do embarque. */
+export function cardEmbarqueMatchStatusFiltro(displayStatus, filtroCodigo) {
+  const filtro = normalizeComprasStatusFiltroCodigo(filtroCodigo);
+  const display = normalizeComprasStatusFiltroCodigo(displayStatus);
+  return display === filtro;
+}
+
 /** Opções de status alinhadas ao filtro em PedidosCompra.jsx / getBorrowedStatus. */
 export const COMPRAS_FILTRO_STATUS_PEDIDO = [
   { codigo: 'Rascunho', label: 'Rascunho', chip: 'bg-muted text-foreground/90' },
@@ -125,19 +152,17 @@ export const COMPRAS_FILTRO_STATUS_PEDIDO = [
   { codigo: 'Aguardando', label: 'Aguard. embarque', chip: 'bg-[#D96F55]/15 text-[#9c4228] dark:bg-[#D96F55]/20 dark:text-[#D96F55]' },
   { codigo: 'Aprovado', label: 'Aprovado', chip: COMPRAS_PILL.aprovado },
   { codigo: 'Pendente', label: 'Pendente', chip: 'bg-[#D96F55]/15 text-[#9c4228] dark:bg-[#D96F55]/20 dark:text-[#D96F55]' },
-  { codigo: 'Necessidade', label: 'Pendente', chip: 'bg-[#D96F55]/15 text-[#9c4228] dark:bg-[#D96F55]/20 dark:text-[#D96F55]' },
   { codigo: 'Despachado', label: 'Despachado', chip: 'bg-[#e8b824]/15 text-[#a8942e] dark:bg-[#4ECDC4]/20 dark:text-[#4ECDC4]' },
   { codigo: 'Concluído', label: 'Concluído', chip: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/25 dark:text-emerald-500' },
   { codigo: 'Cancelado', label: 'Cancelado', chip: 'bg-red-50 text-red-800 dark:bg-red-950/30 dark:text-red-500' },
 ];
 
-/** Seletor rápido (chip) — status operacionais do pedido/embarque. */
+/** Seletor rápido (ícone Layers) — status operacionais do pedido/embarque. */
 export const COMPRAS_FILTRO_STATUS_PICKER = [
   { codigo: 'Rascunho', label: 'Rascunho', chip: 'bg-muted text-foreground/90' },
   { codigo: 'Aguardando Liberação', label: 'Aguard. pagamento', chip: 'bg-[#D96F55]/15 text-[#9c4228] dark:bg-[#D96F55]/20 dark:text-[#D96F55]' },
   { codigo: 'Aprovado', label: 'Aprovado', chip: COMPRAS_PILL.aprovado },
   { codigo: 'Pendente', label: 'Pendente', chip: 'bg-[#D96F55]/15 text-[#9c4228] dark:bg-[#D96F55]/20 dark:text-[#D96F55]' },
-  { codigo: 'Necessidade', label: 'Pendente', chip: 'bg-[#D96F55]/15 text-[#9c4228] dark:bg-[#D96F55]/20 dark:text-[#D96F55]' },
   { codigo: 'Aguardando', label: 'Pend. entrega', chip: 'bg-[#D96F55]/15 text-[#9c4228] dark:bg-[#D96F55]/20 dark:text-[#D96F55]' },
   { codigo: 'Despachado', label: 'Despachado', chip: 'bg-[#e8b824]/15 text-[#a8942e] dark:bg-[#4ECDC4]/20 dark:text-[#4ECDC4]' },
   { codigo: 'Concluído', label: 'Concluído', chip: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/25 dark:text-emerald-500' },
@@ -154,3 +179,8 @@ export const COMPRAS_FILTRO_STATUS_ALL = [
   ...COMPRAS_FILTRO_STATUS_PEDIDO,
   ...COMPRAS_FILTRO_STATUS_RECEBIMENTO,
 ];
+
+export function labelComprasStatusFiltroCodigo(codigo) {
+  const normalized = normalizeComprasStatusFiltroCodigo(codigo);
+  return COMPRAS_FILTRO_STATUS_ALL.find((s) => s.codigo === normalized)?.label || normalized;
+}

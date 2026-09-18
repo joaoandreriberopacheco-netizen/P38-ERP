@@ -23,9 +23,11 @@ import {
   FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT,
 } from '@/lib/filtroVisibilidadePedidosCompra';
 import {
-  COMPRAS_FILTRO_STATUS_ALL,
   COMPRAS_FILTRO_STATUS_PEDIDO,
   COMPRAS_FILTRO_STATUS_RECEBIMENTO,
+  comprasStatusFiltroExplicitos,
+  labelComprasStatusFiltroCodigo,
+  normalizeComprasStatusFiltroCodigo,
 } from '@/lib/comprasEmbarquesPalette';
 import {
   COMPRAS_CHIP_ACTIVE_OLIVE,
@@ -166,15 +168,22 @@ function FiltrosComprasPainel({
   }, [todasTags, searchTag]);
 
   const toggleStatus = (codigo) => {
-    if (statusSel.includes(codigo)) {
-      onStatusSel(statusSel.filter((s) => s !== codigo));
+    const normalized = normalizeComprasStatusFiltroCodigo(codigo);
+    const explicit = comprasStatusFiltroExplicitos(statusSel);
+    const flags = statusSel.filter((s) => s === '__nao_concluido__');
+
+    if (explicit.includes(normalized)) {
+      onStatusSel([
+        ...flags,
+        ...explicit.filter((s) => s !== normalized),
+      ]);
       return;
     }
-    if (codigo === 'Concluído') {
-      onStatusSel([...statusSel.filter((s) => s !== '__nao_concluido__'), codigo]);
+    if (normalized === 'Concluído') {
+      onStatusSel([...explicit.filter((s) => s !== '__nao_concluido__'), normalized]);
       return;
     }
-    onStatusSel([...statusSel, codigo]);
+    onStatusSel([...flags, ...explicit, normalized]);
   };
 
   const toggleTag = (tag) => {
@@ -325,7 +334,7 @@ function FiltrosComprasPainel({
             <StatusChip
               key={option.codigo}
               option={option}
-              selected={statusSel.includes(option.codigo)}
+              selected={comprasStatusFiltroExplicitos(statusSel).includes(normalizeComprasStatusFiltroCodigo(option.codigo))}
               onToggle={toggleStatus}
             />
           ))}
@@ -338,7 +347,7 @@ function FiltrosComprasPainel({
             <StatusChip
               key={option.codigo}
               option={option}
-              selected={statusSel.includes(option.codigo)}
+              selected={comprasStatusFiltroExplicitos(statusSel).includes(option.codigo)}
               onToggle={toggleStatus}
             />
           ))}
@@ -503,12 +512,17 @@ export default function FiltrosCompras({
 
     statusPedidoCompraExplicitos(statusSel)
       .forEach((codigo) => {
-        const status = COMPRAS_FILTRO_STATUS_ALL.find((s) => s.codigo === codigo);
         chips.push({
           key: `status-${codigo}`,
-          label: status?.label || codigo,
+          label: labelComprasStatusFiltroCodigo(codigo),
           tone: 'neutral',
-          onRemove: () => onStatusSel(statusSel.filter((s) => s !== codigo)),
+          onRemove: () => {
+            const flags = statusSel.filter((s) => s === '__nao_concluido__');
+            onStatusSel([
+              ...flags,
+              ...comprasStatusFiltroExplicitos(statusSel).filter((s) => s !== codigo),
+            ]);
+          },
         });
       });
 

@@ -4,10 +4,14 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/components/utils';
 import { P38_CHIP_ACTIVE, P38_POPOVER } from '@/components/financeiro/fluxo/financeiroP38';
-import { COMPRAS_FILTRO_STATUS_PICKER } from '@/lib/comprasEmbarquesPalette';
+import {
+  COMPRAS_FILTRO_STATUS_PICKER,
+  comprasStatusFiltroExplicitos,
+  normalizeComprasStatusFiltroCodigo,
+} from '@/lib/comprasEmbarquesPalette';
 
 export function statusPedidoCompraExplicitos(statusSel = []) {
-  return (statusSel || []).filter((s) => s !== '__nao_concluido__');
+  return comprasStatusFiltroExplicitos(statusSel);
 }
 
 export function labelStatusPedidoCompraPicker(statusSel = []) {
@@ -37,13 +41,17 @@ export default function StatusPedidoCompraPicker({
   const allCodigos = COMPRAS_FILTRO_STATUS_PICKER.map((o) => o.codigo);
 
   const toggle = (codigo) => {
+    const normalized = normalizeComprasStatusFiltroCodigo(codigo);
     const base = explicit.length ? [...explicit] : [];
-    const next = base.includes(codigo) ? base.filter((c) => c !== codigo) : [...base, codigo];
+    const next = base.includes(normalized)
+      ? base.filter((c) => c !== normalized)
+      : [...base, normalized];
     if (next.length === 0) {
       onStatusSel?.(statusSel.filter((s) => s === '__nao_concluido__'));
       return;
     }
-    onStatusSel?.(next);
+    const flags = statusSel.filter((s) => s === '__nao_concluido__');
+    onStatusSel?.([...flags, ...next]);
   };
 
   const limparSelecao = () => {
@@ -105,7 +113,7 @@ export default function StatusPedidoCompraPicker({
         </div>
         <div className="max-h-56 space-y-0.5 overflow-y-auto">
           {COMPRAS_FILTRO_STATUS_PICKER.map((option) => {
-            const selected = explicit.includes(option.codigo);
+            const selected = explicit.includes(normalizeComprasStatusFiltroCodigo(option.codigo));
             return (
               <label
                 key={option.codigo}
