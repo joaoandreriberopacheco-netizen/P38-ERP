@@ -1,81 +1,77 @@
 import React, { useId, useMemo } from 'react';
 import { X } from 'lucide-react';
-import { FLUVIAL_MAP_LAYOUT } from '@/lib/fluvialRiverProjection';
+import {
+  FLUVIAL_MAP_LAYOUT,
+  FLUVIAL_ROUTE_CURVES,
+  FLUVIAL_TERMINALS,
+  buildQuadraticPathD,
+} from '@/lib/fluvialRiverProjection';
 import { fluvialBoatIconPath } from '@/components/logistica-sandbox/FluvialBoatIcon';
 import '@/components/logistica-sandbox/fluvial-map-premium.css';
 
 const FONT = "'Barlow', sans-serif";
 const VIEWBOX = '0 0 100 62';
 
-function buildRoutePath(x1, y1, x2, y2, bend = -6) {
-  const cx = (x1 + x2) / 2;
-  const cy = (y1 + y2) / 2 + bend;
-  return `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`;
+function RiverBackground() {
+  return (
+    <g className="fluvial-river-bg" aria-hidden="true">
+      <path
+        d="M -2 38 C 12 32, 22 42, 35 38 S 52 34, 68 38 S 82 42, 102 36 L 102 62 L -2 62 Z"
+        className="fluvial-river-band"
+      />
+      <path
+        d="M -2 42 C 18 36, 30 46, 48 41 S 62 37, 78 41 S 90 45, 102 40"
+        className="fluvial-river-centerline"
+        fill="none"
+      />
+    </g>
+  );
 }
 
-function BoatMarker({ evento, selected, onSelect, uid }) {
-  const projection = evento.riverProjection;
-  if (!projection) return null;
+function DockZones({ layout }) {
+  const manausRows = 6;
+  const tabRows = 4;
+  return (
+    <g aria-hidden="true">
+      <rect
+        x={layout.tabatingaTerminalBaseX - 4.5}
+        y={layout.dockTopY - 3}
+        width="9"
+        height={tabRows * layout.dockRowSpacing + 4}
+        rx="1.5"
+        className="fluvial-dock-zone"
+      />
+      <rect
+        x={layout.manausTerminalBaseX - layout.dockColSpacing - 5}
+        y={layout.dockTopY - 3}
+        width={layout.dockColSpacing + 6}
+        height={manausRows * layout.dockRowSpacing + 4}
+        rx="1.5"
+        className="fluvial-dock-zone"
+      />
+    </g>
+  );
+}
 
-  const { x, y } = projection;
-  const isSelected = selected === evento.fleetKey || selected === evento.id;
-  const { vinculo } = projection;
-  const stroke = vinculo?.stroke || 'rgba(255,255,255,0.55)';
-  const fill = vinculo?.kind === 'sem' ? '#050505' : (vinculo?.fill || '#ffffff');
-  const label = projection.initials || '---';
-  const onRoute = projection.state === 'viagem_ida' || projection.state === 'viagem_retorno';
-  const labelY = onRoute ? y - 3.4 : y - 2.8;
-  const scale = isSelected ? 0.7 : 0.54;
+function RouteLayer({ uid }) {
+  const ida = FLUVIAL_ROUTE_CURVES.ida;
+  const retorno = FLUVIAL_ROUTE_CURVES.retorno;
+  const idaPath = buildQuadraticPathD(ida);
+  const retornoPath = buildQuadraticPathD(retorno);
+  const idaMid = { x: (ida.x1 + ida.x2) / 2, y: ida.cy - 2 };
+  const retMid = { x: (retorno.x1 + retorno.x2) / 2, y: retorno.cy + 2 };
 
   return (
-    <g
-      className="cursor-pointer"
-      onClick={() => onSelect?.(evento)}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') onSelect?.(evento);
-      }}
-      aria-label={`${evento.embarcacao_nome || evento.transportadora_nome} (${label})`}
-    >
-      {vinculo?.glow && (
-        <circle
-          className="fluvial-marker-pulse"
-          cx={x}
-          cy={y}
-          r={2.4}
-          fill="none"
-          stroke="#ffffff"
-          strokeWidth={0.14}
-        />
-      )}
-      {isSelected && (
-        <>
-          <circle cx={x} cy={y} r={3.4} fill={`url(#${uid}-marker-glow)`} opacity={0.55} />
-          <circle cx={x} cy={y} r={2.9} fill="none" stroke="#ffffff" strokeWidth={0.2} />
-        </>
-      )}
-      <g transform={`translate(${x} ${y}) rotate(${projection.rotation || 0}) scale(${scale})`}>
-        <path
-          d={fluvialBoatIconPath(1)}
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={isSelected ? 0.32 : 0.24}
-          strokeLinejoin="round"
-        />
-      </g>
-      <text
-        x={x}
-        y={labelY}
-        textAnchor="middle"
-        fill="#ffffff"
-        fontSize="2.05"
-        fontFamily={FONT}
-        fontWeight="400"
-        letterSpacing="0.16em"
-        opacity={isSelected ? 1 : 0.76}
-      >
-        {label}
+    <g className="fluvial-routes" aria-hidden="true">
+      <path d={idaPath} className="fluvial-route-glow fluvial-route-glow--ida" fill="none" filter={`url(#${uid}-soft-glow)`} />
+      <path d={retornoPath} className="fluvial-route-glow fluvial-route-glow--retorno" fill="none" filter={`url(#${uid}-soft-glow)`} />
+      <path d={idaPath} className="fluvial-route-line fluvial-route-line--ida fluvial-route-animated" fill="none" markerEnd={`url(#${uid}-arrow)`} />
+      <path d={retornoPath} className="fluvial-route-line fluvial-route-line--retorno fluvial-route-animated" fill="none" markerEnd={`url(#${uid}-arrow)`} />
+      <text x={idaMid.x} y={idaMid.y} className="fluvial-route-label" textAnchor="middle">
+        Ida · 7d
+      </text>
+      <text x={retMid.x} y={retMid.y} className="fluvial-route-label" textAnchor="middle">
+        Retorno · 3d
       </text>
     </g>
   );
@@ -107,26 +103,106 @@ function CityTerminal({ x, label, sublabel, align = 'center' }) {
   );
 }
 
+function BoatMarker({ evento, selected, hovered, onSelect, onHover, uid }) {
+  const projection = evento.riverProjection;
+  if (!projection) return null;
+
+  const { x, y } = projection;
+  const fleetKey = evento.fleetKey || evento.id;
+  const isSelected = selected === fleetKey;
+  const isHovered = hovered === fleetKey;
+  const { vinculo } = projection;
+  const stroke = vinculo?.stroke || 'rgba(255,255,255,0.55)';
+  const fill = vinculo?.kind === 'sem' ? '#050505' : (vinculo?.fill || '#ffffff');
+  const label = projection.initials || '---';
+  const onRoute = projection.state === 'viagem_ida' || projection.state === 'viagem_retorno';
+  const labelY = onRoute ? y - 3.4 : y - 2.8;
+  const scale = isSelected ? 0.72 : isHovered ? 0.62 : 0.54;
+
+  return (
+    <g
+      className="fluvial-boat-marker cursor-pointer"
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect?.(evento);
+      }}
+      onMouseEnter={() => onHover?.(fleetKey)}
+      onMouseLeave={() => onHover?.(null)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') onSelect?.(evento);
+      }}
+      aria-label={`${evento.embarcacao_nome || evento.transportadora_nome} (${label})`}
+    >
+      {vinculo?.glow && (
+        <circle
+          className="fluvial-marker-pulse"
+          cx={x}
+          cy={y}
+          r={2.4}
+          fill="none"
+          stroke="#ffffff"
+          strokeWidth={0.14}
+        />
+      )}
+      {(isSelected || isHovered) && (
+        <circle
+          cx={x}
+          cy={y}
+          r={isSelected ? 3.2 : 2.8}
+          fill={`url(#${uid}-marker-glow)`}
+          opacity={isSelected ? 0.55 : 0.3}
+        />
+      )}
+      {isSelected && (
+        <circle cx={x} cy={y} r={2.9} fill="none" stroke="#ffffff" strokeWidth={0.2} className="fluvial-boat-halo-ring" />
+      )}
+      <g transform={`translate(${x} ${y}) rotate(${projection.rotation || 0}) scale(${scale})`}>
+        <path
+          d={fluvialBoatIconPath(1)}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={isSelected ? 0.32 : 0.24}
+          strokeLinejoin="round"
+        />
+      </g>
+      <text
+        x={x}
+        y={labelY}
+        textAnchor="middle"
+        fill="#ffffff"
+        fontSize="2.05"
+        fontFamily={FONT}
+        fontWeight={isSelected ? '500' : '400'}
+        letterSpacing="0.16em"
+        opacity={isSelected ? 1 : 0.76}
+      >
+        {label}
+      </text>
+    </g>
+  );
+}
+
 export default function FluvialRiverMap({
   eventos = [],
   selectedFleetKey,
+  hoveredFleetKey,
   onSelect,
+  onHover,
   simulationDate,
   loading = false,
   onClose,
+  embedded = false,
 }) {
   const uid = useId().replace(/:/g, '');
   const markers = useMemo(() => eventos || [], [eventos]);
   const layout = FLUVIAL_MAP_LAYOUT;
 
-  const routeIda = useMemo(
-    () => buildRoutePath(layout.manausX, layout.routeY - 2, layout.tabatingaX, layout.routeY - 2, -7),
-    [layout],
-  );
-  const routeRetorno = useMemo(
-    () => buildRoutePath(layout.tabatingaX, layout.routeY + 10, layout.manausX, layout.routeY + 10, 7),
-    [layout],
-  );
+  const selectedProjection = useMemo(() => {
+    const found = markers.find((e) => (e.fleetKey || e.id) === selectedFleetKey);
+    return found?.riverProjection;
+  }, [markers, selectedFleetKey]);
 
   return (
     <div className="fluvial-premium-root relative h-full w-full overflow-hidden bg-[#030303]">
@@ -150,35 +226,43 @@ export default function FluvialRiverMap({
       />
       <div className="fluvial-map-vignette pointer-events-none absolute inset-0" />
 
-      <div className="relative z-20 flex items-center justify-between px-5 py-3">
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.28em] text-white/35">Operação fluvial</p>
-          <p className="text-sm text-white/88">Amazonas · projeção operacional</p>
+      {!embedded && (
+        <div className="relative z-20 flex items-center justify-between px-5 py-3">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.28em] text-white/35">Operação fluvial</p>
+            <p className="text-sm text-white/88">Amazonas · projeção operacional</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="fluvial-premium-glass rounded-full px-3 py-1 text-[11px] text-white/65">
+              {simulationDate || 'hoje'}
+            </span>
+            {onClose ? (
+              <button
+                type="button"
+                onClick={onClose}
+                className="fluvial-premium-glass flex h-8 w-8 items-center justify-center rounded-full text-white/70 transition hover:text-white"
+                aria-label="Voltar para lista"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            ) : null}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="fluvial-premium-glass rounded-full px-3 py-1 text-[11px] text-white/65">
-            {simulationDate || 'hoje'}
-          </span>
-          {onClose ? (
-            <button
-              type="button"
-              onClick={onClose}
-              className="fluvial-premium-glass flex h-8 w-8 items-center justify-center rounded-full text-white/70 transition hover:text-white"
-              aria-label="Voltar para lista"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          ) : null}
-        </div>
-      </div>
+      )}
 
-      <div className="relative z-10 h-[calc(100%-52px)] px-2 pb-2 md:px-4">
+      <div className={embedded ? 'relative z-10 h-full' : 'relative z-10 h-[calc(100%-52px)] px-2 pb-2 md:px-4'}>
         {loading ? (
           <div className="flex h-full items-center justify-center text-sm text-white/40">
             Carregando frota…
           </div>
         ) : (
-          <svg viewBox={VIEWBOX} className="h-full w-full" preserveAspectRatio="xMidYMid meet" aria-label="Mapa fluvial">
+          <svg
+            viewBox={VIEWBOX}
+            className="h-full w-full"
+            preserveAspectRatio="xMidYMid meet"
+            aria-label="Mapa fluvial"
+            onClick={() => onSelect?.(null)}
+          >
             <defs>
               <linearGradient id={`${uid}-route-glow`} x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stopColor="rgba(255,255,255,0.05)" />
@@ -201,70 +285,38 @@ export default function FluvialRiverMap({
               </marker>
             </defs>
 
-            <path
-              d={routeIda}
-              fill="none"
-              stroke={`url(#${uid}-route-glow)`}
-              strokeWidth="0.85"
-              opacity={0.35}
-              filter={`url(#${uid}-soft-glow)`}
-            />
-            <path
-              d={routeIda}
-              fill="none"
-              stroke="rgba(255,255,255,0.42)"
-              strokeWidth="0.2"
-              className="fluvial-route-animated"
-              markerEnd={`url(#${uid}-arrow)`}
-            />
+            <RiverBackground />
+            <RouteLayer uid={uid} />
+            <DockZones layout={layout} />
 
-            <path
-              d={routeRetorno}
-              fill="none"
-              stroke={`url(#${uid}-route-glow)`}
-              strokeWidth="0.7"
-              opacity={0.22}
-              filter={`url(#${uid}-soft-glow)`}
-            />
-            <path
-              d={routeRetorno}
-              fill="none"
-              stroke="rgba(255,255,255,0.28)"
-              strokeWidth="0.16"
-              className="fluvial-route-animated"
-              markerEnd={`url(#${uid}-arrow)`}
-            />
+            {FLUVIAL_TERMINALS.map((terminal) => (
+              <CityTerminal
+                key={terminal.id}
+                x={terminal.x}
+                label={terminal.label}
+                sublabel={terminal.sublabel}
+                align={terminal.align}
+              />
+            ))}
 
-            <rect
-              x={layout.tabatingaDockX - 5}
-              y={layout.dockTopY - 5}
-              width="10"
-              height="26"
-              rx="2"
-              fill="rgba(255,255,255,0.02)"
-              stroke="rgba(255,255,255,0.12)"
-              strokeWidth="0.15"
-            />
-            <rect
-              x={layout.manausDockX - 5}
-              y={layout.dockTopY - 5}
-              width="10"
-              height="36"
-              rx="2"
-              fill="rgba(255,255,255,0.02)"
-              stroke="rgba(255,255,255,0.12)"
-              strokeWidth="0.15"
-            />
-
-            <CityTerminal x={layout.tabatingaDockX} label="TABATINGA" sublabel="doca oeste" />
-            <CityTerminal x={layout.manausDockX} label="MANAUS" sublabel="terminal leste" align="right" />
+            {selectedProjection && (
+              <line
+                x1="22"
+                y1="18"
+                x2={selectedProjection.x}
+                y2={selectedProjection.y}
+                className="fluvial-connection-line"
+              />
+            )}
 
             {markers.map((evento) => (
               <BoatMarker
                 key={evento.fleetKey || evento.id}
                 evento={evento}
                 selected={selectedFleetKey}
+                hovered={hoveredFleetKey}
                 onSelect={onSelect}
+                onHover={onHover}
                 uid={uid}
               />
             ))}
@@ -278,11 +330,15 @@ export default function FluvialRiverMap({
         )}
       </div>
 
-      <div className="pointer-events-none absolute bottom-4 left-4 z-20 hidden md:flex gap-4 text-[10px] uppercase tracking-[0.16em] text-white/35">
+      <div className="pointer-events-none absolute bottom-4 left-4 z-20 hidden gap-4 text-[10px] uppercase tracking-[0.16em] text-white/35 md:flex">
         <span>Ida · 7d</span>
         <span>Descarga · 4d</span>
         <span>Retorno · 3d</span>
         <span>Terminal · fila virtual</span>
+      </div>
+
+      <div className="pointer-events-none absolute bottom-4 right-4 z-20 text-[10px] text-white/30">
+        Posição projetada · não é GPS
       </div>
     </div>
   );

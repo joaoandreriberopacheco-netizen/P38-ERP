@@ -19,11 +19,21 @@
 @keyframes fluvial-panel-in {
   from {
     opacity: 0;
-    transform: translateX(12px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes fluvial-halo-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.85;
   }
 }
 
@@ -40,12 +50,14 @@
     0 24px 80px rgba(0, 0, 0, 0.55),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 
 .fluvial-premium-toolbar {
   background: linear-gradient(180deg, rgba(8, 8, 8, 0.92), rgba(8, 8, 8, 0.72));
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .fluvial-route-animated {
@@ -59,10 +71,311 @@
   transform-box: fill-box;
 }
 
+.fluvial-boat-halo-ring {
+  animation: fluvial-halo-pulse 2s ease-in-out infinite;
+}
+
 .fluvial-detail-panel {
   animation: fluvial-panel-in 0.28s ease-out;
 }
 
 .fluvial-map-vignette {
   background: radial-gradient(ellipse at center, transparent 42%, rgba(0, 0, 0, 0.72) 100%);
+}
+
+/* Rio estilizado (viewBox 0–100) */
+.fluvial-river-band {
+  fill: rgba(255, 255, 255, 0.03);
+  stroke: none;
+}
+
+.fluvial-river-centerline {
+  stroke: rgba(255, 255, 255, 0.06);
+  stroke-width: 0.15;
+  stroke-dasharray: 1.2 1.8;
+}
+
+.fluvial-dock-zone {
+  fill: rgba(255, 255, 255, 0.02);
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 0.12;
+}
+
+/* Rotas Bézier */
+.fluvial-route-glow {
+  stroke-width: 1.1;
+  opacity: 0.28;
+}
+
+.fluvial-route-glow--ida {
+  stroke: rgba(255, 255, 255, 0.55);
+}
+
+.fluvial-route-glow--retorno {
+  stroke: rgba(255, 255, 255, 0.35);
+}
+
+.fluvial-route-line {
+  stroke-width: 0.2;
+  fill: none;
+}
+
+.fluvial-route-line--ida {
+  stroke: rgba(255, 255, 255, 0.42);
+}
+
+.fluvial-route-line--retorno {
+  stroke: rgba(255, 255, 255, 0.28);
+}
+
+.fluvial-route-label {
+  fill: rgba(255, 255, 255, 0.32);
+  font-size: 1.65px;
+  font-family: 'Barlow', sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+}
+
+.fluvial-connection-line {
+  stroke: rgba(255, 255, 255, 0.22);
+  stroke-width: 0.12;
+  stroke-dasharray: 0.8 0.8;
+  pointer-events: none;
+}
+
+/* Painéis flutuantes command center */
+.fluvial-float-panel {
+  background: rgba(10, 10, 10, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+  animation: fluvial-panel-in 0.28s ease-out;
+}
+
+.fluvial-float-panel--sidebar {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.fluvial-float-panel--detail {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.fluvial-float-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.fluvial-float-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 10px 12px;
+}
+
+/* Estado pill */
+.fluvial-state-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.fluvial-state-pill--viagem {
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.fluvial-state-pill--doca {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Barra de ciclo */
+.fluvial-cycle-bar {
+  position: relative;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.fluvial-cycle-bar-fill {
+  position: absolute;
+  inset-y: 0;
+  left: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.7);
+  transition: width 0.3s ease;
+}
+
+.fluvial-cycle-knob {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid #000;
+  background: #fff;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.45);
+  transform: translate(-50%, -50%);
+}
+
+/* Lista frota */
+.fluvial-fleet-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.fluvial-fleet-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.fluvial-fleet-item--selected {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.fluvial-fleet-item-initials {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+  flex-shrink: 0;
+}
+
+.fluvial-fleet-item-name {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.88);
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fluvial-fleet-item-state {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 2px;
+  letter-spacing: 0.04em;
+}
+
+/* Detalhe De/Para */
+.fluvial-detail-route-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.fluvial-detail-route-cell {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 10px 12px;
+}
+
+.fluvial-detail-route-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.fluvial-detail-route-value {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #fff;
+}
+
+.fluvial-detail-route-date {
+  margin-top: 4px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+/* Command center layer */
+.fluvial-command-center {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: #020202;
+}
+
+.fluvial-command-map {
+  position: absolute;
+  inset: 0;
+}
+
+.fluvial-command-toolbar {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 30;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 14px;
+}
+
+.fluvial-command-sidebar {
+  position: absolute;
+  top: 88px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 30;
+  width: min(260px, 32vw);
+}
+
+.fluvial-command-detail {
+  position: absolute;
+  top: 88px;
+  left: 12px;
+  bottom: 12px;
+  z-index: 30;
+  width: min(340px, 36vw);
+}
+
+@media (max-width: 767px) {
+  .fluvial-command-sidebar {
+    display: none;
+  }
+
+  .fluvial-command-detail {
+    left: 8px;
+    right: 8px;
+    width: auto;
+    max-height: 45vh;
+    bottom: auto;
+  }
 }

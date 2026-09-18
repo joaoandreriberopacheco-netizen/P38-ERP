@@ -22,7 +22,12 @@ const STATE_SUB = {
   aguardando: 'Aguardando ciclo',
 };
 
-export default function FluvialMapDetailPanel({ evento, onClose }) {
+function statePillClass(stateKey) {
+  if (stateKey === 'viagem_ida' || stateKey === 'viagem_retorno') return 'fluvial-state-pill fluvial-state-pill--viagem';
+  return 'fluvial-state-pill fluvial-state-pill--doca';
+}
+
+export default function FluvialMapDetailPanel({ evento, onClose, floating = false }) {
   if (!evento) return null;
 
   const projection = evento.riverProjection;
@@ -31,25 +36,33 @@ export default function FluvialMapDetailPanel({ evento, onClose }) {
   const cyclePercent = Math.round((projection?.cycleProgress || 0) * 100);
   const stateKey = projection?.state || 'aguardando';
 
+  const panelClass = floating
+    ? 'fluvial-float-panel fluvial-float-panel--detail fluvial-detail-panel h-full'
+    : 'fluvial-detail-panel fluvial-premium-root flex h-full flex-col border-l border-white/10';
+
+  const innerClass = floating
+    ? 'flex h-full flex-col overflow-hidden'
+    : 'fluvial-premium-glass m-3 flex flex-1 flex-col overflow-hidden rounded-2xl';
+
   return (
-    <div className="fluvial-detail-panel fluvial-premium-root flex h-full flex-col border-l border-white/10">
-      <div className="fluvial-premium-glass m-3 flex flex-1 flex-col overflow-hidden rounded-2xl">
+    <div className={panelClass}>
+      <div className={innerClass}>
         <div className="border-b border-white/10 px-5 py-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-black/60">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-black/60">
                 <FluvialBoatIcon
-                  size={22}
+                  size={20}
                   stroke="#ffffff"
                   fill={projection?.temVinculoAtivo ? '#ffffff' : '#000000'}
                 />
               </div>
               <div>
-                <span className="inline-flex rounded-full border border-white/20 px-2.5 py-0.5 text-[10px] tracking-[0.14em] text-white/75">
+                <span className={statePillClass(stateKey)}>
                   {STATE_LABELS[stateKey] || 'PROJETADO'}
                 </span>
-                <h3 className="mt-2 text-xl leading-tight text-white">{nome}</h3>
-                <p className="mt-1 text-sm tracking-[0.18em] text-white/45">{projection?.initials}</p>
+                <h3 className="mt-2 text-lg leading-tight text-white">{nome}</h3>
+                <p className="mt-1 text-xs tracking-[0.16em] text-white/45">{projection?.initials}</p>
               </div>
             </div>
             {onClose ? (
@@ -66,38 +79,32 @@ export default function FluvialMapDetailPanel({ evento, onClose }) {
         </div>
 
         <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-              <p className="text-[10px] uppercase tracking-[0.14em] text-white/40">De</p>
-              <p className="mt-1 text-sm text-white">Manaus</p>
-              <p className="mt-1 text-xs text-white/45">{evento.data_saida_manaus_formatada || '—'}</p>
+          <div className="fluvial-detail-route-grid">
+            <div className="fluvial-detail-route-cell">
+              <p className="fluvial-detail-route-label">De</p>
+              <p className="fluvial-detail-route-value">Manaus</p>
+              <p className="fluvial-detail-route-date">{evento.data_saida_manaus_formatada || '—'}</p>
             </div>
-            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-              <p className="text-[10px] uppercase tracking-[0.14em] text-white/40">Para</p>
-              <p className="mt-1 text-sm text-white">Tabatinga</p>
-              <p className="mt-1 text-xs text-white/45">{evento.data_chegada_destino_formatada || '—'}</p>
+            <div className="fluvial-detail-route-cell">
+              <p className="fluvial-detail-route-label">Para</p>
+              <p className="fluvial-detail-route-value">Tabatinga</p>
+              <p className="fluvial-detail-route-date">{evento.data_chegada_destino_formatada || '—'}</p>
             </div>
           </div>
 
           <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
             <div className="mb-3 flex items-end justify-between gap-3">
               <div>
-                <p className="text-[10px] uppercase tracking-[0.14em] text-white/40">Progresso do ciclo</p>
+                <p className="text-[10px] uppercase tracking-[0.12em] text-white/40">Progresso do ciclo</p>
                 <p className="mt-1 text-sm text-white/70">{STATE_SUB[stateKey]}</p>
               </div>
               <p className="text-3xl leading-none text-white">{ocupacao}%</p>
             </div>
-            <div className="relative h-px bg-white/15">
-              <div
-                className="absolute inset-y-0 left-0 bg-white/70"
-                style={{ width: `${cyclePercent}%`, height: '1px' }}
-              />
-              <div
-                className="absolute top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full border border-black bg-white shadow-[0_0_12px_rgba(255,255,255,0.45)]"
-                style={{ left: `calc(${cyclePercent}% - 5px)` }}
-              />
+            <div className="fluvial-cycle-bar">
+              <div className="fluvial-cycle-bar-fill" style={{ width: `${cyclePercent}%` }} />
+              <div className="fluvial-cycle-knob" style={{ left: `${cyclePercent}%` }} />
             </div>
-            <div className="mt-2 flex justify-between text-[10px] uppercase tracking-[0.12em] text-white/35">
+            <div className="mt-2 flex justify-between text-[10px] uppercase tracking-[0.1em] text-white/35">
               <span>Manaus</span>
               <span>Tabatinga</span>
               <span>Manaus</span>
@@ -112,14 +119,14 @@ export default function FluvialMapDetailPanel({ evento, onClose }) {
           ) : null}
 
           <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-            <p className="mb-2 text-[10px] uppercase tracking-[0.14em] text-white/40">Viagem de referência</p>
+            <p className="mb-2 text-[10px] uppercase tracking-[0.12em] text-white/40">Viagem de referência</p>
             <p className="text-sm text-white/65">Código {evento.codigo || '—'}</p>
             <p className="mt-1 text-xs text-white/40">Chegada Manaus {evento.data_chegada_manaus_formatada || '—'}</p>
             <p className="text-xs text-white/40">Próxima chegada {evento.proxima_chegada_manaus_formatada || '—'}</p>
           </div>
 
           <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-            <p className="mb-2 text-[10px] uppercase tracking-[0.14em] text-white/40">Embarques vinculados</p>
+            <p className="mb-2 text-[10px] uppercase tracking-[0.12em] text-white/40">Embarques vinculados</p>
             <EventoEmbarquesPanel embarques={evento.embarques_relacionados || []} />
           </div>
         </div>

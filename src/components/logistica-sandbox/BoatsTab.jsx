@@ -94,32 +94,54 @@ function BoatsMapLayer({
   onClose,
 }) {
   const [selectedFleetKey, setSelectedFleetKey] = useState(null);
+  const [hoveredFleetKey, setHoveredFleetKey] = useState(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
   const selectedEvento = useMemo(() => {
     if (!fleet.length) return null;
-    return fleet.find((item) => (item.fleetKey || item.id) === selectedFleetKey) || fleet[0];
+    if (selectedFleetKey) {
+      return fleet.find((item) => (item.fleetKey || item.id) === selectedFleetKey) || null;
+    }
+    return null;
   }, [fleet, selectedFleetKey]);
 
   const handleSelect = (evento) => {
+    if (!evento) {
+      setSelectedFleetKey(null);
+      setDetailOpen(false);
+      return;
+    }
     const key = evento.fleetKey || evento.id;
     setSelectedFleetKey(key);
     setDetailOpen(true);
   };
 
   return (
-    <div className="fluvial-premium-root fixed inset-0 z-50 flex flex-col bg-[#020202]">
-      <div className="fluvial-premium-toolbar flex flex-wrap items-end gap-3 px-4 py-3">
-        <div className="min-w-[180px] flex-1">
-          <label className="mb-1 block text-[10px] uppercase tracking-[0.2em] text-white/38">Data simulada</label>
+    <div className="fluvial-command-center fluvial-premium-root">
+      <div className="fluvial-command-map">
+        <FluvialRiverMap
+          eventos={fleet}
+          selectedFleetKey={selectedFleetKey}
+          hoveredFleetKey={hoveredFleetKey}
+          onSelect={handleSelect}
+          onHover={setHoveredFleetKey}
+          simulationDate={simulationDate}
+          loading={loading}
+          embedded
+        />
+      </div>
+
+      <div className="fluvial-command-toolbar fluvial-premium-glass">
+        <div className="min-w-[160px] flex-1">
+          <label className="mb-1 block text-[10px] uppercase tracking-[0.18em] text-white/38">Data simulada</label>
           <input
             type="date"
             value={simulationDate}
             onChange={(e) => onSimulationDateChange(e.target.value)}
-            className="fluvial-premium-glass w-full rounded-xl px-3 py-2 text-sm text-white outline-none"
+            className="w-full rounded-lg border border-white/12 bg-black/40 px-3 py-1.5 text-sm text-white outline-none"
           />
         </div>
-        <div className="flex flex-wrap gap-2 pb-0.5">
+        <div className="flex flex-wrap gap-2">
           {[
             { value: 'todos', label: 'Todos' },
             { value: 'com_vinculo', label: 'Com vínculo' },
@@ -135,43 +157,40 @@ function BoatsMapLayer({
             </button>
           ))}
         </div>
+        <div className="flex items-center gap-2 pb-0.5">
+          <span className="hidden text-[10px] uppercase tracking-[0.14em] text-white/35 sm:inline">
+            {fleet.length} embarcação{fleet.length !== 1 ? 'ões' : ''}
+          </span>
+          {onClose ? (
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full border border-white/18 px-3 py-1.5 text-xs text-white/70 transition hover:border-white/35 hover:text-white"
+            >
+              Voltar à lista
+            </button>
+          ) : null}
+        </div>
       </div>
 
-      <div className="flex min-h-0 flex-1">
-        <aside className="hidden w-[220px] shrink-0 md:block">
-          <FluvialBoatListSidebar
-            eventos={fleet}
-            selectedFleetKey={selectedEvento?.fleetKey || selectedEvento?.id}
-            onSelect={handleSelect}
-          />
-        </aside>
-
-        <main className="min-w-0 flex-1">
-          <FluvialRiverMap
-            eventos={fleet}
-            selectedFleetKey={selectedEvento?.fleetKey || selectedEvento?.id}
-            onSelect={handleSelect}
-            simulationDate={simulationDate}
-            loading={loading}
-            onClose={onClose}
-          />
-        </main>
-
-        {detailOpen && selectedEvento ? (
-          <aside className="hidden w-[min(360px,34vw)] shrink-0 lg:block">
-            <FluvialMapDetailPanel
-              evento={selectedEvento}
-              onClose={() => setDetailOpen(false)}
-            />
-          </aside>
-        ) : null}
+      <div className="fluvial-command-sidebar hidden md:block">
+        <FluvialBoatListSidebar
+          eventos={fleet}
+          selectedFleetKey={selectedFleetKey}
+          onSelect={handleSelect}
+          floating
+        />
       </div>
 
       {detailOpen && selectedEvento ? (
-        <div className="border-t border-white/10 lg:hidden">
+        <div className="fluvial-command-detail">
           <FluvialMapDetailPanel
             evento={selectedEvento}
-            onClose={() => setDetailOpen(false)}
+            onClose={() => {
+              setDetailOpen(false);
+              setSelectedFleetKey(null);
+            }}
+            floating
           />
         </div>
       ) : null}
