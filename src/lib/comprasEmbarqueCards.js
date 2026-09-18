@@ -9,6 +9,7 @@ import { calcularPercentuaisLogistica, embarqueRecepcaoDocumentalCompleta, embar
 import { getEmbarqueDataRecebimento } from '@/lib/embarqueRecebimentoDate';
 import {
   buildEmbarqueVirtualNecessidade,
+  buildMapaLiberacaoCascataNecessidade,
   embarqueExcluidoDeNecessidade,
   embarqueNecessidadeTemItensPendentes,
   isNecessidadeRenderizada,
@@ -253,7 +254,17 @@ export function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {})
     };
   });
 
-  const cardsDeEmbarque = pedidosComResumoReal.flatMap((pedido) => {
+  const mapaCascataNecessidade = buildMapaLiberacaoCascataNecessidade(
+    pedidosComResumoReal,
+    embarquesPorPedido,
+    produtosMap,
+  );
+  const pedidosComCascata = pedidosComResumoReal.map((pedido) => ({
+    ...pedido,
+    _cascata_necessidade_liberada: mapaCascataNecessidade.get(pedido.id) || false,
+  }));
+
+  const cardsDeEmbarque = pedidosComCascata.flatMap((pedido) => {
     const embarquesDoPedido = (embarquesPorPedido[pedido.id] || []).slice()
       .sort((a, b) => new Date(a.created_date || 0) - new Date(b.created_date || 0));
 
@@ -337,7 +348,7 @@ export function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {})
     });
   });
 
-  return { pedidosComResumoReal, cardsDeEmbarque };
+  return { pedidosComResumoReal: pedidosComCascata, cardsDeEmbarque };
 }
 
 /** Mesma regra do KPI "aprovados e ainda não recebidos" na lista Embarques. */

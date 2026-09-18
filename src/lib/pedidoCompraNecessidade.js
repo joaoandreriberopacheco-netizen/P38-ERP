@@ -6,6 +6,10 @@
  * 2) ainda falta quantidade comercial relevante (não ruído de arredondamento).
  *
  * Pedidos só aguardando pagamento ou primeiro embarque NÃO geram card de necessidade.
+ *
+ * Cascata ETA: ao encontrar o primeiro pedido (por ETA) com despacho real e falta
+ * relevante (ex.: 1 CX), os pedidos a partir dele podem exibir órfãos mesmo sem
+ * despacho real próprio (`_cascata_necessidade_liberada`).
  */
 
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
@@ -22,6 +26,7 @@ import { calcularItensOrfaosPedido, qtyEmbarcadaComercialLinha } from '@/lib/emb
 import { calcValorItensPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { calculateBaseQuantity, commercialQuantityFromBase, getItemCompraExibicaoVitrine } from '@/lib/productUnits';
+import { toLocalDateKey } from '@/components/utils/dateUtils';
 
 /** Mínimo por linha (unidade comercial) para contar como falta real. */
 export const MIN_LINHA_PENDENTE_COMERCIAL = 0.01;
@@ -96,25 +101,44 @@ export function temDespachoRealComItens(embarquesDoPedido = []) {
   return (embarquesDoPedido || []).some((embarque) => embarqueNecessidadeTemItensPendentes(embarque));
 }
 
+function mapOrfaosParaPendenciasComerciais(itensOrfaos = [], produtosMap = {}) {
+  return (itensOrfaos || [])
+    .map((item) => {
+      const produto = produtosMap[item.produto_id] || null;
+      const exib = getItemCompraExibicaoVitrine(item, produto);
+      const pendenteBase = Number(item.qtd_pendente) || 0;
+      const pendenteComercial = Number(item.qtd_pendente_comercial);
+      const pendente = pendenteComercial > 0
+        ? pendenteComercial
+        : commercialQuantityFromBase(
+          pendenteBase,
+          exib.fator_conversao,
+          exib.unidade_medida,
+        );
+      if (pendente <= 0.009) return null;
+      return { item, exib, pendente };
+    })
+    .filter(Boolean);
+}
+
 /** Pendência comercial — alinhada aos itens órfãos da aba Logística (saldo pós-recepção). */
 export function calcularPendenciaComercialItens(pedido, embarquesDoPedido = [], produtosMap = {}) {
   const embarquesConsiderados = filtrarEmbarquesParaCalculoNecessidade(pedido, embarquesDoPedido);
   if (!temDespachoRealComItens(embarquesConsiderados)) return [];
 
-  return calcularItensOrfaosPedido(pedido, embarquesConsiderados, produtosMap)
-    .map((item) => {
-      const produto = produtosMap[item.produto_id] || null;
-      const exib = getItemCompraExibicaoVitrine(item, produto);
-      const pendenteBase = Number(item.qtd_pendente) || 0;
-      const pendente = commercialQuantityFromBase(
-        pendenteBase,
-        exib.fator_conversao,
-        exib.unidade_medida,
-      );
-      if (pendente <= 0.009) return null;
-      return { item, exib, pendente };
-    })
-    .filter(Boolean);
+  return mapOrfaosParaPendenciasComerciais(
+    calcularItensOrfaosPedido(pedido, embarquesConsiderados, produtosMap),
+    produtosMap,
+  );
+}
+
+/** Pendência por órfãos sem exigir despacho real no próprio pedido (cascata ETA). */
+export function calcularPendenciaOrfaosItens(pedido, embarquesDoPedido = [], produtosMap = {}) {
+  const embarquesConsiderados = filtrarEmbarquesParaCalculoNecessidade(pedido, embarquesDoPedido);
+  return mapOrfaosParaPendenciasComerciais(
+    calcularItensOrfaosPedido(pedido, embarquesConsiderados, produtosMap),
+    produtosMap,
+  );
 }
 
 export function somaPendenciaComercial(pendencias = []) {
@@ -132,28 +156,107 @@ function faltaComercialRelevante(pendencias = []) {
   return pendencias.some((p) => p.pendente >= MIN_UNIDADE_INTEIRA_PENDENTE);
 }
 
+function resolveOpcoesNecessidadePedido(pedido = {}, options = {}) {
+  const liberadoPorCascata = options.liberadoPorCascata ?? !!pedido._cascata_necessidade_liberada;
+  return { liberadoPorCascata };
+}
+
+function getPedidoEtaSortKey(pedido = {}, embarquesDoPedido = []) {
+  const embarquesReais = (embarquesDoPedido || []).filter((embarque) => !isNecessidadeRenderizada(embarque));
+  const comEta = embarquesReais.find((embarque) => embarque?.eta);
+  if (comEta?.eta) return toLocalDateKey(new Date(comEta.eta));
+  if (pedido?.data_prevista_entrega) return String(pedido.data_prevista_entrega).slice(0, 10);
+  return '';
+}
+
+/** Pedido gatilho: já teve despacho real e ainda falta quantidade comercial relevante (ex.: 1 CX). */
+export function pedidoEhGatilhoCascataNecessidade(pedido, embarquesDoPedido = [], produtosMap = {}) {
+  const embarquesConsiderados = filtrarEmbarquesParaCalculoNecessidade(pedido, embarquesDoPedido);
+  if (!temDespachoRealComItens(embarquesConsiderados)) return false;
+
+  const pendencias = pendenciasComerciaisRelevantes(
+    calcularPendenciaComercialItens(pedido, embarquesDoPedido, produtosMap),
+  );
+  return faltaComercialRelevante(pendencias);
+}
+
+/**
+ * A partir do primeiro pedido gatilho (por ETA), libera exibição de órfãos nos pedidos seguintes.
+ * @returns {Map<string, boolean>}
+ */
+export function buildMapaLiberacaoCascataNecessidade(pedidos = [], embarquesPorPedido = {}, produtosMap = {}) {
+  const mapa = new Map();
+  const pedidosOrdenados = [...pedidos].sort((a, b) => {
+    const keyA = getPedidoEtaSortKey(a, embarquesPorPedido[a.id] || []);
+    const keyB = getPedidoEtaSortKey(b, embarquesPorPedido[b.id] || []);
+    if (!keyA && !keyB) return String(a.numero || '').localeCompare(String(b.numero || ''), 'pt-BR');
+    if (!keyA) return -1;
+    if (!keyB) return 1;
+    const cmp = keyA.localeCompare(keyB, 'pt-BR');
+    if (cmp !== 0) return cmp;
+    return String(a.numero || '').localeCompare(String(b.numero || ''), 'pt-BR');
+  });
+
+  let cascataAtiva = false;
+  pedidosOrdenados.forEach((pedido) => {
+    const embarques = embarquesPorPedido[pedido.id] || [];
+    if (!cascataAtiva && pedidoEhGatilhoCascataNecessidade(pedido, embarques, produtosMap)) {
+      cascataAtiva = true;
+    }
+    mapa.set(pedido.id, cascataAtiva);
+  });
+
+  return mapa;
+}
+
 /**
  * Avalia se o pedido deve exibir card(s) de necessidade.
- * @returns {{ exibir: boolean, pendencias: Array, somaPendente: number, temDespachoReal: boolean }}
+ * @returns {{ exibir: boolean, pendencias: Array, somaPendente: number, temDespachoReal: boolean, liberadoPorCascata: boolean }}
  */
-export function avaliarNecessidadeComercialPedido(pedido, embarquesDoPedido = [], produtosMap = {}) {
+export function avaliarNecessidadeComercialPedido(
+  pedido,
+  embarquesDoPedido = [],
+  produtosMap = {},
+  options = {},
+) {
+  const { liberadoPorCascata } = resolveOpcoesNecessidadePedido(pedido, options);
   const embarquesConsiderados = filtrarEmbarquesParaCalculoNecessidade(pedido, embarquesDoPedido);
-  const pendenciasBrutas = calcularPendenciaComercialItens(pedido, embarquesDoPedido, produtosMap);
+  const temDespachoReal = temDespachoRealComItens(embarquesConsiderados);
+
+  const pendenciasBrutas = temDespachoReal
+    ? calcularPendenciaComercialItens(pedido, embarquesDoPedido, produtosMap)
+    : (liberadoPorCascata
+      ? calcularPendenciaOrfaosItens(pedido, embarquesDoPedido, produtosMap)
+      : []);
   const pendencias = pendenciasComerciaisRelevantes(pendenciasBrutas);
   const somaPendente = somaPendenciaComercial(pendencias);
-  const temDespachoReal = temDespachoRealComItens(embarquesConsiderados);
-  const exibir = temDespachoReal && faltaComercialRelevante(pendencias);
+  const exibir = (temDespachoReal || liberadoPorCascata) && faltaComercialRelevante(pendencias);
 
-  return { exibir, pendencias, somaPendente, temDespachoReal };
+  return { exibir, pendencias, somaPendente, temDespachoReal, liberadoPorCascata };
 }
 
 /** Atalho — regra única para filtros e virtual necessidade. */
-export function pedidoDeveExibirCardNecessidade(pedido, embarquesDoPedido = [], produtosMap = {}) {
-  return avaliarNecessidadeComercialPedido(pedido, embarquesDoPedido, produtosMap).exibir;
+export function pedidoDeveExibirCardNecessidade(
+  pedido,
+  embarquesDoPedido = [],
+  produtosMap = {},
+  options = {},
+) {
+  return avaliarNecessidadeComercialPedido(pedido, embarquesDoPedido, produtosMap, options).exibir;
 }
 
-export function quantidadePendenteNecessidadePedido(pedido, embarquesDoPedido = [], produtosMap = {}) {
-  const { exibir, somaPendente } = avaliarNecessidadeComercialPedido(pedido, embarquesDoPedido, produtosMap);
+export function quantidadePendenteNecessidadePedido(
+  pedido,
+  embarquesDoPedido = [],
+  produtosMap = {},
+  options = {},
+) {
+  const { exibir, somaPendente } = avaliarNecessidadeComercialPedido(
+    pedido,
+    embarquesDoPedido,
+    produtosMap,
+    options,
+  );
   return exibir ? somaPendente : 0;
 }
 
