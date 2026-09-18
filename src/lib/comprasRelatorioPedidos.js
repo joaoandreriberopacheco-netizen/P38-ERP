@@ -94,9 +94,11 @@ function normalizarItemRelatorio(item, produtosMap = {}) {
 }
 
 export function normalizarPedidoParaRelatorio(pedido, produtosMap = {}) {
-  const fonteItens = Array.isArray(pedido?._display_itens)
-    ? pedido._display_itens
-    : (Array.isArray(pedido?.itens) ? pedido.itens : []);
+  const fonteItens = Array.isArray(pedido?._consulta_itens) && pedido._consulta_itens.length > 0
+    ? pedido._consulta_itens
+    : Array.isArray(pedido?._display_itens) && pedido._display_itens.length > 0
+      ? pedido._display_itens
+      : (Array.isArray(pedido?.itens) ? pedido.itens : []);
   const itensNormalizados = fonteItens.map((item) => normalizarItemRelatorio(item, produtosMap));
 
   return {

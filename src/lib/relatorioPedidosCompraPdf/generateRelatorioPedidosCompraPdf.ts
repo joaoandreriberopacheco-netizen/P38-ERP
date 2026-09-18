@@ -816,7 +816,13 @@ const resolveMetricasItemPdf = (item = {}, prod = {}, pedido = {}) => {
   const avariaUnitF1 = resolveAvariaLinhaCompraFator1(linhaPedido, prod);
   const avariaUnit = (Number.isFinite(avariaUnitF1) ? avariaUnitF1 : 0) * fatorComercial;
   const custoUnit = vlrUnit + freteUnit + outrosUnit + avariaUnit;
-  const totalLinha = (Number(qtd) || 0) * (Number(vlrUnit) || 0);
+  const totalDireto = Number(item.valor_total_item ?? item.total);
+  const totalProporcional = valorTotalLinhaPdf(item, pedido);
+  const totalLinha = Number.isFinite(totalDireto) && totalDireto > 0
+    ? totalDireto
+    : Number.isFinite(totalProporcional) && totalProporcional > 0
+      ? totalProporcional
+      : (Number(qtd) || 0) * (Number(vlrUnit) || 0);
   const vendaUnit = (Number(prod.preco_venda_padrao) || 0) * fatorComercial;
   const markup = Number.isFinite(custoUnit) && custoUnit > 0 ? ((vendaUnit - custoUnit) / custoUnit) * 100 : NaN;
 
