@@ -305,8 +305,13 @@ const comprasAccentFromDisplayStatusPdf = (displayStatus) => {
 };
 
 const getComprasDisplayStatusLabelPdf = (displayStatus) => {
-  if (displayStatus === 'Aguardando Liberação Financeira' || displayStatus === 'Aguardando Aprovação Financeira') {
-    return 'Aguard. Pgto';
+  if (
+    displayStatus === 'Aguardando Pagamento'
+    || displayStatus === 'Aguardando Liberação Financeira'
+    || displayStatus === 'Aguardando Aprovação Financeira'
+    || displayStatus === 'Aguardando Liberação'
+  ) {
+    return 'Aguardando Pagamento';
   }
   if (displayStatus === 'Pendente' || displayStatus === 'Necessidade') return 'Pendente';
   return displayStatus || '-';
