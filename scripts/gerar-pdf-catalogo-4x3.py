@@ -27,6 +27,9 @@ HEADER_BG = colors.HexColor("#FAFAFA")
 
 COL_HEADERS = ["codigo_4x", "linha", "comp1", "comp2", "comp3", "sku"]
 COL_WIDTHS = [18 * mm, 34 * mm, 62 * mm, 52 * mm, 28 * mm, 24 * mm]
+MERGE_KEYS = ("codigo_4x", "linha", "comp1")
+MERGE_COLS = tuple(COL_HEADERS.index(k) for k in MERGE_KEYS)
+MAX_ROWS_PER_TABLE = 12
 
 
 def cell_str(value) -> str:
@@ -68,6 +71,73 @@ def collapse_groups(rows: list[dict[str, str]]) -> list[dict[str, str]]:
                 prev[key] = collapsed[key]
         out.append(collapsed)
     return out
+
+
+def fill_parent_context(row: dict[str, str], context: dict[str, str]) -> dict[str, str]:
+    filled = dict(row)
+    for key in MERGE_KEYS:
+        if not filled[key] and context.get(key):
+            filled[key] = context[key]
+    return filled
+
+
+def chunk_group_rows(group_rows: list[dict[str, str]]) -> list[list[dict[str, str]]]:
+    """Parte blocos grandes para caber na página; repõe células-mãe no início de cada parte."""
+    if len(group_rows) <= MAX_ROWS_PER_TABLE:
+        return [group_rows]
+
+    chunks: list[list[dict[str, str]]] = []
+    context = {"codigo_4x": "", "linha": "", "comp1": ""}
+    for i in range(0, len(group_rows), MAX_ROWS_PER_TABLE):
+        slice_rows = group_rows[i : i + MAX_ROWS_PER_TABLE]
+        chunk: list[dict[str, str]] = []
+        for j, row in enumerate(slice_rows):
+            if j == 0:
+                chunk.append(fill_parent_context(row, context))
+            else:
+                chunk.append(dict(row))
+        chunks.append(chunk)
+        for key in MERGE_KEYS:
+            for row in reversed(group_rows[: i + len(slice_rows)]):
+                if row[key]:
+                    context[key] = row[key]
+                    break
+    return chunks
+
+
+def group_by_codigo(rows: list[dict[str, str]]) -> list[list[dict[str, str]]]:
+    groups: list[list[dict[str, str]]] = []
+    current: list[dict[str, str]] = []
+    for row in rows:
+        if row["codigo_4x"] and current:
+            groups.append(current)
+            current = []
+        current.append(row)
+    if current:
+        groups.append(current)
+    return groups
+
+
+def compute_vertical_spans(
+    rows: list[dict[str, str]], key: str, col: int, *, row_offset: int
+) -> list[tuple]:
+    """Rowspan para células-mãe (filhas ficam vazias e entram no SPAN)."""
+    spans: list[tuple] = []
+    i = 0
+    while i < len(rows):
+        if not rows[i][key]:
+            i += 1
+            continue
+        start = i
+        j = i + 1
+        while j < len(rows) and not rows[j][key]:
+            j += 1
+        if j - start > 1:
+            start_row = start + row_offset
+            end_row = (j - 1) + row_offset
+            spans.append(("SPAN", (col, start_row), (col, end_row)))
+        i = j
+    return spans
 
 
 def build_pdf(rows: list[dict[str, str]], out_path: Path) -> None:
@@ -133,51 +203,73 @@ def build_pdf(rows: list[dict[str, str]], out_path: Path) -> None:
         ),
     ]
 
-    def p(text: str, style: ParagraphStyle) -> Paragraph:
-        safe = (
-            text.replace("&", "&amp;")
-            .replace("<", "&lt;")
-            .replace(">", "&gt;")
-            .replace("\n", " ")
-            or "—"
-        )
-        if safe == "—" and style is code:
-            safe = "—"
+    def cell(text: str, style: ParagraphStyle, *, blank_if_empty: bool = False):
+        raw = text.replace("\n", " ").strip()
+        if not raw:
+            if blank_if_empty:
+                return ""
+            raw = "—"
+        safe = raw.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
         return Paragraph(safe, style)
 
-    table_data: list[list] = [[p(h, header) for h in COL_HEADERS]]
-    for row in rows:
-        table_data.append(
-            [
-                p(row["codigo_4x"], code),
-                p(row["linha"], body),
-                p(row["comp1"], body),
-                p(row["comp2"], body),
-                p(row["comp3"], body if row["comp3"] else code),
-                p(row["sku"], code),
-            ]
-        )
+    def build_group_table(group_rows: list[dict[str, str]], *, include_header: bool) -> Table:
+        table_data: list[list] = []
+        if include_header:
+            table_data.append([cell(h, header) for h in COL_HEADERS])
+        for row in group_rows:
+            table_data.append(
+                [
+                    cell(row["codigo_4x"], code, blank_if_empty=True),
+                    cell(row["linha"], body, blank_if_empty=True),
+                    cell(row["comp1"], body, blank_if_empty=True),
+                    cell(row["comp2"], body),
+                    cell(row["comp3"], body if row["comp3"] else code),
+                    cell(row["sku"], code),
+                ]
+            )
 
-    table = Table(table_data, colWidths=COL_WIDTHS, repeatRows=1)
-    table.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, 0), HEADER_BG),
-                ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("TOPPADDING", (0, 0), (-1, -1), 5),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-                ("LEFTPADDING", (0, 0), (-1, -1), 4),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 4),
-                # Linhas horizontais finas (sem caixa)
-                ("LINEBELOW", (0, 0), (-1, -1), 0.25, LINE),
-                # Linhas verticais só entre colunas (sem tampas laterais)
-                ("LINEAFTER", (0, 0), (-2, -1), 0.25, LINE),
-            ]
-        )
-    )
+        row_offset = 1 if include_header else 0
+        span_styles: list[tuple] = []
+        for key, col in zip(MERGE_KEYS, MERGE_COLS):
+            span_styles.extend(
+                compute_vertical_spans(group_rows, key, col, row_offset=row_offset)
+            )
 
-    story.append(table)
-    story.append(Spacer(1, 6 * mm))
+        repeat_rows = 1 if include_header else 0
+        table = Table(table_data, colWidths=COL_WIDTHS, repeatRows=repeat_rows)
+        data_start = 1 if include_header else 0
+        table.setStyle(
+            TableStyle(
+                [
+                    *(
+                        [("BACKGROUND", (0, 0), (-1, 0), HEADER_BG)]
+                        if include_header
+                        else []
+                    ),
+                    ("VALIGN", (0, data_start), (-1, -1), "TOP"),
+                    ("VALIGN", (0, data_start), (2, -1), "MIDDLE"),
+                    ("TOPPADDING", (0, 0), (-1, -1), 5),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 4),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+                    ("LINEBELOW", (0, 0), (-1, -1), 0.25, LINE),
+                    ("LINEAFTER", (0, 0), (-2, -1), 0.25, LINE),
+                    *span_styles,
+                ]
+            )
+        )
+        return table
+
+    groups = group_by_codigo(rows)
+    header_used = False
+    for group_rows in groups:
+        for chunk in chunk_group_rows(group_rows):
+            include_header = not header_used
+            story.append(build_group_table(chunk, include_header=include_header))
+            header_used = True
+            story.append(Spacer(1, 1.5 * mm))
+
+    story.append(Spacer(1, 4 * mm))
 
     def footer(canvas, doc_obj):
         canvas.saveState()
