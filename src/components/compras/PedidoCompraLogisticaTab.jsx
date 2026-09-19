@@ -82,46 +82,48 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
   return (
     <div className="rounded-2xl bg-card shadow-sm overflow-hidden">
       {/* Header do card */}
-      <div className="flex items-center gap-3 px-4 py-3">
-        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center">
-          <span className="text-[10px] font-bold text-teal-600 dark:text-teal-400">N{nivel}</span>
+      <div className="flex flex-col gap-2.5 px-4 py-3 sm:flex-row sm:items-start sm:gap-3">
+        <div className="flex items-start gap-3 min-w-0 flex-1">
+          <div className="flex-shrink-0 w-7 h-7 rounded-full bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center">
+            <span className="text-[10px] font-bold text-teal-600 dark:text-teal-400">N{nivel}</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-foreground break-words leading-snug">
+              {codigoExibicao} • {embarque.transportadora_nome || 'Transportadora não informada'}
+            </p>
+            <p className="text-[10px] text-muted-foreground flex flex-wrap gap-x-2 gap-y-1 mt-1">
+              {dataEmb && <span>Emb: {format(dataEmb, 'dd/MM/yy')}</span>}
+              {eta && !editandoEta && <span className="text-teal-500">ETA: {format(eta, 'dd/MM/yy HH:mm', { locale: ptBR })}</span>}
+              {editandoEta && (
+                <div className="flex flex-wrap items-center gap-1.5 w-full">
+                  <input autoComplete="off"
+                    type="date"
+                    value={etaValue}
+                    onChange={e => setEtaValue(e.target.value)}
+                    className="text-[0.75rem] border border-border/40 dark:border-border/40 rounded-lg px-1 py-0 bg-card dark:bg-muted text-foreground focus:outline-none focus:border-teal-400"
+                    autoFocus
+                  />
+                  <button onClick={handleSalvarEta} disabled={salvandoEta} className="text-emerald-500 font-bold text-xs">{salvandoEta ? '…' : '✓'}</button>
+                  <button onClick={() => setEditandoEta(false)} className="text-muted-foreground text-xs">✕</button>
+                </div>
+              )}
+              {Array.isArray(embarque.volumes_detalhados) && embarque.volumes_detalhados.length > 0 && (
+                <span>{embarque.volumes_detalhados.length} tipo(s) de volume</span>
+              )}
+              {embarque.peso_kg > 0 && <span>{embarque.peso_kg} kg</span>}
+              <span>{statusRecebimento}</span>
+              <span className="text-muted-foreground">{formatQuantity(totalItens)} un. embarcadas</span>
+            </p>
+          </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-foreground truncate">
-            {codigoExibicao} • {embarque.transportadora_nome || 'Transportadora não informada'}
-          </p>
-          <p className="text-[10px] text-muted-foreground flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
-            {dataEmb && <span>Emb: {format(dataEmb, 'dd/MM/yy')}</span>}
-            {eta && !editandoEta && <span className="text-teal-500">ETA: {format(eta, 'dd/MM/yy HH:mm', { locale: ptBR })}</span>}
-            {editandoEta && (
-              <div className="flex items-center gap-1.5">
-                <input autoComplete="off"
-                  type="date"
-                  value={etaValue}
-                  onChange={e => setEtaValue(e.target.value)}
-                  className="text-[0.75rem] border border-border/40 dark:border-border/40 rounded-lg px-1 py-0 bg-card dark:bg-muted text-foreground focus:outline-none focus:border-teal-400"
-                  autoFocus
-                />
-                <button onClick={handleSalvarEta} disabled={salvandoEta} className="text-emerald-500 font-bold text-xs">{salvandoEta ? '…' : '✓'}</button>
-                <button onClick={() => setEditandoEta(false)} className="text-muted-foreground text-xs">✕</button>
-              </div>
-            )}
-            {Array.isArray(embarque.volumes_detalhados) && embarque.volumes_detalhados.length > 0 && (
-              <span>{embarque.volumes_detalhados.length} tipo(s) de volume</span>
-            )}
-            {embarque.peso_kg > 0 && <span>{embarque.peso_kg} kg</span>}
-            <span>{statusRecebimento}</span>
-            <span className="text-muted-foreground">{formatQuantity(totalItens)} un. embarcadas</span>
-          </p>
-        </div>
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex items-center gap-1 flex-wrap justify-end sm:flex-shrink-0 sm:justify-start">
            {!editandoEta && (
-             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleEditarEta} title="Editar ETA">
+             <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-7 sm:w-7" onClick={handleEditarEta} title="Editar ETA">
                <CalendarDays className="w-3.5 h-3.5 text-teal-400" />
              </Button>
            )}
            {podeExcluir && (
-             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowDeleteConfirm(true)}>
+             <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-7 sm:w-7" onClick={() => setShowDeleteConfirm(true)}>
                <Trash2 className="w-3.5 h-3.5 text-red-400" />
              </Button>
            )}
@@ -129,7 +131,7 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
              <Button
                variant="outline"
                size="sm"
-               className="h-7 px-2.5 text-[10px] border-0 shadow-sm bg-card text-foreground/90 hover:bg-muted"
+               className="h-8 px-2.5 text-[10px] border-0 shadow-sm bg-card text-foreground/90 hover:bg-muted"
                onClick={handleEditarDespacho}
                title="Corrigir quantidades embarcadas antes da recepção"
                data-pulse-sensor="pedidos-compra.logistica-corrigir-despacho"
@@ -138,11 +140,11 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
                Corrigir
              </Button>
            ) : (
-             <Button variant="ghost" size="icon" className="h-7 w-7 opacity-40" disabled title="Despacho bloqueado após recepção">
+             <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-7 sm:w-7 opacity-40" disabled title="Despacho bloqueado após recepção">
                <Edit3 className="w-3.5 h-3.5 text-muted-foreground" />
              </Button>
            )}
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setExpanded(!expanded)}>
+          <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-7 sm:w-7" onClick={() => setExpanded(!expanded)}>
             {expanded ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
           </Button>
         </div>
@@ -279,7 +281,7 @@ export default function PedidoCompraLogisticaTab({ pedido, produtosMap = {}, onP
   return (
     <div className="space-y-4" data-pulse-sensor="pedidos-compra.logistica-panel">
       <div className="rounded-2xl bg-muted/50 px-4 py-4 shadow-sm">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
           <div className="min-w-0">
             <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Dashboard de embarques</p>
             <div className="mt-1 flex items-center gap-2 flex-wrap">
@@ -288,7 +290,7 @@ export default function PedidoCompraLogisticaTab({ pedido, produtosMap = {}, onP
               <span className="text-sm text-emerald-600 dark:text-emerald-400">{temEmbarqueReal ? percentualConcluido.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) : '0'}% concluído</span>
             </div>
           </div>
-          <div className="text-right">
+          <div className="sm:text-right">
             <p className="text-xs text-muted-foreground">Status agregado</p>
             <p className="text-sm font-medium text-foreground/90">{statusEmbarqueAgregado}</p>
           </div>
@@ -301,9 +303,9 @@ export default function PedidoCompraLogisticaTab({ pedido, produtosMap = {}, onP
       </div>
 
       {/* Header da aba com status e botões de ação */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Truck className="w-4 h-4 text-muted-foreground" />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2 flex-wrap min-w-0">
+          <Truck className="w-4 h-4 text-muted-foreground shrink-0" />
           <span className="text-sm font-semibold text-foreground/90 font-quicksand">
             Despachos
           </span>
@@ -324,18 +326,16 @@ export default function PedidoCompraLogisticaTab({ pedido, produtosMap = {}, onP
           }
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleNovoEmbarque}
-            className="h-8 px-3 text-xs border-0 shadow-sm bg-card text-foreground/90 hover:bg-muted"
-            data-pulse-sensor="pedidos-compra.logistica-informar-despacho"
-          >
-            <Plus className="w-3.5 h-3.5 mr-1" />
-            Informar Despacho
-          </Button>
-        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleNovoEmbarque}
+          className="h-9 w-full sm:w-auto px-3 text-xs border-0 shadow-sm bg-card text-foreground/90 hover:bg-muted shrink-0"
+          data-pulse-sensor="pedidos-compra.logistica-informar-despacho"
+        >
+          <Plus className="w-3.5 h-3.5 mr-1" />
+          Informar Despacho
+        </Button>
       </div>
 
       {/* Estado vazio */}
