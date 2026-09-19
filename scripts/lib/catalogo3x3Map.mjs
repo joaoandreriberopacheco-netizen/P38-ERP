@@ -188,6 +188,99 @@ function isPregoCatalogRow(ctx = {}) {
   return linha === 'PREGO' || core === 'FIXACAO';
 }
 
+function isFerramentasRow(ctx = {}) {
+  return norm(linhaBase(ctx.linha_origem || ctx.linha || '')) === 'FERRAMENTAS';
+}
+
+const FITA_MARCAS = new Set(['TEKBOND', 'ADELBRAS', 'KIMANTA', '3M', 'CONDOR', 'MOMFORT', 'DISMA']);
+
+/** Desdobra FITA genérico usando sku legado (ex.: FITA VEDA ROSCA 18MM X 50M). */
+function parseFitaLegacySku(skuAtual = '') {
+  const sku = cellStr(skuAtual);
+  if (!sku) return null;
+
+  const tipos = [
+    { produto: 'FITA VEDA ROSCA', re: /^FITA VEDA ROSCA\s+(.+)$/i },
+    { produto: 'FITA ZEBRADA', re: /^FITA ZEBRADA\s+(.+)$/i },
+    { produto: 'FITA SILVER TAPE', re: /^FITA SILVER TAPE\s+(.+)$/i, splitBrand: true },
+    { produto: 'FITA ALTA TENSÃO', re: /^FITA ALTA TENS[AÃ]O\s+(.+)$/i },
+    { produto: 'FITA DUPLA FACE', re: /^FITA DUPLA FACE\s+(.+)$/i, splitBrand: true },
+  ];
+
+  for (const { produto, re, splitBrand } of tipos) {
+    const m = sku.match(re);
+    if (!m) continue;
+    let resto = m[1].trim();
+    let comp2 = resto;
+    let comp3 = '';
+    if (splitBrand) {
+      const parts = resto.split(/\s+/);
+      const last = parts[parts.length - 1];
+      if (parts.length > 1 && FITA_MARCAS.has(norm(last))) {
+        comp3 = last;
+        comp2 = parts.slice(0, -1).join(' ');
+      }
+    }
+    return { comp1: produto, comp2, comp3 };
+  }
+  return null;
+}
+
+function normalizeFerramentasComponentes(c1, c2, c3, ctx = {}) {
+  const skuAtual = cellStr(ctx.sku_atual);
+
+  // FITA truncado no core — recuperar tipo pelo sku legado.
+  if (norm(c1) === 'FITA' || (norm(c1).startsWith('FITA ') && skuAtual && !norm(c1).includes('VEDA') && !norm(c1).includes('ZEBRADA') && !norm(c1).includes('SILVER') && !norm(c1).includes('ALTA') && !norm(c1).includes('DUPLA'))) {
+    const parsed = parseFitaLegacySku(skuAtual);
+    if (parsed) return parsed;
+  }
+
+  const n1 = norm(c1);
+
+  // Talhadeira chata — 8 e 12 são comp2.
+  const talh = n1.match(/^TALHADEIRA CHATA\s+(\d+)$/);
+  if (talh) {
+    return { comp1: 'TALHADEIRA CHATA', comp2: talh[1], comp3: '' };
+  }
+
+  // Régua de pedreiro — 2 M e 3 M são comp2.
+  const regua = n1.match(/^REGUA (?:DE )?PEDREIRO\s+(\d+\s*M)$/);
+  if (regua) {
+    return { comp1: 'RÉGUA DE PEDREIRO', comp2: regua[1].replace(/\s+/g, ' '), comp3: '' };
+  }
+  if (n1 === 'REGUA DE PEDREIRO' || n1 === 'REGUA PEDREIRO') {
+    return { comp1: 'RÉGUA DE PEDREIRO', comp2: c2, comp3: c3 };
+  }
+
+  // Prumos Ramada — nomenclatura canónica.
+  if (n1 === 'PRUMO HOBBY DE CENTRO' || n1.includes('PRUMO') && n1.includes('CENTRO') && n1.includes('HOBBY')) {
+    return { comp1: 'PRUMO DE CENTRO HOBBY RAMADA', comp2: c2 || '300G', comp3: '' };
+  }
+  if (n1 === 'PRUMO PAREDE HOBBY RAMADA' || (n1.includes('PRUMO') && n1.includes('PAREDE') && n1.includes('HOBBY'))) {
+    return { comp1: 'PRUMO DE PAREDE HOBBY RAMADA', comp2: c2, comp3: c3 };
+  }
+
+  // Marreta oitavada — peso no comp2.
+  const marreta = n1.match(/^MARRETA OITAVADA\s+([\d,\.]+\s*KG)\s+C\/CABO/);
+  if (marreta) {
+    return { comp1: 'MARRETA OITAVADA C/CABO', comp2: marreta[1].replace(/\s+/g, ''), comp3: '' };
+  }
+  if (n1 === 'MARRETA OITAVADA C/CABO') {
+    return { comp1: c1, comp2: c2, comp3: c3 };
+  }
+
+  // Linha de pedreiro — comprimento no comp2 (50 M / 100 M).
+  const linhaPc = n1.match(/^LINHA DE PEDREIRO\s+(\d+\s*M)$/);
+  if (linhaPc) {
+    return { comp1: 'LINHA DE PEDREIRO', comp2: linhaPc[1].replace(/\s+/g, ' '), comp3: '' };
+  }
+  if (n1 === 'LINHA DE PEDREIRO') {
+    return { comp1: 'LINHA DE PEDREIRO', comp2: c2, comp3: c3 };
+  }
+
+  return null;
+}
+
 /** @param {string} comp1 @param {string} comp2 @param {string} comp3 @param {{ sku_atual?: string, novo_sku?: string, linha_origem?: string, core_origem?: string, linha?: string, core?: string }} [ctx] */
 export function normalizeComponentes(comp1, comp2, comp3, ctx = {}) {
   let c1 = cellStr(comp1);
@@ -200,6 +293,16 @@ export function normalizeComponentes(comp1, comp2, comp3, ctx = {}) {
     if (medida && (!c1 || norm(c1) === 'PREGO')) {
       c1 = 'PREGO';
       c2 = medida;
+    }
+  }
+
+  // Ferramentas — produto compra vs comp2 (talhadeira, fita, régua, prumo, marreta, linha).
+  if (isFerramentasRow(ctx)) {
+    const ferr = normalizeFerramentasComponentes(c1, c2, c3, ctx);
+    if (ferr) {
+      c1 = ferr.comp1;
+      c2 = ferr.comp2;
+      c3 = ferr.comp3;
     }
   }
 
