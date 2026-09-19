@@ -10,7 +10,7 @@ from pathlib import Path
 from openpyxl import load_workbook
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_LEFT
-from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
@@ -26,10 +26,14 @@ MUTED = colors.HexColor("#6B6B6B")
 HEADER_BG = colors.HexColor("#FAFAFA")
 
 COL_HEADERS = ["codigo_4x", "linha", "comp1", "comp2", "comp3", "sku"]
-COL_WIDTHS = [18 * mm, 34 * mm, 62 * mm, 52 * mm, 28 * mm, 24 * mm]
+# A4 retrato (~210 mm útil com margens reduzidas)
+COL_WIDTHS = [15 * mm, 30 * mm, 52 * mm, 44 * mm, 24 * mm, 21 * mm]
 MERGE_KEYS = ("codigo_4x", "linha", "comp1")
 MERGE_COLS = tuple(COL_HEADERS.index(k) for k in MERGE_KEYS)
-MAX_ROWS_PER_TABLE = 12
+MAX_ROWS_PER_TABLE = 18
+PAGE_MARGIN_X = 8 * mm
+PAGE_MARGIN_TOP = 10 * mm
+PAGE_MARGIN_BOTTOM = 12 * mm
 
 
 def cell_str(value) -> str:
@@ -145,11 +149,11 @@ def build_pdf(rows: list[dict[str, str]], out_path: Path) -> None:
 
     doc = SimpleDocTemplate(
         str(out_path),
-        pagesize=landscape(A4),
-        leftMargin=14 * mm,
-        rightMargin=14 * mm,
-        topMargin=14 * mm,
-        bottomMargin=16 * mm,
+        pagesize=A4,
+        leftMargin=PAGE_MARGIN_X,
+        rightMargin=PAGE_MARGIN_X,
+        topMargin=PAGE_MARGIN_TOP,
+        bottomMargin=PAGE_MARGIN_BOTTOM,
         title="P38 — Catálogo 4×3",
         author="P38 ERP",
     )
@@ -277,12 +281,12 @@ def build_pdf(rows: list[dict[str, str]], out_path: Path) -> None:
         canvas.setFillColor(MUTED)
         canvas.drawString(
             doc_obj.leftMargin,
-            8 * mm,
+            6 * mm,
             f"P38 · Catálogo 4×3 · {len(rows)} SKUs",
         )
         canvas.drawRightString(
-            landscape(A4)[0] - doc_obj.rightMargin,
-            8 * mm,
+            A4[0] - doc_obj.rightMargin,
+            6 * mm,
             f"pág. {canvas.getPageNumber()}",
         )
         canvas.restoreState()
