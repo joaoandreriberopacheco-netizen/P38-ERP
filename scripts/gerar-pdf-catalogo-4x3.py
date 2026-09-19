@@ -26,14 +26,15 @@ MUTED = colors.HexColor("#6B6B6B")
 HEADER_BG = colors.HexColor("#FAFAFA")
 
 COL_HEADERS = ["codigo_4x", "linha", "comp1", "comp2", "comp3", "sku"]
-# A4 retrato (~210 mm útil com margens reduzidas)
-COL_WIDTHS = [15 * mm, 30 * mm, 52 * mm, 44 * mm, 24 * mm, 21 * mm]
+# A4 retrato 210 mm — margens 4 mm → ~202 mm úteis
+COL_WIDTHS = [16 * mm, 32 * mm, 56 * mm, 48 * mm, 26 * mm, 24 * mm]
 MERGE_KEYS = ("codigo_4x", "linha", "comp1")
 MERGE_COLS = tuple(COL_HEADERS.index(k) for k in MERGE_KEYS)
-MAX_ROWS_PER_TABLE = 18
-PAGE_MARGIN_X = 8 * mm
-PAGE_MARGIN_TOP = 10 * mm
-PAGE_MARGIN_BOTTOM = 12 * mm
+MAX_ROWS_PER_TABLE = 20
+PAGE_MARGIN_X = 4 * mm
+PAGE_MARGIN_TOP = 5 * mm
+PAGE_MARGIN_BOTTOM = 6 * mm
+PAGE_SIZE = A4  # retrato explícito (595×842 pt)
 
 
 def cell_str(value) -> str:
@@ -149,7 +150,7 @@ def build_pdf(rows: list[dict[str, str]], out_path: Path) -> None:
 
     doc = SimpleDocTemplate(
         str(out_path),
-        pagesize=A4,
+        pagesize=PAGE_SIZE,
         leftMargin=PAGE_MARGIN_X,
         rightMargin=PAGE_MARGIN_X,
         topMargin=PAGE_MARGIN_TOP,
@@ -195,14 +196,14 @@ def build_pdf(rows: list[dict[str, str]], out_path: Path) -> None:
         fontSize=8,
         leading=10,
         textColor=MUTED,
-        spaceAfter=8,
+        spaceAfter=4,
     )
 
     generated = datetime.now(timezone.utc).strftime("%d/%m/%Y %H:%M UTC")
     story = [
         Paragraph("P38 — Catálogo 4×3", title),
         Paragraph(
-            f"Catálogo completo · {len(rows)} SKUs · coluna final = código interno · {generated}",
+            f"A4 retrato · {len(rows)} SKUs · coluna final = código · {generated}",
             subtitle,
         ),
     ]
@@ -252,10 +253,10 @@ def build_pdf(rows: list[dict[str, str]], out_path: Path) -> None:
                     ),
                     ("VALIGN", (0, data_start), (-1, -1), "TOP"),
                     ("VALIGN", (0, data_start), (2, -1), "MIDDLE"),
-                    ("TOPPADDING", (0, 0), (-1, -1), 5),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-                    ("LEFTPADDING", (0, 0), (-1, -1), 4),
-                    ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+                    ("TOPPADDING", (0, 0), (-1, -1), 3),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 3),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 3),
                     ("LINEBELOW", (0, 0), (-1, -1), 0.25, LINE),
                     ("LINEAFTER", (0, 0), (-2, -1), 0.25, LINE),
                     *span_styles,
@@ -271,9 +272,9 @@ def build_pdf(rows: list[dict[str, str]], out_path: Path) -> None:
             include_header = not header_used
             story.append(build_group_table(chunk, include_header=include_header))
             header_used = True
-            story.append(Spacer(1, 1.5 * mm))
+            story.append(Spacer(1, 1 * mm))
 
-    story.append(Spacer(1, 4 * mm))
+    story.append(Spacer(1, 2 * mm))
 
     def footer(canvas, doc_obj):
         canvas.saveState()
@@ -281,12 +282,12 @@ def build_pdf(rows: list[dict[str, str]], out_path: Path) -> None:
         canvas.setFillColor(MUTED)
         canvas.drawString(
             doc_obj.leftMargin,
-            6 * mm,
-            f"P38 · Catálogo 4×3 · {len(rows)} SKUs",
+            4 * mm,
+            f"P38 · Catálogo 4×3 · {len(rows)} SKUs · A4 retrato",
         )
         canvas.drawRightString(
-            A4[0] - doc_obj.rightMargin,
-            6 * mm,
+            PAGE_SIZE[0] - doc_obj.rightMargin,
+            4 * mm,
             f"pág. {canvas.getPageNumber()}",
         )
         canvas.restoreState()
