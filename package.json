@@ -102,6 +102,8 @@
     "export:analise-linhas": "node scripts/export-catalogo-analise-linhas.mjs",
     "export:linhas-mestre": "node scripts/export-linhas-mestre.mjs",
     "export:catalogo-skus": "node scripts/export-catalogo-skus.mjs",
+    "export:catalogo-4x3": "node scripts/export-catalogo-3x3.mjs",
+    "export:catalogo-3x3": "node scripts/export-catalogo-3x3.mjs",
     "export:pdf-catalogo-4x3": "node scripts/gerar-pdf-catalogo-4x3.mjs",
     "export:pdf-catalogo-4x": "node scripts/gerar-pdf-catalogo-4x-nivel.mjs",
     "export:conta-azul": "node scripts/export-catalogo-conta-azul.mjs",
