@@ -63,3 +63,54 @@ https://github.com/joaoandreriberopacheco-netizen/P38-ERP/raw/main/docs/exports/
 | [P38-linhas-catalogo-por-categoria.csv](./P38-linhas-catalogo-por-categoria.csv) | Mesmo em CSV |
 
 Regenerar: `npm run export:linhas-categoria`
+
+---
+
+## Catálogo modelo 3×3 — monitor Smart Supply
+
+Excel canónico para **drill-down 3×3** (categorias + componentes SKU). Tags ficam para fase posterior.
+
+| Ficheiro | Descrição |
+|----------|-----------|
+| [P38-catalogo-3x3.xlsx](./P38-catalogo-3x3.xlsx) | README · Categorias 3× · Componentes ×3 · Catálogo 3×3 · Pivot metadados |
+
+**Download directo:**  
+https://github.com/joaoandreriberopacheco-netizen/P38-ERP/raw/main/docs/exports/P38-catalogo-3x3.xlsx
+
+Regenerar:
+
+```bash
+npm run export:catalogo-3x3
+```
+
+Modelo:
+
+- **ETAPA > CATEGORIA > LINHA** — ex.: `Edificações > 01. Alvenaria > Armaduras`
+- **comp1 | comp2 | comp3** — ex.: `Estribo | 7×17 | (vazio)`
+
+Etapas: **Edificações** · **Instalações** · **Acabamentos** · **Transversal**
+
+---
+
+## Estudo hierarquia — Excel unificado (legado multi-aba)
+
+Um único ficheiro com **aba README** (índice) e todas as folhas do estudo A/B/C, catálogo core e benchmark Leroy Merlin.
+
+| Ficheiro | Descrição |
+|----------|-----------|
+| [P38-sku-hierarquia-unificado.xlsx](./P38-sku-hierarquia-unificado.xlsx) | README + Resumo + A/B/C + Catálogo core + Benchmark elétrica + legendas |
+
+**Download directo:**  
+https://github.com/joaoandreriberopacheco-netizen/P38-ERP/raw/main/docs/exports/P38-sku-hierarquia-unificado.xlsx
+
+Fontes (mantidas em `docs/exports/` para regenerar):
+
+- `P38-sku-hierarquia-ab.xlsx`
+- `P38-sku-hierarquia-core.xlsx`
+- `P38-eletrica-benchmark-lm.xlsx`
+
+Regenerar:
+
+```bash
+npm run export:sku-hierarquia-unificado
+```
