@@ -1,0 +1,74 @@
+{
+  "version": "2026-08-28",
+  "nota": "Macro-blocos estudo Excel. B = hidráulica + elétrica até caixa de espera. Visível → acabamentos.",
+  "regra_limite": {
+    "instalacao": "Tudo até a caixa de espera (caixinha/ponto bruto, quadro, fio, tubo, registro embutido).",
+    "acabamentos": "Parte visível ao utilizador: tomada, interruptor, lâmpada, luminária, torneira, louça, metais.",
+    "gas": "Fora de B — botijão/regulador avulso, não pathway de instalação."
+  },
+  "blocos": [
+    {
+      "codigo": "A",
+      "nome": "A — Edificações",
+      "descricao": "Estrutura, cobertura, revestimentos e acabamento seco da obra"
+    },
+    {
+      "codigo": "B",
+      "nome": "B — Instalações",
+      "descricao": "Hidráulica + elétrica (obra bruta até caixa de espera / quadro / registro)"
+    },
+    {
+      "codigo": "C",
+      "nome": "C — Acabamentos",
+      "descricao": "Prévia — peças visíveis (tomada, luz, torneira, louça, tinta, cerâmica…)"
+    }
+  ],
+  "sub_blocos_a": [
+    { "codigo": "A1", "etapa": "1 — Estrutura / alvenaria", "nome": "Estrutura / alvenaria" },
+    { "codigo": "A2", "etapa": "2 — Cobertura", "nome": "Cobertura" },
+    { "codigo": "A4", "etapa": "4 — Revestimentos", "nome": "Revestimentos" },
+    { "codigo": "A6", "etapa": "6 — Acabamento seco", "nome": "Acabamento seco" }
+  ],
+  "sub_blocos_b_hidraulica": [
+    { "codigo": "B01", "nome": "01 — Soldável" },
+    { "codigo": "B02", "nome": "02 — Esgoto" },
+    { "codigo": "B03", "nome": "03 — Roscável" },
+    { "codigo": "B04", "nome": "04 — Captação" },
+    { "codigo": "B05", "nome": "05 — Componentes" }
+  ],
+  "sub_blocos_b_eletrica": [
+    { "codigo": "B06", "nome": "06 — Padrão de entrada", "cores": ["PADRAO_ELETRICO"] },
+    { "codigo": "B07", "nome": "07 — Infra (eletroduto e fios)", "cores": ["INFRA_ELETRICA"], "linhas": ["ELETRODUTO", "FIOS ELÉTRICOS"] },
+    { "codigo": "B08", "nome": "08 — Quadro e proteção", "cores": ["QUADRO_ELETRICO"] },
+    { "codigo": "B09", "nome": "09 — Caixas de espera", "nota": "Caixinha/caixa de luz, placa cega, tapa-furo — antes da tomada/interruptor visível" }
+  ],
+  "acabamentos_eletrica_pc": [
+    "TOMADA",
+    "INTERRUPTOR",
+    "LAMPADA",
+    "LUMINÁRIA",
+    "LUMINARIA",
+    "SPOT LED",
+    "SPOT ",
+    "PLAFON",
+    "PLUG MACHO",
+    "PLUG FEMEA",
+    "PLUG FÊMEA"
+  ],
+  "acabamentos_eletrica_sku": ["NICHO EMBUTIR"],
+  "caixas_espera_pc": [
+    "CAIXINHA DE LUZ",
+    "CAIXA DE LUZ",
+    "PLACA CEGA",
+    "TAPA-FURO",
+    "CAIXA DE STOP"
+  ],
+  "etapas_a": [
+    "1 — Estrutura / alvenaria",
+    "2 — Cobertura",
+    "4 — Revestimentos",
+    "6 — Acabamento seco"
+  ],
+  "cores_hidraulica": ["ESGOTO", "AGUA_FRIA_SOLDAVEL", "AGUA_FRIA_ROSCAVEL", "HIDRAULICA_GERAL"],
+  "cores_eletrica": ["PADRAO_ELETRICO", "INFRA_ELETRICA", "QUADRO_ELETRICO", "PONTOS_ELETRICOS", "ILUMINACAO"]
+}
