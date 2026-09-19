@@ -192,6 +192,130 @@ function isFerramentasRow(ctx = {}) {
   return norm(linhaBase(ctx.linha_origem || ctx.linha || '')) === 'FERRAMENTAS';
 }
 
+function isPinturaQuimicosRow(ctx = {}) {
+  const linha = norm(linhaBase(ctx.linha_origem || ctx.linha || ''));
+  return linha === 'PINTURA E QUIMICOS' || linha === 'LIXA';
+}
+
+function isFerragemRow(ctx = {}) {
+  return norm(linhaBase(ctx.linha_origem || ctx.linha || '')) === 'FERRAGEM';
+}
+
+function stripLegacyPrefix(sku = '', prefix = '') {
+  const re = new RegExp(`^${prefix}\\s+`, 'i');
+  return cellStr(sku).replace(re, '').trim();
+}
+
+function parsePincelLegacy(skuAtual = '') {
+  const rest = stripLegacyPrefix(skuAtual, 'PINCEL');
+  if (!rest) return null;
+  return { comp1: 'PINCEL', comp2: rest, comp3: '' };
+}
+
+function parseRoloEspumaLegacy(skuAtual = '') {
+  const rest = stripLegacyPrefix(skuAtual, 'ROLO DE ESPUMA');
+  if (!rest) return null;
+  const comp2 = rest
+    .replace(/\bPROF\s*(\d+)\s*CM\b/i, 'PROF $1 CM')
+    .replace(/\b(\d+)\s*CM\b/i, (_, n) => `${n.length === 1 ? `0${n}` : n} CM`);
+  return { comp1: 'ROLO DE ESPUMA', comp2, comp3: '' };
+}
+
+function parseRoloLaLegacy(skuAtual = '') {
+  const sku = cellStr(skuAtual);
+  const simple = sku.match(/^ROLO DE L[AÃ]\s+(\d+\s*CM)$/i);
+  if (simple) {
+    return { comp1: 'ROLO DE LÃ', comp2: simple[1].replace(/\s+/g, ' ').trim(), comp3: '' };
+  }
+  const anti = sku.match(/^ROLO DE L[AÃ]\s+ANTI-RESPINGO\s+(\d+)\s*CM(?:\s+S\/CABO\s+(.+))?$/i);
+  if (anti) {
+    return {
+      comp1: 'ROLO DE LÃ ANTI-RESPINGO',
+      comp2: `${anti[1]} CM`,
+      comp3: cellStr(anti[2]),
+    };
+  }
+  const sint = sku.match(/^ROLO DE L[AÃ]\s+SINTETICA C\/ CABO\s+(\d+)\s*CM\s+(\S.+)$/i);
+  if (sint) {
+    return {
+      comp1: 'ROLO DE LÃ SINTÉTICA C/ CABO',
+      comp2: `${sint[1]} CM`,
+      comp3: sint[2].trim(),
+    };
+  }
+  return null;
+}
+
+function parseDiscoCorteLegacy(skuAtual = '', c2 = '', c3 = '') {
+  if (c2 && c3) {
+    return { comp1: 'DISCO DE CORTE', comp2: c2, comp3: c3 };
+  }
+  const rest = stripLegacyPrefix(skuAtual, 'DISCO DE CORTE');
+  if (!rest) return null;
+  const medida = rest.match(/([\d,\.]+\s*X\s*[\d/'\s,]+)$/i);
+  if (medida) {
+    const tipo = rest.slice(0, rest.length - medida[1].length).trim();
+    if (tipo) {
+      return { comp1: 'DISCO DE CORTE', comp2: tipo, comp3: medida[1].trim() };
+    }
+  }
+  const simple = rest.match(/^(.+?)\s+(\d+(?:\s*''?)?)$/);
+  if (simple) {
+    return { comp1: 'DISCO DE CORTE', comp2: simple[1].trim(), comp3: simple[2].trim() };
+  }
+  return { comp1: 'DISCO DE CORTE', comp2: rest, comp3: '' };
+}
+
+function parseDiscoDesbasteLegacy(skuAtual = '', c2 = '', c3 = '') {
+  const size = c2 || c3 || skuAtual.match(/DISCO DE DESBASTE\s*[›>\s]*(\d+)/i)?.[1];
+  if (!size) return null;
+  return { comp1: 'DISCO DE DESBASTE', comp2: String(size).trim(), comp3: '' };
+}
+
+function parseColherDeLegacy(c1 = '', c2 = '', skuAtual = '') {
+  if (norm(c1) !== 'COLHER DE') return null;
+  const num = c2 || stripLegacyPrefix(skuAtual, 'COLHER DE PEDREIRO');
+  return { comp1: 'COLHER DE PEDREIRO', comp2: num, comp3: '' };
+}
+
+function normalizeLegacyToolComponentes(c1, c2, c3, ctx = {}) {
+  const skuAtual = cellStr(ctx.sku_atual);
+  const n1 = norm(c1);
+
+  const ferr = normalizeFerramentasComponentes(c1, c2, c3, ctx);
+  if (ferr) return ferr;
+
+  if (n1 === 'PINCEL' && !c2) {
+    const parsed = parsePincelLegacy(skuAtual);
+    if (parsed) return parsed;
+  }
+
+  if (n1 === 'ROLO DE ESPUMA' && !c2) {
+    const parsed = parseRoloEspumaLegacy(skuAtual);
+    if (parsed) return parsed;
+  }
+
+  if ((n1 === 'ROLO DE LA' || n1 === 'ROLO DE LÃ') && !c2) {
+    const parsed = parseRoloLaLegacy(skuAtual);
+    if (parsed) return parsed;
+  }
+
+  if (n1 === 'DISCO DE CORTE' && !c2 && !c3) {
+    const parsed = parseDiscoCorteLegacy(skuAtual, c2, c3);
+    if (parsed) return parsed;
+  }
+
+  if (n1 === 'DISCO DE DESBASTE' && !c2) {
+    const parsed = parseDiscoDesbasteLegacy(skuAtual, c2, c3);
+    if (parsed) return parsed;
+  }
+
+  const colher = parseColherDeLegacy(c1, c2, skuAtual);
+  if (colher) return colher;
+
+  return null;
+}
+
 const FITA_MARCAS = new Set(['TEKBOND', 'ADELBRAS', 'KIMANTA', '3M', 'CONDOR', 'MOMFORT', 'DISMA']);
 
 /** Desdobra FITA genérico usando sku legado (ex.: FITA VEDA ROSCA 18MM X 50M). */
@@ -296,13 +420,13 @@ export function normalizeComponentes(comp1, comp2, comp3, ctx = {}) {
     }
   }
 
-  // Ferramentas — produto compra vs comp2 (talhadeira, fita, régua, prumo, marreta, linha).
-  if (isFerramentasRow(ctx)) {
-    const ferr = normalizeFerramentasComponentes(c1, c2, c3, ctx);
-    if (ferr) {
-      c1 = ferr.comp1;
-      c2 = ferr.comp2;
-      c3 = ferr.comp3;
+  // Ferramentas / Pintura / Ferragem — produto compra vs comp2/comp3 (sku legado como chave).
+  if (isFerramentasRow(ctx) || isPinturaQuimicosRow(ctx) || isFerragemRow(ctx)) {
+    const legacy = normalizeLegacyToolComponentes(c1, c2, c3, ctx);
+    if (legacy) {
+      c1 = legacy.comp1;
+      c2 = legacy.comp2;
+      c3 = legacy.comp3;
     }
   }
 
