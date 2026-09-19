@@ -248,7 +248,11 @@
 }
 
 .fluvial-geo-map .fluvial-osm-tiles--dark {
-  filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.95) saturate(0.85);
+  filter: invert(1) hue-rotate(180deg) brightness(0.88) contrast(0.94) saturate(0.12) grayscale(0.35);
+}
+
+.fluvial-geo-map .fluvial-osm-tiles--light {
+  filter: grayscale(0.92) contrast(0.98) brightness(1.02);
 }
 
 .fluvial-geo-map .leaflet-control-zoom a {
@@ -293,7 +297,7 @@
 .fluvial-dock-strip {
   position: absolute;
   top: 72px;
-  bottom: 16px;
+  bottom: 108px;
   z-index: 30;
   width: 58px;
   display: flex;
@@ -504,13 +508,26 @@
   align-items: center;
   gap: 12px;
   min-width: 0;
+  flex: 1;
+}
+
+.fluvial-command-chrome__center {
+  flex: 2;
+  text-align: center;
+  min-width: 0;
 }
 
 .fluvial-command-chrome__title {
-  font-size: 13px;
+  margin: 0;
+  font-size: 12px;
   font-weight: 400;
   color: rgba(255, 255, 255, 0.72);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.fluvial-theme-light .fluvial-command-chrome__title {
+  color: rgba(18, 18, 18, 0.72);
 }
 
 .fluvial-command-chrome__meta {
@@ -524,6 +541,7 @@
   gap: 8px;
   flex-wrap: wrap;
   justify-content: flex-end;
+  flex: 1;
 }
 
 .fluvial-date-chip {
@@ -889,6 +907,277 @@
   font-weight: 500;
 }
 
+/* ── Labels de cidade no mapa ── */
+.fluvial-city-label.leaflet-tooltip {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  font-family: 'Barlow', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.88);
+  padding: 0;
+}
+
+.fluvial-city-label--light.leaflet-tooltip {
+  color: rgba(18, 18, 18, 0.88);
+}
+
+.fluvial-city-label.leaflet-tooltip::before {
+  display: none;
+}
+
+.fluvial-vessel-tooltip.leaflet-tooltip {
+  font-family: 'Barlow', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(12, 12, 12, 0.88);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.fluvial-vessel-tooltip--light.leaflet-tooltip {
+  background: rgba(255, 255, 255, 0.94);
+  color: #111;
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+/* ── Timeline (tempo distribuído no rio) ── */
+.fluvial-timeline {
+  position: absolute;
+  left: 76px;
+  right: 76px;
+  bottom: 14px;
+  z-index: 40;
+  pointer-events: none;
+}
+
+.fluvial-timeline__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+  padding: 0 4px;
+}
+
+.fluvial-timeline__label {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.fluvial-timeline__date {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.fluvial-timeline--light .fluvial-timeline__label {
+  color: rgba(18, 18, 18, 0.38);
+}
+
+.fluvial-timeline--light .fluvial-timeline__date {
+  color: rgba(18, 18, 18, 0.55);
+}
+
+.fluvial-timeline__track {
+  position: relative;
+  height: 34px;
+}
+
+.fluvial-timeline__line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 10px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.42) 50%,
+    rgba(255, 255, 255, 0.12) 100%
+  );
+}
+
+.fluvial-timeline--light .fluvial-timeline__line {
+  background: linear-gradient(
+    90deg,
+    rgba(18, 18, 18, 0.1) 0%,
+    rgba(18, 18, 18, 0.38) 50%,
+    rgba(18, 18, 18, 0.1) 100%
+  );
+}
+
+.fluvial-timeline__city {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.fluvial-timeline__tick {
+  width: 1px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.fluvial-timeline--light .fluvial-timeline__tick {
+  background: rgba(18, 18, 18, 0.3);
+}
+
+.fluvial-timeline__city-name {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.48);
+  white-space: nowrap;
+}
+
+.fluvial-timeline--light .fluvial-timeline__city-name {
+  color: rgba(18, 18, 18, 0.48);
+}
+
+.fluvial-timeline__vessel {
+  position: absolute;
+  top: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.45);
+  transform: translateX(-50%);
+}
+
+.fluvial-timeline--light .fluvial-timeline__vessel {
+  background: #111;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+}
+
+.fluvial-timeline__milestones {
+  position: relative;
+  height: 16px;
+  margin-top: 2px;
+}
+
+.fluvial-timeline__milestone {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
+  white-space: nowrap;
+}
+
+.fluvial-timeline--light .fluvial-timeline__milestone {
+  color: rgba(18, 18, 18, 0.42);
+}
+
+.fluvial-timeline__milestone--eta {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.fluvial-timeline--light .fluvial-timeline__milestone--eta {
+  color: rgba(18, 18, 18, 0.72);
+}
+
+/* ── Legenda ── */
+.fluvial-map-legend {
+  position: absolute;
+  right: 16px;
+  bottom: 108px;
+  z-index: 40;
+  min-width: 148px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(10, 10, 10, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  pointer-events: none;
+}
+
+.fluvial-map-legend--light {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.fluvial-map-legend__title {
+  margin: 0 0 8px;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.fluvial-map-legend--light .fluvial-map-legend__title {
+  color: rgba(18, 18, 18, 0.42);
+}
+
+.fluvial-map-legend__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fluvial-map-legend__list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.fluvial-map-legend--light .fluvial-map-legend__list li {
+  color: rgba(18, 18, 18, 0.62);
+}
+
+.fluvial-map-legend__icon {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.fluvial-map-legend__icon--vessel {
+  background: rgba(255, 255, 255, 0.85);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 16'%3E%3Cpath fill='black' d='M2 11h3l2-4 2 4h3l1.5-6h2.5l-1 6H2zm20-2h6l-1.5 4h-4.5l1-4z'/%3E%3C/svg%3E") center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 16'%3E%3Cpath fill='black' d='M2 11h3l2-4 2 4h3l1.5-6h2.5l-1 6H2zm20-2h6l-1.5 4h-4.5l1-4z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.fluvial-map-legend--light .fluvial-map-legend__icon--vessel {
+  background: #111;
+}
+
+.fluvial-map-legend__icon--route {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0.2));
+  height: 2px;
+  border-radius: 999px;
+}
+
+.fluvial-map-legend--light .fluvial-map-legend__icon--route {
+  background: linear-gradient(90deg, rgba(18, 18, 18, 0.15), rgba(18, 18, 18, 0.55), rgba(18, 18, 18, 0.15));
+}
+
+.fluvial-map-legend__icon--active {
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.25);
+}
+
+.fluvial-map-legend--light .fluvial-map-legend__icon--active {
+  border-color: rgba(18, 18, 18, 0.35);
+  box-shadow: none;
+}
+
 @media (max-width: 767px) {
   .fluvial-command-center {
     left: 0;
@@ -910,5 +1199,15 @@
 
   .fluvial-dock-strip {
     width: 44px;
+    bottom: 120px;
+  }
+
+  .fluvial-timeline {
+    left: 12px;
+    right: 12px;
+  }
+
+  .fluvial-map-legend {
+    display: none;
   }
 }

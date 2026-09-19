@@ -24,6 +24,8 @@ import NewTransportadoraDialog from '@/components/logistica-sandbox/NewTransport
 import FluvialGeoMap from '@/components/logistica-sandbox/FluvialGeoMap';
 import FluvialDockStrip from '@/components/logistica-sandbox/FluvialDockStrip';
 import FluvialMapDetailPanel from '@/components/logistica-sandbox/FluvialMapDetailPanel';
+import FluvialTimeline from '@/components/logistica-sandbox/FluvialTimeline';
+import FluvialMapLegend from '@/components/logistica-sandbox/FluvialMapLegend';
 import '@/components/logistica-sandbox/fluvial-map-premium.css';
 
 const LAYER_OPTIONS = [
@@ -174,6 +176,14 @@ function BoatsMapLayer({
         onSelect={(e) => handleSelect(e, true)}
       />
 
+      <FluvialTimeline
+        evento={selectedEvento}
+        simulationDate={simulationDate}
+        mapTheme={mapTheme}
+      />
+
+      <FluvialMapLegend mapTheme={mapTheme} />
+
       <div className="fluvial-command-chrome">
         <div className="fluvial-command-chrome__left">
           <label className="fluvial-date-chip relative">
@@ -188,6 +198,12 @@ function BoatsMapLayer({
           <span className="fluvial-command-chrome__meta hidden sm:inline">
             {fleet.length} embarcação{fleet.length !== 1 ? 'ões' : ''}
           </span>
+        </div>
+
+        <div className="fluvial-command-chrome__center hidden md:block">
+          <h2 className="fluvial-command-chrome__title">
+            Mapa de logística hidroviária — Rio Solimões
+          </h2>
         </div>
 
         <div className="fluvial-command-chrome__right">

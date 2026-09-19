@@ -1,15 +1,31 @@
 /** Coordenadas do corredor fluvial Tabatinga → Manaus (Rio Solimões). */
-export const FLUVIAL_TABATINGA = { lat: -4.2317, lng: -69.9389 };
-export const FLUVIAL_MANAUS = { lat: -3.119, lng: -60.0217 };
+export const FLUVIAL_TABATINGA = { lat: -4.2317, lng: -69.9389, label: 'Tabatinga' };
+export const FLUVIAL_MANAUS = { lat: -3.119, lng: -60.0217, label: 'Manaus' };
 
-/** Trecho aproximado do Solimões para desenhar a rota no mapa. */
+/** Cidades de referência ao longo do Solimões (oeste → leste). */
+export const FLUVIAL_RIVER_CITIES = [
+  { id: 'tabatinga', label: 'Tabatinga', lat: FLUVIAL_TABATINGA.lat, lng: FLUVIAL_TABATINGA.lng, sublabel: 'Porto Voyager' },
+  { id: 'fonte-boa', label: 'Fonte Boa', lat: -2.52, lng: -66.08 },
+  { id: 'tefe', label: 'Tefé', lat: -3.35, lng: -64.71 },
+  { id: 'coari', label: 'Coari', lat: -4.08, lng: -63.14 },
+  { id: 'manaus', label: 'Manaus', lat: FLUVIAL_MANAUS.lat, lng: FLUVIAL_MANAUS.lng, sublabel: 'Terminal leste' },
+];
+
+/** Trecho do Solimões — segue o meandro do rio (Tabatinga → Manaus). */
 export const FLUVIAL_SOLIMOES_WAYPOINTS = [
   [FLUVIAL_TABATINGA.lat, FLUVIAL_TABATINGA.lng],
-  [-4.28, -68.2],
-  [-4.12, -66.4],
-  [-3.98, -64.5],
-  [-3.72, -62.4],
-  [-3.45, -61.0],
+  [-4.18, -69.15],
+  [-4.05, -68.35],
+  [-3.72, -67.55],
+  [-3.35, -66.85],
+  [-2.52, -66.08],
+  [-2.78, -65.45],
+  [-3.35, -64.71],
+  [-3.72, -64.05],
+  [-4.08, -63.14],
+  [-3.92, -62.15],
+  [-3.55, -61.25],
+  [-3.28, -60.55],
   [FLUVIAL_MANAUS.lat, FLUVIAL_MANAUS.lng],
 ];
 
@@ -34,7 +50,7 @@ export const FLUVIAL_TILE_URLS = {
   },
 };
 
-/** Converte posição projetada (0–100) para lat/lng no corredor. */
+/** @deprecated Preferir projectBoatToLatLng — mantido para compatibilidade. */
 export function projectFluvialXYToLatLng(x, y) {
   const t = Math.max(0, Math.min(1, (x - 12) / 76));
   const lat = FLUVIAL_TABATINGA.lat + (FLUVIAL_MANAUS.lat - FLUVIAL_TABATINGA.lat) * t;
