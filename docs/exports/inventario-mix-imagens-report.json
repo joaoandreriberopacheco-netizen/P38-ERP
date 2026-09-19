@@ -1,0 +1,200 @@
+{
+  "generated_at": "2026-09-09T21:45:55.338Z",
+  "apply": true,
+  "total": 32,
+  "resolved": [
+    {
+      "codigo_interno": "0E4-4JI",
+      "ref": "1156MSHB",
+      "resolver": "japi-vtex",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/161333/1156MSHB.jpg?v=637121167425700000"
+    },
+    {
+      "codigo_interno": "2AX-V8I",
+      "ref": "Acqua Bella",
+      "resolver": "manual",
+      "url": "https://lorenzetti.com.br/images/default-source/produtos-png/purificadores/acqua-bella-parede-branco.png"
+    },
+    {
+      "codigo_interno": "2W2-8W1",
+      "ref": "JTL3BR1",
+      "resolver": "japi-vtex",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/165958/JTL3BR1.png?v=637897719486970000"
+    },
+    {
+      "codigo_interno": "39E-AH5",
+      "ref": "JSMG",
+      "resolver": "manual",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/172029/FLCRP20.jpg?v=638582045598970000"
+    },
+    {
+      "codigo_interno": "4KW-7YB",
+      "ref": null,
+      "resolver": "japi-vtex-fallback",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/165597/1168P.jpg?v=637830494433070000"
+    },
+    {
+      "codigo_interno": "5C4-IXK",
+      "ref": "J20RP34",
+      "resolver": "japi-vtex",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/176617/J20RP12.jpg?v=638804979644300000"
+    },
+    {
+      "codigo_interno": "60J-XFF",
+      "ref": "300000453",
+      "resolver": "tigre-media-guess",
+      "url": "https://qfzo0q7soc.execute-api.us-east-1.amazonaws.com/master/new/media/catalog/product//3/0/300000453_torneira_para_tanque_ou_maquina_de_lavar_tigre_cross_iso.jpg"
+    },
+    {
+      "codigo_interno": "6TE-3PD",
+      "ref": null,
+      "resolver": "japi-vtex-fallback",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/161815/FTFAUB.jpg?v=637121170264670000"
+    },
+    {
+      "codigo_interno": "71I-W47",
+      "ref": "1193J4",
+      "resolver": "japi-vtex",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/161366/1193J4.jpg?v=637121167536570000"
+    },
+    {
+      "codigo_interno": "9ES-MWX",
+      "ref": "1178P61",
+      "resolver": "japi-vtex",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/161357/1178P61.jpg?v=637121167505800000"
+    },
+    {
+      "codigo_interno": "9W0-FQI",
+      "ref": "JSIF2AS",
+      "resolver": "manual",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/161978/KSVPK.jpg?v=637121170926670000"
+    },
+    {
+      "codigo_interno": "AZL-N9X",
+      "ref": "VPKB",
+      "resolver": "japi-vtex",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/162128/VPKB.jpg?v=637121171515930000"
+    },
+    {
+      "codigo_interno": "CVG-95E",
+      "ref": "7110015",
+      "resolver": "lorenzetti-site",
+      "url": "https://www.lorenzetti.com.br/images/default-source/produtos-png/plasticos/1195-f31-cromado.png"
+    },
+    {
+      "codigo_interno": "DRD-2OV",
+      "ref": "300000461",
+      "resolver": "tigre-site",
+      "url": "https://qfzo0q7soc.execute-api.us-east-1.amazonaws.com/master/new/media/catalog/product//3/0/300000461_torneira_para_cozinha_mesa_bica_alta_m_vel_tigre_orbe_iso.jpg"
+    },
+    {
+      "codigo_interno": "DSM-KP4",
+      "ref": "1195IHP",
+      "resolver": "japi-vtex",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/161380/1195IHP.jpg?v=637121167584000000"
+    },
+    {
+      "codigo_interno": "ER3-LA5",
+      "ref": "VPKP",
+      "resolver": "japi-vtex",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/162381/VPKP.jpg?v=637121173424370000"
+    },
+    {
+      "codigo_interno": "I1F-GOK",
+      "ref": "JSIF3AS",
+      "resolver": "manual",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/161978/KSVPK.jpg?v=637121170926670000"
+    },
+    {
+      "codigo_interno": "IMN-IN8",
+      "ref": null,
+      "resolver": "japi-vtex-fallback",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/162777/1153SHB.png?v=637153984912000000"
+    },
+    {
+      "codigo_interno": "JMH-O79",
+      "ref": "1158MS (UP)",
+      "resolver": "manual",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/161345/1158IHP.jpg?v=637121167465300000"
+    },
+    {
+      "codigo_interno": "K36-3OL",
+      "ref": "CVCPB",
+      "resolver": "japi-vtex",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/161509/CVCPB.jpg?v=637121169018030000"
+    },
+    {
+      "codigo_interno": "KG3-BSR",
+      "ref": "1195HB",
+      "resolver": "japi-vtex-fallback",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/162544/1195SHB.jpg?v=637121177830600000"
+    },
+    {
+      "codigo_interno": "LV0-IUR",
+      "ref": "1156MBR",
+      "resolver": "japi-vtex",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/165950/1156MBR.png?v=637897684060400000"
+    },
+    {
+      "codigo_interno": "M0Y-YQZ",
+      "ref": "1194IHP",
+      "resolver": "japi-vtex",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/161369/1194IHP.jpg?v=637121167547330000"
+    },
+    {
+      "codigo_interno": "NUP-7QS",
+      "ref": null,
+      "resolver": "japi-vtex-fallback",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/162777/1153SHB.png?v=637153984912000000"
+    },
+    {
+      "codigo_interno": "OM3-A0I",
+      "ref": null,
+      "resolver": "japi-vtex-fallback",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/162901/MCMJ200.png?v=637318081734900000"
+    },
+    {
+      "codigo_interno": "P2O-L4L",
+      "ref": "Acqua Due",
+      "resolver": "lorenzetti-site",
+      "url": "https://www.lorenzetti.com.br/images/default-source/produtos-png/purificadores/acqua-due_mesa.png"
+    },
+    {
+      "codigo_interno": "PC9-7VB",
+      "ref": "1195P61",
+      "resolver": "japi-vtex",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/161389/1195P61.jpg?v=637121167615800000"
+    },
+    {
+      "codigo_interno": "PXF-N4V",
+      "ref": "1134J4",
+      "resolver": "japi-vtex",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/161291/1134J4.jpg?v=637121167265100000"
+    },
+    {
+      "codigo_interno": "SV7-Q22",
+      "ref": "1156MSHK",
+      "resolver": "japi-vtex",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/165990/1156MSHK.png?v=637915785413530000"
+    },
+    {
+      "codigo_interno": "VQL-VI0",
+      "ref": "1156MIHP",
+      "resolver": "japi-vtex",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/161326/1156MIHP.jpg?v=637121167400300000"
+    },
+    {
+      "codigo_interno": "YPK-P2E",
+      "ref": "1195BR",
+      "resolver": "japi-vtex",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/165951/1195BR.png?v=637897684733770000"
+    },
+    {
+      "codigo_interno": "Z0D-Y7Z",
+      "ref": "DHJ4",
+      "resolver": "japi-vtex",
+      "url": "https://japisa.vteximg.com.br/arquivos/ids/161527/DHJ4.jpg?v=637121169088430000"
+    }
+  ],
+  "missing": []
+}

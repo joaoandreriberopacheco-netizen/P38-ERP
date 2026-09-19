@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "source": "docs/Inventario_Produtos_Consolidado-v2.xlsx",
+  "categoria": {
+    "id": "6a3e8eb034482830bdba461f",
+    "nome": "H - ACABAMENTOS PARA ÁREAS MOLHADAS"
+  },
+  "items": [
+    { "item": 1, "ref": "CVCPB", "p38_codigo_interno": "K36-3OL", "action": "reuse" },
+    { "item": 2, "ref": "7110015", "p38_codigo_interno": null, "action": "create" },
+    { "item": 3, "ref": "1158MS (UP)", "p38_codigo_interno": "JMH-O79", "action": "reuse" },
+    { "item": 4, "ref": "1156MBR", "p38_codigo_interno": "LV0-IUR", "action": "reuse" },
+    { "item": 5, "ref": "1156MSHK", "p38_codigo_interno": "SV7-Q22", "action": "reuse" },
+    { "item": 6, "ref": "1195HB", "p38_codigo_interno": "KG3-BSR", "action": "reuse" },
+    { "item": 7, "ref": "1195BR", "p38_codigo_interno": "YPK-P2E", "action": "reuse" },
+    { "item": 8, "ref": "1156MSHB", "p38_codigo_interno": "0E4-4JI", "action": "reuse", "consolidate_with": 9 },
+    { "item": 9, "ref": "1156MSHB", "p38_codigo_interno": "0E4-4JI", "action": "reuse", "consolidated_into": 8 },
+    { "item": 10, "ref": "JSMG", "p38_codigo_interno": "39E-AH5", "action": "reuse" },
+    { "item": 11, "ref": "J20RP34", "p38_codigo_interno": "5C4-IXK", "action": "reuse" },
+    { "item": 12, "ref": "300000461", "p38_codigo_interno": null, "action": "create" },
+    { "item": 13, "ref": "300000453", "p38_codigo_interno": null, "action": "create" },
+    { "item": 14, "ref": "JTL3BR1", "p38_codigo_interno": "2W2-8W1", "action": "reuse" },
+    { "item": 15, "ref": "1194IHP", "p38_codigo_interno": "M0Y-YQZ", "action": "reuse" },
+    { "item": 16, "ref": "1134J4", "p38_codigo_interno": "PXF-N4V", "action": "reuse" },
+    { "item": 17, "ref": "Acqua Due", "p38_codigo_interno": "P2O-L4L", "action": "reuse" },
+    { "item": 18, "ref": "Acqua Bella", "p38_codigo_interno": "2AX-V8I", "action": "reuse" },
+    { "item": 19, "ref": "1195IHP", "p38_codigo_interno": "DSM-KP4", "action": "reuse" },
+    { "item": 20, "ref": "1195P61", "p38_codigo_interno": null, "action": "create" },
+    { "item": 21, "ref": "1178P61", "p38_codigo_interno": "9ES-MWX", "action": "reuse" },
+    { "item": 22, "ref": "1156MIHP", "p38_codigo_interno": "VQL-VI0", "action": "reuse" },
+    { "item": 23, "ref": "VPKP", "p38_codigo_interno": "ER3-LA5", "action": "reuse" },
+    { "item": 24, "ref": "VPKB", "p38_codigo_interno": "AZL-N9X", "action": "reuse" },
+    { "item": 25, "ref": "DHJ4", "p38_codigo_interno": "Z0D-Y7Z", "action": "reuse" },
+    { "item": 26, "ref": "1193J4", "p38_codigo_interno": "71I-W47", "action": "reuse" },
+    { "item": 27, "ref": "JSIF3AS", "p38_codigo_interno": "I1F-GOK", "action": "reuse" },
+    { "item": 28, "ref": "JSIF2AS", "p38_codigo_interno": "9W0-FQI", "action": "reuse" },
+    { "item": 29, "ref": "Avulso", "p38_codigo_interno": "4KW-7YB", "action": "reuse", "avulso_key": "jardim-preta" },
+    { "item": 30, "ref": "Avulso", "p38_codigo_interno": "6TE-3PD", "action": "reuse", "avulso_key": "bebedouro-azul" },
+    { "item": 31, "ref": "Avulso", "p38_codigo_interno": "OM3-A0I", "action": "reuse", "avulso_key": "cozinha-bica-curva" },
+    { "item": 32, "ref": "Avulso", "p38_codigo_interno": "NUP-7QS", "action": "reuse", "avulso_key": "jardim-inclinada" },
+    { "item": 33, "ref": "Avulso", "p38_codigo_interno": "IMN-IN8", "action": "reuse", "avulso_key": "jardim-reta" }
+  ],
+  "created_codes_applied_2026-09-09": {
+    "7110015": "CVG-95E",
+    "300000461": "DRD-2OV",
+    "300000453": "60J-XFF",
+    "1195P61": "PC9-7VB"
+  },
+  "manual_keep": [
+    {
+      "p38_codigo_interno": "P85-O76",
+      "ref": "2877",
+      "nota": "Torneira waterfall — estoque físico, fora do Excel"
+    }
+  ],
+  "deactivate_duplicates": [
+    "OPC-5P4",
+    "ZFG-Q25",
+    "4T1-52O"
+  ],
+  "mix_scope_regex": "torneir|chuveir|ducha|purificador|registro press|valvula pratika|sifao metal|reparo p/registro|reparo para registro"
+}
