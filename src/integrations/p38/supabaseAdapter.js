@@ -523,6 +523,8 @@ function buildIntegrations(supabase) {
   return {
     Core: {
       async InvokeLLM(payload) {
+        const { assertLlmHabilitado } = await import('@/lib/invokeLlmGuard');
+        assertLlmHabilitado('InvokeLLM');
         const data = await invokeCore('InvokeLLM', payload);
         return normalizeInvokeLlmResponse(data);
       },

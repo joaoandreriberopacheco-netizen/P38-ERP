@@ -9,17 +9,15 @@ import { Upload, Loader2, AlertCircle, Check, FileText, X, ArrowLeft, Package } 
 import { useToast } from "@/components/ui/use-toast";
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
 import {
-  buildCotacaoPdfExtracaoPrompt,
   findLocalBestFornecedorMatch,
   findLocalBestProductMatch,
   getProdutoLabel,
   matchesProductQuery,
 } from '@/components/compras/productMatchingUtils';
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
-import { invokeLlmComOcrLocal } from '@/lib/ocrLlmPipeline';
+import { OCR_IMPORT_TIPOS, processarImportOcrLocal } from '@/lib/ocrImportPipeline';
 import { P38TableShell } from '@/components/ui/table';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
-import { buildLlmTelemetryContext } from '@/lib/p38LlmTelemetry';
 import {
     aplicarDescontoUnitarioCotacaoPdf,
     calcularRatioDescontoCotacaoPdf,
@@ -96,56 +94,14 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
             setProdutosSistema(produtos);
             setFornecedoresSistema(fornecedores);
 
-            const prompt = buildCotacaoPdfExtracaoPrompt();
-
-            const aiRes = await invokeLlmComOcrLocal({
-                prompt,
+            const { dados: result } = await processarImportOcrLocal({
                 file: normalized,
-                fileUrl,
-                telemetry: buildLlmTelemetryContext({
-                  source: 'import_cotacao_pdf',
-                  catalogProductCount: 0,
-                  fileCount: 1,
-                }),
-                response_json_schema: {
-                    type: "object",
-                    properties: {
-                        fornecedor: {
-                            type: "object",
-                            properties: {
-                                nome_identificado: { type: "string" },
-                                cnpj_identificado: { type: "string" },
-                            }
-                        },
-                        financeiro: {
-                            type: "object",
-                            properties: {
-                                subtotal: { type: "number" },
-                                desconto_global: { type: "number" },
-                                total_final: { type: "number" },
-                                desconto_comercial: { type: "number" },
-                                desconto_suframa: { type: "number" },
-                                desconto_icms_suframa: { type: "number" }
-                            }
-                        },
-                        itens: {
-                            type: "array",
-                            items: {
-                                type: "object",
-                                properties: {
-                                    descricao_pdf: { type: "string" },
-                                    codigo_pdf: { type: "string" },
-                                    marca_pdf: { type: "string" },
-                                    quantidade_pdf: { type: "number" },
-                                    preco_unitario_pdf: { type: "number" },
-                                }
-                            }
-                        }
-                    }
-                }
+                tipo: OCR_IMPORT_TIPOS.COTACAO_PDF,
             });
 
-            const result = typeof aiRes === 'string' ? JSON.parse(aiRes) : aiRes;
+            if (!result?.itens?.length) {
+                throw new Error('Nenhum item identificado na cotação. Verifique o PDF ou preencha manualmente.');
+            }
             const financeiroNormalizado = normalizarFinanceiroCotacaoPdf(result.financeiro);
             const resultNormalizado = {
                 ...result,

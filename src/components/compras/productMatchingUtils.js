@@ -1,3 +1,4 @@
+import { ratio as fuzzRatio } from 'fuzzball';
 import { parseSearchTerms } from '@/lib/searchTokens';
 import { normalizeProductCodeForSearch, productCodesMatch } from '@/lib/productCode';
 
@@ -301,7 +302,12 @@ export function findLocalBestProductMatch(textoIdentificado, catalogoProdutos = 
     if (direct) return { produto: direct, confianca: 'media' };
 
     for (const produto of catalogoProdutos) {
-      const score = scoreProductAgainstTokens(queryTokens, produto);
+      const tokenScore = scoreProductAgainstTokens(queryTokens, produto);
+      const label = getProdutoLabel(produto);
+      const fuzzyScore = query.length >= 6 && label
+        ? fuzzRatio(query, label, { full_process: true }) / 100
+        : 0;
+      const score = Math.max(tokenScore, fuzzyScore * 0.92);
       if (score > bestScore) {
         secondScore = bestScore;
         bestScore = score;

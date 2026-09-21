@@ -14,8 +14,7 @@ import {
 } from '@/lib/agefinLancamentosRecorrencia';
 import { uploadAnexoParaContaPrevista, uploadAnexoParaLancamentoFinanceiro } from '@/lib/uploadAnexoReferencia';
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
-import { buildLlmTelemetryContext } from '@/lib/p38LlmTelemetry';
-import { invokeLlmComOcrLocal } from '@/lib/ocrLlmPipeline';
+import { OCR_IMPORT_TIPOS, processarImportOcrLocal } from '@/lib/ocrImportPipeline';
 
 function normalizarTexto(value) {
   return String(value || '')
@@ -214,87 +213,12 @@ export default function AgefinImportador({
         name: f.name,
       });
 
-      const extractedRaw = await invokeLlmComOcrLocal({
+      const { dados: extractedRaw } = await processarImportOcrLocal({
         file: f,
-        fileUrl: file_url,
-        minTextoChars: 60,
-        telemetry: buildLlmTelemetryContext({ source: 'agefin_importador', fileCount: 1 }),
-        prompt: `Leia este documento brasileiro de cobran?a e extraia dados REAIS do conte?do do documento, nunca do nome do arquivo.
-
-Regras obrigat?rias:
-- Ignore completamente o nome do arquivo.
-- Leia o PDF/imagem como OCR visual completo.
-- Extraia apenas o que estiver claramente vis?vel no documento.
-- Se um campo n?o existir, retorne null.
-- N?o invente valores.
-- Se houver v?rios valores, use o valor final a pagar, valor total do documento ou valor do boleto.
-- Se houver v?rias datas, use a data explicitamente associada a vencimento.
-- A descri??o deve ser ?til para um lan?amento financeiro humano.
-- Preserve acentos e caracteres do portugu?s (ex.: ?, ?, ?, ?, ?, ?, ?) quando estiverem no documento.
-- A descri??o deve preferir o conceito do pagamento + benefici?rio, por exemplo: "Energia el?trica - Amazonas Energia", "FGTS Digital - Minist?rio do Trabalho", "DAR IPVA - SEFAZ AM", "Taxa ambiental - IBAMA".
-- Identifique tamb?m a natureza sugerida: use "??nico" por padr?o; use "Parcelado" apenas quando houver parcela expl?cita; use "Recorrente" apenas quando o documento indicar cobran?a mensal/compet?ncia recorrente e isso estiver claro.
-- Retorne data em YYYY-MM-DD.
-- Retorne valor como n?mero decimal sem s?mbolo monet?rio.
-
-Campos a interpretar do documento:
-- beneficiario
-- data_vencimento
-- valor_pagamento
-- competencia
-- numero_parcela
-- descricao
-- natureza_sugerida
-- confianca_leitura: alta, media ou baixa`,
-        response_json_schema: {
-          type: 'object',
-          properties: {
-            descricao: { type: ['string', 'null'] },
-            valor_pagamento: { type: ['number', 'null'] },
-            data_vencimento: { type: ['string', 'null'] },
-            beneficiario: { type: ['string', 'null'] },
-            competencia: { type: ['string', 'null'] },
-            numero_parcela: { type: ['string', 'null'] },
-            linha_digitavel: { type: ['string', 'null'] },
-            codigo_pix_copia_cola: { type: ['string', 'null'] },
-            instrucoes: { type: ['string', 'null'] },
-            frequencia_sugerida: { type: ['string', 'null'] },
-            natureza_sugerida: { type: ['string', 'null'] },
-            confianca_leitura: { type: ['string', 'null'] },
-          },
-        },
+        tipo: OCR_IMPORT_TIPOS.BOLETO_AGEFIN,
       });
 
-      let extracted = normalizeInvokeLlmJsonResponse(extractedRaw);
-      if (!possuiLeituraMinima(extracted)) {
-        // Segunda tentativa com prompt enxuto para documentos dif?ceis.
-        const retryRaw = await invokeLlmComOcrLocal({
-          file: f,
-          fileUrl: file_url,
-          minTextoChars: 60,
-          telemetry: buildLlmTelemetryContext({ source: 'agefin_importador_retry', fileCount: 1 }),
-          prompt: `Extraia APENAS os campos listados (sem texto extra):
-- descricao
-- valor_pagamento (number)
-- data_vencimento (YYYY-MM-DD)
-- beneficiario
-- linha_digitavel
-- codigo_pix_copia_cola
-Se n?o encontrar, use null.`,
-          response_json_schema: {
-            type: 'object',
-            properties: {
-              descricao: { type: ['string', 'null'] },
-              valor_pagamento: { type: ['number', 'null'] },
-              data_vencimento: { type: ['string', 'null'] },
-              beneficiario: { type: ['string', 'null'] },
-              linha_digitavel: { type: ['string', 'null'] },
-              codigo_pix_copia_cola: { type: ['string', 'null'] },
-            },
-          },
-        });
-        const extractedRetry = normalizeInvokeLlmJsonResponse(retryRaw);
-        if (possuiLeituraMinima(extractedRetry)) extracted = extractedRetry;
-      }
+      let extracted = extractedRaw;
 
       if (!possuiLeituraMinima(extracted)) {
         // N?o bloqueia o utilizador: abre formul?rio para preenchimento manual.

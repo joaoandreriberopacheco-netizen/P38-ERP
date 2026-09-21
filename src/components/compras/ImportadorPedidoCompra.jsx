@@ -9,12 +9,11 @@ import { useToast } from '@/components/ui/use-toast';
 import { Upload, Loader2, Check, X, ArrowLeft, Package, FileText, Camera, Sparkles } from 'lucide-react';
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
 import {
-  buildPedidoCompraExtracaoPrompt,
   findLocalBestFornecedorMatch,
   getProdutoLabel,
   resolveOcrProductMatch,
 } from '@/components/compras/productMatchingUtils';
-import { invokeLlmComOcrLocal } from '@/lib/ocrLlmPipeline';
+import { OCR_IMPORT_TIPOS, processarImportOcrLocal } from '@/lib/ocrImportPipeline';
 import {
   buildPurchaseUnitOptions,
   pickDefaultPurchaseUnit,
@@ -28,7 +27,6 @@ import {
   lerArquivoPedidoImportDoBridge,
   limparArquivoPedidoImportBridge,
 } from '@/lib/torrePedidoImportBridge';
-import { buildLlmTelemetryContext } from '@/lib/p38LlmTelemetry';
 import { useCompactShell } from '@/hooks/use-breakpoint';
 import ImportadorOcrItemCard from '@/components/compras/ImportadorOcrItemCard';
 import { cn } from '@/lib/utils';
@@ -259,54 +257,22 @@ export default function ImportadorPedidoCompra({
         setFornecedores(fns);
       }
 
-      const matchingSchema = {
-        type: 'object',
-        properties: {
-          fornecedor: {
-            type: 'object',
-            properties: {
-              nome_identificado: { type: 'string' },
-              cnpj_identificado: { type: 'string' },
-            },
-          },
-          itens: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                descricao: { type: 'string' },
-                codigo: { type: 'string' },
-                marca: { type: 'string' },
-                quantidade: { type: 'number' },
-                preco_unitario: { type: 'number' },
-                unidade_medida_documento: { type: 'string' },
-              },
-            },
-          },
-        },
-      };
-
-      const prompt = buildPedidoCompraExtracaoPrompt({ mode });
-
       setProcessingStep(3);
       setProcessingStatus('Lendo texto com PaddleOCR');
 
-      const aiRes = await invokeLlmComOcrLocal({
-        prompt,
+      const { dados: result } = await processarImportOcrLocal({
         file: fileUpload,
-        fileUrl,
-        telemetry: buildLlmTelemetryContext({
-          source: 'import_pedido_compra',
-          catalogProductCount: 0,
-          fileCount: 1,
-        }),
-        response_json_schema: matchingSchema,
+        tipo: OCR_IMPORT_TIPOS.PEDIDO_COMPRA,
       });
+
+      if (!result?.itens?.length) {
+        throw new Error(
+          'Nenhum item identificado no documento. Confira o arquivo ou adicione os itens manualmente na revisão.',
+        );
+      }
 
       setProcessingStep(4);
       setProcessingStatus('Identificando fornecedor e itens');
-
-      const result = typeof aiRes === 'string' ? JSON.parse(aiRes) : aiRes;
       const fornecedorMatch = findLocalBestFornecedorMatch(
         {
           nome: result.fornecedor?.nome_identificado,

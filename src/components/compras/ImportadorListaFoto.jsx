@@ -6,12 +6,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Camera, Image as ImageIcon, Sparkles, Calculator, X } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
-import { buildListaFotoExtracaoPrompt, findLocalBestProductMatch } from '@/components/compras/productMatchingUtils';
+import { findLocalBestProductMatch } from '@/components/compras/productMatchingUtils';
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
-import { invokeLlmComOcrLocal } from '@/lib/ocrLlmPipeline';
+import { OCR_IMPORT_TIPOS, processarImportOcrLocal } from '@/lib/ocrImportPipeline';
 import { P38TableShell } from '@/components/ui/table';
 import { P38MobileLine, P38MobileLineList, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
-import { buildLlmTelemetryContext } from '@/lib/p38LlmTelemetry';
 import CatalogLoteDialog from '@/components/compras/CatalogLoteDialog';
 import { parseLoteQuantidade } from '@/lib/catalogLoteUtils';
 
@@ -125,37 +124,10 @@ export default function ImportadorListaFoto({ isOpen, onClose, onImportComplete,
             const uploadRes = await base44.integrations.Core.UploadFile({ file: normalized });
             const fileUrl = uploadRes.file_url;
 
-            const prompt = buildListaFotoExtracaoPrompt();
-
-            const aiRes = await invokeLlmComOcrLocal({
-                prompt,
+            const { dados: result } = await processarImportOcrLocal({
                 file: normalized,
-                fileUrl,
-                minTextoChars: 40,
-                telemetry: buildLlmTelemetryContext({
-                  source: 'import_lista_foto',
-                  catalogProductCount: 0,
-                  fileCount: 1,
-                }),
-                response_json_schema: {
-                    type: "object",
-                    properties: {
-                        itens: {
-                            type: "array",
-                            items: {
-                                type: "object",
-                                properties: {
-                                    texto_identificado: { type: "string" },
-                                    quantidade_escrita: { type: ["string", "null"] },
-                                    confianca: { type: "string" }
-                                }
-                            }
-                        }
-                    }
-                }
+                tipo: OCR_IMPORT_TIPOS.LISTA_FOTO,
             });
-
-            const result = typeof aiRes === 'string' ? JSON.parse(aiRes) : aiRes;
 
             const itens = Array.isArray(result.itens) ? result.itens : [];
             const processedItems = itens.map(item => {

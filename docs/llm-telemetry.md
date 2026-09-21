@@ -2,15 +2,17 @@
 
 Controlo de custo das leituras com Gemini (OCR de pedidos, boletos, cotações).
 
-## OCR local (PaddleOCR)
+## OCR local (sem Gemini)
 
-Desde 2026-09, os importadores usam **PaddleOCR no browser** (`ppu-paddle-ocr`, modelo Latin) + **pdf.js** para PDFs digitais:
+Desde 2026-09, os importadores usam pipeline **100% gratuito**:
 
-1. Extração local de texto (`src/lib/extrairTextoDocumento.js`)
-2. Gemini **só com texto** quando o OCR local tem ≥120 caracteres (sem `file_urls` / visão)
-3. Match de produto/fornecedor **local** (`productMatchingUtils.js`) — catálogo fora do prompt
+1. **PaddleOCR** + **pdf.js** — extração de texto (`extrairTextoDocumento.js`)
+2. **Parsers locais** — estrutura JSON (`ocrDocumentParser.js`)
+3. **Match local** — tokens + **fuzzball** (`productMatchingUtils.js`)
 
-Ficheiros: `src/lib/paddleOcrBrowser.js`, `src/lib/ocrLlmPipeline.js`
+Gemini/InvokeLLM fica **desativado** por defeito. Para reativar features de IA opcionais (tags, categorias): `VITE_P38_LLM_ENABLED=true` + `GEMINI_API_KEY` no Supabase.
+
+Ficheiros: `paddleOcrBrowser.js`, `ocrImportPipeline.js`, `invokeLlmGuard.js`
 
 ## Passo 1 — Instrumentar
 
