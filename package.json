@@ -87,6 +87,7 @@
     "iep:calcular": "node scripts/invoke-calcular-iep.mjs",
     "abcd:recalcular": "node scripts/run-abcd-job-agendado.mjs",
     "abcd:enable-noturno": "node scripts/set-abcd-job-noturno-secret.mjs",
+    "groq:set-secret": "node scripts/set-groq-ocr-secret.mjs",
     "estoque:atualizar-metas": "node scripts/invoke-atualizar-metas-estoque.mjs",
     "dashboard:kpi-backfill": "node scripts/dashboard-kpi-backfill.mjs",
     "dashboard:kpi-margem-fechar": "npx vite-node scripts/dashboard-kpi-margem-fechar.mjs",
