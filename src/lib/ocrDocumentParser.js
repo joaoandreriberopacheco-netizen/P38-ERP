@@ -32,6 +32,74 @@ function itemPareceValido(item) {
   return true;
 }
 
+/** Pedido MaxAndroid / CCG: # SEQ CÓDIGO EAN DESCRIÇÃO QTDE VALOR DESC. TOTAL */
+function textoSecaoItensPedido(texto) {
+  const flat = String(texto || '').replace(/\s+/g, ' ');
+  const start = flat.search(/ITENS DO PEDIDO/i);
+  const slice = start >= 0 ? flat.slice(start) : flat;
+  const end = slice.search(/\sObs\.:|Sub-Total\(R\$\)|Gerado por MaxAndroid/i);
+  return end > 0 ? slice.slice(0, end) : slice;
+}
+
+export function segmentosMaxAndroid(texto) {
+  const section = textoSecaoItensPedido(texto);
+  return section
+    .split(/\s+(?=\d{1,3}\s+\d{4,6}\s+789\d{10}\s+)/i)
+    .map((s) => s.trim())
+    .filter((s) => /^(\d{1,3})\s+\d{4,6}\s+789\d{10}\b/.test(s));
+}
+
+function parseSegmentoMaxAndroid(seg) {
+  const m = String(seg || '').trim().match(/^(\d{1,3})\s+(\d{4,6})\s+(789\d{10})\s+(.+)$/i);
+  if (!m) return null;
+
+  const parts = m[4].trim().split(/\s+/);
+  const monetarios = [];
+  const moneyTokenRe = /^\d+(?:\.\d{3})*,\d{1,2}$/;
+
+  while (parts.length) {
+    const last = parts[parts.length - 1];
+    if (moneyTokenRe.test(last)) {
+      monetarios.unshift(parseNumeroBr(last));
+      parts.pop();
+      continue;
+    }
+    // Coluna auxiliar (ex.: "1" entre desconto e total) — dígito isolado entre dois valores R$.
+    if (
+      monetarios.length > 0
+      && /^[1-9]$/.test(last)
+      && parts.length >= 2
+      && moneyTokenRe.test(parts[parts.length - 2])
+    ) {
+      parts.pop();
+      continue;
+    }
+    break;
+  }
+
+  if (!parts.length) return null;
+  const quantidade = Number(parts.pop());
+  if (!Number.isFinite(quantidade) || quantidade <= 0) return null;
+  const descricao = parts.join(' ').trim();
+  const preco_unitario = monetarios.length ? monetarios[0] : null;
+
+  const item = {
+    descricao,
+    codigo: m[2],
+    codigo_barras: m[3],
+    marca: '',
+    quantidade,
+    preco_unitario,
+    unidade_medida_documento: 'UN',
+  };
+  return itemPareceValido(item) ? item : null;
+}
+
+export function parseItensMaxAndroid(texto) {
+  if (!/MaxAndroid|ITENS DO PEDIDO.*EAN\/COD\.REF/i.test(texto)) return [];
+  return segmentosMaxAndroid(texto).map(parseSegmentoMaxAndroid).filter(Boolean);
+}
+
 /**
  * Orçamento MASS DISTRIBUIDORA:
  * 121161 DESC … EMB.: 1.0 Cod.Barras: 789… 24 R$ 4,28 R$ 0,00 R$ 4,28 R$ 102,72
@@ -187,11 +255,17 @@ export function parsePedidoCompraDocumento(texto) {
   const textoNormalizado = repartirTextoOcrPedido(texto);
   const cnpj = extrairCnpj(textoNormalizado);
   const nome = extrairNomeFornecedorPedido(textoNormalizado);
-  const itens = [];
 
-  for (const linha of limparLinhas(textoNormalizado)) {
-    const item = parseLinhaItemPedido(linha);
-    if (item) itens.push(item);
+  let itens = parseItensMaxAndroid(texto);
+  if (!itens.length) {
+    itens = parseItensMaxAndroid(textoNormalizado);
+  }
+  if (!itens.length) {
+    itens = [];
+    for (const linha of limparLinhas(textoNormalizado)) {
+      const item = parseLinhaItemPedido(linha);
+      if (item) itens.push(item);
+    }
   }
 
   return {

@@ -269,7 +269,7 @@ export default function ImportadorPedidoCompra({
       if (!result?.itens?.length) {
         const extra = fallbackErro ? ` ${fallbackErro}` : '';
         throw new Error(
-          `Nenhum item identificado no documento.${extra} Confira o arquivo ou adicione os itens manualmente na revisão.`,
+          `Nenhum item identificado no documento.${extra} A leitura flexível (Groq) tenta primeiro; confira o arquivo ou adicione os itens manualmente.`,
         );
       }
 

@@ -47,6 +47,12 @@ export function repartirTextoOcrPedido(texto) {
   t = t.replace(/\s+(QTD\s+ITENS)/gi, '\n$1');
   t = t.replace(/\s+(ORÇAMENTO\s+\d+)/gi, '\n$1');
   t = t.replace(/\s+(PÁGINA\s+\d+)/gi, '\n$1');
+  // MaxAndroid / CCG
+  t = t.replace(/\s+(ITENS DO PEDIDO)/gi, '\n$1');
+  t = t.replace(/\s+(Num\.Pedido\s*:)/gi, '\n$1');
+  t = t.replace(/\s+(\d{1,2})\s+(\d{4,6})\s+(789\d{10})\s+/g, '\n$1 $2 $3 ');
+  t = t.replace(/\s+(Obs\.:)/gi, '\n$1');
+  t = t.replace(/\s+(Gerado por MaxAndroid)/gi, '\n$1');
   t = t.replace(
     /\s+(\d{5,6})\s+(?=[A-ZÁÉÍÓÚÃÂÊÔÇ])/g,
     '\n$1 ',
@@ -63,6 +69,11 @@ export function repartirTextoOcrPedido(texto) {
 
 export function extrairNomeFornecedorPedido(texto) {
   const flat = String(texto || '').replace(/\s+/g, ' ').trim();
+
+  const maxAndroid = flat.match(/^(.+?LTDA)\s+Num\.Pedido\s*:/i);
+  if (maxAndroid?.[1]) {
+    return maxAndroid[1].trim().slice(0, 120);
+  }
 
   const massFilial = flat.match(/FILIAL\s+\d+\s*\/\s*(.+?)\s+#/i);
   if (massFilial?.[1]) {

@@ -155,6 +155,8 @@ export async function processarImportOcrEmSerie({
 
   const leituraFlexivel = usaLeituraFlexivelGroq(tipo);
 
+  let groqPrimarioErro = '';
+
   if (leituraFlexivel && cloudFallback) {
     try {
       const groq = await estruturarComGroq(texto, tipo, onProgress);
@@ -168,7 +170,9 @@ export async function processarImportOcrEmSerie({
           etapas: ['ocr_local', 'groq_primario'],
         });
       }
+      groqPrimarioErro = 'IA não devolveu itens suficientes.';
     } catch (err) {
+      groqPrimarioErro = err?.message || 'IA indisponível.';
       console.warn('[OCR série] leitura flexível Groq:', err);
     }
     onProgress?.('IA sem itens — tentando interpretação local');
@@ -279,11 +283,13 @@ export async function processarImportOcrEmSerie({
       origem,
       modo: 'ocr_local+parser_fallback',
       etapas: ['ocr_local', 'groq_primario_vazio', 'parser_local'],
-      fallbackErro: 'Não foi possível identificar itens. Revise manualmente na tela seguinte.',
+      fallbackErro:
+        groqPrimarioErro || 'Não foi possível identificar itens. Revise manualmente na tela seguinte.',
     });
   }
 
+  const detalheGroq = groqPrimarioErro ? ` ${groqPrimarioErro}` : '';
   throw new Error(
-    'Texto lido, mas não foi possível interpretar o documento. Preencha manualmente na revisão.',
+    `Texto lido, mas não foi possível interpretar o documento.${detalheGroq} Preencha manualmente na revisão.`,
   );
 }
