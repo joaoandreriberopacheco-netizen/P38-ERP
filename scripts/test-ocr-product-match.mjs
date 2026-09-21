@@ -52,6 +52,18 @@ const casos = [
   },
 ];
 
+const semMatch = findLocalBestProductMatch(null, catalogo, {
+  descricao: 'PRODUTO DESCONHECIDO XYZ',
+  codigo: '121161',
+  quantidade: 1,
+  preco_unitario: 10,
+});
+if (semMatch?.produto) {
+  console.error('FAIL: código fornecedor não deve dar match sozinho');
+  process.exit(1);
+}
+console.log('OK código fornecedor ignorado sem EAN');
+
 let falhas = 0;
 for (const caso of casos) {
   const local = findLocalBestProductMatch(null, catalogo, caso.item);

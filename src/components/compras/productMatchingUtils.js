@@ -1,6 +1,6 @@
 import { ratio as fuzzRatio } from 'fuzzball';
 import { parseSearchTerms } from '@/lib/searchTokens';
-import { normalizeProductCodeForSearch, productCodesMatch } from '@/lib/productCode';
+import { isCanonicalProductCode, normalizeProductCodeForSearch, productCodesMatch } from '@/lib/productCode';
 
 const MATCH_STOPWORDS = new Set([
   'a', 'o', 'as', 'os', 'de', 'da', 'do', 'das', 'dos', 'e', 'em', 'com', 'para', 'por', 'no', 'na', 'nos', 'nas',
@@ -124,6 +124,15 @@ function barcodesMatch(a, b) {
   return false;
 }
 
+/** Código numérico do fornecedor (ex. MASS 121161) — não cruza com catálogo P38. */
+function looksLikeSupplierSkuCode(codigo) {
+  const raw = String(codigo || '').trim();
+  if (!raw) return false;
+  const digits = normalizeBarcodeDigits(raw);
+  if (digits.length < 4 || digits.length > 10) return false;
+  return digits === raw.replace(/\D/g, '');
+}
+
 function buildOcrItemMatchQueries(item = {}) {
   const queries = [];
   const descricao = String(item.descricao || item.descricao_pdf || item.texto_identificado || '').trim();
@@ -131,11 +140,14 @@ function buildOcrItemMatchQueries(item = {}) {
   const marca = String(item.marca || item.marca_pdf || '').trim();
   const codigoBarras = String(item.codigo_barras || item.codigo_barras_pdf || '').trim();
 
-  if (codigo) queries.push(codigo);
-  if (codigoBarras) queries.push(codigoBarras);
+  if (codigoBarras && normalizeBarcodeDigits(codigoBarras).length >= 8) {
+    queries.push(codigoBarras);
+  }
+  if (codigo && !looksLikeSupplierSkuCode(codigo)) {
+    queries.push(codigo);
+  }
   if (descricao) queries.push(descricao);
   if (descricao && marca) queries.push(`${descricao} ${marca}`);
-  if (codigo && descricao) queries.push(`${codigo} ${descricao}`);
 
   const tokens = tokenizeForProductMatch(descricao);
   if (tokens.length > 4) {
@@ -149,30 +161,24 @@ function buildOcrItemMatchQueries(item = {}) {
 }
 
 function findByProductCode(item, catalogoProdutos = []) {
-  const codigo = String(item.codigo || item.codigo_pdf || '').trim();
   const codigoBarras = String(item.codigo_barras || item.codigo_barras_pdf || '').trim();
+  const codigo = String(item.codigo || item.codigo_pdf || '').trim();
 
-  if (codigo) {
-    const hit = catalogoProdutos.find((produto) =>
-      productCodesMatch(codigo, produto.codigo_interno)
-      || productCodesMatch(codigo, produto.codigo_barras)
-      || barcodesMatch(codigo, produto.codigo_barras),
-    );
-    if (hit) return { produto: hit, confianca: 'alta' };
-  }
-
-  if (codigoBarras) {
+  if (codigoBarras && normalizeBarcodeDigits(codigoBarras).length >= 8) {
     const hit = catalogoProdutos.find((produto) => barcodesMatch(codigoBarras, produto.codigo_barras));
     if (hit) return { produto: hit, confianca: 'alta' };
   }
 
-  const codigoDigits = normalizeBarcodeDigits(codigo);
-  if (codigoDigits.length >= 4 && codigoDigits.length <= 8) {
+  if (codigo && !looksLikeSupplierSkuCode(codigo)) {
     const hit = catalogoProdutos.find((produto) => {
-      const barras = normalizeBarcodeDigits(produto.codigo_barras);
-      return barras && (barras.endsWith(codigoDigits) || barras.includes(codigoDigits));
+      const interno = produto.codigo_interno;
+      if (!interno) return false;
+      if (isCanonicalProductCode(interno) || isCanonicalProductCode(codigo)) {
+        return productCodesMatch(codigo, interno);
+      }
+      return productCodesMatch(codigo, interno);
     });
-    if (hit) return { produto: hit, confianca: 'media' };
+    if (hit) return { produto: hit, confianca: 'alta' };
   }
 
   return null;

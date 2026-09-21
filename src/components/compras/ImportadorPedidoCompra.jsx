@@ -273,8 +273,10 @@ export default function ImportadorPedidoCompra({
         );
       }
 
-      if (modo === 'ocr_local+groq') {
-        setProcessingStatus('Itens identificados com IA na nuvem (revisar)');
+      if (modo === 'ocr_local+groq' || modo === 'ocr_local+groq_primario') {
+        setProcessingStatus('Itens identificados com IA flexível (revisar vínculos)');
+      } else if (modo === 'ocr_local+parser_fallback') {
+        setProcessingStatus('Itens pelo parser local (revisar vínculos)');
       }
 
       setProcessingStep(4);

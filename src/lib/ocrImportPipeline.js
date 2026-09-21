@@ -1,6 +1,8 @@
 /**
  * Pipeline de importação em série:
- * ① OCR local (pdf.js / Paddle) → ② parser regras → ③ Groq/Llama (fallback, 1 req/doc)
+ * ① OCR local (pdf.js / Paddle) — só extrai texto, sem depender de layout
+ * ② Groq/Llama (leitura flexível, 1 req/doc) — pedido/cotação/lista
+ * ③ Parser por regras — fallback offline / boleto / comprovante
  */
 
 import { extrairTextoDocumento } from '@/lib/extrairTextoDocumento';
@@ -11,7 +13,11 @@ import {
   parseListaFotoDocumento,
   parsePedidoCompraDocumento,
 } from '@/lib/ocrDocumentParser';
-import { estruturarDocumentoOcrNaNuvem, isOcrCloudFallbackEnabled } from '@/lib/ocrCloudFallback';
+import {
+  estruturarDocumentoOcrNaNuvem,
+  isOcrCloudFallbackEnabled,
+  isOcrGroqPrimaryEnabled,
+} from '@/lib/ocrCloudFallback';
 import { normalizarRespostaGroq } from '@/lib/ocrGroqNormalize';
 
 export const OCR_IMPORT_TIPOS = {
@@ -30,7 +36,18 @@ const PARSERS = {
   [OCR_IMPORT_TIPOS.COMPROVANTE]: parseComprovanteDocumento,
 };
 
-/** Indica se o passo ③ (nuvem) deve tentar complementar. */
+/** Tipos em que a IA estrutura o JSON antes do parser por layout (pedido/cotação/lista). */
+const TIPOS_LEITURA_FLEXIVEL = new Set([
+  OCR_IMPORT_TIPOS.PEDIDO_COMPRA,
+  OCR_IMPORT_TIPOS.COTACAO_PDF,
+  OCR_IMPORT_TIPOS.LISTA_FOTO,
+]);
+
+export function usaLeituraFlexivelGroq(tipo) {
+  return TIPOS_LEITURA_FLEXIVEL.has(tipo) && isOcrGroqPrimaryEnabled();
+}
+
+/** Indica se o passo na nuvem deve tentar complementar (resultado ainda incompleto). */
 export function precisaFallbackNuvem(dados, tipo) {
   if (!dados) return true;
   switch (tipo) {
@@ -51,6 +68,36 @@ export function precisaFallbackNuvem(dados, tipo) {
   }
 }
 
+async function extrairTextoLocal(file) {
+  const { texto, origem } = await extrairTextoDocumento(file);
+  if (!String(texto || '').trim()) {
+    throw new Error(
+      'Não foi possível ler texto do documento. Verifique se a imagem está legível ou preencha manualmente.',
+    );
+  }
+  return { texto, origem };
+}
+
+function parsearComRegrasLocais(texto, tipo) {
+  const parser = PARSERS[tipo];
+  if (!parser) {
+    throw new Error(`Tipo de importação OCR desconhecido: ${tipo}`);
+  }
+  return parser(texto);
+}
+
+async function estruturarComGroq(texto, tipo, onProgress) {
+  onProgress?.('Interpretando documento (IA flexível)');
+  const { dados: raw, model } = await estruturarDocumentoOcrNaNuvem({ texto, tipo });
+  const dados = normalizarRespostaGroq(tipo, raw);
+  if (!dados || precisaFallbackNuvem(dados, tipo)) return null;
+  return { dados, model };
+}
+
+function resultadoBase({ dados, texto, origem, modo, etapas, extras = {} }) {
+  return { dados, texto, origem, modo, etapas, ...extras };
+}
+
 /**
  * @param {object} opts
  * @param {File|Blob} opts.file
@@ -60,38 +107,35 @@ export async function processarImportOcrLocal({ file, tipo }) {
   if (!file) {
     throw new Error('Arquivo em falta para leitura OCR.');
   }
-  const parser = PARSERS[tipo];
-  if (!parser) {
-    throw new Error(`Tipo de importação OCR desconhecido: ${tipo}`);
-  }
 
-  const { texto, origem } = await extrairTextoDocumento(file);
-  if (!String(texto || '').trim()) {
-    throw new Error(
-      'Não foi possível ler texto do documento. Verifique se a imagem está legível ou preencha manualmente.',
-    );
-  }
+  const { texto, origem } = await extrairTextoLocal(file);
+  const dados = parsearComRegrasLocais(texto, tipo);
 
-  const dados = parser(texto);
   if (dados == null && tipo === OCR_IMPORT_TIPOS.COMPROVANTE) {
-    return { dados: null, texto, origem, modo: 'ocr_local' };
+    return resultadoBase({
+      dados: null,
+      texto,
+      origem,
+      modo: 'ocr_local',
+      etapas: ['ocr_local', 'parser_local'],
+    });
   }
   if (dados == null) {
     throw new Error(
       'Texto lido, mas não foi possível interpretar o documento. Preencha manualmente na revisão.',
     );
   }
-  return {
+  return resultadoBase({
     dados,
     texto,
     origem,
     modo: 'ocr_local',
     etapas: ['ocr_local', 'parser_local'],
-  };
+  });
 }
 
 /**
- * Cadeia completa: local → parser → Groq (se necessário).
+ * Cadeia completa: texto local → IA flexível (pedido/cotação) → parser regras → IA fallback.
  * @param {object} opts
  * @param {(msg: string) => void} [opts.onProgress]
  * @param {boolean} [opts.cloudFallback]
@@ -102,48 +146,144 @@ export async function processarImportOcrEmSerie({
   onProgress,
   cloudFallback = isOcrCloudFallbackEnabled(),
 }) {
-  onProgress?.('Lendo documento (local)');
-  const local = await processarImportOcrLocal({ file, tipo });
+  if (!file) {
+    throw new Error('Arquivo em falta para leitura OCR.');
+  }
 
-  if (!precisaFallbackNuvem(local.dados, tipo)) {
-    return local;
+  onProgress?.('Lendo documento (local)');
+  const { texto, origem } = await extrairTextoLocal(file);
+
+  const leituraFlexivel = usaLeituraFlexivelGroq(tipo);
+
+  if (leituraFlexivel && cloudFallback) {
+    try {
+      const groq = await estruturarComGroq(texto, tipo, onProgress);
+      if (groq) {
+        return resultadoBase({
+          dados: groq.dados,
+          texto,
+          origem,
+          modo: 'ocr_local+groq_primario',
+          modeloNuvem: groq.model,
+          etapas: ['ocr_local', 'groq_primario'],
+        });
+      }
+    } catch (err) {
+      console.warn('[OCR série] leitura flexível Groq:', err);
+    }
+    onProgress?.('IA sem itens — tentando interpretação local');
+  }
+
+  let dadosLocal = null;
+  try {
+    dadosLocal = parsearComRegrasLocais(texto, tipo);
+  } catch (err) {
+    if (!cloudFallback || leituraFlexivel) {
+      throw err;
+    }
+    console.warn('[OCR série] parser local:', err);
+  }
+
+  if (dadosLocal != null && !precisaFallbackNuvem(dadosLocal, tipo)) {
+    return resultadoBase({
+      dados: dadosLocal,
+      texto,
+      origem,
+      modo: leituraFlexivel ? 'ocr_local+parser_fallback' : 'ocr_local',
+      etapas: leituraFlexivel
+        ? ['ocr_local', 'groq_primario_vazio', 'parser_local']
+        : ['ocr_local', 'parser_local'],
+    });
+  }
+
+  if (tipo === OCR_IMPORT_TIPOS.COMPROVANTE && dadosLocal == null) {
+    return resultadoBase({
+      dados: null,
+      texto,
+      origem,
+      modo: 'ocr_local',
+      etapas: ['ocr_local', 'parser_local'],
+    });
   }
 
   if (!cloudFallback) {
-    return { ...local, fallbackIgnorado: 'desativado' };
-  }
-
-  if (!String(local.texto || '').trim()) {
-    return { ...local, fallbackIgnorado: 'texto_vazio' };
-  }
-
-  onProgress?.('Complementando com IA na nuvem (grátis)');
-  try {
-    const { dados: raw, model } = await estruturarDocumentoOcrNaNuvem({
-      texto: local.texto,
-      tipo,
-    });
-    const dados = normalizarRespostaGroq(tipo, raw);
-    if (dados && !precisaFallbackNuvem(dados, tipo)) {
-      return {
-        ...local,
-        dados,
-        modo: 'ocr_local+groq',
-        modeloNuvem: model,
-        etapas: ['ocr_local', 'parser_local', 'groq'],
-      };
+    if (dadosLocal == null) {
+      throw new Error(
+        'Texto lido, mas não foi possível interpretar o documento. Preencha manualmente na revisão.',
+      );
     }
-    return {
-      ...local,
-      fallbackErro: 'IA na nuvem não identificou itens suficientes.',
-      etapas: ['ocr_local', 'parser_local', 'groq_sem_resultado'],
-    };
-  } catch (err) {
-    console.warn('[OCR série] fallback nuvem:', err);
-    return {
-      ...local,
-      fallbackErro: err?.message || 'Fallback na nuvem falhou.',
-      etapas: ['ocr_local', 'parser_local', 'groq_falhou'],
-    };
+    return resultadoBase({
+      dados: dadosLocal,
+      texto,
+      origem,
+      modo: 'ocr_local',
+      etapas: ['ocr_local', 'parser_local'],
+      fallbackIgnorado: 'desativado',
+    });
   }
+
+  if (!leituraFlexivel) {
+    onProgress?.('Complementando com IA na nuvem (grátis)');
+    try {
+      const groq = await estruturarComGroq(texto, tipo, onProgress);
+      if (groq) {
+        return resultadoBase({
+          dados: groq.dados,
+          texto,
+          origem,
+          modo: 'ocr_local+groq',
+          modeloNuvem: groq.model,
+          etapas: ['ocr_local', 'parser_local', 'groq'],
+        });
+      }
+      if (dadosLocal != null) {
+        return resultadoBase({
+          dados: dadosLocal,
+          texto,
+          origem,
+          modo: 'ocr_local',
+          etapas: ['ocr_local', 'parser_local', 'groq_sem_resultado'],
+          fallbackErro: 'IA na nuvem não identificou itens suficientes.',
+        });
+      }
+    } catch (err) {
+      console.warn('[OCR série] fallback nuvem:', err);
+      if (dadosLocal != null) {
+        return resultadoBase({
+          dados: dadosLocal,
+          texto,
+          origem,
+          modo: 'ocr_local',
+          etapas: ['ocr_local', 'parser_local', 'groq_falhou'],
+          fallbackErro: err?.message || 'Fallback na nuvem falhou.',
+        });
+      }
+      throw err;
+    }
+  }
+
+  if (dadosLocal != null && !precisaFallbackNuvem(dadosLocal, tipo)) {
+    return resultadoBase({
+      dados: dadosLocal,
+      texto,
+      origem,
+      modo: 'ocr_local+parser_fallback',
+      etapas: ['ocr_local', 'groq_primario_vazio', 'parser_local'],
+    });
+  }
+
+  if (dadosLocal != null) {
+    return resultadoBase({
+      dados: dadosLocal,
+      texto,
+      origem,
+      modo: 'ocr_local+parser_fallback',
+      etapas: ['ocr_local', 'groq_primario_vazio', 'parser_local'],
+      fallbackErro: 'Não foi possível identificar itens. Revise manualmente na tela seguinte.',
+    });
+  }
+
+  throw new Error(
+    'Texto lido, mas não foi possível interpretar o documento. Preencha manualmente na revisão.',
+  );
 }

@@ -113,6 +113,8 @@ Regras:
 - CNPJ só se aparecer formatado (XX.XXX.XXX/XXXX-XX); nunca invente.
 - Extraia TODOS os itens de produto que encontrar; ignore cabeçalhos e totais.
 - quantidade e preco_unitario devem ser > 0 quando houver item.
+- "codigo" no item é referência do FORNECEDOR (não é o código interno da loja).
+- Priorize descrição completa do produto; inclua marca e embalagem quando visíveis.
 - Se não houver itens, devolva "itens": [].
 
 Schema esperado:

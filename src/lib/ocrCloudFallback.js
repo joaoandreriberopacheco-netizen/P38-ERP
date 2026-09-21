@@ -9,6 +9,12 @@ export function isOcrCloudFallbackEnabled() {
   return !(flag === '0' || flag === 'false' || flag === 'no');
 }
 
+/** Pedido/cotação/lista: IA estrutura o JSON antes do parser por layout (default ligado). */
+export function isOcrGroqPrimaryEnabled() {
+  const flag = String(import.meta.env?.VITE_P38_OCR_GROQ_PRIMARY ?? 'true').toLowerCase().trim();
+  return !(flag === '0' || flag === 'false' || flag === 'no');
+}
+
 /**
  * @param {{ texto: string, tipo: string }} params
  * @returns {Promise<{ dados: object, model?: string }>}
