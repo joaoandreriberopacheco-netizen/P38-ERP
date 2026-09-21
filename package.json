@@ -109,6 +109,7 @@
     "export:pdf-catalogo-4x": "node scripts/gerar-pdf-catalogo-4x-nivel.mjs",
     "export:pdf-catalogo-sem-estoque": "node scripts/gerar-pdf-catalogo-sem-estoque.mjs",
     "export:pdf-catalogo-zumbis": "node scripts/gerar-pdf-catalogo-zumbis.mjs",
+    "remover:zumbis-catalogo": "node scripts/remover-zumbis-catalogo.mjs",
     "export:conta-azul": "node scripts/export-catalogo-conta-azul.mjs",
     "portal:excel-manifest": "node scripts/build-portal-excel-manifest.mjs",
     "modelo:seed-ceramica": "node scripts/seed-modelo-catalogo-ceramica.mjs",
