@@ -156,6 +156,16 @@ export const EVENTO_LOGISTICO_SANDBOX_COLUMNS = [
   'ocupacao_percentual', 'chave_relacional_futura', 'observacoes',
 ];
 
+export const AGENDA_LOGISTICA_COLUMNS = [
+  'pedido_venda_id',
+  'cliente_id',
+  'endereco_entrega',
+  'data_agendada',
+  'motorista_id',
+  'status',
+  'observacoes',
+];
+
 export const ANEXO_DOCUMENTO_EXTRA_COLUMNS = ['url_thumbnail', 'drive_file_id'];
 
 /** Tabelas restantes → colunas (inclui re-promoção do núcleo e estendidas). */
@@ -232,6 +242,7 @@ export const TABLE_PROMOTION_MANIFEST = {
     'status_codigo_conferencia_itens', 'volumes',
   ],
   maquininha: ['ativo'],
+  agenda_logistica: AGENDA_LOGISTICA_COLUMNS,
   ordem_separacao: ['pedido_venda_id'],
   protocolo_entrega: ['pedido_venda_id'],
   responsavel_consumo_interno: ['ativo', 'nome'],
