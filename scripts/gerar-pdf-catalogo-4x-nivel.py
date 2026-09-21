@@ -67,6 +67,27 @@ def load_filter_produto_keys(filter_path: Path | None) -> set[str] | None:
     return {str(k).strip() for k in data.get("produto_keys", []) if str(k).strip()}
 
 
+def load_filter_kind(filter_path: Path | None) -> str | None:
+    if not filter_path or not filter_path.is_file():
+        return None
+    data = json.loads(filter_path.read_text(encoding="utf-8"))
+    return str(data.get("kind", "sem-estoque")).strip() or "sem-estoque"
+
+
+def filter_copy(kind: str | None) -> tuple[str, str, str]:
+    if kind == "zumbis":
+        return (
+            "P38 — Catálogo 4× (zumbis)",
+            "A4 retrato · {n} produtos compra zumbis · {skus} SKUs · sem mov. 4 meses · {generated}",
+            " · zumbis",
+        )
+    return (
+        "P38 — Catálogo 4× (sem estoque)",
+        "A4 retrato · {n} produtos compra sem estoque · {skus} SKUs · {generated}",
+        " · sem estoque",
+    )
+
+
 def load_and_aggregate(
     xlsx_path: Path, *, produto_keys_filter: set[str] | None = None
 ) -> list[dict[str, str]]:
@@ -187,7 +208,12 @@ def compute_vertical_spans(
 
 
 def build_pdf(
-    rows: list[dict[str, str]], out_path: Path, total_skus: int, *, sem_estoque: bool = False
+    rows: list[dict[str, str]],
+    out_path: Path,
+    total_skus: int,
+    *,
+    sem_estoque: bool = False,
+    filter_kind: str | None = None,
 ) -> None:
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -249,16 +275,13 @@ def build_pdf(
     )
 
     generated = datetime.now(timezone.utc).strftime("%d/%m/%Y %H:%M UTC")
-    titulo = (
-        "P38 — Catálogo 4× (sem estoque)"
-        if sem_estoque
-        else "P38 — Catálogo 4× (nível drill)"
-    )
-    subtitulo = (
-        f"A4 retrato · {len(rows)} produtos compra sem estoque · {total_skus} SKUs · {generated}"
-        if sem_estoque
-        else f"A4 retrato · {len(rows)} produtos compra · {total_skus} SKUs · {generated}"
-    )
+    if sem_estoque:
+        titulo, subt_tpl, footer_tag = filter_copy(filter_kind)
+        subtitulo = subt_tpl.format(n=len(rows), skus=total_skus, generated=generated)
+    else:
+        titulo = "P38 — Catálogo 4× (nível drill)"
+        subtitulo = f"A4 retrato · {len(rows)} produtos compra · {total_skus} SKUs · {generated}"
+        footer_tag = ""
     story = [
         Paragraph(titulo, title),
         Paragraph(subtitulo, subtitle),
@@ -341,7 +364,7 @@ def build_pdf(
         canvas.drawString(
             doc_obj.leftMargin,
             4 * mm,
-            f"P38 · Catálogo 4×{' · sem estoque' if sem_estoque else ' drill'} · {len(rows)} produtos · {total_skus} SKUs",
+            f"P38 · Catálogo 4×{footer_tag if sem_estoque else ' drill'} · {len(rows)} produtos · {total_skus} SKUs",
         )
         canvas.drawRightString(
             PAGE_SIZE[0] - doc_obj.rightMargin,
@@ -363,12 +386,13 @@ def main() -> int:
         return 1
 
     produto_keys_filter = load_filter_produto_keys(filter_path)
+    filter_kind = load_filter_kind(filter_path)
     sem_estoque = produto_keys_filter is not None
     aggregated = load_and_aggregate(xlsx, produto_keys_filter=produto_keys_filter)
     rows = collapse_parents(aggregated)
     total_skus = sum(int(r["skus"]) for r in aggregated)
-    build_pdf(rows, out, total_skus, sem_estoque=sem_estoque)
-    label = "sem-estoque-nivel" if sem_estoque else "catalogo-4x-nivel"
+    build_pdf(rows, out, total_skus, sem_estoque=sem_estoque, filter_kind=filter_kind)
+    label = filter_kind or ("sem-estoque-nivel" if sem_estoque else "catalogo-4x-nivel")
     print(f"[pdf:{label}] {len(rows)} produtos compra · {total_skus} SKUs → {out}")
 
     if not sem_estoque:
