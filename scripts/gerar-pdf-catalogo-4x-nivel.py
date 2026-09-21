@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -50,7 +51,25 @@ def cell_str(value) -> str:
     return str(value).strip()
 
 
-def load_and_aggregate(xlsx_path: Path) -> list[dict[str, str]]:
+def produto_key_tuple(
+    etapa: str, categoria: str, subcategoria: str, linha: str, produto: str
+) -> str:
+    return "\x00".join(
+        cell_str(v)
+        for v in (etapa, categoria, subcategoria, linha, produto)
+    )
+
+
+def load_filter_produto_keys(filter_path: Path | None) -> set[str] | None:
+    if not filter_path or not filter_path.is_file():
+        return None
+    data = json.loads(filter_path.read_text(encoding="utf-8"))
+    return {str(k).strip() for k in data.get("produto_keys", []) if str(k).strip()}
+
+
+def load_and_aggregate(
+    xlsx_path: Path, *, produto_keys_filter: set[str] | None = None
+) -> list[dict[str, str]]:
     wb = load_workbook(xlsx_path, read_only=True, data_only=True)
     ws = wb["Catálogo 4×3"]
     counts: dict[tuple[str, str, str, str, str], int] = defaultdict(int)
@@ -59,13 +78,14 @@ def load_and_aggregate(xlsx_path: Path) -> list[dict[str, str]]:
         if not row or not row[9]:
             continue
         produto = cell_str(row[6]) or cell_str(row[12]) or cell_str(row[7]) or "(sem produto compra)"
-        key = (
-            cell_str(row[2]),
-            cell_str(row[3]),
-            cell_str(row[4]),
-            cell_str(row[5]),
-            produto,
-        )
+        etapa = cell_str(row[2])
+        categoria = cell_str(row[3])
+        subcategoria = cell_str(row[4])
+        linha = cell_str(row[5])
+        pk = produto_key_tuple(etapa, categoria, subcategoria, linha, produto)
+        if produto_keys_filter is not None and pk not in produto_keys_filter:
+            continue
+        key = (etapa, categoria, subcategoria, linha, produto)
         counts[key] += 1
     wb.close()
 
@@ -166,7 +186,9 @@ def compute_vertical_spans(
     return spans
 
 
-def build_pdf(rows: list[dict[str, str]], out_path: Path, total_skus: int) -> None:
+def build_pdf(
+    rows: list[dict[str, str]], out_path: Path, total_skus: int, *, sem_estoque: bool = False
+) -> None:
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     doc = SimpleDocTemplate(
@@ -227,12 +249,19 @@ def build_pdf(rows: list[dict[str, str]], out_path: Path, total_skus: int) -> No
     )
 
     generated = datetime.now(timezone.utc).strftime("%d/%m/%Y %H:%M UTC")
+    titulo = (
+        "P38 — Catálogo 4× (sem estoque)"
+        if sem_estoque
+        else "P38 — Catálogo 4× (nível drill)"
+    )
+    subtitulo = (
+        f"A4 retrato · {len(rows)} produtos compra sem estoque · {total_skus} SKUs · {generated}"
+        if sem_estoque
+        else f"A4 retrato · {len(rows)} produtos compra · {total_skus} SKUs · {generated}"
+    )
     story = [
-        Paragraph("P38 — Catálogo 4× (nível drill)", title),
-        Paragraph(
-            f"A4 retrato · {len(rows)} produtos compra · {total_skus} SKUs · {generated}",
-            subtitle,
-        ),
+        Paragraph(titulo, title),
+        Paragraph(subtitulo, subtitle),
     ]
 
     def cell(text: str, style: ParagraphStyle, *, blank_if_empty: bool = False):
@@ -312,7 +341,7 @@ def build_pdf(rows: list[dict[str, str]], out_path: Path, total_skus: int) -> No
         canvas.drawString(
             doc_obj.leftMargin,
             4 * mm,
-            f"P38 · Catálogo 4× drill · {len(rows)} produtos · {total_skus} SKUs",
+            f"P38 · Catálogo 4×{' · sem estoque' if sem_estoque else ' drill'} · {len(rows)} produtos · {total_skus} SKUs",
         )
         canvas.drawRightString(
             PAGE_SIZE[0] - doc_obj.rightMargin,
@@ -327,23 +356,28 @@ def build_pdf(rows: list[dict[str, str]], out_path: Path, total_skus: int) -> No
 def main() -> int:
     xlsx = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_XLSX
     out = Path(sys.argv[2]) if len(sys.argv) > 2 else DEFAULT_OUT
+    filter_path = Path(sys.argv[3]) if len(sys.argv) > 3 else None
 
     if not xlsx.is_file():
         print(f"Ficheiro em falta: {xlsx}", file=sys.stderr)
         return 1
 
-    aggregated = load_and_aggregate(xlsx)
+    produto_keys_filter = load_filter_produto_keys(filter_path)
+    sem_estoque = produto_keys_filter is not None
+    aggregated = load_and_aggregate(xlsx, produto_keys_filter=produto_keys_filter)
     rows = collapse_parents(aggregated)
     total_skus = sum(int(r["skus"]) for r in aggregated)
-    build_pdf(rows, out, total_skus)
-    print(f"[pdf:catalogo-4x-nivel] {len(rows)} produtos compra · {total_skus} SKUs → {out}")
+    build_pdf(rows, out, total_skus, sem_estoque=sem_estoque)
+    label = "sem-estoque-nivel" if sem_estoque else "catalogo-4x-nivel"
+    print(f"[pdf:{label}] {len(rows)} produtos compra · {total_skus} SKUs → {out}")
 
-    try:
-        ARTIFACT_OUT.parent.mkdir(parents=True, exist_ok=True)
-        ARTIFACT_OUT.write_bytes(out.read_bytes())
-        print(f"[pdf:catalogo-4x-nivel] cópia → {ARTIFACT_OUT}")
-    except OSError:
-        pass
+    if not sem_estoque:
+        try:
+            ARTIFACT_OUT.parent.mkdir(parents=True, exist_ok=True)
+            ARTIFACT_OUT.write_bytes(out.read_bytes())
+            print(f"[pdf:catalogo-4x-nivel] cópia → {ARTIFACT_OUT}")
+        except OSError:
+            pass
 
     return 0
 

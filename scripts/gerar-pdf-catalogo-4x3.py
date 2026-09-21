@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -43,12 +44,24 @@ def cell_str(value) -> str:
     return str(value).strip()
 
 
-def load_catalog_rows(xlsx_path: Path) -> list[dict[str, str]]:
+def load_filter_codigos(filter_path: Path | None) -> set[str] | None:
+    if not filter_path or not filter_path.is_file():
+        return None
+    data = json.loads(filter_path.read_text(encoding="utf-8"))
+    return {str(c).strip().upper() for c in data.get("codigos", []) if str(c).strip()}
+
+
+def load_catalog_rows(
+    xlsx_path: Path, *, codigos_filter: set[str] | None = None
+) -> list[dict[str, str]]:
     wb = load_workbook(xlsx_path, read_only=True, data_only=True)
     ws = wb["Catálogo 4×3"]
     rows: list[dict[str, str]] = []
     for i, row in enumerate(ws.iter_rows(min_row=2, values_only=True)):
         if not row or not row[9]:
+            continue
+        codigo = cell_str(row[9]).upper()
+        if codigos_filter is not None and codigo not in codigos_filter:
             continue
         rows.append(
             {
@@ -57,7 +70,7 @@ def load_catalog_rows(xlsx_path: Path) -> list[dict[str, str]]:
                 "comp1": cell_str(row[6]),
                 "comp2": cell_str(row[7]),
                 "comp3": cell_str(row[8]),
-                "sku": cell_str(row[9]).upper(),
+                "sku": codigo,
             }
         )
     wb.close()
@@ -145,7 +158,9 @@ def compute_vertical_spans(
     return spans
 
 
-def build_pdf(rows: list[dict[str, str]], out_path: Path) -> None:
+def build_pdf(
+    rows: list[dict[str, str]], out_path: Path, *, sem_estoque: bool = False
+) -> None:
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     doc = SimpleDocTemplate(
@@ -200,12 +215,15 @@ def build_pdf(rows: list[dict[str, str]], out_path: Path) -> None:
     )
 
     generated = datetime.now(timezone.utc).strftime("%d/%m/%Y %H:%M UTC")
+    titulo = "P38 — Catálogo 4×3 (sem estoque)" if sem_estoque else "P38 — Catálogo 4×3"
+    subtitulo = (
+        f"A4 retrato · {len(rows)} SKUs · produtos compra sem estoque · {generated}"
+        if sem_estoque
+        else f"A4 retrato · {len(rows)} SKUs · coluna final = código · {generated}"
+    )
     story = [
-        Paragraph("P38 — Catálogo 4×3", title),
-        Paragraph(
-            f"A4 retrato · {len(rows)} SKUs · coluna final = código · {generated}",
-            subtitle,
-        ),
+        Paragraph(titulo, title),
+        Paragraph(subtitulo, subtitle),
     ]
 
     def cell(text: str, style: ParagraphStyle, *, blank_if_empty: bool = False):
@@ -283,7 +301,7 @@ def build_pdf(rows: list[dict[str, str]], out_path: Path) -> None:
         canvas.drawString(
             doc_obj.leftMargin,
             4 * mm,
-            f"P38 · Catálogo 4×3 · {len(rows)} SKUs · A4 retrato",
+            f"P38 · Catálogo 4×3{' · sem estoque' if sem_estoque else ''} · {len(rows)} SKUs · A4 retrato",
         )
         canvas.drawRightString(
             PAGE_SIZE[0] - doc_obj.rightMargin,
@@ -298,21 +316,26 @@ def build_pdf(rows: list[dict[str, str]], out_path: Path) -> None:
 def main() -> int:
     xlsx = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_XLSX
     out = Path(sys.argv[2]) if len(sys.argv) > 2 else DEFAULT_OUT
+    filter_path = Path(sys.argv[3]) if len(sys.argv) > 3 else None
 
     if not xlsx.is_file():
         print(f"Ficheiro em falta: {xlsx}", file=sys.stderr)
         return 1
 
-    rows = collapse_groups(load_catalog_rows(xlsx))
-    build_pdf(rows, out)
-    print(f"[pdf:catalogo-4x3] {len(rows)} SKUs → {out}")
+    codigos_filter = load_filter_codigos(filter_path)
+    sem_estoque = codigos_filter is not None
+    rows = collapse_groups(load_catalog_rows(xlsx, codigos_filter=codigos_filter))
+    build_pdf(rows, out, sem_estoque=sem_estoque)
+    label = "sem-estoque" if sem_estoque else "catalogo-4x3"
+    print(f"[pdf:{label}] {len(rows)} SKUs → {out}")
 
-    try:
-        ARTIFACT_OUT.parent.mkdir(parents=True, exist_ok=True)
-        ARTIFACT_OUT.write_bytes(out.read_bytes())
-        print(f"[pdf:catalogo-4x3] cópia → {ARTIFACT_OUT}")
-    except OSError:
-        pass
+    if not sem_estoque:
+        try:
+            ARTIFACT_OUT.parent.mkdir(parents=True, exist_ok=True)
+            ARTIFACT_OUT.write_bytes(out.read_bytes())
+            print(f"[pdf:catalogo-4x3] cópia → {ARTIFACT_OUT}")
+        except OSError:
+            pass
 
     return 0
 
