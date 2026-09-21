@@ -11,6 +11,7 @@ import DeferredMount from '@/lib/DeferredMount';
 import { initP38Monitoring } from '@/lib/p38Monitoring';
 import { installPortraitOrientationLock } from '@/lib/portraitOrientationLock';
 import { shouldRegisterServiceWorker } from '@/lib/pwaServiceWorkerEnv';
+import { registerServiceWorkerIfNeeded } from '@/lib/pwaServiceWorkerRegister';
 
 const SpeedInsights = dynamic(
   () => import('@vercel/speed-insights/react').then((mod) => ({ default: mod.SpeedInsights })),
@@ -41,7 +42,9 @@ function P38ServiceWorkerBoot() {
       navigator.serviceWorker.getRegistrations().then((regs) => {
         regs.forEach((reg) => reg.unregister());
       }).catch(() => {});
+      return;
     }
+    registerServiceWorkerIfNeeded();
   }, []);
   return null;
 }
