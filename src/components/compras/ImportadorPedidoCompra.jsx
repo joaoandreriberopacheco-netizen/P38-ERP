@@ -307,9 +307,13 @@ export default function ImportadorPedidoCompra({
       const initialSearch = {};
       mappedItems.forEach((item, index) => {
         const id = item.selected_product_id || item.produto_id_match;
-        if (!id || id === 'create_new') return;
-        const produto = catalogoProdutos.find((p) => p.id === id);
-        if (produto) initialSearch[index] = getProdutoLabel(produto);
+        if (id && id !== 'create_new') {
+          const produto = catalogoProdutos.find((p) => p.id === id);
+          if (produto) initialSearch[index] = getProdutoLabel(produto);
+          return;
+        }
+        const descricaoPdf = String(item.descricao || '').trim();
+        if (descricaoPdf) initialSearch[index] = descricaoPdf;
       });
       setItems(mappedItems);
       setProductSearch(initialSearch);

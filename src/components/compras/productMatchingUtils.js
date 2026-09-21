@@ -109,27 +109,85 @@ function scoreProductAgainstTokens(queryTokens, produto) {
   return total / queryTokens.length;
 }
 
+function normalizeBarcodeDigits(value) {
+  return String(value || '').replace(/\D/g, '');
+}
+
+function barcodesMatch(a, b) {
+  const left = normalizeBarcodeDigits(a);
+  const right = normalizeBarcodeDigits(b);
+  if (!left || !right) return false;
+  if (left === right) return true;
+  if (left.length >= 8 && right.length >= 8) {
+    return left.endsWith(right.slice(-8)) || right.endsWith(left.slice(-8));
+  }
+  return false;
+}
+
 function buildOcrItemMatchQueries(item = {}) {
   const queries = [];
   const descricao = String(item.descricao || item.descricao_pdf || item.texto_identificado || '').trim();
   const codigo = String(item.codigo || item.codigo_pdf || '').trim();
   const marca = String(item.marca || item.marca_pdf || '').trim();
+  const codigoBarras = String(item.codigo_barras || item.codigo_barras_pdf || '').trim();
 
   if (codigo) queries.push(codigo);
+  if (codigoBarras) queries.push(codigoBarras);
   if (descricao) queries.push(descricao);
   if (descricao && marca) queries.push(`${descricao} ${marca}`);
   if (codigo && descricao) queries.push(`${codigo} ${descricao}`);
+
+  const tokens = tokenizeForProductMatch(descricao);
+  if (tokens.length > 4) {
+    queries.push(tokens.slice(0, 4).join(' '));
+    queries.push(tokens.slice(0, 6).join(' '));
+  } else if (tokens.length >= 2) {
+    queries.push(tokens.join(' '));
+  }
+
   return [...new Set(queries.filter(Boolean))];
 }
 
 function findByProductCode(item, catalogoProdutos = []) {
   const codigo = String(item.codigo || item.codigo_pdf || '').trim();
-  if (!codigo) return null;
-  const hit = catalogoProdutos.find((produto) =>
-    productCodesMatch(codigo, produto.codigo_interno)
-    || productCodesMatch(codigo, produto.codigo_barras),
-  );
-  return hit ? { produto: hit, confianca: 'alta' } : null;
+  const codigoBarras = String(item.codigo_barras || item.codigo_barras_pdf || '').trim();
+
+  if (codigo) {
+    const hit = catalogoProdutos.find((produto) =>
+      productCodesMatch(codigo, produto.codigo_interno)
+      || productCodesMatch(codigo, produto.codigo_barras)
+      || barcodesMatch(codigo, produto.codigo_barras),
+    );
+    if (hit) return { produto: hit, confianca: 'alta' };
+  }
+
+  if (codigoBarras) {
+    const hit = catalogoProdutos.find((produto) => barcodesMatch(codigoBarras, produto.codigo_barras));
+    if (hit) return { produto: hit, confianca: 'alta' };
+  }
+
+  const codigoDigits = normalizeBarcodeDigits(codigo);
+  if (codigoDigits.length >= 4 && codigoDigits.length <= 8) {
+    const hit = catalogoProdutos.find((produto) => {
+      const barras = normalizeBarcodeDigits(produto.codigo_barras);
+      return barras && (barras.endsWith(codigoDigits) || barras.includes(codigoDigits));
+    });
+    if (hit) return { produto: hit, confianca: 'media' };
+  }
+
+  return null;
+}
+
+/** Match OCR: não exige 100% das palavras do PDF (descrições longas de distribuidor). */
+function matchesProductQueryOcrLoose(produto, query) {
+  const tokens = tokenizeForProductMatch(query);
+  if (!tokens.length) return false;
+  const searchable = getProductSearchText(produto);
+  const matched = tokens.filter((term) => termMatchesSearchable(term, searchable));
+  const minRequired = tokens.length <= 3
+    ? tokens.length
+    : Math.max(2, Math.ceil(tokens.length * 0.55));
+  return matched.length >= minRequired;
 }
 
 export function getProdutoLabel(produto) {
@@ -298,16 +356,27 @@ export function findLocalBestProductMatch(textoIdentificado, catalogoProdutos = 
     const queryTokens = tokenizeForProductMatch(query);
     if (!queryTokens.length) continue;
 
-    const direct = catalogoProdutos.find((produto) => matchesProductQuery(produto, query, { includeHierarchy: true }));
-    if (direct) return { produto: direct, confianca: 'media' };
+    const direct = catalogoProdutos.find((produto) => matchesProductQueryOcrLoose(produto, query));
+    if (direct) {
+      const directScore = scoreProductAgainstTokens(queryTokens, direct);
+      return {
+        produto: direct,
+        confianca: directScore >= 0.7 ? 'alta' : 'media',
+        score: directScore,
+      };
+    }
 
     for (const produto of catalogoProdutos) {
       const tokenScore = scoreProductAgainstTokens(queryTokens, produto);
       const label = getProdutoLabel(produto);
-      const fuzzyScore = query.length >= 6 && label
+      const primary = getProductPrimarySearchText(produto);
+      const fuzzyLabel = query.length >= 6 && label
         ? fuzzRatio(query, label, { full_process: true }) / 100
         : 0;
-      const score = Math.max(tokenScore, fuzzyScore * 0.92);
+      const fuzzyPrimary = query.length >= 6 && primary
+        ? fuzzRatio(query, primary, { full_process: true }) / 100
+        : 0;
+      const score = Math.max(tokenScore, fuzzyLabel * 0.92, fuzzyPrimary * 0.88);
       if (score > bestScore) {
         secondScore = bestScore;
         bestScore = score;
@@ -319,8 +388,11 @@ export function findLocalBestProductMatch(textoIdentificado, catalogoProdutos = 
   }
 
   const minWords = Math.max(...queries.map((q) => tokenizeForProductMatch(q).length), 1);
-  const minScore = minWords <= 2 ? 0.45 : minWords <= 4 ? 0.38 : 0.32;
-  const marginOk = bestScore - secondScore >= 0.08 || secondScore === 0;
+  const minScore = minWords <= 2 ? 0.38 : minWords <= 4 ? 0.30 : 0.24;
+  const marginOk =
+    bestScore - secondScore >= 0.05
+    || secondScore === 0
+    || bestScore >= 0.62;
 
   if (!best || bestScore < minScore || !marginOk) return null;
 
@@ -381,7 +453,7 @@ export function resolveOcrProductMatch(item, catalogoProdutos = [], llmProdutoId
     (
       confianca === 'alta' ||
       confianca === 'media' ||
-      (localId === matchId && localScore >= 0.32) ||
+      (localId === matchId && localScore >= 0.26) ||
       (llmId === matchId && (llmConf === 'alta' || llmConf === 'media'))
     )
       ? matchId

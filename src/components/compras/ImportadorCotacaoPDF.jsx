@@ -10,8 +10,8 @@ import { useToast } from "@/components/ui/use-toast";
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
 import {
   findLocalBestFornecedorMatch,
-  findLocalBestProductMatch,
   getProdutoLabel,
+  resolveOcrProductMatch,
   matchesProductQuery,
 } from '@/components/compras/productMatchingUtils';
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
@@ -118,18 +118,28 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
             const produtosCotacao = produtos.filter((p) => cotacaoProdutoIds.has(p.id));
             const catalogoMatch = produtosCotacao.length ? produtosCotacao : produtos;
 
-            setMappings(itens.map(item => {
-                const fallback = findLocalBestProductMatch(null, catalogoMatch, item)?.produto;
-                const selectedId = fallback?.id || '';
+            const initialSearch = {};
+            const mapped = itens.map((item, index) => {
+                const resolved = resolveOcrProductMatch(item, catalogoMatch, '');
+                const selectedId = resolved.selected_product_id || resolved.produto_id_match || '';
+                if (selectedId) {
+                    const produto = catalogoMatch.find((p) => p.id === selectedId);
+                    if (produto) initialSearch[index] = getProdutoLabel(produto);
+                } else {
+                    const descricaoPdf = String(item.descricao_pdf || item.descricao || '').trim();
+                    if (descricaoPdf) initialSearch[index] = descricaoPdf;
+                }
                 return {
                     ...item,
-                    produto_sistema_match_id: selectedId || null,
+                    produto_sistema_match_id: resolved.produto_id_match || null,
+                    produto_id_match: resolved.produto_id_match || null,
                     selected_product_id: selectedId,
-                    confianca_match: fallback?.confianca || 'baixa',
-                    ignored: !selectedId
+                    confianca_match: resolved.confianca || 'baixa',
+                    ignored: !selectedId,
                 };
-            }));
-            setProductSearch({});
+            });
+            setMappings(mapped);
+            setProductSearch(initialSearch);
 
             const fornecedorMatch = findLocalBestFornecedorMatch(
               {

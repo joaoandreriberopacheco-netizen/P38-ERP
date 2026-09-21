@@ -44,16 +44,17 @@ function parseLinhaItemMassDistribuidora(linha) {
   }
 
   const m = s.match(
-    /^(\d{5,6})\s+(.+?)\s+EMB\.:\s*[\d.]+\s+Cod\.Barras:\s*\d+\s+(\d+)\s+(?:R\$\s*[\d.,]+\s*){2}R\$\s*([\d.,]+)\s+R\$\s*([\d.,]+)\s*$/i,
+    /^(\d{5,6})\s+(.+?)\s+EMB\.:\s*[\d.]+\s+Cod\.Barras:\s*(\d+)\s+(\d+)\s+(?:R\$\s*[\d.,]+\s*){2}R\$\s*([\d.,]+)\s+R\$\s*([\d.,]+)\s*$/i,
   );
   if (!m) return null;
 
   const item = {
     descricao: m[2].trim(),
     codigo: m[1],
+    codigo_barras: m[3],
     marca: '',
-    quantidade: parseNumeroBr(m[3]) || 1,
-    preco_unitario: parseNumeroBr(m[4]),
+    quantidade: parseNumeroBr(m[4]) || 1,
+    preco_unitario: parseNumeroBr(m[5]),
     unidade_medida_documento: 'UN',
   };
   return itemPareceValido(item) ? item : null;
