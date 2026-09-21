@@ -104,8 +104,8 @@ export function extrairCodigoPix(texto) {
 
 export function linhaPareceRodape(linha) {
   const s = String(linha || '');
-  return /^(total|subtotal|desconto|frete|icms|iss|pis|cofins|valor\s+total|pagina|página|nf-?e|chave\s+de\s+acesso|cnpj|cpf|inscricao|qtd\.?\s+total|total\s+itens|peso\s+itens|qtd\s+itens|orçamento|observa)/i.test(s)
-    || /pedido\s+de\s+venda|data\s+de\s+emiss|previs[aã]o\s+de\s+entrega/i.test(s);
+  return /^(total|subtotal|desconto|frete|icms|iss|pis|cofins|valor\s+total|pagina|página|nf-?e|chave\s+de\s+acesso|cnpj|cpf|inscricao|qtd\.?\s+total|total\s+itens|peso\s+itens|qtd\s+itens|orçamento|observa|gerado\s+por)/i.test(s)
+    || /pedido\s+de\s+venda|data\s+de\s+emiss|previs[aã]o\s+de\s+entrega|maxandroid|ccg\s+distribuidora/i.test(s);
 }
 
 export function extrairNumerosMonetariosLinha(linha) {

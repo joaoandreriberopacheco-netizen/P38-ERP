@@ -9,7 +9,8 @@ const METADADO_PEDIDO_RE = new RegExp(
   + 'e-?mail:|vendedor:|fone:|cnp[jp]:|inscri|observa|qtd\\.?\\s+total|'
   +   'total\\s+itens|subtotal|pagamento|emp\\.?\\s+qtd|vr\\.?\\s+unit|'
   + 'peso\\s+itens|qtd\\s+itens|orçamento|transporte|'
-  + 'fabricante|margarita|manaus|tintaomanaus',
+  + 'fabricante|margarita|manaus|tintaomanaus|'
+  + 'gerado\\s+por|maxandroid|pag\\.\\s*\\d|ccg\\s+distribuidora|desconto\\(r\\$\\)',
   'i',
 );
 

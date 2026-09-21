@@ -65,6 +65,39 @@ function normalizeMatchText(value) {
   );
 }
 
+const OCR_COLOR_TOKENS = new Set([
+  'amarelo', 'vermelho', 'branco', 'cinza', 'preto', 'azul', 'verde', 'marrom', 'bege', 'neve',
+]);
+
+const OCR_KIND_TOKENS = new Set([
+  'acrilica', 'acrilico', 'corrida', 'piso', 'semibrilho', 'latex', 'esmalte', 'textura', 'demarcacao',
+]);
+
+/** Evita vincular tinta amarela → vermelha, massa acrílica → corrida, etc. */
+function ocrMatchHasDiscriminatorConflict(queryTokens, catalogTokens) {
+  const qColors = queryTokens.filter((t) => OCR_COLOR_TOKENS.has(t));
+  const cColors = catalogTokens.filter((t) => OCR_COLOR_TOKENS.has(t));
+  if (qColors.length && cColors.length && !qColors.some((c) => cColors.includes(c))) {
+    return true;
+  }
+
+  const qKinds = queryTokens.filter((t) => OCR_KIND_TOKENS.has(t));
+  const cKinds = catalogTokens.filter((t) => OCR_KIND_TOKENS.has(t));
+  if (!qKinds.length || !cKinds.length) return false;
+  if (qKinds.some((k) => cKinds.includes(k))) return false;
+
+  const conflictPairs = [
+    ['acrilica', 'acrilico', 'corrida'],
+    ['piso', 'semibrilho', 'latex', 'esmalte'],
+  ];
+  for (const group of conflictPairs) {
+    const qIn = qKinds.some((k) => group.includes(k));
+    const cIn = cKinds.some((k) => group.includes(k));
+    if (qIn && cIn) return true;
+  }
+  return qKinds.length >= 1 && cKinds.length >= 1;
+}
+
 function tokenizeForProductMatch(value) {
   const normalized = normalizeMatchText(value);
   if (!normalized) return [];
@@ -303,7 +336,11 @@ export function findLocalBestProductMatch(textoIdentificado, catalogoProdutos = 
     const queryTokens = tokenizeForProductMatch(query);
     if (!queryTokens.length) continue;
 
-    const direct = catalogoProdutos.find((produto) => matchesProductQueryOcrLoose(produto, query));
+    const direct = catalogoProdutos.find((produto) => {
+      const catalogTokens = tokenizeForProductMatch(getProductSearchText(produto));
+      if (ocrMatchHasDiscriminatorConflict(queryTokens, catalogTokens)) return false;
+      return matchesProductQueryOcrLoose(produto, query);
+    });
     if (direct) {
       const directScore = scoreProductAgainstTokens(queryTokens, direct);
       return {
@@ -314,6 +351,8 @@ export function findLocalBestProductMatch(textoIdentificado, catalogoProdutos = 
     }
 
     for (const produto of catalogoProdutos) {
+      const catalogTokens = tokenizeForProductMatch(getProductSearchText(produto));
+      if (ocrMatchHasDiscriminatorConflict(queryTokens, catalogTokens)) continue;
       const tokenScore = scoreProductAgainstTokens(queryTokens, produto);
       const label = getProdutoLabel(produto);
       const primary = getProductPrimarySearchText(produto);

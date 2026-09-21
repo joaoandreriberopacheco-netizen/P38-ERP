@@ -21,10 +21,20 @@ import {
   repartirTextoOcrPedido,
 } from '@/lib/ocrPedidoNormalize';
 
+function descricaoPareceLixoPedido(descricao) {
+  const s = String(descricao || '').trim();
+  if (!s) return true;
+  if (/^789\d{8,13}\b/.test(s)) return true;
+  if (/gerado\s+por|maxandroid|sub-total|obs\.?:|pag\.\s*\d|ccg\s+distribuidora|desconto\(r\$\)/i.test(s)) {
+    return true;
+  }
+  return linhaPareceMetadadoPedido(s);
+}
+
 function itemPareceValido(item) {
   if (!item?.descricao || item.descricao.length < 3) return false;
   if (item.descricao.length > 120) return false;
-  if (linhaPareceMetadadoPedido(item.descricao)) return false;
+  if (descricaoPareceLixoPedido(item.descricao)) return false;
   if (!Number.isFinite(item.quantidade) || item.quantidade <= 0 || item.quantidade > 50_000) return false;
   if (!Number.isFinite(item.preco_unitario) || item.preco_unitario <= 0 || item.preco_unitario > 500_000) return false;
   const total = item.quantidade * item.preco_unitario;
@@ -175,6 +185,9 @@ function parseLinhaItemPedido(linha) {
   const codBarras = parseLinhaItemCodBarras(linha);
   if (codBarras) return codBarras;
 
+  // Linhas de tabela SEQ + código + EAN — parser de segmentos trata melhor
+  if (/^\d{1,3}\s+\d{4,6}\s+789\d{10}\b/.test(String(linha || '').trim())) return null;
+
   if (linhaPareceRodape(linha) || linhaPareceMetadadoPedido(linha) || linha.length < 8) return null;
   if (linha.length > 140) return null;
   if (/^(item|codigo|descricao|produto|qtd|quant|unit|valor|emp)\b/i.test(linha)) return null;
@@ -280,13 +293,8 @@ export function parsePedidoCompraDocumento(texto) {
   const cnpj = extrairCnpj(textoNormalizado);
   const nome = extrairNomeFornecedorPedido(textoNormalizado);
 
-  // Fallback local: descrição + qtde + R$ (sem depender de layout por fornecedor)
-  let itens = [];
-  for (const linha of limparLinhas(textoNormalizado)) {
-    const item = parseLinhaItemPedido(linha);
-    if (item) itens.push(item);
-  }
-  if (!itens.length) itens = parseItensPorPadroesTabela(texto);
+  // Fallback local: tabela (seq + descrição + qtde + R$) antes de linha genérica
+  let itens = parseItensPorPadroesTabela(texto);
   if (!itens.length) itens = parseItensPorPadroesTabela(textoNormalizado);
   if (!itens.length) itens = parseItensPorPadraoCodBarras(textoNormalizado);
   if (!itens.length) {
