@@ -109,43 +109,11 @@ function scoreProductAgainstTokens(queryTokens, produto) {
   return total / queryTokens.length;
 }
 
-function normalizeBarcodeDigits(value) {
-  return String(value || '').replace(/\D/g, '');
-}
-
-function barcodesMatch(a, b) {
-  const left = normalizeBarcodeDigits(a);
-  const right = normalizeBarcodeDigits(b);
-  if (!left || !right) return false;
-  if (left === right) return true;
-  if (left.length >= 8 && right.length >= 8) {
-    return left.endsWith(right.slice(-8)) || right.endsWith(left.slice(-8));
-  }
-  return false;
-}
-
-/** Código numérico do fornecedor (ex. MASS 121161) — não cruza com catálogo P38. */
-function looksLikeSupplierSkuCode(codigo) {
-  const raw = String(codigo || '').trim();
-  if (!raw) return false;
-  const digits = normalizeBarcodeDigits(raw);
-  if (digits.length < 4 || digits.length > 10) return false;
-  return digits === raw.replace(/\D/g, '');
-}
-
 function buildOcrItemMatchQueries(item = {}) {
   const queries = [];
   const descricao = String(item.descricao || item.descricao_pdf || item.texto_identificado || '').trim();
-  const codigo = String(item.codigo || item.codigo_pdf || '').trim();
   const marca = String(item.marca || item.marca_pdf || '').trim();
-  const codigoBarras = String(item.codigo_barras || item.codigo_barras_pdf || '').trim();
 
-  if (codigoBarras && normalizeBarcodeDigits(codigoBarras).length >= 8) {
-    queries.push(codigoBarras);
-  }
-  if (codigo && !looksLikeSupplierSkuCode(codigo)) {
-    queries.push(codigo);
-  }
   if (descricao) queries.push(descricao);
   if (descricao && marca) queries.push(`${descricao} ${marca}`);
 
@@ -158,30 +126,6 @@ function buildOcrItemMatchQueries(item = {}) {
   }
 
   return [...new Set(queries.filter(Boolean))];
-}
-
-function findByProductCode(item, catalogoProdutos = []) {
-  const codigoBarras = String(item.codigo_barras || item.codigo_barras_pdf || '').trim();
-  const codigo = String(item.codigo || item.codigo_pdf || '').trim();
-
-  if (codigoBarras && normalizeBarcodeDigits(codigoBarras).length >= 8) {
-    const hit = catalogoProdutos.find((produto) => barcodesMatch(codigoBarras, produto.codigo_barras));
-    if (hit) return { produto: hit, confianca: 'alta' };
-  }
-
-  if (codigo && !looksLikeSupplierSkuCode(codigo)) {
-    const hit = catalogoProdutos.find((produto) => {
-      const interno = produto.codigo_interno;
-      if (!interno) return false;
-      if (isCanonicalProductCode(interno) || isCanonicalProductCode(codigo)) {
-        return productCodesMatch(codigo, interno);
-      }
-      return productCodesMatch(codigo, interno);
-    });
-    if (hit) return { produto: hit, confianca: 'alta' };
-  }
-
-  return null;
 }
 
 /** Match OCR: não exige 100% das palavras do PDF (descrições longas de distribuidor). */
@@ -347,9 +291,6 @@ export function findLocalBestProductMatch(textoIdentificado, catalogoProdutos = 
   if (!catalogoProdutos.length) return null;
 
   const ocrItem = item || { descricao: textoIdentificado };
-  const byCode = findByProductCode(ocrItem, catalogoProdutos);
-  if (byCode) return byCode;
-
   const queries = buildOcrItemMatchQueries(ocrItem);
   if (!queries.length && textoIdentificado) queries.push(String(textoIdentificado).trim());
   if (!queries.length) return null;

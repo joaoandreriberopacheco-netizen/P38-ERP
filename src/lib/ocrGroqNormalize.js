@@ -24,7 +24,6 @@ export function normalizarPedidoGroq(raw) {
       return {
         descricao,
         codigo: asStr(item.codigo || item.codigo_pdf),
-        codigo_barras: asStr(item.codigo_barras || item.codigo_barras_pdf),
         marca: asStr(item.marca || item.marca_pdf),
         quantidade,
         preco_unitario: preco,

@@ -113,9 +113,10 @@ Regras:
 - CNPJ só se aparecer formatado (XX.XXX.XXX/XXXX-XX); nunca invente.
 - Extraia TODOS os itens de produto que encontrar; ignore cabeçalhos e totais.
 - quantidade e preco_unitario devem ser > 0 quando houver item.
-- "codigo" no item é referência do FORNECEDOR (não é o código interno da loja).
-- Priorize descrição completa do produto; inclua marca e embalagem quando visíveis.
-- Layout MaxAndroid/CCG: SEQ CÓDIGO EAN DESCRIÇÃO QTDE VALOR DESC TOTAL — extraia todos os itens da tabela.
+- O campo mais importante é "descricao": nome completo do produto, marca, embalagem (ex.: "MASSA ACRILICA BD 20KG HIPERCOR").
+- "codigo" é opcional (referência do fornecedor; ignore se não houver).
+- Não invente código de barras/EAN; foque no texto legível da descrição + quantidade + preço unitário.
+- Extraia TODOS os itens de produto; ignore cabeçalhos, subtotais, rodapés e frete.
 - Se não houver itens, devolva "itens": [].
 
 Schema esperado:

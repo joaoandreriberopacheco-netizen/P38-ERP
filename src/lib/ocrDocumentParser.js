@@ -32,24 +32,34 @@ function itemPareceValido(item) {
   return true;
 }
 
-/** Pedido MaxAndroid / CCG: # SEQ CÓDIGO EAN DESCRIÇÃO QTDE VALOR DESC. TOTAL */
-function textoSecaoItensPedido(texto) {
+/**
+ * Padrão genérico (vários ERPs): SEQ + código fornecedor + EAN 789… + descrição + qtde + valores R$.
+ * Não depende do nome do sistema (MaxAndroid, CCG, etc.).
+ */
+function textoSecaoTabelaItens(texto) {
   const flat = String(texto || '').replace(/\s+/g, ' ');
-  const start = flat.search(/ITENS DO PEDIDO/i);
+  const start = flat.search(
+    /ITENS DO PEDIDO|ITENS\s+DO\s+OR[CÇ]AMENTO|PRODUTOS\s+DO\s+PEDIDO|#?\s*C[OÓ]DIGO\s+EAN/i,
+  );
   const slice = start >= 0 ? flat.slice(start) : flat;
-  const end = slice.search(/\sObs\.:|Sub-Total\(R\$\)|Gerado por MaxAndroid/i);
+  const end = slice.search(
+    /\sObs\.:|Sub-Total\(R\$\)|Total\s+do\s+Pedido|Gerado por\s+\w+|Página\s+\d+\s+de/i,
+  );
   return end > 0 ? slice.slice(0, end) : slice;
 }
 
-export function segmentosMaxAndroid(texto) {
-  const section = textoSecaoItensPedido(texto);
+export function segmentosLinhaComEan(texto) {
+  const section = textoSecaoTabelaItens(texto);
   return section
     .split(/\s+(?=\d{1,3}\s+\d{4,6}\s+789\d{10}\s+)/i)
     .map((s) => s.trim())
     .filter((s) => /^(\d{1,3})\s+\d{4,6}\s+789\d{10}\b/.test(s));
 }
 
-function parseSegmentoMaxAndroid(seg) {
+/** @deprecated Use segmentosLinhaComEan — alias para scripts de debug */
+export const segmentosMaxAndroid = segmentosLinhaComEan;
+
+function parseSegmentoLinhaEan(seg) {
   const m = String(seg || '').trim().match(/^(\d{1,3})\s+(\d{4,6})\s+(789\d{10})\s+(.+)$/i);
   if (!m) return null;
 
@@ -86,7 +96,6 @@ function parseSegmentoMaxAndroid(seg) {
   const item = {
     descricao,
     codigo: m[2],
-    codigo_barras: m[3],
     marca: '',
     quantidade,
     preco_unitario,
@@ -95,16 +104,22 @@ function parseSegmentoMaxAndroid(seg) {
   return itemPareceValido(item) ? item : null;
 }
 
-export function parseItensMaxAndroid(texto) {
-  if (!/MaxAndroid|ITENS DO PEDIDO.*EAN\/COD\.REF/i.test(texto)) return [];
-  return segmentosMaxAndroid(texto).map(parseSegmentoMaxAndroid).filter(Boolean);
+/** Fallback local: tabela com código + descrição + qtde + R$ (layout-agnóstico). */
+export function parseItensPorPadroesTabela(texto) {
+  if (!/789\d{10}/.test(texto)) return [];
+  const itens = segmentosLinhaComEan(texto).map(parseSegmentoLinhaEan).filter(Boolean);
+  return itens.length >= 1 ? itens : [];
 }
 
+/** @deprecated Use parseItensPorPadroesTabela */
+export const parseItensPorPadroesEan = parseItensPorPadroesTabela;
+export const parseItensMaxAndroid = parseItensPorPadroesTabela;
+
 /**
- * Orçamento MASS DISTRIBUIDORA:
- * 121161 DESC … EMB.: 1.0 Cod.Barras: 789… 24 R$ 4,28 R$ 0,00 R$ 4,28 R$ 102,72
+ * Padrão genérico: … Cod.Barras: 789… QTD R$ unitário …
+ * (MASS e ERPs similares)
  */
-function parseLinhaItemMassDistribuidora(linha) {
+function parseLinhaItemCodBarras(linha) {
   const s = String(linha || '').trim();
   if (!s || s.length < 24) return null;
   if (/^(peso|qtd\s+itens|total|orçamento|filial|página|criado|válido|transporte|plano|cobran)/i.test(s)) {
@@ -119,7 +134,6 @@ function parseLinhaItemMassDistribuidora(linha) {
   const item = {
     descricao: m[2].trim(),
     codigo: m[1],
-    codigo_barras: m[3],
     marca: '',
     quantidade: parseNumeroBr(m[4]) || 1,
     preco_unitario: parseNumeroBr(m[5]),
@@ -147,9 +161,19 @@ function parseLinhaItemPedidoTabular(linha) {
   return itemPareceValido(item) ? item : null;
 }
 
+/** Varre linhas com padrão Cod.Barras: (sem depender do nome do fornecedor). */
+function parseItensPorPadraoCodBarras(texto) {
+  const itens = [];
+  for (const linha of limparLinhas(texto)) {
+    const item = parseLinhaItemCodBarras(linha);
+    if (item) itens.push(item);
+  }
+  return itens;
+}
+
 function parseLinhaItemPedido(linha) {
-  const mass = parseLinhaItemMassDistribuidora(linha);
-  if (mass) return mass;
+  const codBarras = parseLinhaItemCodBarras(linha);
+  if (codBarras) return codBarras;
 
   if (linhaPareceRodape(linha) || linhaPareceMetadadoPedido(linha) || linha.length < 8) return null;
   if (linha.length > 140) return null;
@@ -256,10 +280,15 @@ export function parsePedidoCompraDocumento(texto) {
   const cnpj = extrairCnpj(textoNormalizado);
   const nome = extrairNomeFornecedorPedido(textoNormalizado);
 
-  let itens = parseItensMaxAndroid(texto);
-  if (!itens.length) {
-    itens = parseItensMaxAndroid(textoNormalizado);
+  // Fallback local: descrição + qtde + R$ (sem depender de layout por fornecedor)
+  let itens = [];
+  for (const linha of limparLinhas(textoNormalizado)) {
+    const item = parseLinhaItemPedido(linha);
+    if (item) itens.push(item);
   }
+  if (!itens.length) itens = parseItensPorPadroesTabela(texto);
+  if (!itens.length) itens = parseItensPorPadroesTabela(textoNormalizado);
+  if (!itens.length) itens = parseItensPorPadraoCodBarras(textoNormalizado);
   if (!itens.length) {
     itens = [];
     for (const linha of limparLinhas(textoNormalizado)) {
