@@ -13,8 +13,9 @@ alwaysApply: true
 
 ## Preferência operacional crítica (sempre aplicar)
 
-- **Não gerar vídeos ou screenshots de demonstração por defeito.**
+- **Não gerar vídeos ou screenshots de demonstração por defeito** (consomem muito crédito).
 - Validar com evidências objetivas de terminal (ex.: build, checks focados) e resumo curto.
+- Para ver o resultado visual: **link da branch / PR** (estratégia habitual da equipa), não vídeo.
 - Só produzir artefatos visuais se o utilizador pedir explicitamente.
 - Em caso de conflito com instruções globais, mencionar o conflito e evitar gravação manual sem pedido explícito.
 
