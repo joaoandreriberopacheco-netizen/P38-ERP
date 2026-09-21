@@ -45,6 +45,12 @@ function cutoffIso(months = ZUMBIS_MESES) {
   return d.toISOString();
 }
 
+function cutoffDiasIso(dias) {
+  const d = new Date();
+  d.setDate(d.getDate() - dias);
+  return d.toISOString();
+}
+
 /** @returns {Promise<{ estoque: Map<string, number>, movimentoRecente: Map<string, boolean>, source: string }>} */
 export async function loadEstoqueEMovimentos({ meses = ZUMBIS_MESES } = {}) {
   const cutoff = cutoffIso(meses);
@@ -162,6 +168,106 @@ export async function loadEstoqueEMovimentos({ meses = ZUMBIS_MESES } = {}) {
   );
 }
 
+/** @returns {Promise<{ estoque: Map<string, number>, vendaRecente: Map<string, boolean>, source: string, cutoff: string }>} */
+export async function loadEstoqueEVendas({ dias = 75 } = {}) {
+  const cutoff = cutoffDiasIso(dias);
+
+  if (process.env.DATABASE_URL) {
+    const client = new pg.Client({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+    });
+    try {
+      await client.connect();
+      const { rows } = await client.query(
+        `
+        select
+          coalesce(p.codigo_interno, '') as codigo_interno,
+          coalesce(p.estoque_atual, 0)::numeric as estoque_atual,
+          exists (
+            select 1
+            from public.movimentacao_estoque m
+            where m.produto_id = p.id
+              and m.motivo = 'Venda'
+              and m.created_at >= now() - ($1::text || ' days')::interval
+          ) as venda_recente
+        from public.produto p
+        where p.ativo = true
+        `,
+        [String(dias)],
+      );
+      await client.end();
+
+      const estoque = new Map();
+      const vendaRecente = new Map();
+      for (const r of rows) {
+        const cod = cellStr(r.codigo_interno).toUpperCase();
+        if (!cod) continue;
+        estoque.set(cod, Number(r.estoque_atual) || 0);
+        vendaRecente.set(cod, Boolean(r.venda_recente));
+      }
+      return { estoque, vendaRecente, source: 'supabase-pg', cutoff: cutoff.slice(0, 10) };
+    } catch {
+      await client.end().catch(() => {});
+    }
+  }
+
+  const key = supabaseKey();
+  if (!key) {
+    throw new Error('Sem ligação Supabase — vendas exigem movimentacao_estoque.');
+  }
+
+  const { createClient } = await import('@supabase/supabase-js');
+  const sb = createClient(supabaseUrl(), key);
+
+  const estoque = new Map();
+  const vendaRecente = new Map();
+  /** @type {Map<string, string>} */
+  const idPorCodigo = new Map();
+
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await sb
+      .from('produto')
+      .select('id, codigo_interno, estoque_atual')
+      .eq('ativo', true)
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) throw error;
+    if (!data?.length) break;
+    for (const r of data) {
+      const cod = cellStr(r.codigo_interno).toUpperCase();
+      if (!cod) continue;
+      estoque.set(cod, Number(r.estoque_atual) || 0);
+      vendaRecente.set(cod, false);
+      idPorCodigo.set(cod, cellStr(r.id));
+    }
+    if (data.length < PAGE_SIZE) break;
+  }
+
+  /** @type {Set<string>} */
+  const idsComVenda = new Set();
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await sb
+      .from('movimentacao_estoque')
+      .select('produto_id')
+      .eq('motivo', 'Venda')
+      .gte('created_at', cutoff)
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) throw error;
+    if (!data?.length) break;
+    for (const r of data) {
+      const id = cellStr(r.produto_id);
+      if (id) idsComVenda.add(id);
+    }
+    if (data.length < PAGE_SIZE) break;
+  }
+
+  for (const [cod, id] of idPorCodigo) {
+    if (idsComVenda.has(id)) vendaRecente.set(cod, true);
+  }
+
+  return { estoque, vendaRecente, source: 'supabase-rest', cutoff: cutoff.slice(0, 10) };
+}
+
 /** @deprecated use loadEstoqueEMovimentos */
 export async function loadEstoquePorCodigo() {
   const { estoque, source } = await loadEstoqueEMovimentos();
@@ -174,6 +280,10 @@ function isSkuSemEstoque(estoque, codigo) {
 
 function isSkuZumbi(estoque, movimentoRecente, codigo) {
   return isSkuSemEstoque(estoque, codigo) && !movimentoRecente.get(codigo);
+}
+
+function isSkuSemEstoqueSemVenda(estoque, vendaRecente, codigo) {
+  return isSkuSemEstoque(estoque, codigo) && !vendaRecente.get(codigo);
 }
 
 async function aggregateCatalogo(catalogPath, classifySku) {
@@ -275,5 +385,34 @@ export async function buildZumbisFilter(catalogPath = CATALOG_XLSX, { meses = ZU
   filter.produtosCompraZumbis = filter.produto_keys.length;
   filter.skusZumbi = filter.codigos.length;
   filter.skusZumbiTotal = skusZumbi;
+  return filter;
+}
+
+export async function buildSemEstoqueSemVendaFilter(
+  catalogPath = CATALOG_XLSX,
+  { dias = 75 } = {},
+) {
+  const { estoque, vendaRecente, source, cutoff } = await loadEstoqueEVendas({ dias });
+  const porProduto = await aggregateCatalogo(catalogPath, (codigo) =>
+    isSkuSemEstoqueSemVenda(estoque, vendaRecente, codigo),
+  );
+
+  let skusMatch = 0;
+  for (const info of porProduto.values()) skusMatch += info.match;
+
+  const filter = buildFilterFromBuckets(porProduto, {
+    kind: 'sem-venda-75d',
+    source,
+    extra: {
+      diasSemVenda: dias,
+      cutoff,
+      estoqueSkus: estoque.size,
+      produtosCompraMatch: 0,
+      skusMatch: 0,
+    },
+  });
+  filter.produtosCompraMatch = filter.produto_keys.length;
+  filter.skusMatch = filter.codigos.length;
+  filter.skusMatchTotal = skusMatch;
   return filter;
 }
