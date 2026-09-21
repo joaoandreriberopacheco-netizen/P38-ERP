@@ -3,6 +3,7 @@ import { ArrowLeft, Loader2, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { exportCupomToPdfAndShareOrDownload, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
 import { toast } from 'sonner';
+import { CupomTotalComDesconto } from '@/components/orcamento/OrcamentoTotalComDesconto';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtData = () => new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -76,9 +77,15 @@ function Cupom80mm({ itens, total, desconto, subtotal, observacoes, nomeTabela, 
         </>
       )}
       <LinhaHifens />
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '13px', margin: '2mm 0' }}>
-        <span>TOTAL</span>
-        <span>R$ {fmtR(total)}</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', margin: '2mm 0' }}>
+        <span style={{ fontWeight: 'bold', fontSize: '13px' }}>TOTAL</span>
+        <CupomTotalComDesconto
+          subtotal={subtotal}
+          total={total}
+          valorDesconto={desconto}
+          cheioFontSize="11px"
+          finalFontSize="13px"
+        />
       </div>
       <LinhaHifens />
       {observacoes && (
@@ -171,7 +178,14 @@ function CupomA4({ itens, total, desconto, subtotal, observacoes, nomeTabela, cl
             )}
             <div style={{ borderTop: '2px solid #111', paddingTop: '4mm' }}>
               <div style={{ fontSize: '11px', color: '#555', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Geral</div>
-              <div style={{ fontSize: '22px', fontWeight: '700' }}>R$ {fmtR(total)}</div>
+              <CupomTotalComDesconto
+                subtotal={subtotal}
+                total={total}
+                valorDesconto={desconto}
+                cheioFontSize="14px"
+                finalFontSize="22px"
+                align="right"
+              />
               <div style={{ fontSize: '10px', color: '#999', marginTop: '1mm' }}>{itens.reduce((s, i) => s + i.qtd, 0)} itens</div>
             </div>
           </div>

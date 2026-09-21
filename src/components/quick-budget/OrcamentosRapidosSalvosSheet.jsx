@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 import { listarOrcamentosRapidos } from '@/lib/orcamentoRapidoSql';
 import { orcamentoSalvoToCupomProps } from '@/lib/orcamentoRapidoCupom';
 import OrcamentoRapidoCupomOverlay from './OrcamentoRapidoCupomOverlay';
+import OrcamentoTotalComDesconto from '@/components/orcamento/OrcamentoTotalComDesconto';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -148,7 +149,14 @@ export default function OrcamentosRapidosSalvosSheet({
                           )}
                         </>
                       }
-                      value={`R$ ${fmtR(orc.valor_total)}`}
+                      value={(
+                        <OrcamentoTotalComDesconto
+                          subtotal={orc.subtotal}
+                          total={orc.valor_total}
+                          valorDesconto={orc.valor_desconto}
+                          size="sm"
+                        />
+                      )}
                     />
                     <div className="px-3 pb-3 pt-0 flex flex-wrap gap-2 bg-card/40 dark:bg-background/40">
                       <Button

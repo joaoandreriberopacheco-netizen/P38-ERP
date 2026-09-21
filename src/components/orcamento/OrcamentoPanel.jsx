@@ -37,6 +37,7 @@ import { useIsDesktop } from '@/hooks/use-breakpoint';
 import { P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
 import { cn } from '@/lib/utils';
 import { onProdutoGaleriaClosed } from '@/lib/produtoGaleriaGuard';
+import OrcamentoTotalComDesconto from '@/components/orcamento/OrcamentoTotalComDesconto';
 
 function resolveFlowScreen({ itemDialog, isMobile, showCartMobile, showSalvos }) {
   if (itemDialog) return 'quantity';
@@ -607,9 +608,12 @@ export default function OrcamentoPanel({
                 <div className="flex items-center gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="text-[10px] uppercase tracking-wide text-muted-foreground leading-none mb-0.5">Total</div>
-                    <div className="text-xl font-bold text-foreground leading-tight font-glacial tabular-nums">
-                      {descontoResumo.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                    </div>
+                    <OrcamentoTotalComDesconto
+                      subtotal={descontoResumo.subtotal}
+                      total={descontoResumo.total}
+                      valorDesconto={descontoResumo.valorDesconto}
+                      size="md"
+                    />
                   </div>
                   {isMobile && (
                     <button

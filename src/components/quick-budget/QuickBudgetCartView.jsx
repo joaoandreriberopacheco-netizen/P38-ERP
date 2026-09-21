@@ -26,6 +26,7 @@ import {
 } from './quickBudgetUtils';
 import { selectAllOnFocus } from '@/lib/inputFocusUtils';
 import ProdutoThumb from '@/components/produtos/ProdutoThumb';
+import OrcamentoTotalComDesconto from '@/components/orcamento/OrcamentoTotalComDesconto';
 
 function CartItemRow({
   item,
@@ -330,6 +331,16 @@ export default function QuickBudgetCartView({
         </div>
 
         <div className="flex-shrink-0 border-t border-border/40 p-4 space-y-3 max-h-[58%] overflow-y-auto">
+          <div className="flex items-end justify-between gap-3 px-1">
+            <span className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground font-medium">Total</span>
+            <OrcamentoTotalComDesconto
+              subtotal={subtotal}
+              total={total}
+              valorDesconto={valorDesconto}
+              size="md"
+            />
+          </div>
+
           <div className="rounded-2xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 px-3 py-2 flex gap-2 text-[11px] text-amber-900 dark:text-amber-100">
             <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
             <span>{ORCAMENTO_RAPIDO_AVISO_PRECO}</span>
@@ -352,12 +363,12 @@ export default function QuickBudgetCartView({
               {items.reduce((s, i) => s + (Number(i.quantidade) || 0), 0)} qtd · {items.length} itens
             </p>
           </div>
-          <div className="text-right">
-            {valorDesconto > 0 && (
-              <p className="text-xs text-muted-foreground line-through tabular-nums">{formatCurrency(subtotal)}</p>
-            )}
-            <p className="text-2xl font-bold text-foreground font-glacial tabular-nums">{formatCurrency(total)}</p>
-          </div>
+          <OrcamentoTotalComDesconto
+            subtotal={subtotal}
+            total={total}
+            valorDesconto={valorDesconto}
+            size="lg"
+          />
         </div>
         {itemsList}
       </div>

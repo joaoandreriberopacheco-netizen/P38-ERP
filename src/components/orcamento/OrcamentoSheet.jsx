@@ -11,6 +11,7 @@ import { filterAndSortProducts } from '@/components/compras/productMatchingUtils
 import { buildSaleUnitOptions, formatEstoqueDisponivelApresentacao, pickDefaultSaleUnit } from '@/lib/productUnits';
 import { getPrecoPisoCustoUnidade, parsePrecoDigitado } from '@/lib/orcamentoPrecoTabela';
 import ProdutoThumb from '@/components/produtos/ProdutoThumb';
+import OrcamentoTotalComDesconto from '@/components/orcamento/OrcamentoTotalComDesconto';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -370,10 +371,12 @@ function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGe
           {/* Total */}
           <div className="flex items-baseline justify-between">
             <span className="text-sm text-muted-foreground">{itens.length} {itens.length === 1 ? 'item' : 'itens'}</span>
-            <div className="flex flex-col items-end gap-1">
-              {valorDesconto > 0 && <span className="text-xs text-muted-foreground line-through">R$ {fmtR(subtotal)}</span>}
-              <span className="text-2xl font-bold text-foreground font-glacial tabular-nums">R$ {fmtR(total)}</span>
-            </div>
+            <OrcamentoTotalComDesconto
+              subtotal={subtotal}
+              total={total}
+              valorDesconto={valorDesconto}
+              size="lg"
+            />
           </div>
 
           {/* Formato de impressão */}

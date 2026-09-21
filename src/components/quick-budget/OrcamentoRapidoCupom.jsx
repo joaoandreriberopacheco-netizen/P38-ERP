@@ -11,6 +11,7 @@ import {
   normalizeEmpresaCupom,
   ORCAMENTO_RAPIDO_AVISO_PRECO,
 } from '@/lib/orcamentoRapidoCupom';
+import { CupomTotalComDesconto } from '@/components/orcamento/OrcamentoTotalComDesconto';
 
 const FONT = "'DIN 1451', DINish, system-ui, -apple-system, sans-serif";
 
@@ -89,9 +90,15 @@ function CupomModern80mm({
           {nomeTabela && <div style={{ fontSize: '10px', color: '#6b7280' }}>Tabela: {nomeTabela}</div>}
           <div style={{ fontSize: '10px', color: '#6b7280', marginTop: '2px' }}>{fmtData()}</div>
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: '10px', color: '#6b7280' }}>Total</div>
-          <div style={{ fontSize: '22px', fontWeight: 700, lineHeight: 1.1 }}>{fmtCurrency(total)}</div>
+        <div>
+          <div style={{ fontSize: '10px', color: '#6b7280', textAlign: 'right' }}>Total</div>
+          <CupomTotalComDesconto
+            subtotal={subtotal}
+            total={total}
+            valorDesconto={desconto}
+            cheioFontSize="11px"
+            finalFontSize="22px"
+          />
         </div>
       </div>
 
@@ -143,9 +150,15 @@ function CupomModern80mm({
             <span>- R$ {fmtR(desconto)}</span>
           </div>
         )}
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', fontWeight: 700, paddingTop: '4px' }}>
-          <span>Total</span>
-          <span>R$ {fmtR(total)}</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '4px' }}>
+          <span style={{ fontSize: '18px', fontWeight: 700 }}>Total</span>
+          <CupomTotalComDesconto
+            subtotal={subtotal}
+            total={total}
+            valorDesconto={desconto}
+            cheioFontSize="12px"
+            finalFontSize="18px"
+          />
         </div>
       </div>
 
@@ -201,9 +214,15 @@ function CupomModernA4({
             {itens.length} itens · {fmtData()}
           </div>
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: '14px', color: '#6b7280' }}>Total</div>
-          <div style={{ fontSize: '32px', fontWeight: 700, lineHeight: 1.1 }}>{fmtCurrency(total)}</div>
+        <div>
+          <div style={{ fontSize: '14px', color: '#6b7280', textAlign: 'right' }}>Total</div>
+          <CupomTotalComDesconto
+            subtotal={subtotal}
+            total={total}
+            valorDesconto={desconto}
+            cheioFontSize="14px"
+            finalFontSize="32px"
+          />
         </div>
       </div>
 
@@ -255,9 +274,15 @@ function CupomModernA4({
             <span>- R$ {fmtR(desconto)}</span>
           </div>
         )}
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '22px', fontWeight: 700, paddingTop: '6px' }}>
-          <span>Total</span>
-          <span>R$ {fmtR(total)}</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '6px' }}>
+          <span style={{ fontSize: '22px', fontWeight: 700 }}>Total</span>
+          <CupomTotalComDesconto
+            subtotal={subtotal}
+            total={total}
+            valorDesconto={desconto}
+            cheioFontSize="15px"
+            finalFontSize="22px"
+          />
         </div>
       </div>
 

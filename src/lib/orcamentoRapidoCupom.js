@@ -183,6 +183,8 @@ export function buildOrcamentoRapidoShareHtml({
     .summary { margin-top: 18px; background: #f8fafc; border-radius: 18px; padding: 14px; display: grid; gap: 8px; }
     .summary-row { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; }
     .summary-row.total-row { font-size: 20px; font-weight: 700; }
+    .total-cheio { font-size: 14px; color: #9ca3af; text-decoration: line-through; }
+    .total-final { font-size: 28px; font-weight: 700; line-height: 1.1; }
     .obs { margin-top: 14px; padding: 12px; background: #f1f5f9; border-radius: 12px; font-size: 13px; color: #334155; line-height: 1.45; }
     .aviso { margin-top: 14px; padding: 12px 14px; background: #fffbeb; border-radius: 12px; font-size: 13px; color: #92400e; line-height: 1.45; font-weight: 600; }
     .footer { margin-top: 14px; text-align: center; font-size: 11px; color: #9ca3af; }
@@ -205,7 +207,8 @@ export function buildOrcamentoRapidoShareHtml({
         </div>
         <div class="total">
           <div class="muted">Total</div>
-          <strong>${fmtCurrency(total)}</strong>
+          ${desconto > 0 ? `<div class="total-cheio">${fmtCurrency(subtotal)}</div>` : ''}
+          <strong class="total-final">${fmtCurrency(total)}</strong>
         </div>
       </div>
       <div class="list">${buildItensHtml(itens)}</div>
@@ -213,7 +216,13 @@ export function buildOrcamentoRapidoShareHtml({
         <div class="summary-row"><span>Subtotal</span><strong>${fmtCurrency(subtotal)}</strong></div>
         ${catalogSubtotal > 0 && catalogSubtotal < subtotal ? `<div class="summary-row"><span>Limite catálogo</span><strong>${fmtCurrency(catalogSubtotal)}</strong></div>` : ''}
         ${desconto > 0 ? `<div class="summary-row"><span>Desconto</span><strong>- ${fmtCurrency(desconto)}</strong></div>` : ''}
-        <div class="summary-row total-row"><span>Total</span><strong>${fmtCurrency(total)}</strong></div>
+        <div class="summary-row total-row">
+          <span>Total</span>
+          <div style="text-align:right;">
+            ${desconto > 0 ? `<div class="total-cheio">${fmtCurrency(subtotal)}</div>` : ''}
+            <strong class="total-final" style="font-size:20px;">${fmtCurrency(total)}</strong>
+          </div>
+        </div>
       </div>
       ${observacoesUsuario ? `<div class="obs"><strong>Observações:</strong> ${observacoesUsuario.replace(/\n/g, '<br/>')}</div>` : ''}
       <div class="aviso">${ORCAMENTO_RAPIDO_AVISO_PRECO}</div>
