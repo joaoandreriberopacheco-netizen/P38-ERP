@@ -32,6 +32,33 @@ function itemPareceValido(item) {
   return true;
 }
 
+/**
+ * Orçamento MASS DISTRIBUIDORA:
+ * 121161 DESC … EMB.: 1.0 Cod.Barras: 789… 24 R$ 4,28 R$ 0,00 R$ 4,28 R$ 102,72
+ */
+function parseLinhaItemMassDistribuidora(linha) {
+  const s = String(linha || '').trim();
+  if (!s || s.length < 24) return null;
+  if (/^(peso|qtd\s+itens|total|orçamento|filial|página|criado|válido|transporte|plano|cobran)/i.test(s)) {
+    return null;
+  }
+
+  const m = s.match(
+    /^(\d{5,6})\s+(.+?)\s+EMB\.:\s*[\d.]+\s+Cod\.Barras:\s*\d+\s+(\d+)\s+(?:R\$\s*[\d.,]+\s*){2}R\$\s*([\d.,]+)\s+R\$\s*([\d.,]+)\s*$/i,
+  );
+  if (!m) return null;
+
+  const item = {
+    descricao: m[2].trim(),
+    codigo: m[1],
+    marca: '',
+    quantidade: parseNumeroBr(m[3]) || 1,
+    preco_unitario: parseNumeroBr(m[4]),
+    unidade_medida_documento: 'UN',
+  };
+  return itemPareceValido(item) ? item : null;
+}
+
 /** Linha tabular Tintão/ERP: EMP QTD UND CÓDIGO DESCRIÇÃO … VR.UNIT TOTAL */
 function parseLinhaItemPedidoTabular(linha) {
   const m = String(linha || '').match(
@@ -52,6 +79,9 @@ function parseLinhaItemPedidoTabular(linha) {
 }
 
 function parseLinhaItemPedido(linha) {
+  const mass = parseLinhaItemMassDistribuidora(linha);
+  if (mass) return mass;
+
   if (linhaPareceRodape(linha) || linhaPareceMetadadoPedido(linha) || linha.length < 8) return null;
   if (linha.length > 140) return null;
   if (/^(item|codigo|descricao|produto|qtd|quant|unit|valor|emp)\b/i.test(linha)) return null;

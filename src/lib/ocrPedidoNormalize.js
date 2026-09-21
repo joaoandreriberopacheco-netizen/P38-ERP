@@ -7,7 +7,8 @@ import { limparLinhas } from '@/lib/ocrTextUtils';
 const METADADO_PEDIDO_RE = new RegExp(
   'pedido\\s+de\\s+venda|data\\s+de\\s+emiss|previs[aã]o\\s+de\\s+entrega|'
   + 'e-?mail:|vendedor:|fone:|cnp[jp]:|inscri|observa|qtd\\.?\\s+total|'
-  + 'total\\s+itens|subtotal|pagamento|emp\\.?\\s+qtd|vr\\.?\\s+unit|'
+  +   'total\\s+itens|subtotal|pagamento|emp\\.?\\s+qtd|vr\\.?\\s+unit|'
+  + 'peso\\s+itens|qtd\\s+itens|orçamento|transporte|'
   + 'fabricante|margarita|manaus|tintaomanaus',
   'i',
 );
@@ -40,6 +41,17 @@ export function repartirTextoOcrPedido(texto) {
   t = t.replace(/\s+(OBSERVA[CÇ][AÃ]O)/gi, '\n$1');
   t = t.replace(/\s+(CNP[J]?:)/gi, '\n$1');
 
+  // Orçamento MASS DISTRIBUIDORA e ERPs similares (código + descrição + EMB. + Cod.Barras)
+  t = t.replace(/\s+(FILIAL\s+\d+\s*\/)/gi, '\n$1');
+  t = t.replace(/\s+(PESO\s+ITENS)/gi, '\n$1');
+  t = t.replace(/\s+(QTD\s+ITENS)/gi, '\n$1');
+  t = t.replace(/\s+(ORÇAMENTO\s+\d+)/gi, '\n$1');
+  t = t.replace(/\s+(PÁGINA\s+\d+)/gi, '\n$1');
+  t = t.replace(
+    /\s+(\d{5,6})\s+(?=[A-ZÁÉÍÓÚÃÂÊÔÇ])/g,
+    '\n$1 ',
+  );
+
   // Linha de item típica: EMP QTD UND CÓDIGO … (ex.: 1 119,5 M2 12345 …)
   t = t.replace(
     /\s+(\d{1,2})\s+(\d{1,3}(?:[.,]\d{1,3})?)\s+(M2|M²|CX|UN|UND|SC|PC|KG|LT|RL|BD|FD)\s+(\d{3,})\s+/gi,
@@ -51,6 +63,17 @@ export function repartirTextoOcrPedido(texto) {
 
 export function extrairNomeFornecedorPedido(texto) {
   const flat = String(texto || '').replace(/\s+/g, ' ').trim();
+
+  const massFilial = flat.match(/FILIAL\s+\d+\s*\/\s*(.+?)\s+#/i);
+  if (massFilial?.[1]) {
+    return massFilial[1].trim().slice(0, 120);
+  }
+
+  const massOrcamento = flat.match(/ORÇAMENTO\s+\d+\s+(.+?)\s+PÁGINA/i);
+  if (massOrcamento?.[1]) {
+    return massOrcamento[1].trim().slice(0, 120);
+  }
+
   const antesPedido = flat.match(/^(.{4,80}?)\s+PEDIDO\s+DE\s+VENDA/i);
   if (antesPedido?.[1]) {
     return antesPedido[1].replace(/\s+NRO?:?\s*\d+.*$/i, '').trim().slice(0, 120);
