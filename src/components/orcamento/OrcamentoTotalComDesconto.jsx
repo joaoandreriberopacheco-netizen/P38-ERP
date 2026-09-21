@@ -81,6 +81,117 @@ export function CupomTotalComDesconto({
   );
 }
 
+/**
+ * Par preço cheio (riscado) + líquido — inline para unitário ou totais de linha.
+ */
+export function OrcamentoPrecoPar({
+  cheio = 0,
+  liquido = 0,
+  temDesconto = false,
+  size = 'xs',
+  className,
+  liquidoClassName,
+}) {
+  const valorCheio = Number(cheio) || 0;
+  const valorLiquido = Number(liquido) || 0;
+  const mostrarDesconto = temDesconto && valorCheio > valorLiquido + 0.0001;
+
+  const cheioCls = size === 'sm'
+    ? 'text-[11px] text-muted-foreground line-through tabular-nums'
+    : 'text-[10px] text-muted-foreground line-through tabular-nums';
+  const liquidoCls = size === 'sm'
+    ? 'text-sm font-semibold text-foreground tabular-nums'
+    : 'text-xs font-semibold text-foreground tabular-nums';
+
+  if (!mostrarDesconto) {
+    return (
+      <span className={cn(liquidoCls, className, liquidoClassName)}>
+        {formatBrl(valorCheio || valorLiquido)}
+      </span>
+    );
+  }
+
+  return (
+    <span className={cn('inline-flex items-baseline gap-1 flex-wrap', className)}>
+      <span className={cheioCls}>{formatBrl(valorCheio)}</span>
+      <span className={cn(liquidoCls, liquidoClassName)}>{formatBrl(valorLiquido)}</span>
+    </span>
+  );
+}
+
+export function CupomItemLinhaPrecos({
+  item,
+  fmtCurrency,
+  nomeFontSize = '13px',
+  metaFontSize = '11px',
+  totalFontSize = '14px',
+}) {
+  const fmt = fmtCurrency || formatBrl;
+  const temDesconto = item?.tem_desconto;
+  const qtd = Number(item?.qtd) || 0;
+  const unidade = item?.unidade || 'UN';
+  const totalCheio = Number(item?.total_cheio ?? (item?.preco_unit || 0) * qtd) || 0;
+  const totalLiquido = Number(item?.total_liquido ?? totalCheio) || 0;
+  const precoUnit = Number(item?.preco_unit) || 0;
+  const precoUnitLiquido = Number(item?.preco_unit_liquido ?? precoUnit) || 0;
+
+  return (
+    <div
+      style={{
+        background: '#f8fafc',
+        borderRadius: '14px',
+        padding: '10px 10px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        gap: '10px',
+      }}
+    >
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div style={{ fontWeight: 600, fontSize: nomeFontSize, lineHeight: 1.35, wordBreak: 'break-word' }}>
+          {item.nome}
+        </div>
+        <div
+          style={{
+            fontSize: metaFontSize,
+            color: '#6b7280',
+            marginTop: '4px',
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'baseline',
+            gap: '4px',
+          }}
+        >
+          <span>{qtd} {unidade} ×</span>
+          {temDesconto ? (
+            <>
+              <span style={{ textDecoration: 'line-through', color: '#9ca3af' }}>{fmt(precoUnit)}</span>
+              <span style={{ fontWeight: 600, color: '#111827' }}>{fmt(precoUnitLiquido)}</span>
+            </>
+          ) : (
+            <span>{fmt(precoUnit)}</span>
+          )}
+        </div>
+      </div>
+      <div style={{ flexShrink: 0 }}>
+        {temDesconto ? (
+          <CupomTotalComDesconto
+            subtotal={totalCheio}
+            total={totalLiquido}
+            valorDesconto={totalCheio - totalLiquido}
+            cheioFontSize="10px"
+            finalFontSize={totalFontSize}
+          />
+        ) : (
+          <div style={{ fontWeight: 700, fontSize: totalFontSize, whiteSpace: 'nowrap', textAlign: 'right' }}>
+            {fmt(totalCheio)}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function orcamentoTotalComDescontoInlineStyle({
   subtotal = 0,
   total = 0,

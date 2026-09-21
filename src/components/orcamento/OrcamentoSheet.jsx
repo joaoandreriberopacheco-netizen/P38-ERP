@@ -381,7 +381,7 @@ function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGe
 
           {/* Formato de impressão */}
           <div className="flex gap-2">
-            {['80mm', 'a4'].map(fmt => (
+            {['72mm', 'a4'].map(fmt => (
               <button
                 key={fmt}
                 onClick={() => setFormatoCupom(fmt)}
@@ -391,7 +391,7 @@ function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGe
                     : 'bg-muted text-muted-foreground'
                 }`}
               >
-                {fmt === '80mm' ? '🧾 Cupom 80mm' : '📄 Folha A4'}
+                {fmt === '72mm' ? '🧾 Cupom 72mm' : '📄 Folha A4'}
               </button>
             ))}
           </div>
@@ -425,7 +425,7 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
   const [itens, setItens] = useState([]);
   const [tela, setTela] = useState('busca'); // 'busca' | 'carrinho'
   const [showCupom, setShowCupom] = useState(false);
-  const [formatoCupom, setFormatoCupom] = useState('80mm');
+  const [formatoCupom, setFormatoCupom] = useState('72mm');
   const [clienteNome, setClienteNome] = useState('');
   const [showLostSales, setShowLostSales] = useState(false);
   const [showSimuladorCartao, setShowSimuladorCartao] = useState(false);

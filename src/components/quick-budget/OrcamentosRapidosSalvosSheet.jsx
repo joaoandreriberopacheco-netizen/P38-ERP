@@ -24,6 +24,7 @@ import { listarOrcamentosRapidos } from '@/lib/orcamentoRapidoSql';
 import { orcamentoSalvoToCupomProps } from '@/lib/orcamentoRapidoCupom';
 import OrcamentoRapidoCupomOverlay from './OrcamentoRapidoCupomOverlay';
 import OrcamentoTotalComDesconto from '@/components/orcamento/OrcamentoTotalComDesconto';
+import { ORCAMENTO_CUPOM_FORMATO, ORCAMENTO_CUPOM_LABEL } from '@/lib/orcamentoCupomFormato';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -173,10 +174,10 @@ export default function OrcamentosRapidosSalvosSheet({
                         type="button"
                         size="sm"
                         className={cn('h-9 rounded-xl text-xs', P38_CHIP_INACTIVE)}
-                        onClick={() => handleReimprimir(orc, '80mm')}
+                        onClick={() => handleReimprimir(orc, ORCAMENTO_CUPOM_FORMATO)}
                       >
                         <Printer className="w-3.5 h-3.5 mr-1.5" />
-                        Cupom 80mm
+                        {ORCAMENTO_CUPOM_LABEL}
                       </Button>
                       <Button
                         type="button"
@@ -199,7 +200,7 @@ export default function OrcamentosRapidosSalvosSheet({
       <OrcamentoRapidoCupomOverlay
         open={Boolean(printState)}
         cupomProps={printState?.cupomProps}
-        formato={printState?.formato || '80mm'}
+        formato={printState?.formato || ORCAMENTO_CUPOM_FORMATO}
         nomeTabela={tabelaNome}
         empresa={empresa}
         onClose={() => setPrintState(null)}

@@ -11,7 +11,14 @@ import {
   normalizeEmpresaCupom,
   ORCAMENTO_RAPIDO_AVISO_PRECO,
 } from '@/lib/orcamentoRapidoCupom';
-import { CupomTotalComDesconto } from '@/components/orcamento/OrcamentoTotalComDesconto';
+import { CupomItemLinhaPrecos, CupomTotalComDesconto } from '@/components/orcamento/OrcamentoTotalComDesconto';
+import {
+  isOrcamentoFormatoCupom,
+  normalizeOrcamentoFormatoCupom,
+  orcamentoCupomContainerStyle,
+  orcamentoCupomLarguraPreviewPx,
+  orcamentoCupomPageSizeCss,
+} from '@/lib/orcamentoCupomFormato';
 
 const FONT = "'DIN 1451', DINish, system-ui, -apple-system, sans-serif";
 
@@ -56,7 +63,7 @@ function AvisoPreco({ compact = false }) {
   );
 }
 
-function CupomModern80mm({
+function CupomModern72mm({
   itens,
   total,
   desconto,
@@ -70,15 +77,12 @@ function CupomModern80mm({
   return (
     <div
       id="cupom-print"
-      style={{
-        width: '80mm',
+      style={orcamentoCupomContainerStyle({
         fontFamily: FONT,
         fontSize: '12px',
         color: '#111827',
-        padding: '5mm 4mm',
-        background: '#fff',
         lineHeight: 1.4,
-      }}
+      })}
     >
       <EmpresaHeader empresaNorm={empresaNorm} compact />
 
@@ -104,27 +108,7 @@ function CupomModern80mm({
 
       <div style={{ display: 'grid', gap: '8px' }}>
         {itens.map((item, i) => (
-          <div
-            key={i}
-            style={{
-              background: '#f8fafc',
-              borderRadius: '14px',
-              padding: '10px 10px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              gap: '8px',
-            }}
-          >
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontWeight: 600, fontSize: '13px', lineHeight: 1.35, wordBreak: 'break-word' }}>{item.nome}</div>
-              <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '3px' }}>
-                {item.qtd} {item.unidade || 'UN'} × {fmtCurrency(item.preco_unit)}
-              </div>
-            </div>
-            <div style={{ fontWeight: 700, fontSize: '14px', whiteSpace: 'nowrap' }}>
-              {fmtCurrency(item.preco_unit * item.qtd)}
-            </div>
-          </div>
+          <CupomItemLinhaPrecos key={i} item={item} fmtCurrency={fmtCurrency} />
         ))}
       </div>
 
@@ -228,27 +212,14 @@ function CupomModernA4({
 
       <div style={{ display: 'grid', gap: '10px', marginBottom: '16px' }}>
         {itens.map((item, i) => (
-          <div
+          <CupomItemLinhaPrecos
             key={i}
-            style={{
-              background: '#f8fafc',
-              borderRadius: '18px',
-              padding: '14px 16px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              gap: '12px',
-            }}
-          >
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontWeight: 600, fontSize: '16px', lineHeight: 1.35 }}>{item.nome}</div>
-              <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>
-                {item.qtd} {item.unidade || 'UN'} × {fmtCurrency(item.preco_unit)}
-              </div>
-            </div>
-            <div style={{ fontWeight: 700, fontSize: '17px', whiteSpace: 'nowrap' }}>
-              {fmtCurrency(item.preco_unit * item.qtd)}
-            </div>
-          </div>
+            item={item}
+            fmtCurrency={fmtCurrency}
+            nomeFontSize="16px"
+            metaFontSize="14px"
+            totalFontSize="17px"
+          />
         ))}
       </div>
 
@@ -305,7 +276,7 @@ function CupomModernA4({
 function PreviewScaled({ formato, children }) {
   const containerRef = useRef(null);
   const [scale, setScale] = useState(1);
-  const docWidthPx = formato === 'a4' ? Math.round(210 * 3.7795) : Math.round(80 * 3.7795);
+  const docWidthPx = formato === 'a4' ? Math.round(210 * 3.7795) : orcamentoCupomLarguraPreviewPx();
 
   useEffect(() => {
     const calc = () => {
@@ -377,7 +348,7 @@ export default function OrcamentoRapidoCupom({
       setExportingPdf(true);
       try {
         await exportCupomToPdfAndShareOrDownload('cupom-print', {
-          formato: formato === 'a4' ? 'a4' : '80mm',
+          formato: normalizeOrcamentoFormatoCupom(formato),
           fileBaseName: `orcamento-${new Date().toISOString().slice(0, 10)}`,
           title: 'Orçamento',
         });
@@ -400,7 +371,7 @@ export default function OrcamentoRapidoCupom({
           * { margin: 0; padding: 0; }
           body { margin: 0; padding: 0; }
           @page {
-            size: ${formato === 'a4' ? 'A4 portrait' : '80mm 210mm'};
+            size: ${formato === 'a4' ? 'A4 portrait' : orcamentoCupomPageSizeCss()};
             margin: 0;
           }
         }
@@ -450,8 +421,8 @@ export default function OrcamentoRapidoCupom({
 
       <div className="flex-1 overflow-y-auto">
         <PreviewScaled formato={formato}>
-          {formato === '80mm'
-            ? <CupomModern80mm {...cupomProps} />
+          {isOrcamentoFormatoCupom(formato)
+            ? <CupomModern72mm {...cupomProps} />
             : <CupomModernA4 {...cupomProps} />}
         </PreviewScaled>
       </div>

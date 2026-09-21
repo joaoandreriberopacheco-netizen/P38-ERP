@@ -87,7 +87,7 @@ export default function OrcamentoPanel({
   const [observacoes, setObservacoes] = useState('');
   const [empresa, setEmpresa] = useState(null);
   const [showCupom, setShowCupom] = useState(false);
-  const [formatoImpressao, setFormatoImpressao] = useState('80mm');
+  const [formatoImpressao, setFormatoImpressao] = useState('72mm');
 
   const [ajustePercentual, setAjustePercentual] = useState('');
   const [ajusteValor, setAjusteValor] = useState('');
@@ -214,7 +214,7 @@ export default function OrcamentoPanel({
     setClienteNome('');
     setObservacoes('');
     setShowCupom(false);
-    setFormatoImpressao('80mm');
+    setFormatoImpressao('72mm');
     setAjustePercentual('');
     setAjusteValor('');
     setTipoValorAjuste('percentual');

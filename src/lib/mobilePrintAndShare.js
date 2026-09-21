@@ -3,6 +3,7 @@
  * Preferimos PDF/HTML via blob + Web Share API ou download.
  */
 import { CUPOM_LARGURA_IMPRESSAO_MM, CUPOM_MARGEM_LATERAL_MM, CUPOM_PAPEL_MM } from '@/lib/cupomTermicoConstants';
+import { ORCAMENTO_CUPOM_PAPEL_MM } from '@/lib/orcamentoCupomFormato';
 export function shouldUseMobileDocumentExport() {
   if (typeof window === 'undefined') return false;
   try {
@@ -80,6 +81,11 @@ export async function renderElementToPdfBlob(element, { formato = '80mm' } = {})
     const ratio = canvas.width / canvas.height;
     const imgH = pageW / ratio;
     pdf.addImage(imgData, 'PNG', 0, 0, pageW, Math.min(imgH, pageH));
+  } else if (formato === '72mm') {
+    const pageWidthMm = ORCAMENTO_CUPOM_PAPEL_MM;
+    const heightMm = (canvas.height / canvas.width) * pageWidthMm;
+    pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pageWidthMm, heightMm] });
+    pdf.addImage(imgData, 'PNG', 0, 0, pageWidthMm, heightMm);
   } else {
     const widthMm = CUPOM_LARGURA_IMPRESSAO_MM;
     const pageWidthMm = CUPOM_PAPEL_MM;
@@ -100,7 +106,8 @@ export async function exportCupomToPdfAndShareOrDownload(elementId, {
 } = {}) {
   const el = typeof elementId === 'string' ? document.getElementById(elementId) : elementId;
   if (!el) throw new Error('Elemento não encontrado');
-  const blob = await renderElementToPdfBlob(el, { formato: formato === 'a4' ? 'a4' : '80mm' });
+  const pdfFormato = formato === 'a4' ? 'a4' : (formato === '72mm' ? '72mm' : '80mm');
+  const blob = await renderElementToPdfBlob(el, { formato: pdfFormato });
   const name = `${fileBaseName}.pdf`;
   return shareOrDownloadBlob(blob, name, 'application/pdf', title || name);
 }

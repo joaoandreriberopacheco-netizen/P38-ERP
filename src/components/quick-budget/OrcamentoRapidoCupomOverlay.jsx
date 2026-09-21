@@ -3,12 +3,12 @@ import OrcamentoRapidoCupom from './OrcamentoRapidoCupom';
 import { QUICK_ACCESS_NESTED_DIALOG_CLASS } from '@/lib/quickAccessOverlay';
 
 /**
- * Pré-visualização / impressão cupom 80mm ou A4 (orçamento rápido).
+ * Pré-visualização / impressão cupom 72mm ou A4 (orçamento rápido).
  */
 export default function OrcamentoRapidoCupomOverlay({
   open,
   cupomProps,
-  formato = '80mm',
+  formato = '72mm',
   nomeTabela = '',
   empresa = null,
   onClose,

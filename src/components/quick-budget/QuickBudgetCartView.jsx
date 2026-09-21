@@ -24,6 +24,9 @@ import {
   formatCurrency,
   ORCAMENTO_RAPIDO_AVISO_PRECO,
 } from './quickBudgetUtils';
+import { ORCAMENTO_CUPOM_FORMATO, ORCAMENTO_CUPOM_LABEL } from '@/lib/orcamentoCupomFormato';
+import { fatorDescontoOrcamento } from '@/lib/orcamentoRapidoCupom';
+import { OrcamentoPrecoPar } from '@/components/orcamento/OrcamentoTotalComDesconto';
 import { selectAllOnFocus } from '@/lib/inputFocusUtils';
 import ProdutoThumb from '@/components/produtos/ProdutoThumb';
 import OrcamentoTotalComDesconto from '@/components/orcamento/OrcamentoTotalComDesconto';
@@ -32,8 +35,14 @@ function CartItemRow({
   item,
   onRemoveItem,
   onUpdateQuantity,
+  fatorLiquido = 1,
 }) {
   const qty = Number(item.quantidade) || 0;
+  const precoUnit = Number(item.preco_unitario) || 0;
+  const precoUnitLiquido = precoUnit * fatorLiquido;
+  const totalCheio = precoUnit * qty;
+  const totalLiquido = totalCheio * fatorLiquido;
+  const temDescontoCarrinho = fatorLiquido < 1;
 
   return (
     <div className="rounded-2xl bg-muted/50 dark:bg-muted/30 px-3 py-3 space-y-2.5 w-full min-w-0">
@@ -56,9 +65,12 @@ function CartItemRow({
             {item.tem_ajuste_tabela && Number(item.preco_venda_lista) > 0 && (
               <span className="line-through">{formatCurrency(item.preco_venda_lista)}</span>
             )}
-            <span className={item.tem_ajuste_tabela ? 'font-semibold text-foreground/90' : ''}>
-              {formatCurrency(item.preco_unitario)}
-            </span>
+            <OrcamentoPrecoPar
+              cheio={precoUnit}
+              liquido={precoUnitLiquido}
+              temDesconto={temDescontoCarrinho}
+              size="sm"
+            />
             <span>/{item.unidade || 'UN'}</span>
           </p>
         </div>
@@ -98,7 +110,13 @@ function CartItemRow({
         ) : (
           <span className="text-xs text-muted-foreground">{qty} {item.unidade || 'UN'}</span>
         )}
-        <p className="text-sm font-semibold text-foreground tabular-nums shrink-0">{formatCurrency(item.total)}</p>
+        <OrcamentoPrecoPar
+          cheio={totalCheio}
+          liquido={totalLiquido}
+          temDesconto={temDescontoCarrinho}
+          size="sm"
+          liquidoClassName="text-sm font-semibold"
+        />
       </div>
     </div>
   );
@@ -146,6 +164,7 @@ export default function QuickBudgetCartView({
   } = descontoResumo || {};
 
   const isSidebar = layout === 'sidebar';
+  const fatorLiquido = fatorDescontoOrcamento(subtotal, valorDesconto);
 
   const itemsList = (
     <div className={cn('space-y-2 pr-1 w-full min-w-0', isSidebar ? 'flex-1 min-h-0 overflow-y-auto' : 'overflow-y-auto')}>
@@ -155,6 +174,7 @@ export default function QuickBudgetCartView({
           item={item}
           onRemoveItem={onRemoveItem}
           onUpdateQuantity={onUpdateQuantity}
+          fatorLiquido={fatorLiquido}
         />
       ))}
     </div>
@@ -232,7 +252,7 @@ export default function QuickBudgetCartView({
       <div className="space-y-2">
         <span className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground font-medium">Formato impressão</span>
         <div className="flex gap-2">
-          {['80mm', 'a4'].map((fmt) => (
+          {[ORCAMENTO_CUPOM_FORMATO, 'a4'].map((fmt) => (
             <button
               key={fmt}
               type="button"
@@ -244,7 +264,7 @@ export default function QuickBudgetCartView({
                   : 'bg-muted/60 dark:bg-muted/40 text-muted-foreground',
               )}
             >
-              {fmt === '80mm' ? 'Cupom 80mm' : 'Folha A4'}
+              {fmt === ORCAMENTO_CUPOM_FORMATO ? ORCAMENTO_CUPOM_LABEL : 'Folha A4'}
             </button>
           ))}
         </div>

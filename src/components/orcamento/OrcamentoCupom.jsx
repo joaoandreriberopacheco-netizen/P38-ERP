@@ -4,6 +4,13 @@ import { Button } from '@/components/ui/button';
 import { exportCupomToPdfAndShareOrDownload, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
 import { toast } from 'sonner';
 import { CupomTotalComDesconto } from '@/components/orcamento/OrcamentoTotalComDesconto';
+import {
+  isOrcamentoFormatoCupom,
+  normalizeOrcamentoFormatoCupom,
+  orcamentoCupomContainerStyle,
+  orcamentoCupomLarguraPreviewPx,
+  orcamentoCupomPageSizeCss,
+} from '@/lib/orcamentoCupomFormato';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtData = () => new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -14,20 +21,17 @@ const LinhaHifens = () => (
   </pre>
 );
 
-// ── Cupom 80mm ──────────────────────────────────────────────────────────────
-function Cupom80mm({ itens, total, desconto, subtotal, observacoes, nomeTabela, clienteNome, empresa }) {
+// ── Cupom 72mm (margem interna 1cm cada lado) ───────────────────────────────
+function Cupom72mm({ itens, total, desconto, subtotal, observacoes, nomeTabela, clienteNome, empresa }) {
   return (
     <div
       id="cupom-print"
-      style={{
-        width: '80mm',
+      style={orcamentoCupomContainerStyle({
         fontFamily: "'Ubuntu Sans Mono', 'Cousine', monospace",
         fontSize: '12px',
         color: '#111',
-        padding: '6mm 1.5mm',
-        background: '#fff',
         lineHeight: '1.5',
-      }}
+      })}
     >
       {empresa?.nome && (
          <div style={{ textAlign: 'center', marginBottom: '2mm', paddingBottom: '2mm' }}>
@@ -209,7 +213,7 @@ function PreviewScaled({ formato, children }) {
   const [scale, setScale] = useState(1);
 
   // Largura real do documento em px (96dpi: 1mm = 3.7795px)
-  const docWidthPx = formato === 'a4' ? Math.round(210 * 3.7795) : Math.round(80 * 3.7795);
+  const docWidthPx = formato === 'a4' ? Math.round(210 * 3.7795) : orcamentoCupomLarguraPreviewPx();
 
   useEffect(() => {
     const calc = () => {
@@ -258,7 +262,7 @@ export default function OrcamentoCupom({ itens, total, desconto, subtotal, obser
       setExportingPdf(true);
       try {
         await exportCupomToPdfAndShareOrDownload('cupom-print', {
-          formato: formato === 'a4' ? 'a4' : '80mm',
+          formato: normalizeOrcamentoFormatoCupom(formato),
           fileBaseName: `orcamento-${new Date().toISOString().slice(0, 10)}`,
           title: 'Orçamento',
         });
@@ -283,7 +287,7 @@ export default function OrcamentoCupom({ itens, total, desconto, subtotal, obser
           * { margin: 0; padding: 0; }
           body { margin: 0; padding: 0; }
           @page {
-            size: ${formato === 'a4' ? 'A4 portrait' : '80mm 210mm'};
+            size: ${formato === 'a4' ? 'A4 portrait' : orcamentoCupomPageSizeCss()};
             margin: 0;
           }
         }
@@ -335,8 +339,8 @@ export default function OrcamentoCupom({ itens, total, desconto, subtotal, obser
       {/* Preview com scale automático */}
       <div className="flex-1 overflow-y-auto">
         <PreviewScaled formato={formato}>
-          {formato === '80mm'
-            ? <Cupom80mm itens={itens} total={total} desconto={desconto} subtotal={subtotal} observacoes={observacoes} nomeTabela={nomeTabela} clienteNome={clienteNome} empresa={empresa} />
+          {isOrcamentoFormatoCupom(formato)
+            ? <Cupom72mm itens={itens} total={total} desconto={desconto} subtotal={subtotal} observacoes={observacoes} nomeTabela={nomeTabela} clienteNome={clienteNome} empresa={empresa} />
             : <CupomA4 itens={itens} total={total} desconto={desconto} subtotal={subtotal} observacoes={observacoes} nomeTabela={nomeTabela} clienteNome={clienteNome} empresa={empresa} />
           }
         </PreviewScaled>

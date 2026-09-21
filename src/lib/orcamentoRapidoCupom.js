@@ -14,10 +14,46 @@ const fmtData = () => new Date().toLocaleDateString('pt-BR', {
 export function quickBudgetItemsToCupomItens(items = []) {
   return (items || []).map((item) => ({
     nome: item.produto_nome || item.nome || '',
-    qtd: Number(item.quantidade) || 0,
+    qtd: Number(item.quantidade ?? item.qtd) || 0,
     preco_unit: Number(item.preco_unitario ?? item.preco_unit) || 0,
     unidade: item.unidade || item.unidade_medida || 'UN',
   }));
+}
+
+/** Fator líquido quando há desconto global no orçamento (distribuição proporcional). */
+export function fatorDescontoOrcamento(subtotal = 0, valorDesconto = 0) {
+  const st = Number(subtotal) || 0;
+  const desconto = Math.max(Number(valorDesconto) || 0, 0);
+  if (desconto <= 0 || st <= 0) return 1;
+  return Math.max(0, (st - desconto) / st);
+}
+
+/** Enriquece itens do cupom com preço/total cheio e líquido após desconto global. */
+export function aplicarDescontoProporcionalCupomItens(itens = [], subtotal = 0, valorDesconto = 0) {
+  const lista = Array.isArray(itens) ? itens : [];
+  const st = Number(subtotal) || lista.reduce((sum, item) => {
+    const qtd = Number(item.qtd) || 0;
+    const preco = Number(item.preco_unit) || 0;
+    return sum + qtd * preco;
+  }, 0);
+  const fator = fatorDescontoOrcamento(st, valorDesconto);
+  const temDesconto = fator < 1;
+
+  return lista.map((item) => {
+    const qtd = Number(item.qtd) || 0;
+    const precoUnit = Number(item.preco_unit) || 0;
+    const totalCheio = precoUnit * qtd;
+    const totalLiquido = totalCheio * fator;
+    const precoUnitLiquido = qtd > 0 ? totalLiquido / qtd : precoUnit * fator;
+
+    return {
+      ...item,
+      preco_unit_liquido: precoUnitLiquido,
+      total_cheio: totalCheio,
+      total_liquido: totalLiquido,
+      tem_desconto: temDesconto,
+    };
+  });
 }
 
 /** Linhas legado SQL / PedidoVendaItem → cupom orçamento rápido. */
@@ -59,10 +95,11 @@ export function normalizeEmpresaCupom(empresa) {
 }
 
 export function orcamentoSalvoToCupomProps(orcamento = {}) {
-  const itens = legacyItensToCupomItens(orcamento.itens);
-  const subtotal = Number(orcamento.subtotal) || itens.reduce((s, i) => s + i.preco_unit * i.qtd, 0);
+  const itensBase = legacyItensToCupomItens(orcamento.itens);
+  const subtotal = Number(orcamento.subtotal) || itensBase.reduce((s, i) => s + i.preco_unit * i.qtd, 0);
   const desconto = Number(orcamento.valor_desconto) || 0;
   const total = Number(orcamento.valor_total) || Math.max(subtotal - desconto, 0);
+  const itens = aplicarDescontoProporcionalCupomItens(itensBase, subtotal, desconto);
   const observacoesBase = orcamento.observacoes?.trim() || '';
   const observacoes = observacoesBase
     ? `${observacoesBase}\n\n${ORCAMENTO_RAPIDO_AVISO_PRECO}`
@@ -85,10 +122,11 @@ export function quickBudgetStateToCupomProps({
   clienteNome = '',
   observacoes = '',
 } = {}) {
-  const itens = quickBudgetItemsToCupomItens(items);
+  const itensBase = quickBudgetItemsToCupomItens(items);
   const subtotal = Number(descontoResumo.subtotal) || 0;
   const desconto = Number(descontoResumo.valorDesconto) || 0;
   const total = Number(descontoResumo.total) || 0;
+  const itens = aplicarDescontoProporcionalCupomItens(itensBase, subtotal, desconto);
   const observacoesBase = observacoes?.trim() || '';
   const observacoesFull = observacoesBase
     ? `${observacoesBase}\n\n${ORCAMENTO_RAPIDO_AVISO_PRECO}`
@@ -123,16 +161,24 @@ function buildEmpresaHtml(empresaNorm) {
   `;
 }
 
-function buildItensHtml(itens = []) {
-  return itens.map((item) => {
-    const linhaTotal = item.preco_unit * item.qtd;
+function buildItensHtml(itens = [], subtotal = 0, desconto = 0) {
+  const itensComDesconto = aplicarDescontoProporcionalCupomItens(itens, subtotal, desconto);
+  return itensComDesconto.map((item) => {
+    const temDesconto = item.tem_desconto;
+    const unitHtml = temDesconto
+      ? `<span class="preco-cheio">${fmtCurrency(item.preco_unit)}</span> <span class="preco-liquido">${fmtCurrency(item.preco_unit_liquido)}</span>`
+      : fmtCurrency(item.preco_unit);
+    const totalHtml = temDesconto
+      ? `<div class="preco-cheio">${fmtCurrency(item.total_cheio)}</div><div class="preco-liquido">${fmtCurrency(item.total_liquido)}</div>`
+      : fmtCurrency(item.total_cheio ?? item.preco_unit * item.qtd);
+
     return `
       <div class="item">
         <div>
           <div class="item-name">${item.nome}</div>
-          <div class="item-meta">${item.qtd} ${item.unidade || 'UN'} × ${fmtCurrency(item.preco_unit)}</div>
+          <div class="item-meta">${item.qtd} ${item.unidade || 'UN'} × ${unitHtml}</div>
         </div>
-        <div class="item-total">${fmtCurrency(linhaTotal)}</div>
+        <div class="item-total">${totalHtml}</div>
       </div>
     `;
   }).join('');
@@ -179,7 +225,9 @@ export function buildOrcamentoRapidoShareHtml({
     .item { background: #f8fafc; border-radius: 18px; padding: 14px; display: flex; justify-content: space-between; gap: 12px; }
     .item-name { font-weight: 600; font-size: 15px; line-height: 1.35; }
     .item-meta { font-size: 13px; color: #6b7280; margin-top: 4px; }
-    .item-total { font-weight: 700; font-size: 16px; white-space: nowrap; }
+    .item-total { font-weight: 700; font-size: 16px; white-space: nowrap; text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+    .preco-cheio { color: #9ca3af; text-decoration: line-through; font-weight: 500; }
+    .preco-liquido { font-weight: 700; color: #111827; }
     .summary { margin-top: 18px; background: #f8fafc; border-radius: 18px; padding: 14px; display: grid; gap: 8px; }
     .summary-row { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; }
     .summary-row.total-row { font-size: 20px; font-weight: 700; }
@@ -211,7 +259,7 @@ export function buildOrcamentoRapidoShareHtml({
           <strong class="total-final">${fmtCurrency(total)}</strong>
         </div>
       </div>
-      <div class="list">${buildItensHtml(itens)}</div>
+      <div class="list">${buildItensHtml(itens, subtotal, desconto)}</div>
       <div class="summary">
         <div class="summary-row"><span>Subtotal</span><strong>${fmtCurrency(subtotal)}</strong></div>
         ${catalogSubtotal > 0 && catalogSubtotal < subtotal ? `<div class="summary-row"><span>Limite catálogo</span><strong>${fmtCurrency(catalogSubtotal)}</strong></div>` : ''}

@@ -3,20 +3,26 @@ import { X, Search, Plus, Minus, Trash2, FileText, Printer, Package } from 'luci
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
+import {
+  ORCAMENTO_CUPOM_FORMATO,
+  ORCAMENTO_CUPOM_LABEL,
+  ORCAMENTO_CUPOM_MARGEM_MM,
+  ORCAMENTO_CUPOM_PAPEL_MM,
+} from '@/lib/orcamentoCupomFormato';
 import ProdutoThumb from '@/components/produtos/ProdutoThumb';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 
-// ── Cupom de impressão (80mm e A4) ───────────────────────────────────────────
+// ── Cupom de impressão (72mm e A4) ───────────────────────────────────────────
 function CupomImpressao({ itens, calcularPreco, tabelaSelecionada, onClose }) {
-  const [formato, setFormato] = useState('80mm');
+  const [formato, setFormato] = useState(ORCAMENTO_CUPOM_FORMATO);
   const total = itens.reduce((acc, item) => acc + calcularPreco(item.produto) * item.qtd, 0);
 
   const handlePrint = async () => {
-    const css80 = `
-      @page { size: 80mm auto; margin: 4mm; }
-      body { font-family: monospace; font-size: 10px; width: 72mm; }
+    const css72 = `
+      @page { size: ${ORCAMENTO_CUPOM_PAPEL_MM}mm auto; margin: 0; }
+      body { font-family: monospace; font-size: 10px; width: ${ORCAMENTO_CUPOM_PAPEL_MM}mm; box-sizing: border-box; padding: 4mm ${ORCAMENTO_CUPOM_MARGEM_MM}mm; margin: 0; }
       .header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 6px; margin-bottom: 6px; }
       .item { display: flex; justify-content: space-between; margin-bottom: 3px; }
       .item-nome { flex: 1; margin-right: 4px; word-break: break-word; }
@@ -103,9 +109,9 @@ function CupomImpressao({ itens, calcularPreco, tabelaSelecionada, onClose }) {
         <head>
           <meta charset="UTF-8"/>
           <title>Orçamento</title>
-          <style>${formato === '80mm' ? css80 : cssA4}</style>
+          <style>${formato === ORCAMENTO_CUPOM_FORMATO ? css72 : cssA4}</style>
         </head>
-        <body>${formato === '80mm' ? conteudo80 : conteudoA4}</body>
+        <body>${formato === ORCAMENTO_CUPOM_FORMATO ? conteudo80 : conteudoA4}</body>
       </html>
     `;
     try {
@@ -139,7 +145,7 @@ function CupomImpressao({ itens, calcularPreco, tabelaSelecionada, onClose }) {
           <div>
             <p className="text-xs text-muted-foreground mb-2 font-medium">Formato de impressão</p>
             <div className="grid grid-cols-2 gap-2">
-              {['80mm', 'A4'].map(f => (
+              {[ORCAMENTO_CUPOM_FORMATO, 'A4'].map(f => (
                 <button
                   key={f}
                   onClick={() => setFormato(f)}
@@ -149,7 +155,7 @@ function CupomImpressao({ itens, calcularPreco, tabelaSelecionada, onClose }) {
                       : 'bg-muted text-muted-foreground'
                   }`}
                 >
-                  {f === '80mm' ? '🧾 Cupom 80mm' : '📄 Folha A4'}
+                  {f === ORCAMENTO_CUPOM_FORMATO ? `🧾 ${ORCAMENTO_CUPOM_LABEL}` : '📄 Folha A4'}
                 </button>
               ))}
             </div>
