@@ -13,8 +13,9 @@ import {
   extrairBoletoFingerprintDeObservacoes,
 } from '@/lib/agefinLancamentosRecorrencia';
 import { uploadAnexoParaContaPrevista, uploadAnexoParaLancamentoFinanceiro } from '@/lib/uploadAnexoReferencia';
-import { extrairTextoPdfBrowser, normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
+import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
 import { buildLlmTelemetryContext } from '@/lib/p38LlmTelemetry';
+import { invokeLlmComOcrLocal } from '@/lib/ocrLlmPipeline';
 
 function normalizarTexto(value) {
   return String(value || '')
@@ -205,15 +206,6 @@ export default function AgefinImportador({
     try {
       const f = await normalizarArquivoParaImportBoleto(selectedFile);
 
-      const textoPdfLocal = await extrairTextoPdfBrowser(f);
-      const blocoTextoLocal =
-        textoPdfLocal.length >= 40
-          ? `
-
---- Texto extra?do localmente do ficheiro (PDF com camada de texto; use como apoio se a p?gina for digital) ---
-${textoPdfLocal.slice(0, 14000)}`
-          : '';
-
       const { file_url } = await base44.integrations.Core.UploadFile({ file: f });
       arquivoEnviado = { file_url, file_name: f.name, file_obj: f };
       setFile({
@@ -222,10 +214,12 @@ ${textoPdfLocal.slice(0, 14000)}`
         name: f.name,
       });
 
-      const extractedRaw = await base44.integrations.Core.InvokeLLM({
-        file_urls: [file_url],
+      const extractedRaw = await invokeLlmComOcrLocal({
+        file: f,
+        fileUrl: file_url,
+        minTextoChars: 60,
         telemetry: buildLlmTelemetryContext({ source: 'agefin_importador', fileCount: 1 }),
-        prompt: `Leia visualmente este documento brasileiro de cobran?a e extraia dados REAIS do conte?do do documento, nunca do nome do arquivo.
+        prompt: `Leia este documento brasileiro de cobran?a e extraia dados REAIS do conte?do do documento, nunca do nome do arquivo.
 
 Regras obrigat?rias:
 - Ignore completamente o nome do arquivo.
@@ -250,7 +244,7 @@ Campos a interpretar do documento:
 - numero_parcela
 - descricao
 - natureza_sugerida
-- confianca_leitura: alta, media ou baixa${blocoTextoLocal}`,
+- confianca_leitura: alta, media ou baixa`,
         response_json_schema: {
           type: 'object',
           properties: {
@@ -273,8 +267,10 @@ Campos a interpretar do documento:
       let extracted = normalizeInvokeLlmJsonResponse(extractedRaw);
       if (!possuiLeituraMinima(extracted)) {
         // Segunda tentativa com prompt enxuto para documentos dif?ceis.
-        const retryRaw = await base44.integrations.Core.InvokeLLM({
-          file_urls: [file_url],
+        const retryRaw = await invokeLlmComOcrLocal({
+          file: f,
+          fileUrl: file_url,
+          minTextoChars: 60,
           telemetry: buildLlmTelemetryContext({ source: 'agefin_importador_retry', fileCount: 1 }),
           prompt: `Extraia APENAS os campos listados (sem texto extra):
 - descricao
@@ -283,8 +279,7 @@ Campos a interpretar do documento:
 - beneficiario
 - linha_digitavel
 - codigo_pix_copia_cola
-Se n?o encontrar, use null.
-${blocoTextoLocal}`,
+Se n?o encontrar, use null.`,
           response_json_schema: {
             type: 'object',
             properties: {

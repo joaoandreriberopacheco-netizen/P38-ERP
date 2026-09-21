@@ -2,6 +2,16 @@
 
 Controlo de custo das leituras com Gemini (OCR de pedidos, boletos, cotações).
 
+## OCR local (PaddleOCR)
+
+Desde 2026-09, os importadores usam **PaddleOCR no browser** (`ppu-paddle-ocr`, modelo Latin) + **pdf.js** para PDFs digitais:
+
+1. Extração local de texto (`src/lib/extrairTextoDocumento.js`)
+2. Gemini **só com texto** quando o OCR local tem ≥120 caracteres (sem `file_urls` / visão)
+3. Match de produto/fornecedor **local** (`productMatchingUtils.js`) — catálogo fora do prompt
+
+Ficheiros: `src/lib/paddleOcrBrowser.js`, `src/lib/ocrLlmPipeline.js`
+
 ## Passo 1 — Instrumentar
 
 Cada chamada `InvokeLLM` no `p38-core` regista:

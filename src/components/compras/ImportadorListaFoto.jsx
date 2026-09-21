@@ -6,8 +6,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Camera, Image as ImageIcon, Sparkles, Calculator, X } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
-import { buildProdutoMatchingPromptBase, findLocalBestProductMatch } from '@/components/compras/productMatchingUtils';
+import { buildListaFotoExtracaoPrompt, findLocalBestProductMatch } from '@/components/compras/productMatchingUtils';
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
+import { invokeLlmComOcrLocal } from '@/lib/ocrLlmPipeline';
 import { P38TableShell } from '@/components/ui/table';
 import { P38MobileLine, P38MobileLineList, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 import { buildLlmTelemetryContext } from '@/lib/p38LlmTelemetry';
@@ -124,35 +125,16 @@ export default function ImportadorListaFoto({ isOpen, onClose, onImportComplete,
             const uploadRes = await base44.integrations.Core.UploadFile({ file: normalized });
             const fileUrl = uploadRes.file_url;
 
-            const prompt = `ATENÇÃO: Analise esta imagem de lista manuscrita detalhadamente.
-Sua prioridade ABSOLUTA é transcrever TODOS os itens visíveis na imagem, linha por linha.
-Não ignore nenhum item. Se houver 20 itens escritos, retorne 20 itens.
-Se houver qualquer dúvida, ainda assim retorne o item transcrito com confianca "baixa" e um possível match.
+            const prompt = buildListaFotoExtracaoPrompt();
 
-${buildProdutoMatchingPromptBase({
-    produtos: products.slice(0, 400),
-    fornecedores: [],
-    contextLabel: 'CATALOGO DE PRODUTOS PARA REPOSICAO'
-})}
-
-Retorne JSON:
-{
-    "itens": [
-        {
-            "texto_identificado": "string (Transcreva exatamente o que está escrito)",
-            "produto_id_match": "string (id do produto correspondente ou null se não encontrar)",
-            "quantidade_escrita": "string (ex: 2cx, 10m, ou null)",
-            "confianca": "alta|media|baixa"
-        }
-    ]
-}`;
-
-            const aiRes = await base44.integrations.Core.InvokeLLM({
-                prompt: prompt,
-                file_urls: [fileUrl],
+            const aiRes = await invokeLlmComOcrLocal({
+                prompt,
+                file: normalized,
+                fileUrl,
+                minTextoChars: 40,
                 telemetry: buildLlmTelemetryContext({
                   source: 'import_lista_foto',
-                  catalogProductCount: products.length,
+                  catalogProductCount: 0,
                   fileCount: 1,
                 }),
                 response_json_schema: {
@@ -164,7 +146,6 @@ Retorne JSON:
                                 type: "object",
                                 properties: {
                                     texto_identificado: { type: "string" },
-                                    produto_id_match: { type: ["string", "null"] },
                                     quantidade_escrita: { type: ["string", "null"] },
                                     confianca: { type: "string" }
                                 }
@@ -178,10 +159,12 @@ Retorne JSON:
 
             const itens = Array.isArray(result.itens) ? result.itens : [];
             const processedItems = itens.map(item => {
-                const fallbackProduct = !item.produto_id_match
-                    ? findLocalBestProductMatch(null, products, { texto_identificado: item.texto_identificado })?.produto
-                    : null;
-                const selectedProductId = item.produto_id_match || fallbackProduct?.id || null;
+                const fallbackProduct = findLocalBestProductMatch(
+                  null,
+                  products,
+                  { texto_identificado: item.texto_identificado, descricao: item.texto_identificado },
+                )?.produto;
+                const selectedProductId = fallbackProduct?.id || null;
                 const matchedProduct = products.find(p => p.id === selectedProductId);
                 const suggestedQty = calculateSuggestion(matchedProduct);
 

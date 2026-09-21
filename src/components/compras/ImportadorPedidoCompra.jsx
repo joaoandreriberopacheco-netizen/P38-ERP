@@ -9,11 +9,12 @@ import { useToast } from '@/components/ui/use-toast';
 import { Upload, Loader2, Check, X, ArrowLeft, Package, FileText, Camera, Sparkles } from 'lucide-react';
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
 import {
-  buildEfficientPedidoCompraPrompt,
+  buildPedidoCompraExtracaoPrompt,
   findLocalBestFornecedorMatch,
   getProdutoLabel,
   resolveOcrProductMatch,
 } from '@/components/compras/productMatchingUtils';
+import { invokeLlmComOcrLocal } from '@/lib/ocrLlmPipeline';
 import {
   buildPurchaseUnitOptions,
   pickDefaultPurchaseUnit,
@@ -266,7 +267,6 @@ export default function ImportadorPedidoCompra({
             properties: {
               nome_identificado: { type: 'string' },
               cnpj_identificado: { type: 'string' },
-              id_match: { type: 'string' },
             },
           },
           itens: {
@@ -280,49 +280,40 @@ export default function ImportadorPedidoCompra({
                 quantidade: { type: 'number' },
                 preco_unitario: { type: 'number' },
                 unidade_medida_documento: { type: 'string' },
-                produto_id_match: { type: 'string' },
-                confianca: { type: 'string' },
               },
             },
           },
         },
       };
 
-      const prompt = buildEfficientPedidoCompraPrompt({
-        produtos: catalogoProdutos,
-        fornecedores: listaFornecedores,
-        mode,
-      });
+      const prompt = buildPedidoCompraExtracaoPrompt({ mode });
 
       setProcessingStep(3);
-      setProcessingStatus('Identificando itens e catálogo');
+      setProcessingStatus('Lendo texto com PaddleOCR');
 
-      const aiRes = await base44.integrations.Core.InvokeLLM({
+      const aiRes = await invokeLlmComOcrLocal({
         prompt,
-        file_urls: [fileUrl],
+        file: fileUpload,
+        fileUrl,
         telemetry: buildLlmTelemetryContext({
           source: 'import_pedido_compra',
-          catalogProductCount: catalogoProdutos.length,
+          catalogProductCount: 0,
           fileCount: 1,
         }),
         response_json_schema: matchingSchema,
       });
 
       setProcessingStep(4);
-      setProcessingStatus('Identificando fornecedor');
+      setProcessingStatus('Identificando fornecedor e itens');
 
       const result = typeof aiRes === 'string' ? JSON.parse(aiRes) : aiRes;
-      const fornecedorIds = new Set(listaFornecedores.map((f) => f.id));
-      const fornecedorIdLlm = result.fornecedor?.id_match;
-      const fornecedorMatch = fornecedorIdLlm && fornecedorIds.has(fornecedorIdLlm)
-        ? listaFornecedores.find((f) => f.id === fornecedorIdLlm)
-        : findLocalBestFornecedorMatch(
-          {
-            nome: result.fornecedor?.nome_identificado,
-            cnpj: result.fornecedor?.cnpj_identificado,
-          },
-          listaFornecedores,
-        );
+      const fornecedorMatch = findLocalBestFornecedorMatch(
+        {
+          nome: result.fornecedor?.nome_identificado,
+          cnpj: result.fornecedor?.cnpj_identificado,
+        },
+        listaFornecedores,
+      );
       setFornecedorInfo({
         id: fornecedorMatch?.id || 'new',
         nome: result.fornecedor?.nome_identificado || '',
@@ -332,11 +323,7 @@ export default function ImportadorPedidoCompra({
       setProcessingStatus('Validando correspondências');
 
       const mappedItems = (result.itens || []).map((item) => {
-        const resolved = resolveOcrProductMatch(
-          item,
-          catalogoProdutos,
-          item.produto_id_match,
-        );
+        const resolved = resolveOcrProductMatch(item, catalogoProdutos, '');
         return {
           ...item,
           produto_id_match: resolved.produto_id_match,

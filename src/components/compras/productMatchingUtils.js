@@ -456,6 +456,74 @@ export function buildCompactProdutosTsv(produtos = [], { maxNomeChars = 96 } = {
 /**
  * Prompt enxuto para import pedido: 1 leitura do PDF + match no catálogo compacto.
  */
+/** Prompt só extração — sem catálogo (match local depois do OCR Paddle). */
+export function buildPedidoCompraExtracaoPrompt({ mode = 'pdf' } = {}) {
+  const docTipo = mode === 'pdf' ? 'documento de orçamento/pedido' : 'imagem de lista de compra';
+  return `Analise o texto deste ${docTipo}. Extraia fornecedor e itens visíveis no documento.
+
+REGRAS:
+- Extraia apenas dados presentes no texto.
+- Não invente itens nem valores.
+- quantidade e preco_unitario devem ser números quando visíveis.
+
+Retorne JSON:
+{
+  "fornecedor": {"nome_identificado": "string", "cnpj_identificado": "string"},
+  "itens": [{
+    "descricao": "texto do documento",
+    "codigo": "código no documento",
+    "marca": "marca se visível",
+    "quantidade": number,
+    "preco_unitario": number,
+    "unidade_medida_documento": "M2, CX, UN…"
+  }]
+}`;
+}
+
+/** Prompt só extração para cotação PDF — sem catálogo. */
+export function buildCotacaoPdfExtracaoPrompt() {
+  return `Analise o texto desta proposta/cotação de fornecedor. Extraia fornecedor, valores financeiros e itens.
+
+FINANCEIRO:
+- subtotal: soma bruta antes de descontos
+- total_final: valor final a pagar (último total do documento)
+- desconto_global: diferença entre subtotal e total_final quando aplicável
+
+Retorne JSON:
+{
+  "fornecedor": {"nome_identificado": "string", "cnpj_identificado": "string"},
+  "financeiro": {
+    "subtotal": number,
+    "desconto_global": number,
+    "total_final": number,
+    "desconto_comercial": number,
+    "desconto_suframa": number
+  },
+  "itens": [{
+    "descricao_pdf": "string",
+    "codigo_pdf": "string",
+    "marca_pdf": "string",
+    "quantidade_pdf": number,
+    "preco_unitario_pdf": number
+  }]
+}`;
+}
+
+/** Prompt só transcrição de lista (foto) — sem catálogo. */
+export function buildListaFotoExtracaoPrompt() {
+  return `Transcreva TODOS os itens visíveis na lista (linha por linha).
+Não ignore nenhum item. Se houver dúvida, transcreva com confianca "baixa".
+
+Retorne JSON:
+{
+  "itens": [{
+    "texto_identificado": "string (transcrição exata)",
+    "quantidade_escrita": "string (ex: 2cx, 10m) ou null",
+    "confianca": "alta|media|baixa"
+  }]
+}`;
+}
+
 export function buildEfficientPedidoCompraPrompt({
   produtos = [],
   fornecedores = [],

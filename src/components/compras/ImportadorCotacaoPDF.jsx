@@ -8,8 +8,15 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Upload, Loader2, AlertCircle, Check, FileText, X, ArrowLeft, Package } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
-import { buildProdutoMatchingPromptBase, getProdutoLabel, matchesProductQuery, findLocalBestProductMatch } from '@/components/compras/productMatchingUtils';
+import {
+  buildCotacaoPdfExtracaoPrompt,
+  findLocalBestFornecedorMatch,
+  findLocalBestProductMatch,
+  getProdutoLabel,
+  matchesProductQuery,
+} from '@/components/compras/productMatchingUtils';
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
+import { invokeLlmComOcrLocal } from '@/lib/ocrLlmPipeline';
 import { P38TableShell } from '@/components/ui/table';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 import { buildLlmTelemetryContext } from '@/lib/p38LlmTelemetry';
@@ -89,67 +96,15 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
             setProdutosSistema(produtos);
             setFornecedoresSistema(fornecedores);
 
-            const prompt = `Analise este PDF de cotação/orçamento de fornecedor.
-Extraia os dados do fornecedor e a lista de itens.
-Preserve acentos e caracteres do português nos campos textuais.
+            const prompt = buildCotacaoPdfExtracaoPrompt();
 
-IMPORTANTE: Para cada item, identifique a MARCA do produto quando estiver visível. A marca é um critério qualitativo fundamental para comparação de cotações.
-
-${buildProdutoMatchingPromptBase({
-    produtos,
-    fornecedores,
-    contextLabel: 'CATALOGO GERAL DE PRODUTOS'
-})}
-
-PRIORIDADE DE MATCH:
-1. Tente primeiro identificar correspondência com os itens já existentes desta cotação:
-${JSON.stringify(cotacao.itens.map((item) => ({ id: item.produto_id, nome: item.produto_nome, qtd: item.quantidade })))}
-2. Se não encontrar na cotação atual, use o catálogo geral acima.
-
-FINANCEIRO — REGRAS CRÍTICAS:
-- "subtotal": soma bruta dos itens ANTES de qualquer desconto (ex.: TOTAL BRUTO).
-- "total_final": valor ABSOLUTO que o cliente pagará — o ÚLTIMO total do documento, após TODOS os descontos.
-  * Procure rótulos como "TOTAL DA NF", "TOTAL FINAL", "VALOR TOTAL A PAGAR", "TOTAL NOTA FISCAL".
-  * Se houver benefício SUFRAMA / desconto ICMS (ex.: "ICMS (DEVE TER SUFRAMA)", "DESCONTO SUFRAMA"), aplique sobre o total líquido anterior.
-  * NÃO pare no "TOTAL LÍQUIDO" se existir um total menor depois (ex.: com SUFRAMA).
-  * Exemplo: subtotal R$ 8.993,75 → desconto comercial → R$ 5.576,13 → ICMS SUFRAMA 20% → total_final R$ 4.460,90.
-- "desconto_global": diferença entre subtotal e total_final (soma de TODOS os descontos).
-- Quando identificável, preencha também "desconto_comercial" e "desconto_suframa" (ou "desconto_icms_suframa").
-- "preco_unitario_pdf": preço unitário BRUTO de cada linha, ANTES de descontos (use a coluna de preço bruto/unitário original; não use o total líquido da linha).
-
-Retorne um JSON com:
-{
-    "fornecedor": { 
-        "nome_identificado": "string", 
-        "cnpj_identificado": "string",
-        "id_match": "string (id do sistema ou null se novo)"
-    },
-    "financeiro": {
-        "subtotal": number,
-        "desconto_global": number,
-        "total_final": number,
-        "desconto_comercial": number,
-        "desconto_suframa": number
-    },
-    "itens": [
-        {
-            "descricao_pdf": "string",
-            "codigo_pdf": "string",
-            "marca_pdf": "string (marca do produto identificada no PDF)",
-            "quantidade_pdf": number,
-            "preco_unitario_pdf": number,
-            "produto_sistema_match_id": "string (id do produto ou null)",
-            "confianca_match": "alta|media|baixa"
-        }
-    ]
-}`;
-
-            const aiRes = await base44.integrations.Core.InvokeLLM({
-                prompt: prompt,
-                file_urls: [fileUrl],
+            const aiRes = await invokeLlmComOcrLocal({
+                prompt,
+                file: normalized,
+                fileUrl,
                 telemetry: buildLlmTelemetryContext({
                   source: 'import_cotacao_pdf',
-                  catalogProductCount: produtos.length,
+                  catalogProductCount: 0,
                   fileCount: 1,
                 }),
                 response_json_schema: {
@@ -160,7 +115,6 @@ Retorne um JSON com:
                             properties: {
                                 nome_identificado: { type: "string" },
                                 cnpj_identificado: { type: "string" },
-                                id_match: { type: ["string", "null"] }
                             }
                         },
                         financeiro: {
@@ -184,8 +138,6 @@ Retorne um JSON com:
                                     marca_pdf: { type: "string" },
                                     quantidade_pdf: { type: "number" },
                                     preco_unitario_pdf: { type: "number" },
-                                    produto_sistema_match_id: { type: ["string", "null"] },
-                                    confianca_match: { type: "string" }
                                 }
                             }
                         }
@@ -203,25 +155,36 @@ Retorne um JSON com:
             
             // Defensive check for itens array
             const itens = Array.isArray(result.itens) ? result.itens : [];
+            const cotacaoProdutoIds = new Set(
+              (cotacao?.itens || []).map((item) => item.produto_id).filter(Boolean),
+            );
+            const produtosCotacao = produtos.filter((p) => cotacaoProdutoIds.has(p.id));
+            const catalogoMatch = produtosCotacao.length ? produtosCotacao : produtos;
+
             setMappings(itens.map(item => {
-                const fallback = !item.produto_sistema_match_id
-                    ? findLocalBestProductMatch(null, produtos, item)?.produto
-                    : null;
-                const selectedId = item.produto_sistema_match_id || fallback?.id || '';
+                const fallback = findLocalBestProductMatch(null, catalogoMatch, item)?.produto;
+                const selectedId = fallback?.id || '';
                 return {
                     ...item,
                     produto_sistema_match_id: selectedId || null,
                     selected_product_id: selectedId,
-                    confianca_match: item.confianca_match || (fallback ? 'baixa' : 'baixa'),
+                    confianca_match: fallback?.confianca || 'baixa',
                     ignored: !selectedId
                 };
             }));
             setProductSearch({});
 
+            const fornecedorMatch = findLocalBestFornecedorMatch(
+              {
+                nome: result.fornecedor?.nome_identificado,
+                cnpj: result.fornecedor?.cnpj_identificado,
+              },
+              fornecedores,
+            );
             setFornecedorInfo({
-                id: result.fornecedor.id_match || 'new',
-                nome: result.fornecedor.nome_identificado,
-                cnpj: result.fornecedor.cnpj_identificado
+                id: fornecedorMatch?.id || 'new',
+                nome: result.fornecedor?.nome_identificado,
+                cnpj: result.fornecedor?.cnpj_identificado
             });
 
             setStep('review');

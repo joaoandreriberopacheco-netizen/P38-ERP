@@ -1,6 +1,7 @@
 import { base44 } from '@/api/base44Client';
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
 import { buildLlmTelemetryContext } from '@/lib/p38LlmTelemetry';
+import { invokeLlmComOcrLocal } from '@/lib/ocrLlmPipeline';
 
 /** Extrai número monetário de texto livre (ex.: "150,90", "R$ 1.234,56"). */
 export function parseValorMonetarioTexto(raw) {
@@ -52,8 +53,10 @@ export function extrairDadosComprovanteDeTexto(texto) {
 async function extrairDadosComprovanteViaLlm(file) {
   const f = await normalizarArquivoParaImportBoleto(file);
   const { file_url } = await base44.integrations.Core.UploadFile({ file: f });
-  const raw = await base44.integrations.Core.InvokeLLM({
-    file_urls: [file_url],
+  const raw = await invokeLlmComOcrLocal({
+    file: f,
+    fileUrl: file_url,
+    minTextoChars: 50,
     telemetry: buildLlmTelemetryContext({ source: 'comprovante_bancario', fileCount: 1 }),
     prompt: `Leia este comprovante bancário brasileiro (PIX, TED, boleto pago, transferência).
 Extraia apenas o que estiver visível. Não invente dados.

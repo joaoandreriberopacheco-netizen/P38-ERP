@@ -1,12 +1,11 @@
 /**
  * Utilitários para PDF no importador AGEFIN (Torre / Contas a pagar).
  *
- * Nota: o bundle **Base44/sin** não resolve o pacote `pdfjs-dist`, por isso não há
- * extração local de texto no browser. A leitura do boleto depende de
- * `UploadFile` + `InvokeLLM` com `file_urls`. Mantemos `extrairTextoPdfBrowser`
- * (devolve vazio) para não quebrar o fluxo e permitir reintroduzir texto local
- * noutro ambiente se no futuro o pacote for suportado.
+ * Extração de texto: pdf.js (PDF digital) + PaddleOCR (scan/imagem).
+ * Ver `extrairTextoDocumento.js`.
  */
+
+import { extrairTextoDocumento } from '@/lib/extrairTextoDocumento';
 
 /**
  * Detecta assinatura %PDF- no início do blob (partilha Web manda às vezes sem extensão / octet-stream).
@@ -49,9 +48,11 @@ export async function normalizarArquivoParaImportBoleto(file) {
 }
 
 /**
- * Reservado: extração de texto no cliente (ex. pdf.js). No Base44/sin devolve sempre
- * string vazia — o prompt de texto local não é anexado; o LLM usa só o PDF enviado.
+ * Extrai texto do PDF/imagem no browser (pdf.js + PaddleOCR).
+ * @param {File|Blob} file
+ * @returns {Promise<string>}
  */
-export async function extrairTextoPdfBrowser(_file) {
-  return '';
+export async function extrairTextoPdfBrowser(file) {
+  const { texto } = await extrairTextoDocumento(file);
+  return texto;
 }
