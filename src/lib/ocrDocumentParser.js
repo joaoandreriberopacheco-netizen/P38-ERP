@@ -8,7 +8,6 @@ import {
   extrairDataVencimento,
   extrairLinhaDigitavel,
   extrairNumerosMonetariosLinha,
-  extrairTodosCnpjs,
   extrairUnidadeMedida,
   limparLinhas,
   linhaPareceRodape,
@@ -16,39 +15,56 @@ import {
   parseNumeroBr,
   parseValorMonetarioTexto,
 } from '@/lib/ocrTextUtils';
+import {
+  extrairNomeFornecedorPedido,
+  linhaPareceMetadadoPedido,
+  repartirTextoOcrPedido,
+} from '@/lib/ocrPedidoNormalize';
 
-function extrairNomeFornecedor(texto) {
-  const linhas = limparLinhas(texto);
-  const cnpjs = extrairTodosCnpjs(texto);
+function itemPareceValido(item) {
+  if (!item?.descricao || item.descricao.length < 3) return false;
+  if (item.descricao.length > 120) return false;
+  if (linhaPareceMetadadoPedido(item.descricao)) return false;
+  if (!Number.isFinite(item.quantidade) || item.quantidade <= 0 || item.quantidade > 50_000) return false;
+  if (!Number.isFinite(item.preco_unitario) || item.preco_unitario <= 0 || item.preco_unitario > 500_000) return false;
+  const total = item.quantidade * item.preco_unitario;
+  if (total > 5_000_000) return false;
+  return true;
+}
 
-  for (const linha of linhas) {
-    if (/fornecedor|emitente|razao\s+social|remetente/i.test(linha)) {
-      const nome = linha.replace(/^[^:]+:\s*/i, '').replace(/\d{2}\.\d{3}.*$/, '').trim();
-      if (nome.length >= 3) return nome.slice(0, 120);
-    }
-  }
+/** Linha tabular Tintão/ERP: EMP QTD UND CÓDIGO DESCRIÇÃO … VR.UNIT TOTAL */
+function parseLinhaItemPedidoTabular(linha) {
+  const m = String(linha || '').match(
+    /^(\d{1,2})\s+(\d+(?:[.,]\d+)?)\s+(M2|M²|CX|UN|UND|SC|PC|KG|LT|RL|BD|FD)\s+(\d{3,})\s+(.+?)\s+(\d+(?:[.,]\d+)?)\s+(\d{1,3}(?:\.\d{3})*,\d{2}|\d+(?:[.,]\d+)?)\s*$/i,
+  );
+  if (!m) return null;
 
-  for (const linha of linhas.slice(0, 25)) {
-    if (cnpjs.some((c) => linha.includes(c.replace(/\D/g, '').slice(0, 8)))) {
-      const semCnpj = linha.replace(/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}/, '').trim();
-      if (semCnpj.length >= 4 && !/^\d+$/.test(semCnpj)) return semCnpj.slice(0, 120);
-    }
-  }
-
-  const candidata = linhas.find((l) => l.length >= 6 && !linhaPareceRodape(l) && !/^\d+$/.test(l));
-  return candidata ? candidata.slice(0, 120) : '';
+  const descricao = m[5].replace(/\s+\d+\s*$/, '').trim();
+  const item = {
+    descricao,
+    codigo: m[4],
+    marca: '',
+    quantidade: parseNumeroBr(m[2]) || 1,
+    preco_unitario: parseNumeroBr(m[6]),
+    unidade_medida_documento: m[3].toUpperCase().replace('M²', 'M2'),
+  };
+  return itemPareceValido(item) ? item : null;
 }
 
 function parseLinhaItemPedido(linha) {
-  if (linhaPareceRodape(linha) || linha.length < 8) return null;
-  if (/^(item|codigo|descricao|produto|qtd|quant|unit|valor)\b/i.test(linha)) return null;
+  if (linhaPareceRodape(linha) || linhaPareceMetadadoPedido(linha) || linha.length < 8) return null;
+  if (linha.length > 140) return null;
+  if (/^(item|codigo|descricao|produto|qtd|quant|unit|valor|emp)\b/i.test(linha)) return null;
+
+  const tabular = parseLinhaItemPedidoTabular(linha);
+  if (tabular) return tabular;
 
   const valores = extrairNumerosMonetariosLinha(linha);
   if (!valores.length) return null;
 
   const preco_unitario = valores[valores.length - 1];
   let quantidade = valores.length >= 2 ? valores[valores.length - 2] : 1;
-  if (quantidade > 10000 && preco_unitario < quantidade) {
+  if (quantidade > 10_000 && preco_unitario < quantidade) {
     quantidade = 1;
   }
 
@@ -58,15 +74,19 @@ function parseLinhaItemPedido(linha) {
   }
   resto = resto.replace(/\d{1,3}(?:\.\d{3})*,\d{2}/g, ' ').trim();
 
-  const codigoMatch = resto.match(/^(\d{4,}|[A-Z]{0,3}\d{3,})/i);
-  const codigo = codigoMatch ? codigoMatch[1] : '';
-  let descricao = resto.replace(/^\d+\s+/, '').replace(codigo, '').trim();
+  const codigoMatch = resto.match(/^(\d{1,2}\s+)?(\d{4,}|[A-Z]{0,3}\d{3,})/i);
+  const codigo = codigoMatch ? String(codigoMatch[2] || '').trim() : '';
+  let descricao = resto
+    .replace(/^\d{1,2}\s+/, '')
+    .replace(/^\d+(?:[.,]\d+)?\s+(?:M2|CX|UN|UND|SC|PC|KG)\s+/i, '')
+    .replace(codigo, '')
+    .trim();
   descricao = descricao.replace(/\s+\d+$/, '').trim();
   if (!descricao || descricao.length < 3) return null;
 
   const unidade = extrairUnidadeMedida(linha);
 
-  return {
+  const item = {
     descricao,
     codigo,
     marca: '',
@@ -74,6 +94,7 @@ function parseLinhaItemPedido(linha) {
     preco_unitario,
     unidade_medida_documento: unidade,
   };
+  return itemPareceValido(item) ? item : null;
 }
 
 /** Boleto / cobrança AGEFIN. */
@@ -132,11 +153,12 @@ export function parseBoletoDocumento(texto) {
 
 /** Pedido de compra / orçamento fornecedor. */
 export function parsePedidoCompraDocumento(texto) {
-  const cnpj = extrairCnpj(texto);
-  const nome = extrairNomeFornecedor(texto);
+  const textoNormalizado = repartirTextoOcrPedido(texto);
+  const cnpj = extrairCnpj(textoNormalizado);
+  const nome = extrairNomeFornecedorPedido(textoNormalizado);
   const itens = [];
 
-  for (const linha of limparLinhas(texto)) {
+  for (const linha of limparLinhas(textoNormalizado)) {
     const item = parseLinhaItemPedido(linha);
     if (item) itens.push(item);
   }

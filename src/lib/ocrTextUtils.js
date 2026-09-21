@@ -42,7 +42,10 @@ export function parseValorMonetarioTexto(texto) {
 }
 
 export function extrairCnpj(texto) {
-  const m = String(texto || '').match(/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}/);
+  const s = String(texto || '');
+  const labeled = s.match(/CNP[J]?:?\s*(\d{2}\.\d{3}\.\d{3}\/\d{3,4}-\d{2})/i);
+  if (labeled?.[1]) return labeled[1];
+  const m = s.match(/\d{2}\.?\d{3}\.?\d{3}\/?\d{3,4}-?\d{2}/);
   return m ? m[0] : '';
 }
 
@@ -99,7 +102,9 @@ export function extrairCodigoPix(texto) {
 }
 
 export function linhaPareceRodape(linha) {
-  return /^(total|subtotal|desconto|frete|icms|iss|pis|cofins|valor\s+total|pagina|página|nf-?e|chave\s+de\s+acesso|cnpj|cpf|inscricao)/i.test(linha);
+  const s = String(linha || '');
+  return /^(total|subtotal|desconto|frete|icms|iss|pis|cofins|valor\s+total|pagina|página|nf-?e|chave\s+de\s+acesso|cnpj|cpf|inscricao|qtd\.?\s+total|total\s+itens|observa)/i.test(s)
+    || /pedido\s+de\s+venda|data\s+de\s+emiss|previs[aã]o\s+de\s+entrega/i.test(s);
 }
 
 export function extrairNumerosMonetariosLinha(linha) {
