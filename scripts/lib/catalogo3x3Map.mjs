@@ -227,23 +227,35 @@ function parseRoloLaLegacy(skuAtual = '') {
   if (simple) {
     return { comp1: 'ROLO DE LÃ', comp2: simple[1].replace(/\s+/g, ' ').trim(), comp3: '' };
   }
-  const anti = sku.match(/^ROLO DE L[AÃ]\s+ANTI-RESPINGO\s+(\d+)\s*CM(?:\s+S\/CABO\s+(.+))?$/i);
+  // 23 CM — anti-respingo e sintética mesclados no produto compra ROLO DE LÃ.
+  const anti = sku.match(/^ROLO DE L[AÃ]\s+ANTI-RESPINGO\s+(\d+)\s*CM/i);
   if (anti) {
-    return {
-      comp1: 'ROLO DE LÃ ANTI-RESPINGO',
-      comp2: `${anti[1]} CM`,
-      comp3: cellStr(anti[2]),
-    };
+    return { comp1: 'ROLO DE LÃ', comp2: `${anti[1]} CM`, comp3: '' };
   }
-  const sint = sku.match(/^ROLO DE L[AÃ]\s+SINTETICA C\/ CABO\s+(\d+)\s*CM\s+(\S.+)$/i);
+  const sint = sku.match(/^ROLO DE L[AÃ]\s+SINTETICA C\/ CABO\s+(\d+)\s*CM/i);
   if (sint) {
-    return {
-      comp1: 'ROLO DE LÃ SINTÉTICA C/ CABO',
-      comp2: `${sint[1]} CM`,
-      comp3: sint[2].trim(),
-    };
+    return { comp1: 'ROLO DE LÃ', comp2: `${sint[1]} CM`, comp3: '' };
   }
   return null;
+}
+
+/** Mescla variantes 23 CM já normalizadas no core (anti-respingo / sintética). */
+function normalizeRoloLaMesclado(c1, c2, c3) {
+  const n1 = norm(c1);
+  if (n2Size(c2) !== '23 CM') return null;
+  if (n1 === 'ROLO DE LA' || n1 === 'ROLO DE LÃ') {
+    return { comp1: 'ROLO DE LÃ', comp2: '23 CM', comp3: '' };
+  }
+  if (n1.includes('ANTI-RESPINGO') || n1.includes('SINTETICA')) {
+    return { comp1: 'ROLO DE LÃ', comp2: '23 CM', comp3: '' };
+  }
+  return null;
+}
+
+function n2Size(c2 = '') {
+  const s = String(c2 ?? '').trim().toUpperCase().replace(/\s+/g, ' ');
+  const m = s.match(/^(\d+)\s*CM$/);
+  return m ? `${m[1]} CM` : s;
 }
 
 function parseDiscoCorteLegacy(skuAtual = '', c2 = '', c3 = '') {
@@ -299,6 +311,9 @@ function normalizeLegacyToolComponentes(c1, c2, c3, ctx = {}) {
     const parsed = parseRoloLaLegacy(skuAtual);
     if (parsed) return parsed;
   }
+
+  const roloMesclado = normalizeRoloLaMesclado(c1, c2, c3);
+  if (roloMesclado) return roloMesclado;
 
   if (n1 === 'DISCO DE CORTE' && !c2 && !c3) {
     const parsed = parseDiscoCorteLegacy(skuAtual, c2, c3);

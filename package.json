@@ -104,6 +104,7 @@
     "export:catalogo-skus": "node scripts/export-catalogo-skus.mjs",
     "export:catalogo-4x3": "node scripts/export-catalogo-3x3.mjs",
     "export:catalogo-3x3": "node scripts/export-catalogo-3x3.mjs",
+    "merge:rolo-la-23cm": "node scripts/merge-rolo-la-23cm.mjs --apply",
     "export:pdf-catalogo-4x3": "node scripts/gerar-pdf-catalogo-4x3.mjs",
     "export:pdf-catalogo-4x": "node scripts/gerar-pdf-catalogo-4x-nivel.mjs",
     "export:conta-azul": "node scripts/export-catalogo-conta-azul.mjs",
