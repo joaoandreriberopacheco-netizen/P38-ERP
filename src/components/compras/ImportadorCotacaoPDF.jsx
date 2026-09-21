@@ -15,7 +15,7 @@ import {
   matchesProductQuery,
 } from '@/components/compras/productMatchingUtils';
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
-import { OCR_IMPORT_TIPOS, processarImportOcrLocal } from '@/lib/ocrImportPipeline';
+import { OCR_IMPORT_TIPOS, processarImportOcrEmSerie } from '@/lib/ocrImportPipeline';
 import { P38TableShell } from '@/components/ui/table';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 import {
@@ -94,13 +94,14 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
             setProdutosSistema(produtos);
             setFornecedoresSistema(fornecedores);
 
-            const { dados: result } = await processarImportOcrLocal({
+            const { dados: result, fallbackErro } = await processarImportOcrEmSerie({
                 file: normalized,
                 tipo: OCR_IMPORT_TIPOS.COTACAO_PDF,
             });
 
             if (!result?.itens?.length) {
-                throw new Error('Nenhum item identificado na cotação. Verifique o PDF ou preencha manualmente.');
+                const extra = fallbackErro ? ` ${fallbackErro}` : '';
+                throw new Error(`Nenhum item identificado na cotação.${extra} Verifique o PDF ou preencha manualmente.`);
             }
             const financeiroNormalizado = normalizarFinanceiroCotacaoPdf(result.financeiro);
             const resultNormalizado = {

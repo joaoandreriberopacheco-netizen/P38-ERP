@@ -63,6 +63,9 @@ function humanizeP38CoreError(payload, status) {
   if (status === 401 && /unauthorized/i.test(msg)) {
     return 'Sessão expirada ou ausente. Saia e entre novamente em /login.';
   }
+  if (/GROQ_API_KEY/i.test(msg)) {
+    return 'Fallback IA indisponível: configure GROQ_API_KEY (grátis em console.groq.com) no Supabase → Edge Functions → Secrets.';
+  }
   if (/GEMINI_API_KEY|GOOGLE_API_KEY/i.test(msg)) {
     return 'Leitura com IA indisponível: configure GEMINI_API_KEY no Supabase → Edge Functions → Secrets.';
   }

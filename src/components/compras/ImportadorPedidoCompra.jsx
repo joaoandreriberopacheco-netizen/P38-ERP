@@ -13,7 +13,7 @@ import {
   getProdutoLabel,
   resolveOcrProductMatch,
 } from '@/components/compras/productMatchingUtils';
-import { OCR_IMPORT_TIPOS, processarImportOcrLocal } from '@/lib/ocrImportPipeline';
+import { OCR_IMPORT_TIPOS, processarImportOcrEmSerie } from '@/lib/ocrImportPipeline';
 import {
   buildPurchaseUnitOptions,
   pickDefaultPurchaseUnit,
@@ -258,17 +258,23 @@ export default function ImportadorPedidoCompra({
       }
 
       setProcessingStep(3);
-      setProcessingStatus('Lendo texto com PaddleOCR');
+      setProcessingStatus('Interpretando layout local');
 
-      const { dados: result } = await processarImportOcrLocal({
+      const { dados: result, modo, fallbackErro } = await processarImportOcrEmSerie({
         file: fileUpload,
         tipo: OCR_IMPORT_TIPOS.PEDIDO_COMPRA,
+        onProgress: (msg) => setProcessingStatus(msg),
       });
 
       if (!result?.itens?.length) {
+        const extra = fallbackErro ? ` ${fallbackErro}` : '';
         throw new Error(
-          'Nenhum item identificado no documento. Confira o arquivo ou adicione os itens manualmente na revisão.',
+          `Nenhum item identificado no documento.${extra} Confira o arquivo ou adicione os itens manualmente na revisão.`,
         );
+      }
+
+      if (modo === 'ocr_local+groq') {
+        setProcessingStatus('Itens identificados com IA na nuvem (revisar)');
       }
 
       setProcessingStep(4);

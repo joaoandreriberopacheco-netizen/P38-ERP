@@ -14,7 +14,7 @@ import {
 } from '@/lib/agefinLancamentosRecorrencia';
 import { uploadAnexoParaContaPrevista, uploadAnexoParaLancamentoFinanceiro } from '@/lib/uploadAnexoReferencia';
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
-import { OCR_IMPORT_TIPOS, processarImportOcrLocal } from '@/lib/ocrImportPipeline';
+import { OCR_IMPORT_TIPOS, processarImportOcrEmSerie } from '@/lib/ocrImportPipeline';
 
 function normalizarTexto(value) {
   return String(value || '')
@@ -213,7 +213,7 @@ export default function AgefinImportador({
         name: f.name,
       });
 
-      const { dados: extractedRaw } = await processarImportOcrLocal({
+      const { dados: extractedRaw } = await processarImportOcrEmSerie({
         file: f,
         tipo: OCR_IMPORT_TIPOS.BOLETO_AGEFIN,
       });

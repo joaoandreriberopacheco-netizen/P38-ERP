@@ -1,5 +1,5 @@
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
-import { OCR_IMPORT_TIPOS, processarImportOcrLocal } from '@/lib/ocrImportPipeline';
+import { OCR_IMPORT_TIPOS, processarImportOcrEmSerie } from '@/lib/ocrImportPipeline';
 import { parseValorMonetarioTexto } from '@/lib/ocrTextUtils';
 
 /** Extrai número monetário de texto livre (ex.: "150,90", "R$ 1.234,56"). */
@@ -26,7 +26,7 @@ export function extrairDadosComprovanteDeTexto(texto) {
 
 async function extrairDadosComprovanteViaOcr(file) {
   const f = await normalizarArquivoParaImportBoleto(file);
-  const { dados } = await processarImportOcrLocal({
+  const { dados, modo } = await processarImportOcrEmSerie({
     file: f,
     tipo: OCR_IMPORT_TIPOS.COMPROVANTE,
   });
@@ -35,7 +35,7 @@ async function extrairDadosComprovanteViaOcr(file) {
     valor: dados.valor,
     descricao: dados.descricao,
     data_pagamento: dados.data_pagamento,
-    origem: 'ocr_local',
+    origem: modo === 'ocr_local+groq' ? 'groq_fallback' : 'ocr_local',
   };
 }
 

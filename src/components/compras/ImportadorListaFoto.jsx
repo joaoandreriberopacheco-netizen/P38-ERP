@@ -8,7 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
 import { findLocalBestProductMatch } from '@/components/compras/productMatchingUtils';
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
-import { OCR_IMPORT_TIPOS, processarImportOcrLocal } from '@/lib/ocrImportPipeline';
+import { OCR_IMPORT_TIPOS, processarImportOcrEmSerie } from '@/lib/ocrImportPipeline';
 import { P38TableShell } from '@/components/ui/table';
 import { P38MobileLine, P38MobileLineList, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 import CatalogLoteDialog from '@/components/compras/CatalogLoteDialog';
@@ -124,7 +124,7 @@ export default function ImportadorListaFoto({ isOpen, onClose, onImportComplete,
             const uploadRes = await base44.integrations.Core.UploadFile({ file: normalized });
             const fileUrl = uploadRes.file_url;
 
-            const { dados: result } = await processarImportOcrLocal({
+            const { dados: result } = await processarImportOcrEmSerie({
                 file: normalized,
                 tipo: OCR_IMPORT_TIPOS.LISTA_FOTO,
             });

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from 'npm:@supabase/supabase-js@2';
 
 export type LlmUsage = {
-  provider: 'gemini' | 'openai';
+  provider: 'gemini' | 'openai' | 'groq';
   model: string;
   input_tokens: number;
   output_tokens: number;
@@ -26,6 +26,9 @@ export type LlmTelemetryRow = LlmTelemetryContext & {
 function estimateCostUsd(usage: LlmUsage): number {
   const inM = usage.input_tokens / 1_000_000;
   const outM = usage.output_tokens / 1_000_000;
+  if (usage.provider === 'groq') {
+    return 0;
+  }
   if (usage.provider === 'gemini') {
     return inM * 0.1 + outM * 0.4;
   }

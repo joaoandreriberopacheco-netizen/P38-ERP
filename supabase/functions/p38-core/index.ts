@@ -1,6 +1,7 @@
 // Core integrations proxy (LLM, email, storage helpers server-side)
 import { requireUser, jsonResponse, badRequest, handleCorsPreflight, serviceClient } from '../_shared/auth.ts';
 import { buildCoreIntegrations } from '../_shared/integrations.ts';
+import { structurarDocumentoOcrGroq } from '../_shared/groqOcrStruct.ts';
 import { logLlmTelemetry } from '../_shared/llmTelemetry.ts';
 
 function readTelemetryContext(body: Record<string, unknown>) {
@@ -73,6 +74,46 @@ Deno.serve(async (req) => {
         return jsonResponse(await Core.SendEmail(body));
       case 'CreateFileSignedUrl':
         return jsonResponse(await Core.CreateFileSignedUrl(body));
+      case 'StructurarDocumentoOcr': {
+        const started = Date.now();
+        const tipo = String(body.tipo || 'pedido_compra');
+        const texto = String(body.texto || '');
+        const telemetryCtx = readTelemetryContext(body);
+        const promptChars = texto.length;
+        try {
+          const { dados, usage, model } = await structurarDocumentoOcrGroq({
+            texto,
+            tipo: tipo as 'pedido_compra' | 'cotacao_pdf' | 'lista_foto' | 'boleto_agefin' | 'comprovante',
+          });
+          await logLlmTelemetry(db, {
+            usuario_id: auth.user.id,
+            ...telemetryCtx,
+            source: telemetryCtx.source || `ocr_groq_${tipo}`,
+            ...usage,
+            prompt_chars: promptChars,
+            duration_ms: Date.now() - started,
+            success: true,
+          });
+          return jsonResponse({ dados, model, modo: 'ocr_local+groq' });
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          await logLlmTelemetry(db, {
+            usuario_id: auth.user.id,
+            ...telemetryCtx,
+            source: telemetryCtx.source || `ocr_groq_${tipo}`,
+            provider: 'groq',
+            model: '',
+            input_tokens: 0,
+            output_tokens: 0,
+            total_tokens: 0,
+            prompt_chars: promptChars,
+            duration_ms: Date.now() - started,
+            success: false,
+            error_message: message,
+          });
+          throw err;
+        }
+      }
       default:
         return badRequest(`op inválida: ${op}`);
     }
