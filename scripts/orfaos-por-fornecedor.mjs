@@ -34,7 +34,7 @@ function cxFromNome(nome, qtd, un) {
 
 async function main() {
   const rows = await sbFetch(
-    '/rest/v1/pedido_compra_orfaos_v?select=fornecedor_nome,pedido_compra_numero,pedido_status,produto_nome,unidade_sigla,quantidade_pedida,quantidade_embarcada,saldo_orfa&order=fornecedor_nome.asc,pedido_compra_numero.asc,produto_nome.asc',
+    '/rest/v1/pedido_compra_orfaos_v?select=fornecedor_nome,pedido_compra_numero,pedido_status,produto_nome,unidade_sigla,quantidade_pedida,quantidade_desmembrada,quantidade_embarcada,quantidade_recebida,saldo_orfa&order=fornecedor_nome.asc,pedido_compra_numero.asc,produto_nome.asc',
   );
 
   const porFornecedor = new Map();
@@ -50,8 +50,10 @@ async function main() {
     pedidos.get(num).linhas.push({
       produto: (row.produto_nome || '').slice(0, 58),
       pedida: Number(row.quantidade_pedida),
+      desmembrada: Number(row.quantidade_desmembrada),
       embarcada: Number(row.quantidade_embarcada),
-      saldo,
+      recebida: Number(row.quantidade_recebida),
+      saldo: saldo,
       un: row.unidade_sigla,
       cx: cxFromNome(row.produto_nome, saldo, row.unidade_sigla),
     });
@@ -62,7 +64,7 @@ async function main() {
     return;
   }
 
-  console.log('=== Órfãos — pedido − embarcado (view 095) ===\n');
+  console.log('=== Órfãos — saldo dentro do desmembrado (view 097) ===\n');
   let totalPed = 0;
   let totalLin = 0;
   let totalCx = 0;
@@ -77,7 +79,7 @@ async function main() {
         if (l.cx) totalCx += l.cx;
         console.log(
           `    • saldo ${l.saldo} ${l.un}${l.cx != null ? ` (~${l.cx} cx)` : ''}`
-          + ` (pedido ${l.pedida} − embarcado ${l.embarcada}) — ${l.produto}`,
+          + ` (pedido ${l.pedida}, desmembrado ${l.desmembrada}, recebido ${l.recebida}) — ${l.produto}`,
         );
       }
     }
