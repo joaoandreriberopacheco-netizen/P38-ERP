@@ -76,8 +76,6 @@ function buildHtml() {
     .header h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 6px; }
     .header .meta { font-size: 12px; color: #666; }
     .header .resumo { margin-top: 10px; font-size: 13px; color: #333; }
-    .empresa { margin-bottom: 20px; font-size: 12px; color: #444; line-height: 1.5; }
-    .empresa strong { color: #111; font-size: 13px; }
     .cliente { margin-bottom: 22px; }
     .cliente .label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #666; margin-bottom: 4px; }
     .cliente .nome { font-size: 15px; font-weight: 600; color: #111; }
@@ -122,12 +120,6 @@ function buildHtml() {
       <p class="meta">Data ${DATA_COTACAO} · Gerado em ${geradoEm}</p>
       <p class="resumo"><strong>${numM2(totalM2)} M²</strong> · <strong>${totalCaixas} cx</strong> · <strong>${brl(totalGeral)}</strong></p>
     </header>
-
-    <div class="empresa">
-      <strong>Ausier E Mello Comer. de Mat. de Construç</strong><br />
-      CNPJ 32.655.261/0001-36 · I.E. 041741153 · Fone (92) 3213-9657<br />
-      Av. Max Teixeira, 819 — Col. Santo Antônio — Manaus, AM — CEP 69093-770
-    </div>
 
     <div class="cliente">
       <div class="label">Cliente</div>
@@ -174,6 +166,7 @@ function buildHtml() {
       <strong>Transporte incluso</strong> no valor total.<br />
       <strong>Adiantamento de 60%</strong> na confirmação do pedido; saldo conforme acordado.<br />
       <strong>Prazo de entrega:</strong> 06/10/2026.<br />
+      Por se tratar de material sensível, pode ocorrer <strong>até 3% de avaria</strong>.<br />
       Proposta válida por 03 dias (até 25/09/2026).
     </p>
   </div>
