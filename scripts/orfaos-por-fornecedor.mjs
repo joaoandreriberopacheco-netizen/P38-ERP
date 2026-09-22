@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
  * Órfãos por fornecedor — view pedido_compra_orfaos_v (migration 100).
- * Saldos em base (M²) + saldo_orfa em unidade vitrine (CX).
+ * Só pendência DENTRO do desmembrado (pós-recepção). Não inclui Verona/Naturale
+ * «nunca embarcados» — use: npm run compras:tintao-levantamento
  *
  * Uso: node scripts/orfaos-por-fornecedor.mjs
  */
