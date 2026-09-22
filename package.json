@@ -114,6 +114,7 @@
     "remover:amarelo-sem-venda-75d": "node scripts/remover-skus-amarelo-sem-venda-75d.mjs",
     "remover:exclusoes-manuais": "node scripts/remover-skus-exclusoes-manuais.mjs",
     "export:pdf-catalogo-sem-movimento-45d": "node scripts/gerar-pdf-catalogo-sem-movimento-45d.mjs",
+    "export:xlsx-catalogo-sem-movimento-45d": "node scripts/gerar-pdf-catalogo-sem-movimento-45d.mjs",
     "export:conta-azul": "node scripts/export-catalogo-conta-azul.mjs",
     "portal:excel-manifest": "node scripts/build-portal-excel-manifest.mjs",
     "modelo:seed-ceramica": "node scripts/seed-modelo-catalogo-ceramica.mjs",

@@ -12,6 +12,7 @@ import {
   buildSemEstoqueSemMovimentoFilter,
   enrichFilterNomesSupabase,
 } from './lib/catalogoEstoqueFilter.mjs';
+import { exportCatalogoFiltradoXlsx } from './lib/catalogoFiltradoXlsx.mjs';
 
 const ROOT = process.cwd();
 const XLSX = path.join(ROOT, 'docs', 'exports', 'P38-catalogo-4x3.xlsx');
@@ -19,6 +20,9 @@ const FILTER = path.join(ROOT, 'docs', 'exports', 'P38-catalogo-sem-movimento-45
 const OUT_4X3 = path.join(ROOT, 'docs', 'exports', 'P38-catalogo-4x3-sem-movimento-45d.pdf');
 const OUT_4X = path.join(ROOT, 'docs', 'exports', 'P38-catalogo-4x-nivel-sem-movimento-45d.pdf');
 const OUT_UNI = path.join(ROOT, 'docs', 'exports', 'P38-catalogo-unificado-sem-movimento-45d-paisagem.pdf');
+const XLS_4X3 = path.join(ROOT, 'docs', 'exports', 'P38-catalogo-4x3-sem-movimento-45d.xlsx');
+const XLS_4X = path.join(ROOT, 'docs', 'exports', 'P38-catalogo-4x-nivel-sem-movimento-45d.xlsx');
+const XLS_UNI = path.join(ROOT, 'docs', 'exports', 'P38-catalogo-unificado-sem-movimento-45d.xlsx');
 
 if (!fs.existsSync(XLSX)) {
   console.error(`Fonte em falta: ${XLSX}`);
@@ -46,3 +50,14 @@ function runPy(script, out, extra = []) {
 runPy('gerar-pdf-catalogo-4x3.py', OUT_4X3);
 runPy('gerar-pdf-catalogo-4x-nivel.py', OUT_4X);
 runPy('gerar-pdf-catalogo-unificado-paisagem.py', OUT_UNI);
+
+const xls = await exportCatalogoFiltradoXlsx({
+  catalogPath: XLSX,
+  filterPath: FILTER,
+  out4x3: XLS_4X3,
+  outNivel: XLS_4X,
+  outUnificado: XLS_UNI,
+});
+console.log(
+  `[sem-mov-45d] Excel: ${xls.produtosCompra} produtos · ${xls.skus} SKUs → 3 ficheiros .xlsx`,
+);
