@@ -339,6 +339,8 @@ export function findLocalBestProductMatch(textoIdentificado, catalogoProdutos = 
     const direct = catalogoProdutos.find((produto) => {
       const catalogTokens = tokenizeForProductMatch(getProductSearchText(produto));
       if (ocrMatchHasDiscriminatorConflict(queryTokens, catalogTokens)) return false;
+      if (ocrMarcaConflitaComProduto(query, produto)) return false;
+      if (ocrEmbalagemConflita(query, produto)) return false;
       return matchesProductQueryOcrLoose(produto, query);
     });
     if (direct) {
@@ -353,16 +355,23 @@ export function findLocalBestProductMatch(textoIdentificado, catalogoProdutos = 
     for (const produto of catalogoProdutos) {
       const catalogTokens = tokenizeForProductMatch(getProductSearchText(produto));
       if (ocrMatchHasDiscriminatorConflict(queryTokens, catalogTokens)) continue;
+      if (ocrMarcaConflitaComProduto(query, produto)) continue;
+      if (ocrEmbalagemConflita(query, produto)) continue;
       const tokenScore = scoreProductAgainstTokens(queryTokens, produto);
       const label = getProdutoLabel(produto);
       const primary = getProductPrimarySearchText(produto);
+      const nomeCompleto = normalizeMatchText(produto?.nome || '');
       const fuzzyLabel = query.length >= 6 && label
         ? fuzzRatio(query, label, { full_process: true }) / 100
         : 0;
       const fuzzyPrimary = query.length >= 6 && primary
         ? fuzzRatio(query, primary, { full_process: true }) / 100
         : 0;
-      const score = Math.max(tokenScore, fuzzyLabel * 0.92, fuzzyPrimary * 0.88);
+      const fuzzyNome = query.length >= 6 && nomeCompleto
+        ? fuzzRatio(query, nomeCompleto, { full_process: true }) / 100
+        : 0;
+      const score = Math.max(tokenScore, fuzzyLabel * 0.92, fuzzyPrimary * 0.88, fuzzyNome * 0.95)
+        + bonusMarcaEmbalagemOcr(query, produto);
       if (score > bestScore) {
         secondScore = bestScore;
         bestScore = score;
@@ -397,20 +406,79 @@ function normalizeMatchConfianca(value, fallback = 'baixa') {
 
 const OCR_MARCAS_CONHECIDAS = [
   'hidracor', 'iquine', 'hipercor', 'hypercor', 'suvinil', 'coral', 'eucatex', 'delacryl', 'basf', 'sherwin',
+  'lux', 'quartzolit', 'vedacit', 'viapol', 'duratex', 'sika', 'tekbond', 'henkel',
 ];
+
+function textoBuscaProdutoOcr(produto) {
+  return normalizeMatchText(
+    [
+      produto?.nome,
+      produto?.descricao,
+      produto?.marca,
+      produto?.campo_hierarquico_1,
+      produto?.campo_hierarquico_2,
+      produto?.campo_hierarquico_3,
+      produto?.campo_hierarquico_4,
+      produto?.campo_hierarquico_5,
+    ].filter(Boolean).join(' '),
+  );
+}
 
 function extrairMarcasOcr(texto) {
   const tokens = tokenizeForProductMatch(texto);
-  return tokens.filter((t) => OCR_MARCAS_CONHECIDAS.includes(t));
+  const fromTokens = tokens.filter((t) => OCR_MARCAS_CONHECIDAS.includes(t));
+  const flat = normalizeMatchText(texto);
+  const fromText = OCR_MARCAS_CONHECIDAS.filter((m) => flat.includes(m));
+  return [...new Set([...fromTokens, ...fromText])];
+}
+
+function extrairMarcasCatalogo(produto) {
+  const combined = textoBuscaProdutoOcr(produto);
+  return OCR_MARCAS_CONHECIDAS.filter((m) => combined.includes(m));
 }
 
 function ocrMarcaConflitaComProduto(descricao, produto) {
   const marcasOcr = extrairMarcasOcr(descricao);
   if (!marcasOcr.length) return false;
-  const catText = normalizeMatchText(getProductSearchText(produto));
-  const marcasCat = OCR_MARCAS_CONHECIDAS.filter((m) => catText.includes(m));
+  const marcasCat = extrairMarcasCatalogo(produto);
   if (!marcasCat.length) return false;
   return !marcasOcr.some((m) => marcasCat.includes(m));
+}
+
+/** Ex.: 20kg, 5kg, 3,6l — prioriza embalagem igual no catálogo. */
+function extrairEmbalagemTokens(texto) {
+  const n = normalizeMatchText(preprocessMatchText(texto));
+  const found = [];
+  const re = /\b(\d+(?:[.,]\d+)?)\s*(kg|g|l|lt|ml|m2)\b/g;
+  let m = re.exec(n);
+  while (m) {
+    const num = m[1].replace(',', '.');
+    const unit = m[2] === 'lt' ? 'l' : m[2];
+    found.push(`${num}${unit}`);
+    m = re.exec(n);
+  }
+  return [...new Set(found)];
+}
+
+function ocrEmbalagemConflita(descricao, produto) {
+  const qSizes = extrairEmbalagemTokens(descricao);
+  if (!qSizes.length) return false;
+  const catSizes = extrairEmbalagemTokens(textoBuscaProdutoOcr(produto));
+  if (!catSizes.length) return false;
+  return !qSizes.some((s) => catSizes.includes(s));
+}
+
+function bonusMarcaEmbalagemOcr(descricao, produto) {
+  let bonus = 0;
+  const marcasOcr = extrairMarcasOcr(descricao);
+  const marcasCat = extrairMarcasCatalogo(produto);
+  if (marcasOcr.length && marcasOcr.some((m) => marcasCat.includes(m))) bonus += 0.22;
+
+  const qSizes = extrairEmbalagemTokens(descricao);
+  const catSizes = extrairEmbalagemTokens(textoBuscaProdutoOcr(produto));
+  if (qSizes.length && catSizes.length && qSizes.some((s) => catSizes.includes(s))) bonus += 0.12;
+
+  return bonus;
 }
 
 /**
@@ -430,14 +498,19 @@ export function findOcrSiblingProduct(item, catalogoProdutos = []) {
   for (const produto of catalogoProdutos) {
     const catalogTokens = tokenizeForProductMatch(getProductSearchText(produto));
     if (ocrMatchHasDiscriminatorConflict(queryTokens, catalogTokens)) continue;
+    if (ocrMarcaConflitaComProduto(descricao, produto)) continue;
 
     let score = scoreProductAgainstTokens(queryTokens, produto);
     const label = getProdutoLabel(produto);
+    const nomeCompleto = normalizeMatchText(produto?.nome || '');
     if (descricao.length >= 8) {
-      score = Math.max(score, (fuzzRatio(descricao, label, { full_process: true }) / 100) * 0.92);
+      score = Math.max(
+        score,
+        (fuzzRatio(descricao, label, { full_process: true }) / 100) * 0.92,
+        nomeCompleto ? (fuzzRatio(descricao, nomeCompleto, { full_process: true }) / 100) * 0.95 : 0,
+      );
     }
-    const catText = normalizeMatchText(getProductSearchText(produto));
-    if (marcasOcr.length && marcasOcr.some((m) => catText.includes(m))) score += 0.14;
+    score += bonusMarcaEmbalagemOcr(descricao, produto);
 
     if (score > bestScore) {
       bestScore = score;
@@ -495,6 +568,7 @@ export function resolveOcrProductMatch(item, catalogoProdutos = [], llmProdutoId
   const conflitoSemantico = matchedProduto && (
     ocrMatchHasDiscriminatorConflict(qTokens, cTokens)
     || ocrMarcaConflitaComProduto(descricaoOcr, matchedProduto)
+    || ocrEmbalagemConflita(descricaoOcr, matchedProduto)
   );
 
   const sibling = findOcrSiblingProduct(item, catalogoProdutos);
