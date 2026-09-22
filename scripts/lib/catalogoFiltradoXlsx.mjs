@@ -276,6 +276,22 @@ export async function exportCatalogoFiltradoXlsx(opts) {
 /**
  * Catálogo activo completo — 3 Excel (detalhe, drill, unificado + nome Supabase).
  */
+export async function buildCatalogoCompletoManifest(catalogPath) {
+  const rows = sortCatalogRows(await readCatalogSheet(catalogPath));
+  const codigos = rows.map((r) => cellStr(r.codigo_interno).toUpperCase()).filter(Boolean);
+  const nomesSupabase = await loadNomesSupabasePorCodigos(codigos);
+  return {
+    kind: 'catalogo-completo',
+    source: 'P38-catalogo-4x3.xlsx',
+    cutoff: '—',
+    produtosCompraTotal: aggregateNivel(rows).length,
+    skusMatch: codigos.length,
+    codigos,
+    nomesSupabase,
+    produto_keys: [],
+  };
+}
+
 export async function exportCatalogoCompletoXlsx(opts) {
   const { catalogPath, out4x3, outNivel, outUnificado } = opts;
   const rows = sortCatalogRows(await readCatalogSheet(catalogPath));

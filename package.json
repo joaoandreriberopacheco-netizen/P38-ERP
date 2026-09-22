@@ -116,6 +116,8 @@
     "export:pdf-catalogo-sem-movimento-45d": "node scripts/gerar-pdf-catalogo-sem-movimento-45d.mjs",
     "export:xlsx-catalogo-sem-movimento-45d": "node scripts/gerar-pdf-catalogo-sem-movimento-45d.mjs",
     "export:xlsx-catalogo-completo": "node scripts/export-catalogo-completo-xlsx.mjs",
+    "export:pdf-catalogo-completo": "node scripts/export-pdf-catalogo-completo.mjs",
+    "export:catalogo-completo": "node scripts/export-catalogo-completo.mjs",
     "export:conta-azul": "node scripts/export-catalogo-conta-azul.mjs",
     "portal:excel-manifest": "node scripts/build-portal-excel-manifest.mjs",
     "modelo:seed-ceramica": "node scripts/seed-modelo-catalogo-ceramica.mjs",
