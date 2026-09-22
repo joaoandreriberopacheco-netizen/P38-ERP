@@ -2,6 +2,7 @@ import { Check } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
+import OcrSugestaoCriarProduto from '@/components/compras/OcrSugestaoCriarProduto';
 import ProdutoThumb from '@/components/produtos/ProdutoThumb';
 import { getProdutoLabel } from '@/components/compras/productMatchingUtils';
 import { cn } from '@/lib/utils';
@@ -55,12 +56,15 @@ export default function ImportadorOcrItemCard({
       ? item.selected_product_id
       : null;
   const suggestedProduct = getSuggestedProduct(item);
+  const mostrarSugestaoVinculo = Boolean(suggestedProduct?.id)
+    && !catalogConfirmado
+    && !item.sugerir_criar_novo;
   const catalogProduto = selectedId
-    ? produtos.find((p) => p.id === selectedId) || suggestedProduct
-    : suggestedProduct;
+    ? produtos.find((p) => p.id === selectedId) || (mostrarSugestaoVinculo ? suggestedProduct : null)
+    : (mostrarSugestaoVinculo ? suggestedProduct : null);
   const catalogLabel = catalogProduto ? getProdutoLabel(catalogProduto) : null;
   const catalogConfirmado = Boolean(selectedId);
-  const temSugestaoPendente = Boolean(suggestedProduct?.id) && !catalogConfirmado;
+  const temSugestaoPendente = mostrarSugestaoVinculo;
 
   const confirmarSugestao = () => {
     if (!suggestedProduct?.id) return;
@@ -172,6 +176,14 @@ export default function ImportadorOcrItemCard({
           Confirmar sugestão
         </Button>
       ) : null}
+
+      <OcrSugestaoCriarProduto
+        item={item}
+        index={index}
+        produtos={produtos}
+        onProductCreated={onProductCreated}
+        className="mt-3"
+      />
 
       {/* Linha 3 — qtd / preço / total */}
       <div className="mt-3 grid grid-cols-3 gap-2 rounded-2xl bg-muted/50 p-3">

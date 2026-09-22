@@ -29,6 +29,7 @@ import {
 } from '@/lib/torrePedidoImportBridge';
 import { useCompactShell } from '@/hooks/use-breakpoint';
 import ImportadorOcrItemCard from '@/components/compras/ImportadorOcrItemCard';
+import OcrSugestaoCriarProduto from '@/components/compras/OcrSugestaoCriarProduto';
 import { cn } from '@/lib/utils';
 
 export default function ImportadorPedidoCompra({
@@ -160,6 +161,8 @@ export default function ImportadorPedidoCompra({
               produto_id_match: produtoCompleto.id,
               selected_product_id: produtoCompleto.id,
               confianca: 'alta',
+              sugerir_criar_novo: false,
+              criar_novo_motivo: '',
               ignored: false,
             }
           : item
@@ -205,9 +208,11 @@ export default function ImportadorPedidoCompra({
       return sum + qty * getDiscountedUnitPrice(item);
     }, 0);
     const vinculados = ativos.filter((item) => item.selected_product_id && item.selected_product_id !== 'create_new').length;
+    const sugeridosCriar = ativos.filter((item) => item.sugerir_criar_novo && !item.selected_product_id).length;
     return {
       totalItens: ativos.length,
       vinculados,
+      sugeridosCriar,
       totalEstimado,
     };
   }, [items, discountNumber, effectiveDiscountType]);
@@ -303,6 +308,9 @@ export default function ImportadorPedidoCompra({
           produto_id_match: resolved.produto_id_match,
           selected_product_id: resolved.selected_product_id,
           confianca: resolved.confianca,
+          sugerir_criar_novo: resolved.sugerir_criar_novo,
+          produto_irmao_id: resolved.produto_irmao_id,
+          criar_novo_motivo: resolved.criar_novo_motivo,
           ignored: false,
         };
       });
@@ -816,6 +824,13 @@ export default function ImportadorPedidoCompra({
                       </div>
                     </div>
                     <div className="pl-7 space-y-1">
+                      <OcrSugestaoCriarProduto
+                        item={item}
+                        index={index}
+                        produtos={produtos}
+                        onProductCreated={(novoProduto) => handleProdutoCriadoNoImportador(novoProduto, index)}
+                        className="mb-2"
+                      />
                       <ProductSearchInputPDV
                         item={item}
                         index={index}

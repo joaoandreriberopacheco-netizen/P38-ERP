@@ -3,10 +3,24 @@ import { createPortal } from 'react-dom';
 import { base44 } from '@/api/base44Client';
 import ProdutoFormCompleto from '@/components/produtos/ProdutoFormCompleto';
 
-export default function NovoProdutoRapidoDialog({ isOpen, onClose, onSuccess, nomeInicial = '' }) {
-  // Produto "semente" com o nome digitado na busca preenchido
-  const produtoSemente = nomeInicial
-    ? { campo_hierarquico_1: nomeInicial, nome: nomeInicial }
+export default function NovoProdutoRapidoDialog({
+  isOpen,
+  onClose,
+  onSuccess,
+  nomeInicial = '',
+  valorCompraInicial = null,
+  marcaInicial = '',
+  produtoSimilarBase = null,
+}) {
+  const precoCompra = Number(valorCompraInicial);
+  const produtoSemente = nomeInicial || marcaInicial || precoCompra > 0
+    ? {
+      campo_hierarquico_1: nomeInicial || '',
+      nome: nomeInicial || '',
+      marca: marcaInicial || '',
+      valor_compra: precoCompra > 0 ? precoCompra : 0,
+      ...(precoCompra > 0 ? { preco_venda_padrao: Math.round(precoCompra * 1.4 * 100) / 100 } : {}),
+    }
     : null;
 
   const handleSave = async (savedProduto) => {
@@ -32,6 +46,7 @@ export default function NovoProdutoRapidoDialog({ isOpen, onClose, onSuccess, no
       <div className="relative max-w-3xl w-full h-[90vh] mx-4 overflow-hidden bg-card shadow-2xl rounded-2xl">
         <ProdutoFormCompleto
           produto={produtoSemente}
+          produtoSimilarBase={produtoSimilarBase}
           onSave={handleSave}
           onClose={onClose}
         />

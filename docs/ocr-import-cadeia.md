@@ -31,6 +31,7 @@ Boleto e comprovante mantêm parser local primeiro (campos fixos: linha digitáv
 - **Não** usa código numérico do fornecedor nem EAN do PDF para auto-vincular.
 - **Usa** descrição do documento vs hierarquia/nome do produto no P38 (tokens + similaridade).
 - Sem match claro → linha na revisão com busca pré-preenchida pela **descrição** lida do PDF.
+- Match fraco ou marca/cor diferente → **sugerir criar produto novo** (nome + preço do PDF, produto “irmão” no catálogo como modelo).
 
 ## Padrões vs layout por fornecedor
 

@@ -395,6 +395,60 @@ function normalizeMatchConfianca(value, fallback = 'baixa') {
   return fallback;
 }
 
+const OCR_MARCAS_CONHECIDAS = [
+  'hidracor', 'iquine', 'hipercor', 'hypercor', 'suvinil', 'coral', 'eucatex', 'delacryl', 'basf', 'sherwin',
+];
+
+function extrairMarcasOcr(texto) {
+  const tokens = tokenizeForProductMatch(texto);
+  return tokens.filter((t) => OCR_MARCAS_CONHECIDAS.includes(t));
+}
+
+function ocrMarcaConflitaComProduto(descricao, produto) {
+  const marcasOcr = extrairMarcasOcr(descricao);
+  if (!marcasOcr.length) return false;
+  const catText = normalizeMatchText(getProductSearchText(produto));
+  const marcasCat = OCR_MARCAS_CONHECIDAS.filter((m) => catText.includes(m));
+  if (!marcasCat.length) return false;
+  return !marcasOcr.some((m) => marcasCat.includes(m));
+}
+
+/**
+ * Produto “irmão” no catálogo — mesma linha/marca, embalagem diferente (modelo para cadastro novo).
+ */
+export function findOcrSiblingProduct(item, catalogoProdutos = []) {
+  const descricao = String(item.descricao || item.descricao_pdf || item.texto_identificado || '').trim();
+  if (!descricao || !catalogoProdutos.length) return null;
+
+  const queryTokens = tokenizeForProductMatch(descricao);
+  if (!queryTokens.length) return null;
+  const marcasOcr = extrairMarcasOcr(descricao);
+
+  let best = null;
+  let bestScore = 0;
+
+  for (const produto of catalogoProdutos) {
+    const catalogTokens = tokenizeForProductMatch(getProductSearchText(produto));
+    if (ocrMatchHasDiscriminatorConflict(queryTokens, catalogTokens)) continue;
+
+    let score = scoreProductAgainstTokens(queryTokens, produto);
+    const label = getProdutoLabel(produto);
+    if (descricao.length >= 8) {
+      score = Math.max(score, (fuzzRatio(descricao, label, { full_process: true }) / 100) * 0.92);
+    }
+    const catText = normalizeMatchText(getProductSearchText(produto));
+    if (marcasOcr.length && marcasOcr.some((m) => catText.includes(m))) score += 0.14;
+
+    if (score > bestScore) {
+      bestScore = score;
+      best = produto;
+    }
+  }
+
+  if (!best || bestScore < 0.28) return null;
+  return { produto: best, score: bestScore };
+}
+
 /**
  * Após OCR/LLM: separa sugestão (produto_id_match) de seleção automática (selected_product_id).
  * Evita preencher linha com match fraco (ex.: sempre cair em porcelanato genérico).
@@ -434,7 +488,33 @@ export function resolveOcrProductMatch(item, catalogoProdutos = [], llmProdutoId
     confianca = normalizeMatchConfianca(local.confianca, 'baixa');
   }
 
-  const autoSelect =
+  const descricaoOcr = String(item.descricao || item.descricao_pdf || item.texto_identificado || '').trim();
+  const matchedProduto = matchId ? catalogoProdutos.find((p) => p.id === matchId) : null;
+  const qTokens = tokenizeForProductMatch(descricaoOcr);
+  const cTokens = matchedProduto ? tokenizeForProductMatch(getProductSearchText(matchedProduto)) : [];
+  const conflitoSemantico = matchedProduto && (
+    ocrMatchHasDiscriminatorConflict(qTokens, cTokens)
+    || ocrMarcaConflitaComProduto(descricaoOcr, matchedProduto)
+  );
+
+  const sibling = findOcrSiblingProduct(item, catalogoProdutos);
+  const siblingId = sibling?.produto?.id || '';
+
+  let sugerirCriarNovo = false;
+  let criarNovoMotivo = '';
+
+  if (!matchId) {
+    sugerirCriarNovo = true;
+    criarNovoMotivo = 'Não encontramos este produto no catálogo.';
+  } else if (conflitoSemantico) {
+    sugerirCriarNovo = true;
+    criarNovoMotivo = 'O mais parecido não é o mesmo (marca, cor ou tipo diferente).';
+  } else if (confianca === 'baixa' || localScore < 0.42) {
+    sugerirCriarNovo = true;
+    criarNovoMotivo = 'Correspondência fraca — sugerimos cadastrar como novo.';
+  }
+
+  let autoSelect =
     matchId &&
     (
       confianca === 'alta' ||
@@ -445,10 +525,21 @@ export function resolveOcrProductMatch(item, catalogoProdutos = [], llmProdutoId
       ? matchId
       : '';
 
+  if (sugerirCriarNovo && confianca !== 'alta') {
+    autoSelect = '';
+  }
+
+  const produtoIrmaoId = sugerirCriarNovo
+    ? (siblingId || (conflitoSemantico ? matchId : '') || matchId)
+    : '';
+
   return {
     produto_id_match: matchId,
     selected_product_id: autoSelect,
     confianca: matchId ? confianca : '',
+    sugerir_criar_novo: sugerirCriarNovo,
+    produto_irmao_id: produtoIrmaoId,
+    criar_novo_motivo: sugerirCriarNovo ? criarNovoMotivo : '',
   };
 }
 
