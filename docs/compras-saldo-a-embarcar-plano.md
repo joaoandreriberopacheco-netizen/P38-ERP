@@ -2,7 +2,7 @@
 
 Documento de referência para alinhar **base de dados** e **interface** à lógica real de compras (Tintão e demais fornecedores).
 
-**Estado:** view 094 **aplicada no Supabase** (consultas SQL directas). UI na branch `cursor/compras-saldo-a-embarcar-plano-290b`.  
+**Estado:** view 094 **aplicada no Supabase** (consultas SQL directas). View **095** `pedido_compra_orfaos_v` — conta simples órfãos (pedido − embarcado).  
 **Referência de auditoria SQL:** [`scripts/sql/auditoria-pedido-compra-tintao-e62.sql`](../scripts/sql/auditoria-pedido-compra-tintao-e62.sql)  
 **View canónica (migration 094):** `pedido_compra_saldo_a_embarcar_v`
 
