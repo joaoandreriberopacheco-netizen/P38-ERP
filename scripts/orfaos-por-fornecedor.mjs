@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Órfãos por fornecedor — view pedido_compra_orfaos_v (migration 099).
+ * Órfãos por fornecedor — view pedido_compra_orfaos_v (migration 100).
  * Saldos em base (M²) + saldo_orfa em unidade vitrine (CX).
  *
  * Uso: node scripts/orfaos-por-fornecedor.mjs
@@ -57,7 +57,7 @@ async function main() {
     return;
   }
 
-  console.log('=== Órfãos — unidade vitrine (view 099) ===\n');
+  console.log('=== Órfãos — unidade vitrine (view 100, trânsito excluído) ===\n');
   let totalPed = 0;
   let totalLin = 0;
   let totalCx = 0;
