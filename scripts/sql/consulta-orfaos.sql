@@ -1,9 +1,13 @@
--- Órfãos — view pedido_compra_orfaos_v (migration 098)
+-- Órfãos — view pedido_compra_orfaos_v (migration 099)
 -- Ver docs/compras-saldo-a-embarcar-plano.md § órfãos
 
--- Detalhe HHW-5NP (exemplo)
-select produto_nome, quantidade_pedida, quantidade_desmembrada,
-       quantidade_embarcada, quantidade_recebida, saldo_orfa
+-- Detalhe HHW-5NP (exemplo: Java = 1 CX, Coliseu = 0)
+select produto_nome,
+       quantidade_pedida_base,
+       quantidade_recebida_base,
+       saldo_orfa_base,
+       saldo_orfa,
+       unidade_vitrine_sigla
 from public.pedido_compra_orfaos_v
 where pedido_compra_numero = 'HHW-5NP';
 
