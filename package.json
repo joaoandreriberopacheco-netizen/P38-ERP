@@ -47,6 +47,8 @@
     "audit:valor-card": "node scripts/audit-pedido-valor-card.mjs",
     "compras:align-valor-embarque": "node scripts/align-pedido-valor-embarque.mjs",
     "compras:fix-e62-embarque": "node scripts/fix-embarque-e62-67g-dados.mjs",
+    "compras:saldo-por-fornecedor": "node scripts/saldo-pizza-por-fornecedor.mjs",
+    "compras:saldo-auditoria-tintao": "node scripts/tintao-saldo-view-auditoria.mjs",
     "compras:atualizar-consistencia": "node scripts/audit-consistencia-valor-tela.mjs --apply",
     "auditar:cartao-conta": "node scripts/auditar-cartao-conta-pdv.mjs",
     "check:pci-entity": "node scripts/check-pedido-compra-item-entity.mjs",
