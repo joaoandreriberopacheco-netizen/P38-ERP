@@ -1,12 +1,19 @@
 /**
  * Motor JS alinhado à view SQL `pedido_compra_saldo_a_embarcar_v` (migration 094).
  *
- * Usar em scripts e, na Fase UI-2, na lista "Saldo a embarcar".
- * Não substitui ainda o card virtual de Necessidade (legado).
+ * Fonte única para KPI "falta embarcar", aba Saldo e card virtual (substitui órfãos/cascata).
  */
+
+import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
+import { calculateBaseQuantity, getItemCompraExibicaoVitrine } from '@/lib/productUnits';
+import { getTotalLinhaPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
+import { roundToTwoDecimals } from '@/lib/financialUtils';
 
 /** Tolerância numérica — mesma ordem de grandeza que a view SQL (0.009). */
 export const SALDO_EMBARQUE_EPS = 0.009;
+
+export const SALDO_EMBARQUE_DISPLAY_STATUS = 'Saldo a embarcar';
+export const SALDO_EMBARQUE_TIPO = 'SaldoEmbarque';
 
 function n(v) {
   return Number(v) || 0;
@@ -18,6 +25,26 @@ export function isEmbarqueReal(embarque) {
 
 export function isNecessidadeEmbarque(embarque) {
   return !isEmbarqueReal(embarque);
+}
+
+export function isSaldoEmbarqueRenderizado(embarque) {
+  if (!embarque) return false;
+  if (embarque?.tipo === SALDO_EMBARQUE_TIPO) return true;
+  return String(embarque?.id || '').startsWith('virtual-saldo-');
+}
+
+/** Produtos já registados em embarque tipo Necessidade (pós-recepção) — evita dupla contagem no virtual. */
+export function produtosIdsComSaldoPosRecepcaoBd(embarques = []) {
+  const ids = new Set();
+  (embarques || [])
+    .filter((emb) => isNecessidadeEmbarque(emb) && !isSaldoEmbarqueRenderizado(emb))
+    .forEach((emb) => {
+      getEmbarqueItensLinhas(emb).forEach((linha) => {
+        const q = n(linha.quantidade_embarcada ?? linha.quantidade_embarcada_comercial);
+        if (q > SALDO_EMBARQUE_EPS && linha?.produto_id) ids.add(linha.produto_id);
+      });
+    });
+  return ids;
 }
 
 /**
@@ -155,4 +182,103 @@ export function agruparFaltaPorPedido(linhasComFalta = []) {
     byPedido[key].soma_falta += n(l.falta_operacional);
   });
   return Object.values(byPedido);
+}
+
+function mapLinhaSaldoParaItemEmbarque(pedido, linhaSaldo, produtosMap = {}) {
+  const item = (pedido?.itens || []).find((i) => i.produto_id === linhaSaldo.produto_id) || {};
+  const produto = produtosMap[linhaSaldo.produto_id] || null;
+  const exib = getItemCompraExibicaoVitrine(item, produto);
+  const falta = n(linhaSaldo.falta_operacional);
+
+  return {
+    produto_id: linhaSaldo.produto_id,
+    produto_nome: linhaSaldo.produto_nome || item.produto_nome,
+    quantidade_pedida: exib.quantidade,
+    quantidade_embarcada: falta,
+    quantidade_embarcada_apresentacao: falta,
+    quantidade_embarcada_comercial: falta,
+    quantidade_embarcada_base: calculateBaseQuantity(falta, exib.fator_conversao),
+    quantidade_base: calculateBaseQuantity(falta, exib.fator_conversao),
+    quantidade_recebida: 0,
+    fator_conversao: exib.fator_conversao,
+    fator_apresentacao: exib.fator_conversao,
+    unidade_apresentacao: exib.unidade_medida,
+    unidade_medida: exib.unidade_medida || linhaSaldo.unidade_sigla || 'UN',
+  };
+}
+
+/**
+ * Embarque virtual único por pedido — falta operacional sem cascata ETA.
+ * Exclui produtos já cobertos por registo Necessidade no BD.
+ */
+export function buildEmbarqueVirtualSaldoEmbarque(
+  pedido,
+  embarquesDoPedido = [],
+  produtosMap = {},
+  options = {},
+) {
+  if (String(pedido?.status || '').trim() === 'Concluído') return null;
+
+  const excluirProdutos = options.excluirProdutosIds || produtosIdsComSaldoPosRecepcaoBd(embarquesDoPedido);
+  const linhas = filtrarLinhasComFaltaOperacional(
+    calcularSaldoEmbarquePorLinha(pedido, embarquesDoPedido),
+  ).filter((l) => !excluirProdutos.has(l.produto_id));
+
+  if (!linhas.length) return null;
+
+  const itensPendentes = linhas.map((l) => mapLinhaSaldoParaItemEmbarque(pedido, l, produtosMap));
+
+  return {
+    id: `virtual-saldo-${pedido.id}`,
+    pedido_compra_id: pedido.id,
+    numero: `${pedido.numero || 'PC'}-SAL`,
+    tipo: SALDO_EMBARQUE_TIPO,
+    status: 'Pendente',
+    status_recebimento: 'Pendente',
+    observacoes: 'Saldo a embarcar — parte do pedido ainda não colocada em viagem real.',
+    _linhas: itensPendentes,
+    _itens_fonte: 'saldo_operacional',
+    created_date: new Date().toISOString(),
+  };
+}
+
+/** Valor proporcional das linhas com falta operacional. */
+export function calcValorSaldoEmbarqueLinhas(pedido, linhasSaldo = [], produtosMap = {}) {
+  return roundToTwoDecimals(
+    (linhasSaldo || []).reduce((acc, linha) => {
+      const item = (pedido?.itens || []).find((i) => i.produto_id === linha.produto_id) || {};
+      const pedida = n(item.quantidade ?? item.quantidade_comercial);
+      const total = getTotalLinhaPedidoCompra(item);
+      const falta = n(linha.falta_operacional);
+      if (!pedida || !falta) return acc;
+      return acc + (falta / pedida) * total;
+    }, 0),
+  );
+}
+
+/** Display items para cards de saldo (lista / consulta / PDF). */
+export function buildDisplayItensSaldoEmbarque(pedido, linhasSaldo = [], produtosMap = {}) {
+  return (linhasSaldo || []).map((linha) => {
+    const item = (pedido?.itens || []).find((i) => i.produto_id === linha.produto_id) || {};
+    const produto = produtosMap[linha.produto_id] || null;
+    const exib = getItemCompraExibicaoVitrine(item, produto);
+    const falta = n(linha.falta_operacional);
+    const totalLinha = getTotalLinhaPedidoCompra(item);
+    const pedida = n(item.quantidade ?? item.quantidade_comercial);
+    const valor = pedida > 0 ? roundToTwoDecimals((falta / pedida) * totalLinha) : 0;
+
+    return {
+      produto_id: linha.produto_id,
+      produto_nome: linha.produto_nome || item.produto_nome,
+      quantidade: falta,
+      quantidade_embarcada: falta,
+      quantidade_pedida: exib.quantidade,
+      quantidade_base: calculateBaseQuantity(falta, exib.fator_conversao),
+      fator_conversao: exib.fator_conversao,
+      unidade_medida: exib.unidade_medida || linha.unidade_sigla || 'UN',
+      total: valor,
+      valor_total_item: valor,
+      preco_unitario: falta > 0 ? roundToTwoDecimals(valor / falta) : exib.preco_unitario,
+    };
+  });
 }

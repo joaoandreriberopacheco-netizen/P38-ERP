@@ -4,9 +4,11 @@ import { dataHoje } from '@/components/utils/dateUtils';
 import { normalizeItemCompraParaExibicao, custoApresentacaoParaFator1 } from '@/lib/productUnits';
 import { base44 } from '@/api/base44Client';
 import { gerarConsultaComprasHtmlPdf } from '@/lib/consultaComprasHtmlExport';
+import { gerarRelatorioSaldoEmbarquePdf } from '@/lib/comprasRelatorioSaldoEmbarque';
 
 const VERSOES_RELATORIO_COM_ANEXOS = new Set(['expandida_com_anexos', 'expandida_com_anexos_a4']);
 const VERSOES_HTML_CONSULTA = new Set(['expandida_mobile', 'expandida_mobile_claro']);
+const VERSAO_SALDO_EMBARQUE = 'saldo_a_embarcar';
 
 /** Quatro formatos canónicos — mobile consulta via HTML (mesmos componentes da tela). */
 export const COMPRAS_RELATORIOS = [
@@ -33,6 +35,12 @@ export const COMPRAS_RELATORIOS = [
     label: 'PDF anexos (mobile)',
     icon: 'files',
     title: 'Minuta mobile + comprovantes embutidos por pedido',
+  },
+  {
+    version: VERSAO_SALDO_EMBARQUE,
+    label: 'PDF saldo a embarcar',
+    icon: 'list',
+    title: 'Falta operacional por pedido (exclui trânsito)',
   },
 ];
 
@@ -162,6 +170,19 @@ export async function gerarComprasRelatorioPdf({
   groupBy = 'eta_transportadora',
   sortOrder = 'asc',
 }) {
+  if (version === VERSAO_SALDO_EMBARQUE) {
+    const cardsSaldo = (pedidos || []).filter((p) => p._is_saldo_embarcar || p._consulta_papel === 'saldo_a_embarcar');
+    const somaFalta = cardsSaldo.reduce((acc, c) => acc + Number(c._quantidade_falta_operacional ?? c._quantidade_pendente ?? 0), 0);
+    const totalValor = cardsSaldo.reduce((acc, c) => acc + Number(c._display_valor ?? 0), 0);
+    await gerarRelatorioSaldoEmbarquePdf({
+      cards: cardsSaldo,
+      filtrosDesc,
+      kpis: { ...kpis, somaFaltaOperacional: somaFalta, totalValorSaldo: totalValor },
+      onProgress,
+    });
+    return;
+  }
+
   if (VERSOES_HTML_CONSULTA.has(version)) {
     onProgress?.('Carregando produtos...');
     const ids = coletarProdutoIds([pedidos, grupos]);

@@ -13,7 +13,6 @@ import {
 } from '@/lib/embarqueLogisticaHelpers';
 import { getEmbarqueDataRecebimento } from '@/lib/embarqueRecebimentoDate';
 import {
-  buildEmbarqueVirtualNecessidade,
   buildMapaLiberacaoCascataNecessidade,
   embarqueExcluidoDeNecessidade,
   embarqueNecessidadeTemItensPendentes,
@@ -22,6 +21,17 @@ import {
   pedidoPermiteCardNecessidade,
   quantidadePendenteNecessidadePedido,
 } from '@/lib/pedidoCompraNecessidade';
+import {
+  SALDO_EMBARQUE_DISPLAY_STATUS,
+  buildDisplayItensSaldoEmbarque,
+  buildEmbarqueVirtualSaldoEmbarque,
+  calcularSaldoEmbarquePorLinha,
+  calcValorSaldoEmbarqueLinhas,
+  filtrarLinhasComFaltaOperacional,
+  isSaldoEmbarqueRenderizado,
+  produtosIdsComSaldoPosRecepcaoBd,
+  resumirSaldoEmbarquePedido,
+} from '@/lib/pedidoCompraSaldoEmbarque';
 import { calcValorEmbarqueCard, calcValorEmbarcadoPedido, resolveValorLinhaEmbarqueProporcional } from '@/lib/embarqueValorFinanceiro';
 import { resolveEmbarqueQuantidadeBase, resolveEmbarqueQuantidadeComercial } from '@/lib/embarqueQuantityResolve';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
@@ -92,7 +102,12 @@ export function getBorrowedStatus(pedido, embarque, produtosMap = {}, embarquesD
     ? quantidadePendenteNecessidadePedido(pedido, embarquesDoPedido, produtosMap)
     : 0;
   const ehNecessidade = isNecessidadeRenderizada(embarque);
+  const ehSaldoEmbarque = isSaldoEmbarqueRenderizado(embarque);
   const precisaPreenchimento = ehNecessidade && !temDespachoVinculado && exibirNecessidade && quantidadePendente > 0;
+
+  if (ehSaldoEmbarque) {
+    return SALDO_EMBARQUE_DISPLAY_STATUS;
+  }
 
   if (!pedidoNaoConcluido(pedido) && !(ehNecessidade && exibirNecessidade && quantidadePendente > 0)) {
     return 'Concluído';
@@ -309,10 +324,12 @@ export function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {})
     const embarquesReais = embarquesDoPedido.filter((embarque) => !isNecessidadeRenderizada(embarque));
     const embarquesNecessidade = embarquesDoPedido.filter((embarque) => isNecessidadeRenderizada(embarque));
     const embarqueOriginal = embarquesReais[0] || null;
-    const exibirNecessidadeCard = pedidoDeveExibirCardNecessidade(pedido, embarquesDoPedido, produtosMap);
     const embarquesNecessidadeComItens = embarquesNecessidade.filter((embarque) => embarqueNecessidadeTemItensPendentes(embarque));
-    const necessidadeVirtual = exibirNecessidadeCard && pedidoPermiteCardNecessidade(pedido) && embarquesNecessidadeComItens.length === 0
-      ? buildEmbarqueVirtualNecessidade(pedido, embarquesDoPedido, produtosMap)
+    const produtosNecessidadeBd = produtosIdsComSaldoPosRecepcaoBd(embarquesNecessidadeComItens);
+    const saldoVirtual = pedidoPermiteCardNecessidade(pedido)
+      ? buildEmbarqueVirtualSaldoEmbarque(pedido, embarquesDoPedido, produtosMap, {
+        excluirProdutosIds: produtosNecessidadeBd,
+      })
       : null;
 
     const embarquesNecessidadeLista = embarquesNecessidade.filter(
@@ -320,7 +337,7 @@ export function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {})
     );
 
     const embarquesRenderizados = embarquesDoPedido.length > 0
-      ? [...embarquesReais, ...embarquesNecessidadeLista, ...(necessidadeVirtual ? [necessidadeVirtual] : [])]
+      ? [...embarquesReais, ...embarquesNecessidadeLista, ...(saldoVirtual ? [saldoVirtual] : [])]
         .filter((embarque) => {
           if (embarqueExcluidoDeNecessidade(pedido, embarque)) {
             return !isNecessidadeRenderizada(embarque);
@@ -347,8 +364,16 @@ export function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {})
     return embarquesRenderizados.map((embarque) => {
       const exibirNecessidade = pedidoDeveExibirCardNecessidade(pedido, embarquesDoPedido, produtosMap);
       const quantidadePendente = quantidadePendenteNecessidadePedido(pedido, embarquesDoPedido, produtosMap);
-      const ehNecessidade = isNecessidadeRenderizada(embarque) && exibirNecessidade && !embarqueExcluidoDeNecessidade(pedido, embarque);
-      const itensDoCard = ehNecessidade
+      const ehSaldoEmbarque = isSaldoEmbarqueRenderizado(embarque);
+      const ehNecessidade = !ehSaldoEmbarque && isNecessidadeRenderizada(embarque) && exibirNecessidade && !embarqueExcluidoDeNecessidade(pedido, embarque);
+      const itensDoCard = ehSaldoEmbarque
+        ? buildDisplayItensSaldoEmbarque(
+          pedido,
+          filtrarLinhasComFaltaOperacional(calcularSaldoEmbarquePorLinha(pedido, embarquesDoPedido))
+            .filter((l) => !produtosNecessidadeBd.has(l.produto_id)),
+          produtosMap,
+        )
+        : ehNecessidade
         ? buildDisplayItensFromEmbarque(pedido, embarque, produtosMap)
         : (hasLinkedItems(embarque)
           ? buildDisplayItensFromEmbarque(pedido, embarque, produtosMap)
@@ -375,21 +400,34 @@ export function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {})
         _display_code: displayCode,
         _display_ordinal: getDisplayEmbarqueOrdinal(embarque, pedido, embarquesDoPedido),
         _display_status: displayStatus,
-        _display_valor: hasLinkedItems(embarque) || ehNecessidade
-          ? getDisplayValorEmbarque(pedido, embarque, produtosMap, embarquesDoPedido)
-          : calcValorTotalPedidoCompra(pedido),
+        _display_valor: ehSaldoEmbarque
+          ? calcValorSaldoEmbarqueLinhas(
+            pedido,
+            filtrarLinhasComFaltaOperacional(calcularSaldoEmbarquePorLinha(pedido, embarquesDoPedido))
+              .filter((l) => !produtosNecessidadeBd.has(l.produto_id)),
+            produtosMap,
+          )
+          : hasLinkedItems(embarque) || ehNecessidade
+            ? getDisplayValorEmbarque(pedido, embarque, produtosMap, embarquesDoPedido)
+            : calcValorTotalPedidoCompra(pedido),
         _display_itens: itensDoCard,
         _display_date: getEmbarqueDisplayDate(pedido),
         _display_fornecedor: pedido.fornecedor_nome || '—',
         _quantidade_pendente: quantidadePendente,
         _is_original: !!embarqueOriginal && embarque.id === embarqueOriginal.id,
         _is_necessidade: ehNecessidade,
+        _is_saldo_embarcar: ehSaldoEmbarque,
+        _consulta_papel: ehSaldoEmbarque ? 'saldo_a_embarcar' : (ehNecessidade ? 'necessidade' : 'despacho'),
         _embarques: embarquesDoPedido,
       };
 
+      const cardFinal = ehSaldoEmbarque
+        ? { ...cardBase, _display_status: SALDO_EMBARQUE_DISPLAY_STATUS }
+        : cardBase;
+
       return {
-        ...cardBase,
-        _display_data_recebimento: getEmbarqueDataRecebimento(cardBase),
+        ...cardFinal,
+        _display_data_recebimento: getEmbarqueDataRecebimento(cardFinal),
       };
     });
   });
@@ -399,6 +437,7 @@ export function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {})
 
 /** Mesma regra do KPI "aprovados e ainda não recebidos" na lista Embarques. */
 export function cardEmbarqueContaEmTransito(card = {}) {
+  if (card._is_saldo_embarcar || card._consulta_papel === 'saldo_a_embarcar') return false;
   const status = card._display_status || '';
   if (status === 'Concluído' || status === 'Rascunho') return false;
 
@@ -422,4 +461,58 @@ export function filtrarCardsEmbarqueEmTransito(cards = []) {
 export function valorPendenteCardEmbarque(card = {}, produtosMap = {}) {
   const itens = buildConsultaItensEmbarque(card, produtosMap, { modo: 'pendente' });
   return calcConsultaValorEmbarque(card, itens, { modo: 'pendente' });
+}
+
+/**
+ * Cards da aba «Saldo a embarcar» — um card por pedido com falta operacional (sem trânsito).
+ */
+export function materializeSaldoEmbarqueCards(pedidos = [], produtosMap = {}) {
+  return (pedidos || []).flatMap((pedido) => {
+    const embarquesDoPedido = pedido._embarques || [];
+    const linhasSaldo = filtrarLinhasComFaltaOperacional(
+      calcularSaldoEmbarquePorLinha(pedido, embarquesDoPedido),
+    );
+    if (!linhasSaldo.length) return [];
+
+    const resumo = resumirSaldoEmbarquePedido(linhasSaldo);
+    const embarque = buildEmbarqueVirtualSaldoEmbarque(pedido, embarquesDoPedido, produtosMap, {
+      excluirProdutosIds: new Set(),
+    }) || {
+      id: `virtual-saldo-${pedido.id}`,
+      pedido_compra_id: pedido.id,
+      numero: `${pedido.numero || 'PC'}-SAL`,
+      tipo: 'SaldoEmbarque',
+      status: 'Pendente',
+      status_recebimento: 'Pendente',
+      observacoes: 'Saldo a embarcar',
+      _linhas: [],
+      created_date: pedido.created_date,
+    };
+
+    const displayItens = buildDisplayItensSaldoEmbarque(pedido, linhasSaldo, produtosMap);
+    const displayCode = pedido.numero || embarque.numero;
+    const displayValor = calcValorSaldoEmbarqueLinhas(pedido, linhasSaldo, produtosMap);
+
+    return [{
+      ...pedido,
+      _virtual_key: `${pedido.id}_saldo_embarcar`,
+      _embarque: embarque,
+      _display_code: displayCode,
+      _display_ordinal: 'Saldo',
+      _display_status: SALDO_EMBARQUE_DISPLAY_STATUS,
+      _display_valor: displayValor,
+      _display_itens: displayItens,
+      _display_date: getEmbarqueDisplayDate(pedido),
+      _display_fornecedor: pedido.fornecedor_nome || '—',
+      _quantidade_pendente: resumo.soma_falta_operacional,
+      _quantidade_falta_operacional: resumo.soma_falta_operacional,
+      _saldo_linhas: linhasSaldo,
+      _is_original: false,
+      _is_necessidade: false,
+      _is_saldo_embarcar: true,
+      _consulta_papel: 'saldo_a_embarcar',
+      _embarques: embarquesDoPedido,
+      _display_data_recebimento: getEmbarqueDataRecebimento({ ...pedido, _embarque: embarque }),
+    }];
+  });
 }

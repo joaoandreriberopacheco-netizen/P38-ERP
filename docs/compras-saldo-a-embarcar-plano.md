@@ -133,35 +133,25 @@ Escolher **uma** opção (decidir na implementação):
 - Migrar `Necessidade` → entidade própria (ex. `pedido_compra_saldo_pendente`).
 - `embarque` fica **só** viagens reais.
 
-### Fase UI-1 — Motor paralelo (em curso)
+### Fase UI-1 — Motor paralelo ✅
 
 - [`src/lib/pedidoCompraSaldoEmbarque.js`](../src/lib/pedidoCompraSaldoEmbarque.js) — mesma fórmula que a view.
-- Não altera ecrã actual; usado por scripts e próximas telas.
 
-### Fase UI-2 — Interface Embarques
+### Fase UI-2 — Interface Embarques ✅
 
-- Novo `_consulta_papel`: `'embarque'` | `'saldo_a_embarcar'`.
-- Renomear card virtual → **“Saldo a embarcar”** (não “Necessidade”).
-- Filtro + KPI **“Falta embarcar”** usando `falta_operacional`.
-- Manter filtros “Necessidade” / “Aguardando” em paralelo (deprecar depois).
-- **Desligar cascata ETA** só no modo saldo (mantém no legado se necessário).
+- Aba **Saldo a embarcar** em `PedidosCompra.jsx` (terceira tab).
+- KPI: pedidos com falta · unidades · valor (exclui trânsito).
+- Filtro de status **Saldo a embarcar** em `comprasEmbarquesPalette.js`.
+- `_consulta_papel: 'saldo_a_embarcar'`.
 
-Ficheiros principais:
+### Fase UI-3 — Relatório ✅
 
-- `src/lib/comprasEmbarqueCards.js`
-- `src/pages/PedidosCompra.jsx`
-- `src/lib/comprasEmbarquesPalette.js`
+- PDF **Saldo a embarcar** no `ComprasRelatoriosMenu` (`comprasRelatorioSaldoEmbarque.js`).
 
-### Fase UI-3 — Relatório
+### Fase UI-4 — Pós-recepção ✅
 
-- PDF “Saldo a embarcar” no menu de relatórios.
-- Unificar `buildConsultaItensEmbarque` com `_display_itens` para cards saldo.
-- Corrigir conversão cx / m² (uma fonte por linha).
-
-### Fase UI-4 — Pós-recepção
-
-- Tratar `Necessidade` gravada (AB6) **sem** dupla contagem com virtual.
-- Recepção continua a criar registo — UI mostra como saldo, não como “embarque”.
+- Card virtual substituído por `buildEmbarqueVirtualSaldoEmbarque` (`falta_operacional`, sem cascata).
+- Produtos já em `Necessidade` BD excluídos do virtual (sem dupla contagem AB6).
 
 ---
 

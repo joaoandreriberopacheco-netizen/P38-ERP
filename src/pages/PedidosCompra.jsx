@@ -33,7 +33,7 @@ import {
 } from '@/lib/pedidoCompraNecessidade';
 import { compareEmbarquesConsulta, enrichEmbarqueParaConsulta, buildConsultaItensPendentes, calcConsultaValorEmbarque, buildGruposConsultaEmbarques } from '@/lib/consultaComprasEmbarques';
 import { calcValorEmbarqueCard, calcValorEmbarcadoPedido } from '@/lib/embarqueValorFinanceiro';
-import { pedidoNaoConcluido } from '@/lib/comprasEmbarqueCards';
+import { pedidoNaoConcluido, materializeSaldoEmbarqueCards } from '@/lib/comprasEmbarqueCards';
 import {
   cardEmbarqueMatchStatusFiltro,
   COMPRAS_STATUS_FILTRO_AGUARDANDO_PGTO,
@@ -54,7 +54,7 @@ import EnvioFinanceiroLoteDialog from '@/components/compras/EnvioFinanceiroLoteD
 import AtualizarPrecosFiltradosDialog from '@/components/compras/AtualizarPrecosFiltradosDialog';
 import PedidosCompraOrganizer from '@/components/compras/PedidosCompraOrganizer';
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
-import { Package, Receipt } from 'lucide-react';
+import { Package, Receipt, ClipboardList } from 'lucide-react';
 import {
   COMPRAS_VIEW_TAB_ACTIVE,
   COMPRAS_VIEW_TAB_BTN,
@@ -113,6 +113,7 @@ const STATUS_EMBARQUE_VIRTUAIS = [
   'Despachado',
   'Concluído',
   'Pendente',
+  'Saldo a embarcar',
 ];
 
 const normalizeStatusFiltro = (status) => [normalizeComprasStatusFiltroCodigo(status)];
@@ -220,34 +221,31 @@ const compareGruposPedidosCompra = (a, b, sortOrder, groupBy) => {
 };
 
 function ComprasViewTabsInline({ activeView, onSelect, dataTour }) {
+  const tabs = [
+    { id: 'embarques', label: 'Embarques', icon: Package, tour: 'embarques-tabs' },
+    { id: 'saldo', label: 'Saldo a embarcar', icon: ClipboardList, tour: 'saldo-tabs' },
+    { id: 'consulta', label: 'Consulta', icon: Receipt, tour: 'consulta-tabs' },
+  ];
+
   return (
     <div className={COMPRAS_VIEW_TAB_GROUP} data-tour={dataTour}>
-      <button
-        type="button"
-        className={cn(
-          COMPRAS_VIEW_TAB_BTN,
-          activeView === 'embarques' ? COMPRAS_VIEW_TAB_ACTIVE : COMPRAS_VIEW_TAB_IDLE,
-        )}
-        onClick={() => onSelect('embarques')}
-        aria-label="Embarques"
-        aria-pressed={activeView === 'embarques'}
-        data-pulse-sensor="pedidos-compra.tab-embarques"
-      >
-        <Package className="h-4 w-4" />
-      </button>
-      <button
-        type="button"
-        className={cn(
-          COMPRAS_VIEW_TAB_BTN,
-          activeView === 'consulta' ? COMPRAS_VIEW_TAB_ACTIVE : COMPRAS_VIEW_TAB_IDLE,
-        )}
-        onClick={() => onSelect('consulta')}
-        aria-label="Consulta de compras"
-        aria-pressed={activeView === 'consulta'}
-        data-pulse-sensor="pedidos-compra.tab-consulta"
-      >
-        <Receipt className="h-4 w-4" />
-      </button>
+      {tabs.map(({ id, label, icon: Icon, tour }) => (
+        <button
+          key={id}
+          type="button"
+          className={cn(
+            COMPRAS_VIEW_TAB_BTN,
+            activeView === id ? COMPRAS_VIEW_TAB_ACTIVE : COMPRAS_VIEW_TAB_IDLE,
+          )}
+          onClick={() => onSelect(id)}
+          aria-label={label}
+          aria-pressed={activeView === id}
+          data-pulse-sensor={`pedidos-compra.tab-${id}`}
+          data-tour={activeView === id ? tour : undefined}
+        >
+          <Icon className="h-4 w-4" />
+        </button>
+      ))}
     </div>
   );
 }
@@ -470,10 +468,22 @@ export default function PedidosCompraPage() {
     ],
   );
 
+  const saldoCards = useMemo(
+    () => materializeSaldoEmbarqueCards(pedidos, produtosMap),
+    [pedidos, produtosMap],
+  );
+
   const filtrados = useMemo(
     () => embarques.filter((card) => passaFiltrosEmbarqueCard(card, filtrosCompras)),
     [embarques, filtrosCompras],
   );
+
+  const saldoFiltrados = useMemo(
+    () => saldoCards.filter((card) => passaFiltrosEmbarqueCard(card, filtrosCompras)),
+    [saldoCards, filtrosCompras],
+  );
+
+  const cardsListaAtiva = activeView === 'saldo' ? saldoFiltrados : filtrados;
 
   const filtradosSemBusca = useMemo(
     () => embarques.filter((card) => passaFiltrosEmbarqueCard(card, { ...filtrosCompras, skipSearch: true })),
@@ -507,8 +517,15 @@ export default function PedidosCompraPage() {
   }, [filtrados]);
 
   const valorTotal = useMemo(() => {
-    return filtrados.reduce((acc, pedido) => acc + (pedido._display_valor ?? pedido.valor_total ?? 0), 0);
-  }, [filtrados]);
+    return cardsListaAtiva.reduce((acc, pedido) => acc + (pedido._display_valor ?? pedido.valor_total ?? 0), 0);
+  }, [cardsListaAtiva]);
+
+  const somaFaltaOperacional = useMemo(() => (
+    saldoFiltrados.reduce(
+      (acc, card) => acc + Number(card._quantidade_falta_operacional ?? card._quantidade_pendente ?? 0),
+      0,
+    )
+  ), [saldoFiltrados]);
 
   const valorPagoNaoEntregue = useMemo(() => {
     return pedidosPagosPendentes.reduce((acc, pedido) => acc + Number(pedido._display_valor || 0), 0);
@@ -558,7 +575,7 @@ export default function PedidosCompraPage() {
 
     const map = {};
 
-    filtrados.forEach((pedido) => {
+    cardsListaAtiva.forEach((pedido) => {
       const embarque = pedido._embarque;
       const meta = getGroupMeta(pedido, embarque);
 
@@ -598,7 +615,7 @@ export default function PedidosCompraPage() {
           _total_eta: pedidosSort.reduce((acc, p) => acc + (p._display_valor || 0), 0)
         };
       });
-  }, [filtrados, groupBy, sortOrder, produtosMap]);
+  }, [cardsListaAtiva, groupBy, sortOrder, produtosMap]);
 
   const hasEtaFilter = etaFiltroModo && (
     (['antes', 'depois'].includes(etaFiltroModo) && etaData) ||
@@ -662,12 +679,25 @@ export default function PedidosCompraPage() {
                   data-tour={activeView === 'consulta' ? 'consulta-header' : 'embarques-header'}
                 >
                   <p className="text-xl font-medium text-foreground font-din-1451">
-                    {activeView === 'consulta' ? 'Consulta de compras' : 'Embarques'}
+                    {activeView === 'consulta'
+                      ? 'Consulta de compras'
+                      : activeView === 'saldo'
+                        ? 'Saldo a embarcar'
+                        : 'Embarques'}
                   </p>
                   {activeView === 'consulta' ? (
                     <p className="text-sm leading-normal text-foreground/85 font-din-1451">
                       {pedidosConsulta.length} embarque{pedidosConsulta.length === 1 ? '' : 's'} no período
                     </p>
+                  ) : activeView === 'saldo' ? (
+                    <>
+                      <p className="text-sm leading-normal text-foreground/85 font-din-1451">
+                        {saldoFiltrados.length} pedido{saldoFiltrados.length === 1 ? '' : 's'} com falta · {somaFaltaOperacional.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} un. · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </p>
+                      <p className={cn('text-sm leading-normal font-din-1451', COMPRAS_KPI_ACCENT)}>
+                        Exclui mercadoria em trânsito — só o que falta colocar em viagem
+                      </p>
+                    </>
                   ) : (
                     <>
                       <p className="text-sm leading-normal text-foreground/85 font-din-1451">{filtrados.length} embarques visíveis · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
@@ -675,7 +705,7 @@ export default function PedidosCompraPage() {
                     </>
                   )}
                 </div>
-                {activeView === 'embarques' || activeView === 'consulta' ? (
+                {activeView === 'embarques' || activeView === 'consulta' || activeView === 'saldo' ? (
                   <div
                     className="flex items-center gap-2 justify-end flex-nowrap max-w-full overflow-x-auto overscroll-x-contain touch-pan-x no-scrollbar"
                     data-tour={activeView === 'consulta' ? 'consulta-relatorios' : 'embarques-operacoes'}
@@ -686,17 +716,19 @@ export default function PedidosCompraPage() {
                       label={activeView === 'consulta' ? 'Tour: Consulta de embarques' : 'Tour: Embarques'}
                     />
                     <ComprasRelatoriosMenu
-                      pedidos={activeView === 'consulta' ? pedidosConsulta : filtrados}
+                      pedidos={activeView === 'consulta' ? pedidosConsulta : activeView === 'saldo' ? saldoFiltrados : filtrados}
                       grupos={activeView === 'consulta' ? gruposConsultaRelatorio : grupos}
                       produtosMap={produtosMap}
                       groupBy={groupBy}
                       sortOrder={sortOrder}
                       filtrosDesc={`Busca: ${search || 'todas'} · Status: ${statusSel.join(', ') || 'todos'} · Tags: ${tagsSel.length || 0} · Período: ${dataInicial || '-'} até ${dataFinal || '-'} · ETA: ${etaFiltroModo || 'todos'}${etaFiltroModo === 'antes' || etaFiltroModo === 'depois' ? ` (${etaData || '-'})` : ''}${etaFiltroModo === 'entre' || etaFiltroModo === 'personalizado' ? ` (${etaInicial || '-'} até ${etaFinal || '-'})` : ''}`}
                       kpis={{
-                        totalPedidos: filtrados.length,
+                        totalPedidos: cardsListaAtiva.length,
                         totalGeral: valorTotal,
-                        totalEmAberto: filtrados.filter(p => ['Rascunho', 'Aguardando Aprovação Financeira', 'Aprovado'].includes(p.status)).reduce((acc, p) => acc + Number(p._display_valor || p.valor_total || 0), 0),
+                        totalEmAberto: cardsListaAtiva.filter(p => ['Rascunho', 'Aguardando Aprovação Financeira', 'Aprovado'].includes(p.status)).reduce((acc, p) => acc + Number(p._display_valor || p.valor_total || 0), 0),
                         totalPagoNaoEntregue: valorPagoNaoEntregue,
+                        somaFaltaOperacional,
+                        totalValorSaldo: activeView === 'saldo' ? valorTotal : undefined,
                       }}
                     />
                     <ComprasOperacoesMenu
@@ -775,8 +807,8 @@ export default function PedidosCompraPage() {
             ref={scrollRef}
             className="flex-1 min-h-0 min-w-0 p38-stage-panel-scroll overflow-x-hidden touch-pan-y px-4 p38-scroll-pad-fab"
           >
-            {activeView === 'embarques' ? (
-              <div data-tour="embarques-lista">
+            {activeView === 'embarques' || activeView === 'saldo' ? (
+              <div data-tour={activeView === 'saldo' ? 'saldo-lista' : 'embarques-lista'}>
                 <ListaPedidosCompra
                   grupos={grupos}
                   loading={loading}
@@ -815,12 +847,25 @@ export default function PedidosCompraPage() {
           data-tour={activeView === 'consulta' ? 'consulta-header' : 'embarques-header'}
         >
           <p className="text-xl font-medium text-foreground font-din-1451">
-            {activeView === 'consulta' ? 'Consulta de compras' : 'Embarques'}
+            {activeView === 'consulta'
+              ? 'Consulta de compras'
+              : activeView === 'saldo'
+                ? 'Saldo a embarcar'
+                : 'Embarques'}
           </p>
           {activeView === 'consulta' ? (
             <p className="text-sm leading-normal text-foreground/85 font-din-1451">
               {pedidosConsulta.length} embarque{pedidosConsulta.length === 1 ? '' : 's'} no período
             </p>
+          ) : activeView === 'saldo' ? (
+            <>
+              <p className="text-sm leading-normal text-foreground/85 font-din-1451">
+                {saldoFiltrados.length} pedido{saldoFiltrados.length === 1 ? '' : 's'} com falta · {somaFaltaOperacional.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} un. · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+              <p className="text-sm leading-normal text-emerald-600 dark:text-emerald-400">
+                Exclui mercadoria em trânsito — só o que falta colocar em viagem
+              </p>
+            </>
           ) : (
             <>
               <p className="text-sm leading-normal text-foreground/85 font-din-1451">{filtrados.length} embarques visíveis · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
@@ -828,7 +873,7 @@ export default function PedidosCompraPage() {
             </>
           )}
         </div>
-        {activeView === 'embarques' || activeView === 'consulta' ? (
+        {activeView === 'embarques' || activeView === 'consulta' || activeView === 'saldo' ? (
           <div
             className="flex items-center gap-2 flex-wrap justify-end"
             data-tour={activeView === 'consulta' ? 'consulta-relatorios' : 'embarques-operacoes'}
@@ -836,20 +881,22 @@ export default function PedidosCompraPage() {
             <P38TourFab
               key={activeView}
               steps={activeView === 'consulta' ? CONSULTA_EMBARQUES_TOUR : EMBARQUES_LISTA_TOUR}
-              label={activeView === 'consulta' ? 'Tour: Consulta de embarques' : 'Tour: Embarques'}
+              label={activeView === 'consulta' ? 'Tour: Consulta de embarques' : activeView === 'saldo' ? 'Tour: Saldo a embarcar' : 'Tour: Embarques'}
             />
             <ComprasRelatoriosMenu
-              pedidos={activeView === 'consulta' ? pedidosConsulta : filtrados}
+              pedidos={activeView === 'consulta' ? pedidosConsulta : activeView === 'saldo' ? saldoFiltrados : filtrados}
               grupos={activeView === 'consulta' ? gruposConsultaRelatorio : grupos}
               produtosMap={produtosMap}
               groupBy={groupBy}
               sortOrder={sortOrder}
               filtrosDesc={`Busca: ${search || 'todas'} · Status: ${statusSel.join(', ') || 'todos'} · Tags: ${tagsSel.length || 0} · Período: ${dataInicial || '-'} até ${dataFinal || '-'} · ETA: ${etaFiltroModo || 'todos'}${etaFiltroModo === 'antes' || etaFiltroModo === 'depois' ? ` (${etaData || '-'})` : ''}${etaFiltroModo === 'entre' || etaFiltroModo === 'personalizado' ? ` (${etaInicial || '-'} até ${etaFinal || '-'})` : ''}`}
               kpis={{
-                totalPedidos: filtrados.length,
+                totalPedidos: cardsListaAtiva.length,
                 totalGeral: valorTotal,
-                totalEmAberto: filtrados.filter(p => ['Rascunho', 'Aguardando Aprovação Financeira', 'Aprovado'].includes(p.status)).reduce((acc, p) => acc + Number(p._display_valor || p.valor_total || 0), 0),
+                totalEmAberto: cardsListaAtiva.filter(p => ['Rascunho', 'Aguardando Aprovação Financeira', 'Aprovado'].includes(p.status)).reduce((acc, p) => acc + Number(p._display_valor || p.valor_total || 0), 0),
                 totalPagoNaoEntregue: valorPagoNaoEntregue,
+                somaFaltaOperacional,
+                totalValorSaldo: activeView === 'saldo' ? valorTotal : undefined,
               }}
             />
             <ComprasOperacoesMenu
@@ -884,6 +931,7 @@ export default function PedidosCompraPage() {
         scrollable
       >
         <GlacialTabsTrigger value="embarques" activeValue={activeView} onSelect={setActiveView} label="Embarques" icon={Package} pulseSensor="pedidos-compra.tab-embarques" />
+        <GlacialTabsTrigger value="saldo" activeValue={activeView} onSelect={setActiveView} label="Saldo a embarcar" icon={ClipboardList} pulseSensor="pedidos-compra.tab-saldo" />
         <GlacialTabsTrigger value="consulta" activeValue={activeView} onSelect={setActiveView} label="Consulta" icon={Receipt} pulseSensor="pedidos-compra.tab-consulta" />
       </GlacialTabsList>
       </div>
@@ -924,8 +972,8 @@ export default function PedidosCompraPage() {
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain px-4 md:px-6 pb-4 md:pb-6">
-      {activeView === 'embarques' ? (
-        <div data-tour="embarques-lista">
+      {activeView === 'embarques' || activeView === 'saldo' ? (
+        <div data-tour={activeView === 'saldo' ? 'saldo-lista' : 'embarques-lista'}>
         <ListaPedidosCompra
           grupos={grupos}
           loading={loading}

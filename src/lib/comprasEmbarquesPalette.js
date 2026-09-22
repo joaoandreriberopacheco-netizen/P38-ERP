@@ -68,6 +68,7 @@ export const COMPRAS_STATUS_CONFIG = {
   Aprovado: COMPRAS_APROVADO_STYLE,
   Pendente: COMPRAS_PENDENTE_STYLE,
   Necessidade: COMPRAS_PENDENTE_STYLE,
+  'Saldo a embarcar': COMPRAS_PENDENTE_STYLE,
   Despachado: COMPRAS_STATUS_STYLE.despachado,
   Concluído: { dot: 'bg-emerald-600 dark:bg-emerald-600/70', pill: 'bg-emerald-50 dark:bg-emerald-900/25 text-emerald-700 dark:text-emerald-500' },
   Cancelado: { dot: 'bg-rose-600 dark:bg-rose-600/70', pill: 'bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-500' },
@@ -84,6 +85,7 @@ export function resolveComprasStatusConfig(displayStatus, fallbackStatus) {
 export function getComprasDisplayStatusLabel(displayStatus) {
   const bucket = normalizeComprasDisplayStatusParaFiltro(displayStatus);
   if (bucket === COMPRAS_STATUS_FILTRO_AGUARDANDO_PGTO) return COMPRAS_STATUS_FILTRO_AGUARDANDO_PGTO;
+  if (bucket === 'Saldo a embarcar') return 'Saldo a embarcar';
   if (bucket === 'Pendente') return 'Pendente';
   return displayStatus;
 }
@@ -108,6 +110,7 @@ export const COMPRAS_STATUS_BORDER = {
   Aprovado: 'border-l-lime-500 dark:border-l-[#636B2F]/55',
   Pendente: 'border-l-[#D96F55] dark:border-l-[#D96F55]',
   Necessidade: 'border-l-[#D96F55] dark:border-l-[#D96F55]',
+  'Saldo a embarcar': 'border-l-[#D96F55] dark:border-l-[#D96F55]',
   Despachado: 'border-l-[#e8b824] dark:border-l-[#4ECDC4]',
   Concluído: 'border-l-emerald-600 dark:border-l-emerald-500',
   Cancelado: 'border-l-rose-600 dark:border-l-rose-500',
@@ -130,7 +133,7 @@ export function comprasAccentFromDisplayStatus(displayStatus) {
   if (status === COMPRAS_STATUS_FILTRO_AGUARDANDO_PGTO || status.includes('Aguard') || status.includes('Aprovação')) {
     return 'warning';
   }
-  if (status === 'Pendente' || status === 'Necessidade') return 'danger';
+  if (status === 'Pendente' || status === 'Necessidade' || status === 'Saldo a embarcar') return 'danger';
   if (status === 'Cancelado') return 'danger';
   return 'muted';
 }
@@ -140,6 +143,7 @@ export function normalizeComprasStatusFiltroCodigo(codigo) {
   const s = String(codigo || '').trim();
   if (!s) return s;
   if (s === 'Necessidade') return 'Pendente';
+  if (s === 'Saldo a embarcar') return 'Saldo a embarcar';
   if (
     s === 'Aguardando Liberação'
     || s === 'Aguardando Liberação Financeira'
@@ -189,6 +193,7 @@ export const COMPRAS_FILTRO_STATUS_PEDIDO = [
   { codigo: 'Despachado', label: 'Despachado', chip: 'bg-[#e8b824]/15 text-[#a8942e] dark:bg-[#4ECDC4]/20 dark:text-[#4ECDC4]' },
   { codigo: 'Concluído', label: 'Concluído', chip: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/25 dark:text-emerald-500' },
   { codigo: 'Pendente', label: 'Pendente', chip: CHIP_PENDENTE },
+  { codigo: 'Saldo a embarcar', label: 'Saldo a embarcar', chip: CHIP_PENDENTE },
 ];
 
 /** Seletor rápido (ícone Layers) — um bucket por status. */

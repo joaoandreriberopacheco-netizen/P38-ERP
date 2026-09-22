@@ -222,6 +222,19 @@ export function calcConsultaValorEmbarque(card, itens, { modo = 'pendente' } = {
 export const calcConsultaValorPendenteEmbarque = calcConsultaValorEmbarque;
 
 export function enrichEmbarqueParaConsulta(card, produtosMap = {}) {
+  const ehSaldo = card._is_saldo_embarcar || card._consulta_papel === 'saldo_a_embarcar';
+  if (ehSaldo) {
+    const itens = Array.isArray(card._display_itens) && card._display_itens.length
+      ? card._display_itens
+      : buildConsultaItensEmbarque(card, produtosMap, { modo: 'pendente' });
+    return {
+      ...card,
+      _consulta_itens: itens,
+      _consulta_valor: Number(card._display_valor) || calcValorEmbarqueCard(card, produtosMap),
+      _consulta_papel: 'saldo_a_embarcar',
+    };
+  }
+
   // Sempre recalcula itens (qtd + valor proporcional ao split) — não reutilizar _display_itens,
   // que traz o total integral da linha do pedido e desalinha do cabeçalho do card.
   const itens = buildConsultaItensEmbarque(card, produtosMap, { modo: 'integral' });
