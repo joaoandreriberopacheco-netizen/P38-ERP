@@ -87,6 +87,12 @@ def filter_copy(kind: str | None) -> tuple[str, str, str]:
             "A4 retrato · {n} produtos compra · {skus} SKUs · sem venda 75 dias · {generated}",
             " · sem venda 75d",
         )
+    if kind == "sem-movimento-45d":
+        return (
+            "P38 — Catálogo 4× (sem estoque · sem mov. 45d)",
+            "A4 retrato · {n} produtos compra · {skus} SKUs · sem mov. 45 dias · {generated}",
+            " · sem mov. 45d",
+        )
     return (
         "P38 — Catálogo 4× (sem estoque)",
         "A4 retrato · {n} produtos compra sem estoque · {skus} SKUs · {generated}",

@@ -51,9 +51,9 @@ function cutoffDiasIso(dias) {
   return d.toISOString();
 }
 
-/** @returns {Promise<{ estoque: Map<string, number>, movimentoRecente: Map<string, boolean>, source: string }>} */
-export async function loadEstoqueEMovimentos({ meses = ZUMBIS_MESES } = {}) {
-  const cutoff = cutoffIso(meses);
+/** @returns {Promise<{ estoque: Map<string, number>, movimentoRecente: Map<string, boolean>, source: string, cutoff?: string }>} */
+export async function loadEstoqueEMovimentos({ meses = ZUMBIS_MESES, dias } = {}) {
+  const cutoff = dias != null ? cutoffDiasIso(dias) : cutoffIso(meses);
 
   if (process.env.DATABASE_URL) {
     const client = new pg.Client({
@@ -71,12 +71,12 @@ export async function loadEstoqueEMovimentos({ meses = ZUMBIS_MESES } = {}) {
             select 1
             from public.movimentacao_estoque m
             where m.produto_id = p.id
-              and m.created_at >= now() - ($1::text || ' months')::interval
+              and m.created_at >= now() - ($1::text || ' ' || $2)::interval
           ) as movimento_recente
         from public.produto p
         where p.ativo = true
         `,
-        [String(meses)],
+        [String(dias ?? meses), dias != null ? 'days' : 'months'],
       );
       await client.end();
 
@@ -88,7 +88,7 @@ export async function loadEstoqueEMovimentos({ meses = ZUMBIS_MESES } = {}) {
         estoque.set(cod, Number(r.estoque_atual) || 0);
         movimentoRecente.set(cod, Boolean(r.movimento_recente));
       }
-      return { estoque, movimentoRecente, source: 'supabase-pg' };
+      return { estoque, movimentoRecente, source: 'supabase-pg', cutoff: cutoff.slice(0, 10) };
     } catch {
       await client.end().catch(() => {});
     }
@@ -143,29 +143,10 @@ export async function loadEstoqueEMovimentos({ meses = ZUMBIS_MESES } = {}) {
       if (idsComMovimento.has(id)) movimentoRecente.set(cod, true);
     }
 
-    return { estoque, movimentoRecente, source: 'supabase-rest' };
+    return { estoque, movimentoRecente, source: 'supabase-rest', cutoff: cutoff.slice(0, 10) };
   }
 
-  if (!fs.existsSync(STOCK_XLSX)) {
-    throw new Error(
-      `Sem ligação Supabase e sem ${STOCK_XLSX}. Correr: npm run export:catalogo-skus`,
-    );
-  }
-
-  const estoque = new Map();
-  const wb = new ExcelJS.Workbook();
-  await wb.xlsx.readFile(STOCK_XLSX);
-  const ws = wb.getWorksheet('Catálogo SKUs');
-  ws.eachRow((row, n) => {
-    if (n === 1) return;
-    const cod = cellStr(row.getCell(2).value).toUpperCase();
-    const est = Number(row.getCell(9).value) || 0;
-    if (cod) estoque.set(cod, est);
-  });
-
-  throw new Error(
-    'Zumbis exigem movimentos dos últimos 4 meses — ligação Supabase indisponível e Excel não inclui movimentação.',
-  );
+  throw new Error('Movimentos exigem ligação Supabase (movimentacao_estoque).');
 }
 
 /** @returns {Promise<{ estoque: Map<string, number>, vendaRecente: Map<string, boolean>, source: string, cutoff: string }>} */
@@ -415,4 +396,58 @@ export async function buildSemEstoqueSemVendaFilter(
   filter.skusMatch = filter.codigos.length;
   filter.skusMatchTotal = skusMatch;
   return filter;
+}
+
+export async function buildSemEstoqueSemMovimentoFilter(
+  catalogPath = CATALOG_XLSX,
+  { dias = 45 } = {},
+) {
+  const { estoque, movimentoRecente, source, cutoff } = await loadEstoqueEMovimentos({ dias });
+  const porProduto = await aggregateCatalogo(catalogPath, (codigo) =>
+    isSkuZumbi(estoque, movimentoRecente, codigo),
+  );
+
+  let skusMatch = 0;
+  for (const info of porProduto.values()) skusMatch += info.match;
+
+  const filter = buildFilterFromBuckets(porProduto, {
+    kind: 'sem-movimento-45d',
+    source,
+    extra: {
+      diasSemMovimento: dias,
+      cutoff,
+      estoqueSkus: estoque.size,
+      produtosCompraMatch: 0,
+      skusMatch: 0,
+    },
+  });
+  filter.produtosCompraMatch = filter.produto_keys.length;
+  filter.skusMatch = filter.codigos.length;
+  filter.skusMatchTotal = skusMatch;
+  return filter;
+}
+
+export async function enrichFilterNomesSupabase(filter) {
+  const key = supabaseKey();
+  if (!key || !filter.codigos?.length) return filter;
+
+  const { createClient } = await import('@supabase/supabase-js');
+  const sb = createClient(supabaseUrl(), key);
+  /** @type {Record<string, string>} */
+  const nomes = {};
+
+  for (let i = 0; i < filter.codigos.length; i += 100) {
+    const batch = filter.codigos.slice(i, i + 100);
+    const { data, error } = await sb
+      .from('produto')
+      .select('codigo_interno, nome')
+      .in('codigo_interno', batch);
+    if (error) throw error;
+    for (const r of data ?? []) {
+      const cod = cellStr(r.codigo_interno).toUpperCase();
+      if (cod) nomes[cod] = cellStr(r.nome);
+    }
+  }
+
+  return { ...filter, nomesSupabase: nomes };
 }
