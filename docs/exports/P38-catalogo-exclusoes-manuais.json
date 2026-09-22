@@ -1,0 +1,22 @@
+{
+  "updatedAt": "2026-09-22",
+  "notas": "Referências pedidas pelo utilizador (formato compacto → codigo_interno)",
+  "codigos": [
+    "0AL-8O3",
+    "7UH-XAA",
+    "JIP-SW4",
+    "P73-7FB",
+    "NS0-M60",
+    "TMG-Y2F",
+    "TJH-S7T"
+  ],
+  "aliases": {
+    "GAL803": "0AL-8O3",
+    "7UHXAA": "7UH-XAA",
+    "JIPSW4": "JIP-SW4",
+    "P738FB": "P73-7FB",
+    "NSOM60": "NS0-M60",
+    "TMGYF2": "TMG-Y2F",
+    "TJHS7T": "TJH-S7T"
+  }
+}
