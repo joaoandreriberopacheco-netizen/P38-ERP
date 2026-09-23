@@ -33,7 +33,7 @@ import {
 } from '@/lib/pedidoCompraNecessidade';
 import { compareEmbarquesConsulta, enrichEmbarqueParaConsulta, buildConsultaItensPendentes, calcConsultaValorEmbarque, buildGruposConsultaEmbarques } from '@/lib/consultaComprasEmbarques';
 import { calcValorEmbarqueCard, calcValorEmbarcadoPedido } from '@/lib/embarqueValorFinanceiro';
-import { pedidoNaoConcluido, materializeSaldoEmbarqueCards } from '@/lib/comprasEmbarqueCards';
+import { pedidoNaoConcluido } from '@/lib/comprasEmbarqueCards';
 import {
   cardEmbarqueMatchStatusFiltro,
   COMPRAS_STATUS_FILTRO_AGUARDANDO_PGTO,
@@ -290,6 +290,17 @@ export default function PedidosCompraPage() {
   const [activeView, setActiveView] = useState('embarques');
   const [showAtualizarPrecosFiltrados, setShowAtualizarPrecosFiltrados] = useState(false);
 
+  /** Aba Saldo = mesma lista Embarques, filtro fixo Pendente (regra única pós-desmembramento). */
+  const handleSelectView = (view) => {
+    setActiveView(view);
+    if (view === 'saldo') {
+      setStatusSel((prev) => {
+        const extras = prev.filter((s) => s === '__nao_concluido__');
+        return ['Pendente', ...extras];
+      });
+    }
+  };
+
   useEffect(() => {
     if (!gestaoQuery.data) return;
     setProdutosMap(gestaoQuery.data.produtosMap ?? {});
@@ -467,19 +478,25 @@ export default function PedidosCompraPage() {
     ],
   );
 
-  const saldoCards = useMemo(
-    () => materializeSaldoEmbarqueCards(pedidos, produtosMap),
-    [pedidos, produtosMap],
-  );
-
   const filtrados = useMemo(
     () => embarques.filter((card) => passaFiltrosEmbarqueCard(card, filtrosCompras)),
     [embarques, filtrosCompras],
   );
 
+  const filtrosSaldoTab = useMemo(
+    () => ({
+      ...filtrosCompras,
+      statusSel: [
+        'Pendente',
+        ...statusSel.filter((s) => s === '__nao_concluido__'),
+      ],
+    }),
+    [filtrosCompras, statusSel],
+  );
+
   const saldoFiltrados = useMemo(
-    () => saldoCards.filter((card) => passaFiltrosEmbarqueCard(card, filtrosCompras)),
-    [saldoCards, filtrosCompras],
+    () => embarques.filter((card) => passaFiltrosEmbarqueCard(card, filtrosSaldoTab)),
+    [embarques, filtrosSaldoTab],
   );
 
   const cardsListaAtiva = activeView === 'saldo' ? saldoFiltrados : filtrados;
@@ -521,7 +538,7 @@ export default function PedidosCompraPage() {
 
   const somaFaltaOperacional = useMemo(() => (
     saldoFiltrados.reduce(
-      (acc, card) => acc + Number(card._quantidade_falta_operacional ?? card._quantidade_pendente ?? 0),
+      (acc, card) => acc + Number(card._quantidade_pendente ?? 0),
       0,
     )
   ), [saldoFiltrados]);
@@ -689,14 +706,9 @@ export default function PedidosCompraPage() {
                       {pedidosConsulta.length} embarque{pedidosConsulta.length === 1 ? '' : 's'} no período
                     </p>
                   ) : activeView === 'saldo' ? (
-                    <>
-                      <p className="text-sm leading-normal text-foreground/85 font-din-1451">
-                        {saldoFiltrados.length} pedido{saldoFiltrados.length === 1 ? '' : 's'} com falta · {somaFaltaOperacional.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} un. · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </p>
-                      <p className={cn('text-sm leading-normal font-din-1451', COMPRAS_KPI_ACCENT)}>
-                        Exclui mercadoria em trânsito — só o que falta colocar em viagem
-                      </p>
-                    </>
+                    <p className="text-sm leading-normal text-foreground/85 font-din-1451">
+                      {saldoFiltrados.length} embarque{saldoFiltrados.length === 1 ? '' : 's'} pendentes · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </p>
                   ) : (
                     <>
                       <p className="text-sm leading-normal text-foreground/85 font-din-1451">{filtrados.length} embarques visíveis · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
@@ -766,7 +778,7 @@ export default function PedidosCompraPage() {
               mobileLeading={(
                 <ComprasViewTabsInline
                   activeView={activeView}
-                  onSelect={setActiveView}
+                  onSelect={handleSelectView}
                   dataTour={activeView === 'consulta' ? 'consulta-tabs' : 'embarques-tabs'}
                 />
               )}
@@ -857,14 +869,9 @@ export default function PedidosCompraPage() {
               {pedidosConsulta.length} embarque{pedidosConsulta.length === 1 ? '' : 's'} no período
             </p>
           ) : activeView === 'saldo' ? (
-            <>
-              <p className="text-sm leading-normal text-foreground/85 font-din-1451">
-                {saldoFiltrados.length} pedido{saldoFiltrados.length === 1 ? '' : 's'} com falta · {somaFaltaOperacional.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} un. · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </p>
-              <p className="text-sm leading-normal text-emerald-600 dark:text-emerald-400">
-                Exclui mercadoria em trânsito — só o que falta colocar em viagem
-              </p>
-            </>
+            <p className="text-sm leading-normal text-foreground/85 font-din-1451">
+              {saldoFiltrados.length} embarque{saldoFiltrados.length === 1 ? '' : 's'} pendentes · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </p>
           ) : (
             <>
               <p className="text-sm leading-normal text-foreground/85 font-din-1451">{filtrados.length} embarques visíveis · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
@@ -929,9 +936,9 @@ export default function PedidosCompraPage() {
         className="w-full"
         scrollable
       >
-        <GlacialTabsTrigger value="embarques" activeValue={activeView} onSelect={setActiveView} label="Embarques" icon={Package} pulseSensor="pedidos-compra.tab-embarques" />
-        <GlacialTabsTrigger value="saldo" activeValue={activeView} onSelect={setActiveView} label="Saldo a embarcar" icon={ClipboardList} pulseSensor="pedidos-compra.tab-saldo" />
-        <GlacialTabsTrigger value="consulta" activeValue={activeView} onSelect={setActiveView} label="Consulta" icon={Receipt} pulseSensor="pedidos-compra.tab-consulta" />
+        <GlacialTabsTrigger value="embarques" activeValue={activeView} onSelect={handleSelectView} label="Embarques" icon={Package} pulseSensor="pedidos-compra.tab-embarques" />
+        <GlacialTabsTrigger value="saldo" activeValue={activeView} onSelect={handleSelectView} label="Saldo a embarcar" icon={ClipboardList} pulseSensor="pedidos-compra.tab-saldo" />
+        <GlacialTabsTrigger value="consulta" activeValue={activeView} onSelect={handleSelectView} label="Consulta" icon={Receipt} pulseSensor="pedidos-compra.tab-consulta" />
       </GlacialTabsList>
       </div>
 
