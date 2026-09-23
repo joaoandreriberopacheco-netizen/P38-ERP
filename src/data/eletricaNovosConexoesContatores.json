@@ -1,0 +1,45 @@
+{
+  "version": "2026-08-28",
+  "nota_estrategia": "Poucas unidades em stock inicial; cadastro completo para hidratar e mix atrair eletricistas/projetos. Conexões dispensam fita isolante na emenda.",
+  "conexoes": {
+    "cadastro_actual": "vazio",
+    "referencia_existente": {
+      "core": "INFRA_ELETRICA",
+      "linha": "MATERIAL ELÉTRICO",
+      "etapa": "3 — Instalações brutas",
+      "sub_bloco": "07 — Infra (fios, eletroduto, conduíte)"
+    },
+    "novos": [
+      { "numero": 1, "produto_compra": "CONECTOR EMENDA RÁPIDA", "eixo_a": "2 VIAS 1,5-2,5 MM²", "eixo_b": "PUSH-IN", "novo_sku": "CONECTOR EMENDA RÁPIDA 2 VIAS 1,5-2,5 MM²", "nota": "Tipo Wago — dispensa fita isolante" },
+      { "numero": 2, "produto_compra": "CONECTOR EMENDA RÁPIDA", "eixo_a": "3 VIAS 1,5-2,5 MM²", "eixo_b": "PUSH-IN", "novo_sku": "CONECTOR EMENDA RÁPIDA 3 VIAS 1,5-2,5 MM²", "nota": "Derivador caixinha — sem fita" },
+      { "numero": 3, "produto_compra": "CONECTOR EMENDA RÁPIDA", "eixo_a": "5 VIAS 1,5-2,5 MM²", "eixo_b": "PUSH-IN", "novo_sku": "CONECTOR EMENDA RÁPIDA 5 VIAS 1,5-2,5 MM²" },
+      { "numero": 4, "produto_compra": "CONECTOR EMENDA RÁPIDA", "eixo_a": "2 VIAS 4-6 MM²", "eixo_b": "PUSH-IN", "novo_sku": "CONECTOR EMENDA RÁPIDA 2 VIAS 4-6 MM²", "nota": "Chuveiro / circuito 6 mm²" },
+      { "numero": 5, "produto_compra": "TERMINAL OLHAL", "eixo_a": "#14", "eixo_b": "1,5 MM²", "novo_sku": "TERMINAL OLHAL #14 1,5 MM²" },
+      { "numero": 6, "produto_compra": "TERMINAL OLHAL", "eixo_a": "#12", "eixo_b": "2,5 MM²", "novo_sku": "TERMINAL OLHAL #12 2,5 MM²" },
+      { "numero": 7, "produto_compra": "TERMINAL OLHAL", "eixo_a": "#10", "eixo_b": "6 MM²", "novo_sku": "TERMINAL OLHAL #10 6 MM²" },
+      { "numero": 8, "produto_compra": "TERMINAL GARFO", "eixo_a": "#14", "eixo_b": "1,5 MM²", "novo_sku": "TERMINAL GARFO #14 1,5 MM²" },
+      { "numero": 9, "produto_compra": "TERMINAL GARFO", "eixo_a": "#12", "eixo_b": "2,5 MM²", "novo_sku": "TERMINAL GARFO #12 2,5 MM²" },
+      { "numero": 10, "produto_compra": "CONECTOR PERFURANTE", "eixo_a": "1,5-6 MM²", "eixo_b": "DERIVADOR", "novo_sku": "CONECTOR PERFURANTE 1,5-6 MM²", "nota": "Derivador linha viva — sem fita" },
+      { "numero": 11, "produto_compra": "BLOCO TERMINAL DIN", "eixo_a": "12 POLOS", "eixo_b": "DIN", "novo_sku": "BLOCO TERMINAL DIN 12 POLOS", "prioridade": "complemento", "nota": "Quadro / borne organizado" }
+    ]
+  },
+  "contatores": {
+    "cadastro_actual": "vazio",
+    "referencia_existente": {
+      "core": "QUADRO_ELETRICO",
+      "linha": "MATERIAL ELÉTRICO",
+      "etapa": "3 — Instalações brutas",
+      "sub_bloco": "08 — Quadro e proteção"
+    },
+    "novos": [
+      { "numero": 1, "polos": "1NA", "amperagem": "9A", "eixo_a": "MODULAR", "eixo_b": "1NA", "novo_sku": "CONTATOR 9A 1NA", "nota": "Chave boia / cargas leves" },
+      { "numero": 2, "polos": "1NA", "amperagem": "12A", "eixo_a": "MODULAR", "eixo_b": "1NA", "novo_sku": "CONTATOR 12A 1NA" },
+      { "numero": 3, "polos": "1NA", "amperagem": "18A", "eixo_a": "MODULAR", "eixo_b": "1NA", "novo_sku": "CONTATOR 18A 1NA", "nota": "Ar-condicionado / bomba mono" },
+      { "numero": 4, "polos": "1NA", "amperagem": "25A", "eixo_a": "MODULAR", "eixo_b": "1NA", "novo_sku": "CONTATOR 25A 1NA" },
+      { "numero": 5, "polos": "TRIFÁSICO", "amperagem": "12A", "eixo_a": "MODULAR", "eixo_b": "TRIFÁSICO", "novo_sku": "CONTATOR TRIFÁSICO 12A", "prioridade": "complemento", "nota": "Infra beyond — poucas unidades" },
+      { "numero": 6, "polos": "TRIFÁSICO", "amperagem": "18A", "eixo_a": "MODULAR", "eixo_b": "TRIFÁSICO", "novo_sku": "CONTATOR TRIFÁSICO 18A", "prioridade": "complemento" },
+      { "numero": 7, "polos": "TRIFÁSICO", "amperagem": "25A", "eixo_a": "MODULAR", "eixo_b": "TRIFÁSICO", "novo_sku": "CONTATOR TRIFÁSICO 25A", "prioridade": "complemento" },
+      { "numero": 8, "polos": "TRIFÁSICO", "amperagem": "32A", "eixo_a": "MODULAR", "eixo_b": "TRIFÁSICO", "novo_sku": "CONTATOR TRIFÁSICO 32A", "prioridade": "complemento", "nota": "Motor bomba / projeto comercial leve" }
+    ]
+  }
+}
