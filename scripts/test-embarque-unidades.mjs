@@ -8,6 +8,7 @@ import {
   resolveEmbarqueQuantidadeBase,
   resolveEmbarqueQuantidadeComercial,
 } from '../src/lib/embarqueQuantityResolve.js';
+import { calcularSaldoEmbarquePorLinha } from '../src/lib/pedidoCompraSaldoEmbarque.js';
 
 const FATOR = 200;
 const toBase = (comercial, fator) => Math.round((Number(comercial) || 0) * (Number(fator) || 1) * 1_000_000) / 1_000_000;
@@ -47,4 +48,36 @@ assert.equal(pct, 80);
 
 assert.equal(toBase(12, FATOR), 2400);
 
-console.log('OK — uniformidade comercial/base validada (espelho, legado, %, estoque).');
+/** Cenário Tintão: pedido M², embarque CX com fator em dados (migration 106). */
+const pedidoSqf = {
+  id: 'p1',
+  numero: 'SQF-TEST',
+  itens: [{
+    id: 'i1',
+    produto_id: 'prod1',
+    produto_nome: 'PISO TEST (2,02 M²/CX)',
+    quantidade_comercial: 60.6,
+    quantidade_base: 60.6,
+    fator_aplicado: 1,
+    unidade_sigla: 'M2',
+  }],
+};
+
+const embarqueCx = {
+  tipo: 'Embarque',
+  _linhas: [{
+    produto_id: 'prod1',
+    quantidade_embarcada_comercial: 30,
+    quantidade_recebida_comercial: 30,
+    quantidade_embarcada_base: 60.6,
+    quantidade_recebida_base: 60.6,
+    fator_aplicado: 2.02,
+    unidade_sigla: 'CX',
+  }],
+};
+
+const linhas = calcularSaldoEmbarquePorLinha(pedidoSqf, [embarqueCx]);
+assert.equal(linhas[0].falta_operacional_base, 0, 'Windsor-like: 30 CX = 60.6 M², saldo 0');
+assert.ok(linhas[0].falta_operacional <= 0.009, 'vitrine também zero');
+
+console.log('OK — uniformidade comercial/base validada (espelho, legado, %, estoque, saldo CX→M²).');

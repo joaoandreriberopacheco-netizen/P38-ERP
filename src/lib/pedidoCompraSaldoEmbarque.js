@@ -1,11 +1,16 @@
 /**
- * Motor JS alinhado à view SQL `pedido_compra_saldo_a_embarcar_v` (migration 094).
+ * Motor JS alinhado à view SQL `pedido_compra_saldo_a_embarcar_v` (migration 103/106).
  *
- * Fonte única para KPI "falta embarcar", aba Saldo e card virtual (substitui órfãos/cascata).
+ * Agrega em BASE (M²); vitrine (CX) só na leitura. Embarque CX usa fator da linha (dados JSONB).
  */
 
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
-import { calculateBaseQuantity, getItemCompraExibicaoVitrine } from '@/lib/productUnits';
+import {
+  calculateBaseQuantity,
+  commercialQuantityFromBase,
+  getItemCompraExibicaoVitrine,
+} from '@/lib/productUnits';
+import { resolveEmbarqueQuantidadeBase } from '@/lib/embarqueQuantityResolve';
 import { getTotalLinhaPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 
@@ -17,6 +22,19 @@ export const SALDO_EMBARQUE_TIPO = 'SaldoEmbarque';
 
 function n(v) {
   return Number(v) || 0;
+}
+
+function pedidaBaseItem(item = {}) {
+  const base = n(item.quantidade_base);
+  if (base > 0) return base;
+  const com = n(item.quantidade ?? item.quantidade_comercial);
+  const fator = n(item.fator_aplicado ?? item.fator_conversao, 1) || 1;
+  return calculateBaseQuantity(com, fator);
+}
+
+function faltaParaVitrine(faltaBase, item = {}, produto = null) {
+  const exib = getItemCompraExibicaoVitrine(item, produto);
+  return commercialQuantityFromBase(faltaBase, exib.fator_conversao, exib.unidade_medida);
 }
 
 export function isEmbarqueReal(embarque) {
@@ -40,7 +58,7 @@ export function produtosIdsComSaldoPosRecepcaoBd(embarques = []) {
     .filter((emb) => isNecessidadeEmbarque(emb) && !isSaldoEmbarqueRenderizado(emb))
     .forEach((emb) => {
       getEmbarqueItensLinhas(emb).forEach((linha) => {
-        const q = n(linha.quantidade_embarcada ?? linha.quantidade_embarcada_comercial);
+        const q = resolveEmbarqueQuantidadeBase(linha, 'embarcada');
         if (q > SALDO_EMBARQUE_EPS && linha?.produto_id) ids.add(linha.produto_id);
       });
     });
@@ -48,7 +66,7 @@ export function produtosIdsComSaldoPosRecepcaoBd(embarques = []) {
 }
 
 /**
- * Agrega quantidades por produto_id a partir de embarques + linhas (espelho SQL ou _linhas).
+ * Agrega quantidades por produto_id em BASE a partir de embarques + linhas.
  * @param {object[]} embarques
  * @param {(emb: object) => object[]} getLinhas
  */
@@ -70,22 +88,22 @@ export function agregarEmbarquesPorProduto(embarques = [], getLinhas) {
 
       if (!bucket[pid]) {
         bucket[pid] = {
-          quantidade_embarcada_real: 0,
-          quantidade_recebida_real: 0,
-          quantidade_em_transito: 0,
-          saldo_pos_recepcao: 0,
+          quantidade_embarcada_real_base: 0,
+          quantidade_recebida_real_base: 0,
+          quantidade_em_transito_base: 0,
+          saldo_pos_recepcao_base: 0,
         };
       }
 
-      const embQ = n(linha.quantidade_embarcada ?? linha.quantidade_embarcada_comercial);
-      const recQ = n(linha.quantidade_recebida ?? linha.quantidade_recebida_comercial);
+      const embBase = resolveEmbarqueQuantidadeBase(linha, 'embarcada');
+      const recBase = resolveEmbarqueQuantidadeBase(linha, 'recebida');
 
       if (real) {
-        bucket[pid].quantidade_embarcada_real += embQ;
-        bucket[pid].quantidade_recebida_real += recQ;
-        bucket[pid].quantidade_em_transito += Math.max(embQ - recQ, 0);
+        bucket[pid].quantidade_embarcada_real_base += embBase;
+        bucket[pid].quantidade_recebida_real_base += recBase;
+        bucket[pid].quantidade_em_transito_base += Math.max(embBase - recBase, 0);
       } else {
-        bucket[pid].saldo_pos_recepcao += Math.max(embQ, 0);
+        bucket[pid].saldo_pos_recepcao_base += Math.max(embBase, 0);
       }
     });
   });
@@ -98,29 +116,38 @@ export function agregarEmbarquesPorProduto(embarques = [], getLinhas) {
  * @param {object} pedido — com itens (legacy mirror ou SQL)
  * @param {object[]} embarques — embarques do pedido hidratados
  * @param {(emb: object) => object[]} [getLinhas]
+ * @param {object} [produtosMap]
  */
-export function calcularSaldoEmbarquePorLinha(pedido, embarques = [], getLinhas) {
+export function calcularSaldoEmbarquePorLinha(pedido, embarques = [], getLinhas, produtosMap = {}) {
   const { reais, necessidade } = agregarEmbarquesPorProduto(embarques, getLinhas);
   const itens = pedido?.itens || [];
 
   return itens.map((item) => {
     const pid = item?.produto_id;
-    const pedida = n(item.quantidade ?? item.quantidade_comercial);
+    const pedidaBase = pedidaBaseItem(item);
     const tr = reais[pid] || {};
     const tn = necessidade[pid] || {};
+    const produto = produtosMap[pid] || null;
 
-    const embarcadaReal = n(tr.quantidade_embarcada_real);
-    const recebidaReal = n(tr.quantidade_recebida_real);
-    const emTransito = n(tr.quantidade_em_transito);
-    const saldoPosRecepcao = n(tn.saldo_pos_recepcao);
+    const embarcadaRealBase = n(tr.quantidade_embarcada_real_base);
+    const recebidaRealBase = n(tr.quantidade_recebida_real_base);
+    const emTransitoBase = n(tr.quantidade_em_transito_base);
+    const saldoPosRecepcaoBase = n(tn.saldo_pos_recepcao_base);
 
-    const saldoNuncaEmbarcado = Math.max(pedida - embarcadaReal, 0);
-    const faltaOperacional = Math.max(pedida - recebidaReal - emTransito, 0);
+    const saldoNuncaEmbarcadoBase = Math.max(pedidaBase - embarcadaRealBase, 0);
+    const faltaOperacionalBase = Math.max(pedidaBase - recebidaRealBase - emTransitoBase, 0);
+
+    const exib = getItemCompraExibicaoVitrine(item, produto);
+    const pedidaVitrine = n(item.quantidade ?? item.quantidade_comercial) || exib.quantidade;
+    const embarcadaReal = commercialQuantityFromBase(embarcadaRealBase, exib.fator_conversao, exib.unidade_medida);
+    const recebidaReal = commercialQuantityFromBase(recebidaRealBase, exib.fator_conversao, exib.unidade_medida);
+    const emTransito = commercialQuantityFromBase(emTransitoBase, exib.fator_conversao, exib.unidade_medida);
+    const faltaOperacional = faltaParaVitrine(faltaOperacionalBase, item, produto);
 
     let diagnostico = 'REVISAR';
-    if (faltaOperacional > SALDO_EMBARQUE_EPS) diagnostico = 'FALTA_EMBARCAR';
-    else if (emTransito > SALDO_EMBARQUE_EPS) diagnostico = 'EM_TRANSITO';
-    else if (pedida - recebidaReal <= SALDO_EMBARQUE_EPS) diagnostico = 'OK';
+    if (faltaOperacionalBase > SALDO_EMBARQUE_EPS) diagnostico = 'FALTA_EMBARCAR';
+    else if (emTransitoBase > SALDO_EMBARQUE_EPS) diagnostico = 'EM_TRANSITO';
+    else if (pedidaBase - recebidaRealBase <= SALDO_EMBARQUE_EPS) diagnostico = 'OK';
 
     return {
       pedido_compra_id: pedido?.id,
@@ -128,22 +155,30 @@ export function calcularSaldoEmbarquePorLinha(pedido, embarques = [], getLinhas)
       pedido_item_id: item?.id,
       produto_id: pid,
       produto_nome: item?.produto_nome,
-      unidade_sigla: item?.unidade_medida || item?.unidade_sigla || 'UN',
-      quantidade_pedida_comercial: pedida,
+      unidade_sigla: exib.unidade_medida || item?.unidade_medida || item?.unidade_sigla || 'UN',
+      quantidade_pedida_comercial: pedidaVitrine,
+      quantidade_pedida_base: pedidaBase,
       quantidade_embarcada_real: embarcadaReal,
+      quantidade_embarcada_real_base: embarcadaRealBase,
       quantidade_recebida_real: recebidaReal,
+      quantidade_recebida_real_base: recebidaRealBase,
       quantidade_em_transito: emTransito,
-      saldo_nunca_embarcado: saldoNuncaEmbarcado,
-      saldo_pos_recepcao: saldoPosRecepcao,
+      quantidade_em_transito_base: emTransitoBase,
+      saldo_nunca_embarcado: faltaParaVitrine(saldoNuncaEmbarcadoBase, item, produto),
+      saldo_nunca_embarcado_base: saldoNuncaEmbarcadoBase,
+      saldo_pos_recepcao: commercialQuantityFromBase(saldoPosRecepcaoBase, exib.fator_conversao, exib.unidade_medida),
+      saldo_pos_recepcao_base: saldoPosRecepcaoBase,
       falta_operacional: faltaOperacional,
+      falta_operacional_base: faltaOperacionalBase,
+      fator_vitrine: exib.fator_conversao,
       diagnostico,
     };
   });
 }
 
-/** Linhas com falta operacional relevante. */
+/** Linhas com falta operacional relevante (base). */
 export function filtrarLinhasComFaltaOperacional(linhas = [], eps = SALDO_EMBARQUE_EPS) {
-  return (linhas || []).filter((l) => n(l.falta_operacional) > eps);
+  return (linhas || []).filter((l) => n(l.falta_operacional_base ?? l.falta_operacional) > eps);
 }
 
 /**
@@ -154,25 +189,33 @@ export function pedidoTemDesmembramentoIniciado(embarques = [], linhasSaldo = []
   const reais = (embarques || []).filter(isEmbarqueReal);
   const despachouAlgo = reais.some((emb) =>
     getEmbarqueItensLinhas(emb).some(
-      (linha) => n(linha.quantidade_embarcada ?? linha.quantidade_embarcada_comercial) > SALDO_EMBARQUE_EPS,
+      (linha) => resolveEmbarqueQuantidadeBase(linha, 'embarcada') > SALDO_EMBARQUE_EPS,
     ),
   );
   if (despachouAlgo) return true;
 
-  return (linhasSaldo || []).some((l) => n(l.quantidade_embarcada_real) > SALDO_EMBARQUE_EPS);
+  return (linhasSaldo || []).some(
+    (l) => n(l.quantidade_embarcada_real_base ?? l.quantidade_embarcada_real) > SALDO_EMBARQUE_EPS,
+  );
 }
 
 /** Resumo agregado por pedido. */
 export function resumirSaldoEmbarquePedido(linhas = []) {
   const comFalta = filtrarLinhasComFaltaOperacional(linhas);
   const soTransito = (linhas || []).filter(
-    (l) => n(l.quantidade_em_transito) > SALDO_EMBARQUE_EPS && n(l.falta_operacional) <= SALDO_EMBARQUE_EPS,
+    (l) =>
+      n(l.quantidade_em_transito_base ?? l.quantidade_em_transito) > SALDO_EMBARQUE_EPS
+      && n(l.falta_operacional_base ?? l.falta_operacional) <= SALDO_EMBARQUE_EPS,
   );
 
   return {
     linhas_com_falta: comFalta.length,
     linhas_so_em_transito: soTransito.length,
     soma_falta_operacional: comFalta.reduce((acc, l) => acc + n(l.falta_operacional), 0),
+    soma_falta_operacional_base: comFalta.reduce(
+      (acc, l) => acc + n(l.falta_operacional_base ?? l.falta_operacional),
+      0,
+    ),
     soma_em_transito: (linhas || []).reduce((acc, l) => acc + n(l.quantidade_em_transito), 0),
     soma_saldo_pos_recepcao: (linhas || []).reduce((acc, l) => acc + n(l.saldo_pos_recepcao), 0),
     linhas_com_falta_detalhe: comFalta,
@@ -205,6 +248,7 @@ function mapLinhaSaldoParaItemEmbarque(pedido, linhaSaldo, produtosMap = {}) {
   const produto = produtosMap[linhaSaldo.produto_id] || null;
   const exib = getItemCompraExibicaoVitrine(item, produto);
   const falta = n(linhaSaldo.falta_operacional);
+  const faltaBase = n(linhaSaldo.falta_operacional_base) || calculateBaseQuantity(falta, exib.fator_conversao);
 
   return {
     produto_id: linhaSaldo.produto_id,
@@ -213,8 +257,8 @@ function mapLinhaSaldoParaItemEmbarque(pedido, linhaSaldo, produtosMap = {}) {
     quantidade_embarcada: falta,
     quantidade_embarcada_apresentacao: falta,
     quantidade_embarcada_comercial: falta,
-    quantidade_embarcada_base: calculateBaseQuantity(falta, exib.fator_conversao),
-    quantidade_base: calculateBaseQuantity(falta, exib.fator_conversao),
+    quantidade_embarcada_base: faltaBase,
+    quantidade_base: faltaBase,
     quantidade_recebida: 0,
     fator_conversao: exib.fator_conversao,
     fator_apresentacao: exib.fator_conversao,
@@ -235,7 +279,7 @@ export function buildEmbarqueVirtualSaldoEmbarque(
 ) {
   if (String(pedido?.status || '').trim() === 'Concluído') return null;
 
-  const linhasSaldo = calcularSaldoEmbarquePorLinha(pedido, embarquesDoPedido);
+  const linhasSaldo = calcularSaldoEmbarquePorLinha(pedido, embarquesDoPedido, undefined, produtosMap);
   if (!pedidoTemDesmembramentoIniciado(embarquesDoPedido, linhasSaldo)) return null;
 
   const excluirProdutos = options.excluirProdutosIds || produtosIdsComSaldoPosRecepcaoBd(embarquesDoPedido);
@@ -266,11 +310,11 @@ export function calcValorSaldoEmbarqueLinhas(pedido, linhasSaldo = [], produtosM
   return roundToTwoDecimals(
     (linhasSaldo || []).reduce((acc, linha) => {
       const item = (pedido?.itens || []).find((i) => i.produto_id === linha.produto_id) || {};
-      const pedida = n(item.quantidade ?? item.quantidade_comercial);
+      const pedidaBase = pedidaBaseItem(item);
       const total = getTotalLinhaPedidoCompra(item);
-      const falta = n(linha.falta_operacional);
-      if (!pedida || !falta) return acc;
-      return acc + (falta / pedida) * total;
+      const faltaBase = n(linha.falta_operacional_base ?? linha.falta_operacional);
+      if (!pedidaBase || !faltaBase) return acc;
+      return acc + (faltaBase / pedidaBase) * total;
     }, 0),
   );
 }
@@ -283,8 +327,9 @@ export function buildDisplayItensSaldoEmbarque(pedido, linhasSaldo = [], produto
     const exib = getItemCompraExibicaoVitrine(item, produto);
     const falta = n(linha.falta_operacional);
     const totalLinha = getTotalLinhaPedidoCompra(item);
-    const pedida = n(item.quantidade ?? item.quantidade_comercial);
-    const valor = pedida > 0 ? roundToTwoDecimals((falta / pedida) * totalLinha) : 0;
+    const pedidaBase = pedidaBaseItem(item);
+    const faltaBase = n(linha.falta_operacional_base);
+    const valor = pedidaBase > 0 ? roundToTwoDecimals((faltaBase / pedidaBase) * totalLinha) : 0;
 
     return {
       produto_id: linha.produto_id,
@@ -292,7 +337,7 @@ export function buildDisplayItensSaldoEmbarque(pedido, linhasSaldo = [], produto
       quantidade: falta,
       quantidade_embarcada: falta,
       quantidade_pedida: exib.quantidade,
-      quantidade_base: calculateBaseQuantity(falta, exib.fator_conversao),
+      quantidade_base: faltaBase || calculateBaseQuantity(falta, exib.fator_conversao),
       fator_conversao: exib.fator_conversao,
       unidade_medida: exib.unidade_medida || linha.unidade_sigla || 'UN',
       total: valor,

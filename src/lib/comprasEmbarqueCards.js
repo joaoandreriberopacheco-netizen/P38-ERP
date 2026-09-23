@@ -369,7 +369,9 @@ export function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {})
       const itensDoCard = ehSaldoEmbarque
         ? buildDisplayItensSaldoEmbarque(
           pedido,
-          filtrarLinhasComFaltaOperacional(calcularSaldoEmbarquePorLinha(pedido, embarquesDoPedido))
+          filtrarLinhasComFaltaOperacional(
+            calcularSaldoEmbarquePorLinha(pedido, embarquesDoPedido, undefined, produtosMap),
+          )
             .filter((l) => !produtosNecessidadeBd.has(l.produto_id)),
           produtosMap,
         )
@@ -403,7 +405,9 @@ export function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {})
         _display_valor: ehSaldoEmbarque
           ? calcValorSaldoEmbarqueLinhas(
             pedido,
-            filtrarLinhasComFaltaOperacional(calcularSaldoEmbarquePorLinha(pedido, embarquesDoPedido))
+            filtrarLinhasComFaltaOperacional(
+            calcularSaldoEmbarquePorLinha(pedido, embarquesDoPedido, undefined, produtosMap),
+          )
               .filter((l) => !produtosNecessidadeBd.has(l.produto_id)),
             produtosMap,
           )
@@ -470,7 +474,7 @@ export function materializeSaldoEmbarqueCards(pedidos = [], produtosMap = {}) {
   return (pedidos || []).flatMap((pedido) => {
     const embarquesDoPedido = pedido._embarques || [];
     const linhasSaldo = filtrarLinhasComFaltaOperacional(
-      calcularSaldoEmbarquePorLinha(pedido, embarquesDoPedido),
+      calcularSaldoEmbarquePorLinha(pedido, embarquesDoPedido, undefined, produtosMap),
     );
     if (!linhasSaldo.length) return [];
 

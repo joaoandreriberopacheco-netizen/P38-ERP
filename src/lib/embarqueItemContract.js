@@ -130,6 +130,31 @@ export function embarqueItemToLegacyMirror(item = {}) {
   };
 }
 
+/** SQL row: base/fator vivem em `dados` JSONB — fundir antes do espelho legado. */
+export function embarqueItemSqlRowToMirror(row = {}) {
+  const dados = row?.dados && typeof row.dados === 'object' ? row.dados : {};
+  const fator =
+    asNumber(dados.fator_aplicado, 0)
+    || asNumber(dados.fator_apresentacao, 0)
+    || asNumber(row.fator_aplicado, 0)
+    || 1;
+  return embarqueItemToLegacyMirror({
+    ...dados,
+    ...row,
+    fator_aplicado: fator,
+    fator_apresentacao: asNumber(dados.fator_apresentacao, 0) || fator,
+    fator_conversao: fator,
+    quantidade_embarcada_base:
+      asNumber(dados.quantidade_embarcada_base, 0) || asNumber(row.quantidade_embarcada_base, 0),
+    quantidade_recebida_base:
+      asNumber(dados.quantidade_recebida_base, 0) || asNumber(row.quantidade_recebida_base, 0),
+    quantidade_pedida_base:
+      asNumber(dados.quantidade_pedida_base, 0) || asNumber(row.quantidade_pedida_base, 0),
+    unidade_apresentacao:
+      dados.unidade_apresentacao || row.unidade_sigla || row.unidade_medida || 'UN',
+  });
+}
+
 export function rebuildEmbarqueItensMirror(items = []) {
-  return (Array.isArray(items) ? items : []).map(embarqueItemToLegacyMirror);
+  return (Array.isArray(items) ? items : []).map(embarqueItemSqlRowToMirror);
 }
