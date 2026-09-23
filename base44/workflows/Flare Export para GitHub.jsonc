@@ -1,0 +1,38 @@
+{
+  "name": "Flare: Export para GitHub",
+  "description": "Exporta a fila de TargetFlare pendentes como JSON para o reposit\u00f3rio GitHub sempre que um alvo \u00e9 criado ou marcado como resolvido. Usa debounce impl\u00edcito \u2014 s\u00f3 dispara quando briefing est\u00e1 preenchido.",
+  "trigger": {
+    "condition": "${ (.trigger.data.briefing != null and .trigger.data.briefing != \"\" and .trigger.data.briefing != [] and .trigger.data.briefing != {}) }",
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create",
+        "update"
+      ],
+      "entity_name": "TargetFlare"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "flare_export_para_github",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "exportFlareToGithub",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "exportFlareToGithub"
+  }
+}

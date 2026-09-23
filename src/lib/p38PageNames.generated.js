@@ -66,6 +66,7 @@ export const P38_PAGE_NAMES = [
   "ModeloCatalogo",
   "MovimentosInventario",
   "Notificacoes",
+  "OAuthConsent",
   "Operacoes",
   "OtimizacaoEstoqueIA",
   "PainelGerente",

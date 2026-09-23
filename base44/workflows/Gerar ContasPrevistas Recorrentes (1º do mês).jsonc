@@ -1,0 +1,44 @@
+{
+  "name": "Gerar ContasPrevistas Recorrentes (1\u00ba do m\u00eas)",
+  "description": "Executa todo dia 1\u00ba do m\u00eas \u00e0s 6 da manh\u00e3 para gerar contas previstas dos pr\u00f3ximos 3 meses",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 6 1 * *",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "gerar_contasprevistas_recorrentes_1_do_m_s",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "gerarContasPrevistasRecorrentes",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "gerarContasPrevistasRecorrentes"
+  }
+}

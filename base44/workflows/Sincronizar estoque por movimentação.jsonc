@@ -1,0 +1,39 @@
+{
+  "name": "Sincronizar estoque por movimenta\u00e7\u00e3o",
+  "description": "Mant\u00e9m o estoque do produto sincronizado automaticamente sempre que houver movimenta\u00e7\u00e3o.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create",
+        "update",
+        "delete"
+      ],
+      "entity_name": "MovimentacaoEstoque"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "sincronizar_estoque_por_movimenta_o",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sincronizarEstoquePorMovimentacao",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "sincronizarEstoquePorMovimentacao"
+  }
+}
