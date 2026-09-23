@@ -94,13 +94,19 @@ const deriveEmbarqueItem = (embarque: any, produto: any, pedidoCompraItem: any, 
   }
   const u = resolvido.unidade;
   const fatorInput = asNumber(input?.fator_aplicado ?? input?.fator_apresentacao, 0);
+  const fatorPedido = asNumber(
+    pedidoCompraItem?.fator_aplicado ?? pedidoCompraItem?.fator_conversao,
+    0,
+  );
   const fatorUnidade = asNumber(u?.fator_conversao, 1) || 1;
   const siglaInput = normalizeSigla(input?.unidade_sigla || input?.unidade_medida || input?.unidade_apresentacao);
   const siglaUnidade = normalizeSigla(u?.sigla);
   const fator =
-    fatorInput > 0 && siglaInput && (siglaInput === siglaUnidade || !resolvido.found)
-      ? fatorInput
-      : fatorUnidade;
+    fatorPedido > 0
+      ? fatorPedido
+      : fatorInput > 0 && siglaInput && (siglaInput === siglaUnidade || !resolvido.found)
+        ? fatorInput
+        : fatorUnidade;
 
   const qPedida = asNumber(input?.quantidade_pedida_comercial ?? input?.quantidade_pedida, 0);
   const qEmbarcada = asNumber(input?.quantidade_embarcada_comercial ?? input?.quantidade_embarcada, 0);
@@ -186,6 +192,20 @@ const fetchPedidoCompraItem = async (base44: any, id: string) => {
   return Array.isArray(list) && list.length > 0 ? list[0] : null;
 };
 
+const fetchPedidoCompraItemByProduto = async (
+  base44: any,
+  pedidoCompraId: string,
+  produtoId: string,
+) => {
+  if (!pedidoCompraId || !produtoId) return null;
+  const list = await base44.asServiceRole.entities.PedidoCompraItem.filter(
+    { pedido_compra_id: pedidoCompraId, produto_id: produtoId },
+    'ordem',
+    1,
+  );
+  return Array.isArray(list) && list.length > 0 ? list[0] : null;
+};
+
 export async function handle(req: Request, base44: Awaited<ReturnType<typeof createP38Client>>): Promise<Response> {
   try {
     // base44 injetado por servePorted
@@ -214,13 +234,17 @@ export async function handle(req: Request, base44: Awaited<ReturnType<typeof cre
       if (!embarqueId) return Response.json({ error: 'embarque_id obrigatorio' }, { status: 400 });
       if (!produtoId) return Response.json({ error: 'produto_id obrigatorio' }, { status: 400 });
 
-      const [embarque, produto, pedidoItem] = await Promise.all([
+      const [embarque, produto, pedidoItemById] = await Promise.all([
         fetchEmbarque(base44, embarqueId),
         fetchProduto(base44, produtoId),
         fetchPedidoCompraItem(base44, String(input?.pedido_compra_item_id || '')),
       ]);
       if (!embarque) return Response.json({ error: 'Embarque nao encontrado' }, { status: 404 });
       if (!produto) return Response.json({ error: 'Produto nao encontrado' }, { status: 404 });
+
+      const pedidoItem =
+        pedidoItemById
+        || (await fetchPedidoCompraItemByProduto(base44, embarque.pedido_compra_id, produtoId));
 
       const derivation = deriveEmbarqueItem(embarque, produto, pedidoItem, input);
       if (!derivation.valid) return Response.json({ error: 'Validacao falhou', details: derivation.errors }, { status: 422 });
@@ -262,7 +286,15 @@ export async function handle(req: Request, base44: Awaited<ReturnType<typeof cre
           erros.push({ index: idx, errors: [`produto_id ${input?.produto_id} nao encontrado`] });
           continue;
         }
-        const pedidoItem = input?.pedido_compra_item_id ? await fetchPedidoCompraItem(base44, String(input.pedido_compra_item_id)) : null;
+        const pedidoItem =
+          (input?.pedido_compra_item_id
+            ? await fetchPedidoCompraItem(base44, String(input.pedido_compra_item_id))
+            : null)
+          || (await fetchPedidoCompraItemByProduto(
+            base44,
+            embarque.pedido_compra_id,
+            String(input?.produto_id),
+          ));
         const d = deriveEmbarqueItem(embarque, produto, pedidoItem, { ...input, ordem: input?.ordem ?? idx });
         if (!d.valid) { erros.push({ index: idx, errors: d.errors }); continue; }
         linhasDerivadas.push(d.item);
