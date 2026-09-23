@@ -50,6 +50,8 @@
     "compras:saldo-por-fornecedor": "node scripts/saldo-pizza-por-fornecedor.mjs",
     "compras:orfaos-por-fornecedor": "node scripts/orfaos-por-fornecedor.mjs",
     "compras:saldo-auditoria-tintao": "node scripts/tintao-saldo-view-auditoria.mjs",
+    "compras:desmembramento:auditoria": "node scripts/backfill-desmembramento-auditoria.mjs",
+    "compras:desmembramento:aplicar": "node scripts/backfill-desmembramento-auditoria.mjs --apply",
     "compras:atualizar-consistencia": "node scripts/audit-consistencia-valor-tela.mjs --apply",
     "auditar:cartao-conta": "node scripts/auditar-cartao-conta-pdv.mjs",
     "check:pci-entity": "node scripts/check-pedido-compra-item-entity.mjs",
