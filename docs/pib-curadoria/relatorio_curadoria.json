@@ -1,0 +1,956 @@
+{
+  "objetivo": "125 -> 50 fotos essenciais (distribuição equilibrada por evento)",
+  "estrategia": "mesma quota por pasta (~3-4), prioridade para fotos não repetidas",
+  "quotas_por_evento": {
+    "ANIVERSÁRIOS ANTERIORES": 4,
+    "BATISMO": 4,
+    "CULTO TEMÁTICO": 4,
+    "CULTOS": 4,
+    "CULTOS DOMÉSTICOS": 4,
+    "EBF": 4,
+    "GINCANA": 4,
+    "JUVENTUDE PIB": 4,
+    "MISSÃES": 4,
+    "PASTORES": 3,
+    "RETIROS": 4,
+    "Templo": 4,
+    "VÔLEI": 3
+  },
+  "pastas": {
+    "ANIVERSÁRIOS ANTERIORES": {
+      "total": 5,
+      "baixadas": 5,
+      "grupos_unicos": 5,
+      "quota": 4,
+      "selecionadas": 4
+    },
+    "BATISMO": {
+      "total": 8,
+      "baixadas": 8,
+      "grupos_unicos": 8,
+      "quota": 4,
+      "selecionadas": 4
+    },
+    "CULTO TEMÁTICO": {
+      "total": 7,
+      "baixadas": 7,
+      "grupos_unicos": 7,
+      "quota": 4,
+      "selecionadas": 4
+    },
+    "CULTOS": {
+      "total": 27,
+      "baixadas": 27,
+      "grupos_unicos": 27,
+      "quota": 4,
+      "selecionadas": 4
+    },
+    "CULTOS DOMÉSTICOS": {
+      "total": 6,
+      "baixadas": 6,
+      "grupos_unicos": 6,
+      "quota": 4,
+      "selecionadas": 4
+    },
+    "EBF": {
+      "total": 8,
+      "baixadas": 8,
+      "grupos_unicos": 8,
+      "quota": 4,
+      "selecionadas": 4
+    },
+    "GINCANA": {
+      "total": 8,
+      "baixadas": 8,
+      "grupos_unicos": 8,
+      "quota": 4,
+      "selecionadas": 4
+    },
+    "JUVENTUDE PIB": {
+      "total": 17,
+      "baixadas": 17,
+      "grupos_unicos": 17,
+      "quota": 4,
+      "selecionadas": 4
+    },
+    "MISSÃES": {
+      "total": 7,
+      "baixadas": 7,
+      "grupos_unicos": 7,
+      "quota": 4,
+      "selecionadas": 4
+    },
+    "PASTORES": {
+      "total": 5,
+      "baixadas": 5,
+      "grupos_unicos": 5,
+      "quota": 3,
+      "selecionadas": 3
+    },
+    "RETIROS": {
+      "total": 12,
+      "baixadas": 12,
+      "grupos_unicos": 12,
+      "quota": 4,
+      "selecionadas": 4
+    },
+    "Templo": {
+      "total": 10,
+      "baixadas": 10,
+      "grupos_unicos": 9,
+      "quota": 4,
+      "selecionadas": 4
+    },
+    "VÔLEI": {
+      "total": 5,
+      "baixadas": 5,
+      "grupos_unicos": 5,
+      "quota": 3,
+      "selecionadas": 3
+    }
+  },
+  "selecionadas": [
+    {
+      "pasta": "ANIVERSÁRIOS ANTERIORES",
+      "nome": "IMG_20140928_214154.jpg",
+      "id": "1ib81FLfdx052qzsIEbMSl34HA82vnn-Y",
+      "link": "https://drive.google.com/file/d/1ib81FLfdx052qzsIEbMSl34HA82vnn-Y/view"
+    },
+    {
+      "pasta": "ANIVERSÁRIOS ANTERIORES",
+      "nome": "IMG_20190927_191139744_BURST001.jpg",
+      "id": "10DJSKXbOrdFtu5cLpkTbgS-zGKgVeDmj",
+      "link": "https://drive.google.com/file/d/10DJSKXbOrdFtu5cLpkTbgS-zGKgVeDmj/view"
+    },
+    {
+      "pasta": "ANIVERSÁRIOS ANTERIORES",
+      "nome": "IMG_20190927_195225849.jpg",
+      "id": "15YIL-GsdNoKu4kVo_ur8KsE-HeDrJC7g",
+      "link": "https://drive.google.com/file/d/15YIL-GsdNoKu4kVo_ur8KsE-HeDrJC7g/view"
+    },
+    {
+      "pasta": "ANIVERSÁRIOS ANTERIORES",
+      "nome": "IMG-20190929-WA0060.jpg",
+      "id": "18JvjKy-zTutC0PkD0XG_mSzyP7766hUV",
+      "link": "https://drive.google.com/file/d/18JvjKy-zTutC0PkD0XG_mSzyP7766hUV/view"
+    },
+    {
+      "pasta": "BATISMO",
+      "nome": "20181217 - Batismo (3).jpg",
+      "id": "1WLXRbjuT8wdGwar0VQy2n4rPudItEqd5",
+      "link": "https://drive.google.com/file/d/1WLXRbjuT8wdGwar0VQy2n4rPudItEqd5/view"
+    },
+    {
+      "pasta": "BATISMO",
+      "nome": "IMG_20191214_095244687_HDR.jpg",
+      "id": "1-kyXBZnJNVu_7mLm_972j_d_w807EIz-",
+      "link": "https://drive.google.com/file/d/1-kyXBZnJNVu_7mLm_972j_d_w807EIz-/view"
+    },
+    {
+      "pasta": "BATISMO",
+      "nome": "IMG-20200521-WA0018.jpg",
+      "id": "19yL3uonQYu43UgqXbYNbRjH4u0k2g1Zu",
+      "link": "https://drive.google.com/file/d/19yL3uonQYu43UgqXbYNbRjH4u0k2g1Zu/view"
+    },
+    {
+      "pasta": "BATISMO",
+      "nome": "IMG-20200521-WA0019.jpg",
+      "id": "1ZYdhEyvR4U75F0bbNacIWKfpcDHD66f6",
+      "link": "https://drive.google.com/file/d/1ZYdhEyvR4U75F0bbNacIWKfpcDHD66f6/view"
+    },
+    {
+      "pasta": "CULTO TEMÁTICO",
+      "nome": "IMG_5763.jpg",
+      "id": "1FC3XJr3n7b_76omIiGaIXo4HyFSohC5S",
+      "link": "https://drive.google.com/file/d/1FC3XJr3n7b_76omIiGaIXo4HyFSohC5S/view"
+    },
+    {
+      "pasta": "CULTO TEMÁTICO",
+      "nome": "IMG_5986.jpg",
+      "id": "1TINN-DOOb4ko2UyI4l-mQPYXO6M5JWWZ",
+      "link": "https://drive.google.com/file/d/1TINN-DOOb4ko2UyI4l-mQPYXO6M5JWWZ/view"
+    },
+    {
+      "pasta": "CULTO TEMÁTICO",
+      "nome": "IMG-20210102-WA0066.jpg",
+      "id": "1E9aNwdfTvhkNuGe2LRpHaeSlWwvWINWh",
+      "link": "https://drive.google.com/file/d/1E9aNwdfTvhkNuGe2LRpHaeSlWwvWINWh/view"
+    },
+    {
+      "pasta": "CULTO TEMÁTICO",
+      "nome": "IMG-20210102-WA0075.jpg",
+      "id": "1McyFfjc_DAIlsZTk5xyi6fOjo0AcJ7Wp",
+      "link": "https://drive.google.com/file/d/1McyFfjc_DAIlsZTk5xyi6fOjo0AcJ7Wp/view"
+    },
+    {
+      "pasta": "CULTOS",
+      "nome": "2009 (3).JPG",
+      "id": "14pdsQHoJFRcB43_s-i0CTV_gxnlIWDTg",
+      "link": "https://drive.google.com/file/d/14pdsQHoJFRcB43_s-i0CTV_gxnlIWDTg/view"
+    },
+    {
+      "pasta": "CULTOS",
+      "nome": "2009 (8).JPG",
+      "id": "1-fkhdtdcdq-KkYs13ii28vdGeUyoI7mE",
+      "link": "https://drive.google.com/file/d/1-fkhdtdcdq-KkYs13ii28vdGeUyoI7mE/view"
+    },
+    {
+      "pasta": "CULTOS",
+      "nome": "IMG_6231.jpg",
+      "id": "1KZJcViqpVNB-NOjZNFRlEtZeXmoQNYL2",
+      "link": "https://drive.google.com/file/d/1KZJcViqpVNB-NOjZNFRlEtZeXmoQNYL2/view"
+    },
+    {
+      "pasta": "CULTOS",
+      "nome": "IMG_20200105_111025080~2.jpg",
+      "id": "1znkoNID59kzXuk_Q5uG-JFXtZOrZ-vsp",
+      "link": "https://drive.google.com/file/d/1znkoNID59kzXuk_Q5uG-JFXtZOrZ-vsp/view"
+    },
+    {
+      "pasta": "CULTOS DOMÉSTICOS",
+      "nome": "2009 atrÃ¡s do templo.JPG",
+      "id": "1GaFv_3rwFuFuM8pP33yS1E1Oo_JGcOa3",
+      "link": "https://drive.google.com/file/d/1GaFv_3rwFuFuM8pP33yS1E1Oo_JGcOa3/view"
+    },
+    {
+      "pasta": "CULTOS DOMÉSTICOS",
+      "nome": "DSC03817.JPG",
+      "id": "1N0Iu_2M8DyBAhjqsPgILSKa9lpwS2i4s",
+      "link": "https://drive.google.com/file/d/1N0Iu_2M8DyBAhjqsPgILSKa9lpwS2i4s/view"
+    },
+    {
+      "pasta": "CULTOS DOMÉSTICOS",
+      "nome": "IMG-20190420-WA0005.jpg",
+      "id": "1Kf7_noi7aAqpkJHctLRzEqbcjiHBNsWq",
+      "link": "https://drive.google.com/file/d/1Kf7_noi7aAqpkJHctLRzEqbcjiHBNsWq/view"
+    },
+    {
+      "pasta": "CULTOS DOMÉSTICOS",
+      "nome": "P2170090.JPG",
+      "id": "12Rgx0ZxViUQbuZjoAPYJ5l1h_F-OYxiE",
+      "link": "https://drive.google.com/file/d/12Rgx0ZxViUQbuZjoAPYJ5l1h_F-OYxiE/view"
+    },
+    {
+      "pasta": "EBF",
+      "nome": "IMG_20151010_164409.jpg",
+      "id": "1e4lw5YU7JE5SxtYqTJ2DRiRQXq_d0kzW",
+      "link": "https://drive.google.com/file/d/1e4lw5YU7JE5SxtYqTJ2DRiRQXq_d0kzW/view"
+    },
+    {
+      "pasta": "EBF",
+      "nome": "IMG-20151011-WA00111.jpg",
+      "id": "1t1v63PAB-dpAPMvi-NvWZIVtOapggAjB",
+      "link": "https://drive.google.com/file/d/1t1v63PAB-dpAPMvi-NvWZIVtOapggAjB/view"
+    },
+    {
+      "pasta": "EBF",
+      "nome": "IMG-20151012-WA0040.jpg",
+      "id": "1f5GP04CDkLp3aueWivQbsDOuqbhUfTcb",
+      "link": "https://drive.google.com/file/d/1f5GP04CDkLp3aueWivQbsDOuqbhUfTcb/view"
+    },
+    {
+      "pasta": "EBF",
+      "nome": "IMG-20190928-WA0015.jpg",
+      "id": "1hKDXxb2Dp6aVNPk9tnHmHrPyrLyPckf-",
+      "link": "https://drive.google.com/file/d/1hKDXxb2Dp6aVNPk9tnHmHrPyrLyPckf-/view"
+    },
+    {
+      "pasta": "GINCANA",
+      "nome": "2018-06-30-22-32-01-089.jpg",
+      "id": "1aM8g9cHDeCI9N02xOk8OZY4q_XCdamdo",
+      "link": "https://drive.google.com/file/d/1aM8g9cHDeCI9N02xOk8OZY4q_XCdamdo/view"
+    },
+    {
+      "pasta": "GINCANA",
+      "nome": "20190915 gincana da EBD (3).jpg",
+      "id": "14I65CBvfHL_TIIud6hLZ9HaE1k4akR8R",
+      "link": "https://drive.google.com/file/d/14I65CBvfHL_TIIud6hLZ9HaE1k4akR8R/view"
+    },
+    {
+      "pasta": "GINCANA",
+      "nome": "IMG-20200201-WA0038.jpg",
+      "id": "1C02H6rt6eZW59eVLbxA1Hhev59VEqaFF",
+      "link": "https://drive.google.com/file/d/1C02H6rt6eZW59eVLbxA1Hhev59VEqaFF/view"
+    },
+    {
+      "pasta": "GINCANA",
+      "nome": "SAM_0492.JPG",
+      "id": "1kW1FgCVLzpBHWGgrSGSHwutET7Txy6tn",
+      "link": "https://drive.google.com/file/d/1kW1FgCVLzpBHWGgrSGSHwutET7Txy6tn/view"
+    },
+    {
+      "pasta": "JUVENTUDE PIB",
+      "nome": "IMG_20140817_101856.jpg",
+      "id": "1O4MkIhQRSy9AR2DWgPw7lEUpjCxRaN3m",
+      "link": "https://drive.google.com/file/d/1O4MkIhQRSy9AR2DWgPw7lEUpjCxRaN3m/view"
+    },
+    {
+      "pasta": "JUVENTUDE PIB",
+      "nome": "IMG_20181208_184245509.jpg",
+      "id": "1LxhBikBklHlMjdVquw4OGq3z-SbTpGKs",
+      "link": "https://drive.google.com/file/d/1LxhBikBklHlMjdVquw4OGq3z-SbTpGKs/view"
+    },
+    {
+      "pasta": "JUVENTUDE PIB",
+      "nome": "IMG-20200225-WA0110.jpg",
+      "id": "1FFRaBoVSgyx6pQCClw8NfKAxkxeW1Tnr",
+      "link": "https://drive.google.com/file/d/1FFRaBoVSgyx6pQCClw8NfKAxkxeW1Tnr/view"
+    },
+    {
+      "pasta": "JUVENTUDE PIB",
+      "nome": "IMG-20200225-WA0115.jpg",
+      "id": "1GxuL1Z6jneaguLbfT5SkP6Lwna-QJHjP",
+      "link": "https://drive.google.com/file/d/1GxuL1Z6jneaguLbfT5SkP6Lwna-QJHjP/view"
+    },
+    {
+      "pasta": "MISSÃES",
+      "nome": "2012.JPG",
+      "id": "1z7RqJjssXt45AHRz-DtHuyylPGk6nHK2",
+      "link": "https://drive.google.com/file/d/1z7RqJjssXt45AHRz-DtHuyylPGk6nHK2/view"
+    },
+    {
+      "pasta": "MISSÃES",
+      "nome": "20150404 Feira MissionÃ¡ria (1).jpg",
+      "id": "1QSVciikrxxRoC3p43ONSnXN0bnZeHE29",
+      "link": "https://drive.google.com/file/d/1QSVciikrxxRoC3p43ONSnXN0bnZeHE29/view"
+    },
+    {
+      "pasta": "MISSÃES",
+      "nome": "20150404 Feira MissionÃ¡ria (2).jpg",
+      "id": "1pxEabR7LVzDIsAbkbfMIqdttsv6vV4l9",
+      "link": "https://drive.google.com/file/d/1pxEabR7LVzDIsAbkbfMIqdttsv6vV4l9/view"
+    },
+    {
+      "pasta": "MISSÃES",
+      "nome": "20150404 Feira MissionÃ¡ria (4).jpg",
+      "id": "1j1Y63l_3BsNVbJqXtCpHERCpymuJKGoa",
+      "link": "https://drive.google.com/file/d/1j1Y63l_3BsNVbJqXtCpHERCpymuJKGoa/view"
+    },
+    {
+      "pasta": "PASTORES",
+      "nome": "20190317 Posse do Pastor Fernando Roque (1).jpg",
+      "id": "1OTBnN-Iokdp92NeKtyI3Kox9aHmKTwOG",
+      "link": "https://drive.google.com/file/d/1OTBnN-Iokdp92NeKtyI3Kox9aHmKTwOG/view"
+    },
+    {
+      "pasta": "PASTORES",
+      "nome": "IMG_20200425_103420973.jpg",
+      "id": "1tmda-RkwfSgVSNDvpA3XOv3u3V2aCT6I",
+      "link": "https://drive.google.com/file/d/1tmda-RkwfSgVSNDvpA3XOv3u3V2aCT6I/view"
+    },
+    {
+      "pasta": "PASTORES",
+      "nome": "IMG-20150617-WA0025.jpg",
+      "id": "170lLUmM3mjUPYuPvc1QhefKNFBrc3EAQ",
+      "link": "https://drive.google.com/file/d/170lLUmM3mjUPYuPvc1QhefKNFBrc3EAQ/view"
+    },
+    {
+      "pasta": "RETIROS",
+      "nome": "2013 Retiro.JPG",
+      "id": "1RMPQl_5-ffwys3egGv87kUG9j2cwKcZR",
+      "link": "https://drive.google.com/file/d/1RMPQl_5-ffwys3egGv87kUG9j2cwKcZR/view"
+    },
+    {
+      "pasta": "RETIROS",
+      "nome": "IMG_20170616_150537743.jpg",
+      "id": "1On52DOstO2bJs_9e6UsZ5HCxh8Oq41z8",
+      "link": "https://drive.google.com/file/d/1On52DOstO2bJs_9e6UsZ5HCxh8Oq41z8/view"
+    },
+    {
+      "pasta": "RETIROS",
+      "nome": "IMG-20170617-WA0117.jpg",
+      "id": "1t_IZH74k3aTmzyySO7OACFiIssySwIpg",
+      "link": "https://drive.google.com/file/d/1t_IZH74k3aTmzyySO7OACFiIssySwIpg/view"
+    },
+    {
+      "pasta": "RETIROS",
+      "nome": "IMG-20200225-WA0112.jpg",
+      "id": "14iFiQkp9_5KqfRn8yCvXf1fvO8zKc2u_",
+      "link": "https://drive.google.com/file/d/14iFiQkp9_5KqfRn8yCvXf1fvO8zKc2u_/view"
+    },
+    {
+      "pasta": "Templo",
+      "nome": "2012 obra (1).JPG",
+      "id": "1QEjE6z_QtBsmAdpq_pWDxGb-wiTzN525",
+      "link": "https://drive.google.com/file/d/1QEjE6z_QtBsmAdpq_pWDxGb-wiTzN525/view"
+    },
+    {
+      "pasta": "Templo",
+      "nome": "IMG_20140830_093855.jpg",
+      "id": "1LFwLaigDZwMWu0MiJ4a1j8vCn2WgMfwy",
+      "link": "https://drive.google.com/file/d/1LFwLaigDZwMWu0MiJ4a1j8vCn2WgMfwy/view"
+    },
+    {
+      "pasta": "Templo",
+      "nome": "IMG_20140928_083916.jpg",
+      "id": "1c_mspqaami60z1C-f-lIAleG2HSwE-T8",
+      "link": "https://drive.google.com/file/d/1c_mspqaami60z1C-f-lIAleG2HSwE-T8/view"
+    },
+    {
+      "pasta": "Templo",
+      "nome": "IMG-20190419-WA0095.jpg",
+      "id": "1R7tMclAmgfZNrj3gEbNNAFMNtB5ErYsA",
+      "link": "https://drive.google.com/file/d/1R7tMclAmgfZNrj3gEbNNAFMNtB5ErYsA/view"
+    },
+    {
+      "pasta": "VÔLEI",
+      "nome": "20191208 torneio de volei (1).jpg",
+      "id": "1vETu6dmcy4DX4VUwTkvdceCFhH3tr8D5",
+      "link": "https://drive.google.com/file/d/1vETu6dmcy4DX4VUwTkvdceCFhH3tr8D5/view"
+    },
+    {
+      "pasta": "VÔLEI",
+      "nome": "DSC03741.JPG",
+      "id": "1E0F3U1BpT86IjiPO6yq5f1MCA9SRUU4a",
+      "link": "https://drive.google.com/file/d/1E0F3U1BpT86IjiPO6yq5f1MCA9SRUU4a/view"
+    },
+    {
+      "pasta": "VÔLEI",
+      "nome": "IMG_20200125_165634714.jpg",
+      "id": "1FINy_sh-iZYEJg05UZss2Q6qWv6ga7Vv",
+      "link": "https://drive.google.com/file/d/1FINy_sh-iZYEJg05UZss2Q6qWv6ga7Vv/view"
+    }
+  ],
+  "removidas": [
+    {
+      "pasta": "ANIVERSÁRIOS ANTERIORES",
+      "nome": "IMG-20190929-WA0029~2.jpg",
+      "id": "16-CbuF8CKRHdEcCzkJ5voaxEqONoYDRI",
+      "link": "https://drive.google.com/file/d/16-CbuF8CKRHdEcCzkJ5voaxEqONoYDRI/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "BATISMO",
+      "nome": "20181217 - Batismo (1).jpg",
+      "id": "16WBgBKeXDTsYfHN3cCj885HlTSjG-PQ0",
+      "link": "https://drive.google.com/file/d/16WBgBKeXDTsYfHN3cCj885HlTSjG-PQ0/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "BATISMO",
+      "nome": "20181217 - Batismo (4).jpg",
+      "id": "1GpmvsCeiQkdOQnv_OvkQ_2JlYrs7s5nk",
+      "link": "https://drive.google.com/file/d/1GpmvsCeiQkdOQnv_OvkQ_2JlYrs7s5nk/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "BATISMO",
+      "nome": "IMG_20191215_195008015_BURST000_COVER_TOP~2.jpg",
+      "id": "13lF9tk1sJf2GSwPrJAMEojPgubTLMinY",
+      "link": "https://drive.google.com/file/d/13lF9tk1sJf2GSwPrJAMEojPgubTLMinY/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "BATISMO",
+      "nome": "IMG-20191214-WA0014.jpg",
+      "id": "1g4BsBBKHIFOzwnkBh_LguDGozTUg6ion",
+      "link": "https://drive.google.com/file/d/1g4BsBBKHIFOzwnkBh_LguDGozTUg6ion/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "CULTO TEMÁTICO",
+      "nome": "IMG_5449(2).jpg",
+      "id": "1OBHgsrwOvUOEgWcMuiZ8sKEe2nur_b6t",
+      "link": "https://drive.google.com/file/d/1OBHgsrwOvUOEgWcMuiZ8sKEe2nur_b6t/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "CULTO TEMÁTICO",
+      "nome": "IMG_6231.jpg",
+      "id": "1KrgdmYg2uYdFmomtdMBanybPRct-2qbu",
+      "link": "https://drive.google.com/file/d/1KrgdmYg2uYdFmomtdMBanybPRct-2qbu/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "CULTO TEMÁTICO",
+      "nome": "IMG-20210102-WA0082.jpg",
+      "id": "1SjRxWgoJN2G0nGrM8PkT_ykDvGnpVlvk",
+      "link": "https://drive.google.com/file/d/1SjRxWgoJN2G0nGrM8PkT_ykDvGnpVlvk/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "CULTOS",
+      "nome": "7 (28).JPG",
+      "id": "1y_uJlfppens9-NIZSGXfjg-_knDC6_tz",
+      "link": "https://drive.google.com/file/d/1y_uJlfppens9-NIZSGXfjg-_knDC6_tz/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "CULTOS",
+      "nome": "19.12 (8).jpg",
+      "id": "1PgmG9e9DKKusjSpOEDrxmytx2inZtTc4",
+      "link": "https://drive.google.com/file/d/1PgmG9e9DKKusjSpOEDrxmytx2inZtTc4/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "CULTOS",
+      "nome": "19.12 (12).jpg",
+      "id": "1-qFNK-kftYA25k-xR73nm4GBSccDe2ag",
+      "link": "https://drive.google.com/file/d/1-qFNK-kftYA25k-xR73nm4GBSccDe2ag/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "CULTOS",
+      "nome": "2009  (1).jpg",
+      "id": "1r2SmBaFf95BFbBqh9NJgDONc6YcyU6Yl",
+      "link": "https://drive.google.com/file/d/1r2SmBaFf95BFbBqh9NJgDONc6YcyU6Yl/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "CULTOS",
+      "nome": "2009  (2).jpg",
+      "id": "1FmuXmjICB6q-DK2Iim93BjO5XFy9K9XK",
+      "link": "https://drive.google.com/file/d/1FmuXmjICB6q-DK2Iim93BjO5XFy9K9XK/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "CULTOS",
+      "nome": "2009  (3).jpg",
+      "id": "1hLhPfcw0tjcXZKxNtW98XdWuU5AVVa07",
+      "link": "https://drive.google.com/file/d/1hLhPfcw0tjcXZKxNtW98XdWuU5AVVa07/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "CULTOS",
+      "nome": "2009 (1).JPG",
+      "id": "1e0I8nekQmnAptSx-9KxNyLmlfia4gHvf",
+      "link": "https://drive.google.com/file/d/1e0I8nekQmnAptSx-9KxNyLmlfia4gHvf/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "CULTOS",
+      "nome": "2009 (2).JPG",
+      "id": "1jftc4AMeP8vCBL46p3i5fpiIHBjzt1r8",
+      "link": "https://drive.google.com/file/d/1jftc4AMeP8vCBL46p3i5fpiIHBjzt1r8/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "CULTOS",
+      "nome": "2009 (4).JPG",
+      "id": "1AooBrU5kOpSaGsoajtnxijLTs8jWcC15",
+      "link": "https://drive.google.com/file/d/1AooBrU5kOpSaGsoajtnxijLTs8jWcC15/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "CULTOS",
+      "nome": "2009 (5).JPG",
+      "id": "1XJwYrAPxx7rZbE4QBJ4nTVIZHO_YbfDw",
+      "link": "https://drive.google.com/file/d/1XJwYrAPxx7rZbE4QBJ4nTVIZHO_YbfDw/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "CULTOS",
+      "nome": "2009 (6).JPG",
+      "id": "1A41ImHoiZpej6XrKVAo2YuvyQFBlyrqt",
+      "link": "https://drive.google.com/file/d/1A41ImHoiZpej6XrKVAo2YuvyQFBlyrqt/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "CULTOS",
+      "nome": "2009 (7).JPG",
+      "id": "1QdILEJhwFfR6i5_56aUr64QrL8qnwHmF",
+      "link": "https://drive.google.com/file/d/1QdILEJhwFfR6i5_56aUr64QrL8qnwHmF/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "CULTOS",
+      "nome": "2019-09-30-06-53-53-556.jpg",
+      "id": "1_SN1MBXfbheU1-IWaEkFsOGNvwG1L7K2",
+      "link": "https://drive.google.com/file/d/1_SN1MBXfbheU1-IWaEkFsOGNvwG1L7K2/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "CULTOS",
+      "nome": "20180930 Anivers PIB.jpg",
+      "id": "1hf9UnE4yHQQNrbQNwB5SumrhNfPwQFzS",
+      "link": "https://drive.google.com/file/d/1hf9UnE4yHQQNrbQNwB5SumrhNfPwQFzS/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "CULTOS",
+      "nome": "20190317 Posse do Pastor Fernando Roque (3).jpg",
+      "id": "1GUghPx1yhofeRpoJeY20FPCvhoVNok-u",
+      "link": "https://drive.google.com/file/d/1GUghPx1yhofeRpoJeY20FPCvhoVNok-u/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "CULTOS",
+      "nome": "20190915 gincana da EBD (1).jpg",
+      "id": "1sS4C64zir1D3RN4gz-HL28GpJIMMecbg",
+      "link": "https://drive.google.com/file/d/1sS4C64zir1D3RN4gz-HL28GpJIMMecbg/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "CULTOS",
+      "nome": "HPIM1956.JPG",
+      "id": "1y8WsFS2PXR3MXRatT2dgBFwbBp63rl_p",
+      "link": "https://drive.google.com/file/d/1y8WsFS2PXR3MXRatT2dgBFwbBp63rl_p/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "CULTOS",
+      "nome": "IMG_20140927_204826.jpg",
+      "id": "1ur5L2ZCrAnCXQGboDMavh8ub2RSVnoYk",
+      "link": "https://drive.google.com/file/d/1ur5L2ZCrAnCXQGboDMavh8ub2RSVnoYk/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "CULTOS",
+      "nome": "IMG_20140928_214154.jpg",
+      "id": "1yR0aLSLLl6DzJuXIdPyualh9QAjtJP23",
+      "link": "https://drive.google.com/file/d/1yR0aLSLLl6DzJuXIdPyualh9QAjtJP23/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "CULTOS",
+      "nome": "IMG-20190419-WA0097.jpg",
+      "id": "11N7HLyliUX3hunxzop475ljjsIWoFjD7",
+      "link": "https://drive.google.com/file/d/11N7HLyliUX3hunxzop475ljjsIWoFjD7/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "CULTOS",
+      "nome": "IMG-20210102-WA0066.jpg",
+      "id": "1cY4iPxCnvoPnKSPeVFX6R_YM5CVnE2UP",
+      "link": "https://drive.google.com/file/d/1cY4iPxCnvoPnKSPeVFX6R_YM5CVnE2UP/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "CULTOS",
+      "nome": "IMG-20210102-WA0075.jpg",
+      "id": "11ocnCuY33e6z4gWmX8mmxOzCnVOI_YNo",
+      "link": "https://drive.google.com/file/d/11ocnCuY33e6z4gWmX8mmxOzCnVOI_YNo/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "CULTOS",
+      "nome": "SCX-6545_20120224_11085201.jpg",
+      "id": "1hnnmyi61J31T2QJu1yXA62zDlS5z8zRW",
+      "link": "https://drive.google.com/file/d/1hnnmyi61J31T2QJu1yXA62zDlS5z8zRW/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "CULTOS DOMÉSTICOS",
+      "nome": "2009 atrÃ¡s do templo 1.JPG",
+      "id": "1md9CuzhJu80kDPp_5sERxQD-f0f60p-l",
+      "link": "https://drive.google.com/file/d/1md9CuzhJu80kDPp_5sERxQD-f0f60p-l/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "CULTOS DOMÉSTICOS",
+      "nome": "20181217 - Batismo (2).jpg",
+      "id": "1sCQLHNq8Ydh7QWHpLYNMcD2Gs3eP9Jqo",
+      "link": "https://drive.google.com/file/d/1sCQLHNq8Ydh7QWHpLYNMcD2Gs3eP9Jqo/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "EBF",
+      "nome": "IMG_20151010_161526.jpg",
+      "id": "1tcNEJOdM0nmfobd8_aPjAJSSALZ7eY-6",
+      "link": "https://drive.google.com/file/d/1tcNEJOdM0nmfobd8_aPjAJSSALZ7eY-6/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "EBF",
+      "nome": "IMG-20180714-WA0014.jpg",
+      "id": "191etng-iHc9KZE7D9pSp27SIjnpyzQJd",
+      "link": "https://drive.google.com/file/d/191etng-iHc9KZE7D9pSp27SIjnpyzQJd/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "EBF",
+      "nome": "IMG-20180716-WA0069.jpg",
+      "id": "1XT62xRd4MNFYn7MuZTUzVh0AsZDDux0B",
+      "link": "https://drive.google.com/file/d/1XT62xRd4MNFYn7MuZTUzVh0AsZDDux0B/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "EBF",
+      "nome": "IMG-20190928-WA0080.jpg",
+      "id": "18o6KQqGmGqkvcN4ou4c6hyvtpGge6L2s",
+      "link": "https://drive.google.com/file/d/18o6KQqGmGqkvcN4ou4c6hyvtpGge6L2s/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "GINCANA",
+      "nome": "20190915 gincana da EBD (1).jpg",
+      "id": "1OQdLZNdKw_6P1_lmApFc9GKcv_n7RmTJ",
+      "link": "https://drive.google.com/file/d/1OQdLZNdKw_6P1_lmApFc9GKcv_n7RmTJ/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "GINCANA",
+      "nome": "20190915 gincana da EBD (2).jpg",
+      "id": "1N3rp6vYnFeTKgHw7bji-4mjhdW9G6IFY",
+      "link": "https://drive.google.com/file/d/1N3rp6vYnFeTKgHw7bji-4mjhdW9G6IFY/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "GINCANA",
+      "nome": "IMG-20200201-WA0052.jpg",
+      "id": "1zm00o3f1B13HIDa0eA1Kuei0YiQUDXs7",
+      "link": "https://drive.google.com/file/d/1zm00o3f1B13HIDa0eA1Kuei0YiQUDXs7/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "GINCANA",
+      "nome": "IMG-20200201-WA0084.jpg",
+      "id": "1SuxvJXPoP88nvg17UkIw5AmT8fjtrX_q",
+      "link": "https://drive.google.com/file/d/1SuxvJXPoP88nvg17UkIw5AmT8fjtrX_q/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "JUVENTUDE PIB",
+      "nome": "IMG_20141227_092611.jpg",
+      "id": "1oW-PRA_BYjVH4Huu8qSin8UuPdgtmlQb",
+      "link": "https://drive.google.com/file/d/1oW-PRA_BYjVH4Huu8qSin8UuPdgtmlQb/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "JUVENTUDE PIB",
+      "nome": "IMG_20141228_132834.jpg",
+      "id": "1mdN8bE_Z3ykUEBVr8tnXX6mQq0SaTIl7",
+      "link": "https://drive.google.com/file/d/1mdN8bE_Z3ykUEBVr8tnXX6mQq0SaTIl7/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "JUVENTUDE PIB",
+      "nome": "IMG_20190609_110305645~2.jpg",
+      "id": "1pZloYhw3zg4fIhF9ojlg_Tdh7dDJXUHD",
+      "link": "https://drive.google.com/file/d/1pZloYhw3zg4fIhF9ojlg_Tdh7dDJXUHD/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "JUVENTUDE PIB",
+      "nome": "IMG_20200314_202752016~2.jpg",
+      "id": "1EzzpwkkO2zhJUT_J6qQeQ11ZWBBx4c63",
+      "link": "https://drive.google.com/file/d/1EzzpwkkO2zhJUT_J6qQeQ11ZWBBx4c63/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "JUVENTUDE PIB",
+      "nome": "IMG-20140402-WA0026.jpg",
+      "id": "1U8ssrwd-ZaCRiHvN-qz7LxO6_5I20UWm",
+      "link": "https://drive.google.com/file/d/1U8ssrwd-ZaCRiHvN-qz7LxO6_5I20UWm/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "JUVENTUDE PIB",
+      "nome": "IMG-20180311-WA0032.jpg",
+      "id": "1_sWyqxLv2k9TSb0QUse5_lWOsBh8f7Yo",
+      "link": "https://drive.google.com/file/d/1_sWyqxLv2k9TSb0QUse5_lWOsBh8f7Yo/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "JUVENTUDE PIB",
+      "nome": "IMG-20190420-WA0002.jpg",
+      "id": "15jda734g0UWvOoF5FnwoSL0nu9KYk10Y",
+      "link": "https://drive.google.com/file/d/15jda734g0UWvOoF5FnwoSL0nu9KYk10Y/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "JUVENTUDE PIB",
+      "nome": "IMG-20190420-WA0004.jpg",
+      "id": "1MzTju0nqYB2e0SY-mvEFTeclh0-v_E1k",
+      "link": "https://drive.google.com/file/d/1MzTju0nqYB2e0SY-mvEFTeclh0-v_E1k/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "JUVENTUDE PIB",
+      "nome": "IMG-20200225-WA0107.jpg",
+      "id": "1uTa6pxxfAwrk67AgL3HL_WQ1Atj3taf3",
+      "link": "https://drive.google.com/file/d/1uTa6pxxfAwrk67AgL3HL_WQ1Atj3taf3/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "JUVENTUDE PIB",
+      "nome": "IMG-20200225-WA0111.jpg",
+      "id": "1GdxwRuy3jDRRhdZZvCiaU1FPPUROjsSZ",
+      "link": "https://drive.google.com/file/d/1GdxwRuy3jDRRhdZZvCiaU1FPPUROjsSZ/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "JUVENTUDE PIB",
+      "nome": "IMG-20200225-WA0114.jpg",
+      "id": "13lyVQsbjaKqLe3dvKfOpOagbZTFUBPPI",
+      "link": "https://drive.google.com/file/d/13lyVQsbjaKqLe3dvKfOpOagbZTFUBPPI/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "JUVENTUDE PIB",
+      "nome": "IMG-20200521-WA0020.jpg",
+      "id": "1x6c4_i4ktxxKiRdSarbC6fPaV562DNDC",
+      "link": "https://drive.google.com/file/d/1x6c4_i4ktxxKiRdSarbC6fPaV562DNDC/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "JUVENTUDE PIB",
+      "nome": "IMG-20210114-WA0061.jpg",
+      "id": "1B8c_QIF4tLUdJJsLowbchH68uHtphTWt",
+      "link": "https://drive.google.com/file/d/1B8c_QIF4tLUdJJsLowbchH68uHtphTWt/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "MISSÃES",
+      "nome": "20150404 Feira MissionÃ¡ria (3).jpg",
+      "id": "1UnwI-A9rMrLC-NqHWfzdKf6Uw8BhMlws",
+      "link": "https://drive.google.com/file/d/1UnwI-A9rMrLC-NqHWfzdKf6Uw8BhMlws/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "MISSÃES",
+      "nome": "20150404 Feira MissionÃ¡ria (5).jpg",
+      "id": "1XBYC2M_g9F62r-435_u3QrcUlQMD61x2",
+      "link": "https://drive.google.com/file/d/1XBYC2M_g9F62r-435_u3QrcUlQMD61x2/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "MISSÃES",
+      "nome": "20150404 Feira MissionÃ¡ria (6).jpg",
+      "id": "1yRtg0pWcMoNk4gZCRwUGf5eSmlF4jTyF",
+      "link": "https://drive.google.com/file/d/1yRtg0pWcMoNk4gZCRwUGf5eSmlF4jTyF/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "PASTORES",
+      "nome": "20190317 Posse do Pastor Fernando Roque (2).jpg",
+      "id": "1Zwx2O3hXJvEun5BdtLRBF06dEKVOTEK8",
+      "link": "https://drive.google.com/file/d/1Zwx2O3hXJvEun5BdtLRBF06dEKVOTEK8/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "PASTORES",
+      "nome": "IMG_20140927_203025.jpg",
+      "id": "178lv31gs5AD5FnmaAMfrxTECplWHa9gu",
+      "link": "https://drive.google.com/file/d/178lv31gs5AD5FnmaAMfrxTECplWHa9gu/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "RETIROS",
+      "nome": "IMG_20170616_150651591.jpg",
+      "id": "1JInfU1VnHpGlWQTLlHW4mjEnCYW3ohbk",
+      "link": "https://drive.google.com/file/d/1JInfU1VnHpGlWQTLlHW4mjEnCYW3ohbk/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "RETIROS",
+      "nome": "IMG_20170616_152703765.jpg",
+      "id": "1f-oRA_YysZsHnHwCr4LmdnsOHYWAm61n",
+      "link": "https://drive.google.com/file/d/1f-oRA_YysZsHnHwCr4LmdnsOHYWAm61n/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "RETIROS",
+      "nome": "IMG_20200222_083205154.jpg",
+      "id": "1d3l-pz_fxX_O9FyHss4KvlEXpYDyczSf",
+      "link": "https://drive.google.com/file/d/1d3l-pz_fxX_O9FyHss4KvlEXpYDyczSf/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "RETIROS",
+      "nome": "IMG-20200225-WA0113.jpg",
+      "id": "1JDx_WIgwHcEoeDWHcg-JvDJEKWWUq65j",
+      "link": "https://drive.google.com/file/d/1JDx_WIgwHcEoeDWHcg-JvDJEKWWUq65j/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "RETIROS",
+      "nome": "IMG-20200226-WA0021.jpg",
+      "id": "19iZ8sIewX7HL2Z5-_IYKq4U9ljV6ah4s",
+      "link": "https://drive.google.com/file/d/19iZ8sIewX7HL2Z5-_IYKq4U9ljV6ah4s/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "RETIROS",
+      "nome": "IMG-20200226-WA0057.jpg",
+      "id": "1CeqnfuVwyD4vdnomw6s6pYY5GIfpHYjh",
+      "link": "https://drive.google.com/file/d/1CeqnfuVwyD4vdnomw6s6pYY5GIfpHYjh/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "RETIROS",
+      "nome": "Retiro TBT 2012.jpg",
+      "id": "1TA1-fP2xEczSXl9AKOrnFVQNvc5-RAWX",
+      "link": "https://drive.google.com/file/d/1TA1-fP2xEczSXl9AKOrnFVQNvc5-RAWX/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "RETIROS",
+      "nome": "retiro.jpg",
+      "id": "1MVJQXZgOTDL9ZuJXC6zpy4sZf9WM6YKI",
+      "link": "https://drive.google.com/file/d/1MVJQXZgOTDL9ZuJXC6zpy4sZf9WM6YKI/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "Templo",
+      "nome": "2012 obra (2).JPG",
+      "id": "1-0kMI5_eZAVeDkCVPomQxFMvzv_55qoZ",
+      "link": "https://drive.google.com/file/d/1-0kMI5_eZAVeDkCVPomQxFMvzv_55qoZ/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "Templo",
+      "nome": "2012 obra (3).JPG",
+      "id": "1RGkrqqxG17boY_7uf5ys2CFg8_q5VUGD",
+      "link": "https://drive.google.com/file/d/1RGkrqqxG17boY_7uf5ys2CFg8_q5VUGD/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "Templo",
+      "nome": "223680_318563491584756_1484477006_n.jpg",
+      "id": "14OBT-jNNU63iQTaaxq8n3FSdQfW4sXUe",
+      "link": "https://drive.google.com/file/d/14OBT-jNNU63iQTaaxq8n3FSdQfW4sXUe/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "Templo",
+      "nome": "IMG-20190419-WA0093.jpg",
+      "id": "1ADswQONe0qEx5sKIHvLObQJTv30dPFdt",
+      "link": "https://drive.google.com/file/d/1ADswQONe0qEx5sKIHvLObQJTv30dPFdt/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "Templo",
+      "nome": "pib tbt INICIO.jpg",
+      "id": "1asz5gcQaKV1iloiLfsLBI_iEp8nLHor_",
+      "link": "https://drive.google.com/file/d/1asz5gcQaKV1iloiLfsLBI_iEp8nLHor_/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "Templo",
+      "nome": "PIB TBT.jpg",
+      "id": "1Nb4POaMEf3Yo5ofAitePLiv4L4y24_17",
+      "link": "https://drive.google.com/file/d/1Nb4POaMEf3Yo5ofAitePLiv4L4y24_17/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "VÔLEI",
+      "nome": "20191208 torneio de volei (2).jpg",
+      "id": "1QL63318PSuu_VsZ2XlyCgLo4Vt8cyuno",
+      "link": "https://drive.google.com/file/d/1QL63318PSuu_VsZ2XlyCgLo4Vt8cyuno/view",
+      "motivo": "repetida ou fora da quota"
+    },
+    {
+      "pasta": "VÔLEI",
+      "nome": "20191208 torneio de volei (3).jpg",
+      "id": "1BF-ii7Tw4f0jhUrXoaGStNiX6XVltBNd",
+      "link": "https://drive.google.com/file/d/1BF-ii7Tw4f0jhUrXoaGStNiX6XVltBNd/view",
+      "motivo": "repetida ou fora da quota"
+    }
+  ],
+  "duplicatas_detectadas": [
+    {
+      "pasta": "Templo",
+      "mantida": "pib tbt INICIO.jpg",
+      "removidas": [
+        "223680_318563491584756_1484477006_n.jpg"
+      ]
+    }
+  ],
+  "resumo": {
+    "total_original": 125,
+    "total_selecionadas": 50,
+    "pastas_com_fotos": 13,
+    "media_por_evento": 3.8
+  }
+}
