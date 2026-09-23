@@ -146,6 +146,22 @@ export function filtrarLinhasComFaltaOperacional(linhas = [], eps = SALDO_EMBARQ
   return (linhas || []).filter((l) => n(l.falta_operacional) > eps);
 }
 
+/**
+ * Card vermelho só depois de desmembramento iniciado no pedido (João André):
+ * olhar o pedido → se já houve embarque/despacho real → aí sim saldo pendente por linha.
+ */
+export function pedidoTemDesmembramentoIniciado(embarques = [], linhasSaldo = []) {
+  const reais = (embarques || []).filter(isEmbarqueReal);
+  const despachouAlgo = reais.some((emb) =>
+    getEmbarqueItensLinhas(emb).some(
+      (linha) => n(linha.quantidade_embarcada ?? linha.quantidade_embarcada_comercial) > SALDO_EMBARQUE_EPS,
+    ),
+  );
+  if (despachouAlgo) return true;
+
+  return (linhasSaldo || []).some((l) => n(l.quantidade_embarcada_real) > SALDO_EMBARQUE_EPS);
+}
+
 /** Resumo agregado por pedido. */
 export function resumirSaldoEmbarquePedido(linhas = []) {
   const comFalta = filtrarLinhasComFaltaOperacional(linhas);
@@ -219,10 +235,13 @@ export function buildEmbarqueVirtualSaldoEmbarque(
 ) {
   if (String(pedido?.status || '').trim() === 'Concluído') return null;
 
+  const linhasSaldo = calcularSaldoEmbarquePorLinha(pedido, embarquesDoPedido);
+  if (!pedidoTemDesmembramentoIniciado(embarquesDoPedido, linhasSaldo)) return null;
+
   const excluirProdutos = options.excluirProdutosIds || produtosIdsComSaldoPosRecepcaoBd(embarquesDoPedido);
-  const linhas = filtrarLinhasComFaltaOperacional(
-    calcularSaldoEmbarquePorLinha(pedido, embarquesDoPedido),
-  ).filter((l) => !excluirProdutos.has(l.produto_id));
+  const linhas = filtrarLinhasComFaltaOperacional(linhasSaldo).filter(
+    (l) => !excluirProdutos.has(l.produto_id),
+  );
 
   if (!linhas.length) return null;
 
