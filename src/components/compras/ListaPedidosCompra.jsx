@@ -111,7 +111,7 @@ function EmbarquesInfo({ pedido }) {
       <span className="text-foreground/75 tabular-nums">
         {pedido._display_ordinal || '#01'}
       </span>
-      {pedido._is_necessidade && (pedido._quantidade_pendente ?? 0) > 0 && (
+      {(pedido._is_necessidade || pedido._is_saldo_embarcar) && (pedido._quantidade_pendente ?? 0) > 0 && (
         <span className="text-red-500 dark:text-red-400 font-medium">
           {formatQuantity(pedido._quantidade_pendente)} {sufixoUnidade} faltando embarcar
         </span>

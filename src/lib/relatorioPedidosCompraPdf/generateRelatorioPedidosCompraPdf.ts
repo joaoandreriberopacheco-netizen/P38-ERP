@@ -313,7 +313,9 @@ const getComprasDisplayStatusLabelPdf = (displayStatus) => {
   ) {
     return 'Aguardando Pagamento';
   }
-  if (displayStatus === 'Pendente' || displayStatus === 'Necessidade') return 'Pendente';
+  if (displayStatus === 'Pendente' || displayStatus === 'Necessidade' || displayStatus === 'Saldo a embarcar') {
+    return 'Pendente';
+  }
   return displayStatus || '-';
 };
 const getDataRelatorio = (pedido) => pedido._display_date || pedido.data_prevista_entrega || pedido.data_emissao || pedido.created_date;

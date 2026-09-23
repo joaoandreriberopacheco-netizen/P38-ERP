@@ -113,7 +113,6 @@ const STATUS_EMBARQUE_VIRTUAIS = [
   'Despachado',
   'Concluído',
   'Pendente',
-  'Saldo a embarcar',
 ];
 
 const normalizeStatusFiltro = (status) => [normalizeComprasStatusFiltroCodigo(status)];

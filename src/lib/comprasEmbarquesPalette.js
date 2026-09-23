@@ -85,7 +85,6 @@ export function resolveComprasStatusConfig(displayStatus, fallbackStatus) {
 export function getComprasDisplayStatusLabel(displayStatus) {
   const bucket = normalizeComprasDisplayStatusParaFiltro(displayStatus);
   if (bucket === COMPRAS_STATUS_FILTRO_AGUARDANDO_PGTO) return COMPRAS_STATUS_FILTRO_AGUARDANDO_PGTO;
-  if (bucket === 'Saldo a embarcar') return 'Saldo a embarcar';
   if (bucket === 'Pendente') return 'Pendente';
   return displayStatus;
 }
@@ -143,7 +142,7 @@ export function normalizeComprasStatusFiltroCodigo(codigo) {
   const s = String(codigo || '').trim();
   if (!s) return s;
   if (s === 'Necessidade') return 'Pendente';
-  if (s === 'Saldo a embarcar') return 'Saldo a embarcar';
+  if (s === 'Saldo a embarcar') return 'Pendente';
   if (
     s === 'Aguardando Liberação'
     || s === 'Aguardando Liberação Financeira'
@@ -193,7 +192,6 @@ export const COMPRAS_FILTRO_STATUS_PEDIDO = [
   { codigo: 'Despachado', label: 'Despachado', chip: 'bg-[#e8b824]/15 text-[#a8942e] dark:bg-[#4ECDC4]/20 dark:text-[#4ECDC4]' },
   { codigo: 'Concluído', label: 'Concluído', chip: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/25 dark:text-emerald-500' },
   { codigo: 'Pendente', label: 'Pendente', chip: CHIP_PENDENTE },
-  { codigo: 'Saldo a embarcar', label: 'Saldo a embarcar', chip: CHIP_PENDENTE },
 ];
 
 /** Seletor rápido (ícone Layers) — um bucket por status. */

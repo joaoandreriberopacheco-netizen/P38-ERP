@@ -425,13 +425,20 @@ export function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {})
         _embarques: embarquesDoPedido,
       };
 
-      const cardFinal = ehSaldoEmbarque
-        ? { ...cardBase, _display_status: SALDO_EMBARQUE_DISPLAY_STATUS }
-        : cardBase;
+      const quantidadePendenteCard = ehSaldoEmbarque
+        ? resumirSaldoEmbarquePedido(
+          filtrarLinhasComFaltaOperacional(
+            calcularSaldoEmbarquePorLinha(pedido, embarquesDoPedido, undefined, produtosMap),
+          ).filter((l) => !produtosNecessidadeBd.has(l.produto_id)),
+        ).soma_falta_operacional
+        : ehNecessidade
+          ? quantidadePendente
+          : 0;
 
       return {
-        ...cardFinal,
-        _display_data_recebimento: getEmbarqueDataRecebimento(cardFinal),
+        ...cardBase,
+        _quantidade_pendente: quantidadePendenteCard,
+        _display_data_recebimento: getEmbarqueDataRecebimento(cardBase),
       };
     });
   });
@@ -441,7 +448,6 @@ export function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {})
 
 /** Mesma regra do KPI "aprovados e ainda não recebidos" na lista Embarques. */
 export function cardEmbarqueContaEmTransito(card = {}) {
-  if (card._is_saldo_embarcar || card._consulta_papel === 'saldo_a_embarcar') return false;
   const status = card._display_status || '';
   if (status === 'Concluído' || status === 'Rascunho') return false;
 

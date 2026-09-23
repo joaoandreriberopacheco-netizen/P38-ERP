@@ -18,7 +18,8 @@ import { enrichEmbarquesComFatorPedido } from '@/lib/embarqueLogisticaHelpers';
 /** Tolerância numérica — mesma ordem de grandeza que a view SQL (0.009). */
 export const SALDO_EMBARQUE_EPS = 0.009;
 
-export const SALDO_EMBARQUE_DISPLAY_STATUS = 'Saldo a embarcar';
+/** Mesma regra visual que Necessidade: pedido desmembrado com falta operacional. */
+export const SALDO_EMBARQUE_DISPLAY_STATUS = 'Pendente';
 export const SALDO_EMBARQUE_TIPO = 'SaldoEmbarque';
 
 function n(v) {

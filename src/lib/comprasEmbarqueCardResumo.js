@@ -26,9 +26,14 @@ function isCardNecessidade(card = {}) {
   return !!card._is_necessidade || isNecessidadeRenderizada(card._embarque);
 }
 
+/** Pós-desmembramento: Necessidade ou saldo operacional — mesma regra visual PENDENTE. */
+function isCardPendentePosDesmembramento(card = {}) {
+  return isCardNecessidade(card) || !!card._is_saldo_embarcar;
+}
+
 /** Quantidade comercial do split: embarcada (ou pendente na Necessidade). */
 export function resolveQuantidadeEmbarcadaCard(card = {}) {
-  if (isCardNecessidade(card)) {
+  if (isCardPendentePosDesmembramento(card)) {
     const pend = Number(card._quantidade_pendente) || 0;
     if (pend > 0) return pend;
   }
@@ -46,7 +51,7 @@ export function buildEmbarqueCardQtdResumo(card = {}) {
   const totalLinhas = itens.length;
   const sufixoUnidade = resolveSufixoUnidade(itens);
   const qtdEmbarcada = resolveQuantidadeEmbarcadaCard(card);
-  const necessidade = isCardNecessidade(card);
+  const necessidade = isCardPendentePosDesmembramento(card);
 
   const qtdLabel = necessidade
     ? (qtdEmbarcada > 0 ? `${formatCardQuantity(qtdEmbarcada, sufixoUnidade)} ${sufixoUnidade} pend.` : '')
