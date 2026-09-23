@@ -231,8 +231,8 @@
   "devDependencies": {
     "@babel/parser": "^7.29.2",
     "@babel/traverse": "^7.29.0",
-    "@base44/sdk": "^0.8.40",
-    "@base44/vite-plugin": "^1.0.30",
+    "@base44/sdk": "^0.8.49",
+    "@base44/vite-plugin": "^1.0.42",
     "@eslint/js": "^9.19.0",
     "@types/node": "^22.13.5",
     "@types/react": "^18.2.66",
