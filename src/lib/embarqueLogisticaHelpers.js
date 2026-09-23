@@ -1,4 +1,4 @@
-import { rebuildEmbarqueItensMirror } from '@/lib/embarqueItemContract';
+import { rebuildEmbarqueItensMirror, enrichEmbarqueMirrorFromPedidoItens } from '@/lib/embarqueItemContract';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import {
   resolveEmbarqueQuantidadeBase,
@@ -89,11 +89,25 @@ export function embarqueRecepcaoDocumentalCompleta(embarque) {
   return temRecebido && temEmbarcado;
 }
 
+/** Enriquece linhas de embarque legadas (sem fator no SQL) com fator do pedido. */
+export function enrichEmbarquesComFatorPedido(embarques = [], pedidoItens = []) {
+  if (!pedidoItens?.length) return embarques || [];
+  return (embarques || []).map((emb) => {
+    const linhasEmb = getEmbarqueItensLinhas(emb);
+    if (!linhasEmb.length) return emb;
+    return {
+      ...emb,
+      _linhas: linhasEmb.map((l) => enrichEmbarqueMirrorFromPedidoItens(l, pedidoItens)),
+    };
+  });
+}
+
 /**
  * Percentuais de despacho/conclusão a partir dos embarques reais (entidade Embarque),
  * alinhado à lógica de `integrarPedidosEmbarques` mas sem depender do snapshot no PedidoCompra.
  */
 export function calcularPercentuaisLogistica(pedido, embarques = []) {
+  const emb = enrichEmbarquesComFatorPedido(embarques, pedido?.itens || []);
   const totalPedido = (pedido?.itens || []).reduce(
     (acc, item) => acc + qtyPedidaBaseItem(item),
     0,
@@ -102,12 +116,12 @@ export function calcularPercentuaisLogistica(pedido, embarques = []) {
     return { despachado: 0, concluido: 0, pendente: 100 };
   }
 
-  const linhas = (embarques || []).filter((emb) => emb?.tipo !== 'Necessidade');
+  const embarquesReais = (emb || []).filter((e) => e?.tipo !== 'Necessidade');
   const porProdutoEmb = {};
   const porProdutoRec = {};
 
-  linhas.forEach((emb) => {
-    getEmbarqueItensLinhas(emb).forEach((item) => {
+  embarquesReais.forEach((embarque) => {
+    getEmbarqueItensLinhas(embarque).forEach((item) => {
       const pid = item.produto_id;
       if (!pid) return;
       porProdutoEmb[pid] = (porProdutoEmb[pid] || 0) + qtyDespachadaEfetivaBaseLinha(item);
@@ -232,10 +246,11 @@ export function calcularTotalDespachadoBasePorProduto(embarques = []) {
 
 /** Órfãos com cálculo automático do total embarcado (para Logs e listagens). */
 export function calcularItensOrfaosPedido(pedido, embarques = [], produtosMap = {}) {
+  const emb = enrichEmbarquesComFatorPedido(embarques, pedido?.itens || []);
   return calcularItensOrfaosAguardandoDespacho(
     pedido,
-    embarques,
-    calcularTotalDespachadoBasePorProduto(embarques),
+    emb,
+    calcularTotalDespachadoBasePorProduto(emb),
     produtosMap,
   );
 }

@@ -158,3 +158,38 @@ export function embarqueItemSqlRowToMirror(row = {}) {
 export function rebuildEmbarqueItensMirror(items = []) {
   return (Array.isArray(items) ? items : []).map(embarqueItemSqlRowToMirror);
 }
+
+/**
+ * Embarques legados: sem pedido_compra_item_id nem dados.fator — herda fator do pedido (produto_id).
+ */
+export function enrichEmbarqueMirrorFromPedidoItens(mirrorLinha = {}, pedidoItens = []) {
+  const fatorAtual = asNumber(mirrorLinha.fator_aplicado ?? mirrorLinha.fator_conversao, 0) || 1;
+  if (fatorAtual > 1.001) return mirrorLinha;
+
+  const pci = (pedidoItens || []).find((i) => i?.produto_id === mirrorLinha?.produto_id);
+  const fatorPed = asNumber(pci?.fator_aplicado ?? pci?.fator_conversao, 0) || 1;
+  if (fatorPed <= 1.001) return mirrorLinha;
+
+  const qEmb = asNumber(
+    mirrorLinha.quantidade_embarcada ?? mirrorLinha.quantidade_embarcada_comercial,
+    0,
+  );
+  const qRec = asNumber(
+    mirrorLinha.quantidade_recebida ?? mirrorLinha.quantidade_recebida_comercial,
+    0,
+  );
+  const qPed = asNumber(mirrorLinha.quantidade_pedida ?? mirrorLinha.quantidade_pedida_comercial, 0);
+
+  return {
+    ...mirrorLinha,
+    fator_aplicado: fatorPed,
+    fator_apresentacao: fatorPed,
+    fator_conversao: fatorPed,
+    quantidade_embarcada_base: round6(qEmb * fatorPed),
+    quantidade_recebida_base: round6(qRec * fatorPed),
+    quantidade_pedida_base: round6(qPed * fatorPed) || mirrorLinha.quantidade_pedida_base,
+    unidade_medida: mirrorLinha.unidade_medida || pci?.unidade_sigla || pci?.unidade_medida || 'UN',
+    unidade_apresentacao:
+      mirrorLinha.unidade_apresentacao || pci?.unidade_sigla || pci?.unidade_medida || 'UN',
+  };
+}

@@ -13,6 +13,7 @@ import {
 import { resolveEmbarqueQuantidadeBase } from '@/lib/embarqueQuantityResolve';
 import { getTotalLinhaPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { enrichEmbarquesComFatorPedido } from '@/lib/embarqueLogisticaHelpers';
 
 /** Tolerância numérica — mesma ordem de grandeza que a view SQL (0.009). */
 export const SALDO_EMBARQUE_EPS = 0.009;
@@ -119,7 +120,8 @@ export function agregarEmbarquesPorProduto(embarques = [], getLinhas) {
  * @param {object} [produtosMap]
  */
 export function calcularSaldoEmbarquePorLinha(pedido, embarques = [], getLinhas, produtosMap = {}) {
-  const { reais, necessidade } = agregarEmbarquesPorProduto(embarques, getLinhas);
+  const embarquesNorm = enrichEmbarquesComFatorPedido(embarques, pedido?.itens || []);
+  const { reais, necessidade } = agregarEmbarquesPorProduto(embarquesNorm, getLinhas);
   const itens = pedido?.itens || [];
 
   return itens.map((item) => {
@@ -279,10 +281,11 @@ export function buildEmbarqueVirtualSaldoEmbarque(
 ) {
   if (String(pedido?.status || '').trim() === 'Concluído') return null;
 
-  const linhasSaldo = calcularSaldoEmbarquePorLinha(pedido, embarquesDoPedido, undefined, produtosMap);
-  if (!pedidoTemDesmembramentoIniciado(embarquesDoPedido, linhasSaldo)) return null;
+  const embarquesNorm = enrichEmbarquesComFatorPedido(embarquesDoPedido, pedido?.itens || []);
+  const linhasSaldo = calcularSaldoEmbarquePorLinha(pedido, embarquesNorm, undefined, produtosMap);
+  if (!pedidoTemDesmembramentoIniciado(embarquesNorm, linhasSaldo)) return null;
 
-  const excluirProdutos = options.excluirProdutosIds || produtosIdsComSaldoPosRecepcaoBd(embarquesDoPedido);
+  const excluirProdutos = options.excluirProdutosIds || produtosIdsComSaldoPosRecepcaoBd(embarquesNorm);
   const linhas = filtrarLinhasComFaltaOperacional(linhasSaldo).filter(
     (l) => !excluirProdutos.has(l.produto_id),
   );
