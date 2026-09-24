@@ -2,8 +2,6 @@ import { NextResponse } from 'next/server';
 import { collectFilesFromShareFormData } from '@/lib/pwaShareTargetCollect';
 import { buildShareTargetBootstrapHtml } from '@/lib/pwaShareTargetBootstrapHtml';
 
-export const runtime = 'nodejs';
-
 function redirectTorre(origin, params) {
   const qs = new URLSearchParams(params);
   qs.set('share-target', '1');
@@ -11,9 +9,10 @@ function redirectTorre(origin, params) {
 }
 
 /**
- * Web Share Target (fallback servidor). Não usar pasta em /AnexoCompartilhado — quebra GET da página.
+ * Web Share Target (fallback servidor). POST /api/pwa-share-target
+ * @param {Request} request
  */
-export async function POST(request) {
+export async function handlePwaShareTargetPost(request) {
   const url = new URL(request.url);
   const origin = url.origin;
 
