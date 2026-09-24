@@ -36,6 +36,10 @@ import {
 import TorreWidgetDestinos from '@/components/anexos/TorreWidgetDestinos';
 import TorreArquivoCard from '@/components/anexos/TorreArquivoCard';
 import { P38_FIELD_SURFACE, P38_KPI_SHELL, P38_ACCENT } from '@/components/financeiro/fluxo/financeiroP38';
+import {
+  takeShareTargetFileAsBlob,
+  takeNewestShareTargetFileAsBlob,
+} from '@/lib/pwaShareTargetStorage';
 
 export default function AnexoCompartilhado() {
   const [arquivo, setArquivo] = useState(null);
@@ -321,12 +325,32 @@ export default function AnexoCompartilhado() {
     }
   };
 
+  const carregarArquivoDoIndexedDb = async (sharedId) => {
+    try {
+      const fromId = sharedId
+        ? await takeShareTargetFileAsBlob(sharedId)
+        : await takeNewestShareTargetFileAsBlob();
+      if (!fromId?.blob || fromId.blob.size === 0) return false;
+      prepararArquivo(fromId.blob, fromId.name || 'arquivo');
+      await limparTodoCacheCompartilhados();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  };
+
   const tentarCarregarArquivoCompartilhado = async (params) => {
     const shareTarget = params.get('share-target') === '1';
     const sharedPath = params.get('shared');
+    const sharedId = params.get('shared-id');
 
     if (shareTarget) {
       await aguardarServiceWorkerPronto();
+    }
+
+    if (sharedId) {
+      const achouIdb = await carregarArquivoDoIndexedDb(sharedId);
+      if (achouIdb) return true;
     }
 
     if (sharedPath) {
@@ -355,6 +379,8 @@ export default function AnexoCompartilhado() {
     if (shareTarget) {
       const achouNoCache = await consumirArquivoMaisRecenteDoCache();
       if (achouNoCache) return true;
+      const achouIdbRecente = await carregarArquivoDoIndexedDb(null);
+      if (achouIdbRecente) return true;
     }
 
     return false;
@@ -449,13 +475,17 @@ export default function AnexoCompartilhado() {
         const msg =
           shareError === 'no-files'
             ? 'O sistema não recebeu o arquivo. Tente partilhar de novo ou use Selecionar arquivo.'
-            : 'Não foi possível receber o arquivo partilhado. Abra o P38 uma vez, actualize a app e tente de novo.';
+            : shareError === 'too-large'
+              ? 'O arquivo é grande demais para esta entrada. Use Selecionar arquivo na Torre.'
+              : 'Não foi possível receber o arquivo partilhado. Abra o P38 uma vez, actualize a app e tente de novo.';
         setErroCompartilhamento(msg);
       }
 
       if (primeiraExecucaoTentar) {
         primeiraExecucaoTentar = false;
-        if (!shareTarget) {
+        const temPendenciaPartilha =
+          shareTarget || params.get('shared') || params.get('shared-id');
+        if (!temPendenciaPartilha) {
           await limparTodoCacheCompartilhados();
         }
       }
@@ -467,11 +497,13 @@ export default function AnexoCompartilhado() {
         return;
       }
 
-      if (shareTarget && tentativas >= MAX_TENTATIVAS - 1) {
+      if (tentativas >= MAX_TENTATIVAS - 1 && !arquivo) {
         setErroCompartilhamento(
           (prev) =>
             prev ||
-            'Não foi possível carregar o arquivo partilhado. Abra o P38 uma vez, actualize o ícone na tela inicial e tente partilhar de novo.',
+            (shareTarget
+              ? 'Não foi possível carregar o arquivo partilhado. Actualize o ícone do P38 na tela inicial e tente partilhar de novo.'
+              : 'Se partilhou do WhatsApp, abra o P38 pelo ícone (app instalada) e partilhe de novo. Também pode usar Selecionar arquivo na Torre.'),
         );
       }
 
@@ -519,6 +551,19 @@ export default function AnexoCompartilhado() {
           navigator.serviceWorker.removeEventListener('message', onMessage);
       }
     };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('launchQueue' in window)) return;
+    window.launchQueue.setConsumer(async (launchParams) => {
+      const files = launchParams?.files;
+      if (!files?.length) return;
+      const f = files[0];
+      if (!f || f.size === 0) return;
+      prepararArquivo(f, f.name || `arquivo${extensaoPorMime(f.type)}`);
+      setCarregando(false);
+      setErroCompartilhamento('');
+    });
   }, []);
 
   useEffect(() => {

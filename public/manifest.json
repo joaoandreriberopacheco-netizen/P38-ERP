@@ -10,6 +10,14 @@
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
   "orientation": "any",
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "serviceworker": {
+    "src": "/sw.js",
+    "scope": "/",
+    "update_via_cache": "none"
+  },
   "icons": [
     {
       "src": "/brand/p38-app-icon.png",

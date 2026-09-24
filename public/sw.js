@@ -1,4 +1,6 @@
-const CACHE_NAME = 'p38-erp-v20';
+const CACHE_NAME = 'p38-erp-v21';
+const SHARE_IDB_NAME = 'p38-share-target';
+const SHARE_IDB_STORE = 'files';
 const SHARED_CACHE = 'VarejoSync-shared-files';
 /** Ícone P38 (raio) — alinhado ao manifest; pré-cache para instalação PWA / notificações. */
 const APP_ICON_PATH = '/brand/p38-app-icon.png';
@@ -72,7 +74,19 @@ function collectFilesFromFormData(formData) {
     out.push(file);
   };
 
-  const fieldNames = ['files', 'file', 'files[]', 'image', 'media', 'attachment', 'share', 'documents'];
+  const fieldNames = [
+    'files',
+    'file',
+    'files[]',
+    'image',
+    'media',
+    'attachment',
+    'share',
+    'documents',
+    'images',
+    'photos',
+    'picture',
+  ];
   for (const name of fieldNames) {
     try {
       formData.getAll(name).forEach(add);
@@ -90,8 +104,38 @@ function collectFilesFromFormData(formData) {
   return out;
 }
 
+function openShareIdb() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(SHARE_IDB_NAME, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(SHARE_IDB_STORE)) {
+        db.createObjectStore(SHARE_IDB_STORE);
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function persistShareFileToIdb(file) {
+  const id = `share-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  const buffer = await file.arrayBuffer();
+  const db = await openShareIdb();
+  await new Promise((resolve, reject) => {
+    const tx = db.transaction(SHARE_IDB_STORE, 'readwrite');
+    tx.objectStore(SHARE_IDB_STORE).put(
+      { buffer, name: file.name || 'arquivo', type: file.type || 'application/octet-stream', savedAt: Date.now() },
+      id
+    );
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+  return id;
+}
+
 /**
- * Web Share Target: POST multipart → Cache API (Request explícito) → redirect GET.
+ * Web Share Target: POST multipart → Cache API + IndexedDB → redirect GET.
  */
 async function handleShareTargetPost(request) {
   const url = new URL(request.url);
@@ -103,6 +147,7 @@ async function handleShareTargetPost(request) {
   const cache = await caches.open(SHARED_CACHE);
   const files = collectFilesFromFormData(formData);
   let lastCachePath = '';
+  let lastShareId = '';
 
   for (const file of files) {
     const safeName = (file.name || 'arquivo').replace(/[^\w.\-()+ ]/g, '_');
@@ -114,6 +159,11 @@ async function handleShareTargetPost(request) {
       headers: { 'Content-Type': file.type || 'application/octet-stream' },
     });
     await cache.put(req, res);
+    try {
+      lastShareId = await persistShareFileToIdb(file);
+    } catch (_) {
+      /* cache continua como fallback */
+    }
 
     const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     clients.forEach((c) =>
@@ -130,7 +180,10 @@ async function handleShareTargetPost(request) {
   if (urlParam) redirectParams.set('url', urlParam);
   redirectParams.set('share-target', '1');
   if (files.length === 0) redirectParams.set('share-error', 'no-files');
-  else if (lastCachePath) redirectParams.set('shared', lastCachePath);
+  else {
+    if (lastCachePath) redirectParams.set('shared', lastCachePath);
+    if (lastShareId) redirectParams.set('shared-id', lastShareId);
+  }
 
   const destPath = normalizePathname(url.pathname) || '/AnexoCompartilhado';
   const dest = `${self.location.origin}${destPath}?${redirectParams.toString()}`;
