@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import FornecedorPedidoSelect from '@/components/compras/FornecedorPedidoSelect';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/use-toast';
 import { Upload, Loader2, Check, X, ArrowLeft, Package, FileText, Camera, Sparkles } from 'lucide-react';
@@ -738,15 +738,31 @@ export default function ImportadorPedidoCompra({
             <div className="grid gap-4 md:grid-cols-3">
               <div className="rounded-3xl bg-muted/50/60 p-5 shadow-sm md:col-span-2">
                 <Label className="text-xs text-muted-foreground mb-2 block">Fornecedor</Label>
-                <Select value={fornecedorInfo.id || 'new'} onValueChange={(value) => setFornecedorInfo(prev => ({ ...prev, id: value }))}>
-                  <SelectTrigger className={cn('border-0 rounded-2xl bg-card shadow-sm text-foreground dark:text-white', isMobile ? 'h-14 text-base' : 'h-14 text-base')}>
-                    <SelectValue placeholder="Selecionar fornecedor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="new">Criar novo fornecedor</SelectItem>
-                    {fornecedores.map(f => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <FornecedorPedidoSelect
+                  value={fornecedorInfo.id || 'new'}
+                  onValueChange={(value) => {
+                    if (value === 'new') {
+                      setFornecedorInfo((prev) => ({ ...prev, id: 'new' }));
+                      return;
+                    }
+                    const f = fornecedores.find((x) => x.id === value);
+                    setFornecedorInfo((prev) => ({
+                      ...prev,
+                      id: value,
+                      nome: f?.nome || prev.nome,
+                    }));
+                  }}
+                  fornecedores={fornecedores}
+                  displayName={fornecedorInfo.nome}
+                  triggerClassName={cn(
+                    'border-0 rounded-2xl bg-card shadow-sm text-foreground dark:text-white',
+                    isMobile ? 'h-14 text-base' : 'h-14 text-base',
+                  )}
+                  placeholder="Selecionar fornecedor"
+                  showCreateNew
+                  createNewValue="new"
+                  createNewLabel="Criar novo fornecedor"
+                />
               </div>
               {fornecedorInfo.id === 'new' && (
                 <>
