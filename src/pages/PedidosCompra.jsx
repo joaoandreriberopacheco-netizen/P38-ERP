@@ -36,6 +36,7 @@ import { calcValorEmbarqueCard, calcValorEmbarcadoPedido } from '@/lib/embarqueV
 import { pedidoNaoConcluido } from '@/lib/comprasEmbarqueCards';
 import {
   cardEmbarqueMatchStatusFiltro,
+  comprasStatusFiltroExplicitos,
   COMPRAS_STATUS_FILTRO_AGUARDANDO_PGTO,
   normalizeComprasStatusFiltroCodigo,
 } from '@/lib/comprasEmbarquesPalette';
@@ -146,6 +147,7 @@ const passaFiltrosEmbarqueCard = (
     recebimentoFinal,
     skipSearch = false,
     searchIncludeProdutos = false,
+    ocultarPendenteSaldo = false,
   },
 ) => {
   const searchLower = search.toLowerCase();
@@ -156,6 +158,13 @@ const passaFiltrosEmbarqueCard = (
   const embarque = card._embarque;
 
   if (!skipSearch && search && !cardMatchesSearch(card, searchLower, { includeProdutos: searchIncludeProdutos })) {
+    return false;
+  }
+
+  if (
+    ocultarPendenteSaldo
+    && cardEmbarqueMatchStatusFiltro(card._display_status, 'Pendente')
+  ) {
     return false;
   }
 
@@ -219,21 +228,22 @@ const compareGruposPedidosCompra = (a, b, sortOrder, groupBy) => {
   return String(b.orderValue).localeCompare(String(a.orderValue), 'pt-BR');
 };
 
-function ComprasViewTabsInline({ activeView, onSelect, dataTour }) {
+function ComprasViewTabsInline({ activeView, onSelect, dataTour, saldoPendenteAlert = false }) {
   const tabs = [
     { id: 'embarques', label: 'Embarques', icon: Package, tour: 'embarques-tabs' },
-    { id: 'saldo', label: 'Saldo a embarcar', icon: ClipboardList, tour: 'saldo-tabs' },
+    { id: 'saldo', label: 'Saldo a embarcar', icon: ClipboardList, tour: 'saldo-tabs', alert: saldoPendenteAlert },
     { id: 'consulta', label: 'Consulta', icon: Receipt, tour: 'consulta-tabs' },
   ];
 
   return (
     <div className={COMPRAS_VIEW_TAB_GROUP} data-tour={dataTour}>
-      {tabs.map(({ id, label, icon: Icon, tour }) => (
+      {tabs.map(({ id, label, icon: Icon, tour, alert }) => (
         <button
           key={id}
           type="button"
           className={cn(
             COMPRAS_VIEW_TAB_BTN,
+            'relative',
             activeView === id ? COMPRAS_VIEW_TAB_ACTIVE : COMPRAS_VIEW_TAB_IDLE,
           )}
           onClick={() => onSelect(id)}
@@ -242,7 +252,15 @@ function ComprasViewTabsInline({ activeView, onSelect, dataTour }) {
           data-pulse-sensor={`pedidos-compra.tab-${id}`}
           data-tour={activeView === id ? tour : undefined}
         >
-          <Icon className="h-4 w-4" />
+          <span className="relative inline-flex">
+            <Icon className="h-4 w-4" />
+            {alert && id === 'saldo' ? (
+              <span
+                className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-red-500 shadow-[0_0_0_1px_rgba(255,255,255,0.9)] animate-pulse dark:shadow-[0_0_0_1px_rgba(0,0,0,0.5)]"
+                aria-hidden
+              />
+            ) : null}
+          </span>
         </button>
       ))}
     </div>
@@ -296,10 +314,27 @@ export default function PedidosCompraPage() {
     if (view === 'saldo') {
       setStatusSel((prev) => {
         const extras = prev.filter((s) => s === '__nao_concluido__');
-        return ['Pendente', ...extras];
+        const explicit = comprasStatusFiltroExplicitos(prev).filter((s) => s !== 'Pendente');
+        return ['Pendente', ...extras, ...explicit];
+      });
+      return;
+    }
+    if (view === 'embarques') {
+      setStatusSel((prev) => {
+        const flags = prev.filter((s) => s === '__nao_concluido__');
+        const explicit = comprasStatusFiltroExplicitos(prev).filter((s) => s !== 'Pendente');
+        return [...flags, ...explicit];
       });
     }
   };
+
+  /** Na aba Saldo o chip «Pendente» é implícito — alinha picker e chips ao que a lista mostra. */
+  const statusSelUi = useMemo(() => {
+    if (activeView !== 'saldo') return statusSel;
+    const flags = statusSel.filter((s) => s === '__nao_concluido__');
+    const explicit = comprasStatusFiltroExplicitos(statusSel).filter((s) => s !== 'Pendente');
+    return ['Pendente', ...flags, ...explicit];
+  }, [activeView, statusSel]);
 
   const gestaoListaPronta = Boolean(gestaoQuery.data && gestaoQuery.data.isListaParcial === false);
 
@@ -481,9 +516,19 @@ export default function PedidosCompraPage() {
     ],
   );
 
+  const mostrarPendenteNaListaEmbarques = comprasStatusFiltroExplicitos(statusSel).includes('Pendente');
+
+  const filtrosListaEmbarques = useMemo(
+    () => ({
+      ...filtrosCompras,
+      ocultarPendenteSaldo: activeView === 'embarques' && !mostrarPendenteNaListaEmbarques,
+    }),
+    [filtrosCompras, activeView, mostrarPendenteNaListaEmbarques],
+  );
+
   const filtrados = useMemo(
-    () => embarques.filter((card) => passaFiltrosEmbarqueCard(card, filtrosCompras)),
-    [embarques, filtrosCompras],
+    () => embarques.filter((card) => passaFiltrosEmbarqueCard(card, filtrosListaEmbarques)),
+    [embarques, filtrosListaEmbarques],
   );
 
   const filtrosSaldoTab = useMemo(
@@ -501,6 +546,8 @@ export default function PedidosCompraPage() {
     () => embarques.filter((card) => passaFiltrosEmbarqueCard(card, filtrosSaldoTab)),
     [embarques, filtrosSaldoTab],
   );
+
+  const saldoPendenteAlert = saldoFiltrados.length > 0;
 
   const cardsListaAtiva = activeView === 'saldo' ? saldoFiltrados : filtrados;
 
@@ -763,7 +810,7 @@ export default function PedidosCompraPage() {
                       onSortOrderToggle={() => setSortOrder((prev) => prev === 'asc' ? 'desc' : 'asc')}
                     />
                     <StatusPedidoCompraPicker
-                      statusSel={statusSel}
+                      statusSel={statusSelUi}
                       onStatusSel={setStatusSel}
                       onFiltroSomenteNaoConcluidos={setFiltroSomenteNaoConcluidos}
                     />
@@ -787,12 +834,13 @@ export default function PedidosCompraPage() {
                     activeView={activeView}
                     onSelect={handleSelectView}
                     dataTour={activeView === 'consulta' ? 'consulta-tabs' : 'embarques-tabs'}
+                    saldoPendenteAlert={saldoPendenteAlert && activeView !== 'saldo'}
                   />
                 )}
                 search={search} onSearch={setSearch}
                 filtroUltimos30Dias={filtroUltimos30Dias} onFiltroUltimos30Dias={setFiltroUltimos30Dias}
                 filtroSomenteNaoConcluidos={filtroSomenteNaoConcluidos} onFiltroSomenteNaoConcluidos={setFiltroSomenteNaoConcluidos}
-                statusSel={statusSel} onStatusSel={setStatusSel}
+                statusSel={statusSelUi} onStatusSel={setStatusSel}
                 todasTags={todasTags} tagsSel={tagsSel} onTagsSel={setTagsSel}
                 dataInicial={dataInicial} onDataInicial={setDataInicial}
                 dataFinal={dataFinal} onDataFinal={setDataFinal}
@@ -925,7 +973,7 @@ export default function PedidosCompraPage() {
               onSortOrderToggle={() => setSortOrder((prev) => prev === 'asc' ? 'desc' : 'asc')}
             />
             <StatusPedidoCompraPicker
-              statusSel={statusSel}
+              statusSel={statusSelUi}
               onStatusSel={setStatusSel}
               onFiltroSomenteNaoConcluidos={setFiltroSomenteNaoConcluidos}
             />
@@ -939,7 +987,15 @@ export default function PedidosCompraPage() {
         scrollable
       >
         <GlacialTabsTrigger value="embarques" activeValue={activeView} onSelect={handleSelectView} label="Embarques" icon={Package} pulseSensor="pedidos-compra.tab-embarques" />
-        <GlacialTabsTrigger value="saldo" activeValue={activeView} onSelect={handleSelectView} label="Saldo a embarcar" icon={ClipboardList} pulseSensor="pedidos-compra.tab-saldo" />
+        <GlacialTabsTrigger
+          value="saldo"
+          activeValue={activeView}
+          onSelect={handleSelectView}
+          label="Saldo a embarcar"
+          icon={ClipboardList}
+          pulseSensor="pedidos-compra.tab-saldo"
+          alertDot={saldoPendenteAlert && activeView !== 'saldo'}
+        />
         <GlacialTabsTrigger value="consulta" activeValue={activeView} onSelect={handleSelectView} label="Consulta" icon={Receipt} pulseSensor="pedidos-compra.tab-consulta" />
       </GlacialTabsList>
       </div>
@@ -949,7 +1005,7 @@ export default function PedidosCompraPage() {
         search={search} onSearch={setSearch}
         filtroUltimos30Dias={filtroUltimos30Dias} onFiltroUltimos30Dias={setFiltroUltimos30Dias}
         filtroSomenteNaoConcluidos={filtroSomenteNaoConcluidos} onFiltroSomenteNaoConcluidos={setFiltroSomenteNaoConcluidos}
-        statusSel={statusSel} onStatusSel={setStatusSel}
+        statusSel={statusSelUi} onStatusSel={setStatusSel}
         todasTags={todasTags} tagsSel={tagsSel} onTagsSel={setTagsSel}
         dataInicial={dataInicial} onDataInicial={setDataInicial}
         dataFinal={dataFinal} onDataFinal={setDataFinal}

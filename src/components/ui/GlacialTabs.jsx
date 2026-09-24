@@ -22,7 +22,7 @@ export function GlacialTabsList({ children, className, scrollable = false }) {
 }
 
 // eslint-disable-next-line no-unused-vars
-export function GlacialTabsTrigger({ value, activeValue, onSelect, icon: Icon, label, className, pulseSensor }) {
+export function GlacialTabsTrigger({ value, activeValue, onSelect, icon: Icon, label, className, pulseSensor, alertDot = false }) {
   const isActive = value === activeValue;
   return (
     <button
@@ -30,14 +30,24 @@ export function GlacialTabsTrigger({ value, activeValue, onSelect, icon: Icon, l
       onClick={() => onSelect(value)}
       data-pulse-sensor={pulseSensor}
       className={cn(
-        'flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 whitespace-nowrap flex-shrink-0 min-h-[36px]',
+        'relative flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 whitespace-nowrap flex-shrink-0 min-h-[36px]',
         isActive
           ? 'bg-card dark:bg-muted text-foreground shadow-sm'
           : 'text-muted-foreground hover:text-foreground/90 dark:hover:text-muted-foreground',
         className
       )}
     >
-      {Icon && <Icon className="w-4 h-4 flex-shrink-0" />}
+      {Icon && (
+        <span className="relative inline-flex flex-shrink-0">
+          <Icon className="w-4 h-4" />
+          {alertDot ? (
+            <span
+              className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-red-500 shadow-[0_0_0_1px_rgba(255,255,255,0.9)] animate-pulse dark:shadow-[0_0_0_1px_rgba(0,0,0,0.5)]"
+              aria-hidden
+            />
+          ) : null}
+        </span>
+      )}
       {label && <span className={Icon ? 'hidden md:inline' : ''}>{label}</span>}
     </button>
   );
