@@ -13,6 +13,7 @@ import {
   resolveSaldoPendenteEmbarqueBase,
 } from '@/lib/embarqueLogisticaHelpers';
 import { isNecessidadeRenderizada } from '@/lib/pedidoCompraNecessidade';
+import { comparePedidosNoMesmoGrupoEmbarque } from '@/lib/comprasEmbarquesPalette';
 import { embarqueExcluidoOperacional } from '@/lib/embarqueCodigosExcluidos';
 import { calculateBaseQuantity, commercialQuantityFromBase, getItemCompraExibicaoVitrine } from '@/lib/productUnits';
 
@@ -373,7 +374,7 @@ export function buildGruposConsultaEmbarques(cards = [], groupBy = 'eta_transpor
     .sort((a, b) => compareGruposConsulta(a, b, sortOrder, groupBy))
     .map((grupo) => ({
       ...grupo,
-      cards: grupo.cards.sort((a, b) => compareEmbarquesConsulta(a, b, sortOrder, groupBy)),
+      cards: grupo.cards.sort(comparePedidosNoMesmoGrupoEmbarque),
       totalConsulta: roundToTwoDecimals(
         grupo.cards.reduce((acc, c) => acc + (Number(c._consulta_valor) || 0), 0),
       ),

@@ -36,6 +36,7 @@ import { calcValorEmbarqueCard, calcValorEmbarcadoPedido } from '@/lib/embarqueV
 import { pedidoNaoConcluido } from '@/lib/comprasEmbarqueCards';
 import {
   cardEmbarqueMatchStatusFiltro,
+  comparePedidosNoMesmoGrupoEmbarque,
   comprasStatusFiltroExplicitos,
   COMPRAS_STATUS_FILTRO_AGUARDANDO_PGTO,
   normalizeComprasStatusFiltroCodigo,
@@ -634,11 +635,6 @@ export default function PedidosCompraPage() {
       return { key: `data_pedido:${key}`, label, orderValue: key };
     };
 
-    const compareValues = (a, b) => {
-      if (sortOrder === 'asc') return String(a).localeCompare(String(b), 'pt-BR');
-      return String(b).localeCompare(String(a), 'pt-BR');
-    };
-
     const map = {};
 
     cardsListaAtiva.forEach((pedido) => {
@@ -666,11 +662,7 @@ export default function PedidosCompraPage() {
     return Object.values(map)
       .sort((a, b) => compareGruposPedidosCompra(a, b, sortOrder, groupBy))
       .map((grupo) => {
-        const pedidosSort = grupo.pedidos.sort((a, b) => {
-          const valorA = a.data_emissao || a.created_date || '';
-          const valorB = b.data_emissao || b.created_date || '';
-          return compareValues(valorA, valorB);
-        });
+        const pedidosSort = grupo.pedidos.sort(comparePedidosNoMesmoGrupoEmbarque);
 
         return {
           key: grupo.key,

@@ -213,3 +213,41 @@ export function labelComprasStatusFiltroCodigo(codigo) {
   const normalized = normalizeComprasStatusFiltroCodigo(codigo);
   return COMPRAS_FILTRO_STATUS_ALL.find((s) => s.codigo === normalized)?.label || normalized;
 }
+
+/** Ordem fixa dos pedidos dentro do mesmo agrupamento (Embarques / Consulta). */
+export const COMPRAS_ORDEM_STATUS_PEDIDO_NO_GRUPO = COMPRAS_FILTRO_STATUS_PEDIDO.map((s) => s.codigo);
+
+function indiceOrdemStatusPedidoNoGrupo(displayStatus) {
+  const normalized = normalizeComprasStatusFiltroCodigo(displayStatus);
+  if (normalized === 'Recebido OK') {
+    const i = COMPRAS_ORDEM_STATUS_PEDIDO_NO_GRUPO.indexOf('Concluído');
+    return i >= 0 ? i : 999;
+  }
+  if (normalized === 'Recebido Parcial' || normalized === 'Com Divergência') {
+    const i = COMPRAS_ORDEM_STATUS_PEDIDO_NO_GRUPO.indexOf('Despachado');
+    return i >= 0 ? i : 999;
+  }
+  if (normalized === 'Aguardando Embarque') {
+    const i = COMPRAS_ORDEM_STATUS_PEDIDO_NO_GRUPO.indexOf('Aprovado');
+    return i >= 0 ? i : 999;
+  }
+  const idx = COMPRAS_ORDEM_STATUS_PEDIDO_NO_GRUPO.indexOf(normalized);
+  return idx >= 0 ? idx : 999;
+}
+
+/** Rascunho → Aguardando Pagamento → Aprovado → Despachado → Concluído → Pendente; depois data e número. */
+export function comparePedidosNoMesmoGrupoEmbarque(a, b) {
+  const ordA = indiceOrdemStatusPedidoNoGrupo(a?._display_status || a?.status);
+  const ordB = indiceOrdemStatusPedidoNoGrupo(b?._display_status || b?.status);
+  if (ordA !== ordB) return ordA - ordB;
+
+  const dataA = a?.data_emissao || (a?.created_date ? String(a.created_date).slice(0, 10) : '');
+  const dataB = b?.data_emissao || (b?.created_date ? String(b.created_date).slice(0, 10) : '');
+  const dateCmp = String(dataA).localeCompare(String(dataB), 'pt-BR');
+  if (dateCmp !== 0) return dateCmp;
+
+  return String(a?.numero || a?._display_code || '').localeCompare(
+    String(b?.numero || b?._display_code || ''),
+    'pt-BR',
+  );
+}
