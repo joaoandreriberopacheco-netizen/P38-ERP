@@ -150,6 +150,7 @@
     "catalogo:publicar-tintao": "node scripts/catalogo/gerar-html-tintao-catalogo.mjs",
     "catalogo:publicar-formigres": "node scripts/catalogo/classificar-formigres-completo.mjs && node scripts/catalogo/gerar-html-formigres-catalogo.mjs",
     "catalogo:publicar-arielle": "node scripts/catalogo/snapshot-arielle.mjs && node scripts/catalogo/classificar-arielle-completo.mjs && node scripts/catalogo/gerar-html-arielle-catalogo.mjs",
+    "cotacao:miguel:publish": "cp scripts/cotacao-miguel-alejandro-osorio.html public/cotacoes/miguel-alejandro-osorio.html",
     "produto:nome:restaurar": "node scripts/restaurar-nomes-produto-hierarquia.mjs",
     "produto:nome:restaurar:apply": "node scripts/restaurar-nomes-produto-hierarquia.mjs --apply",
     "git:ship": "node scripts/git-ship.mjs",
