@@ -301,14 +301,17 @@ export default function PedidosCompraPage() {
     }
   };
 
+  const gestaoListaPronta = Boolean(gestaoQuery.data && gestaoQuery.data.isListaParcial === false);
+
   useEffect(() => {
-    if (!gestaoQuery.data) return;
+    if (!gestaoListaPronta) return;
     setProdutosMap(gestaoQuery.data.produtosMap ?? {});
     setPedidos(gestaoQuery.data.pedidos ?? []);
     setEmbarques(gestaoQuery.data.embarques ?? []);
-  }, [gestaoQuery.data]);
+  }, [gestaoQuery.data, gestaoListaPronta]);
 
-  const loading = gestaoQuery.isLoading && !gestaoQuery.data;
+  /** Só pintar após vitrine/financeiro — evita flash da lista rápida (status/ filtros errados). */
+  const loading = !gestaoListaPronta && (gestaoQuery.isLoading || gestaoQuery.isFetching);
 
   const loadData = async () => {
     await queryClient.invalidateQueries({ queryKey: p38Keys.pedidosCompraGestaoInicial() });
