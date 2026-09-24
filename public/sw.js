@@ -1,4 +1,4 @@
-const CACHE_NAME = 'p38-erp-v21';
+const CACHE_NAME = 'p38-erp-v22';
 const SHARE_IDB_NAME = 'p38-share-target';
 const SHARE_IDB_STORE = 'files';
 const SHARED_CACHE = 'VarejoSync-shared-files';
@@ -42,8 +42,14 @@ function isAnexoCompartilhadoPath(pathname) {
   return p === '/anexocompartilhado' || p.endsWith('/anexocompartilhado');
 }
 
+function isShareTargetApiPath(pathname) {
+  const p = normalizePathname(pathname).toLowerCase();
+  return p === '/api/pwa-share-target';
+}
+
 function isShareTargetPostUrl(url) {
-  return isAnexoCompartilhadoPath(url.pathname) && url.origin === self.location.origin;
+  if (url.origin !== self.location.origin) return false;
+  return isAnexoCompartilhadoPath(url.pathname) || isShareTargetApiPath(url.pathname);
 }
 
 function isSharedFileGetUrl(url) {
@@ -185,8 +191,7 @@ async function handleShareTargetPost(request) {
     if (lastShareId) redirectParams.set('shared-id', lastShareId);
   }
 
-  const destPath = normalizePathname(url.pathname) || '/AnexoCompartilhado';
-  const dest = `${self.location.origin}${destPath}?${redirectParams.toString()}`;
+  const dest = `${self.location.origin}/AnexoCompartilhado?${redirectParams.toString()}`;
   return Response.redirect(dest, 303);
 }
 

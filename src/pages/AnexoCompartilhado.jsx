@@ -339,10 +339,28 @@ export default function AnexoCompartilhado() {
     }
   };
 
+  const resolverSharedIdDaUrl = (params) => {
+    const fromUrl = params.get('shared-id');
+    if (fromUrl) return fromUrl;
+    try {
+      return sessionStorage.getItem('p38-share-pending') || '';
+    } catch (_) {
+      return '';
+    }
+  };
+
+  const limparMarcadorPartilhaPendente = () => {
+    try {
+      sessionStorage.removeItem('p38-share-pending');
+    } catch (_) {
+      /* ignore */
+    }
+  };
+
   const tentarCarregarArquivoCompartilhado = async (params) => {
     const shareTarget = params.get('share-target') === '1';
     const sharedPath = params.get('shared');
-    const sharedId = params.get('shared-id');
+    const sharedId = resolverSharedIdDaUrl(params);
 
     if (shareTarget) {
       await aguardarServiceWorkerPronto();
@@ -350,7 +368,18 @@ export default function AnexoCompartilhado() {
 
     if (sharedId) {
       const achouIdb = await carregarArquivoDoIndexedDb(sharedId);
-      if (achouIdb) return true;
+      if (achouIdb) {
+        limparMarcadorPartilhaPendente();
+        return true;
+      }
+    }
+
+    if (!shareTarget && !sharedPath && !sharedId) {
+      const achouRecente = await carregarArquivoDoIndexedDb(null);
+      if (achouRecente) {
+        limparMarcadorPartilhaPendente();
+        return true;
+      }
     }
 
     if (sharedPath) {
@@ -484,7 +513,11 @@ export default function AnexoCompartilhado() {
       if (primeiraExecucaoTentar) {
         primeiraExecucaoTentar = false;
         const temPendenciaPartilha =
-          shareTarget || params.get('shared') || params.get('shared-id');
+          shareTarget ||
+          shareError ||
+          params.get('shared') ||
+          params.get('shared-id') ||
+          resolverSharedIdDaUrl(params);
         if (!temPendenciaPartilha) {
           await limparTodoCacheCompartilhados();
         }
@@ -492,6 +525,7 @@ export default function AnexoCompartilhado() {
 
       const achouCompartilhado = await tentarCarregarArquivoCompartilhado(params);
       if (achouCompartilhado) {
+        limparMarcadorPartilhaPendente();
         setCarregando(false);
         clearTimeout(pollingRef.current);
         return;
@@ -507,7 +541,16 @@ export default function AnexoCompartilhado() {
         );
       }
 
-      if (focoClipboard || String(destino || '').toLowerCase() === 'torre') {
+      const partilhaPendente =
+        shareTarget ||
+        shareError ||
+        params.get('shared') ||
+        params.get('shared-id') ||
+        resolverSharedIdDaUrl(params);
+      if (
+        (focoClipboard || String(destino || '').toLowerCase() === 'torre') &&
+        !partilhaPendente
+      ) {
         setCarregando(false);
         clearTimeout(pollingRef.current);
         return;

@@ -11,7 +11,7 @@ function redirectTorre(origin, params) {
 }
 
 /**
- * Fallback quando o POST da partilha não é interceptado pelo service worker (arranque frio / Next).
+ * Web Share Target (fallback servidor). Não usar pasta em /AnexoCompartilhado — quebra GET da página.
  */
 export async function POST(request) {
   const url = new URL(request.url);

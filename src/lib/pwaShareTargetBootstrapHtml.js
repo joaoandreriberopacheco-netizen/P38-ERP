@@ -68,6 +68,7 @@ export function buildShareTargetBootstrapHtml(origin, { id, name, type, base64, 
       });
     })
     .then(function () {
+      try { sessionStorage.setItem('p38-share-pending', payload.id); } catch (_) {}
       window.location.replace(dest);
     })
     .catch(function () {
