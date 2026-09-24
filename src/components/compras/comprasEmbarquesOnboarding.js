@@ -4,7 +4,7 @@ export const EMBARQUES_LISTA_TOUR = [
   {
     target: '[data-tour="embarques-header"]',
     title: 'Visão geral dos embarques',
-    body: 'Aqui você acompanha quantos embarques estão visíveis no filtro atual e o valor total em aberto. Use como painel rápido da operação.',
+    body: 'Toque no ícone ao lado do título para ver quantos embarques estão no filtro, o valor total e o que já foi aprovado financeiramente e ainda não foi recebido.',
     placement: 'bottom',
   },
   {

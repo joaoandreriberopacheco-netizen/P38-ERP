@@ -55,6 +55,11 @@ import ComprasOperacoesMenu from '@/components/compras/ComprasOperacoesMenu';
 import EnvioFinanceiroLoteDialog from '@/components/compras/EnvioFinanceiroLoteDialog';
 import AtualizarPrecosFiltradosDialog from '@/components/compras/AtualizarPrecosFiltradosDialog';
 import PedidosCompraOrganizer from '@/components/compras/PedidosCompraOrganizer';
+import ComprasListaResumoPopover, {
+  ComprasListaResumoConsulta,
+  ComprasListaResumoEmbarques,
+  ComprasListaResumoSaldo,
+} from '@/components/compras/ComprasListaResumoPopover';
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
 import { Package, Receipt, ClipboardList } from 'lucide-react';
 import {
@@ -62,7 +67,6 @@ import {
   COMPRAS_VIEW_TAB_BTN,
   COMPRAS_VIEW_TAB_GROUP,
   COMPRAS_VIEW_TAB_IDLE,
-  COMPRAS_KPI_ACCENT,
 } from '@/lib/comprasP38Theme';
 import {
   buildPurchaseUnitOptions,
@@ -729,34 +733,41 @@ export default function PedidosCompraPage() {
       {isPhone ? (
         <>
           <P38ScrollChromeCollapse visible={chromeVisible} enabled scrollEl={scrollEl} className="shrink-0">
-            <div className="space-y-4 px-4">
+            <div className="space-y-3 px-4">
               {/* Header */}
-              <div className="pb-3 mb-1 flex flex-col gap-3">
+              <div className="pb-2 mb-0 flex flex-col gap-2">
                 <div
-                  className="space-y-1.5 min-w-0"
+                  className="flex min-w-0 items-center justify-between gap-2"
                   data-tour={activeView === 'consulta' ? 'consulta-header' : 'embarques-header'}
                 >
-                  <p className="text-xl font-medium text-foreground font-din-1451">
+                  <p className="min-w-0 truncate text-xl font-medium text-foreground font-din-1451">
                     {activeView === 'consulta'
                       ? 'Consulta de compras'
                       : activeView === 'saldo'
                         ? 'Saldo a embarcar'
                         : 'Embarques'}
                   </p>
-                  {activeView === 'consulta' ? (
-                    <p className="text-sm leading-normal text-foreground/85 font-din-1451">
-                      {pedidosConsulta.length} embarque{pedidosConsulta.length === 1 ? '' : 's'} no período
-                    </p>
-                  ) : activeView === 'saldo' ? (
-                    <p className="text-sm leading-normal text-foreground/85 font-din-1451">
-                      {saldoFiltrados.length} embarque{saldoFiltrados.length === 1 ? '' : 's'} pendentes · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </p>
-                  ) : (
-                    <>
-                      <p className="text-sm leading-normal text-foreground/85 font-din-1451">{filtrados.length} embarques visíveis · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                      <p className={cn('text-sm leading-normal font-din-1451', COMPRAS_KPI_ACCENT)}>Aprovados financeiramente e ainda não recebidos no filtro: R$ {valorPagoNaoEntregue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                    </>
-                  )}
+                  <ComprasListaResumoPopover
+                    label={
+                      activeView === 'consulta'
+                        ? 'Resumo da consulta'
+                        : activeView === 'saldo'
+                          ? 'Resumo do saldo a embarcar'
+                          : 'Resumo financeiro dos embarques visíveis'
+                    }
+                  >
+                    {activeView === 'consulta' ? (
+                      <ComprasListaResumoConsulta count={pedidosConsulta.length} />
+                    ) : activeView === 'saldo' ? (
+                      <ComprasListaResumoSaldo count={saldoFiltrados.length} valorTotal={valorTotal} />
+                    ) : (
+                      <ComprasListaResumoEmbarques
+                        count={filtrados.length}
+                        valorTotal={valorTotal}
+                        valorPagoNaoEntregue={valorPagoNaoEntregue}
+                      />
+                    )}
+                  </ComprasListaResumoPopover>
                 </div>
                 {activeView === 'embarques' || activeView === 'consulta' || activeView === 'saldo' ? (
                   <div
