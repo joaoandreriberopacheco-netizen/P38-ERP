@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Cotação — MIGUEL ALEJANDRO OSORIO</title>
+  <style>
+    @page { size: A4; margin: 18mm 16mm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+      font-size: 13px;
+      line-height: 1.45;
+      color: #111;
+      background: #fff;
+      -webkit-font-smoothing: antialiased;
+    }
+    .doc { max-width: 680px; margin: 0 auto; padding: 8px 0 24px; }
+    .header { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e8e8e8; }
+    .header h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 6px; }
+    .header .meta { font-size: 12px; color: #666; }
+    .header .resumo { margin-top: 10px; font-size: 13px; color: #333; }
+    .cliente { margin-bottom: 22px; }
+    .cliente .label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #666; margin-bottom: 4px; }
+    .cliente .nome { font-size: 15px; font-weight: 600; color: #111; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      font-size: 11px;
+      font-weight: 600;
+      color: #111;
+      text-align: left;
+      padding: 6px 0 8px;
+      border-bottom: 1px solid #d9d9d9;
+    }
+    tbody td {
+      padding: 8px 0;
+      border-bottom: 1px solid #efefef;
+      vertical-align: top;
+    }
+    .col-qty { width: 12%; text-align: right; white-space: nowrap; padding-right: 8px; }
+    .col-desc { width: 40%; padding-right: 12px; }
+    .col-num { width: 14%; text-align: right; white-space: nowrap; }
+    thead .col-qty, thead .col-num { text-align: right; }
+    .subtotal td {
+      font-weight: 600;
+      border-top: 1px solid #d9d9d9;
+      border-bottom: none;
+      padding-top: 10px;
+    }
+    .total td {
+      font-weight: 600;
+      font-size: 14px;
+      border-top: 1px solid #bdbdbd;
+      padding-top: 12px;
+    }
+    .obs { margin-top: 20px; font-size: 12px; color: #555; line-height: 1.55; }
+    .obs strong { color: #333; }
+  </style>
+</head>
+<body>
+  <div class="doc">
+    <header class="header">
+      <h1>Cotação — porcelanato Dallas</h1>
+      <p class="meta">Data 22/09/2026 · Gerado em 22/09/2026, 17:13:55</p>
+      <p class="resumo"><strong>202,52 M²</strong> · <strong>83 cx</strong> · <strong>R$ 20.193,44</strong></p>
+    </header>
+
+    <div class="empresa">
+      <strong>Ausier E Mello Comer. de Mat. de Construç</strong><br />
+      CNPJ 32.655.261/0001-36 · I.E. 041741153 · Fone (92) 3213-9657<br />
+      Av. Max Teixeira, 819 — Col. Santo Antônio — Manaus, AM — CEP 69093-770
+    </div>
+
+    <div class="cliente">
+      <div class="label">Cliente</div>
+      <div class="nome">MIGUEL ALEJANDRO OSORIO</div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th class="col-qty">Quant (M²)</th>
+          <th class="col-desc">Descrição</th>
+          <th class="col-num">Caixas</th>
+          <th class="col-num">Valor unit. (M²)</th>
+          <th class="col-num">Valor total</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+      <tr>
+        <td class="col-qty">70,76</td>
+        <td class="col-desc">PORCELANATO 70×70 (2,44) DALLAS CEMENT TOUCH RÚSTICO ALTO TRÁFEGO USO XT DELTA</td>
+        <td class="col-num">29</td>
+        <td class="col-num">R$ 88,00</td>
+        <td class="col-num">R$ 6.226,88</td>
+      </tr>
+      <tr>
+        <td class="col-qty">131,76</td>
+        <td class="col-desc">PORCELANATO 70×70 (2,44) DALLAS LIGHT GRAY POLIDO USO MT DELTA</td>
+        <td class="col-num">54</td>
+        <td class="col-num">R$ 106,00</td>
+        <td class="col-num">R$ 13.966,56</td>
+      </tr>
+        <tr class="subtotal">
+          <td class="col-qty">202,52</td>
+          <td class="col-desc">Subtotal</td>
+          <td class="col-num">83</td>
+          <td class="col-num"></td>
+          <td class="col-num">R$ 20.193,44</td>
+        </tr>
+        <tr class="subtotal">
+          <td class="col-qty"></td>
+          <td class="col-desc">Frete</td>
+          <td class="col-num"></td>
+          <td class="col-num">Incluso</td>
+          <td class="col-num">—</td>
+        </tr>
+        <tr class="total">
+          <td class="col-qty"></td>
+          <td class="col-desc">Total</td>
+          <td class="col-num"></td>
+          <td class="col-num"></td>
+          <td class="col-num">R$ 20.193,44</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="obs">
+      <strong>Transporte incluso</strong> no valor total.<br />
+      <strong>Adiantamento de 60%</strong> na confirmação do pedido; saldo conforme acordado.<br />
+      <strong>Prazo de entrega:</strong> 06/10/2026.<br />
+      Proposta válida por 03 dias (até 25/09/2026).
+    </p>
+  </div>
+</body>
+</html>
