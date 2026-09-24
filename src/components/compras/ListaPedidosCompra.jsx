@@ -382,8 +382,20 @@ function GrupoDia({ label, groupDate, groupCarrier, pedidos, onEdit, onDelete, s
 export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete, selecionadosIds = [], onToggleSelecao, modoSelecao = false }) {
   if (loading) {
     return (
-      <div className="space-y-2">
-        {[1, 2, 3, 4, 5].map(i => <div key={i} className={cn('h-14 bg-secondary/20 animate-pulse', COMPRAS_SEP)} />)}
+      <div className="space-y-3 font-din-1451" aria-busy="true" aria-label="A carregar embarques">
+        <div className="h-4 w-32 rounded-md bg-muted/60 animate-pulse" />
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className={cn('rounded-2xl border border-border/20 bg-card/40 p-3 space-y-2 animate-pulse', COMPRAS_SEP)}>
+            <div className="flex gap-2">
+              <div className="h-2 w-2 rounded-full bg-muted shrink-0 mt-1" />
+              <div className="flex-1 space-y-1.5">
+                <div className="h-3.5 w-3/4 max-w-[12rem] rounded bg-muted/70" />
+                <div className="h-3 w-1/2 max-w-[8rem] rounded bg-muted/50" />
+              </div>
+              <div className="h-5 w-14 rounded-full bg-muted/60" />
+            </div>
+          </div>
+        ))}
       </div>
     );
   }

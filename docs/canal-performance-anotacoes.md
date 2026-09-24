@@ -200,7 +200,8 @@ Ou via Edge Function `fechar-dashboard-kpi` / cron `job_fechar_p38_anotacao_onte
 - [x] **Vendas Gestão** — merge híbrido (**passado até ontem** da anotação + **só hoje** live).
 - [x] **Backfill vendas_gestao** — `npm run anotacao:vendas-gestao-backfill`.
 - [ ] **Medir LCP** no preview vs produção.
-- [ ] **Compras** — evitar fetch pesado quando `compras:gestao-resumo` bater.
+- [x] **Compras / Embarques** — query única (sem lista+completo duplicado), prefetch no hub Compras, cache warm sessionStorage, paralelo hydrate/produtos.
+- [ ] **Compras** — snapshot SQL completo da lista (além de `compras:gestao-resumo` versão).
 - [ ] **Margem** — unificar snapshot com `vendas:YYYY-MM`.
 - [ ] **Merge canal → `main`**.
 

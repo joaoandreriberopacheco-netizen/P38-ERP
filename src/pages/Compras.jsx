@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { prefetchPedidosCompraGestao } from '@/lib/prefetchPedidosCompraGestao';
 import { base44 } from '@/api/base44Client';
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
 import { Button } from '@/components/ui/button';
@@ -365,9 +367,14 @@ const PedidosCompraTab = () => {
 };
 
 export default function ComprasPage() {
+  const queryClient = useQueryClient();
   const [sugestaoKey, setSugestaoKey] = useState(0);
   const [activeTab, setActiveTab] = useState('sugestoes');
   const isMobile = useCompactShell();
+
+  useEffect(() => {
+    prefetchPedidosCompraGestao(queryClient).catch(() => {});
+  }, [queryClient]);
   const cotacoesFullHeight = activeTab === 'cotacoes';
   const tabFullHeight = isMobile || cotacoesFullHeight;
   const tabContentScrolls = isMobile && activeTab !== 'sugestoes' && activeTab !== 'cotacoes';

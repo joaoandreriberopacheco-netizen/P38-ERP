@@ -25,8 +25,12 @@ export { fetchPedidosVenda90d, fetchDadosVendaAbcd90d };
 import { unifyLogisticaEventos } from '@/components/logistica-sandbox/fluvialDataUtils';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { getGestaoDateRangeStaleTime } from '@/lib/p38GestaoCache';
-import { fetchPedidosCompraGestaoCompleto, fetchPedidosCompraGestaoListaRapida } from '@/lib/fetchPedidosCompraGestaoCompleto';
+import { fetchPedidosCompraGestaoCompleto } from '@/lib/fetchPedidosCompraGestaoCompleto';
 import { sincronizarPedidosCompraAprovacaoPendente } from '@/lib/fetchPedidosCompraGestaoSync';
+import {
+  readPedidosCompraGestaoWarmCache,
+  writePedidosCompraGestaoWarmCache,
+} from '@/lib/pedidosCompraGestaoWarmCache';
 import { fetchProdutosPdvCatalogo, searchClientesPdv } from '@/lib/fetchPdvCatalogo';
 import { readCatalogoAnotacaoVersion, readComprasAnotacaoResumo } from '@/lib/p38AnotacaoApi';
 
@@ -184,21 +188,20 @@ export function usePedidosCompraGestaoInicialQuery(options = {}) {
   const comprasVersion = resumoQuery.data?.comprasVersion ?? 'v0';
   const fetchFiltersKey = JSON.stringify(fetchFilters);
 
-  const listaQuery = useQuery({
-    queryKey: [...p38Keys.pedidosCompraGestaoInicial(), comprasVersion, 'lista', fetchFiltersKey],
-    queryFn: () => fetchPedidosCompraGestaoListaRapida(base44, fetchFilters),
+  const completoQueryKey = [...p38Keys.pedidosCompraGestaoInicial(), comprasVersion, 'completo', fetchFiltersKey];
+  const warmPlaceholder = readPedidosCompraGestaoWarmCache(fetchFiltersKey, comprasVersion);
+
+  const completoQuery = useQuery({
+    queryKey: completoQueryKey,
+    queryFn: async () => {
+      const data = await fetchPedidosCompraGestaoCompleto(base44, { deferSyncAprovacao: true, fetchFilters });
+      writePedidosCompraGestaoWarmCache(fetchFiltersKey, comprasVersion, data);
+      return data;
+    },
+    placeholderData: (previous) => previous ?? warmPlaceholder ?? undefined,
     staleTime: P38_STALE_TIME,
     gcTime: P38_GC_TIME,
     enabled,
-    ...rest,
-  });
-
-  const completoQuery = useQuery({
-    queryKey: [...p38Keys.pedidosCompraGestaoInicial(), comprasVersion, 'completo', fetchFiltersKey],
-    queryFn: () => fetchPedidosCompraGestaoCompleto(base44, { deferSyncAprovacao: true, fetchFilters }),
-    staleTime: P38_STALE_TIME,
-    gcTime: P38_GC_TIME,
-    enabled: enabled && Boolean(listaQuery.data),
     ...rest,
   });
 
@@ -224,15 +227,15 @@ export function usePedidosCompraGestaoInicialQuery(options = {}) {
     gcTime: P38_GC_TIME,
   });
 
-  const data = completoQuery.data ?? listaQuery.data;
-  const isLoading = listaQuery.isLoading && !data;
+  const data = completoQuery.data;
+  const isLoading = completoQuery.isLoading && !data;
 
   return {
-    ...listaQuery,
+    ...completoQuery,
     data,
     isLoading,
-    isFetching: listaQuery.isFetching || completoQuery.isFetching,
-    isEnriching: Boolean(listaQuery.data && completoQuery.isFetching && !completoQuery.data),
+    isFetching: completoQuery.isFetching,
+    isEnriching: false,
     resumoCompras: resumoQuery.data,
   };
 }

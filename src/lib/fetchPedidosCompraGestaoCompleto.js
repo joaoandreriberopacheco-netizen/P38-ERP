@@ -29,20 +29,29 @@ export async function fetchPedidosCompraGestaoListaRapida(base44, filters = {}) 
  * @param {{ deferSyncAprovacao?: boolean }} options
  */
 export async function fetchPedidosCompraGestaoCompleto(base44, options = {}) {
-  const { deferSyncAprovacao = true, fetchFilters = {} } = options;
-  const gestao = await fetchPedidosCompraGestaoInicial(base44, fetchFilters);
+  const { deferSyncAprovacao = true, fetchFilters = {}, gestaoPrefetch = null } = options;
+  const gestao = gestaoPrefetch ?? await fetchPedidosCompraGestaoInicial(base44, fetchFilters);
 
   const pcs = gestao.pedidos;
   const embarquesHeaders = gestao.embarques;
 
-  const embarquesDb = await hydrateEmbarquesFromSql(base44, embarquesHeaders);
-  const produtoIds = [
-    ...new Set([
-      ...pcs.flatMap((p) => (p.itens || []).map((i) => i.produto_id).filter(Boolean)),
-      ...embarquesDb.flatMap((e) => getEmbarqueItensLinhas(e).map((i) => i.produto_id).filter(Boolean)),
-    ]),
+  const pedidoProdutoRefs = pcs.flatMap((p) => (p.itens || []).map((i) => ({ produto_id: i.produto_id })));
+
+  const [embarquesDb, produtosMapPedidos] = await Promise.all([
+    hydrateEmbarquesFromSql(base44, embarquesHeaders),
+    carregarProdutosMap(pedidoProdutoRefs),
+  ]);
+
+  const produtoIdsEmbarque = [
+    ...new Set(
+      embarquesDb.flatMap((e) => getEmbarqueItensLinhas(e).map((i) => i.produto_id).filter(Boolean)),
+    ),
   ];
-  const produtosMap = await carregarProdutosMap(produtoIds.map((id) => ({ produto_id: id })));
+  const missingProdutoIds = produtoIdsEmbarque.filter((id) => !produtosMapPedidos[id]);
+  const produtosMapExtras = missingProdutoIds.length
+    ? await carregarProdutosMap(missingProdutoIds.map((id) => ({ produto_id: id })))
+    : {};
+  const produtosMap = { ...produtosMapPedidos, ...produtosMapExtras };
   const refinado = materializePedidosCompraView(pcs, embarquesDb, produtosMap);
 
   let pedidosBase = refinado.pedidosComResumoReal;

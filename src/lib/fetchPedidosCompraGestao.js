@@ -24,6 +24,34 @@ async function fetchPedidosByIds(base44, ids = []) {
   return rows.flat().filter((pedido) => pedido?.id);
 }
 
+async function fetchEmbarquesGestao(base44, { somenteNaoConcluidos, ultimos30Dias, pedidoIds, inicio30 }) {
+  if (somenteNaoConcluidos) {
+    return pedidoIds.length
+      ? fetchEmbarquesPorPedidos(base44, pedidoIds)
+      : [];
+  }
+  if (ultimos30Dias) {
+    const [embarquesRecentes, embarquesPorPedido] = await Promise.all([
+      base44.entities.Embarque.filter(
+        { created_date: { $gte: inicio30 } },
+        '-created_date',
+        600,
+      ).catch(() => []),
+      pedidoIds.length ? fetchEmbarquesPorPedidos(base44, pedidoIds) : Promise.resolve([]),
+    ]);
+    return dedupePorId([...(embarquesRecentes || []), ...(embarquesPorPedido || [])]);
+  }
+  const [embarquesRecentes, embarquesPorPedido] = await Promise.all([
+    base44.entities.Embarque.filter(
+      { created_date: { $gte: inicio30 } },
+      '-created_date',
+      600,
+    ).catch(() => []),
+    pedidoIds.length ? fetchEmbarquesPorPedidos(base44, pedidoIds) : Promise.resolve([]),
+  ]);
+  return dedupePorId([...(embarquesRecentes || []), ...(embarquesPorPedido || [])]);
+}
+
 /**
  * Pedidos + embarques para a lista de compras.
  * Respeita filtros de visibilidade (evita carregar concluídos quando «Não concluídos» está ativo).
@@ -67,22 +95,10 @@ export async function fetchPedidosCompraGestaoInicial(base44, filters = {}) {
 
   const pedidoIds = pcsRaw.map((p) => p.id).filter(Boolean);
 
-  let embarquesDbRaw = [];
-  if (somenteNaoConcluidos) {
-    embarquesDbRaw = pedidoIds.length
-      ? await fetchEmbarquesPorPedidos(base44, pedidoIds)
-      : [];
-  } else {
-    const [embarquesRecentes, embarquesPorPedido] = await Promise.all([
-      base44.entities.Embarque.filter(
-        { created_date: { $gte: inicio30 } },
-        '-created_date',
-        600,
-      ).catch(() => []),
-      pedidoIds.length ? fetchEmbarquesPorPedidos(base44, pedidoIds) : Promise.resolve([]),
-    ]);
-    embarquesDbRaw = dedupePorId([...(embarquesRecentes || []), ...(embarquesPorPedido || [])]);
-  }
+  const [embarquesDbRaw, pedidosBase] = await Promise.all([
+    fetchEmbarquesGestao(base44, { somenteNaoConcluidos, ultimos30Dias, pedidoIds, inicio30 }),
+    hydratePedidosCompraItensFromSql(base44, pcsRaw),
+  ]);
 
   const pedidoIdsConhecidos = new Set(pcsRaw.map((p) => p.id));
   const missingPedidoIds = [
@@ -90,12 +106,13 @@ export async function fetchPedidosCompraGestaoInicial(base44, filters = {}) {
       embarquesDbRaw.map((e) => e.pedido_compra_id).filter((id) => id && !pedidoIdsConhecidos.has(id)),
     ),
   ];
-  if (missingPedidoIds.length) {
-    const extras = await fetchPedidosByIds(base44, missingPedidoIds);
-    pcsRaw = dedupePorId([...pcsRaw, ...extras]);
-  }
 
-  const pedidos = await hydratePedidosCompraItensFromSql(base44, pcsRaw);
+  let pedidos = pedidosBase;
+  if (missingPedidoIds.length) {
+    const extrasRaw = await fetchPedidosByIds(base44, missingPedidoIds);
+    const extrasHydrated = await hydratePedidosCompraItensFromSql(base44, extrasRaw);
+    pedidos = dedupePorId([...pedidos, ...extrasHydrated]);
+  }
 
   return { pedidos, embarques: embarquesDbRaw };
 }
