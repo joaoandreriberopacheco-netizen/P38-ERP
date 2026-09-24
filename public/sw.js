@@ -1,4 +1,4 @@
-const CACHE_NAME = 'p38-erp-v23';
+const CACHE_NAME = 'p38-erp-v24';
 const SHARE_IDB_NAME = 'p38-share-target';
 const SHARE_IDB_STORE = 'files';
 const SHARED_CACHE = 'VarejoSync-shared-files';
@@ -231,7 +231,7 @@ async function handleShareTargetPost(request) {
   const landing = `${self.location.origin}/pwa-share-landing.html?${redirectParams.toString()}`;
   const headers = { Location: landing };
   if (lastShareId) {
-    headers['Set-Cookie'] = `p38_share_id=${encodeURIComponent(lastShareId)}; Path=/; Max-Age=300; SameSite=Lax`;
+    headers['Set-Cookie'] = `p38_share_id=${encodeURIComponent(lastShareId)}; Path=/; Max-Age=900; SameSite=Lax`;
   }
   return new Response(null, { status: 303, headers });
 }

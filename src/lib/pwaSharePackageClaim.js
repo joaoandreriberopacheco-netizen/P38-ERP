@@ -1,38 +1,25 @@
 import {
   peekShareTargetFileAsBlob,
   peekNewestShareTargetFileAsBlob,
+  mirrorShareTargetFileToSessionBackup,
   deleteShareTargetFile,
   markShareTargetDelivered,
 } from '@/lib/pwaShareTargetStorage';
+import { readShareBlobBackup, clearShareBlobBackup } from '@/lib/pwaShareBlobBackup';
+import {
+  readSharePendingId,
+  clearSharePendingMarkers,
+  hasSharePendingMarkers,
+} from '@/lib/pwaSharePendingMarkers';
 
 const SHARED_FILES_CACHE = 'VarejoSync-shared-files';
-const COOKIE_ID = 'p38_share_id';
 
+export { readSharePendingId as readShareIdFromSession, hasSharePendingMarkers };
 export function readShareIdFromCookie() {
-  if (typeof document === 'undefined') return '';
-  const m = document.cookie.match(new RegExp(`(?:^|; )${COOKIE_ID}=([^;]*)`));
-  return m ? decodeURIComponent(m[1]) : '';
+  return readSharePendingId();
 }
-
-export function clearShareIdCookie() {
-  if (typeof document === 'undefined') return;
-  document.cookie = `${COOKIE_ID}=; Path=/; Max-Age=0; SameSite=Lax`;
-}
-
-export function readShareIdFromSession() {
-  try {
-    return sessionStorage.getItem('p38-share-pending') || '';
-  } catch (_) {
-    return '';
-  }
-}
-
 export function clearSharePendingSession() {
-  try {
-    sessionStorage.removeItem('p38-share-pending');
-  } catch (_) {
-    /* ignore */
-  }
+  clearSharePendingMarkers();
 }
 
 function extrairTimestampCachePath(req) {
@@ -94,13 +81,23 @@ export async function claimSharePackageForTorre(params) {
   const sharedPath = params?.get?.('shared') || '';
   const ids = [
     params?.get?.('shared-id'),
-    readShareIdFromSession(),
-    readShareIdFromCookie(),
+    readSharePendingId(),
   ].filter(Boolean);
 
+  const fromBackup = readShareBlobBackup();
+  if (fromBackup?.blob?.size) {
+    return fromBackup;
+  }
+
   for (const id of ids) {
+    await mirrorShareTargetFileToSessionBackup(id);
+    const fromBackupAfterMirror = readShareBlobBackup();
+    if (fromBackupAfterMirror?.blob?.size) {
+      return fromBackupAfterMirror;
+    }
     const fromIdb = await peekShareTargetFileAsBlob(id);
     if (fromIdb?.blob?.size) {
+      await mirrorShareTargetFileToSessionBackup(id);
       return { source: 'idb', ...fromIdb };
     }
   }
@@ -118,9 +115,11 @@ export async function claimSharePackageForTorre(params) {
     if (newest?.blob?.size) return { source: 'idb-newest', ...newest };
   }
 
-  if (!shareTarget && !ids.length && !sharedPath) {
-    const newest = await peekNewestShareTargetFileAsBlob(2 * 60 * 1000);
-    if (newest?.blob?.size) return { source: 'idb-recent', ...newest };
+  const recentWindow = hasSharePendingMarkers() || shareTarget ? 15 * 60 * 1000 : 3 * 60 * 1000;
+  const newest = await peekNewestShareTargetFileAsBlob(recentWindow);
+  if (newest?.blob?.size) {
+    await mirrorShareTargetFileToSessionBackup(newest.id);
+    return { source: 'idb-recent', ...newest };
   }
 
   return null;
@@ -140,6 +139,6 @@ export async function confirmSharePackageConsumed(claimed) {
       /* ignore */
     }
   }
-  clearShareIdCookie();
-  clearSharePendingSession();
+  clearShareBlobBackup();
+  clearSharePendingMarkers();
 }

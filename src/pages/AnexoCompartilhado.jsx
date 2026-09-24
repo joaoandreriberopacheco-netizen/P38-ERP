@@ -42,6 +42,7 @@ import {
   readShareIdFromSession,
   readShareIdFromCookie,
   clearSharePendingSession,
+  hasSharePendingMarkers,
 } from '@/lib/pwaSharePackageClaim';
 
 export default function AnexoCompartilhado() {
@@ -328,19 +329,28 @@ export default function AnexoCompartilhado() {
   };
 
   const shareClaimRef = useRef(null);
+  const shareIngestConfirmedRef = useRef(false);
 
   const tentarCarregarArquivoCompartilhado = async (params) => {
     const shareTarget = params.get('share-target') === '1';
-    if (shareTarget) {
+    if (shareTarget || hasSharePendingMarkers()) {
       await aguardarServiceWorkerPronto();
     }
     const claimed = await claimSharePackageForTorre(params);
     if (!claimed?.blob?.size) return false;
     prepararArquivo(claimed.blob, claimed.name || 'arquivo');
     shareClaimRef.current = claimed;
-    await confirmSharePackageConsumed(claimed);
     return true;
   };
+
+  useEffect(() => {
+    if (!arquivo?.file || shareIngestConfirmedRef.current) return;
+    const pending = shareClaimRef.current;
+    if (!pending) return;
+    shareIngestConfirmedRef.current = true;
+    void confirmSharePackageConsumed(pending);
+    clearSharePendingSession();
+  }, [arquivo?.file, arquivo?.nome]);
 
   useEffect(() => {
     let tentativas = 0;
@@ -361,7 +371,7 @@ export default function AnexoCompartilhado() {
               const claimed = await claimSharePackageForTorre(new URLSearchParams(window.location.search));
               if (claimed?.blob?.size) {
                 prepararArquivo(claimed.blob, claimed.name || 'arquivo');
-                await confirmSharePackageConsumed(claimed);
+                shareClaimRef.current = claimed;
               }
             }
         } else if (textEntry) {
@@ -408,7 +418,8 @@ export default function AnexoCompartilhado() {
           params.get('shared') ||
           params.get('shared-id') ||
           readShareIdFromSession() ||
-          readShareIdFromCookie();
+          readShareIdFromCookie() ||
+          hasSharePendingMarkers();
         if (!temPendenciaPartilha) {
           await limparTodoCacheCompartilhados();
         }
@@ -416,7 +427,6 @@ export default function AnexoCompartilhado() {
 
       const achouCompartilhado = await tentarCarregarArquivoCompartilhado(params);
       if (achouCompartilhado) {
-        clearSharePendingSession();
         setCarregando(false);
         clearTimeout(pollingRef.current);
         return;
@@ -438,7 +448,8 @@ export default function AnexoCompartilhado() {
         params.get('shared') ||
         params.get('shared-id') ||
         readShareIdFromSession() ||
-        readShareIdFromCookie();
+        readShareIdFromCookie() ||
+        hasSharePendingMarkers();
       if (
         (focoClipboard || String(destino || '').toLowerCase() === 'torre') &&
         !partilhaPendente

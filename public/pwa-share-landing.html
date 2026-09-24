@@ -55,17 +55,66 @@
     }).catch(function () { return false; });
   }
 
+  function arrayBufferToBase64(buffer) {
+    var bytes = new Uint8Array(buffer);
+    var binary = '';
+    var chunk = 0x8000;
+    for (var i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+    }
+    return btoa(binary);
+  }
+
+  function gravarBackupSession(id) {
+    if (!id) return Promise.resolve();
+    return openDb().then(function (db) {
+      return new Promise(function (resolve) {
+        var tx = db.transaction(STORE, 'readonly');
+        var req = tx.objectStore(STORE).get(id);
+        req.onsuccess = function () {
+          var rec = req.result;
+          if (rec && rec.buffer && rec.buffer.byteLength && rec.buffer.byteLength <= 4 * 1024 * 1024) {
+            try {
+              sessionStorage.setItem('p38-share-blob-backup', JSON.stringify({
+                id: id,
+                name: rec.name || 'arquivo',
+                type: rec.type || 'application/octet-stream',
+                savedAt: Date.now(),
+                base64: arrayBufferToBase64(rec.buffer)
+              }));
+            } catch (_) {}
+          }
+          resolve();
+        };
+        req.onerror = function () { resolve(); };
+      });
+    }).catch(function () {});
+  }
+
   function irParaTorre(extra) {
     var qs = new URLSearchParams(window.location.search);
     if (extra) {
       Object.keys(extra).forEach(function (k) { qs.set(k, extra[k]); });
     }
     qs.set('share-target', '1');
+    var now = String(Date.now());
     if (sharedId) {
-      try { sessionStorage.setItem('p38-share-pending', sharedId); } catch (_) {}
-      document.cookie = 'p38_share_id=' + encodeURIComponent(sharedId) + '; Path=/; Max-Age=300; SameSite=Lax';
+      try {
+        sessionStorage.setItem('p38-share-pending', sharedId);
+        sessionStorage.setItem('p38-share-active', '1');
+        sessionStorage.setItem('p38-share-active-at', now);
+        localStorage.setItem('p38_share_id', sharedId);
+        localStorage.setItem('p38-share-active-at', now);
+      } catch (_) {}
+      document.cookie = 'p38_share_id=' + encodeURIComponent(sharedId) + '; Path=/; Max-Age=900; SameSite=Lax';
     }
-    window.location.replace('/AnexoCompartilhado?' + qs.toString());
+    var dest = '/AnexoCompartilhado?' + qs.toString();
+    var go = function () { window.location.replace(dest); };
+    if (sharedId) {
+      gravarBackupSession(sharedId).then(go);
+    } else {
+      go();
+    }
   }
 
   if (shareError) {

@@ -1,3 +1,5 @@
+import { bufferToShareBlob, writeShareBlobBackup } from '@/lib/pwaShareBlobBackup';
+
 const DB_NAME = 'p38-share-target';
 const DB_VERSION = 2;
 const STORE = 'files';
@@ -72,11 +74,23 @@ export async function markShareTargetDelivered(id) {
   });
 }
 
+function recToBlobPackage(id, rec) {
+  const blob = bufferToShareBlob(rec.buffer, rec.type);
+  if (!blob?.size) return null;
+  return { blob, name: rec.name || 'arquivo', type: rec.type || blob.type, id };
+}
+
 export async function peekShareTargetFileAsBlob(id) {
   const rec = await readShareTargetFile(id);
   if (!rec?.buffer) return null;
-  const blob = new Blob([rec.buffer], { type: rec.type || 'application/octet-stream' });
-  return { blob, name: rec.name || 'arquivo', type: rec.type || blob.type, id };
+  return recToBlobPackage(id, rec);
+}
+
+/** Grava cópia em sessionStorage (até 4 MB) para não perder no salto à Torre. */
+export async function mirrorShareTargetFileToSessionBackup(id) {
+  const rec = await readShareTargetFile(id);
+  if (!rec?.buffer) return false;
+  return writeShareBlobBackup({ id, name: rec.name, type: rec.type, buffer: rec.buffer });
 }
 
 /** @deprecated prefer peek + deleteShareTargetFile após sucesso na Torre */
@@ -115,8 +129,7 @@ export async function peekNewestShareTargetFileAsBlob(maxAgeMs = 10 * 60 * 1000)
     if (!best || rec.savedAt > best.rec.savedAt) best = { id, rec };
   }
   if (!best) return null;
-  const blob = new Blob([best.rec.buffer], { type: best.rec.type || 'application/octet-stream' });
-  return { blob, name: best.rec.name || 'arquivo', type: best.rec.type || blob.type, id: best.id };
+  return recToBlobPackage(best.id, best.rec);
 }
 
 export async function takeNewestShareTargetFileAsBlob(maxAgeMs = 10 * 60 * 1000) {
