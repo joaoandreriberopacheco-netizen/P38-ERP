@@ -36,6 +36,12 @@ import {
 import TorreWidgetDestinos from '@/components/anexos/TorreWidgetDestinos';
 import TorreArquivoCard from '@/components/anexos/TorreArquivoCard';
 import { P38_FIELD_SURFACE, P38_KPI_SHELL, P38_ACCENT } from '@/components/financeiro/fluxo/financeiroP38';
+import {
+  limparArquivoTorrePersistido,
+  persistirArquivoTorre,
+  persistirTextoTorre,
+  restaurarArquivoTorre,
+} from '@/lib/torreArquivoPersist';
 
 export default function AnexoCompartilhado() {
   const [arquivo, setArquivo] = useState(null);
@@ -178,20 +184,35 @@ export default function AnexoCompartilhado() {
       fileObj = blob;
     }
     const previewUrl = URL.createObjectURL(blob);
-    setArquivo({ file: fileObj, previewUrl, nome: fileName, tipo: blob.type });
+    const entrada = { file: fileObj, previewUrl, nome: fileName, tipo: blob.type };
+    setArquivo(entrada);
+    void persistirArquivoTorre(blob, fileName, blob.type);
+    setErroCompartilhamento('');
+    return entrada;
   };
 
   const definirTextoColado = (texto) => {
     const valor = String(texto || '').trim();
     if (!valor) return false;
     const isUrl = /^https?:\/\//i.test(valor);
-    setArquivo({
+    const entrada = {
       file: null,
       previewUrl: null,
       nome: isUrl ? 'Link colado' : 'Texto colado',
       tipo: isUrl ? 'text/uri-list' : 'text/plain',
       texto: valor,
-    });
+    };
+    setArquivo(entrada);
+    persistirTextoTorre(valor, entrada.nome, entrada.tipo);
+    setErroCompartilhamento('');
+    return true;
+  };
+
+  const restaurarArquivoPersistidoSePossivel = () => {
+    const restaurado = restaurarArquivoTorre();
+    if (!restaurado) return false;
+    setArquivo(restaurado);
+    setErroCompartilhamento('');
     return true;
   };
 
@@ -283,29 +304,58 @@ export default function AnexoCompartilhado() {
     }
   };
 
+  const extrairNomeArquivoCompartilhado = (fileUrl) =>
+    decodeURIComponent(String(fileUrl || '').split('/').pop().replace(/^\d+-/, '') || 'arquivo');
+
   const carregarArquivoDoCache = async (fileUrl) => {
+    if (!fileUrl || typeof caches === 'undefined') return false;
     try {
       const cache = await caches.open(SHARED_FILES_CACHE);
+      const pathOnly =
+        typeof fileUrl === 'string' && fileUrl.startsWith('/')
+          ? fileUrl
+          : String(fileUrl).replace(window.location.origin, '');
       const normalizedUrl =
         typeof fileUrl === 'string' && fileUrl.startsWith('/')
           ? `${window.location.origin}${fileUrl}`
           : fileUrl;
-      const req = typeof normalizedUrl === 'string' ? new Request(normalizedUrl) : normalizedUrl;
-      let resp = await cache.match(req);
-      if (!resp && typeof normalizedUrl === 'string') {
-        resp = await cache.match(new Request(normalizedUrl, { method: 'GET' }));
+      const candidates = [
+        typeof normalizedUrl === 'string' ? new Request(normalizedUrl, { method: 'GET' }) : normalizedUrl,
+        pathOnly ? new Request(`${window.location.origin}${pathOnly}`, { method: 'GET' }) : null,
+      ].filter(Boolean);
+
+      let matchedReq = null;
+      let resp = null;
+      for (const req of candidates) {
+        resp = await cache.match(req);
+        if (resp) {
+          matchedReq = req;
+          break;
+        }
       }
+
+      if (!resp) {
+        const keys = await cache.keys();
+        const fileName = extrairNomeArquivoCompartilhado(pathOnly || normalizedUrl);
+        const fallback = keys.find((req) => {
+          const url = req.url || '';
+          if (!url.includes('/shared/')) return false;
+          const nomeCache = decodeURIComponent(String(url).split('/').pop() || '').replace(/^\d+-/, '');
+          return nomeCache === fileName || url.endsWith(fileName);
+        });
+        if (fallback) {
+          matchedReq = fallback;
+          resp = await cache.match(fallback);
+        }
+      }
+
       if (!resp) return false;
       const blob = await resp.blob();
       if (blob.size === 0) return false;
-      await cache.delete(req);
-      const fileName =
-        String(normalizedUrl)
-          .split('/')
-          .pop()
-          .replace(/^\d+-/, '') || 'arquivo';
+
+      const fileName = extrairNomeArquivoCompartilhado(pathOnly || normalizedUrl);
       prepararArquivo(blob, fileName);
-      await limparTodoCacheCompartilhados();
+      if (matchedReq) await cache.delete(matchedReq);
       return true;
     } catch (e) {
       return false;
@@ -327,6 +377,7 @@ export default function AnexoCompartilhado() {
 
     if (shareTarget) {
       await aguardarServiceWorkerPronto();
+      if (restaurarArquivoPersistidoSePossivel()) return true;
     }
 
     if (sharedPath) {
@@ -341,9 +392,8 @@ export default function AnexoCompartilhado() {
         if (resp.ok) {
           const blob = await resp.blob();
           if (blob.size > 0) {
-            const fileName = String(sharedPath).split('/').pop().replace(/^\d+-/, '') || 'arquivo';
+            const fileName = extrairNomeArquivoCompartilhado(sharedPath);
             prepararArquivo(blob, fileName);
-            await limparTodoCacheCompartilhados();
             return true;
           }
         }
@@ -355,6 +405,7 @@ export default function AnexoCompartilhado() {
     if (shareTarget) {
       const achouNoCache = await consumirArquivoMaisRecenteDoCache();
       if (achouNoCache) return true;
+      if (restaurarArquivoPersistidoSePossivel()) return true;
     }
 
     return false;
@@ -386,19 +437,13 @@ export default function AnexoCompartilhado() {
       if (!melhorReq) return false;
 
       const resp = await cache.match(melhorReq);
-      if (!resp) {
-        await limparTodoCacheCompartilhados();
-        return false;
-      }
+      if (!resp) return false;
       const blob = await resp.blob();
-      if (blob.size === 0) {
-        await limparTodoCacheCompartilhados();
-        return false;
-      }
+      if (blob.size === 0) return false;
       const url = typeof melhorReq === 'string' ? melhorReq : melhorReq.url;
-      const fileName = url.split('/').pop().replace(/^\d+-/, '') || 'arquivo';
+      const fileName = extrairNomeArquivoCompartilhado(url);
       prepararArquivo(blob, fileName);
-      await limparTodoCacheCompartilhados();
+      await cache.delete(melhorReq);
       return true;
     } catch (e) {
       return false;
@@ -457,6 +502,7 @@ export default function AnexoCompartilhado() {
         primeiraExecucaoTentar = false;
         if (!shareTarget) {
           await limparTodoCacheCompartilhados();
+          limparArquivoTorrePersistido();
         }
       }
 
@@ -623,6 +669,7 @@ export default function AnexoCompartilhado() {
       etapa === 'vincular_pedido' ||
       etapa === 'vincular_evento';
     if (precisaArquivo && !arquivo?.file) {
+      if (restaurarArquivoPersistidoSePossivel()) return;
       if (etapa === 'vincular_pedido' || etapa === 'vincular_evento') {
         setFeedbackVinculo(
           'Nenhum arquivo pronto para enviar. Volte e selecione ou cole um PDF/imagem na Torre de controle.',
