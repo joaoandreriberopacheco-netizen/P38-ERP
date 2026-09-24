@@ -1,4 +1,4 @@
-const CACHE_NAME = 'p38-erp-v22';
+const CACHE_NAME = 'p38-erp-v23';
 const SHARE_IDB_NAME = 'p38-share-target';
 const SHARE_IDB_STORE = 'files';
 const SHARED_CACHE = 'VarejoSync-shared-files';
@@ -110,13 +110,18 @@ function collectFilesFromFormData(formData) {
   return out;
 }
 
+const SHARE_LEDGER_STORE = 'ledger';
+
 function openShareIdb() {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(SHARE_IDB_NAME, 1);
+    const req = indexedDB.open(SHARE_IDB_NAME, 2);
     req.onupgradeneeded = () => {
       const db = req.result;
       if (!db.objectStoreNames.contains(SHARE_IDB_STORE)) {
         db.createObjectStore(SHARE_IDB_STORE);
+      }
+      if (!db.objectStoreNames.contains(SHARE_LEDGER_STORE)) {
+        db.createObjectStore(SHARE_LEDGER_STORE);
       }
     };
     req.onsuccess = () => resolve(req.result);
@@ -124,20 +129,48 @@ function openShareIdb() {
   });
 }
 
+function notifySharePackageReady(id) {
+  try {
+    const ch = new BroadcastChannel('p38-share-package');
+    ch.postMessage({ type: 'SHARE_PACKAGE_READY', id });
+    ch.close();
+  } catch (_) {}
+}
+
 async function persistShareFileToIdb(file) {
   const id = `share-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
   const buffer = await file.arrayBuffer();
+  const savedAt = Date.now();
   const db = await openShareIdb();
   await new Promise((resolve, reject) => {
-    const tx = db.transaction(SHARE_IDB_STORE, 'readwrite');
+    const tx = db.transaction([SHARE_IDB_STORE, SHARE_LEDGER_STORE], 'readwrite');
     tx.objectStore(SHARE_IDB_STORE).put(
-      { buffer, name: file.name || 'arquivo', type: file.type || 'application/octet-stream', savedAt: Date.now() },
+      { buffer, name: file.name || 'arquivo', type: file.type || 'application/octet-stream', savedAt },
       id
     );
+    tx.objectStore(SHARE_LEDGER_STORE).put({ id, savedAt, status: 'pending' }, id);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
+  notifySharePackageReady(id);
   return id;
+}
+
+function fileFromDataUrlText(text) {
+  const s = String(text || '').trim();
+  const m = s.match(/^data:((?:image\/[a-z0-9.+-]+)|application\/pdf);base64,([A-Za-z0-9+/=\s]+)$/i);
+  if (!m) return null;
+  const type = m[1].toLowerCase();
+  const b64 = m[2].replace(/\s/g, '');
+  try {
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const ext = type === 'application/pdf' ? '.pdf' : type.includes('png') ? '.png' : '.jpg';
+    return new File([bytes], `partilha${ext}`, { type });
+  } catch (_) {
+    return null;
+  }
 }
 
 /**
@@ -151,7 +184,11 @@ async function handleShareTargetPost(request) {
   const urlParam = (formData.get('url') && String(formData.get('url'))) || '';
 
   const cache = await caches.open(SHARED_CACHE);
-  const files = collectFilesFromFormData(formData);
+  let files = collectFilesFromFormData(formData);
+  if (files.length === 0 && text) {
+    const fromDataUrl = fileFromDataUrlText(text);
+    if (fromDataUrl) files = [fromDataUrl];
+  }
   let lastCachePath = '';
   let lastShareId = '';
 
@@ -191,8 +228,12 @@ async function handleShareTargetPost(request) {
     if (lastShareId) redirectParams.set('shared-id', lastShareId);
   }
 
-  const dest = `${self.location.origin}/AnexoCompartilhado?${redirectParams.toString()}`;
-  return Response.redirect(dest, 303);
+  const landing = `${self.location.origin}/pwa-share-landing.html?${redirectParams.toString()}`;
+  const headers = { Location: landing };
+  if (lastShareId) {
+    headers['Set-Cookie'] = `p38_share_id=${encodeURIComponent(lastShareId)}; Path=/; Max-Age=300; SameSite=Lax`;
+  }
+  return new Response(null, { status: 303, headers });
 }
 
 async function serveSharedFileFromCache(request) {

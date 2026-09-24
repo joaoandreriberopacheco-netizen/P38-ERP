@@ -1,3 +1,21 @@
+/** Alguns apps enviam imagem só como data URL no campo text. */
+export function fileFromDataUrlText(text) {
+  const s = String(text || '').trim();
+  const m = s.match(/^data:((?:image\/[a-z0-9.+-]+)|application\/pdf);base64,([A-Za-z0-9+/=\s]+)$/i);
+  if (!m) return null;
+  const type = m[1].toLowerCase();
+  const b64 = m[2].replace(/\s/g, '');
+  try {
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const ext = type === 'application/pdf' ? '.pdf' : type.includes('png') ? '.png' : '.jpg';
+    return new File([bytes], `partilha${ext}`, { type });
+  } catch (_) {
+    return null;
+  }
+}
+
 /**
  * Extrai ficheiros do multipart do Web Share Target (Chrome/Android/WhatsApp).
  * Usado no fallback POST (Next) e espelhado em public/sw.js.
@@ -56,5 +74,16 @@ export function collectFilesFromShareFormData(formData) {
       /* ignore */
     }
   }
+
+  if (out.length === 0) {
+    try {
+      const textVal = formData.get('text');
+      const fromDataUrl = fileFromDataUrlText(textVal);
+      if (fromDataUrl) out.push(fromDataUrl);
+    } catch (_) {
+      /* ignore */
+    }
+  }
+
   return out;
 }

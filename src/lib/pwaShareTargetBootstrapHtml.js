@@ -8,7 +8,7 @@ export function buildShareTargetBootstrapHtml(origin, { id, name, type, base64, 
   if (title) redirectParams.set('title', title);
   if (text) redirectParams.set('text', text);
   if (urlParam) redirectParams.set('url', urlParam);
-  const dest = `${origin}/AnexoCompartilhado?${redirectParams.toString()}`;
+  const dest = `${origin}/pwa-share-landing.html?${redirectParams.toString()}`;
 
   const payload = JSON.stringify({
     id,
@@ -69,10 +69,12 @@ export function buildShareTargetBootstrapHtml(origin, { id, name, type, base64, 
     })
     .then(function () {
       try { sessionStorage.setItem('p38-share-pending', payload.id); } catch (_) {}
+      try { sessionStorage.setItem('p38-share-pending', payload.id); } catch (_) {}
+      document.cookie = 'p38_share_id=' + encodeURIComponent(payload.id) + '; Path=/; Max-Age=300; SameSite=Lax';
       window.location.replace(dest);
     })
     .catch(function () {
-      window.location.replace(dest + '&share-error=idb');
+      window.location.replace(dest + (dest.indexOf('?') >= 0 ? '&' : '?') + 'share-error=idb');
     });
 })();
 </script>

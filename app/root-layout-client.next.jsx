@@ -27,6 +27,7 @@ export default function RootLayoutClient({ children }) {
         <link rel="apple-touch-icon" href="/brand/p38-app-icon.png" />
         <link rel="manifest" href="/manifest.json" />
         <Script src="/pwa-sw-register.js" strategy="beforeInteractive" />
+        <Script src="/pwa-share-claim.js" strategy="beforeInteractive" />
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
       </head>
       <body className="min-h-screen bg-background text-foreground antialiased">

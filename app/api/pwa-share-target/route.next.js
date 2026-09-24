@@ -4,10 +4,10 @@ import { buildShareTargetBootstrapHtml } from '@/lib/pwaShareTargetBootstrapHtml
 
 export const runtime = 'nodejs';
 
-function redirectTorre(origin, params) {
+function redirectCorridor(origin, params) {
   const qs = new URLSearchParams(params);
   qs.set('share-target', '1');
-  return NextResponse.redirect(`${origin}/AnexoCompartilhado?${qs.toString()}`, 303);
+  return NextResponse.redirect(`${origin}/pwa-share-landing.html?${qs.toString()}`, 303);
 }
 
 /**
@@ -21,7 +21,7 @@ export async function POST(request) {
   try {
     formData = await request.formData();
   } catch (_) {
-    return redirectTorre(origin, { 'share-error': '1' });
+    return redirectCorridor(origin, { 'share-error': '1' });
   }
 
   const title = (formData.get('title') && String(formData.get('title'))) || '';
@@ -30,7 +30,7 @@ export async function POST(request) {
   const files = collectFilesFromShareFormData(formData);
 
   if (files.length === 0) {
-    return redirectTorre(origin, {
+    return redirectCorridor(origin, {
       'share-error': 'no-files',
       ...(title ? { title } : {}),
       ...(text ? { text } : {}),
@@ -43,7 +43,7 @@ export async function POST(request) {
   const buffer = Buffer.from(await file.arrayBuffer());
   const maxBootstrapBytes = 12 * 1024 * 1024;
   if (buffer.length > maxBootstrapBytes) {
-    return redirectTorre(origin, { 'share-error': 'too-large' });
+    return redirectCorridor(origin, { 'share-error': 'too-large' });
   }
 
   const base64 = buffer.toString('base64');

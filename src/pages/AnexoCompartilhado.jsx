@@ -37,9 +37,12 @@ import TorreWidgetDestinos from '@/components/anexos/TorreWidgetDestinos';
 import TorreArquivoCard from '@/components/anexos/TorreArquivoCard';
 import { P38_FIELD_SURFACE, P38_KPI_SHELL, P38_ACCENT } from '@/components/financeiro/fluxo/financeiroP38';
 import {
-  takeShareTargetFileAsBlob,
-  takeNewestShareTargetFileAsBlob,
-} from '@/lib/pwaShareTargetStorage';
+  claimSharePackageForTorre,
+  confirmSharePackageConsumed,
+  readShareIdFromSession,
+  readShareIdFromCookie,
+  clearSharePendingSession,
+} from '@/lib/pwaSharePackageClaim';
 
 export default function AnexoCompartilhado() {
   const [arquivo, setArquivo] = useState(null);
@@ -309,7 +312,6 @@ export default function AnexoCompartilhado() {
           .pop()
           .replace(/^\d+-/, '') || 'arquivo';
       prepararArquivo(blob, fileName);
-      await limparTodoCacheCompartilhados();
       return true;
     } catch (e) {
       return false;
@@ -325,144 +327,24 @@ export default function AnexoCompartilhado() {
     }
   };
 
-  const carregarArquivoDoIndexedDb = async (sharedId) => {
-    try {
-      const fromId = sharedId
-        ? await takeShareTargetFileAsBlob(sharedId)
-        : await takeNewestShareTargetFileAsBlob();
-      if (!fromId?.blob || fromId.blob.size === 0) return false;
-      prepararArquivo(fromId.blob, fromId.name || 'arquivo');
-      await limparTodoCacheCompartilhados();
-      return true;
-    } catch (_) {
-      return false;
-    }
-  };
-
-  const resolverSharedIdDaUrl = (params) => {
-    const fromUrl = params.get('shared-id');
-    if (fromUrl) return fromUrl;
-    try {
-      return sessionStorage.getItem('p38-share-pending') || '';
-    } catch (_) {
-      return '';
-    }
-  };
-
-  const limparMarcadorPartilhaPendente = () => {
-    try {
-      sessionStorage.removeItem('p38-share-pending');
-    } catch (_) {
-      /* ignore */
-    }
-  };
+  const shareClaimRef = useRef(null);
 
   const tentarCarregarArquivoCompartilhado = async (params) => {
     const shareTarget = params.get('share-target') === '1';
-    const sharedPath = params.get('shared');
-    const sharedId = resolverSharedIdDaUrl(params);
-
     if (shareTarget) {
       await aguardarServiceWorkerPronto();
     }
-
-    if (sharedId) {
-      const achouIdb = await carregarArquivoDoIndexedDb(sharedId);
-      if (achouIdb) {
-        limparMarcadorPartilhaPendente();
-        return true;
-      }
-    }
-
-    if (!shareTarget && !sharedPath && !sharedId) {
-      const achouRecente = await carregarArquivoDoIndexedDb(null);
-      if (achouRecente) {
-        limparMarcadorPartilhaPendente();
-        return true;
-      }
-    }
-
-    if (sharedPath) {
-      const achouPorPath = await carregarArquivoDoCache(sharedPath);
-      if (achouPorPath) return true;
-
-      try {
-        const fetchUrl = sharedPath.startsWith('/')
-          ? `${window.location.origin}${sharedPath}`
-          : sharedPath;
-        const resp = await fetch(fetchUrl);
-        if (resp.ok) {
-          const blob = await resp.blob();
-          if (blob.size > 0) {
-            const fileName = String(sharedPath).split('/').pop().replace(/^\d+-/, '') || 'arquivo';
-            prepararArquivo(blob, fileName);
-            await limparTodoCacheCompartilhados();
-            return true;
-          }
-        }
-      } catch (_) {
-        /* fallback via cache acima */
-      }
-    }
-
-    if (shareTarget) {
-      const achouNoCache = await consumirArquivoMaisRecenteDoCache();
-      if (achouNoCache) return true;
-      const achouIdbRecente = await carregarArquivoDoIndexedDb(null);
-      if (achouIdbRecente) return true;
-    }
-
-    return false;
-  };
-
-  /** SW grava `/shared/${Date.now()}-nome`; sem isso o primeiro da lista pode ser PDF antigo ainda na cache. */
-  const extrairTimestampCachePath = (req) => {
-    const url = typeof req === 'string' ? req : req.url;
-    const m = String(url).match(/\/shared\/(\d+)-/);
-    return m ? parseInt(m[1], 10) : 0;
-  };
-
-  const consumirArquivoMaisRecenteDoCache = async () => {
-    try {
-      const cache = await caches.open(SHARED_FILES_CACHE);
-      const keys = await cache.keys();
-      if (keys.length === 0) return false;
-
-      let melhorReq = null;
-      let melhorTs = -1;
-      for (const req of keys) {
-        const ts = extrairTimestampCachePath(req);
-        if (ts >= melhorTs) {
-          melhorTs = ts;
-          melhorReq = req;
-        }
-      }
-
-      if (!melhorReq) return false;
-
-      const resp = await cache.match(melhorReq);
-      if (!resp) {
-        await limparTodoCacheCompartilhados();
-        return false;
-      }
-      const blob = await resp.blob();
-      if (blob.size === 0) {
-        await limparTodoCacheCompartilhados();
-        return false;
-      }
-      const url = typeof melhorReq === 'string' ? melhorReq : melhorReq.url;
-      const fileName = url.split('/').pop().replace(/^\d+-/, '') || 'arquivo';
-      prepararArquivo(blob, fileName);
-      await limparTodoCacheCompartilhados();
-      return true;
-    } catch (e) {
-      return false;
-    }
+    const claimed = await claimSharePackageForTorre(params);
+    if (!claimed?.blob?.size) return false;
+    prepararArquivo(claimed.blob, claimed.name || 'arquivo');
+    shareClaimRef.current = claimed;
+    await confirmSharePackageConsumed(claimed);
+    return true;
   };
 
   useEffect(() => {
     let tentativas = 0;
-    const MAX_TENTATIVAS = 30;
+    const MAX_TENTATIVAS = 60;
     let primeiraExecucaoTentar = true;
 
     const processSharedData = async (fileEntries) => {
@@ -475,7 +357,13 @@ export default function AnexoCompartilhado() {
 
         if (firstFileEntry) {
             const achou = await carregarArquivoDoCache(firstFileEntry.url);
-            if (!achou) await consumirArquivoMaisRecenteDoCache(); 
+            if (!achou) {
+              const claimed = await claimSharePackageForTorre(new URLSearchParams(window.location.search));
+              if (claimed?.blob?.size) {
+                prepararArquivo(claimed.blob, claimed.name || 'arquivo');
+                await confirmSharePackageConsumed(claimed);
+              }
+            }
         } else if (textEntry) {
             setArquivo({ file: null, previewUrl: null, nome: textEntry.name, tipo: textEntry.type, texto: textEntry.textContent });
         }
@@ -506,7 +394,9 @@ export default function AnexoCompartilhado() {
             ? 'O sistema não recebeu o arquivo. Tente partilhar de novo ou use Selecionar arquivo.'
             : shareError === 'too-large'
               ? 'O arquivo é grande demais para esta entrada. Use Selecionar arquivo na Torre.'
-              : 'Não foi possível receber o arquivo partilhado. Abra o P38 uma vez, actualize a app e tente de novo.';
+              : shareError === 'corridor-timeout'
+                ? 'O arquivo demorou a chegar à Torre. Tente partilhar de novo ou use Selecionar arquivo.'
+                : 'Não foi possível receber o arquivo partilhado. Abra o P38 uma vez, actualize a app e tente de novo.';
         setErroCompartilhamento(msg);
       }
 
@@ -517,7 +407,8 @@ export default function AnexoCompartilhado() {
           shareError ||
           params.get('shared') ||
           params.get('shared-id') ||
-          resolverSharedIdDaUrl(params);
+          readShareIdFromSession() ||
+          readShareIdFromCookie();
         if (!temPendenciaPartilha) {
           await limparTodoCacheCompartilhados();
         }
@@ -525,7 +416,7 @@ export default function AnexoCompartilhado() {
 
       const achouCompartilhado = await tentarCarregarArquivoCompartilhado(params);
       if (achouCompartilhado) {
-        limparMarcadorPartilhaPendente();
+        clearSharePendingSession();
         setCarregando(false);
         clearTimeout(pollingRef.current);
         return;
@@ -546,7 +437,8 @@ export default function AnexoCompartilhado() {
         shareError ||
         params.get('shared') ||
         params.get('shared-id') ||
-        resolverSharedIdDaUrl(params);
+        readShareIdFromSession() ||
+        readShareIdFromCookie();
       if (
         (focoClipboard || String(destino || '').toLowerCase() === 'torre') &&
         !partilhaPendente
@@ -581,6 +473,16 @@ export default function AnexoCompartilhado() {
       }
     };
 
+    let shareChannel = null;
+    try {
+      shareChannel = new BroadcastChannel('p38-share-package');
+      shareChannel.onmessage = () => {
+        void tentar();
+      };
+    } catch (_) {
+      /* ignore */
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     if (!urlParams.get('share-target')) {
       tentar();
@@ -592,6 +494,13 @@ export default function AnexoCompartilhado() {
       clearTimeout(pollingRef.current);
       if ('serviceWorker' in navigator) {
           navigator.serviceWorker.removeEventListener('message', onMessage);
+      }
+      if (shareChannel) {
+        try {
+          shareChannel.close();
+        } catch (_) {
+          /* ignore */
+        }
       }
     };
   }, []);
