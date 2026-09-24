@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {
   FileText,
@@ -44,10 +44,21 @@ import {
   clearSharePendingSession,
   hasSharePendingMarkers,
 } from '@/lib/pwaSharePackageClaim';
+import { buildTorreArquivoFromSharePreload } from '@/lib/pwaShareTorrePreload';
+
+function readTorreShareInitOnce() {
+  if (typeof window === 'undefined') return null;
+  const w = window;
+  if (w.__P38_TORRE_SHARE_INIT_DONE) return w.__P38_TORRE_SHARE_INIT_CACHE ?? null;
+  w.__P38_TORRE_SHARE_INIT_DONE = true;
+  w.__P38_TORRE_SHARE_INIT_CACHE = buildTorreArquivoFromSharePreload();
+  return w.__P38_TORRE_SHARE_INIT_CACHE;
+}
 
 export default function AnexoCompartilhado() {
-  const [arquivo, setArquivo] = useState(null);
-  const [carregando, setCarregando] = useState(true);
+  const torreShareInit = readTorreShareInitOnce();
+  const [arquivo, setArquivo] = useState(() => torreShareInit?.arquivo ?? null);
+  const [carregando, setCarregando] = useState(() => !torreShareInit?.arquivo?.file);
   /** torre_controle = classificar documento; opcoes = sala de desembarque (destinos) */
   const [etapa, setEtapa] = useState('torre_controle');
   const [uploadando, setUploadando] = useState(false);
@@ -328,8 +339,15 @@ export default function AnexoCompartilhado() {
     }
   };
 
-  const shareClaimRef = useRef(null);
+  const shareClaimRef = useRef(torreShareInit?.claim ?? null);
   const shareIngestConfirmedRef = useRef(false);
+
+  useLayoutEffect(() => {
+    if (arquivo?.file || !torreShareInit?.arquivo?.file) return;
+    setArquivo(torreShareInit.arquivo);
+    shareClaimRef.current = torreShareInit.claim ?? shareClaimRef.current;
+    setCarregando(false);
+  }, []);
 
   const tentarCarregarArquivoCompartilhado = async (params) => {
     const shareTarget = params.get('share-target') === '1';
@@ -406,7 +424,9 @@ export default function AnexoCompartilhado() {
               ? 'O arquivo é grande demais para esta entrada. Use Selecionar arquivo na Torre.'
               : shareError === 'corridor-timeout'
                 ? 'O arquivo demorou a chegar à Torre. Tente partilhar de novo ou use Selecionar arquivo.'
-                : 'Não foi possível receber o arquivo partilhado. Abra o P38 uma vez, actualize a app e tente de novo.';
+                : shareError === 'no-backup'
+                  ? 'O arquivo não ficou guardado no telemóvel. Tente partilhar de novo ou use Selecionar arquivo.'
+                  : 'Não foi possível receber o arquivo partilhado. Abra o P38 uma vez, actualize a app e tente de novo.';
         setErroCompartilhamento(msg);
       }
 
@@ -492,6 +512,23 @@ export default function AnexoCompartilhado() {
       };
     } catch (_) {
       /* ignore */
+    }
+
+    if (torreShareInit?.arquivo?.file) {
+      setCarregando(false);
+      return () => {
+        clearTimeout(pollingRef.current);
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.removeEventListener('message', onMessage);
+        }
+        if (shareChannel) {
+          try {
+            shareChannel.close();
+          } catch (_) {
+            /* ignore */
+          }
+        }
+      };
     }
 
     const urlParams = new URLSearchParams(window.location.search);

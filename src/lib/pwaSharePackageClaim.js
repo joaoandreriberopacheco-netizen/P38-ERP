@@ -76,17 +76,48 @@ async function fetchSharedPath(sharedPath) {
 /**
  * Tenta recuperar o pacote partilhado sem apagar até confirmação na Torre.
  */
+function resolveShareSearchParams(params) {
+  if (params?.get?.('share-target')) return params;
+  try {
+    const stored = sessionStorage.getItem('p38-share-query');
+    if (stored) return new URLSearchParams(stored.startsWith('?') ? stored.slice(1) : stored);
+  } catch (_) {
+    /* ignore */
+  }
+  return params || new URLSearchParams();
+}
+
 export async function claimSharePackageForTorre(params) {
-  const shareTarget = params?.get?.('share-target') === '1';
-  const sharedPath = params?.get?.('shared') || '';
+  const resolved = resolveShareSearchParams(params);
+  const shareTarget = resolved?.get?.('share-target') === '1';
+  let sharedPath = resolved?.get?.('shared') || '';
+  try {
+    if (!sharedPath) sharedPath = sessionStorage.getItem('p38-share-path') || '';
+  } catch (_) {
+    /* ignore */
+  }
   const ids = [
-    params?.get?.('shared-id'),
+    resolved?.get?.('shared-id'),
     readSharePendingId(),
   ].filter(Boolean);
 
   const fromBackup = readShareBlobBackup();
   if (fromBackup?.blob?.size) {
     return fromBackup;
+  }
+
+  if (sharedPath) {
+    const fromFetch = await fetchSharedPath(sharedPath);
+    if (fromFetch) {
+      const { writeShareBlobBackupFromBlob } = await import('@/lib/pwaShareBlobBackup');
+      await writeShareBlobBackupFromBlob({
+        id: ids[0] || '',
+        name: fromFetch.name,
+        type: fromFetch.type,
+        blob: fromFetch.blob,
+      });
+      return { source: 'fetch-priority', ...fromFetch, id: ids[0] || '' };
+    }
   }
 
   for (const id of ids) {

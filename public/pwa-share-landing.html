@@ -91,6 +91,54 @@
     }).catch(function () {});
   }
 
+  function temBackupSession() {
+    try {
+      return Boolean(sessionStorage.getItem('p38-share-blob-backup'));
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function gravarBackupFromFetch(path) {
+    if (!path) return Promise.resolve(false);
+    var url = path.indexOf('/') === 0 ? path : path;
+    return fetch(url, { credentials: 'same-origin', cache: 'no-store' })
+      .then(function (r) {
+        if (!r.ok) return null;
+        return r.blob();
+      })
+      .then(function (blob) {
+        if (!blob || !blob.size || blob.size > 4 * 1024 * 1024) return false;
+        return blob.arrayBuffer().then(function (buf) {
+          try {
+            sessionStorage.setItem('p38-share-blob-backup', JSON.stringify({
+              id: sharedId || '',
+              name: (path.split('/').pop() || 'arquivo').replace(/^\d+-/, ''),
+              type: blob.type || 'application/octet-stream',
+              savedAt: Date.now(),
+              base64: arrayBufferToBase64(buf)
+            }));
+            return true;
+          } catch (_) {
+            return false;
+          }
+        });
+      })
+      .catch(function () { return false; });
+  }
+
+  function prepararBackups() {
+    var chain = Promise.resolve();
+    if (sharedId) chain = chain.then(function () { return gravarBackupSession(sharedId); });
+    if (sharedPath) {
+      chain = chain.then(function () {
+        if (temBackupSession()) return true;
+        return gravarBackupFromFetch(sharedPath);
+      });
+    }
+    return chain;
+  }
+
   function irParaTorre(extra) {
     var qs = new URLSearchParams(window.location.search);
     if (extra) {
@@ -98,6 +146,10 @@
     }
     qs.set('share-target', '1');
     var now = String(Date.now());
+    try {
+      sessionStorage.setItem('p38-share-query', '?' + qs.toString());
+      if (sharedPath) sessionStorage.setItem('p38-share-path', sharedPath);
+    } catch (_) {}
     if (sharedId) {
       try {
         sessionStorage.setItem('p38-share-pending', sharedId);
@@ -108,17 +160,21 @@
       } catch (_) {}
       document.cookie = 'p38_share_id=' + encodeURIComponent(sharedId) + '; Path=/; Max-Age=900; SameSite=Lax';
     }
-    var dest = '/AnexoCompartilhado?' + qs.toString();
-    var go = function () { window.location.replace(dest); };
-    if (sharedId) {
-      gravarBackupSession(sharedId).then(go);
-    } else {
-      go();
-    }
+    window.location.replace('/AnexoCompartilhado?' + qs.toString());
+  }
+
+  function finalizarCorredor(extra) {
+    prepararBackups().then(function () {
+      if (!extra && !temBackupSession() && (sharedId || sharedPath)) {
+        irParaTorre({ 'share-error': 'no-backup' });
+        return;
+      }
+      irParaTorre(extra);
+    });
   }
 
   if (shareError) {
-    irParaTorre();
+    finalizarCorredor();
     return;
   }
 
@@ -131,9 +187,9 @@
     promessa.then(function (ok) {
       if (ok || tentativa >= maxTentativas) {
         if (!ok && tentativa >= maxTentativas) {
-          irParaTorre({ 'share-error': 'corridor-timeout' });
+          finalizarCorredor({ 'share-error': 'corridor-timeout' });
         } else {
-          irParaTorre();
+          finalizarCorredor();
         }
         return;
       }
@@ -145,7 +201,7 @@
     var ch = new BroadcastChannel('p38-share-package');
     ch.onmessage = function (ev) {
       if (ev.data && ev.data.type === 'SHARE_PACKAGE_READY' && ev.data.id === sharedId) {
-        irParaTorre();
+        finalizarCorredor();
       }
     };
   } catch (_) {}

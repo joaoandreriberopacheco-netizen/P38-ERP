@@ -20,6 +20,11 @@
     if (params.get('share-target') === '1') {
       sessionStorage.setItem('p38-share-active', '1');
       sessionStorage.setItem('p38-share-active-at', now);
+      sessionStorage.setItem('p38-share-query', window.location.search || '');
+    }
+    var sharedPath = params.get('shared');
+    if (sharedPath) {
+      sessionStorage.setItem('p38-share-path', sharedPath);
     }
   } catch (_) {}
 })();

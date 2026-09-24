@@ -24,6 +24,13 @@ export function bufferToShareBlob(buffer, type) {
   return new Blob([slice], { type: type || 'application/octet-stream' });
 }
 
+export async function writeShareBlobBackupFromBlob({ id, name, type, blob }) {
+  if (!blob?.size) return false;
+  if (blob.size > MAX_BYTES) return false;
+  const buffer = await blob.arrayBuffer();
+  return writeShareBlobBackup({ id, name, type, buffer });
+}
+
 export function writeShareBlobBackup({ id, name, type, buffer }) {
   if (typeof sessionStorage === 'undefined' || !buffer?.byteLength) return false;
   if (buffer.byteLength > MAX_BYTES) return false;

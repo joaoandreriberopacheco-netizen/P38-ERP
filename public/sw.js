@@ -1,4 +1,4 @@
-const CACHE_NAME = 'p38-erp-v24';
+const CACHE_NAME = 'p38-erp-v25';
 const SHARE_IDB_NAME = 'p38-share-target';
 const SHARE_IDB_STORE = 'files';
 const SHARED_CACHE = 'VarejoSync-shared-files';
