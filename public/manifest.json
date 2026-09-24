@@ -92,6 +92,10 @@
         {
           "name": "files",
           "accept": ["application/pdf", "image/*", "application/*", "text/*", "*/*"]
+        },
+        {
+          "name": "file",
+          "accept": ["application/pdf", "image/*", "application/*", "text/*", "*/*"]
         }
       ]
     }
