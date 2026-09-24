@@ -771,53 +771,52 @@ export default function PedidosCompraPage() {
           </P38ScrollChromeCollapse>
 
           <div
-            className="shrink-0 z-10 border-b border-border/25 bg-background/95 px-4 pb-2 backdrop-blur-sm"
-            data-tour={activeView === 'consulta' ? 'consulta-filtros' : 'embarques-filtros'}
-          >
-            <FiltrosCompras
-              mobileLeading={(
-                <ComprasViewTabsInline
-                  activeView={activeView}
-                  onSelect={handleSelectView}
-                  dataTour={activeView === 'consulta' ? 'consulta-tabs' : 'embarques-tabs'}
-                />
-              )}
-              search={search} onSearch={setSearch}
-              filtroUltimos30Dias={filtroUltimos30Dias} onFiltroUltimos30Dias={setFiltroUltimos30Dias}
-              filtroSomenteNaoConcluidos={filtroSomenteNaoConcluidos} onFiltroSomenteNaoConcluidos={setFiltroSomenteNaoConcluidos}
-              statusSel={statusSel} onStatusSel={setStatusSel}
-              todasTags={todasTags} tagsSel={tagsSel} onTagsSel={setTagsSel}
-              dataInicial={dataInicial} onDataInicial={setDataInicial}
-              dataFinal={dataFinal} onDataFinal={setDataFinal}
-              etaFiltroModo={etaFiltroModo} onEtaFiltroModo={setEtaFiltroModo}
-              etaData={etaData} onEtaData={setEtaData}
-              etaInicial={etaInicial} onEtaInicial={setEtaInicial}
-              etaFinal={etaFinal} onEtaFinal={setEtaFinal}
-              recebimentoInicial={recebimentoInicial} onRecebimentoInicial={setRecebimentoInicial}
-              recebimentoFinal={recebimentoFinal} onRecebimentoFinal={setRecebimentoFinal}
-              hasActiveFilters={hasActiveFilters}
-              onLimparFiltros={() => {
-                setSearch('');
-                setStatusSel(filtroComprasStatusSelInicial());
-                setFiltroUltimos30Dias(FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT);
-                setFiltroSomenteNaoConcluidos(FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT);
-                setTagsSel([]);
-                setDataInicial('');
-                setDataFinal('');
-                setEtaFiltroModo('');
-                setEtaData('');
-                setEtaInicial('');
-                setEtaFinal('');
-                setRecebimentoInicial('');
-                setRecebimentoFinal('');
-              }}
-            />
-          </div>
-
-          <div
             ref={scrollRef}
             className="flex-1 min-h-0 min-w-0 p38-stage-panel-scroll overflow-x-hidden touch-pan-y px-4 p38-scroll-pad-fab"
           >
+            <div
+              className="sticky top-0 z-10 -mx-4 border-b border-border/25 bg-background/95 px-4 pb-2 backdrop-blur-sm"
+              data-tour={activeView === 'consulta' ? 'consulta-filtros' : 'embarques-filtros'}
+            >
+              <FiltrosCompras
+                mobileLeading={(
+                  <ComprasViewTabsInline
+                    activeView={activeView}
+                    onSelect={handleSelectView}
+                    dataTour={activeView === 'consulta' ? 'consulta-tabs' : 'embarques-tabs'}
+                  />
+                )}
+                search={search} onSearch={setSearch}
+                filtroUltimos30Dias={filtroUltimos30Dias} onFiltroUltimos30Dias={setFiltroUltimos30Dias}
+                filtroSomenteNaoConcluidos={filtroSomenteNaoConcluidos} onFiltroSomenteNaoConcluidos={setFiltroSomenteNaoConcluidos}
+                statusSel={statusSel} onStatusSel={setStatusSel}
+                todasTags={todasTags} tagsSel={tagsSel} onTagsSel={setTagsSel}
+                dataInicial={dataInicial} onDataInicial={setDataInicial}
+                dataFinal={dataFinal} onDataFinal={setDataFinal}
+                etaFiltroModo={etaFiltroModo} onEtaFiltroModo={setEtaFiltroModo}
+                etaData={etaData} onEtaData={setEtaData}
+                etaInicial={etaInicial} onEtaInicial={setEtaInicial}
+                etaFinal={etaFinal} onEtaFinal={setEtaFinal}
+                recebimentoInicial={recebimentoInicial} onRecebimentoInicial={setRecebimentoInicial}
+                recebimentoFinal={recebimentoFinal} onRecebimentoFinal={setRecebimentoFinal}
+                hasActiveFilters={hasActiveFilters}
+                onLimparFiltros={() => {
+                  setSearch('');
+                  setStatusSel(filtroComprasStatusSelInicial());
+                  setFiltroUltimos30Dias(FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT);
+                  setFiltroSomenteNaoConcluidos(FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT);
+                  setTagsSel([]);
+                  setDataInicial('');
+                  setDataFinal('');
+                  setEtaFiltroModo('');
+                  setEtaData('');
+                  setEtaInicial('');
+                  setEtaFinal('');
+                  setRecebimentoInicial('');
+                  setRecebimentoFinal('');
+                }}
+              />
+            </div>
             {activeView === 'embarques' || activeView === 'saldo' ? (
               <div data-tour={activeView === 'saldo' ? 'saldo-lista' : 'embarques-lista'}>
                 <ListaPedidosCompra
