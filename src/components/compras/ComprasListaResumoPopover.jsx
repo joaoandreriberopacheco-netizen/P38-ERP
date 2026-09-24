@@ -3,6 +3,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { COMPRAS_KPI_ACCENT } from '@/lib/comprasP38Theme';
 
+const ICON_BTN =
+  'relative flex shrink-0 items-center justify-center w-10 h-10 rounded-xl bg-card shadow-sm hover:shadow-md transition text-foreground/90';
+
 /**
  * Mobile: KPIs da lista de embarques/compras num ícone compacto (popover ao toque).
  */
@@ -10,24 +13,25 @@ export default function ComprasListaResumoPopover({
   label = 'Resumo financeiro da lista',
   children,
   className,
+  'data-tour': dataTour,
 }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
         <button
           type="button"
-          className={cn(
-            'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground/80 transition-colors hover:bg-muted/80 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-            className,
-          )}
+          data-tour={dataTour}
+          className={cn(ICON_BTN, className)}
+          title={label}
           aria-label={label}
         >
-          <CircleDollarSign className="h-5 w-5" strokeWidth={1.75} />
+          <CircleDollarSign className="h-4 w-4" strokeWidth={2} />
         </button>
       </PopoverTrigger>
       <PopoverContent
         side="bottom"
         align="end"
+        sideOffset={6}
         className="max-w-[min(20rem,calc(100vw-2rem))] space-y-2 p-3.5 text-left font-din-1451 text-sm leading-normal normal-case"
       >
         {children}

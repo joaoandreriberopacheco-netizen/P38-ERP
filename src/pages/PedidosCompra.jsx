@@ -736,10 +736,7 @@ export default function PedidosCompraPage() {
             <div className="space-y-3 px-4">
               {/* Header */}
               <div className="pb-2 mb-0 flex flex-col gap-2">
-                <div
-                  className="flex min-w-0 items-center justify-between gap-2"
-                  data-tour={activeView === 'consulta' ? 'consulta-header' : 'embarques-header'}
-                >
+                <div className="min-w-0">
                   <p className="min-w-0 truncate text-xl font-medium text-foreground font-din-1451">
                     {activeView === 'consulta'
                       ? 'Consulta de compras'
@@ -747,33 +744,34 @@ export default function PedidosCompraPage() {
                         ? 'Saldo a embarcar'
                         : 'Embarques'}
                   </p>
-                  <ComprasListaResumoPopover
-                    label={
-                      activeView === 'consulta'
-                        ? 'Resumo da consulta'
-                        : activeView === 'saldo'
-                          ? 'Resumo do saldo a embarcar'
-                          : 'Resumo financeiro dos embarques visíveis'
-                    }
-                  >
-                    {activeView === 'consulta' ? (
-                      <ComprasListaResumoConsulta count={pedidosConsulta.length} />
-                    ) : activeView === 'saldo' ? (
-                      <ComprasListaResumoSaldo count={saldoFiltrados.length} valorTotal={valorTotal} />
-                    ) : (
-                      <ComprasListaResumoEmbarques
-                        count={filtrados.length}
-                        valorTotal={valorTotal}
-                        valorPagoNaoEntregue={valorPagoNaoEntregue}
-                      />
-                    )}
-                  </ComprasListaResumoPopover>
                 </div>
                 {activeView === 'embarques' || activeView === 'consulta' || activeView === 'saldo' ? (
                   <div
                     className="flex items-center gap-2 justify-end flex-nowrap max-w-full overflow-x-auto overscroll-x-contain touch-pan-x no-scrollbar"
                     data-tour={activeView === 'consulta' ? 'consulta-relatorios' : 'embarques-operacoes'}
                   >
+                    <ComprasListaResumoPopover
+                      data-tour={activeView === 'consulta' ? 'consulta-header' : 'embarques-header'}
+                      label={
+                        activeView === 'consulta'
+                          ? 'Resumo da consulta'
+                          : activeView === 'saldo'
+                            ? 'Resumo do saldo a embarcar'
+                            : 'Resumo financeiro dos embarques visíveis'
+                      }
+                    >
+                      {activeView === 'consulta' ? (
+                        <ComprasListaResumoConsulta count={pedidosConsulta.length} />
+                      ) : activeView === 'saldo' ? (
+                        <ComprasListaResumoSaldo count={saldoFiltrados.length} valorTotal={valorTotal} />
+                      ) : (
+                        <ComprasListaResumoEmbarques
+                          count={filtrados.length}
+                          valorTotal={valorTotal}
+                          valorPagoNaoEntregue={valorPagoNaoEntregue}
+                        />
+                      )}
+                    </ComprasListaResumoPopover>
                     <P38TourFab
                       key={activeView}
                       steps={activeView === 'consulta' ? CONSULTA_EMBARQUES_TOUR : EMBARQUES_LISTA_TOUR}
