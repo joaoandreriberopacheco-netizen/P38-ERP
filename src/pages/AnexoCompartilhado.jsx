@@ -481,13 +481,17 @@ export default function AnexoCompartilhado() {
         return;
       }
 
-      if (params.get('text') || params.get('url')) {
+      const textoPartilha = params.get('text') || params.get('url');
+      const falhaArquivoPartilhado =
+        shareError === 'no-files' || shareError === '1' || shareError === 'true';
+      // WhatsApp envia legenda em `text` junto com a imagem — não tratar como "arquivo" na Torre.
+      if (textoPartilha && !shareTarget && !falhaArquivoPartilhado) {
         setArquivo({
           file: null,
           previewUrl: null,
           nome: params.get('title') || 'Conteúdo',
           tipo: 'text/plain',
-          texto: params.get('text') || params.get('url'),
+          texto: textoPartilha,
         });
         setCarregando(false);
         clearTimeout(pollingRef.current);

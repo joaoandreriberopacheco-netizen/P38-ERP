@@ -1,4 +1,4 @@
-const CACHE_NAME = 'p38-erp-v19';
+const CACHE_NAME = 'p38-erp-v20';
 const SHARED_CACHE = 'VarejoSync-shared-files';
 /** Ícone P38 (raio) — alinhado ao manifest; pré-cache para instalação PWA / notificações. */
 const APP_ICON_PATH = '/brand/p38-app-icon.png';
@@ -48,21 +48,43 @@ function isSharedFileGetUrl(url) {
   return url.origin === self.location.origin && normalizePathname(url.pathname).startsWith('/shared/');
 }
 
-/** Chrome/Android podem usar "files", "file" ou outro nome no multipart. */
+/** Chrome/Android/WhatsApp podem usar nomes diferentes no multipart. */
 function collectFilesFromFormData(formData) {
   const out = [];
+  const seen = new Set();
   const add = (v) => {
-    if (v instanceof File && v.size > 0) out.push(v);
+    if (!v) return;
+    let file = null;
+    if (v instanceof File && v.size > 0) {
+      file = v;
+    } else if (typeof Blob !== 'undefined' && v instanceof Blob && v.size > 0) {
+      const nome = v.name || 'arquivo';
+      try {
+        file = new File([v], nome, { type: v.type || 'application/octet-stream' });
+      } catch (_) {
+        file = v;
+      }
+    }
+    if (!file || file.size === 0) return;
+    const key = `${file.name}|${file.size}|${file.type}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push(file);
   };
-  try {
-    formData.getAll('files').forEach(add);
-  } catch (_) {}
-  try {
-    formData.getAll('file').forEach(add);
-  } catch (_) {}
+
+  const fieldNames = ['files', 'file', 'files[]', 'image', 'media', 'attachment', 'share', 'documents'];
+  for (const name of fieldNames) {
+    try {
+      formData.getAll(name).forEach(add);
+    } catch (_) {}
+  }
+
   if (out.length === 0) {
     try {
-      for (const [, val] of formData.entries()) add(val);
+      for (const [key, val] of formData.entries()) {
+        if (key === 'title' || key === 'text' || key === 'url') continue;
+        add(val);
+      }
     } catch (_) {}
   }
   return out;
