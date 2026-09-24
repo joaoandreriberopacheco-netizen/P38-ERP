@@ -43,7 +43,7 @@ export const CONSULTA_EMBARQUES_TOUR = [
   {
     target: '[data-tour="consulta-header"]',
     title: 'Consulta de compras',
-    body: 'Resumo do período filtrado: quantidade de embarques e visão consolidada para análise, sem o foco operacional dos cartões.',
+    body: 'Toque no ícone de cifrão na barra de ações para ver quantos embarques entram no período filtrado — visão consolidada para análise.',
     placement: 'bottom',
   },
   {
