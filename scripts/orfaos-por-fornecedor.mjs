@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Órfãos por fornecedor — view pedido_compra_orfaos_v (migration 095).
- * Conta simples: pedido − embarcado, só pedidos com algum embarque > 0.
+ * Órfãos por fornecedor — view pedido_compra_orfaos_v (migration 100).
+ * Só pendência DENTRO do desmembrado (pós-recepção). Não inclui Verona/Naturale
+ * «nunca embarcados» — use: npm run compras:tintao-levantamento
  *
  * Uso: node scripts/orfaos-por-fornecedor.mjs
  */
@@ -24,17 +25,9 @@ async function sbFetch(path) {
   return r.json();
 }
 
-function cxFromNome(nome, qtd, un) {
-  if (String(un || '').toUpperCase() === 'CX') return Math.round(qtd * 10) / 10;
-  const m = String(nome || '').match(/([\d,\.]+)\s*m[²2]\s*\/\s*cx/i)
-    || String(nome || '').match(/\(([\d,\.]+)\s*m[²2]/i);
-  const m2cx = m ? parseFloat(m[1].replace(',', '.')) : null;
-  return m2cx && qtd ? Math.round((qtd / m2cx) * 10) / 10 : null;
-}
-
 async function main() {
   const rows = await sbFetch(
-    '/rest/v1/pedido_compra_orfaos_v?select=fornecedor_nome,pedido_compra_numero,pedido_status,produto_nome,unidade_sigla,quantidade_pedida,quantidade_desmembrada,quantidade_embarcada,quantidade_recebida,saldo_orfa&order=fornecedor_nome.asc,pedido_compra_numero.asc,produto_nome.asc',
+    '/rest/v1/pedido_compra_orfaos_v?select=fornecedor_nome,pedido_compra_numero,pedido_status,produto_nome,unidade_sigla,unidade_vitrine_sigla,quantidade_pedida_base,quantidade_desmembrada_base,quantidade_embarcada_base,quantidade_recebida_base,saldo_orfa_base,saldo_orfa&order=fornecedor_nome.asc,pedido_compra_numero.asc,produto_nome.asc',
   );
 
   const porFornecedor = new Map();
@@ -46,16 +39,17 @@ async function main() {
     if (!pedidos.has(num)) {
       pedidos.set(num, { status: row.pedido_status, linhas: [] });
     }
-    const saldo = Number(row.saldo_orfa);
+    const saldoVitrine = Number(row.saldo_orfa);
+    const unVitrine = row.unidade_vitrine_sigla || 'CX';
     pedidos.get(num).linhas.push({
       produto: (row.produto_nome || '').slice(0, 58),
-      pedida: Number(row.quantidade_pedida),
-      desmembrada: Number(row.quantidade_desmembrada),
-      embarcada: Number(row.quantidade_embarcada),
-      recebida: Number(row.quantidade_recebida),
-      saldo: saldo,
-      un: row.unidade_sigla,
-      cx: cxFromNome(row.produto_nome, saldo, row.unidade_sigla),
+      pedidaBase: Number(row.quantidade_pedida_base),
+      desmembradaBase: Number(row.quantidade_desmembrada_base),
+      recebidaBase: Number(row.quantidade_recebida_base),
+      saldoBase: Number(row.saldo_orfa_base),
+      saldoVitrine,
+      unBase: row.unidade_sigla,
+      unVitrine,
     });
   }
 
@@ -64,7 +58,7 @@ async function main() {
     return;
   }
 
-  console.log('=== Órfãos — saldo dentro do desmembrado (view 097) ===\n');
+  console.log('=== Órfãos — unidade vitrine (view 100, trânsito excluído) ===\n');
   let totalPed = 0;
   let totalLin = 0;
   let totalCx = 0;
@@ -76,10 +70,12 @@ async function main() {
       console.log(`\n  Pedido ${num} (${p.status})`);
       for (const l of p.linhas) {
         totalLin += 1;
-        if (l.cx) totalCx += l.cx;
+        if (String(l.unVitrine).toUpperCase() === 'CX') totalCx += l.saldoVitrine;
         console.log(
-          `    • saldo ${l.saldo} ${l.un}${l.cx != null ? ` (~${l.cx} cx)` : ''}`
-          + ` (pedido ${l.pedida}, desmembrado ${l.desmembrada}, recebido ${l.recebida}) — ${l.produto}`,
+          `    • saldo ${l.saldoVitrine} ${l.unVitrine}`
+          + ` (${l.saldoBase} ${l.unBase} base)`
+          + ` — pedido ${l.pedidaBase} ${l.unBase}, recebido ${l.recebidaBase} ${l.unBase}`
+          + ` — ${l.produto}`,
         );
       }
     }
