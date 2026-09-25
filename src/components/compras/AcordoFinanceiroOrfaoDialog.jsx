@@ -14,7 +14,7 @@ import {
   particionarBaixaOrfaoAcordo,
 } from '@/lib/aplicarAcordoFinanceiroOrfaos';
 import { calculateBaseQuantity } from '@/lib/productUnits';
-import { invokeRecalcularConclusaoPedidoCompra } from '@/lib/p38StockRecalc';
+import { completarBaixaLogisticaAcordoExistente, resolverAcordoOrfaoLegadoParaCompletar } from '@/lib/completarAcordoFinanceiroOrfaoLegado';
 
 // itensOrfaos: [{ produto_id, produto_nome, qtd_pendente, unidade_medida, qtd_pendente_comercial }]
 export default function AcordoFinanceiroOrfaoDialog({
@@ -34,10 +34,21 @@ export default function AcordoFinanceiroOrfaoDialog({
   const [loading, setLoading] = useState(false);
   const [baixarLogistica, setBaixarLogistica] = useState(true);
   const [qtdBaixaComercial, setQtdBaixaComercial] = useState({});
+  const [acordoLegado, setAcordoLegado] = useState(null);
+  const [modoCompletar, setModoCompletar] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       base44.entities.ContasFinanceiras.list().then(setContas).catch(() => {});
+      resolverAcordoOrfaoLegadoParaCompletar(base44, pedido)
+        .then((lanc) => {
+          setAcordoLegado(lanc);
+          setModoCompletar(Boolean(lanc));
+        })
+        .catch(() => {
+          setAcordoLegado(null);
+          setModoCompletar(false);
+        });
       const init = {};
       (itensOrfaos || []).forEach((item) => {
         const q = item.qtd_pendente_comercial ?? item.qtd_pendente;
@@ -45,7 +56,20 @@ export default function AcordoFinanceiroOrfaoDialog({
       });
       setQtdBaixaComercial(init);
     }
-  }, [isOpen, itensOrfaos]);
+  }, [isOpen, itensOrfaos, pedido?.id, pedido?.historico]);
+
+  const buildItensComBaixa = () =>
+    (itensOrfaos || []).map((orfao) => {
+      const itemPedido = (pedido?.itens || []).find(
+        (it) => String(it?.produto_id) === String(orfao?.produto_id),
+      );
+      const qCom = parseFloat(qtdBaixaComercial[orfao.produto_id]) || 0;
+      const fator = Number(itemPedido?.fator_aplicado ?? itemPedido?.fator_conversao) || 1;
+      return {
+        ...orfao,
+        qtd_baixa_base: calculateBaseQuantity(qCom, fator),
+      };
+    });
 
   const planoPorItem = useMemo(() => {
     if (!baixarLogistica) return [];
@@ -66,23 +90,38 @@ export default function AcordoFinanceiroOrfaoDialog({
     }).filter(Boolean);
   }, [baixarLogistica, itensOrfaos, pedido?.itens, embarques, qtdBaixaComercial]);
 
+  const handleCompletarLegado = async () => {
+    if (!acordoLegado?.id) return;
+    setLoading(true);
+    try {
+      const result = await completarBaixaLogisticaAcordoExistente(base44, {
+        pedido,
+        embarques,
+        itensOrfaos: buildItensComBaixa(),
+        lancamentoId: acordoLegado.id,
+        produtosMap,
+      });
+      if (!result.ok) {
+        toast.error(result.error || 'Não foi possível completar a baixa logística.');
+        return;
+      }
+      toast.success('Baixa logística concluída usando o acordo financeiro já existente.');
+      onSuccess?.();
+      onClose();
+    } catch (err) {
+      toast.error('Erro: ' + (err.message || 'Erro desconhecido'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleConfirmar = async () => {
     if (!valor || parseFloat(valor) <= 0) return toast.error('Informe o valor do acordo');
     if (!contaId) return toast.error('Selecione a conta financeira');
 
     setLoading(true);
     try {
-      const itensComBaixa = (itensOrfaos || []).map((orfao) => {
-        const itemPedido = (pedido?.itens || []).find(
-          (it) => String(it?.produto_id) === String(orfao?.produto_id),
-        );
-        const qCom = parseFloat(qtdBaixaComercial[orfao.produto_id]) || 0;
-        const fator = Number(itemPedido?.fator_aplicado ?? itemPedido?.fator_conversao) || 1;
-        return {
-          ...orfao,
-          qtd_baixa_base: calculateBaseQuantity(qCom, fator),
-        };
-      });
+      const itensComBaixa = buildItensComBaixa();
 
       const descricaoItens = itensComBaixa.map((i) => {
         const qtd = qtdBaixaComercial[i.produto_id] ?? i.qtd_pendente_comercial ?? i.qtd_pendente;
@@ -165,6 +204,36 @@ export default function AcordoFinanceiroOrfaoDialog({
         </DialogHeader>
 
         <div className="space-y-4">
+          {acordoLegado && (
+            <div className="rounded-xl border border-teal-200 dark:border-teal-800 bg-teal-50/80 dark:bg-teal-900/20 px-3 py-2.5 space-y-2">
+              <p className="text-xs font-medium text-teal-800 dark:text-teal-200">
+                Já existe acordo financeiro neste pedido (R$ {Number(acordoLegado.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+              </p>
+              <p className="text-[10px] text-teal-700/90 dark:text-teal-300/90 leading-relaxed">
+                Pode completar só a baixa na folha logística, sem criar outro lançamento. O registro no Supabase
+                fica no lançamento existente + histórico do pedido + vínculo nas linhas de embarque.
+              </p>
+              <label className="flex items-center gap-2 text-[10px] text-teal-800 dark:text-teal-200 cursor-pointer">
+                <input
+                  type="radio"
+                  name="modo-acordo"
+                  checked={modoCompletar}
+                  onChange={() => setModoCompletar(true)}
+                />
+                Completar baixa logística (recomendado)
+              </label>
+              <label className="flex items-center gap-2 text-[10px] text-muted-foreground cursor-pointer">
+                <input
+                  type="radio"
+                  name="modo-acordo"
+                  checked={!modoCompletar}
+                  onChange={() => setModoCompletar(false)}
+                />
+                Registrar novo acordo financeiro
+              </label>
+            </div>
+          )}
+
           <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-900/20 rounded-xl px-3 py-2.5">
             <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
@@ -236,68 +305,79 @@ export default function AcordoFinanceiroOrfaoDialog({
             </div>
           )}
 
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Tipo de Acordo</Label>
-            <Select value={tipo} onValueChange={setTipo}>
-              <SelectTrigger className="bg-muted/50 border-0 shadow-sm text-foreground dark:text-foreground">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="dark:bg-muted border-0 shadow-lg z-[9999]">
-                <SelectItem value="saldo_fornecedor">Saldo a Favor (crédito com o fornecedor)</SelectItem>
-                <SelectItem value="conta_receber">Conta a Receber do Fornecedor</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-[10px] text-muted-foreground leading-relaxed">
-              {tipo === 'saldo_fornecedor'
-                ? 'Registra um crédito para uso em compras futuras com este fornecedor.'
-                : 'Registra uma cobrança formal ao fornecedor pelos itens não entregues.'}
-            </p>
-          </div>
+          {!modoCompletar && (
+            <>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Tipo de Acordo</Label>
+                <Select value={tipo} onValueChange={setTipo}>
+                  <SelectTrigger className="bg-muted/50 border-0 shadow-sm text-foreground dark:text-foreground">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="dark:bg-muted border-0 shadow-lg z-[9999]">
+                    <SelectItem value="saldo_fornecedor">Saldo a Favor (crédito com o fornecedor)</SelectItem>
+                    <SelectItem value="conta_receber">Conta a Receber do Fornecedor</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-muted-foreground leading-relaxed">
+                  {tipo === 'saldo_fornecedor'
+                    ? 'Registra um crédito para uso em compras futuras com este fornecedor.'
+                    : 'Registra uma cobrança formal ao fornecedor pelos itens não entregues.'}
+                </p>
+              </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Valor (R$) *</Label>
-            <Input
-              type="text"
-              inputMode="decimal"
-              placeholder="0,00"
-              value={valor}
-              onChange={(e) => setValor(e.target.value.replace(',', '.'))}
-              className="bg-muted/50 border-0 shadow-sm text-foreground dark:text-foreground placeholder:text-muted-foreground"
-            />
-          </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Valor (R$) *</Label>
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="0,00"
+                  value={valor}
+                  onChange={(e) => setValor(e.target.value.replace(',', '.'))}
+                  className="bg-muted/50 border-0 shadow-sm text-foreground dark:text-foreground placeholder:text-muted-foreground"
+                />
+              </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Conta Financeira *</Label>
-            <Select value={contaId} onValueChange={setContaId}>
-              <SelectTrigger className="bg-muted/50 border-0 shadow-sm text-foreground dark:text-foreground">
-                <SelectValue placeholder="Selecione..." />
-              </SelectTrigger>
-              <SelectContent className="dark:bg-muted border-0 shadow-lg z-[9999]">
-                {contas.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Conta Financeira *</Label>
+                <Select value={contaId} onValueChange={setContaId}>
+                  <SelectTrigger className="bg-muted/50 border-0 shadow-sm text-foreground dark:text-foreground">
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent className="dark:bg-muted border-0 shadow-lg z-[9999]">
+                    {contas.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Justificativa / Observações</Label>
-            <Input
-              placeholder="Motivo do acordo, referência NF, etc..."
-              value={observacoes}
-              onChange={(e) => setObservacoes(e.target.value)}
-              className="bg-muted/50 border-0 shadow-sm text-foreground dark:text-foreground placeholder:text-muted-foreground"
-            />
-          </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Justificativa / Observações</Label>
+                <Input
+                  placeholder="Motivo do acordo, referência NF, etc..."
+                  value={observacoes}
+                  onChange={(e) => setObservacoes(e.target.value)}
+                  className="bg-muted/50 border-0 shadow-sm text-foreground dark:text-foreground placeholder:text-muted-foreground"
+                />
+              </div>
+            </>
+          )}
         </div>
 
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={onClose} disabled={loading} size="sm"
             className="border-0 shadow-sm text-foreground/90">Cancelar</Button>
-          <Button onClick={handleConfirmar} disabled={loading} size="sm"
-            className="bg-amber-500 hover:bg-amber-600 text-white border-0 shadow-sm">
-            {loading ? 'Registrando...' : 'Confirmar Acordo'}
-          </Button>
+          {modoCompletar && acordoLegado ? (
+            <Button onClick={handleCompletarLegado} disabled={loading} size="sm"
+              className="bg-teal-600 hover:bg-teal-700 text-white border-0 shadow-sm">
+              {loading ? 'Completando...' : 'Completar baixa logística'}
+            </Button>
+          ) : (
+            <Button onClick={handleConfirmar} disabled={loading} size="sm"
+              className="bg-amber-500 hover:bg-amber-600 text-white border-0 shadow-sm">
+              {loading ? 'Registrando...' : 'Confirmar Acordo'}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
