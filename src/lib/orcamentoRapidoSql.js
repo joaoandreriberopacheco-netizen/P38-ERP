@@ -1,12 +1,14 @@
 /**
  * Orçamento rápido — persistência SQL-only (pedido_venda + pedido_venda_item).
  */
+import { base44 } from '@/api/base44Client';
+import { inicioDiaSistemaISO, fimDiaSistemaISO } from '@/components/utils/dateUtils';
 import { getSupabaseBrowserClient, isSupabaseBrowserConfigured } from '@/lib/supabaseBrowserClient';
 import { gerarNumeroSequencial } from '@/lib/gerarNumeroSequencial';
 import { syncPedidoVendaItens } from '@/lib/syncPedidoVendaItens';
 import { linhasPedidoVendaToLegacyItens } from '@/lib/fetchPedidoVendaItens';
 import { getItemUnitKey } from '@/lib/productUnits';
-import { isOrcamentoPedidoVendaRow } from '@/lib/pedidoVendaEligibility';
+import { isOrcamentoPedidoVendaRow, isPedidoOrcamento } from '@/lib/pedidoVendaEligibility';
 
 const TIPO_ORCAMENTO = 'Orçamento';
 const STATUS_ORCAMENTO = 'Orçamento';
@@ -35,9 +37,44 @@ function rowToHeader(row = {}) {
     vendedor_nome: row.vendedor_nome || '',
     tipo: row.tipo || row.dados?.tipo || '',
     status: row.status || row.dados?.status || '',
-    created_at: row.created_at,
-    created_date: row.created_at,
+    created_at: row.created_at || row.dados?.created_date,
+    created_date: row.created_at || row.dados?.created_date,
   };
+}
+
+function entityPedidoToHeader(pedido = {}) {
+  const total = Number(pedido.total ?? pedido.valor_total ?? 0);
+  return {
+    id: pedido.id,
+    numero: pedido.numero || '',
+    cliente_nome: pedido.cliente_nome || '',
+    observacoes: pedido.observacoes || '',
+    subtotal: Number(pedido.subtotal ?? 0),
+    valor_desconto: Number(pedido.valor_desconto ?? 0),
+    valor_total: total,
+    tabela_preco_id: pedido.tabela_preco_id || '',
+    vendedor_id: pedido.vendedor_id || '',
+    vendedor_nome: pedido.vendedor_nome || '',
+    tipo: pedido.tipo || '',
+    status: pedido.status || '',
+    created_at: pedido.created_at || pedido.created_date,
+    created_date: pedido.created_date || pedido.created_at,
+  };
+}
+
+function applyBuscaOrcamentos(headers, busca) {
+  const termo = String(busca || '').trim().toLowerCase();
+  if (!termo) return headers;
+  return headers.filter((o) =>
+    [o.cliente_nome, o.numero, o.observacoes, o.vendedor_nome]
+      .some((v) => String(v || '').toLowerCase().includes(termo)),
+  );
+}
+
+function pedidoVendaRowWithinWindow(row, desdeMs) {
+  const ms = pedidoVendaRowTimestampMs(row);
+  if (!ms) return true;
+  return ms >= desdeMs;
 }
 
 export function quickBudgetItemToLegacy(item = {}) {
@@ -146,8 +183,7 @@ function pedidoVendaRowTimestampMs(row = {}) {
 const ORCAMENTO_PEDIDO_VENDA_OR_FILTER =
   'tipo.ilike.%orcament%,status.ilike.%orcament%,dados->>tipo.ilike.%orcament%,dados->>status.ilike.%orcament%,dados->>origem.eq.orcamento_rapido';
 
-/** Lista orçamentos rápidos gravados (SQL). */
-export async function listarOrcamentosRapidos({ dias = 7, busca = '', limite = 50 } = {}) {
+async function listarOrcamentosRapidosSql({ dias = 7, busca = '', limite = 50 } = {}) {
   const client = sb();
   const windowDays = Math.max(1, Number(dias) || 7);
   const desdeMs = Date.now() - windowDays * 86400000;
@@ -163,20 +199,52 @@ export async function listarOrcamentosRapidos({ dias = 7, busca = '', limite = 5
   if (error) throw new Error(error.message);
 
   const recentRows = (data || [])
-    .filter((row) => isOrcamentoPedidoVendaRow(row) && pedidoVendaRowTimestampMs(row) >= desdeMs)
+    .filter((row) => isOrcamentoPedidoVendaRow(row) && pedidoVendaRowWithinWindow(row, desdeMs))
     .sort((a, b) => pedidoVendaRowTimestampMs(b) - pedidoVendaRowTimestampMs(a))
     .slice(0, Math.max(1, Number(limite) || 50));
 
-  const headers = recentRows.map(rowToHeader);
-  const termo = String(busca || '').trim().toLowerCase();
-  const filtrados = termo
-    ? headers.filter((o) =>
-        [o.cliente_nome, o.numero, o.observacoes, o.vendedor_nome]
-          .some((v) => String(v || '').toLowerCase().includes(termo)),
-      )
-    : headers;
+  const headers = applyBuscaOrcamentos(recentRows.map(rowToHeader), busca);
+  return hydrateItens(headers);
+}
 
-  return hydrateItens(filtrados);
+/** Mesmo critério da aba Orçamentos em Gestão de vendas (entidade PedidoVenda). */
+async function listarOrcamentosRapidosEntidades({ dias = 7, busca = '', limite = 50 } = {}) {
+  const windowDays = Math.max(1, Number(dias) || 7);
+  const end = new Date();
+  const start = new Date();
+  start.setDate(start.getDate() - windowDays);
+  const startKey = start.toISOString().slice(0, 10);
+  const endKey = end.toISOString().slice(0, 10);
+  const created_date = {
+    $gte: inicioDiaSistemaISO(startKey),
+    $lte: fimDiaSistemaISO(endKey),
+  };
+  const cap = Math.min(Math.max(Number(limite) || 50, 50) * 3, 300);
+  const rows = await base44.entities.PedidoVenda.filter({ created_date }, '-created_date', cap);
+  const headers = applyBuscaOrcamentos(
+    (Array.isArray(rows) ? rows : [])
+      .filter(isPedidoOrcamento)
+      .map(entityPedidoToHeader)
+      .slice(0, Math.max(1, Number(limite) || 50)),
+    busca,
+  );
+  return hydrateItens(headers);
+}
+
+/** Lista orçamentos rápidos gravados (SQL + fallback entidade). */
+export async function listarOrcamentosRapidos({ dias = 7, busca = '', limite = 50 } = {}) {
+  if (!isSupabaseBrowserConfigured()) {
+    return listarOrcamentosRapidosEntidades({ dias, busca, limite });
+  }
+
+  try {
+    const fromSql = await listarOrcamentosRapidosSql({ dias, busca, limite });
+    if (fromSql.length > 0) return fromSql;
+  } catch (e) {
+    console.warn('[orcamentoRapido] listagem SQL:', e);
+  }
+
+  return listarOrcamentosRapidosEntidades({ dias, busca, limite });
 }
 
 /** Carrega um orçamento com itens (SQL). */

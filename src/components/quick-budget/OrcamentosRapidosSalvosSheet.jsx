@@ -82,7 +82,7 @@ export default function OrcamentosRapidosSalvosSheet({
 
   return (
     <>
-      <div className="relative z-[2] flex flex-1 min-h-0 w-full flex-col font-din-1451 bg-muted/40 dark:bg-background">
+      <div className="absolute inset-0 z-[2] flex min-h-0 flex-col font-din-1451 bg-muted/40 dark:bg-background">
         <div className="flex-shrink-0 px-3 pt-3 pb-2">
           <div className={cn('rounded-[28px] bg-card dark:bg-background shadow-sm px-4 py-3', P38_FIELD_SURFACE)}>
             <div className="flex items-center gap-3">
@@ -119,7 +119,7 @@ export default function OrcamentosRapidosSalvosSheet({
           </div>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto px-3 pb-6">
+        <div className="flex-1 min-h-[min(50vh,20rem)] overflow-y-auto px-3 pb-6">
           {loading ? (
             <div className="flex items-center justify-center py-20">
               <Loader2 className="w-7 h-7 animate-spin text-muted-foreground" />
