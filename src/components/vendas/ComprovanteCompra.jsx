@@ -33,6 +33,8 @@ import {
   CUPOM_PAPEL_MM,
 } from '@/lib/cupomTermicoConstants';
 import { ensureCupomTermicoFontLoaded } from '@/lib/cupomTermicoFont';
+import DocumentoComercialA4 from '@/components/documento/DocumentoComercialA4';
+import { mapPedidoVendaParaDocumentoComercial } from '@/lib/documentoComercialA4';
 
 /** Exibição de data/hora no fuso do negócio (Tabatinga — `TIMEZONE_SISTEMA`). */
 const fmtDtTZ = (d) => d ? new Intl.DateTimeFormat('pt-BR', { timeZone: TIMEZONE_SISTEMA, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(d)) : '-';
@@ -348,196 +350,6 @@ function PreviewScaled({ children }) {
         <div className="shadow-2xl rounded-sm overflow-hidden">
           {children}
         </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Cupom A4 (mesma estrutura do 80mm; cabeçalho em duas colunas) ─────────────
-function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
-  const itens = ordenarItensComprovante(pedido?.itens);
-  const pagamentos = listarPagamentosComprovante(pedido?.pagamentos);
-  const font = CUPOM_FONT;
-  const F = 14;
-  const preto = PRETO_CUPOM;
-  const empresa = buildEmpresaCupom(dadosEmpresa);
-  const cliente = buildClienteCupom(pedido, dadosCliente);
-  const dataPedido = pedido.created_date || new Date();
-
-  const gridItens = '36px 30px minmax(0, 1fr) 56px 62px';
-  const gapCol = '6px';
-  const estiloGridLinha = {
-    display: 'grid',
-    gridTemplateColumns: gridItens,
-    columnGap: gapCol,
-    alignItems: 'start',
-    width: '100%',
-  };
-  const estiloCelulaCentro = { textAlign: 'center', alignSelf: 'center' };
-  const estiloDescricao = {
-    textAlign: 'justify',
-    hyphens: 'auto',
-    WebkitHyphens: 'auto',
-    msHyphens: 'auto',
-    wordBreak: 'break-word',
-    overflowWrap: 'break-word',
-    lineHeight: 1.32,
-    paddingRight: '4px',
-  };
-
-  const Sep = () => (
-    <div style={{ margin: '6px 0', fontSize: F - 1, fontFamily: font, color: preto, letterSpacing: '1px' }}>
-      {'- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -'}
-    </div>
-  );
-
-  return (
-    <div
-      id="cupom-print"
-      className="p38-cupom-termico"
-      style={{
-        width: '210mm', minHeight: '297mm',
-        background: '#fff', color: preto,
-        fontFamily: font, fontSize: F,
-        padding: '14mm 16mm 18mm', margin: '0 auto', lineHeight: '1.4',
-      }}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12mm', marginBottom: '8px' }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {dadosEmpresa?.logo_url && (
-            <img
-              src={dadosEmpresa.logo_url}
-              alt="Logo"
-              style={{ maxWidth: '120px', maxHeight: '60px', filter: 'grayscale(100%) contrast(200%)', display: 'block', marginBottom: '8px' }}
-            />
-          )}
-          <div style={{ fontSize: F + 8, fontWeight: '400', letterSpacing: '0.5px', lineHeight: 1.1, marginBottom: '4px' }}>
-            {empresa.nomeFantasia}
-          </div>
-          {empresa.razaoSocial && (
-            <div style={{ fontSize: F, fontWeight: '400', color: preto, lineHeight: 1.3 }}>
-              {empresa.razaoSocial}
-            </div>
-          )}
-          <div style={{ fontSize: F, fontWeight: '400', color: preto, lineHeight: 1.4, marginTop: '4px' }}>
-            {empresa.cnpj && <div>CNPJ: {empresa.cnpj}</div>}
-            {empresa.endereco && <div>{empresa.endereco}</div>}
-            {empresa.bairro_cidade && <div>{empresa.bairro_cidade}</div>}
-            {empresa.telefone && <div>Fone: {empresa.telefone}</div>}
-          </div>
-
-          {cliente && (
-            <div style={{ marginTop: '10px', fontSize: F, lineHeight: 1.5, color: preto }}>
-              {cliente.nome && <div style={{ fontWeight: '500' }}>Cliente: {String(cliente.nome).toUpperCase()}</div>}
-              {cliente.enderecoLinha && <div>{cliente.enderecoLinha}</div>}
-              {cliente.cidadeLinha && <div>{cliente.cidadeLinha}{cliente.cep ? ` — CEP: ${cliente.cep}` : ''}</div>}
-              {cliente.telefone && <div>Fone: {cliente.telefone}</div>}
-            </div>
-          )}
-        </div>
-
-        <div style={{ textAlign: 'right', flexShrink: 0, minWidth: '52mm', fontSize: F, lineHeight: 1.65 }}>
-          <div style={{ fontSize: F + 2, marginBottom: '4px' }}>Cupom nº {pedido.numero || 'S/N'}</div>
-          <div>Data: {fmtDataTZ(dataPedido)}</div>
-          <div>Hora: {fmtHoraTZ(dataPedido)}</div>
-          {pedido.vendedor_nome && <div style={{ marginTop: '6px' }}>Vendedor: {pedido.vendedor_nome}</div>}
-        </div>
-      </div>
-
-      <Sep />
-
-      <div style={{ ...estiloGridLinha, fontSize: F - 1, fontWeight: '600', color: preto, lineHeight: 1.35, marginBottom: '6px' }}>
-        <span style={estiloCelulaCentro}>QUANT</span>
-        <span style={estiloCelulaCentro}>UN</span>
-        <span style={{ textAlign: 'left' }}>DESCRIÇÃO</span>
-        <span style={{ textAlign: 'right' }}>PREÇO</span>
-        <span style={{ textAlign: 'right' }}>TOTAL</span>
-      </div>
-
-      <Sep />
-
-      <div style={{ padding: '6px 0 4px' }}>
-        {itens.map((item, idx) => {
-          const nome = item.produto_nome || '';
-          const qtd = String(parseFloat(item.quantidade) || 0);
-          const precoItem = fmtV(item.preco_unitario_praticado);
-          const totalItem = fmtV(item.total);
-          const unidade = getUnidadeMedidaItemPedidoVenda(item).substring(0, 4);
-
-          return (
-            <div
-              key={item.pedido_venda_item_id || item.produto_id || idx}
-              style={{
-                ...estiloGridLinha,
-                fontSize: F,
-                color: preto,
-                padding: '10px 0',
-                marginBottom: idx < itens.length - 1 ? '6px' : 0,
-                borderBottom: idx < itens.length - 1 ? `0.5px solid ${preto}` : 'none',
-              }}
-            >
-              <span style={estiloCelulaCentro}>{qtd}</span>
-              <span style={estiloCelulaCentro}>{unidade}</span>
-              <span lang="pt-BR" style={{ ...estiloDescricao, textTransform: 'uppercase' }}>{nome}</span>
-              <span style={{ textAlign: 'right', whiteSpace: 'nowrap', alignSelf: 'center' }}>{precoItem}</span>
-              <span style={{ textAlign: 'right', whiteSpace: 'nowrap', alignSelf: 'center' }}>{totalItem}</span>
-            </div>
-          );
-        })}
-      </div>
-
-      <Sep />
-
-      <div style={{ marginTop: '4px' }}>
-        {pedido.subtotal > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F, color: preto }}>
-            <span>Subtotal</span><span>R$ {fmtV(pedido.subtotal)}</span>
-          </div>
-        )}
-        {pedido.valor_desconto > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F, color: preto }}>
-            <span>Desconto</span><span>-R$ {fmtV(pedido.valor_desconto)}</span>
-          </div>
-        )}
-        {pedido.valor_frete > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F, color: preto }}>
-            <span>Frete</span><span>R$ {fmtV(pedido.valor_frete)}</span>
-          </div>
-        )}
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F + 8, fontWeight: '400', margin: '8px 0 4px', color: preto }}>
-          <span>TOTAL</span>
-          <span>R$ {fmtV(pedido.valor_total || 0)}</span>
-        </div>
-      </div>
-
-      {pagamentos.length > 0 && (
-        <div style={{ marginTop: '4px' }}>
-          {pagamentos.map((pag, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: F + 4, fontWeight: '400', color: preto }}>
-              <span>{(pag.forma_pagamento || '').toUpperCase()}{pag.parcelas > 1 ? ` ${pag.parcelas}x` : ''}</span>
-              <span>R$ {fmtV(pag.valor)}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {pedido.observacoes && (
-        <>
-          <Sep />
-          <div style={{ fontSize: F, color: preto, lineHeight: 1.5 }}>
-            <div style={{ fontWeight: '600', marginBottom: '4px' }}>Observações</div>
-            <div>{pedido.observacoes}</div>
-          </div>
-        </>
-      )}
-
-      <Sep />
-
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: F + 4, fontWeight: '400', letterSpacing: '0.5px', margin: '6px 0 4px', color: preto }}>
-          {empresa.mensagem}
-        </div>
-        <div style={{ fontSize: F - 1, color: preto }}>Este documento não possui validade fiscal.</div>
       </div>
     </div>
   );
@@ -916,7 +728,14 @@ export default function ComprovanteCompra({ pedido, open = true, onClose }) {
         ) : (
           <div className="w-full flex justify-center py-4 px-4">
             <div style={{ width: `${210 * 3.7795}px`, transformOrigin: 'top center' }} className="shadow-2xl rounded-sm overflow-hidden">
-              <CupomA4 pedido={pedido} dadosEmpresa={dadosEmpresa} dadosCliente={dadosCliente} />
+              <DocumentoComercialA4
+                {...mapPedidoVendaParaDocumentoComercial(
+                  pedido,
+                  dadosEmpresa,
+                  dadosCliente,
+                  getUnidadeMedidaItemPedidoVenda,
+                )}
+              />
             </div>
           </div>
         )}

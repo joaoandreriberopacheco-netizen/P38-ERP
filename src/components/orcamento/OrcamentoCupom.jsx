@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { exportCupomToPdfAndShareOrDownload, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
 import { toast } from 'sonner';
 import { CupomTotalComDesconto } from '@/components/orcamento/OrcamentoTotalComDesconto';
+import DocumentoComercialA4 from '@/components/documento/DocumentoComercialA4';
+import { ORCAMENTO_RAPIDO_AVISO_PRECO } from '@/lib/orcamentoRapidoCupom';
 import {
   isOrcamentoFormatoCupom,
   normalizeOrcamentoFormatoCupom,
@@ -103,106 +105,6 @@ function Cupom72mm({ itens, total, desconto, subtotal, observacoes, nomeTabela, 
       <div style={{ textAlign: 'center', fontSize: '9px', color: '#777', marginTop: '2mm' }}>
         Nao possui validade fiscal.
       </div>
-    </div>
-  );
-}
-
-// ── Cupom A4 ────────────────────────────────────────────────────────────────
-function CupomA4({ itens, total, desconto, subtotal, observacoes, nomeTabela, clienteNome, empresa }) {
-  return (
-    <div
-      id="cupom-print"
-      style={{
-        width: '210mm',
-        minHeight: '297mm',
-        fontFamily: "'Ubuntu Sans Mono', 'Cousine', monospace",
-        fontSize: '12px',
-        color: '#111',
-        padding: '20mm 18mm',
-        background: '#fff',
-        lineHeight: '1.6',
-      }}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10mm', borderBottom: '2px solid #111', paddingBottom: '6mm' }}>
-        <div>
-          {empresa?.nome && <div style={{ fontSize: '20px', fontWeight: '700', letterSpacing: '-0.5px' }}>{empresa.nome}</div>}
-          {empresa?.cnpj && <div style={{ fontSize: '11px', color: '#555', marginTop: '1mm' }}>CNPJ: {empresa.cnpj}</div>}
-          {empresa?.telefone && <div style={{ fontSize: '11px', color: '#555' }}>{empresa.telefone}</div>}
-          {empresa?.cidade && <div style={{ fontSize: '11px', color: '#555' }}>{empresa.cidade} - {empresa.estado}</div>}
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: '18px', fontWeight: '700', letterSpacing: '1px', color: '#333' }}>ORÇAMENTO</div>
-          <div style={{ fontSize: '11px', color: '#555', marginTop: '1mm' }}>{fmtData()}</div>
-          {nomeTabela && <div style={{ fontSize: '11px', color: '#555' }}>Tabela: {nomeTabela}</div>}
-        </div>
-      </div>
-      {clienteNome && (
-        <div style={{ marginBottom: '8mm', padding: '4mm 6mm', background: '#f5f5f5', borderRadius: '4px' }}>
-          <div style={{ fontSize: '10px', color: '#777', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Cliente</div>
-          <div style={{ fontSize: '13px', fontWeight: '600' }}>{clienteNome}</div>
-        </div>
-      )}
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '8mm' }}>
-        <thead>
-          <tr style={{ borderBottom: '1.5px solid #ddd' }}>
-            <th style={{ textAlign: 'left', padding: '3mm 2mm', fontSize: '11px', color: '#555', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Produto</th>
-            <th style={{ textAlign: 'center', padding: '3mm 2mm', fontSize: '11px', color: '#555', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', width: '15mm' }}>Qtd</th>
-            <th style={{ textAlign: 'center', padding: '3mm 2mm', fontSize: '11px', color: '#555', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', width: '15mm' }}>Un</th>
-            <th style={{ textAlign: 'right', padding: '3mm 2mm', fontSize: '11px', color: '#555', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', width: '28mm' }}>Unit. (R$)</th>
-            <th style={{ textAlign: 'right', padding: '3mm 2mm', fontSize: '11px', color: '#555', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', width: '30mm' }}>Total (R$)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {itens.map((item, i) => (
-            <tr key={i} style={{ borderBottom: '0.5px solid #eee' }}>
-              <td style={{ padding: '3mm 2mm', fontSize: '12px' }}>{item.nome}</td>
-              <td style={{ padding: '3mm 2mm', textAlign: 'center', fontSize: '12px', fontWeight: '600' }}>{item.qtd}</td>
-              <td style={{ padding: '3mm 2mm', textAlign: 'center', fontSize: '12px', color: '#555' }}>{item.unidade}</td>
-              <td style={{ padding: '3mm 2mm', textAlign: 'right', fontSize: '12px' }}>{fmtR(item.preco_unit)}</td>
-              <td style={{ padding: '3mm 2mm', textAlign: 'right', fontSize: '12px', fontWeight: '600' }}>{fmtR(item.preco_unit * item.qtd)}</td>
-            </tr>
-          ))}
-        </tbody>
-        </table>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8mm' }}>
-          <div style={{ minWidth: '100mm', textAlign: 'right' }}>
-            {subtotal > 0 && (
-              <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '2mm' }}>
-                  <span>Subtotal</span>
-                  <span>R$ {fmtR(subtotal)}</span>
-                </div>
-                {desconto > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#e74c3c', fontWeight: '600', marginBottom: '2mm' }}>
-                    <span>Desconto</span>
-                    <span>-R$ {fmtR(desconto)}</span>
-                  </div>
-                )}
-              </>
-            )}
-            <div style={{ borderTop: '2px solid #111', paddingTop: '4mm' }}>
-              <div style={{ fontSize: '11px', color: '#555', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Geral</div>
-              <CupomTotalComDesconto
-                subtotal={subtotal}
-                total={total}
-                valorDesconto={desconto}
-                cheioFontSize="14px"
-                finalFontSize="22px"
-                align="right"
-              />
-              <div style={{ fontSize: '10px', color: '#999', marginTop: '1mm' }}>{itens.reduce((s, i) => s + i.qtd, 0)} itens</div>
-            </div>
-          </div>
-        </div>
-        {observacoes && (
-          <div style={{ background: '#f5f5f5', padding: '4mm 6mm', borderRadius: '4px', marginBottom: '6mm', fontSize: '10px' }}>
-            <div style={{ fontWeight: '600', marginBottom: '2mm' }}>Observações:</div>
-            <div style={{ color: '#555', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{observacoes}</div>
-          </div>
-        )}
-        <div style={{ borderTop: '0.5px solid #ddd', paddingTop: '5mm', textAlign: 'center', fontSize: '10px', color: '#999' }}>
-          Este documento não tem validade fiscal. Orçamento gerado em {fmtData()}.
-        </div>
     </div>
   );
 }
@@ -341,7 +243,21 @@ export default function OrcamentoCupom({ itens, total, desconto, subtotal, obser
         <PreviewScaled formato={formato}>
           {isOrcamentoFormatoCupom(formato)
             ? <Cupom72mm itens={itens} total={total} desconto={desconto} subtotal={subtotal} observacoes={observacoes} nomeTabela={nomeTabela} clienteNome={clienteNome} empresa={empresa} />
-            : <CupomA4 itens={itens} total={total} desconto={desconto} subtotal={subtotal} observacoes={observacoes} nomeTabela={nomeTabela} clienteNome={clienteNome} empresa={empresa} />
+            : (
+              <DocumentoComercialA4
+                tipo="orcamento"
+                empresa={empresa}
+                clienteNome={clienteNome}
+                subtitulo={nomeTabela ? `Tabela: ${nomeTabela}` : ''}
+                itens={itens}
+                subtotal={subtotal}
+                desconto={desconto}
+                total={total}
+                observacoes={observacoes}
+                avisoPreco={ORCAMENTO_RAPIDO_AVISO_PRECO}
+                rodapeLegal="Documento sem validade fiscal · Orçamento para consulta de preços"
+              />
+            )
           }
         </PreviewScaled>
       </div>

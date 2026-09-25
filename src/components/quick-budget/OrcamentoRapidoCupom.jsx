@@ -12,6 +12,7 @@ import {
   ORCAMENTO_RAPIDO_AVISO_PRECO,
 } from '@/lib/orcamentoRapidoCupom';
 import { CupomItemLinhaPrecos, CupomTotalComDesconto } from '@/components/orcamento/OrcamentoTotalComDesconto';
+import DocumentoComercialA4 from '@/components/documento/DocumentoComercialA4';
 import {
   isOrcamentoFormatoCupom,
   normalizeOrcamentoFormatoCupom,
@@ -156,118 +157,6 @@ function CupomModern72mm({
 
       <div style={{ marginTop: '10px', textAlign: 'center', fontSize: '9px', color: '#9ca3af' }}>
         Documento sem validade fiscal
-      </div>
-    </div>
-  );
-}
-
-function CupomModernA4({
-  itens,
-  total,
-  desconto,
-  subtotal,
-  observacoesUsuario,
-  nomeTabela,
-  clienteNome,
-  numero,
-  empresaNorm,
-}) {
-  return (
-    <div
-      id="cupom-print"
-      style={{
-        width: '210mm',
-        minHeight: '297mm',
-        fontFamily: FONT,
-        fontSize: '14px',
-        color: '#111827',
-        padding: '18mm 16mm',
-        background: '#fff',
-        lineHeight: 1.45,
-      }}
-    >
-      <EmpresaHeader empresaNorm={empresaNorm} />
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: '16px' }}>
-        <div>
-          <div style={{ fontSize: '32px', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.1 }}>Orçamento</div>
-          {numero && <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>Nº {numero}</div>}
-          {clienteNome && <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>Cliente: {clienteNome}</div>}
-          {nomeTabela && <div style={{ fontSize: '14px', color: '#6b7280' }}>Tabela: {nomeTabela}</div>}
-          <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>
-            {itens.length} itens · {fmtData()}
-          </div>
-        </div>
-        <div>
-          <div style={{ fontSize: '14px', color: '#6b7280', textAlign: 'right' }}>Total</div>
-          <CupomTotalComDesconto
-            subtotal={subtotal}
-            total={total}
-            valorDesconto={desconto}
-            cheioFontSize="14px"
-            finalFontSize="32px"
-          />
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gap: '10px', marginBottom: '16px' }}>
-        {itens.map((item, i) => (
-          <CupomItemLinhaPrecos
-            key={i}
-            item={item}
-            fmtCurrency={fmtCurrency}
-            nomeFontSize="16px"
-            metaFontSize="14px"
-            totalFontSize="17px"
-          />
-        ))}
-      </div>
-
-      <div
-        style={{
-          background: '#f8fafc',
-          borderRadius: '18px',
-          padding: '16px 18px',
-          display: 'grid',
-          gap: '8px',
-          marginBottom: '14px',
-        }}
-      >
-        {subtotal > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '15px' }}>
-            <span>Subtotal</span>
-            <span>R$ {fmtR(subtotal)}</span>
-          </div>
-        )}
-        {desconto > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '15px', color: '#b45309' }}>
-            <span>Desconto</span>
-            <span>- R$ {fmtR(desconto)}</span>
-          </div>
-        )}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '6px' }}>
-          <span style={{ fontSize: '22px', fontWeight: 700 }}>Total</span>
-          <CupomTotalComDesconto
-            subtotal={subtotal}
-            total={total}
-            valorDesconto={desconto}
-            cheioFontSize="15px"
-            finalFontSize="22px"
-          />
-        </div>
-      </div>
-
-      {observacoesUsuario && (
-        <div style={{ marginBottom: '14px', padding: '14px', background: '#f1f5f9', borderRadius: '14px', fontSize: '14px', color: '#334155', lineHeight: 1.45 }}>
-          <strong>Observações:</strong>
-          <div style={{ marginTop: '4px', whiteSpace: 'pre-wrap' }}>{observacoesUsuario}</div>
-        </div>
-      )}
-
-      <AvisoPreco />
-
-      <div style={{ marginTop: '16px', textAlign: 'center', fontSize: '12px', color: '#9ca3af' }}>
-        Documento sem validade fiscal · Orçamento para consulta de preços
       </div>
     </div>
   );
@@ -423,7 +312,22 @@ export default function OrcamentoRapidoCupom({
         <PreviewScaled formato={formato}>
           {isOrcamentoFormatoCupom(formato)
             ? <CupomModern72mm {...cupomProps} />
-            : <CupomModernA4 {...cupomProps} />}
+            : (
+              <DocumentoComercialA4
+                tipo="orcamento"
+                empresa={empresa}
+                clienteNome={clienteNome}
+                numero={numero}
+                subtitulo={nomeTabela ? `Tabela: ${nomeTabela}` : ''}
+                itens={itens}
+                subtotal={subtotal}
+                desconto={desconto}
+                total={total}
+                observacoes={observacoes}
+                avisoPreco={ORCAMENTO_RAPIDO_AVISO_PRECO}
+                rodapeLegal="Documento sem validade fiscal · Orçamento para consulta de preços"
+              />
+            )}
         </PreviewScaled>
       </div>
     </div>
