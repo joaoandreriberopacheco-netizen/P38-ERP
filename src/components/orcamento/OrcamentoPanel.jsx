@@ -522,7 +522,7 @@ export default function OrcamentoPanel({
   const shell = (
     <div
       className={cn(
-        'fixed inset-0 flex min-h-0 flex-col overflow-hidden font-din-1451 bg-muted/40 dark:bg-background',
+        'fixed inset-0 relative flex min-h-0 flex-col overflow-hidden font-din-1451 bg-muted/40 dark:bg-background',
         QUICK_ACCESS_PANEL_SHELL_CLASS,
       )}
       style={{ zIndex: panelZ }}

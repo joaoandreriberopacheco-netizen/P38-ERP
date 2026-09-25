@@ -6,6 +6,7 @@ import { gerarNumeroSequencial } from '@/lib/gerarNumeroSequencial';
 import { syncPedidoVendaItens } from '@/lib/syncPedidoVendaItens';
 import { linhasPedidoVendaToLegacyItens } from '@/lib/fetchPedidoVendaItens';
 import { getItemUnitKey } from '@/lib/productUnits';
+import { isOrcamentoPedidoVendaRow } from '@/lib/pedidoVendaEligibility';
 
 const TIPO_ORCAMENTO = 'Orçamento';
 const STATUS_ORCAMENTO = 'Orçamento';
@@ -32,8 +33,8 @@ function rowToHeader(row = {}) {
     tabela_preco_id: row.tabela_preco_id || row.dados?.tabela_preco_id || '',
     vendedor_id: row.vendedor_id || '',
     vendedor_nome: row.vendedor_nome || '',
-    tipo: row.tipo || row.dados?.tipo || TIPO_ORCAMENTO,
-    status: row.status || row.dados?.status || STATUS_ORCAMENTO,
+    tipo: row.tipo || row.dados?.tipo || '',
+    status: row.status || row.dados?.status || '',
     created_at: row.created_at,
     created_date: row.created_at,
   };
@@ -127,24 +128,46 @@ async function hydrateItens(pedidos = []) {
   });
 }
 
+function pedidoVendaRowTimestampMs(row = {}) {
+  const candidates = [
+    row.created_at,
+    row.updated_at,
+    row.dados?.created_date,
+    row.dados?.data_emissao,
+  ];
+  for (const raw of candidates) {
+    if (!raw) continue;
+    const ms = Date.parse(String(raw));
+    if (Number.isFinite(ms)) return ms;
+  }
+  return 0;
+}
+
+const ORCAMENTO_PEDIDO_VENDA_OR_FILTER =
+  'tipo.ilike.%orcament%,status.ilike.%orcament%,dados->>tipo.ilike.%orcament%,dados->>status.ilike.%orcament%,dados->>origem.eq.orcamento_rapido';
+
 /** Lista orçamentos rápidos gravados (SQL). */
 export async function listarOrcamentosRapidos({ dias = 7, busca = '', limite = 50 } = {}) {
   const client = sb();
-  const desde = new Date();
-  desde.setDate(desde.getDate() - Math.max(1, Number(dias) || 7));
+  const windowDays = Math.max(1, Number(dias) || 7);
+  const desdeMs = Date.now() - windowDays * 86400000;
+  const maxRows = Math.min(Math.max(Number(limite) || 50, 50) * 4, 400);
 
-  let query = client
+  const { data, error } = await client
     .from('pedido_venda')
     .select('*')
-    .ilike('tipo', TIPO_ORCAMENTO)
-    .gte('created_at', desde.toISOString())
-    .order('created_at', { ascending: false })
-    .limit(limite);
+    .or(ORCAMENTO_PEDIDO_VENDA_OR_FILTER)
+    .order('updated_at', { ascending: false })
+    .limit(maxRows);
 
-  const { data, error } = await query;
   if (error) throw new Error(error.message);
 
-  const headers = (data || []).map(rowToHeader);
+  const recentRows = (data || [])
+    .filter((row) => isOrcamentoPedidoVendaRow(row) && pedidoVendaRowTimestampMs(row) >= desdeMs)
+    .sort((a, b) => pedidoVendaRowTimestampMs(b) - pedidoVendaRowTimestampMs(a))
+    .slice(0, Math.max(1, Number(limite) || 50));
+
+  const headers = recentRows.map(rowToHeader);
   const termo = String(busca || '').trim().toLowerCase();
   const filtrados = termo
     ? headers.filter((o) =>

@@ -37,3 +37,21 @@ export function isPedidoOrcamento(pedido) {
     tipo === 'orcamento'
   );
 }
+
+/** Linha bruta `pedido_venda` (colunas + `dados` JSON) para critério de orçamento. */
+export function pedidoVendaRowEligibilityFields(row = {}) {
+  const dados = row.dados && typeof row.dados === 'object' ? row.dados : {};
+  return {
+    tipo: row.tipo ?? dados.tipo,
+    status: row.status ?? dados.status,
+    origem: dados.origem,
+  };
+}
+
+/** Orçamento na listagem SQL (inclui `dados.origem = orcamento_rapido`). */
+export function isOrcamentoPedidoVendaRow(row) {
+  if (!row) return false;
+  const { tipo, status, origem } = pedidoVendaRowEligibilityFields(row);
+  if (normalizePedidoVendaLabel(origem) === 'orcamento_rapido') return true;
+  return isPedidoOrcamento({ tipo, status });
+}
