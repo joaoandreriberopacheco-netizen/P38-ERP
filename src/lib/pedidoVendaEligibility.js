@@ -4,6 +4,17 @@
  * Espelha `public.p38_pedido_venda_elegivel_dashboard` no Postgres.
  */
 
+import {
+  PEDIDO_VENDA_STATUS_ORCAMENTO,
+  PEDIDO_VENDA_TIPO_ORCAMENTO,
+  resolvePedidoVendaTipoStatus,
+} from './pedidoVendaOrcamentoLabels.js';
+
+export {
+  PEDIDO_VENDA_STATUS_ORCAMENTO,
+  PEDIDO_VENDA_TIPO_ORCAMENTO,
+} from './pedidoVendaOrcamentoLabels.js';
+
 const EXCLUDED_STATUSES = new Set(['cancelado', 'orçamento', 'orcamento']);
 const EXCLUDED_TYPES = new Set(['orçamento', 'orcamento']);
 
@@ -28,14 +39,12 @@ export function filterPedidosVendaElegiblesKpi(pedidos) {
 /** Orçamento gravado em pedido_venda (rápido ou legado) — não é venda fechada. */
 export function isPedidoOrcamento(pedido) {
   if (!pedido) return false;
-  const status = normalizePedidoVendaLabel(pedido.status);
-  const tipo = normalizePedidoVendaLabel(pedido.tipo);
-  return (
-    status === 'orçamento' ||
-    status === 'orcamento' ||
-    tipo === 'orçamento' ||
-    tipo === 'orcamento'
-  );
+  const dados = pedido.dados && typeof pedido.dados === 'object' ? pedido.dados : {};
+  if (normalizePedidoVendaLabel(dados.origem ?? pedido.origem) === 'orcamento_rapido') {
+    return true;
+  }
+  const { tipo, status } = resolvePedidoVendaTipoStatus(pedido);
+  return tipo === PEDIDO_VENDA_TIPO_ORCAMENTO || status === PEDIDO_VENDA_STATUS_ORCAMENTO;
 }
 
 /** Linha bruta `pedido_venda` (colunas + `dados` JSON) para critério de orçamento. */
@@ -51,7 +60,5 @@ export function pedidoVendaRowEligibilityFields(row = {}) {
 /** Orçamento na listagem SQL (inclui `dados.origem = orcamento_rapido`). */
 export function isOrcamentoPedidoVendaRow(row) {
   if (!row) return false;
-  const { tipo, status, origem } = pedidoVendaRowEligibilityFields(row);
-  if (normalizePedidoVendaLabel(origem) === 'orcamento_rapido') return true;
-  return isPedidoOrcamento({ tipo, status });
+  return isPedidoOrcamento(row);
 }

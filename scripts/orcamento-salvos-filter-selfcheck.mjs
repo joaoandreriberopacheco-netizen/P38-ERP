@@ -1,10 +1,16 @@
 /**
- * Self-check: critério de orçamento na listagem SQL (sem BD).
+ * Self-check: critério e labels canónicos de orçamento (sem BD).
  */
 import {
   isOrcamentoPedidoVendaRow,
   isPedidoOrcamento,
 } from '../src/lib/pedidoVendaEligibility.js';
+import {
+  normalizePedidoVendaOrcamentoColumn,
+  orcamentoPedidoVendaSqlOrFilter,
+  PEDIDO_VENDA_TIPO_ORCAMENTO,
+  resolvePedidoVendaTipoStatus,
+} from '../src/lib/pedidoVendaOrcamentoLabels.js';
 
 const cases = [
   [{ tipo: 'Orcamento', status: 'Rascunho' }, true],
@@ -21,6 +27,23 @@ for (const [row, expected] of cases) {
     console.error('FAIL', row, 'expected', expected, 'got', got);
     failed += 1;
   }
+}
+
+if (normalizePedidoVendaOrcamentoColumn('orcamento') !== PEDIDO_VENDA_TIPO_ORCAMENTO) {
+  console.error('FAIL normalize column');
+  failed += 1;
+}
+
+const resolved = resolvePedidoVendaTipoStatus({ tipo: 'Orcamento', status: 'x' });
+if (resolved.tipo !== PEDIDO_VENDA_TIPO_ORCAMENTO) {
+  console.error('FAIL resolve tipo');
+  failed += 1;
+}
+
+const filter = orcamentoPedidoVendaSqlOrFilter();
+if (!filter.includes('tipo.eq.Orçamento') || !filter.includes('status.eq.Orçamento')) {
+  console.error('FAIL sql or filter', filter);
+  failed += 1;
 }
 
 if (!isPedidoOrcamento({ tipo: 'orcamento', status: 'x' })) {

@@ -9,9 +9,12 @@ import { syncPedidoVendaItens } from '@/lib/syncPedidoVendaItens';
 import { linhasPedidoVendaToLegacyItens } from '@/lib/fetchPedidoVendaItens';
 import { getItemUnitKey } from '@/lib/productUnits';
 import { isOrcamentoPedidoVendaRow, isPedidoOrcamento } from '@/lib/pedidoVendaEligibility';
-
-const TIPO_ORCAMENTO = 'Orçamento';
-const STATUS_ORCAMENTO = 'Orçamento';
+import {
+  orcamentoPedidoVendaSqlOrFilter,
+  PEDIDO_VENDA_STATUS_ORCAMENTO,
+  PEDIDO_VENDA_TIPO_ORCAMENTO,
+  resolvePedidoVendaTipoStatus,
+} from '@/lib/pedidoVendaOrcamentoLabels';
 
 function sb() {
   if (!isSupabaseBrowserConfigured()) {
@@ -24,6 +27,7 @@ function sb() {
 
 function rowToHeader(row = {}) {
   const total = Number(row.total ?? row.dados?.valor_total ?? 0);
+  const { tipo, status } = resolvePedidoVendaTipoStatus(row);
   return {
     id: row.id,
     numero: row.numero || '',
@@ -35,8 +39,8 @@ function rowToHeader(row = {}) {
     tabela_preco_id: row.tabela_preco_id || row.dados?.tabela_preco_id || '',
     vendedor_id: row.vendedor_id || '',
     vendedor_nome: row.vendedor_nome || '',
-    tipo: row.tipo || row.dados?.tipo || '',
-    status: row.status || row.dados?.status || '',
+    tipo,
+    status,
     created_at: row.created_at || row.dados?.created_date,
     created_date: row.created_at || row.dados?.created_date,
   };
@@ -44,6 +48,7 @@ function rowToHeader(row = {}) {
 
 function entityPedidoToHeader(pedido = {}) {
   const total = Number(pedido.total ?? pedido.valor_total ?? 0);
+  const { tipo, status } = resolvePedidoVendaTipoStatus(pedido);
   return {
     id: pedido.id,
     numero: pedido.numero || '',
@@ -55,8 +60,8 @@ function entityPedidoToHeader(pedido = {}) {
     tabela_preco_id: pedido.tabela_preco_id || '',
     vendedor_id: pedido.vendedor_id || '',
     vendedor_nome: pedido.vendedor_nome || '',
-    tipo: pedido.tipo || '',
-    status: pedido.status || '',
+    tipo,
+    status,
     created_at: pedido.created_at || pedido.created_date,
     created_date: pedido.created_date || pedido.created_at,
   };
@@ -180,9 +185,6 @@ function pedidoVendaRowTimestampMs(row = {}) {
   return 0;
 }
 
-const ORCAMENTO_PEDIDO_VENDA_OR_FILTER =
-  'tipo.ilike.%orcament%,status.ilike.%orcament%,dados->>tipo.ilike.%orcament%,dados->>status.ilike.%orcament%,dados->>origem.eq.orcamento_rapido';
-
 async function listarOrcamentosRapidosSql({ dias = 7, busca = '', limite = 50 } = {}) {
   const client = sb();
   const windowDays = Math.max(1, Number(dias) || 7);
@@ -192,7 +194,7 @@ async function listarOrcamentosRapidosSql({ dias = 7, busca = '', limite = 50 } 
   const { data, error } = await client
     .from('pedido_venda')
     .select('*')
-    .or(ORCAMENTO_PEDIDO_VENDA_OR_FILTER)
+    .or(orcamentoPedidoVendaSqlOrFilter())
     .order('updated_at', { ascending: false })
     .limit(maxRows);
 
@@ -289,8 +291,8 @@ export async function salvarOrcamentoRapido({
   const now = new Date().toISOString();
   const payload = {
     cliente_nome: clienteNome?.trim() || '',
-    status: STATUS_ORCAMENTO,
-    tipo: TIPO_ORCAMENTO,
+    status: PEDIDO_VENDA_STATUS_ORCAMENTO,
+    tipo: PEDIDO_VENDA_TIPO_ORCAMENTO,
     subtotal: Number(subtotal) || 0,
     valor_desconto: Number(valorDesconto) || 0,
     valor_frete: 0,
@@ -306,8 +308,8 @@ export async function salvarOrcamentoRapido({
       valor_total: Number(valorTotal) || 0,
       subtotal: Number(subtotal) || 0,
       valor_desconto: Number(valorDesconto) || 0,
-      tipo: TIPO_ORCAMENTO,
-      status: STATUS_ORCAMENTO,
+      tipo: PEDIDO_VENDA_TIPO_ORCAMENTO,
+      status: PEDIDO_VENDA_STATUS_ORCAMENTO,
       origem: 'orcamento_rapido',
     },
   };
