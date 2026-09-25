@@ -34,13 +34,15 @@ const embarques = [
 ];
 
 const f = folha(item, embarques);
-if (f.saldoPendente !== 45) {
-  console.error('saldo pendente esperado 45', f);
+// Órfão UI = Necessidade (5) + nunca despachado (40) = 45; saldo folha = 100 − 50 − 10 = 40
+const orfaoTotal = round(f.nec + Math.max(0, 100 - 60));
+if (f.saldoPendente !== 40 || orfaoTotal !== 45) {
+  console.error('folha/órfão esperados 40 / 45', { f, orfaoTotal });
   process.exit(1);
 }
 
-const baixaNec = Math.min(45, f.nec);
-const baixaComprada = Math.min(45 - baixaNec, 100 - 60);
+const baixaNec = Math.min(orfaoTotal, f.nec);
+const baixaComprada = Math.min(orfaoTotal - baixaNec, 100 - 60);
 if (baixaNec !== 5 || baixaComprada !== 40) {
   console.error('partição esperada 5+40', { baixaNec, baixaComprada });
   process.exit(1);
