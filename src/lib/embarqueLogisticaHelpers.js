@@ -7,7 +7,7 @@ import {
 import { getEmbarqueItensLinhas, hydrateEmbarquesPedidoFromSql } from '@/lib/fetchEmbarqueItens';
 import { commercialQuantityFromBase, getItemCompraExibicaoVitrine } from '@/lib/productUnits';
 
-function qtyPedidaBaseItem(item = {}) {
+export function qtyPedidaBaseItem(item = {}) {
   return resolveEmbarqueQuantidadeBase(
     {
       ...item,
