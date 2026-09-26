@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { normalizeEmpresaCupom, extractObservacoesUsuario } from '@/lib/orcamentoRapidoCupom';
+import { ensureCupomTermicoFontLoaded } from '@/lib/cupomTermicoFont';
 import {
   buildResumoDocumentoComercial,
+  DOCUMENTO_COMERCIAL_A4_BORDER,
+  DOCUMENTO_COMERCIAL_A4_BORDER_STRONG,
   documentoComercialA4DocStyle,
   documentoComercialA4PageStyle,
   fmtDataDocumento,
@@ -12,18 +15,33 @@ import {
   labelColunaQuantidade,
 } from '@/lib/documentoComercialA4';
 
+const lineBottom = `1px solid ${DOCUMENTO_COMERCIAL_A4_BORDER}`;
+const lineBottomStrong = `1px solid ${DOCUMENTO_COMERCIAL_A4_BORDER_STRONG}`;
+
 const thStyle = {
   fontSize: '11px',
   fontWeight: 600,
   color: '#111',
   textAlign: 'left',
   padding: '6px 0 8px',
-  borderBottom: '1px solid #d9d9d9',
+  borderBottom: lineBottomStrong,
+  textTransform: 'uppercase',
+  letterSpacing: '0.03em',
+  verticalAlign: 'middle',
 };
 
-const tdStyle = {
-  padding: '8px 0',
-  borderBottom: '1px solid #efefef',
+const tdStyleBase = {
+  padding: '10px 0',
+  borderBottom: lineBottom,
+};
+
+const tdStyleProduto = {
+  ...tdStyleBase,
+  verticalAlign: 'middle',
+};
+
+const tdStyleResumo = {
+  ...tdStyleBase,
   verticalAlign: 'top',
 };
 
@@ -98,47 +116,90 @@ export default function DocumentoComercialA4({
 
   const pagamentosLista = Array.isArray(pagamentos) ? pagamentos.filter((p) => p?.valor > 0) : [];
 
-  return (
-    <div id={printId} style={documentoComercialA4PageStyle}>
-      <div style={documentoComercialA4DocStyle}>
-        {empresaNorm?.nome && (
-          <header style={{ marginBottom: '20px', paddingBottom: '14px', borderBottom: '1px solid #e8e8e8' }}>
-            {empresa?.logo_url && (
-              <img
-                src={empresa.logo_url}
-                alt=""
-                style={{ maxWidth: '140px', maxHeight: '56px', display: 'block', marginBottom: '10px', objectFit: 'contain' }}
-              />
-            )}
-            <div style={{ fontSize: '16px', fontWeight: 600, letterSpacing: '-0.02em', marginBottom: '4px' }}>
-              {empresaNorm.nome}
-            </div>
-            {empresaNorm.razaoSocial && (
-              <div style={{ fontSize: '12px', color: '#555', marginBottom: '2px' }}>{empresaNorm.razaoSocial}</div>
-            )}
-            <div style={{ fontSize: '12px', color: '#666', lineHeight: 1.5 }}>
-              {empresaNorm.cnpj && <div>CNPJ {empresaNorm.cnpj}</div>}
-              {empresaNorm.endereco && <div>{empresaNorm.endereco}</div>}
-              {empresaNorm.complemento && <div>{empresaNorm.complemento}</div>}
-              {empresaNorm.bairroCidade && <div>{empresaNorm.bairroCidade}</div>}
-              {empresaNorm.telefone && <div>{empresaNorm.telefone}</div>}
-              {empresaNorm.email && <div>{empresaNorm.email}</div>}
-            </div>
-          </header>
-        )}
+  useEffect(() => {
+    ensureCupomTermicoFontLoaded().catch(() => {});
+  }, []);
 
-        <header style={{ marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid #e8e8e8' }}>
-          <h1 style={{ fontSize: '20px', fontWeight: 600, letterSpacing: '-0.02em', marginBottom: '6px' }}>
-            {tituloDoc}
-          </h1>
-          {subtitulo && <p style={{ fontSize: '13px', color: '#333', marginBottom: '4px' }}>{subtitulo}</p>}
-          <p style={{ fontSize: '12px', color: '#666' }}>Data {metaData}</p>
-          {vendedorNome && (
-            <p style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>Vendedor: {vendedorNome}</p>
+  const metaLinhaStyle = {
+    fontSize: '12px',
+    color: '#666',
+    marginTop: '3px',
+    lineHeight: 1.45,
+  };
+
+  return (
+    <div id={printId} className="p38-documento-comercial-a4" style={documentoComercialA4PageStyle}>
+      <div style={documentoComercialA4DocStyle}>
+        <header
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            gap: '28px',
+            marginBottom: '22px',
+            paddingBottom: '16px',
+            borderBottom: lineBottom,
+          }}
+        >
+          {empresaNorm?.nome ? (
+            <div style={{ flex: '1 1 50%', minWidth: 0 }}>
+              {empresa?.logo_url && (
+                <img
+                  src={empresa.logo_url}
+                  alt=""
+                  style={{ maxWidth: '140px', maxHeight: '56px', display: 'block', marginBottom: '10px', objectFit: 'contain' }}
+                />
+              )}
+              <div style={{ fontSize: '16px', fontWeight: 600, letterSpacing: '-0.02em', marginBottom: '4px' }}>
+                {empresaNorm.nome}
+              </div>
+              {empresaNorm.razaoSocial && (
+                <div style={{ fontSize: '12px', color: '#555', marginBottom: '2px' }}>{empresaNorm.razaoSocial}</div>
+              )}
+              <div style={{ fontSize: '12px', color: '#666', lineHeight: 1.5 }}>
+                {empresaNorm.cnpj && <div>CNPJ {empresaNorm.cnpj}</div>}
+                {empresaNorm.endereco && <div>{empresaNorm.endereco}</div>}
+                {empresaNorm.complemento && <div>{empresaNorm.complemento}</div>}
+                {empresaNorm.bairroCidade && <div>{empresaNorm.bairroCidade}</div>}
+                {empresaNorm.telefone && <div>{empresaNorm.telefone}</div>}
+                {empresaNorm.email && <div>{empresaNorm.email}</div>}
+              </div>
+            </div>
+          ) : (
+            <div style={{ flex: '1 1 50%' }} />
           )}
-          {lista.length > 0 && (
-            <p style={{ marginTop: '10px', fontSize: '13px', color: '#333' }}>{resumo}</p>
-          )}
+
+          <div style={{ flex: '0 1 46%', textAlign: 'right', minWidth: '200px' }}>
+            <h1
+              style={{
+                fontSize: '14px',
+                fontWeight: 600,
+                letterSpacing: '0.02em',
+                textTransform: 'uppercase',
+                margin: 0,
+                lineHeight: 1.35,
+                color: '#111',
+              }}
+            >
+              {tituloDoc}
+            </h1>
+            {subtitulo && <p style={{ ...metaLinhaStyle, color: '#444' }}>{subtitulo}</p>}
+            <p style={metaLinhaStyle}>
+              <span style={{ textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '11px' }}>Data</span>
+              {' '}
+              {metaData}
+            </p>
+            {vendedorNome && (
+              <p style={metaLinhaStyle}>
+                <span style={{ textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '11px' }}>Vendedor:</span>
+                {' '}
+                {vendedorNome}
+              </p>
+            )}
+            {lista.length > 0 && (
+              <p style={{ marginTop: '10px', fontSize: '13px', fontWeight: 600, color: '#111' }}>{resumo}</p>
+            )}
+          </div>
         </header>
 
         {clienteNome && (
@@ -169,67 +230,67 @@ export default function DocumentoComercialA4({
               const cx = Number(item.caixas ?? item.quantidade_caixas);
               return (
                 <tr key={item.id || item.produto_id || idx}>
-                  <td style={{ ...tdStyle, ...colQty }}>{fmtNumeroPt(qtd)}</td>
-                  <td style={{ ...tdStyle, ...colDesc }}>{nome}</td>
+                  <td style={{ ...tdStyleProduto, ...colQty }}>{fmtNumeroPt(qtd)}</td>
+                  <td style={{ ...tdStyleProduto, ...colDesc }}>{nome}</td>
                   {comCaixas && (
-                    <td style={{ ...tdStyle, ...colCx }}>
+                    <td style={{ ...tdStyleProduto, ...colCx }}>
                       {Number.isFinite(cx) && cx > 0 ? fmtNumeroPt(cx, 0) : ''}
                     </td>
                   )}
-                  <td style={{ ...tdStyle, ...colNum }}>{fmtMoedaBRL(linhaItemPrecoUnit(item))}</td>
-                  <td style={{ ...tdStyle, ...colNum }}>{fmtMoedaBRL(linhaItemTotal(item))}</td>
+                  <td style={{ ...tdStyleProduto, ...colNum }}>{fmtMoedaBRL(linhaItemPrecoUnit(item))}</td>
+                  <td style={{ ...tdStyleProduto, ...colNum }}>{fmtMoedaBRL(linhaItemTotal(item))}</td>
                 </tr>
               );
             })}
             {lista.length > 0 && (
               <>
                 <tr>
-                  <td style={{ ...tdStyle, ...colQty, fontWeight: 600, borderTop: '1px solid #d9d9d9', borderBottom: 'none', paddingTop: '10px' }}>
+                  <td style={{ ...tdStyleResumo, ...colQty, fontWeight: 600, borderTop: lineBottomStrong, borderBottom: 'none', paddingTop: '10px' }}>
                     {fmtNumeroPt(somaQty)}
                   </td>
-                  <td style={{ ...tdStyle, ...colDesc, fontWeight: 600, borderTop: '1px solid #d9d9d9', borderBottom: 'none', paddingTop: '10px' }}>
+                  <td style={{ ...tdStyleResumo, ...colDesc, fontWeight: 600, borderTop: lineBottomStrong, borderBottom: 'none', paddingTop: '10px' }}>
                     Subtotal
                   </td>
                   {comCaixas && (
-                    <td style={{ ...tdStyle, ...colCx, fontWeight: 600, borderTop: '1px solid #d9d9d9', borderBottom: 'none', paddingTop: '10px' }}>
+                    <td style={{ ...tdStyleResumo, ...colCx, fontWeight: 600, borderTop: lineBottomStrong, borderBottom: 'none', paddingTop: '10px' }}>
                       {somaCaixas > 0 ? fmtNumeroPt(somaCaixas, 0) : ''}
                     </td>
                   )}
-                  <td style={{ ...tdStyle, ...colNum, borderTop: '1px solid #d9d9d9', borderBottom: 'none', paddingTop: '10px' }} />
-                  <td style={{ ...tdStyle, ...colNum, fontWeight: 600, borderTop: '1px solid #d9d9d9', borderBottom: 'none', paddingTop: '10px' }}>
+                  <td style={{ ...tdStyleResumo, ...colNum, borderTop: lineBottomStrong, borderBottom: 'none', paddingTop: '10px' }} />
+                  <td style={{ ...tdStyleResumo, ...colNum, fontWeight: 600, borderTop: lineBottomStrong, borderBottom: 'none', paddingTop: '10px' }}>
                     {fmtMoedaBRL(st)}
                   </td>
                 </tr>
                 {desc > 0 && (
                   <tr>
-                    <td style={{ ...tdStyle, ...colQty, color: '#444', fontWeight: 500 }} />
-                    <td style={{ ...tdStyle, ...colDesc, color: '#444', fontWeight: 500 }}>Desconto comercial</td>
-                    {comCaixas && <td style={{ ...tdStyle, ...colCx }} />}
-                    <td style={{ ...tdStyle, ...colNum }} />
-                    <td style={{ ...tdStyle, ...colNum, color: '#444', fontWeight: 500 }}>− {fmtMoedaBRL(desc)}</td>
+                    <td style={{ ...tdStyleResumo, ...colQty, color: '#444', fontWeight: 500 }} />
+                    <td style={{ ...tdStyleResumo, ...colDesc, color: '#444', fontWeight: 500 }}>Desconto comercial</td>
+                    {comCaixas && <td style={{ ...tdStyleResumo, ...colCx }} />}
+                    <td style={{ ...tdStyleResumo, ...colNum }} />
+                    <td style={{ ...tdStyleResumo, ...colNum, color: '#444', fontWeight: 500 }}>− {fmtMoedaBRL(desc)}</td>
                   </tr>
                 )}
                 {temFreteLinha && (
                   <tr>
-                    <td style={{ ...tdStyle, ...colQty, fontWeight: 600 }} />
-                    <td style={{ ...tdStyle, ...colDesc, fontWeight: 600 }}>Frete</td>
-                    {comCaixas && <td style={{ ...tdStyle, ...colCx }} />}
-                    <td style={{ ...tdStyle, ...colNum, fontWeight: 500 }}>
+                    <td style={{ ...tdStyleResumo, ...colQty, fontWeight: 600 }} />
+                    <td style={{ ...tdStyleResumo, ...colDesc, fontWeight: 600 }}>Frete</td>
+                    {comCaixas && <td style={{ ...tdStyleResumo, ...colCx }} />}
+                    <td style={{ ...tdStyleResumo, ...colNum, fontWeight: 500 }}>
                       {freteIncluso ? 'Incluso' : ''}
                     </td>
-                    <td style={{ ...tdStyle, ...colNum }}>
+                    <td style={{ ...tdStyleResumo, ...colNum }}>
                       {freteIncluso ? '—' : (freteValor > 0 ? fmtMoedaBRL(freteValor) : '—')}
                     </td>
                   </tr>
                 )}
                 <tr>
-                  <td style={{ ...tdStyle, ...colQty, fontWeight: 600, fontSize: '14px', borderTop: '1px solid #bdbdbd', paddingTop: '12px', borderBottom: 'none' }} />
-                  <td style={{ ...tdStyle, ...colDesc, fontWeight: 600, fontSize: '14px', borderTop: '1px solid #bdbdbd', paddingTop: '12px', borderBottom: 'none' }}>
+                  <td style={{ ...tdStyleResumo, ...colQty, fontWeight: 600, fontSize: '14px', borderTop: lineBottomStrong, paddingTop: '12px', borderBottom: 'none' }} />
+                  <td style={{ ...tdStyleResumo, ...colDesc, fontWeight: 600, fontSize: '14px', borderTop: lineBottomStrong, paddingTop: '12px', borderBottom: 'none' }}>
                     Total
                   </td>
-                  {comCaixas && <td style={{ ...tdStyle, ...colCx, borderTop: '1px solid #bdbdbd', borderBottom: 'none', paddingTop: '12px' }} />}
-                  <td style={{ ...tdStyle, ...colNum, borderTop: '1px solid #bdbdbd', borderBottom: 'none', paddingTop: '12px' }} />
-                  <td style={{ ...tdStyle, ...colNum, fontWeight: 600, fontSize: '14px', borderTop: '1px solid #bdbdbd', paddingTop: '12px', borderBottom: 'none' }}>
+                  {comCaixas && <td style={{ ...tdStyleResumo, ...colCx, borderTop: lineBottomStrong, borderBottom: 'none', paddingTop: '12px' }} />}
+                  <td style={{ ...tdStyleResumo, ...colNum, borderTop: lineBottomStrong, borderBottom: 'none', paddingTop: '12px' }} />
+                  <td style={{ ...tdStyleResumo, ...colNum, fontWeight: 600, fontSize: '14px', borderTop: lineBottomStrong, paddingTop: '12px', borderBottom: 'none' }}>
                     {fmtMoedaBRL(tot)}
                   </td>
                 </tr>

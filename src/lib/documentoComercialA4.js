@@ -3,8 +3,12 @@
  * Tipografia sans limpa, tabela com totais no corpo e bloco de observações.
  */
 
-export const DOCUMENTO_COMERCIAL_A4_FONT =
-  'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif';
+/** Barlow regular (não Condensed) — alinhado ao cupom/relatórios P38. */
+export const DOCUMENTO_COMERCIAL_A4_FONT = "'Barlow', sans-serif";
+
+/** Linha fina de tabela (mesmo peso visual das tabelas do app). */
+export const DOCUMENTO_COMERCIAL_A4_BORDER = '#e8e8e8';
+export const DOCUMENTO_COMERCIAL_A4_BORDER_STRONG = '#d9d9d9';
 
 export const fmtMoedaBRL = (n) =>
   (Number(n) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -71,6 +75,7 @@ export const documentoComercialA4PageStyle = {
   width: '210mm',
   minHeight: '297mm',
   fontFamily: DOCUMENTO_COMERCIAL_A4_FONT,
+  fontWeight: 400,
   fontSize: '13px',
   lineHeight: 1.45,
   color: '#111',
