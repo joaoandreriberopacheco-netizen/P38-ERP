@@ -40,6 +40,9 @@ export function filterPedidosVendaElegiblesKpi(pedidos) {
 export function isPedidoOrcamento(pedido) {
   if (!pedido) return false;
   const dados = pedido.dados && typeof pedido.dados === 'object' ? pedido.dados : {};
+  if (dados.migrado_para_orcamento === true || pedido.migrado_para_orcamento === true) {
+    return false;
+  }
   if (normalizePedidoVendaLabel(dados.origem ?? pedido.origem) === 'orcamento_rapido') {
     return true;
   }
