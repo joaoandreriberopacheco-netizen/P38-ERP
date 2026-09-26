@@ -1686,7 +1686,7 @@ function ProdutosPageContent({ hierarchyMode = 'cadastro' } = {}) {
 
       <div className="flex flex-1 min-h-0 flex-col overflow-hidden w-full min-w-0">
         {isDesktop && (
-          <div>
+          <div className="flex-none shrink-0">
             <ProdutosCommandBar
               sortOrder={sortOrder}
               setSortOrder={setSortOrder}
