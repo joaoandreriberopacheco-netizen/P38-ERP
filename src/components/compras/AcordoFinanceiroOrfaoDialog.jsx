@@ -222,8 +222,8 @@ export default function AcordoFinanceiroOrfaoDialog({
                       <p className="font-medium text-foreground/90 truncate">{item.produto_nome}</p>
                       {folha && (
                         <p className="text-muted-foreground mt-0.5 leading-snug">
-                          Comprada {folha.comprada} · Desp. {folha.despachada} · Rec. {folha.recebida} ·
-                          Trânsito {folha.emTransito} · Pend. {folha.saldoPendente} · Não rec.{' '}
+                          Comprada {folha.comprada} · Trânsito {folha.emTransito} · Recep. {folha.recebida}{' '}
+                          · Pend. {folha.saldoPendente} · Acordo (máx.){' '}
                           {roundToTwoDecimals(Math.max(0, folha.comprada - folha.recebida))}
                         </p>
                       )}

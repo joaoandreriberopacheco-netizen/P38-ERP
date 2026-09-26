@@ -83,8 +83,8 @@ export function calcularTotalRecebidoBasePorProduto(embarques = []) {
 }
 
 /**
- * Folha 4 colunas por linha de pedido.
- * Saldo pendente (coluna 4) = comprada − recebida − em trânsito; em trânsito = despachada − recebida.
+ * Folha 4 colunas por linha de pedido (comprada → trânsito → recepcionada → pendente).
+ * Trânsito = despachada − recepcionada; pendente = comprada − recepcionada − trânsito.
  */
 export function calcularFolhaLogisticaLinha(item = {}, embarques = []) {
   const pid = item?.produto_id;

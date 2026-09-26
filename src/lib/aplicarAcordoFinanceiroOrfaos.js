@@ -1,7 +1,7 @@
 /**
- * Baixa logística de itens órfãos após acordo financeiro — alinhada à folha 4 colunas:
- * comprada → despachada → recebida → saldo pendente
- * (saldo_pendente = comprada − recebida − em_trânsito, em_trânsito = despachada − recebida).
+ * Baixa logística de itens órfãos após acordo financeiro — folha 4 colunas (negócio):
+ * comprada → trânsito → recepcionada → pendente
+ * (comprada = trânsito + recepcionada + pendente; acordo cobre trânsito + pendente = comprada − recepcionada).
  */
 
 import { formatarLogTime } from '@/components/utils/dateUtils';
