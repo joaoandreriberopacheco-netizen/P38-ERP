@@ -774,7 +774,7 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
   const paddingBottom = shouldVirtualizeRows ? virtualRows.paddingBottom : 0;
 
   return (
-    <div className="flex flex-col h-full w-full">
+    <div className="flex flex-col flex-1 min-h-0 h-full w-full overflow-hidden">
       {/* Scroll container — tabela rola livremente; coluna Produto é sticky */}
       <div
         className="flex-1 overflow-auto p38-catalog-table-scroll overscroll-contain [overflow-anchor:none] [scrollbar-gutter:stable]"

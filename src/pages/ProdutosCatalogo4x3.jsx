@@ -11,13 +11,15 @@ import { ProdutosPageContent } from '@/pages/Produtos';
  */
 function ProdutosCatalogo4x3Inner() {
   return (
-    <div className="flex flex-col min-h-0 h-full">
-      <div className="px-3 py-1.5 border-b border-border/40 bg-muted/20 flex justify-end">
+    <div className="flex flex-1 min-h-0 h-full w-full flex-col overflow-hidden">
+      <div className="flex-none px-3 py-1.5 border-b border-border/40 bg-muted/20 flex justify-end shrink-0">
         <Button variant="ghost" size="sm" className="h-7 text-xs" asChild>
           <Link to={createPageUrl('Produtos')}>Voltar ao catálogo clássico (h1–h4)</Link>
         </Button>
       </div>
-      <ProdutosPageContent hierarchyMode="4x3" />
+      <div className="flex-1 min-h-0 overflow-hidden flex flex-col w-full">
+        <ProdutosPageContent hierarchyMode="4x3" />
+      </div>
     </div>
   );
 }
