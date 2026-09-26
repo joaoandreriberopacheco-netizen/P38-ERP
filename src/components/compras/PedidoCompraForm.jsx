@@ -37,6 +37,7 @@ import PedidoCompraFAB from './PedidoCompraFAB.jsx';
 import { P38TourFab } from '@/components/ui/p38-tour';
 import { buildPedidoCompraFormTour } from './comprasEmbarquesOnboarding';
 import ImportadorPedidoCompra from './ImportadorPedidoCompra.jsx';
+import FornecedorPedidoSelect from './FornecedorPedidoSelect.jsx';
 import BannerStatusPedido from './BannerStatusPedido.jsx';
 import AnexosPedidoCompra from './AnexosPedidoCompra.jsx';
 import SolicitarEdicaoPDV from './SolicitarEdicaoPDV.jsx';
@@ -150,9 +151,7 @@ export default function PedidoCompraForm({
   const [fornecedores, setFornecedores] = useState([]);
   const [produtos, setProdutos] = useState([]);
   const [search, setSearch] = useState('');
-  const [searchFornecedor, setSearchFornecedor] = useState('');
   const [selectedProductIndex, setSelectedProductIndex] = useState(-1);
-  const [selectedFornecedorIndex, setSelectedFornecedorIndex] = useState(-1);
   
   const filteredProducts = useMemo(() => {
     if (!search.trim()) return [];
@@ -164,15 +163,6 @@ export default function PedidoCompraForm({
     ).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).slice(0, 30);
   }, [produtos, search]);
 
-  const filteredFornecedores = useMemo(() => {
-    const sorted = [...fornecedores].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
-    if (!searchFornecedor.trim()) return sorted;
-    const lower = searchFornecedor.toLowerCase();
-    return sorted.filter(f => 
-      f.nome.toLowerCase().includes(lower) || 
-      (f.codigo_interno && f.codigo_interno.toLowerCase().includes(lower))
-    );
-  }, [fornecedores, searchFornecedor]);
   const [contas, setContas] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
@@ -1562,76 +1552,18 @@ export default function PedidoCompraForm({
                 {/* Fornecedor */}
                 <div className="col-span-12 lg:col-span-6">
                   <Label className="text-sm font-light text-muted-foreground mb-2 block">Fornecedor *</Label>
-                  <Select value={formData.fornecedor_id} onValueChange={handleFornecedorChange} disabled={isLocked}>
-                    <SelectTrigger className={COMPRAS_FIELD_H12}>
-                      <SelectValue placeholder="Selecione o fornecedor..." />
-                    </SelectTrigger>
-                    <SelectContent className="dark:bg-muted border-0 shadow-lg z-[9999] max-h-[300px]">
-                      <div className={cn('sticky top-0 bg-card p-2 z-10', COMPRAS_SEP)}>
-                        <div className="relative">
-                          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                          <Input
-                            placeholder="Buscar..."
-                            className="pl-8 h-8 text-xs bg-card border-0"
-                            value={searchFornecedor}
-                            onChange={e => {
-                              setSearchFornecedor(e.target.value);
-                              setSelectedFornecedorIndex(-1);
-                            }}
-                            onClick={e => e.stopPropagation()}
-                            onKeyDown={e => {
-                              if (!filteredFornecedores.length) return;
-                              
-                              if (e.key === 'ArrowDown') {
-                                e.preventDefault();
-                                setSelectedFornecedorIndex(prev => 
-                                  prev < filteredFornecedores.length - 1 ? prev + 1 : 0
-                                );
-                              } else if (e.key === 'ArrowUp') {
-                                e.preventDefault();
-                                setSelectedFornecedorIndex(prev => 
-                                  prev > 0 ? prev - 1 : filteredFornecedores.length - 1
-                                );
-                              } else if (e.key === 'Enter' && selectedFornecedorIndex >= 0) {
-                                e.preventDefault();
-                                handleFornecedorChange(filteredFornecedores[selectedFornecedorIndex].id);
-                                setSearchFornecedor('');
-                                setSelectedFornecedorIndex(-1);
-                              } else if (e.key === 'Tab' && filteredFornecedores.length > 0) {
-                                e.preventDefault();
-                                setSelectedFornecedorIndex(prev => 
-                                  prev < filteredFornecedores.length - 1 ? prev + 1 : 0
-                                );
-                              }
-                            }}
-                          />
-                        </div>
-                      </div>
-                      {filteredFornecedores.map((f, idx) => (
-                        <SelectItem 
-                          key={f.id} 
-                          value={f.id}
-                          className={idx === selectedFornecedorIndex ? COMPRAS_SELECT_HIGHLIGHT : ''}
-                        >
-                          {f.nome}
-                        </SelectItem>
-                      ))}
-                      <div className={cn('p-2', COMPRAS_DIVIDER_TOP)}>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          className="w-full justify-start text-xs text-muted-foreground hover:bg-muted h-8"
-                          onClick={() => {
-                            handleFornecedorChange('novo');
-                            setSearchFornecedor('');
-                          }}
-                        >
-                          <Plus className="w-3 h-3 mr-2" />
-                          Novo Fornecedor
-                        </Button>
-                      </div>
-                    </SelectContent>
-                  </Select>
+                  <FornecedorPedidoSelect
+                    value={formData.fornecedor_id}
+                    onValueChange={handleFornecedorChange}
+                    fornecedores={fornecedores}
+                    disabled={isLocked}
+                    displayName={formData.fornecedor_nome}
+                    triggerClassName={COMPRAS_FIELD_H12}
+                    showCreateNew
+                    createNewValue="novo"
+                    createNewLabel="Criar novo fornecedor"
+                    onCreateNew={() => handleFornecedorChange('novo')}
+                  />
                 </div>
 
                 {/* Tags */}
