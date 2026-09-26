@@ -14,6 +14,7 @@ import {
   particionarBaixaOrfaoAcordo,
 } from '@/lib/aplicarAcordoFinanceiroOrfaos';
 import { calculateBaseQuantity } from '@/lib/productUnits';
+import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { listarAcordosOrfaoComBaixaPendente } from '@/lib/acordoFinanceiroOrfaoLancamento';
 import { listarLancamentosPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
 import { invokeRecalcularConclusaoPedidoCompra } from '@/lib/p38StockRecalc';
@@ -222,7 +223,8 @@ export default function AcordoFinanceiroOrfaoDialog({
                       {folha && (
                         <p className="text-muted-foreground mt-0.5 leading-snug">
                           Comprada {folha.comprada} · Desp. {folha.despachada} · Rec. {folha.recebida} ·
-                          Pend. {folha.saldoPendente}
+                          Trânsito {folha.emTransito} · Pend. {folha.saldoPendente} · Não rec.{' '}
+                          {roundToTwoDecimals(Math.max(0, folha.comprada - folha.recebida))}
                         </p>
                       )}
                       {!bloqueadoLegado && (
@@ -254,9 +256,9 @@ export default function AcordoFinanceiroOrfaoDialog({
               <p className="font-medium text-foreground/80">Prévia do ajuste na folha (incluído no acordo)</p>
               {planoPorItem.map(({ orfao, plano }) => (
                 <p key={orfao.produto_id}>
-                  {orfao.produto_nome}: Pendente −{plano.baixa_necessidade_base}, trânsito −
-                  {plano.baixa_transito_base ?? 0}, comprada −{plano.baixa_comprada_base} (pend.{' '}
-                  {plano.folha_antes.saldoPendente} → após acordo)
+                  {orfao.produto_nome}: −{plano.qtd_baixa_total} base na folha (não recebido{' '}
+                  {plano.saldo_nao_recebido_antes ?? plano.folha_antes.comprada - plano.folha_antes.recebida}{' '}
+                  → após acordo)
                 </p>
               ))}
             </div>

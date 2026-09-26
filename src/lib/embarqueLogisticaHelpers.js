@@ -50,6 +50,62 @@ export function embarqueTemDespachoInformado(embarque = {}) {
   );
 }
 
+/** Total despachado por produto (base), alinhado a órfãos e percentuais. */
+export function calcularTotalDespachadoBasePorProduto(embarques = []) {
+  const map = {};
+  (embarques || []).forEach((emb) => {
+    if (isEmbarqueSaldoPendente(emb)) return;
+    if (!(emb?.data_embarque || emb?.eta || emb?.transportadora_id || emb?.transportadora_nome)) return;
+    getEmbarqueItensLinhas(emb).forEach((item) => {
+      const pid = item?.produto_id;
+      if (!pid) return;
+      const add = qtyDespachadaEfetivaBaseLinha(item);
+      map[pid] = roundToTwoDecimals((map[pid] || 0) + add);
+    });
+  });
+  return map;
+}
+
+/** Soma recebida em embarques reais (exclui split tipo Pendente pós-recepção). */
+export function calcularTotalRecebidoBasePorProduto(embarques = []) {
+  const map = {};
+  (embarques || [])
+    .filter((emb) => isEmbarqueReal(emb))
+    .forEach((emb) => {
+      getEmbarqueItensLinhas(emb).forEach((linha) => {
+        const pid = linha?.produto_id;
+        if (!pid) return;
+        const add = qtyRecebidaBaseLinha(linha);
+        map[pid] = roundToTwoDecimals((map[pid] || 0) + add);
+      });
+    });
+  return map;
+}
+
+/**
+ * Folha 4 colunas por linha de pedido.
+ * Saldo pendente (coluna 4) = comprada − recebida − em trânsito; em trânsito = despachada − recebida.
+ */
+export function calcularFolhaLogisticaLinha(item = {}, embarques = []) {
+  const pid = item?.produto_id;
+  const comprada = qtyPedidaBaseItem(item);
+  const despachada = roundToTwoDecimals(
+    calcularTotalDespachadoBasePorProduto(embarques)[pid] || 0,
+  );
+  const recebida = roundToTwoDecimals(calcularTotalRecebidoBasePorProduto(embarques)[pid] || 0);
+  const emTransito = roundToTwoDecimals(Math.max(0, despachada - recebida));
+  const saldoPendente = roundToTwoDecimals(
+    Math.max(0, comprada - recebida - emTransito),
+  );
+  return { comprada, despachada, recebida, emTransito, saldoPendente };
+}
+
+/** Quantidade ainda não recebida (teto do acordo) — uma só leitura da folha, sem somar buckets. */
+export function calcularSaldoNaoRecebidoAcordoBase(item = {}, embarques = []) {
+  const { comprada, recebida } = calcularFolhaLogisticaLinha(item, embarques);
+  return roundToTwoDecimals(Math.max(0, comprada - recebida));
+}
+
 /** Mínimo em unidade base (M², UN fator 1…) para contar saldo pendente real. */
 export const MIN_SALDO_PENDENTE_BASE = 0.009;
 
@@ -183,53 +239,12 @@ export function qtyPendenteComercialParaExibicao(item = {}, produto = null) {
 export function calcularItensOrfaosAguardandoDespacho(
   pedido,
   embarques = [],
-  totalEmbarcadoPorProduto = {},
+  _totalEmbarcadoPorProduto = {},
   produtosMap = {},
 ) {
-  const pendentePorProduto = {};
-
-  (embarques || [])
-    .filter((emb) => isEmbarqueSaldoPendente(emb))
-    .forEach((emb) => {
-      getEmbarqueItensLinhas(emb).forEach((linha) => {
-        const pid = linha?.produto_id;
-        if (!pid) return;
-        const q = qtyEmbarcadaBaseLinha(linha);
-        if (q > 0) {
-          pendentePorProduto[pid] = roundToTwoDecimals((pendentePorProduto[pid] || 0) + q);
-        }
-      });
-    });
-
-  (pedido?.itens || []).forEach((item) => {
-    const pid = item?.produto_id;
-    if (!pid) return;
-    const pedidaBase = qtyPedidaBaseItem(item);
-    const embarcadoBase = Number(totalEmbarcadoPorProduto[pid]) || 0;
-    const faltaDespacho = Math.max(0, pedidaBase - embarcadoBase);
-    if (faltaDespacho > 0.009) {
-      pendentePorProduto[pid] = roundToTwoDecimals((pendentePorProduto[pid] || 0) + faltaDespacho);
-    }
-  });
-
-  (embarques || [])
-    .filter((emb) => isEmbarqueReal(emb))
-    .forEach((emb) => {
-      getEmbarqueItensLinhas(emb).forEach((linha) => {
-        const pid = linha?.produto_id;
-        if (!pid) return;
-        const embBase = qtyEmbarcadaBaseLinha(linha);
-        const recBase = qtyRecebidaBaseLinha(linha);
-        const emTransito = roundToTwoDecimals(Math.max(0, embBase - recBase));
-        if (emTransito > 0.009) {
-          pendentePorProduto[pid] = roundToTwoDecimals((pendentePorProduto[pid] || 0) + emTransito);
-        }
-      });
-    });
-
   return (pedido?.itens || [])
     .map((item) => {
-      const qtdPendenteBase = roundToTwoDecimals(pendentePorProduto[item.produto_id] || 0);
+      const qtdPendenteBase = calcularSaldoNaoRecebidoAcordoBase(item, embarques);
       const exibCom = qtyPendenteComercialParaExibicao(
         { ...item, qtd_pendente: qtdPendenteBase },
         produtosMap[item.produto_id] || null,
@@ -241,23 +256,7 @@ export function calcularItensOrfaosAguardandoDespacho(
         unidade_pendente_exibicao: exibCom.unidade,
       };
     })
-    .filter((item) => item.qtd_pendente > 0.009);
-}
-
-/** Total despachado por produto (base), alinhado a órfãos e percentuais. */
-export function calcularTotalDespachadoBasePorProduto(embarques = []) {
-  const map = {};
-  (embarques || []).forEach((emb) => {
-    if (isEmbarqueSaldoPendente(emb)) return;
-    if (!(emb?.data_embarque || emb?.eta || emb?.transportadora_id || emb?.transportadora_nome)) return;
-    getEmbarqueItensLinhas(emb).forEach((item) => {
-      const pid = item?.produto_id;
-      if (!pid) return;
-      const add = qtyDespachadaEfetivaBaseLinha(item);
-      map[pid] = roundToTwoDecimals((map[pid] || 0) + add);
-    });
-  });
-  return map;
+    .filter((item) => item.qtd_pendente > MIN_SALDO_PENDENTE_BASE);
 }
 
 /** Órfãos com cálculo automático do total embarcado (para Logs e listagens). */
