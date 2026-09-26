@@ -113,10 +113,17 @@ async function mergeSupabase(winner, loser) {
     await client.query(
       `UPDATE produto SET
         ativo = false,
-        observacoes = COALESCE(observacoes, '') || $2,
+        dados = COALESCE(dados, '{}'::jsonb) || $2::jsonb,
         updated_at = now()
       WHERE id = $1`,
-      [loser.id, `\n[${new Date().toISOString().slice(0, 10)}] Mesclado em ${winner.codigo_interno} (ROLO DE LÃ 23 CM).`],
+      [
+        loser.id,
+        JSON.stringify({
+          merge_rolo_la_23cm_em: new Date().toISOString().slice(0, 10),
+          merge_rolo_la_23cm_vencedor: winner.codigo_interno,
+          merge_rolo_la_23cm_nota: `Mesclado em ${winner.codigo_interno} (ROLO DE LÃ 23 CM).`,
+        }),
+      ],
     );
 
     if (APPLY) {

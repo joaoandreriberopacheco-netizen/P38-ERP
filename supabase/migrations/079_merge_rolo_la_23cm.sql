@@ -56,7 +56,11 @@ BEGIN
 
   UPDATE produto SET
     ativo = false,
-    observacoes = COALESCE(observacoes, '') || E'\n[merge] Mesclado em ' || win_cod || ' (ROLO DE LÃ 23 CM).',
+    dados = COALESCE(dados, '{}'::jsonb) || jsonb_build_object(
+      'merge_rolo_la_23cm_em', to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD'),
+      'merge_rolo_la_23cm_vencedor', win_cod,
+      'merge_rolo_la_23cm_nota', 'Mesclado em ' || win_cod || ' (ROLO DE LÃ 23 CM).'
+    ),
     updated_at = now()
   WHERE id = lose_id;
 
