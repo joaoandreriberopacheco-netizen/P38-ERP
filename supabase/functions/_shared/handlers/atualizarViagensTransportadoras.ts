@@ -17,7 +17,6 @@ export async function handle(req: Request, base44: Awaited<ReturnType<typeof cre
       if (!transportadora.saida_referencia) continue;
       const response = await base44.asServiceRole.functions.invoke('gerarViagensTransportadora', {
         transportadoraId: transportadora.id,
-        ensureNextMonthOnly: true,
       });
       resultados.push({ transportadoraId: transportadora.id, ...response.data });
     }

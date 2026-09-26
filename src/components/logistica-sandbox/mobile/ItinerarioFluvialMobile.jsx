@@ -20,6 +20,7 @@ import ItinerarioMobileHeader from '@/components/logistica-sandbox/mobile/Itiner
 import ItinerarioMobileEmptyState from '@/components/logistica-sandbox/mobile/ItinerarioMobileEmptyState';
 import FluvialSearchBar from '@/components/logistica-sandbox/mobile/FluvialSearchBar';
 import FluvialFAB from '@/components/logistica-sandbox/mobile/FluvialFAB';
+import { useEnsureFluvialViagensHorizon } from '@/hooks/useEnsureFluvialViagensHorizon';
 
 export default function ItinerarioFluvialMobile() {
   const [routeType, setRouteType] = useState('Fluvial');
@@ -34,6 +35,8 @@ export default function ItinerarioFluvialMobile() {
   const [periodoFiltro, setPeriodoFiltro] = useState(FLUVIAL_DEFAULT_PERIOD);
   const todayRef = useRef(null);
   const queryClient = useQueryClient();
+
+  useEnsureFluvialViagensHorizon();
 
   const { data: eventosLogisticos = [] } = useLogisticaEventosQuery();
 

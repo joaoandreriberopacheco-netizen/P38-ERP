@@ -59,10 +59,12 @@ function isSameOrBefore(dateA, dateB) {
   return createUtcDate(dateA).getTime() <= createUtcDate(dateB).getTime();
 }
 
-function addMonths(dateString, months) {
-  const date = createUtcDate(dateString, 12);
-  date.setUTCMonth(date.getUTCMonth() + months);
-  return formatDate(date);
+/** Fim do mês civil a +3 meses (forecast rolante; ver `src/lib/fluvialForecastHorizon.js`). */
+function fluvialLimiteProspectivoKey(reference = new Date()) {
+  const y = reference.getUTCFullYear();
+  const m = reference.getUTCMonth();
+  const lastDay = new Date(Date.UTC(y, m + 3 + 1, 0, 12, 0, 0, 0));
+  return lastDay.toISOString().slice(0, 10);
 }
 
 Deno.serve(async (req) => {
@@ -91,8 +93,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Transportadora sem saída de referência' }, { status: 400 });
     }
 
-    const hoje = formatDate(new Date());
-    const limiteProspectivo = addMonths(hoje, 3);
+    const limiteProspectivo = fluvialLimiteProspectivoKey();
     const sequenciaMaxima = 999;
 
     const viagensDaTransportadora = await base44.asServiceRole.entities.EventoLogisticoSandbox.filter(
