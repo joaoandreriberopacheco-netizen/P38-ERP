@@ -14,7 +14,6 @@ import {
   particionarBaixaOrfaoAcordo,
 } from '@/lib/aplicarAcordoFinanceiroOrfaos';
 import { calculateBaseQuantity } from '@/lib/productUnits';
-import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { listarAcordosOrfaoComBaixaPendente } from '@/lib/acordoFinanceiroOrfaoLancamento';
 import { listarLancamentosPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
 import { invokeRecalcularConclusaoPedidoCompra } from '@/lib/p38StockRecalc';
@@ -223,8 +222,13 @@ export default function AcordoFinanceiroOrfaoDialog({
                       {folha && (
                         <p className="text-muted-foreground mt-0.5 leading-snug">
                           Comprada {folha.comprada} · Trânsito {folha.emTransito} · Recep. {folha.recebida}{' '}
-                          · Pend. {folha.saldoPendente} · Acordo (máx.){' '}
-                          {roundToTwoDecimals(Math.max(0, folha.comprada - folha.recebida))}
+                          · Pend. {folha.saldoPendente}
+                          {folha.emTransito > 0.009 && (
+                            <span className="text-muted-foreground/80">
+                              {' '}
+                              (em trânsito não entra no acordo — aguarda recepção)
+                            </span>
+                          )}
                         </p>
                       )}
                       {!bloqueadoLegado && (
@@ -256,9 +260,8 @@ export default function AcordoFinanceiroOrfaoDialog({
               <p className="font-medium text-foreground/80">Prévia do ajuste na folha (incluído no acordo)</p>
               {planoPorItem.map(({ orfao, plano }) => (
                 <p key={orfao.produto_id}>
-                  {orfao.produto_nome}: −{plano.qtd_baixa_total} base na folha (não recebido{' '}
-                  {plano.saldo_nao_recebido_antes ?? plano.folha_antes.comprada - plano.folha_antes.recebida}{' '}
-                  → após acordo)
+                  {orfao.produto_nome}: −{plano.qtd_baixa_total} base na coluna Pendente (teto{' '}
+                  {plano.saldo_pendente_acordo_antes ?? orfao.qtd_pendente} → após acordo)
                 </p>
               ))}
             </div>

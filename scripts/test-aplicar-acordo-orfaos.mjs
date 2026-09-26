@@ -34,21 +34,16 @@ const embarques = [
 ];
 
 const f = folha(item, embarques);
-const emTransito = Math.max(0, 60 - 50);
-// Órfão = comprada − recebida (folha única), sem somar Pendente + trânsito + falta despacho
-const orfaoTotal = round(f.comprada - f.recebida);
-if (f.saldoPendente !== 40 || orfaoTotal !== 50) {
-  console.error('folha/órfão esperados saldo col4 40 / não recebido 50', { f, orfaoTotal });
+const orfaoAcordo = round(f.nec + Math.max(0, 100 - 60));
+if (f.saldoPendente !== 40 || orfaoAcordo !== 45) {
+  console.error('pendente col4 40; órfão acordo 45 (sem trânsito)', { f, orfaoAcordo });
   process.exit(1);
 }
 
-const baixaNec = Math.min(orfaoTotal, f.nec);
-let rest = orfaoTotal - baixaNec;
-const baixaTransito = Math.min(rest, emTransito);
-rest -= baixaTransito;
-const baixaComprada = Math.min(rest, 100 - 60);
-if (baixaNec !== 5 || baixaTransito !== 10 || baixaComprada !== 35) {
-  console.error('partição interna esperada 5+10+35', { baixaNec, baixaTransito, baixaComprada });
+const baixaNec = Math.min(orfaoAcordo, f.nec);
+const baixaComprada = Math.min(orfaoAcordo - baixaNec, 100 - 60);
+if (baixaNec !== 5 || baixaComprada !== 40) {
+  console.error('partição pendente 5+40', { baixaNec, baixaComprada });
   process.exit(1);
 }
 
@@ -60,10 +55,10 @@ const emb2 = [
   },
 ];
 const f2 = folha(item2, emb2);
-const orfao2 = round(f2.comprada - f2.recebida);
-if (orfao2 !== 50 || f2.saldoPendente !== 0) {
-  console.error('não recebido em trânsito esperado 50', { f2, orfao2 });
+const orfao2 = round(f2.nec + Math.max(0, 50 - 50));
+if (orfao2 !== 0 || f2.emTransito !== 50) {
+  console.error('só trânsito: órfão acordo 0', { f2, orfao2 });
   process.exit(1);
 }
 
-console.log('OK — folha 4 colunas e acordo órfãos (saldo único comprada − recebida)');
+console.log('OK — acordo órfão = coluna Pendente (trânsito fora)');

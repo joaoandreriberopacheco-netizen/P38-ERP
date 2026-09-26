@@ -1,7 +1,7 @@
 /**
  * Baixa logística de itens órfãos após acordo financeiro — folha 4 colunas (negócio):
  * comprada → trânsito → recepcionada → pendente
- * (comprada = trânsito + recepcionada + pendente; acordo cobre trânsito + pendente = comprada − recepcionada).
+ * (comprada = trânsito + recepcionada + pendente; acordo órfão só baixa a coluna Pendente — trânsito é fluxo normal).
  */
 
 import { formatarLogTime } from '@/components/utils/dateUtils';
@@ -9,7 +9,6 @@ import { buildItensCanonicosEmbarque } from '@/lib/buildEmbarqueItensCanonicos';
 import { saveEmbarqueItem } from '@/functions/saveEmbarqueItem';
 import {
   calcularFolhaLogisticaLinha,
-  calcularSaldoNaoRecebidoAcordoBase,
   calcularTotalDespachadoBasePorProduto,
   qtyEmbarcadaBaseLinha,
   qtyPedidaBaseItem,
@@ -86,8 +85,7 @@ export function calcularNecessidadeBasePorProduto(embarques = []) {
 }
 
 /**
- * Ordem interna de gravação (embarques + comprada) para baixar saldo não recebido na folha.
- * Conceito único: comprada − recebida; não expõe “tipos” de órfão ao utilizador.
+ * Gravação interna (splits Pendente + comprada) para baixar só a coluna Pendente da folha.
  */
 export function particionarBaixaOrfaoAcordo({
   itemPedido,
@@ -95,9 +93,6 @@ export function particionarBaixaOrfaoAcordo({
   qtdBaixaBase,
 }) {
   const pid = itemPedido?.produto_id;
-  const tetoFolha = calcularSaldoNaoRecebidoAcordoBase(itemPedido, embarques);
-  const qtdPedida = roundToTwoDecimals(Math.max(0, Number(qtdBaixaBase) || 0));
-  const qtd = roundToTwoDecimals(Math.min(qtdPedida, tetoFolha));
   const necessidadeMap = calcularNecessidadeBasePorProduto(embarques);
   const despachadoMap = calcularTotalDespachadoBasePorProduto(embarques);
   const necessidadeBase = roundToTwoDecimals(necessidadeMap[pid] || 0);
@@ -105,27 +100,28 @@ export function particionarBaixaOrfaoAcordo({
   const faltaDespachoBase = roundToTwoDecimals(
     Math.max(0, pedidaBase - (despachadoMap[pid] || 0)),
   );
+  const tetoPendente = roundToTwoDecimals(necessidadeBase + faltaDespachoBase);
+
+  const qtdPedida = roundToTwoDecimals(Math.max(0, Number(qtdBaixaBase) || 0));
+  const qtd = roundToTwoDecimals(Math.min(qtdPedida, tetoPendente));
 
   const folhaAntes = calcularFolhaLogisticaLinha(itemPedido, embarques);
-  const emTransitoBase = roundToTwoDecimals(Math.max(0, folhaAntes.emTransito));
 
   const baixaNecessidade = roundToTwoDecimals(Math.min(qtd, necessidadeBase));
   let restante = roundToTwoDecimals(qtd - baixaNecessidade);
-  const baixaTransito = roundToTwoDecimals(Math.min(restante, emTransitoBase));
-  restante = roundToTwoDecimals(restante - baixaTransito);
   const baixaComprada = roundToTwoDecimals(Math.min(restante, faltaDespachoBase));
 
   return {
     produto_id: pid,
     qtd_baixa_total: qtd,
     baixa_necessidade_base: baixaNecessidade,
-    baixa_transito_base: baixaTransito,
+    baixa_transito_base: 0,
     baixa_comprada_base: baixaComprada,
     nao_aplicado_base: roundToTwoDecimals(
       qtdPedida - qtd + (restante - baixaComprada),
     ),
     folha_antes: folhaAntes,
-    saldo_nao_recebido_antes: tetoFolha,
+    saldo_pendente_acordo_antes: tetoPendente,
   };
 }
 
@@ -331,31 +327,6 @@ export async function aplicarBaixaLogisticaAcordoFinanceiroOrfaos(
       }
     }
 
-    let aplicadoTransito = 0;
-    if (plano.baixa_transito_base > MIN_BASE) {
-      const embarquesReais = embarquesLocal.filter((e) => isEmbarqueReal(e));
-      for (const emb of embarquesReais) {
-        if (aplicadoTransito >= plano.baixa_transito_base - MIN_BASE) break;
-        const faltante = roundToTwoDecimals(plano.baixa_transito_base - aplicadoTransito);
-        const { canonicos, aplicado } = aplicarBaixaTransitoEmbarqueReal(
-          emb,
-          pid,
-          faltante,
-          lancamentoId,
-          pedidoItens,
-        );
-        if (aplicado > MIN_BASE && emb?.id) {
-          await invokeSaveEmbarqueItem(base44, {
-            action: 'replaceAll',
-            embarque_id: emb.id,
-            items: canonicos || [],
-          });
-          await recarregarLinhasEmbarqueNoArray(base44, embarquesLocal, emb.id);
-          aplicadoTransito = roundToTwoDecimals(aplicadoTransito + aplicado);
-        }
-      }
-    }
-
     let itemAtualizado = itemPedido;
     if (qtdBaixaBase > MIN_BASE) {
       const idx = pedidoItens.findIndex((it) => String(it?.produto_id) === String(pid));
@@ -373,7 +344,6 @@ export async function aplicarBaixaLogisticaAcordoFinanceiroOrfaos(
       produto_nome: orfao.produto_nome || itemPedido.produto_nome,
       ...plano,
       aplicado_necessidade_base: aplicadoNecessidade,
-      aplicado_transito_base: aplicadoTransito,
       folha_depois: folhaDepois,
     });
   }
@@ -387,7 +357,7 @@ export async function aplicarBaixaLogisticaAcordoFinanceiroOrfaos(
   const resumoTxt = resumo
     .map(
       (r) =>
-        `${r.produto_nome}: −${r.qtd_baixa_total} base (saldo não recebido na folha)`,
+        `${r.produto_nome}: −${r.qtd_baixa_total} base (coluna Pendente da folha)`,
     )
     .join('; ');
 
