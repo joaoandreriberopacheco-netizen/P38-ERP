@@ -66,7 +66,7 @@ async function invokeSaveEmbarqueItem(base44, body) {
   return saveEmbarqueItem(body);
 }
 
-/** Saldo em embarques tipo Pendente (pós-recepção — coluna 4 / folha). */
+/** Parte do saldo pendente já lançada em split tipo Pendente (sobra da recepção). */
 export function calcularNecessidadeBasePorProduto(embarques = []) {
   const map = {};
   (embarques || [])
@@ -85,7 +85,7 @@ export function calcularNecessidadeBasePorProduto(embarques = []) {
 }
 
 /**
- * Gravação interna (splits Pendente + comprada) para baixar só a coluna Pendente da folha.
+ * Gravação interna para baixar saldo pendente (um conceito; vários registos na BD).
  */
 export function particionarBaixaOrfaoAcordo({
   itemPedido,
@@ -121,7 +121,7 @@ export function particionarBaixaOrfaoAcordo({
       qtdPedida - qtd + (restante - baixaComprada),
     ),
     folha_antes: folhaAntes,
-    saldo_pendente_acordo_antes: tetoPendente,
+    saldo_pendente_antes: tetoPendente,
   };
 }
 

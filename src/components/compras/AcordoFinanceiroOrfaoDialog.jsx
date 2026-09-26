@@ -197,8 +197,8 @@ export default function AcordoFinanceiroOrfaoDialog({
 
           {!bloqueadoLegado && (
             <p className="text-[10px] text-muted-foreground leading-relaxed px-0.5">
-              Um único passo: o lançamento financeiro e o ajuste na folha (saldo pendente e comprada)
-              seguem juntos, no mesmo espírito de uma devolução parcial ao fornecedor.
+              Um único passo: lançamento financeiro e baixa do saldo pendente na folha (não despachado
+              ou sobrou da recepção — é a mesma pendência), no espírito de devolução parcial ao fornecedor.
             </p>
           )}
 
@@ -206,7 +206,7 @@ export default function AcordoFinanceiroOrfaoDialog({
             <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-amber-700 dark:text-amber-300 mb-1">
-                Itens pendentes (folha 4 colunas)
+                Saldo pendente para acordo (folha 4 colunas)
               </p>
               <ul className="space-y-2">
                 {(itensOrfaos || []).map((item) => {
@@ -260,8 +260,8 @@ export default function AcordoFinanceiroOrfaoDialog({
               <p className="font-medium text-foreground/80">Prévia do ajuste na folha (incluído no acordo)</p>
               {planoPorItem.map(({ orfao, plano }) => (
                 <p key={orfao.produto_id}>
-                  {orfao.produto_nome}: −{plano.qtd_baixa_total} base na coluna Pendente (teto{' '}
-                  {plano.saldo_pendente_acordo_antes ?? orfao.qtd_pendente} → após acordo)
+                  {orfao.produto_nome}: −{plano.qtd_baixa_total} do saldo pendente (de{' '}
+                  {plano.saldo_pendente_antes ?? orfao.qtd_pendente} → após acordo)
                 </p>
               ))}
             </div>

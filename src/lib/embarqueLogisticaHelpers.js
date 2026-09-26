@@ -215,10 +215,37 @@ export function qtyEmbarcadaComercialLinha(item = {}) {
 }
 
 /**
- * Órfãos para acordo: coluna Pendente da folha (nunca inclui trânsito — fluxo normal).
- * 1) saldo em splits tipo Pendente (pós-recepção), e
- * 2) comprada ainda não coberta por despacho real.
+ * Saldo pendente único para acordo órfão (coluna Pendente da folha).
+ * Inclui o que nunca foi despachado e o que sobrou da recepção — mesma categoria, origem irrelevante.
+ * Nunca inclui trânsito.
  */
+export function calcularSaldoPendenteOrfaoUnificadoBase(
+  item = {},
+  embarques = [],
+  totalEmbarcadoPorProduto = {},
+) {
+  const pid = item?.produto_id;
+  if (!pid) return 0;
+
+  let saldo = 0;
+
+  (embarques || [])
+    .filter((emb) => isEmbarqueSaldoPendente(emb))
+    .forEach((emb) => {
+      getEmbarqueItensLinhas(emb).forEach((linha) => {
+        if (String(linha?.produto_id) !== String(pid)) return;
+        const q = qtyEmbarcadaBaseLinha(linha);
+        if (q > MIN_SALDO_PENDENTE_BASE) saldo += q;
+      });
+    });
+
+  const pedidaBase = qtyPedidaBaseItem(item);
+  const embarcadoBase = Number(totalEmbarcadoPorProduto[pid]) || 0;
+  saldo += Math.max(0, pedidaBase - embarcadoBase);
+
+  return roundToTwoDecimals(saldo);
+}
+
 /**
  * Converte pendência em base (M²) para unidade vitrine (CX, PAC…).
  * `qtd_pendente` nos órfãos é sempre em base — evita comparar CX com M².
@@ -242,35 +269,13 @@ export function calcularItensOrfaosAguardandoDespacho(
   totalEmbarcadoPorProduto = {},
   produtosMap = {},
 ) {
-  const pendentePorProduto = {};
-
-  (embarques || [])
-    .filter((emb) => isEmbarqueSaldoPendente(emb))
-    .forEach((emb) => {
-      getEmbarqueItensLinhas(emb).forEach((linha) => {
-        const pid = linha?.produto_id;
-        if (!pid) return;
-        const q = qtyEmbarcadaBaseLinha(linha);
-        if (q > MIN_SALDO_PENDENTE_BASE) {
-          pendentePorProduto[pid] = roundToTwoDecimals((pendentePorProduto[pid] || 0) + q);
-        }
-      });
-    });
-
-  (pedido?.itens || []).forEach((item) => {
-    const pid = item?.produto_id;
-    if (!pid) return;
-    const pedidaBase = qtyPedidaBaseItem(item);
-    const embarcadoBase = Number(totalEmbarcadoPorProduto[pid]) || 0;
-    const faltaDespacho = Math.max(0, pedidaBase - embarcadoBase);
-    if (faltaDespacho > MIN_SALDO_PENDENTE_BASE) {
-      pendentePorProduto[pid] = roundToTwoDecimals((pendentePorProduto[pid] || 0) + faltaDespacho);
-    }
-  });
-
   return (pedido?.itens || [])
     .map((item) => {
-      const qtdPendenteBase = roundToTwoDecimals(pendentePorProduto[item.produto_id] || 0);
+      const qtdPendenteBase = calcularSaldoPendenteOrfaoUnificadoBase(
+        item,
+        embarques,
+        totalEmbarcadoPorProduto,
+      );
       const exibCom = qtyPendenteComercialParaExibicao(
         { ...item, qtd_pendente: qtdPendenteBase },
         produtosMap[item.produto_id] || null,
