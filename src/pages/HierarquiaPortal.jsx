@@ -29,6 +29,7 @@ import PortalTreeGrid from '@/components/hierarquia-portal/PortalTreeGrid';
 import PortalSmartSupplyPanel from '@/components/hierarquia-portal/PortalSmartSupplyPanel';
 import PortalReservaPanel from '@/components/hierarquia-portal/PortalReservaPanel';
 import PortalMassaCriticaRelatorioButton from '@/components/hierarquia-portal/PortalMassaCriticaRelatorioButton';
+import CatalogoExcelEntry from '@/components/hierarquia-portal/CatalogoExcelEntry';
 import PortalTipoFilter from '@/components/hierarquia-portal/PortalTipoFilter';
 import PortalCatalogFilters from '@/components/hierarquia-portal/PortalCatalogFilters';
 import CadastroProdutoV2Form from '@/components/cadastro-produto-v2/CadastroProdutoV2Form';
@@ -274,7 +275,9 @@ function HierarquiaPortalInner() {
                 LINHA → produto compra → grade de SKUs (eixos). Hierarquia · SMART SUPPLY · reserva 12 pos.
               </p>
             </div>
-            <div className="rounded-lg border border-violet-500/40 bg-violet-50/80 dark:bg-violet-950/30 px-3 py-2 text-xs text-violet-900 dark:text-violet-100 max-w-sm space-y-1 shrink-0">
+            <div className="flex flex-col gap-2 shrink-0 items-stretch sm:items-end">
+            <CatalogoExcelEntry />
+            <div className="rounded-lg border border-violet-500/40 bg-violet-50/80 dark:bg-violet-950/30 px-3 py-2 text-xs text-violet-900 dark:text-violet-100 max-w-sm space-y-1">
               <p>
                 <strong>Piloto:</strong> {enriched.length}
                 {produtosPilotoFiltrados.length !== produtosPiloto.length && (
@@ -285,6 +288,7 @@ function HierarquiaPortalInner() {
               <p className="opacity-80 hidden sm:block">
                 Em breve: {MODELO_PILOTO_LINHAS_PLANEADAS.map((l) => l.nome).join(' · ')}
               </p>
+            </div>
             </div>
           </div>
 

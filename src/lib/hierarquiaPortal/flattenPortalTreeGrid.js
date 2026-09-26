@@ -63,6 +63,7 @@ export function flattenPortalTreeGrid(tree, maxLevel, catalogStockContext = null
       tipo: null,
       skuCount: catSkus.length,
       estoque: catStock,
+      payload: { kind: 'categoria', categoria: cat.nome, cat },
     });
 
     if (maxLevel < 2 && !showAll) continue;
@@ -79,6 +80,7 @@ export function flattenPortalTreeGrid(tree, maxLevel, catalogStockContext = null
         tipo: lin.linha_tipo,
         skuCount: skuCountLinha(lin),
         estoque: linStock,
+        payload: { kind: 'linha', categoria: cat.nome, cat, lin },
       });
 
       if (maxLevel < 3 && !showAll) continue;
@@ -100,6 +102,7 @@ export function flattenPortalTreeGrid(tree, maxLevel, catalogStockContext = null
                 sigla: s.estoque_sigla,
                 virtual: s.estoque_virtual,
               },
+              payload: { kind: 'sku', categoria: cat.nome, cat, lin, enriched: s },
             });
           }
         }
@@ -120,6 +123,7 @@ export function flattenPortalTreeGrid(tree, maxLevel, catalogStockContext = null
           tipo: lin.linha_tipo,
           skuCount: pc.skus.length,
           estoque: pcStock,
+          payload: { kind: 'produto_compra', categoria: cat.nome, cat, lin, pc },
         });
 
         if (maxLevel < 4 && !showAll) continue;
@@ -139,6 +143,7 @@ export function flattenPortalTreeGrid(tree, maxLevel, catalogStockContext = null
               sigla: s.estoque_sigla,
               virtual: s.estoque_virtual,
             },
+            payload: { kind: 'sku', categoria: cat.nome, cat, lin, pc, enriched: s },
           });
         }
       }

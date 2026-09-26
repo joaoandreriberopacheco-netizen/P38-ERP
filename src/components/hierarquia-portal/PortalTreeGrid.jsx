@@ -45,7 +45,15 @@ function rowTone(kind) {
   return 'text-muted-foreground';
 }
 
-export default function PortalTreeGrid({ tree, filtroLinha, filtroTipos, search, catalogStockContext = null }) {
+export default function PortalTreeGrid({
+  tree,
+  filtroLinha,
+  filtroTipos,
+  search,
+  catalogStockContext = null,
+  selectedRowId = null,
+  onRowSelect = null,
+}) {
   const [maxLevel, setMaxLevel] = useState(TREE_GRID_EXPAND_ALL_LEVEL);
 
   const filtered = useMemo(
@@ -107,8 +115,31 @@ export default function PortalTreeGrid({ tree, filtroLinha, filtroTipos, search,
             {rows.map((row) => {
               const Icon = KIND_ICON[row.kind];
               const pad = 6 + row.depth * 18;
+              const selectable = Boolean(onRowSelect && row.payload);
               return (
-                <TableRow key={row.id} className={cn(p38Table.row, rowTone(row.kind), 'h-8')}>
+                <TableRow
+                  key={row.id}
+                  className={cn(
+                    p38Table.row,
+                    rowTone(row.kind),
+                    'h-8',
+                    selectable && 'cursor-pointer',
+                    selectedRowId === row.id && 'ring-2 ring-[#a4ce33]/80 ring-inset bg-secondary/30 dark:bg-white/[0.06]',
+                  )}
+                  onClick={selectable ? () => onRowSelect(row) : undefined}
+                  onKeyDown={
+                    selectable
+                      ? (e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            onRowSelect(row);
+                          }
+                        }
+                      : undefined
+                  }
+                  tabIndex={selectable ? 0 : undefined}
+                  aria-selected={selectable ? selectedRowId === row.id : undefined}
+                >
                   <TableCell className={cn(p38Table.cell, 'py-1 sticky left-0 z-10 bg-inherit')}>
                     <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground whitespace-nowrap">
                       <Icon className="h-3 w-3 shrink-0 opacity-70" aria-hidden />
