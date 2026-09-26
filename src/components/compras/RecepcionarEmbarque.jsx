@@ -45,6 +45,7 @@ import {
   resolveEmbarqueQuantidadeBase,
   resolveEmbarqueQuantidadeComercial,
 } from '@/lib/embarqueQuantityResolve';
+import { embarqueTipoSaldoPendenteParaGravar } from '@/lib/embarqueTipoSaldoPendente';
 
 function pedidoItemParaEmbarque(pedido, embItem) {
   return (Array.isArray(pedido?.itens) ? pedido.itens : []).find(
@@ -385,7 +386,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
         fornecedor_nome: pedido.fornecedor_nome,
         numero: String(outrosEmbarques.length + 1).padStart(2, '0'),
         codigo_exibicao: `${pedido.numero}-${proximaLetra}`,
-        tipo: 'Necessidade',
+        tipo: embarqueTipoSaldoPendenteParaGravar(),
         status: 'Pendente',
         data_embarque: null,
         eta: null,

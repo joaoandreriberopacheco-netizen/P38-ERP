@@ -385,6 +385,8 @@ export default function PedidoCompraLogisticaTab({ pedido, produtosMap = {}, onP
         isOpen={acordoOpen}
         onClose={() => setAcordoOpen(false)}
         pedido={pedido}
+        embarques={embarques}
+        produtosMap={produtosMap}
         itensOrfaos={itensOrfaos}
         onSuccess={() => {setAcordoOpen(false);onPedidoUpdated?.();}} />
       

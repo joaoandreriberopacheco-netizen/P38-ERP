@@ -1,5 +1,6 @@
 import { rebuildEmbarqueItensMirror, enrichEmbarqueMirrorFromPedidoItens } from '@/lib/embarqueItemContract';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { isEmbarqueReal, isEmbarqueSaldoPendente } from '@/lib/embarqueTipoSaldoPendente';
 import {
   resolveEmbarqueQuantidadeBase,
   resolveEmbarqueQuantidadeComercial,
@@ -7,7 +8,7 @@ import {
 import { getEmbarqueItensLinhas, hydrateEmbarquesPedidoFromSql } from '@/lib/fetchEmbarqueItens';
 import { commercialQuantityFromBase, getItemCompraExibicaoVitrine } from '@/lib/productUnits';
 
-function qtyPedidaBaseItem(item = {}) {
+export function qtyPedidaBaseItem(item = {}) {
   return resolveEmbarqueQuantidadeBase(
     {
       ...item,
@@ -116,7 +117,7 @@ export function calcularPercentuaisLogistica(pedido, embarques = []) {
     return { despachado: 0, concluido: 0, pendente: 100 };
   }
 
-  const embarquesReais = (emb || []).filter((e) => e?.tipo !== 'Necessidade');
+  const embarquesReais = (emb || []).filter((e) => isEmbarqueReal(e));
   const porProdutoEmb = {};
   const porProdutoRec = {};
 
@@ -159,7 +160,7 @@ export function qtyEmbarcadaComercialLinha(item = {}) {
 
 /**
  * Itens aguardando novo despacho:
- * 1) saldo em embarques tipo Necessidade (pós-recepção com divergência), e
+ * 1) saldo em embarques tipo Pendente (pós-recepção com divergência), e
  * 2) quantidade do pedido ainda não coberta por despachos reais.
  */
 /**
@@ -188,7 +189,7 @@ export function calcularItensOrfaosAguardandoDespacho(
   const pendentePorProduto = {};
 
   (embarques || [])
-    .filter((emb) => emb?.tipo === 'Necessidade')
+    .filter((emb) => isEmbarqueSaldoPendente(emb))
     .forEach((emb) => {
       getEmbarqueItensLinhas(emb).forEach((linha) => {
         const pid = linha?.produto_id;
@@ -232,7 +233,7 @@ export function calcularItensOrfaosAguardandoDespacho(
 export function calcularTotalDespachadoBasePorProduto(embarques = []) {
   const map = {};
   (embarques || []).forEach((emb) => {
-    if (emb?.tipo === 'Necessidade') return;
+    if (isEmbarqueSaldoPendente(emb)) return;
     if (!(emb?.data_embarque || emb?.eta || emb?.transportadora_id || emb?.transportadora_nome)) return;
     getEmbarqueItensLinhas(emb).forEach((item) => {
       const pid = item?.produto_id;

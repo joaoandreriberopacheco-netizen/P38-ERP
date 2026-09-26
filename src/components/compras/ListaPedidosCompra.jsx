@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
+import { isEmbarqueSaldoPendente } from '@/lib/embarqueTipoSaldoPendente';
 import { cn } from '@/components/utils';
 import { comprasStatusBorderClass, getComprasDisplayStatusLabel, resolveComprasStatusConfig } from '@/lib/comprasEmbarquesPalette';
 import { ComprasRecebimentoDateChip } from '@/components/compras/ComprasStatusChip';
@@ -98,7 +99,7 @@ function EmbarquesInfo({ pedido }) {
   const sufixoUnidade = unidadesCard.length === 1 ? unidadesCard[0] : 'un.';
   const temItensAssociados = itensEmbarque.some((item) => (Number(item?.quantidade_embarcada) || 0) > 0);
   const quantidadePendente = pedido._quantidade_pendente ?? 0;
-  const embarqueDormindo = embarque?.tipo === 'Necessidade' && !embarque?.transportadora_id && !embarque?.transportadora_nome && !embarque?.data_embarque && !embarque?.eta && !temItensAssociados && quantidadePendente <= 0;
+  const embarqueDormindo = isEmbarqueSaldoPendente(embarque) && !embarque?.transportadora_id && !embarque?.transportadora_nome && !embarque?.data_embarque && !embarque?.eta && !temItensAssociados && quantidadePendente <= 0;
 
   if (embarqueDormindo) return null;
 

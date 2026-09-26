@@ -12,6 +12,7 @@ import {
   resolveEmbarqueQuantidadeBase,
   resolveEmbarqueQuantidadeComercial,
 } from '@/lib/embarqueQuantityResolve';
+import { isEmbarqueSaldoPendente } from '@/lib/embarqueTipoSaldoPendente';
 
 function normCodigo(value = '') {
   return String(value || '').trim().replace(/\s+/g, '').toUpperCase();
@@ -56,7 +57,7 @@ function embarqueJaRecebido(embarque = {}) {
 }
 
 function isEmbarqueNecessidade(embarque = {}) {
-  if (embarque?.tipo === 'Necessidade') return true;
+  if (isEmbarqueSaldoPendente(embarque)) return true;
   return String(embarque?.observacoes || '').includes('criado automaticamente para itens pendentes');
 }
 

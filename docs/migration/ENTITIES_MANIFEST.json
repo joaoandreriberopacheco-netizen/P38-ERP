@@ -1272,6 +1272,7 @@
           "type": "enum",
           "values": [
             "Embarque",
+            "Pendente",
             "Necessidade"
           ],
           "pg_type": "TEXT NOT NULL DEFAULT 'Embarque'"
