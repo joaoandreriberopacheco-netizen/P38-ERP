@@ -237,6 +237,8 @@ comment on view public.pedido_compra_orfaos_resumo_v is
 
 grant select on public.pedido_compra_orfaos_v to authenticated, anon, service_role;
 grant select on public.pedido_compra_orfaos_resumo_v to authenticated, anon, service_role;
+
+drop view if exists public.pedido_compra_status_logistica_v;
 drop view if exists public.pedido_compra_card_logistica_v;
 drop view if exists public.pedido_compra_saldo_resumo_v;
 drop view if exists public.pedido_compra_saldo_a_embarcar_v;
