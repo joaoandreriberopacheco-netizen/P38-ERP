@@ -49,8 +49,10 @@ BEGIN
     UPDATE produto SET
       ativo = false,
       tags = CASE
-        WHEN COALESCE(tags, '{}') @> ARRAY['zumbi-removido']::text[] THEN tags
-        ELSE array_append(COALESCE(tags, '{}'), 'zumbi-removido')
+        WHEN COALESCE(tags, '[]'::jsonb) @> '["zumbi-removido"]'::jsonb THEN tags
+        WHEN jsonb_typeof(COALESCE(tags, 'null'::jsonb)) = 'array' THEN
+          COALESCE(tags, '[]'::jsonb) || jsonb_build_array('zumbi-removido')
+        ELSE jsonb_build_array('zumbi-removido')
       END,
       dados = COALESCE(dados, '{}'::jsonb) || jsonb_build_object(
         'zumbi_removido_em', '2026-09-21',
