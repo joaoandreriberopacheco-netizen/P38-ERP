@@ -13,6 +13,7 @@ import {
   itensTemColunaCaixas,
   labelColunaPrecoUnit,
   labelColunaQuantidade,
+  joinCamposDocumento,
 } from '@/lib/documentoComercialA4';
 
 const lineBottom = `1px solid ${DOCUMENTO_COMERCIAL_A4_BORDER}`;
@@ -123,9 +124,25 @@ export default function DocumentoComercialA4({
   const metaLinhaStyle = {
     fontSize: '12px',
     color: '#666',
-    marginTop: '3px',
+    marginTop: '6px',
     lineHeight: 1.45,
   };
+
+  const empresaMetaLinha = joinCamposDocumento(
+    empresaNorm?.cnpj ? `CNPJ ${empresaNorm.cnpj}` : '',
+    empresaNorm?.endereco,
+    empresaNorm?.complemento,
+    empresaNorm?.bairroCidade,
+    empresaNorm?.telefone,
+    empresaNorm?.email,
+  );
+
+  const documentoMetaLinha = joinCamposDocumento(
+    subtitulo,
+    `Data ${metaData}`,
+    vendedorNome ? `Vendedor: ${vendedorNome}` : '',
+    lista.length > 0 ? resumo : '',
+  );
 
   return (
     <div id={printId} className="p38-documento-comercial-a4" style={documentoComercialA4PageStyle}>
@@ -156,14 +173,9 @@ export default function DocumentoComercialA4({
               {empresaNorm.razaoSocial && (
                 <div style={{ fontSize: '12px', color: '#555', marginBottom: '2px' }}>{empresaNorm.razaoSocial}</div>
               )}
-              <div style={{ fontSize: '12px', color: '#666', lineHeight: 1.5 }}>
-                {empresaNorm.cnpj && <div>CNPJ {empresaNorm.cnpj}</div>}
-                {empresaNorm.endereco && <div>{empresaNorm.endereco}</div>}
-                {empresaNorm.complemento && <div>{empresaNorm.complemento}</div>}
-                {empresaNorm.bairroCidade && <div>{empresaNorm.bairroCidade}</div>}
-                {empresaNorm.telefone && <div>{empresaNorm.telefone}</div>}
-                {empresaNorm.email && <div>{empresaNorm.email}</div>}
-              </div>
+              {empresaMetaLinha && (
+                <div style={{ fontSize: '12px', color: '#666', lineHeight: 1.5 }}>{empresaMetaLinha}</div>
+              )}
             </div>
           ) : (
             <div style={{ flex: '1 1 50%' }} />
@@ -183,21 +195,8 @@ export default function DocumentoComercialA4({
             >
               {tituloDoc}
             </h1>
-            {subtitulo && <p style={{ ...metaLinhaStyle, color: '#444' }}>{subtitulo}</p>}
-            <p style={metaLinhaStyle}>
-              <span style={{ textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '11px' }}>Data</span>
-              {' '}
-              {metaData}
-            </p>
-            {vendedorNome && (
-              <p style={metaLinhaStyle}>
-                <span style={{ textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '11px' }}>Vendedor:</span>
-                {' '}
-                {vendedorNome}
-              </p>
-            )}
-            {lista.length > 0 && (
-              <p style={{ marginTop: '10px', fontSize: '13px', fontWeight: 600, color: '#111' }}>{resumo}</p>
+            {documentoMetaLinha && (
+              <p style={{ ...metaLinhaStyle, fontWeight: 500, color: '#444' }}>{documentoMetaLinha}</p>
             )}
           </div>
         </header>
@@ -318,7 +317,7 @@ export default function DocumentoComercialA4({
                   <div key={i}>
                     {(pag.forma_pagamento || 'Forma').toUpperCase()}
                     {pag.parcelas > 1 ? ` ${pag.parcelas}x` : ''}
-                    {' — '}
+                    {' · '}
                     {fmtMoedaBRL(pag.valor)}
                   </div>
                 ))}

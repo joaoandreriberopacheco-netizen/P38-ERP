@@ -15,6 +15,17 @@ export {
 export const DOCUMENTO_COMERCIAL_A4_BORDER = '#e8e8e8';
 export const DOCUMENTO_COMERCIAL_A4_BORDER_STRONG = '#d9d9d9';
 
+/** Separador entre campos no cabeçalho (ex.: Data · Vendedor · total). */
+export const DOCUMENTO_COMERCIAL_SEP = ' · ';
+
+export function joinCamposDocumento(...partes) {
+  return partes
+    .flat()
+    .map((p) => (p == null ? '' : String(p).trim()))
+    .filter(Boolean)
+    .join(DOCUMENTO_COMERCIAL_SEP);
+}
+
 export const fmtMoedaBRL = (n) =>
   (Number(n) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
