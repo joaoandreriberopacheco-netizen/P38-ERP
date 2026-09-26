@@ -77,7 +77,24 @@ Na fact sheet: três dropdowns (comp1 → comp2 → comp3).
 
 ---
 
+## Design (importador em massa)
+
+Mesma linguagem visual do **Exportar Produtos** (`ImportacaoProdutos` → `ExportarPlanilha.jsx`):
+
+- Cabeçalho linha 1: fundo `#1F2937`, texto branco, negrito, filtro automático  
+- Células **editáveis** (Fact + Dim): fundo `#F9FAFB`  
+- Células **Supabase / calculado** (`SKU_Completo`): fundo azul `#E0F2FE`, texto itálico  
+- Abas **Dim_***: fundo verde suave — listas para dropdowns  
+- **Fact_Catalogo_4x3**: validação tipo lista apontando para cada aba Dim  
+
+## Comandos
+
+```bash
+npm run turbocharger:generate          # gera docs/exports/P38-TurboCharger.xlsx (seed do 4×3)
+npm run turbocharger:generate:full     # + preenche SKU_Completo via DATABASE_URL
+```
+
 ## Estado
 
-- **Nome aprovado:** P38 · TurboCharger  
-- **Implementação:** plano; workbook modelo e scripts de publish/export por fazer quando autorizado.
+- **Ficheiro:** `docs/exports/P38-TurboCharger.xlsx` (gerado pelo script)  
+- **App:** ainda lê `P38-catalogo-4x3` / JSON — ligar ao TurboCharger num passo seguinte
