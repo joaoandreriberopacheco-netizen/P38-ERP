@@ -31,6 +31,7 @@ import {
   pedidoDeveExibirCardNecessidade,
   quantidadePendenteNecessidadePedido,
 } from '@/lib/pedidoCompraNecessidade';
+import { isEmbarqueSaldoPendente } from '@/lib/embarqueTipoSaldoPendente';
 import { compareEmbarquesConsulta, enrichEmbarqueParaConsulta, buildConsultaItensPendentes, calcConsultaValorEmbarque, buildGruposConsultaEmbarques } from '@/lib/consultaComprasEmbarques';
 import { calcValorEmbarqueCard, calcValorEmbarcadoPedido } from '@/lib/embarqueValorFinanceiro';
 import { pedidoNaoConcluido } from '@/lib/comprasEmbarqueCards';
@@ -575,7 +576,8 @@ export default function PedidosCompraPage() {
       const aprovadoFinanceiro =
         pedidoLiberadoParaLogistica(pedido) ||
         pedido._display_status === 'Aprovado';
-      const ehNecessidade = !!pedido._is_necessidade || pedido._embarque?.tipo === 'Necessidade';
+      const ehNecessidade =
+        !!pedido._is_necessidade || isEmbarqueSaldoPendente(pedido._embarque);
       const aindaNaoRecebido = pedido._display_status !== 'Concluído';
       const aindaNaoEhAguardandoPagamento = ehNecessidade || ![
         COMPRAS_STATUS_FILTRO_AGUARDANDO_PGTO,

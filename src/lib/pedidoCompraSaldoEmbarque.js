@@ -13,6 +13,7 @@ import {
 import { resolveEmbarqueQuantidadeBase } from '@/lib/embarqueQuantityResolve';
 import { getTotalLinhaPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { isEmbarqueSaldoPendente } from '@/lib/embarqueTipoSaldoPendente';
 import { enrichEmbarquesComFatorPedido } from '@/lib/embarqueLogisticaHelpers';
 
 /** Tolerância numérica — mesma ordem de grandeza que a view SQL (0.009). */
@@ -40,7 +41,7 @@ function faltaParaVitrine(faltaBase, item = {}, produto = null) {
 }
 
 export function isEmbarqueReal(embarque) {
-  return String(embarque?.tipo || 'Embarque').trim() !== 'Necessidade';
+  return !isEmbarqueSaldoPendente(embarque);
 }
 
 export function isNecessidadeEmbarque(embarque) {

@@ -8,12 +8,14 @@ import { toSupabaseEdgeFunctionName } from '@/lib/p38EdgeFunctionNames';
 
 function resolveFunctionUrls(edgeName) {
   const urls = [];
-  if (typeof window !== 'undefined' && window.location?.origin) {
-    urls.push(`${window.location.origin}/api/p38-edge/${encodeURIComponent(edgeName)}`);
-  }
   const base = normalizeSupabaseProjectUrl(p38PublicEnv('VITE_SUPABASE_URL') || '');
+  // Directo ao Supabase primeiro: o proxy Vercel (/api/p38-edge) exige env no servidor;
+  // o browser já tem NEXT_PUBLIC_* no bundle.
   if (base) {
     urls.push(`${base}/functions/v1/${encodeURIComponent(edgeName)}`);
+  }
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    urls.push(`${window.location.origin}/api/p38-edge/${encodeURIComponent(edgeName)}`);
   }
   return [...new Set(urls.filter(Boolean))];
 }
@@ -147,7 +149,11 @@ export async function invokeP38EdgeFunction(functionName, body, { supabase: supa
       }
 
       const msg = humanizeEdgeFunctionError(payload, response.status, functionName);
-      if (/invalid jwt/i.test(msg) && urls.length > 1) {
+      const proxyMisconfigured =
+        isSameOriginProxy(url)
+        && (response.status === 502
+          || /não configurado no servidor|não configurado/i.test(msg));
+      if (urls.length > 1 && (/invalid jwt/i.test(msg) || proxyMisconfigured)) {
         lastHttpError = new Error(msg);
         continue;
       }

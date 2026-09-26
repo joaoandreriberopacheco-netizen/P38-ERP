@@ -3,6 +3,8 @@
  * A = primeiro despacho; B, C… seguem a ordem de criação/despacho (nunca o mais recente).
  */
 
+import { isEmbarqueSaldoPendente } from '@/lib/embarqueTipoSaldoPendente';
+
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 function normCodigo(value = '') {
@@ -16,7 +18,7 @@ function timestampEmbarque(embarque = {}) {
 }
 
 function isEmbarqueNecessidadeTipo(embarque = {}) {
-  return embarque?.tipo === 'Necessidade';
+  return isEmbarqueSaldoPendente(embarque);
 }
 
 function embarqueIdKey(embarque = {}) {

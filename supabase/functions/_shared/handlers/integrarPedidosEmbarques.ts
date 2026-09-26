@@ -1,5 +1,6 @@
 // Percentuais de logística a partir de PedidoCompraItem + EmbarqueItem (SQL). Sem espelho JSON.
 import type { createP38Client } from '../p38Client.ts';
+import { embarqueIsSaldoPendente } from '../embarqueTipoSaldoPendente.ts';
 
 function toNumber(value: unknown) {
   return Number(value) || 0;
@@ -86,7 +87,9 @@ export async function handle(req: Request, base44: Awaited<ReturnType<typeof cre
       ]);
 
       const percentuais = calcularPercentuaisFromSql(pciRows || [], embItens || []);
-      const temNecessidade = (embRows || []).some((e: Record<string, unknown>) => e?.tipo === 'Necessidade');
+      const temNecessidade = (embRows || []).some((e: Record<string, unknown>) =>
+        embarqueIsSaldoPendente(e?.tipo),
+      );
 
       await base44.asServiceRole.entities.PedidoCompra.update(pedido.id, {
         status_embarque: temNecessidade

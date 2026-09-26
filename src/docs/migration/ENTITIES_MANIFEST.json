@@ -362,7 +362,7 @@
       "fields": [
         { "name": "pedido_compra_id", "type": "string", "pg_type": "TEXT NOT NULL" },
         { "name": "numero", "type": "string", "pg_type": "TEXT NOT NULL" },
-        { "name": "tipo", "type": "enum", "values": ["Embarque","Necessidade"], "default": "Embarque", "pg_type": "TEXT NOT NULL DEFAULT 'Embarque'" },
+        { "name": "tipo", "type": "enum", "values": ["Embarque","Pendente","Necessidade"], "default": "Embarque", "pg_type": "TEXT NOT NULL DEFAULT 'Embarque'" },
         { "name": "status", "type": "enum", "values": ["Pendente","Despachado","Concluído"], "default": "Pendente", "pg_type": "TEXT DEFAULT 'Pendente'" },
         { "name": "status_recebimento", "type": "enum", "values": ["Pendente","Recebido Parcial","Recebido OK","Com Divergência"], "default": "Pendente", "pg_type": "TEXT DEFAULT 'Pendente'" },
         { "name": "data_embarque", "type": "datetime", "pg_type": "TIMESTAMPTZ" },
