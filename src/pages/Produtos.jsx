@@ -1179,10 +1179,16 @@ function ProdutosPageContent() {
 
   const estoqueVirtualAtivo = filters.estoqueVirtual === true;
 
-  const { data: pendentePorProduto = {}, isLoading: pendenteEstoqueLoading, isFetching: pendenteEstoqueFetching } = useQuery({
+  const {
+    data: pendentePorProduto = {},
+    isLoading: pendenteEstoqueLoading,
+    isFetching: pendenteEstoqueFetching,
+    isError: pendenteEstoqueErro,
+  } = useQuery({
     queryKey: ['catalogo', 'pendente-estoque'],
     enabled: estoqueVirtualAtivo,
     staleTime: 5 * 60 * 1000,
+    retry: 2,
     queryFn: async () => {
       const data = await fetchPedidosCompraParaSugestaoEstoque(base44);
       return buildPendenteAprovadoFinanceiroPorProduto(
@@ -1193,14 +1199,13 @@ function ProdutosPageContent() {
     },
   });
 
-  const estoqueVirtualPendenteCarregando = estoqueVirtualAtivo
-    && (pendenteEstoqueLoading || pendenteEstoqueFetching);
+  const pendenteEstoqueCarregando = pendenteEstoqueLoading || pendenteEstoqueFetching;
 
   const catalogStockContext = useMemo(
     () => createCatalogStockContext(estoqueVirtualAtivo, pendentePorProduto, {
-      pendenteCarregando: estoqueVirtualPendenteCarregando,
+      pendenteCarregando: estoqueVirtualAtivo && pendenteEstoqueCarregando,
     }),
-    [estoqueVirtualAtivo, pendentePorProduto, estoqueVirtualPendenteCarregando],
+    [estoqueVirtualAtivo, pendentePorProduto, pendenteEstoqueCarregando],
   );
 
   const needsSalesVelocity = useMemo(() => {
@@ -1610,6 +1615,8 @@ function ProdutosPageContent() {
     onOpenPontosPedido: handleOpenPontosPedido,
     groupTreeByCategory,
     onGroupTreeByCategoryChange: handleGroupTreeByCategoryChange,
+    estoqueVirtualCarregando: estoqueVirtualAtivo && pendenteEstoqueCarregando,
+    estoqueVirtualErro: estoqueVirtualAtivo && pendenteEstoqueErro,
     onClearFilters: handleClearCatalogFilters,
   }), [
     podeVerCusto,
@@ -1649,6 +1656,9 @@ function ProdutosPageContent() {
     groupTreeByCategory,
     handleGroupTreeByCategoryChange,
     handleClearCatalogFilters,
+    estoqueVirtualAtivo,
+    pendenteEstoqueCarregando,
+    pendenteEstoqueErro,
   ]);
 
   const mobileCatalogChrome = useMemo(

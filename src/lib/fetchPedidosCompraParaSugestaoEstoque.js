@@ -57,8 +57,9 @@ export async function fetchEmbarquesForPedidoIds(base44, pedidoIds = []) {
 }
 
 /**
- * Carrega pedidos de compra relevantes para pendente de estoque na Sugestão de Compra.
- * Inclui pedidos referenciados por embarques em trânsito (ex. E62-67G) mesmo fora do top N recentes.
+ * Carrega pedidos de compra relevantes para pendente de estoque (catálogo / sugestão).
+ * Fonte: Supabase via `p38.legacyClient` (parâmetro mantém nome legado `base44`).
+ * Inclui pedidos referenciados por embarques em trânsito mesmo fora do top N recentes.
  */
 export async function fetchPedidosCompraParaSugestaoEstoque(base44) {
   const [porStatus, recentes, embarques] = await Promise.all([

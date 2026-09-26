@@ -79,6 +79,11 @@ export function getPortalCatalogSkuCountSync() {
   return catalogSkuMap.size;
 }
 
+/** Todas as linhas SKU do cache (forma Excel) — base da árvore “Excel como BD”. */
+export function listPortalCatalogExcelSkusSync() {
+  return [...catalogSkuMap.values()];
+}
+
 export function isProdutoInPortalCatalogSync(produtoOrCodigo) {
   const cod =
     typeof produtoOrCodigo === 'string'

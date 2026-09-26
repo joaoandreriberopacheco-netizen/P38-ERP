@@ -240,6 +240,17 @@ export const ALL_MENU_ITEMS = [
           p?.estoque?.compras?.pedidos ||
           p?.estoque?.compras?.conferencia ||
           p?.estoque?.compras_ativo,
+      },
+      {
+        name: 'Catálogo Excel',
+        page: 'CatalogoExcel',
+        icon: Sparkles,
+        permissaoCheck: (p) =>
+          p?.estoque?.compras?.sugestoes ||
+          p?.estoque?.compras?.cotacoes ||
+          p?.estoque?.compras?.pedidos ||
+          p?.estoque?.compras?.conferencia ||
+          p?.estoque?.compras_ativo,
       }
     ]
   },

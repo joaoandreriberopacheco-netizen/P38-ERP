@@ -1,0 +1,35 @@
+{
+  "kind": "zumbis",
+  "source": "supabase-rest",
+  "produtosCompraTotal": 273,
+  "skusCatalogo": 285,
+  "produto_keys": [
+    "a. Edificações\u000001. Alvenaria\u0000Estrutura\u0000Armaduras\u0000TELA",
+    "c. Acabamentos\u000001. Revestimentos\u0000Assentamento\u0000Porcelanato\u0000PORCELENATO",
+    "c. Acabamentos\u000001. Revestimentos\u0000Assentamento\u0000Porcelanato\u0000PORCELENATO 60X120 SAFIRA MATE",
+    "c. Acabamentos\u000005. Hidráulica\u0000Chuveiros\u0000Chuveiros\u0000CHUVEIRO ABS BRANCO",
+    "c. Acabamentos\u000005. Hidráulica\u0000Chuveiros\u0000Chuveiros\u0000CHUVEIRO PLASTICO CROMADO",
+    "c. Acabamentos\u000005. Hidráulica\u0000Chuveiros\u0000Chuveiros\u0000CHUVEIRO PVC COM REGISTRO",
+    "c. Acabamentos\u000005. Hidráulica\u0000Chuveiros\u0000Chuveiros\u0000CHUVEIRO QUADRADO 15 X",
+    "c. Acabamentos\u000005. Hidráulica\u0000Chuveiros\u0000Chuveiros\u0000CHUVEIRO REDONDO",
+    "c. Acabamentos\u000005. Hidráulica\u0000Chuveiros\u0000Chuveiros\u0000REGISTRO"
+  ],
+  "codigos": [
+    "9RL-L6C",
+    "SS7-6Y2",
+    "L0L-B7T",
+    "64M-Q0T",
+    "KPM-NZ3",
+    "T9I-93U",
+    "SD9-LN0",
+    "QSE-Q2E",
+    "QS4-PSR",
+    "TJH-S7T",
+    "44J-C1D"
+  ],
+  "mesesSemMovimento": 4,
+  "estoqueSkus": 1084,
+  "produtosCompraZumbis": 9,
+  "skusZumbi": 11,
+  "skusZumbiTotal": 285
+}
