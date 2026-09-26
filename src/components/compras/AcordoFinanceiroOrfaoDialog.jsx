@@ -254,8 +254,9 @@ export default function AcordoFinanceiroOrfaoDialog({
               <p className="font-medium text-foreground/80">Prévia do ajuste na folha (incluído no acordo)</p>
               {planoPorItem.map(({ orfao, plano }) => (
                 <p key={orfao.produto_id}>
-                  {orfao.produto_nome}: Pendente −{plano.baixa_necessidade_base}, comprada −
-                  {plano.baixa_comprada_base} (pend. {plano.folha_antes.saldoPendente} → após acordo)
+                  {orfao.produto_nome}: Pendente −{plano.baixa_necessidade_base}, trânsito −
+                  {plano.baixa_transito_base ?? 0}, comprada −{plano.baixa_comprada_base} (pend.{' '}
+                  {plano.folha_antes.saldoPendente} → após acordo)
                 </p>
               ))}
             </div>

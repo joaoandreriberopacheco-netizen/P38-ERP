@@ -212,6 +212,21 @@ export function calcularItensOrfaosAguardandoDespacho(
     }
   });
 
+  (embarques || [])
+    .filter((emb) => isEmbarqueReal(emb))
+    .forEach((emb) => {
+      getEmbarqueItensLinhas(emb).forEach((linha) => {
+        const pid = linha?.produto_id;
+        if (!pid) return;
+        const embBase = qtyEmbarcadaBaseLinha(linha);
+        const recBase = qtyRecebidaBaseLinha(linha);
+        const emTransito = roundToTwoDecimals(Math.max(0, embBase - recBase));
+        if (emTransito > 0.009) {
+          pendentePorProduto[pid] = roundToTwoDecimals((pendentePorProduto[pid] || 0) + emTransito);
+        }
+      });
+    });
+
   return (pedido?.itens || [])
     .map((item) => {
       const qtdPendenteBase = roundToTwoDecimals(pendentePorProduto[item.produto_id] || 0);

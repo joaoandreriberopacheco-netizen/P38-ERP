@@ -13,6 +13,7 @@ import {
   qtyPedidaBaseItem,
   qtyRecebidaBaseLinha,
 } from '@/lib/embarqueLogisticaHelpers';
+import { rebuildEmbarqueItensMirror } from '@/lib/embarqueItemContract';
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import {
@@ -114,7 +115,7 @@ export function calcularFolhaLogisticaLinha(item = {}, embarques = []) {
 }
 
 /**
- * Particiona a baixa do órfão: primeiro Necessidade (saldo pós-recepção), depois redução de comprada.
+ * Particiona a baixa do órfão: Pendente (pós-recepção) → trânsito (embarque real) → comprada.
  */
 export function particionarBaixaOrfaoAcordo({
   itemPedido,
@@ -131,17 +132,23 @@ export function particionarBaixaOrfaoAcordo({
     Math.max(0, pedidaBase - (despachadoMap[pid] || 0)),
   );
 
+  const folhaAntes = calcularFolhaLogisticaLinha(itemPedido, embarques);
+  const emTransitoBase = roundToTwoDecimals(Math.max(0, folhaAntes.emTransito));
+
   const baixaNecessidade = roundToTwoDecimals(Math.min(qtd, necessidadeBase));
-  const restante = roundToTwoDecimals(qtd - baixaNecessidade);
+  let restante = roundToTwoDecimals(qtd - baixaNecessidade);
+  const baixaTransito = roundToTwoDecimals(Math.min(restante, emTransitoBase));
+  restante = roundToTwoDecimals(restante - baixaTransito);
   const baixaComprada = roundToTwoDecimals(Math.min(restante, faltaDespachoBase));
 
   return {
     produto_id: pid,
     qtd_baixa_total: qtd,
     baixa_necessidade_base: baixaNecessidade,
+    baixa_transito_base: baixaTransito,
     baixa_comprada_base: baixaComprada,
     nao_aplicado_base: roundToTwoDecimals(restante - baixaComprada),
-    folha_antes: calcularFolhaLogisticaLinha(itemPedido, embarques),
+    folha_antes: folhaAntes,
   };
 }
 
@@ -217,6 +224,66 @@ function aplicarBaixaNecessidadeEmbarque(embarque, produtoId, reduzirBase, lanca
   return { embarque: { ...embarque, _linhas: linhas }, canonicos, aplicado };
 }
 
+/** Reduz quantidade embarcada (não recebida) em embarques reais — mercadoria em trânsito perdida. */
+function aplicarBaixaTransitoEmbarqueReal(embarque, produtoId, reduzirBase, lancamentoId, pedidoItens) {
+  if (isEmbarqueSaldoPendente(embarque)) {
+    return { embarque, canonicos: [], aplicado: 0 };
+  }
+  const reduzir = roundToTwoDecimals(Math.max(0, Number(reduzirBase) || 0));
+  if (reduzir <= MIN_BASE) {
+    return { embarque, canonicos: [], aplicado: 0 };
+  }
+
+  let restante = reduzir;
+  const linhas = getEmbarqueItensLinhas(embarque).map((linha) => {
+    if (String(linha?.produto_id) !== String(produtoId) || restante <= MIN_BASE) {
+      return linha;
+    }
+    const embBase = qtyEmbarcadaBaseLinha(linha);
+    const recBase = qtyRecebidaBaseLinha(linha);
+    const transitoLinha = roundToTwoDecimals(Math.max(0, embBase - recBase));
+    const take = roundToTwoDecimals(Math.min(restante, transitoLinha));
+    restante = roundToTwoDecimals(restante - take);
+    const novaEmbBase = roundToTwoDecimals(Math.max(recBase, embBase - take));
+    const pedidoItem = (pedidoItens || []).find(
+      (pi) => String(pi?.produto_id) === String(produtoId),
+    );
+    const fator = Number(linha?.fator_aplicado ?? pedidoItem?.fator_aplicado ?? 1) || 1;
+    const novaEmbCom = commercialQuantityFromBase(novaEmbBase, fator, linha?.unidade_medida);
+
+    return {
+      ...linha,
+      quantidade_embarcada: novaEmbBase,
+      quantidade_embarcada_base: novaEmbBase,
+      quantidade_embarcada_apresentacao: novaEmbCom,
+      quantidade_embarcada_comercial: novaEmbCom,
+      acordo_financeiro_lancamento_id: take > MIN_BASE ? lancamentoId : (linha.acordo_financeiro_lancamento_id || ''),
+      observacoes: take > MIN_BASE
+        ? `${linha.observacoes || ''} | Baixa acordo (trânsito −${take} base)`.trim()
+        : linha.observacoes,
+    };
+  });
+
+  const aplicado = roundToTwoDecimals(reduzir - restante);
+  const itensNorm = linhas.filter((l) => qtyEmbarcadaBaseLinha(l) > MIN_BASE || qtyRecebidaBaseLinha(l) > MIN_BASE);
+  const canonicos = buildItensCanonicosEmbarque(itensNorm, pedidoItens).map((c) => ({
+    ...c,
+    acordo_financeiro_lancamento_id: lancamentoId,
+  }));
+
+  return { embarque: { ...embarque, _linhas: linhas }, canonicos, aplicado };
+}
+
+async function recarregarLinhasEmbarqueNoArray(base44, embarquesLocal, embarqueId) {
+  const idx = embarquesLocal.findIndex((e) => String(e?.id) === String(embarqueId));
+  if (idx < 0 || !base44?.entities?.EmbarqueItem) return;
+  const linhas = await base44.entities.EmbarqueItem.filter({ embarque_id: embarqueId });
+  embarquesLocal[idx] = {
+    ...embarquesLocal[idx],
+    _linhas: rebuildEmbarqueItensMirror(linhas || []),
+  };
+}
+
 /**
  * Aplica baixa logística após criar o lançamento financeiro.
  * @returns {Promise<{ ok: boolean, resumo: object[] }>}
@@ -230,6 +297,8 @@ export async function aplicarBaixaLogisticaAcordoFinanceiroOrfaos(
     lancamentoId,
     produtosMap = {},
     baixarQuantidades = true,
+    appendHistorico = true,
+    historicoSufixoExtra = '',
   },
 ) {
   if (!baixarQuantidades) {
@@ -279,17 +348,46 @@ export async function aplicarBaixaLogisticaAcordoFinanceiroOrfaos(
             embarque_id: emb.id,
             items: canonicos || [],
           });
+          await recarregarLinhasEmbarqueNoArray(base44, embarquesLocal, emb.id);
           aplicadoNecessidade = roundToTwoDecimals(aplicadoNecessidade + aplicado);
         }
       }
     }
 
+    let aplicadoTransito = 0;
+    if (plano.baixa_transito_base > MIN_BASE) {
+      const embarquesReais = embarquesLocal.filter((e) => isEmbarqueReal(e));
+      for (const emb of embarquesReais) {
+        if (aplicadoTransito >= plano.baixa_transito_base - MIN_BASE) break;
+        const faltante = roundToTwoDecimals(plano.baixa_transito_base - aplicadoTransito);
+        const { canonicos, aplicado } = aplicarBaixaTransitoEmbarqueReal(
+          emb,
+          pid,
+          faltante,
+          lancamentoId,
+          pedidoItens,
+        );
+        if (aplicado > MIN_BASE && emb?.id) {
+          await invokeSaveEmbarqueItem(base44, {
+            action: 'replaceAll',
+            embarque_id: emb.id,
+            items: canonicos || [],
+          });
+          await recarregarLinhasEmbarqueNoArray(base44, embarquesLocal, emb.id);
+          aplicadoTransito = roundToTwoDecimals(aplicadoTransito + aplicado);
+        }
+      }
+    }
+
+    const reduzirCompradaBase = roundToTwoDecimals(
+      plano.baixa_comprada_base + (plano.baixa_transito_base || 0),
+    );
     let itemAtualizado = itemPedido;
-    if (plano.baixa_comprada_base > MIN_BASE) {
+    if (reduzirCompradaBase > MIN_BASE) {
       const idx = pedidoItens.findIndex((it) => String(it?.produto_id) === String(pid));
       itemAtualizado = reduzirItemPedidoCompra(
         itemPedido,
-        plano.baixa_comprada_base,
+        reduzirCompradaBase,
         produtosMap[pid] || null,
       );
       if (idx >= 0) pedidoItens[idx] = itemAtualizado;
@@ -301,6 +399,7 @@ export async function aplicarBaixaLogisticaAcordoFinanceiroOrfaos(
       produto_nome: orfao.produto_nome || itemPedido.produto_nome,
       ...plano,
       aplicado_necessidade_base: aplicadoNecessidade,
+      aplicado_transito_base: aplicadoTransito,
       folha_depois: folhaDepois,
     });
   }
@@ -314,12 +413,18 @@ export async function aplicarBaixaLogisticaAcordoFinanceiroOrfaos(
   const resumoTxt = resumo
     .map(
       (r) =>
-        `${r.produto_nome}: −${r.qtd_baixa_total} base (Nec ${r.aplicado_necessidade_base}, comprada ${r.baixa_comprada_base})`,
+        `${r.produto_nome}: −${r.qtd_baixa_total} base (Pend ${r.aplicado_necessidade_base}, trânsito ${r.aplicado_transito_base ?? 0}, comprada ${r.baixa_comprada_base})`,
     )
     .join('; ');
 
-  pedidoPatch.historico =
-    `${pedido.historico || ''}\n[ACORDO FINANCEIRO ÓRFÃOS | lançamento=${lancamentoId} | ${resumoTxt} | ${formatarLogTime()}]`.trim();
+  if (appendHistorico) {
+    const extra = historicoSufixoExtra ? ` ${historicoSufixoExtra}` : '';
+    pedidoPatch.historico =
+      `${pedido.historico || ''}\n[ACORDO FINANCEIRO ÓRFÃOS | lançamento=${lancamentoId} | ${resumoTxt}${extra} | ${formatarLogTime()}]`.trim();
+  } else if (historicoSufixoExtra) {
+    pedidoPatch.historico =
+      `${pedido.historico || ''}\n[${historicoSufixoExtra} | lançamento=${lancamentoId} | ${resumoTxt} | ${formatarLogTime()}]`.trim();
+  }
 
   await base44.entities.PedidoCompra.update(pedido.id, pedidoPatch);
 

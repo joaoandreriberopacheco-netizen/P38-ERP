@@ -34,17 +34,36 @@ const embarques = [
 ];
 
 const f = folha(item, embarques);
-// Órfão UI = Necessidade (5) + nunca despachado (40) = 45; saldo folha = 100 − 50 − 10 = 40
-const orfaoTotal = round(f.nec + Math.max(0, 100 - 60));
-if (f.saldoPendente !== 40 || orfaoTotal !== 45) {
-  console.error('folha/órfão esperados 40 / 45', { f, orfaoTotal });
+const emTransito = Math.max(0, 60 - 50);
+// Órfão UI = Pendente (5) + nunca despachado (40) + trânsito (10) = 55; saldo folha = 40
+const orfaoTotal = round(f.nec + Math.max(0, 100 - 60) + emTransito);
+if (f.saldoPendente !== 40 || orfaoTotal !== 55) {
+  console.error('folha/órfão esperados 40 / 55', { f, orfaoTotal });
   process.exit(1);
 }
 
 const baixaNec = Math.min(orfaoTotal, f.nec);
-const baixaComprada = Math.min(orfaoTotal - baixaNec, 100 - 60);
-if (baixaNec !== 5 || baixaComprada !== 40) {
-  console.error('partição esperada 5+40', { baixaNec, baixaComprada });
+let rest = orfaoTotal - baixaNec;
+const baixaTransito = Math.min(rest, emTransito);
+rest -= baixaTransito;
+const baixaComprada = Math.min(rest, 100 - 60);
+if (baixaNec !== 5 || baixaTransito !== 10 || baixaComprada !== 40) {
+  console.error('partição esperada 5+10+40', { baixaNec, baixaTransito, baixaComprada });
+  process.exit(1);
+}
+
+// Órfão com trânsito: saldo folha 0 mas 50 em trânsito
+const item2 = { produto_id: 'p2', quantidade_base: 50 };
+const emb2 = [
+  {
+    tipo: 'Embarque',
+    _linhas: [{ produto_id: 'p2', quantidade_embarcada_base: 50, quantidade_recebida_base: 0 }],
+  },
+];
+const f2 = folha(item2, emb2);
+const orfao2 = round(f2.nec + Math.max(0, 50 - 50) + Math.max(0, 50 - 0));
+if (orfao2 !== 50 || f2.saldoPendente !== 0) {
+  console.error('órfão em trânsito esperado 50', { f2, orfao2 });
   process.exit(1);
 }
 
