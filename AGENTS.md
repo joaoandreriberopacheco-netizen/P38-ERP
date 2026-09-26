@@ -35,7 +35,7 @@ Trabalho de **performance, cache, snapshots / “anotações”** vai na branch 
 
 - **Package manager:** npm (`package-lock.json`). Use **`npm ci`** at repo root on VM startup (not `npm install`) so lockfile stays authoritative.
 - **Node:** CI uses Node 22; local VMs should match (no `engines` field in `package.json`).
-- **App:** Single Vite SPA (`npm run dev` → default **http://localhost:5173**). Backend for production-like flows is **hosted Base44** (`p38.base44.app`), not started from this repo.
+- **App:** Next.js na Vercel (legado Vite local: `npm run dev` → **http://localhost:5173**). Backend de produção: **Supabase** (Postgres + Edge Functions), não Base44.
 
 ### Commands (see `package.json`)
 
@@ -111,11 +111,13 @@ Gravar secrets em **GitHub Actions** (produção) e **Cursor Cloud** (agente) �
 - Optional **Supabase** hybrid testing: see `docs/migration/SUPABASE_TEST_SETUP.md` (`supabase start`, `VITE_USE_SUPABASE_ENTITIES=true`).
 - Build/dev may log `[base44] Proxy not enabled (VITE_BASE44_APP_BASE_URL not set)` — expected without proxy env; build still succeeds.
 
-### Base44 + Supabase — secrets no Cloud Agent
+### Supabase — secrets no Cloud Agent
 
-Ver guia passo a passo. Mínimo Supabase: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `DATABASE_URL`, `SUPABASE_ACCESS_TOKEN`.
+Ver guia passo a passo. Mínimo: `VITE_SUPABASE_URL` (ou `NEXT_PUBLIC_SUPABASE_URL`), `VITE_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (scripts admin), `DATABASE_URL`, `SUPABASE_ACCESS_TOKEN`.
 
-Opcional Base44 (auditoria/flares): `VITE_BASE44_APP_ID`, `VITE_BASE44_BACKEND_URL`, `BASE44_ACCESS_TOKEN` ou `BASE44_API_KEY`.
+Scripts de negócio (ex. acordo órfão): `scripts/p38-supabase-script-client.mjs` — **não** usar `flare-sdk` / Base44.
+
+Opcional legado (só scripts flare antigos): `BASE44_*` — fora do stack de produção.
 
 Após gravar secrets no Cursor: **nova sessão** → `npm run secrets:audit`
 
