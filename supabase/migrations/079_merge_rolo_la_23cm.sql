@@ -5,8 +5,8 @@ DO $$
 DECLARE
   a RECORD;
   b RECORD;
-  win_id uuid;
-  lose_id uuid;
+  win_id text;
+  lose_id text;
   win_cod text;
   best_venda numeric;
   best_compra numeric;
