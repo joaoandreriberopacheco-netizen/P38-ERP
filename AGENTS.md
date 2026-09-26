@@ -29,7 +29,9 @@ Trabalho de **performance, cache, snapshots / “anotações”** vai na branch 
 
 ## Cursor Cloud specific instructions
 
-### Stack
+### Stack (produção)
+
+**Cursor → GitHub → Vercel → Supabase.** Dados e Edge Functions vivem no Supabase; Base44 **não** faz parte do deploy. Ver [`docs/migration/P38_STACK_CURSOR_GITHUB_VERCEL_SUPABASE.md`](docs/migration/P38_STACK_CURSOR_GITHUB_VERCEL_SUPABASE.md).
 
 - **Package manager:** npm (`package-lock.json`). Use **`npm ci`** at repo root on VM startup (not `npm install`) so lockfile stays authoritative.
 - **Node:** CI uses Node 22; local VMs should match (no `engines` field in `package.json`).

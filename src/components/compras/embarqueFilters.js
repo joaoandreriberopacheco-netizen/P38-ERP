@@ -5,7 +5,7 @@ import { isEmbarqueSaldoPendente } from '@/lib/embarqueTipoSaldoPendente';
  * Oculta registros tipo Necessidade em stand by (sem transporte/datas e sem itens pendentes).
  * Mantém Necessidade com linhas de itens ainda pendentes de despacho/recepção.
  *
- * Função cloud `recalcularConclusaoPedidoCompra` (Base44, fora deste repositório): ao auditar
+ * Edge Function Supabase `recalcular-conclusao-pedido-compra`: ao auditar
  * no painel, confirmar que percentuais/status agregados usam quantidade recebida (ou movimentos
  * de compra), não quantidade embarcada isolada; e que não há criação de MovimentacaoEstoque ali
  * (entrada de estoque permanece em RecepcionarEmbarque / conferência).
