@@ -28,6 +28,40 @@ import { isEmbarqueReal, isEmbarqueSaldoPendente } from '@/lib/embarqueTipoSaldo
 
 const MIN_BASE = 0.009;
 
+/** Browser usa helper global; scripts passam `base44.functions` (Supabase Edge). */
+async function saveEmbarqueItemReplaceAllEntities(base44, body) {
+  const embarqueId = String(body?.embarque_id || '').trim();
+  const items = Array.isArray(body?.items) ? body.items : [];
+  if (!embarqueId) throw new Error('embarque_id obrigatório');
+  const existing = await base44.entities.EmbarqueItem.filter({ embarque_id: embarqueId });
+  for (const row of existing || []) {
+    if (row?.id) await base44.entities.EmbarqueItem.delete(row.id);
+  }
+  for (const item of items) {
+    await base44.entities.EmbarqueItem.create({ ...item, embarque_id: embarqueId });
+  }
+}
+
+async function invokeSaveEmbarqueItem(base44, body) {
+  if (body?.action === 'replaceAll' && base44?.entities?.EmbarqueItem) {
+    try {
+      if (base44?.functions?.invoke) {
+        const { data } = await base44.functions.invoke('saveEmbarqueItem', body);
+        return data;
+      }
+    } catch (err) {
+      if (!/Unauthorized/i.test(String(err?.message || err))) throw err;
+    }
+    await saveEmbarqueItemReplaceAllEntities(base44, body);
+    return { success: true };
+  }
+  if (base44?.functions?.invoke) {
+    const { data } = await base44.functions.invoke('saveEmbarqueItem', body);
+    return data;
+  }
+  return saveEmbarqueItem(body);
+}
+
 /** Soma recebida em embarques reais (exclui saldo pendente pós-recepção). */
 export function calcularTotalRecebidoBasePorProduto(embarques = []) {
   const map = {};
@@ -240,7 +274,7 @@ export async function aplicarBaixaLogisticaAcordoFinanceiroOrfaos(
           pedidoItens,
         );
         if (aplicado > MIN_BASE && emb?.id) {
-          await saveEmbarqueItem({
+          await invokeSaveEmbarqueItem(base44, {
             action: 'replaceAll',
             embarque_id: emb.id,
             items: canonicos || [],

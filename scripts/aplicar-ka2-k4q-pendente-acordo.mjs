@@ -17,6 +17,8 @@ import {
   completarBaixaLogisticaAcordoExistente,
   resolverAcordoOrfaoLegadoParaCompletar,
 } from '../src/lib/completarAcordoFinanceiroOrfaoLegado.js';
+import { listarLancamentosPedidoCompra } from '../src/lib/pedidoCompraFinanceiro.js';
+import { listarAcordosOrfaoComBaixaPendente } from '../src/lib/acordoFinanceiroOrfaoLancamento.js';
 
 const NUMERO = 'KA2-K4Q';
 const LANCAMENTO_PADRAO = 'fea676a0-2112-436c-ad76-c2e45c27d88b';
@@ -46,15 +48,18 @@ async function main() {
 
   console.log('Órfãos antes da baixa:', itensOrfaos);
 
-  const lancamentoId =
-    LANCAMENTO_PADRAO || (await resolverAcordoOrfaoLegadoParaCompletar(p38, pedido))?.id;
-
-  const lancRows = await p38.entities.LancamentoFinanceiro.filter({ pedido_compra_id: pedido.id });
-  const lanc = (lancRows || []).find((l) => l.id === lancamentoId);
+  const lancRows = await listarLancamentosPedidoCompra(p38, pedido.id);
+  let lanc = (lancRows || []).find((l) => l.id === LANCAMENTO_PADRAO);
   if (!lanc) {
-    console.error(`Lançamento ${lancamentoId} não encontrado neste pedido.`);
+    const pendentes = listarAcordosOrfaoComBaixaPendente(pedido, lancRows);
+    lanc = pendentes[0]?.lancamento
+      || (await resolverAcordoOrfaoLegadoParaCompletar(p38, pedido));
+  }
+  if (!lanc?.id) {
+    console.error('Nenhum acordo órfão com baixa pendente encontrado neste pedido.');
     process.exit(1);
   }
+  const lancamentoId = lanc.id;
 
   console.log(`Lançamento acordo: ${lanc.id} — valor ${lanc.valor ?? lanc.valor_liquido ?? '?'}`);
   if (!apply) {

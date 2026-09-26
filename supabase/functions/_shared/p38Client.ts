@@ -74,8 +74,18 @@ export async function createP38Client(req: Request): Promise<P38Client> {
   const jwt = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
   let user: P38User | null = null;
   if (jwt) {
-    const { data } = await client.auth.getUser(jwt);
-    user = await resolveUsuario(client, data.user);
+    const serviceKey = env('SUPABASE_SERVICE_ROLE_KEY');
+    if (serviceKey && jwt === serviceKey) {
+      user = {
+        id: 'service-role',
+        email: 'service-role@p38.internal',
+        role: 'admin',
+        full_name: 'P38 Service Role',
+      };
+    } else {
+      const { data } = await client.auth.getUser(jwt);
+      user = await resolveUsuario(client, data.user);
+    }
   }
 
   const entities = createSupabaseEntityLayer(null, client);

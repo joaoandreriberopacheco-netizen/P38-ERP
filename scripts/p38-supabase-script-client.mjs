@@ -4,6 +4,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { loadDotEnvFiles } from './base44-env.mjs';
+import { loadP38SecretsBundle } from './load-p38-secrets-bundle.mjs';
 import { resolveP38Secrets } from './p38-secrets.mjs';
 import { createSupabaseEntityLayer } from '../src/integrations/p38/supabaseEntityLayer.js';
 import { toSupabaseEdgeFunctionName } from '../src/lib/p38EdgeFunctionNames.js';
@@ -13,9 +14,14 @@ import { toSupabaseEdgeFunctionName } from '../src/lib/p38EdgeFunctionNames.js';
  */
 export function requireP38SupabaseScriptClient() {
   loadDotEnvFiles();
+  loadP38SecretsBundle();
   const secrets = resolveP38Secrets();
-  const url = secrets.supabaseUrl;
+  let url = secrets.supabaseUrl;
   const serviceRoleKey = secrets.serviceRoleKey;
+
+  if (!url && secrets.databaseUrl && secrets.projectRef) {
+    url = `https://${secrets.projectRef}.supabase.co`;
+  }
 
   if (!url || !serviceRoleKey) {
     console.error(
@@ -40,7 +46,19 @@ export function requireP38SupabaseScriptClient() {
         headers: { Authorization: `Bearer ${serviceRoleKey}` },
       });
       if (error) {
-        const msg = error?.message || String(error);
+        const ctx = error?.context;
+        let detail = '';
+        try {
+          if (ctx && typeof ctx.json === 'function') {
+            const j = await ctx.json();
+            detail = j?.error || j?.message || JSON.stringify(j);
+          } else if (ctx?.body) {
+            detail = String(ctx.body).slice(0, 500);
+          }
+        } catch {
+          /* ignore */
+        }
+        const msg = detail || error?.message || String(error);
         throw new Error(`Edge Function ${slug}: ${msg}`);
       }
       if (data && typeof data === 'object' && data.error && data.success !== true) {
