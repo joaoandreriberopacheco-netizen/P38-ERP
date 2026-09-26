@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { base44 } from '@/api/base44Client';
-import { Handshake, AlertTriangle } from 'lucide-react';
+import { Handshake, AlertTriangle, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { dataHoje } from '@/components/utils/dateUtils';
 import {
@@ -14,7 +14,9 @@ import {
   particionarBaixaOrfaoAcordo,
 } from '@/lib/aplicarAcordoFinanceiroOrfaos';
 import { calculateBaseQuantity } from '@/lib/productUnits';
-import { completarBaixaLogisticaAcordoExistente, resolverAcordoOrfaoLegadoParaCompletar } from '@/lib/completarAcordoFinanceiroOrfaoLegado';
+import { listarAcordosOrfaoComBaixaPendente } from '@/lib/acordoFinanceiroOrfaoLancamento';
+import { listarLancamentosPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
+import { invokeRecalcularConclusaoPedidoCompra } from '@/lib/p38StockRecalc';
 
 // itensOrfaos: [{ produto_id, produto_nome, qtd_pendente, unidade_medida, qtd_pendente_comercial }]
 export default function AcordoFinanceiroOrfaoDialog({
@@ -32,31 +34,29 @@ export default function AcordoFinanceiroOrfaoDialog({
   const [contas, setContas] = useState([]);
   const [contaId, setContaId] = useState('');
   const [loading, setLoading] = useState(false);
-  const [baixarLogistica, setBaixarLogistica] = useState(true);
   const [qtdBaixaComercial, setQtdBaixaComercial] = useState({});
-  const [acordoLegado, setAcordoLegado] = useState(null);
-  const [modoCompletar, setModoCompletar] = useState(false);
+  /** Acordo financeiro já lançado sem baixa na folha — não se resolve neste ecrã (ex.: legado KA2-K4Q). */
+  const [acordoLegadoSemBaixa, setAcordoLegadoSemBaixa] = useState(null);
 
   useEffect(() => {
-    if (isOpen) {
-      base44.entities.ContasFinanceiras.list().then(setContas).catch(() => {});
-      resolverAcordoOrfaoLegadoParaCompletar(base44, pedido)
-        .then((lanc) => {
-          setAcordoLegado(lanc);
-          setModoCompletar(Boolean(lanc));
-        })
-        .catch(() => {
-          setAcordoLegado(null);
-          setModoCompletar(false);
-        });
-      const init = {};
-      (itensOrfaos || []).forEach((item) => {
-        const q = item.qtd_pendente_comercial ?? item.qtd_pendente;
-        init[item.produto_id] = String(q ?? '');
-      });
-      setQtdBaixaComercial(init);
-    }
+    if (!isOpen) return;
+    base44.entities.ContasFinanceiras.list().then(setContas).catch(() => {});
+    listarLancamentosPedidoCompra(base44, pedido?.id)
+      .then((lancs) => {
+        const pendentes = listarAcordosOrfaoComBaixaPendente(pedido, lancs);
+        setAcordoLegadoSemBaixa(pendentes[0]?.lancamento || null);
+      })
+      .catch(() => setAcordoLegadoSemBaixa(null));
+
+    const init = {};
+    (itensOrfaos || []).forEach((item) => {
+      const q = item.qtd_pendente_comercial ?? item.qtd_pendente;
+      init[item.produto_id] = String(q ?? '');
+    });
+    setQtdBaixaComercial(init);
   }, [isOpen, itensOrfaos, pedido?.id, pedido?.historico]);
+
+  const bloqueadoLegado = Boolean(acordoLegadoSemBaixa);
 
   const buildItensComBaixa = () =>
     (itensOrfaos || []).map((orfao) => {
@@ -72,7 +72,6 @@ export default function AcordoFinanceiroOrfaoDialog({
     });
 
   const planoPorItem = useMemo(() => {
-    if (!baixarLogistica) return [];
     return (itensOrfaos || []).map((orfao) => {
       const itemPedido = (pedido?.itens || []).find(
         (it) => String(it?.produto_id) === String(orfao?.produto_id),
@@ -88,34 +87,10 @@ export default function AcordoFinanceiroOrfaoDialog({
       });
       return { orfao, plano, qBase };
     }).filter(Boolean);
-  }, [baixarLogistica, itensOrfaos, pedido?.itens, embarques, qtdBaixaComercial]);
-
-  const handleCompletarLegado = async () => {
-    if (!acordoLegado?.id) return;
-    setLoading(true);
-    try {
-      const result = await completarBaixaLogisticaAcordoExistente(base44, {
-        pedido,
-        embarques,
-        itensOrfaos: buildItensComBaixa(),
-        lancamentoId: acordoLegado.id,
-        produtosMap,
-      });
-      if (!result.ok) {
-        toast.error(result.error || 'Não foi possível completar a baixa logística.');
-        return;
-      }
-      toast.success('Baixa logística concluída usando o acordo financeiro já existente.');
-      onSuccess?.();
-      onClose();
-    } catch (err) {
-      toast.error('Erro: ' + (err.message || 'Erro desconhecido'));
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [itensOrfaos, pedido?.itens, embarques, qtdBaixaComercial]);
 
   const handleConfirmar = async () => {
+    if (bloqueadoLegado) return;
     if (!valor || parseFloat(valor) <= 0) return toast.error('Informe o valor do acordo');
     if (!contaId) return toast.error('Selecione a conta financeira');
 
@@ -160,7 +135,7 @@ export default function AcordoFinanceiroOrfaoDialog({
       );
 
       const lancamentoId = lancamento?.id;
-      if (baixarLogistica && lancamentoId) {
+      if (lancamentoId) {
         const { ok, error, resumo } = await aplicarBaixaLogisticaAcordoFinanceiroOrfaos(base44, {
           pedido,
           embarques,
@@ -170,7 +145,7 @@ export default function AcordoFinanceiroOrfaoDialog({
           baixarQuantidades: true,
         });
         if (!ok) {
-          toast.error(error || 'Acordo financeiro criado, mas a baixa logística falhou.');
+          toast.error(error || 'Acordo financeiro criado, mas o ajuste na folha logística falhou.');
         } else if (resumo?.some((r) => r.nao_aplicado_base > 0.009)) {
           toast.message('Acordo registrado com ressalva', {
             description: 'Parte da quantidade não pôde ser baixada na folha — revise o pedido.',
@@ -179,11 +154,7 @@ export default function AcordoFinanceiroOrfaoDialog({
       }
 
       await invokeRecalcularConclusaoPedidoCompra(base44, pedido.id);
-      toast.success(
-        baixarLogistica
-          ? 'Acordo financeiro registrado e quantidades órfãs atualizadas.'
-          : 'Acordo financeiro registrado com sucesso!',
-      );
+      toast.success('Acordo financeiro registrado e folha do pedido atualizada.');
       onSuccess?.();
       onClose();
     } catch (err) {
@@ -204,34 +175,31 @@ export default function AcordoFinanceiroOrfaoDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          {acordoLegado && (
-            <div className="rounded-xl border border-teal-200 dark:border-teal-800 bg-teal-50/80 dark:bg-teal-900/20 px-3 py-2.5 space-y-2">
-              <p className="text-xs font-medium text-teal-800 dark:text-teal-200">
-                Já existe acordo financeiro neste pedido (R$ {Number(acordoLegado.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+          {bloqueadoLegado && (
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900/40 px-3 py-2.5 space-y-1.5">
+              <p className="text-xs font-medium text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                <Info className="w-3.5 h-3.5 shrink-0" />
+                Acordo financeiro já registrado
               </p>
-              <p className="text-[10px] text-teal-700/90 dark:text-teal-300/90 leading-relaxed">
-                Pode completar só a baixa na folha logística, sem criar outro lançamento. O registro no Supabase
-                fica no lançamento existente + histórico do pedido + vínculo nas linhas de embarque.
+              <p className="text-[10px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                Valor: R$ {Number(acordoLegadoSemBaixa.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.
+                A regularização na folha logística deste pedido{' '}
+                <strong>não é feita neste ecrã</strong> — é tratada pela operação no Supabase
+                {String(pedido?.numero || '').toUpperCase() === 'KA2-K4Q'
+                  ? ' (pedido KA2-K4Q).'
+                  : ' (acordo anterior ao fluxo único).'}
               </p>
-              <label className="flex items-center gap-2 text-[10px] text-teal-800 dark:text-teal-200 cursor-pointer">
-                <input
-                  type="radio"
-                  name="modo-acordo"
-                  checked={modoCompletar}
-                  onChange={() => setModoCompletar(true)}
-                />
-                Completar baixa logística (recomendado)
-              </label>
-              <label className="flex items-center gap-2 text-[10px] text-muted-foreground cursor-pointer">
-                <input
-                  type="radio"
-                  name="modo-acordo"
-                  checked={!modoCompletar}
-                  onChange={() => setModoCompletar(false)}
-                />
-                Registrar novo acordo financeiro
-              </label>
+              <p className="text-[10px] text-muted-foreground">
+                Não crie outro lançamento aqui. Quando a folha estiver regularizada, o órfão deixa de aparecer.
+              </p>
             </div>
+          )}
+
+          {!bloqueadoLegado && (
+            <p className="text-[10px] text-muted-foreground leading-relaxed px-0.5">
+              Um único passo: o lançamento financeiro e o ajuste na folha (saldo pendente e comprada)
+              seguem juntos, no mesmo espírito de uma devolução parcial ao fornecedor.
+            </p>
           )}
 
           <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-900/20 rounded-xl px-3 py-2.5">
@@ -257,22 +225,23 @@ export default function AcordoFinanceiroOrfaoDialog({
                           Pend. {folha.saldoPendente}
                         </p>
                       )}
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <Input
-                          type="text"
-                          inputMode="decimal"
-                          className="h-7 w-16 text-xs bg-card border-0 shadow-sm text-center"
-                          value={qtdBaixaComercial[item.produto_id] ?? ''}
-                          onChange={(e) =>
-                            setQtdBaixaComercial((prev) => ({
-                              ...prev,
-                              [item.produto_id]: e.target.value.replace(',', '.'),
-                            }))
-                          }
-                          disabled={!baixarLogistica}
-                        />
-                        <span>{item.unidade_pendente_exibicao || item.unidade_medida} a baixar</span>
-                      </div>
+                      {!bloqueadoLegado && (
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <Input
+                            type="text"
+                            inputMode="decimal"
+                            className="h-7 w-16 text-xs bg-card border-0 shadow-sm text-center"
+                            value={qtdBaixaComercial[item.produto_id] ?? ''}
+                            onChange={(e) =>
+                              setQtdBaixaComercial((prev) => ({
+                                ...prev,
+                                [item.produto_id]: e.target.value.replace(',', '.'),
+                              }))
+                            }
+                          />
+                          <span>{item.unidade_pendente_exibicao || item.unidade_medida} no acordo</span>
+                        </div>
+                      )}
                     </li>
                   );
                 })}
@@ -280,32 +249,19 @@ export default function AcordoFinanceiroOrfaoDialog({
             </div>
           </div>
 
-          <label className="flex items-start gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              className="mt-0.5 rounded border-border"
-              checked={baixarLogistica}
-              onChange={(e) => setBaixarLogistica(e.target.checked)}
-            />
-            <span className="text-xs text-muted-foreground leading-relaxed">
-              Zerar ou reduzir o saldo pendente no pedido (recomendado): baixa primeiro embarques
-              Pendente (saldo pós-recepção) e depois reduz a quantidade comprada, como na folha logística.
-            </span>
-          </label>
-
-          {baixarLogistica && planoPorItem.length > 0 && (
+          {!bloqueadoLegado && planoPorItem.length > 0 && (
             <div className="rounded-xl bg-muted/40 px-3 py-2 text-[10px] text-muted-foreground space-y-1">
-              <p className="font-medium text-foreground/80">Prévia da baixa</p>
+              <p className="font-medium text-foreground/80">Prévia do ajuste na folha (incluído no acordo)</p>
               {planoPorItem.map(({ orfao, plano }) => (
                 <p key={orfao.produto_id}>
                   {orfao.produto_nome}: Pendente −{plano.baixa_necessidade_base}, comprada −
-                  {plano.baixa_comprada_base} (pend. {plano.folha_antes.saldoPendente} → estimado após acordo)
+                  {plano.baixa_comprada_base} (pend. {plano.folha_antes.saldoPendente} → após acordo)
                 </p>
               ))}
             </div>
           )}
 
-          {!modoCompletar && (
+          {!bloqueadoLegado && (
             <>
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">Tipo de Acordo</Label>
@@ -320,8 +276,8 @@ export default function AcordoFinanceiroOrfaoDialog({
                 </Select>
                 <p className="text-[10px] text-muted-foreground leading-relaxed">
                   {tipo === 'saldo_fornecedor'
-                    ? 'Registra um crédito para uso em compras futuras com este fornecedor.'
-                    : 'Registra uma cobrança formal ao fornecedor pelos itens não entregues.'}
+                    ? 'Crédito para compras futuras com este fornecedor.'
+                    : 'Cobrança formal ao fornecedor pelos itens não entregues.'}
                 </p>
               </div>
 
@@ -366,16 +322,13 @@ export default function AcordoFinanceiroOrfaoDialog({
 
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={onClose} disabled={loading} size="sm"
-            className="border-0 shadow-sm text-foreground/90">Cancelar</Button>
-          {modoCompletar && acordoLegado ? (
-            <Button onClick={handleCompletarLegado} disabled={loading} size="sm"
-              className="bg-teal-600 hover:bg-teal-700 text-white border-0 shadow-sm">
-              {loading ? 'Completando...' : 'Completar baixa logística'}
-            </Button>
-          ) : (
+            className="border-0 shadow-sm text-foreground/90">
+            {bloqueadoLegado ? 'Fechar' : 'Cancelar'}
+          </Button>
+          {!bloqueadoLegado && (
             <Button onClick={handleConfirmar} disabled={loading} size="sm"
               className="bg-amber-500 hover:bg-amber-600 text-white border-0 shadow-sm">
-              {loading ? 'Registrando...' : 'Confirmar Acordo'}
+              {loading ? 'Registrando...' : 'Registrar acordo'}
             </Button>
           )}
         </DialogFooter>

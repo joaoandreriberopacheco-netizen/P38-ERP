@@ -25,3 +25,12 @@ npx vite-node scripts/aplicar-ka2-k4q-pendente-acordo.mjs --apply
 ```
 
 Cliente: `scripts/p38-supabase-script-client.mjs` (service role).
+
+## UI vs operação (acordo órfão legado)
+
+- **Pedidos novos:** um ecrã só — registro do acordo financeiro **com** ajuste na folha (sem passo separado de “completar baixa”).
+- **Pedido com acordo antigo sem folha** (ex. KA2-K4Q): o modal **informa** e bloqueia novo lançamento; a baixa é feita no Supabase via script (`aplicar-ka2-k4q-pendente-acordo.mjs`), não na UI.
+
+## Vercel — env no servidor
+
+As rotas `/api/p38-edge/*` precisam de `NEXT_PUBLIC_SUPABASE_URL` (e anon key) nas **Environment Variables** do projeto Vercel. O app no browser também chama a Edge Function **directo** no Supabase quando o bundle tem a URL pública — evita o erro “não configurado no servidor” se o proxy Vercel falhar.
