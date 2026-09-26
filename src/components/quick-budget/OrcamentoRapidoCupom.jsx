@@ -20,8 +20,10 @@ import {
   orcamentoCupomLarguraPreviewPx,
   orcamentoCupomPageSizeCss,
 } from '@/lib/orcamentoCupomFormato';
-import { CUPOM_FONT_GOOGLE, CUPOM_FONT_WEIGHT } from '@/lib/cupomTermicoConstants';
-import { DOCUMENTO_COMERCIAL_A4_FONT } from '@/lib/documentoComercialA4';
+import {
+  DOCUMENTO_COMERCIAL_A4_FONT,
+  DOCUMENTO_COMERCIAL_A4_FONT_GOOGLE,
+} from '@/lib/documentoComercialA4';
 
 const FONT = "'DIN 1451', DINish, system-ui, -apple-system, sans-serif";
 
@@ -256,10 +258,10 @@ export default function OrcamentoRapidoCupom({
       <title>Orçamento</title>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      ${isA4 ? `<link href="${CUPOM_FONT_GOOGLE}" rel="stylesheet">` : ''}
+      ${isA4 ? `<link href="${DOCUMENTO_COMERCIAL_A4_FONT_GOOGLE}" rel="stylesheet">` : ''}
       <style>
         * { box-sizing: border-box; }
-        html, body { margin: 0; padding: 0; background: #fff; font-family: ${isA4 ? DOCUMENTO_COMERCIAL_A4_FONT : FONT}; font-weight: ${isA4 ? CUPOM_FONT_WEIGHT : '400'}; }
+        html, body { margin: 0; padding: 0; background: #fff; font-family: ${isA4 ? DOCUMENTO_COMERCIAL_A4_FONT : FONT}; font-weight: 400; -webkit-font-smoothing: antialiased; }
         @media print {
           * { margin: 0; padding: 0; }
           body { margin: 0; padding: 0; }

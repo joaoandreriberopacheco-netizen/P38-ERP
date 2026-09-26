@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
 import { normalizeEmpresaCupom, extractObservacoesUsuario } from '@/lib/orcamentoRapidoCupom';
-import { ensureCupomTermicoFontLoaded } from '@/lib/cupomTermicoFont';
 import {
   buildResumoDocumentoComercial,
   DOCUMENTO_COMERCIAL_A4_BORDER,
   DOCUMENTO_COMERCIAL_A4_BORDER_STRONG,
   documentoComercialA4DocStyle,
   documentoComercialA4PageStyle,
+  ensureDocumentoComercialA4FontLoaded,
   fmtDataDocumento,
   fmtMoedaBRL,
   fmtNumeroPt,
@@ -117,7 +117,7 @@ export default function DocumentoComercialA4({
   const pagamentosLista = Array.isArray(pagamentos) ? pagamentos.filter((p) => p?.valor > 0) : [];
 
   useEffect(() => {
-    ensureCupomTermicoFontLoaded().catch(() => {});
+    ensureDocumentoComercialA4FontLoaded().catch(() => {});
   }, []);
 
   const metaLinhaStyle = {

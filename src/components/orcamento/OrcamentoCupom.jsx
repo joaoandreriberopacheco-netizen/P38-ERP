@@ -13,8 +13,10 @@ import {
   orcamentoCupomLarguraPreviewPx,
   orcamentoCupomPageSizeCss,
 } from '@/lib/orcamentoCupomFormato';
-import { CUPOM_FONT_GOOGLE, CUPOM_FONT_WEIGHT } from '@/lib/cupomTermicoConstants';
-import { DOCUMENTO_COMERCIAL_A4_FONT } from '@/lib/documentoComercialA4';
+import {
+  DOCUMENTO_COMERCIAL_A4_FONT,
+  DOCUMENTO_COMERCIAL_A4_FONT_GOOGLE,
+} from '@/lib/documentoComercialA4';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtData = () => new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -181,7 +183,7 @@ export default function OrcamentoCupom({ itens, total, desconto, subtotal, obser
     // HTML genérico para print em qualquer dispositivo (desktop)
     const isA4 = formato === 'a4';
     const fontLink = isA4
-      ? CUPOM_FONT_GOOGLE
+      ? DOCUMENTO_COMERCIAL_A4_FONT_GOOGLE
       : 'https://fonts.googleapis.com/css2?family=Ubuntu+Sans+Mono:wght@400;700&display=swap';
     const bodyFont = isA4 ? DOCUMENTO_COMERCIAL_A4_FONT : "'Ubuntu Sans Mono', monospace";
 
@@ -192,7 +194,7 @@ export default function OrcamentoCupom({ itens, total, desconto, subtotal, obser
       <link href="${fontLink}" rel="stylesheet">
       <style>
         * { box-sizing: border-box; }
-        html, body { margin: 0; padding: 0; background: #fff; font-family: ${bodyFont}; font-weight: ${isA4 ? CUPOM_FONT_WEIGHT : '400'}; }
+        html, body { margin: 0; padding: 0; background: #fff; font-family: ${bodyFont}; font-weight: 400; -webkit-font-smoothing: antialiased; }
         @media print {
           * { margin: 0; padding: 0; }
           body { margin: 0; padding: 0; }

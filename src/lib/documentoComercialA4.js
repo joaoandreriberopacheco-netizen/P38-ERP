@@ -1,10 +1,15 @@
 /**
  * Estilo A4 “proposta comercial” (referência: scripts/cotacao-miguel-alejandro-osorio.html).
- * Tipografia sans limpa, tabela com totais no corpo e bloco de observações.
+ * Tipografia: Segoe UI no PDF de referência; Inter como fallback web — ver documentoComercialA4Font.js.
  */
 
-/** Barlow regular (não Condensed) — alinhado ao cupom/relatórios P38. */
-export const DOCUMENTO_COMERCIAL_A4_FONT = "'Barlow', sans-serif";
+import { DOCUMENTO_COMERCIAL_A4_FONT } from '@/lib/documentoComercialA4Font';
+
+export {
+  DOCUMENTO_COMERCIAL_A4_FONT,
+  DOCUMENTO_COMERCIAL_A4_FONT_GOOGLE,
+  ensureDocumentoComercialA4FontLoaded,
+} from '@/lib/documentoComercialA4Font';
 
 /** Linha fina de tabela (mesmo peso visual das tabelas do app). */
 export const DOCUMENTO_COMERCIAL_A4_BORDER = '#e8e8e8';

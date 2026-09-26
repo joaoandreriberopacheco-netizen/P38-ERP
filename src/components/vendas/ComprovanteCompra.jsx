@@ -34,7 +34,12 @@ import {
 } from '@/lib/cupomTermicoConstants';
 import { ensureCupomTermicoFontLoaded } from '@/lib/cupomTermicoFont';
 import DocumentoComercialA4 from '@/components/documento/DocumentoComercialA4';
-import { mapPedidoVendaParaDocumentoComercial } from '@/lib/documentoComercialA4';
+import {
+  DOCUMENTO_COMERCIAL_A4_FONT,
+  DOCUMENTO_COMERCIAL_A4_FONT_GOOGLE,
+  ensureDocumentoComercialA4FontLoaded,
+  mapPedidoVendaParaDocumentoComercial,
+} from '@/lib/documentoComercialA4';
 
 /** Exibição de data/hora no fuso do negócio (Tabatinga — `TIMEZONE_SISTEMA`). */
 const fmtDtTZ = (d) => d ? new Intl.DateTimeFormat('pt-BR', { timeZone: TIMEZONE_SISTEMA, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(d)) : '-';
@@ -396,7 +401,12 @@ export default function ComprovanteCompra({ pedido, open = true, onClose }) {
       .catch(() => {
         if (!cancelled) setAgenteLocalOk(false);
       });
-    ensureCupomTermicoFontLoaded().catch(() => {});
+    const fmtAberto = readLocalStorage('comprovante_formato_venda', 'a4');
+    if (fmtAberto === 'a4') {
+      ensureDocumentoComercialA4FontLoaded().catch(() => {});
+    } else {
+      ensureCupomTermicoFontLoaded().catch(() => {});
+    }
     return () => {
       cancelled = true;
     };
@@ -442,16 +452,20 @@ export default function ComprovanteCompra({ pedido, open = true, onClose }) {
         }`
       : '';
 
+    const fontLink = isCupomTermico ? CUPOM_FONT_GOOGLE : DOCUMENTO_COMERCIAL_A4_FONT_GOOGLE;
+    const bodyFontFamily = isCupomTermico ? CUPOM_FONT : DOCUMENTO_COMERCIAL_A4_FONT;
+
     const html = `<!DOCTYPE html><html><head>
       <meta charset="UTF-8">
       <title>Pedido ${pedido?.numero || ''}</title>
-      <link href="${CUPOM_FONT_GOOGLE}" rel="stylesheet">
+      <link href="${fontLink}" rel="stylesheet">
       <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html, body {
           background: #fff;
-          font-family: 'Barlow', sans-serif;
+          font-family: ${bodyFontFamily};
           font-weight: ${CUPOM_FONT_WEIGHT};
+          -webkit-font-smoothing: antialiased;
         }
         ${larguraPaginaCss}
         .p38-cupom-item-desc {
@@ -503,9 +517,12 @@ export default function ComprovanteCompra({ pedido, open = true, onClose }) {
     const el = document.getElementById('cupom-print');
     if (!el) return null;
 
-    await ensureCupomTermicoFontLoaded();
-
     const isA4 = formato === 'a4';
+    if (isA4) {
+      await ensureDocumentoComercialA4FontLoaded();
+    } else {
+      await ensureCupomTermicoFontLoaded();
+    }
 
     const html2canvas = await loadHtml2Canvas();
     const JsPDF = await loadJsPDF();
