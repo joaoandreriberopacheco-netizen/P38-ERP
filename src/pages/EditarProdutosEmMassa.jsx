@@ -16,6 +16,7 @@ import {
   buildProdutoUnidadesPatchFromVitrine,
 } from '@/lib/productUnitsCrud';
 import { P38MobileLine, P38MobileLineList } from '@/components/ui/p38-mobile-line';
+import { toast } from 'sonner';
 
 export default function EditarProdutosEmMassa() {
   const [parsedData, setParsedData] = useState(null);
@@ -24,22 +25,42 @@ export default function EditarProdutosEmMassa() {
   const [salvando, setSalvando] = useState(false);
   const [salvouOk, setSalvouOk] = useState(false);
   const [salvouOkEmbalagens, setSalvouOkEmbalagens] = useState(false);
+  const [salvouOkEstoque, setSalvouOkEstoque] = useState(false);
+  const [resultadoSucesso, setResultadoSucesso] = useState(null);
+  const [resultadoEmbalagensSucesso, setResultadoEmbalagensSucesso] = useState(null);
+  const [resultadoEstoqueSucesso, setResultadoEstoqueSucesso] = useState(null);
   const [processandoBackfillLegado, setProcessandoBackfillLegado] = useState(false);
   const [resumoBackfillLegado, setResumoBackfillLegado] = useState(null);
+
+  const resumirAlterados = (alterados = []) => ({
+    total: alterados.length,
+    novos: alterados.filter((item) => item.isNew).length,
+    atualizados: alterados.filter((item) => !item.isNew).length,
+  });
+
+  const mensagemImportacaoConcluida = ({ total, novos, atualizados }) => {
+    const partes = [`Processo finalizado: ${total} produto(s) processado(s)`];
+    if (novos > 0) partes.push(`${novos} criado(s)`);
+    if (atualizados > 0) partes.push(`${atualizados} atualizado(s)`);
+    return partes.join(' · ');
+  };
 
   const handleParsed = useCallback((data) => {
     setParsedData(data);
     setSalvouOk(false);
+    setResultadoSucesso(null);
   }, []);
 
   const handleParsedEmbalagens = useCallback((data) => {
     setParsedEmbalagens(data);
     setSalvouOkEmbalagens(false);
+    setResultadoEmbalagensSucesso(null);
   }, []);
 
   const handleParsedEstoque = useCallback((data) => {
     setParsedEstoque(data);
-    setSalvouOk(false);
+    setSalvouOkEstoque(false);
+    setResultadoEstoqueSucesso(null);
   }, []);
 
   const handleConfirmar = async () => {
@@ -48,6 +69,7 @@ export default function EditarProdutosEmMassa() {
       return;
     }
     setSalvando(true);
+    const resumo = resumirAlterados(parsedData.alterados);
     try {
       console.log('🔄 Iniciando sincronização de', parsedData.alterados.length, 'produtos');
       const user = await base44.auth.me();
@@ -147,11 +169,14 @@ export default function EditarProdutosEmMassa() {
         }
       }
       console.log('✅ Sincronização concluída com sucesso');
+      const mensagem = mensagemImportacaoConcluida(resumo);
+      toast.success(mensagem);
+      setResultadoSucesso({ ...resumo, mensagem });
       setSalvouOk(true);
       setParsedData(null);
     } catch (error) {
       console.error('❌ Erro na sincronização:', error);
-      alert(`Erro ao sincronizar: ${error?.message || 'Erro desconhecido'}`);
+      toast.error(`Erro ao sincronizar: ${error?.message || 'Erro desconhecido'}`);
     } finally {
       setSalvando(false);
     }
@@ -160,6 +185,7 @@ export default function EditarProdutosEmMassa() {
   const handleConfirmarEmbalagens = async () => {
     if (!parsedEmbalagens?.alterados?.length) return;
     setSalvando(true);
+    const resumo = resumirAlterados(parsedEmbalagens.alterados);
     try {
       const user = await base44.auth.me();
       const idsAfetados = parsedEmbalagens.alterados.map((a) => a.id).filter(Boolean);
@@ -195,11 +221,14 @@ export default function EditarProdutosEmMassa() {
           await base44.entities.Produto.update(id, dadosAtualizacao);
         }
       }
+      const mensagem = `Processo finalizado: ${resumo.total} produto(s) com embalagens atualizadas.`;
+      toast.success(mensagem);
+      setResultadoEmbalagensSucesso({ ...resumo, mensagem });
       setSalvouOkEmbalagens(true);
       setParsedEmbalagens(null);
     } catch (error) {
       console.error('❌ Erro na sincronização de embalagens:', error);
-      alert(`Erro ao gravar embalagens: ${error?.message || 'Erro desconhecido'}`);
+      toast.error(`Erro ao gravar embalagens: ${error?.message || 'Erro desconhecido'}`);
     } finally {
       setSalvando(false);
     }
@@ -208,6 +237,7 @@ export default function EditarProdutosEmMassa() {
   const handleConfirmarEstoque = async () => {
     if (!parsedEstoque?.alterados?.length) return;
     setSalvando(true);
+    const total = parsedEstoque.alterados.length;
     try {
       const user = await base44.auth.me();
       
@@ -229,7 +259,10 @@ export default function EditarProdutosEmMassa() {
         });
       }
       
-      setSalvouOk(true);
+      const mensagem = `Processo finalizado: ${total} produto(s) com estoque atualizado.`;
+      toast.success(mensagem);
+      setResultadoEstoqueSucesso({ total, mensagem });
+      setSalvouOkEstoque(true);
       setParsedEstoque(null);
     } finally {
       setSalvando(false);
@@ -383,17 +416,20 @@ export default function EditarProdutosEmMassa() {
               <Button
                 onClick={handleConfirmar}
                 disabled={!podeConfirmar || salvando}
-                className="w-full bg-background dark:bg-card dark:text-foreground hover:bg-primary/90 dark:hover:bg-muted h-11 text-sm font-medium"
+                className="w-full h-11 text-sm font-medium"
               >
                 {salvando ? 'Sincronizando...' : `Confirmar Sincronização (${parsedData.alterados?.length ?? 0} registros)`}
               </Button>
             </div>
           )}
 
-          {salvouOk && !parsedEstoque && (
+          {salvouOk && resultadoSucesso && (
             <div className="rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 p-4 text-center">
               <p className="text-sm font-medium text-green-700 dark:text-green-400">
-                ✓ Sincronização concluída com sucesso!
+                ✓ Importação concluída com sucesso
+              </p>
+              <p className="text-sm text-green-800 dark:text-green-200 mt-1">
+                {resultadoSucesso.mensagem}
               </p>
             </div>
           )}
@@ -450,7 +486,7 @@ export default function EditarProdutosEmMassa() {
               <Button
                 onClick={handleConfirmarEmbalagens}
                 disabled={!podeConfirmarEmbalagens || salvando}
-                className="w-full bg-background dark:bg-card dark:text-foreground hover:bg-primary/90 dark:hover:bg-muted h-11 text-sm font-medium"
+                className="w-full h-11 text-sm font-medium"
               >
                 {salvando
                   ? 'Gravando embalagens…'
@@ -459,10 +495,13 @@ export default function EditarProdutosEmMassa() {
             </div>
           )}
 
-          {salvouOkEmbalagens && (
+          {salvouOkEmbalagens && resultadoEmbalagensSucesso && (
             <div className="rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 p-4 text-center">
               <p className="text-sm font-medium text-green-700 dark:text-green-400">
-                ✓ Embalagens gravadas: base, alternativas e unidade vitrine atualizadas no cadastro.
+                ✓ Embalagens gravadas com sucesso
+              </p>
+              <p className="text-sm text-green-800 dark:text-green-200 mt-1">
+                {resultadoEmbalagensSucesso.mensagem}
               </p>
             </div>
           )}
@@ -524,17 +563,20 @@ export default function EditarProdutosEmMassa() {
               <Button
                 onClick={handleConfirmarEstoque}
                 disabled={!podeConfirmarEstoque || salvando}
-                className="w-full bg-background dark:bg-card dark:text-foreground hover:bg-primary/90 dark:hover:bg-muted h-11 text-sm font-medium"
+                className="w-full h-11 text-sm font-medium"
               >
                 {salvando ? 'Atualizando estoque...' : `Confirmar Atualização (${parsedEstoque.alterados?.length ?? 0} produtos)`}
               </Button>
             </div>
           )}
 
-          {salvouOk && parsedEstoque === null && (
+          {salvouOkEstoque && resultadoEstoqueSucesso && (
             <div className="rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 p-4 text-center">
               <p className="text-sm font-medium text-green-700 dark:text-green-400">
-                ✓ Estoque atualizado e movimentações registradas com sucesso!
+                ✓ Estoque atualizado com sucesso
+              </p>
+              <p className="text-sm text-green-800 dark:text-green-200 mt-1">
+                {resultadoEstoqueSucesso.mensagem}
               </p>
             </div>
           )}
