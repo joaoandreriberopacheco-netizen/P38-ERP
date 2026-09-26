@@ -30,6 +30,7 @@ import {
 } from '@/lib/catalogSalesVelocity';
 import { aggregateCatalogEstoqueExibicao, resolveCatalogEstoqueExibicao } from '@/lib/catalogEstoqueVirtual';
 import { LevelControl } from './LevelControl';
+import { getCatalogo4x3DisplayName, getCatalogo4x3Subtitle } from '@/lib/catalogo4x3Client';
 
 export { LevelControl };
 
@@ -566,8 +567,15 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
   );
 });
 
+function catalogRowLabel(produto, hierarchyMode) {
+  if (hierarchyMode === '4x3') {
+    return produto?.nome_catalogo || getCatalogo4x3DisplayName(produto);
+  }
+  return produto?.nome;
+}
+
 // ── Linha de SKU ───────────────────────────────────────────────────────────────
-const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, produtoWidth, produtoCellStyle, readOnly, salesVelocityMap, catalogStockContext }) {
+const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, produtoWidth, produtoCellStyle, readOnly, salesVelocityMap, catalogStockContext, hierarchyMode = 'cadastro' }) {
   const p = row.produto;
   const isPrimeiroNivel = row.level === 1;
   const hierDepth = catalogHierDepth(row.level);
@@ -586,7 +594,7 @@ const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, p
             produto={p}
           >
             <span className={isPrimeiroNivel ? CATALOG_ROW_DESC_CLASS : CATALOG_CHILD_LABEL_CLASS}>
-              {p.nome}
+              {catalogRowLabel(p, hierarchyMode)}
             </span>
             {p.codigo_interno && (
               <span className="text-[10px] font-mono text-muted-foreground break-all leading-tight">
@@ -613,14 +621,15 @@ const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, p
 // masterLevel é controlado pelo pai (painel fixo da página Produtos).
 // expandedKeys é gerenciado internamente — toggle manual do usuário funciona
 // independente do nível selecionado.
-export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = DEFAULT_COLS, masterLevel = TREE_GRID_EXPAND_ALL_LEVEL, readOnly = false, sortOrder = 'az', groupByCategory = false, onExpandedKeysChange, salesVelocityMap = {}, catalogStockContext = null, catalogFilters = null }) {
+export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = DEFAULT_COLS, masterLevel = TREE_GRID_EXPAND_ALL_LEVEL, readOnly = false, sortOrder = 'az', groupByCategory = false, hierarchyMode = 'cadastro', onExpandedKeysChange, salesVelocityMap = {}, catalogStockContext = null, catalogFilters = null }) {
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const scrollContainerRef = useRef(null);
   const treeRef = useRef(null);
   const pendingScrollRestoreRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(0);
 
-  const rawTree = useCatalogTreeGrid(produtos, { groupByCategory });
+  const effectiveGroupByCategory = hierarchyMode === '4x3' ? false : groupByCategory;
+  const rawTree = useCatalogTreeGrid(produtos, { groupByCategory: effectiveGroupByCategory, hierarchyMode });
   const tree = useMemo(
     () =>
       pruneTreeForGroupAnalysis(rawTree, {
@@ -633,8 +642,8 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
   treeRef.current = tree;
 
   const produtosStructureSig = useMemo(
-    () => catalogProdutosStructureSig(produtos, { groupByCategory }),
-    [produtos, groupByCategory]
+    () => catalogProdutosStructureSig(produtos, { groupByCategory: effectiveGroupByCategory, hierarchyMode }),
+    [produtos, effectiveGroupByCategory, hierarchyMode]
   );
   const groupAnalysisSig = useMemo(
     () => catalogGroupAnalysisSig(catalogFilters),
@@ -652,9 +661,9 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
       pendingScrollRestoreRef.current = scrollEl.scrollTop;
     }
     setExpandedKeys(
-      resolveExpandedKeysForMasterLevel(treeRef.current, masterLevel, groupByCategory),
+      resolveExpandedKeysForMasterLevel(treeRef.current, masterLevel, effectiveGroupByCategory),
     );
-  }, [produtosStructureSig, groupByCategory, masterLevel, groupAnalysisSig]);
+  }, [produtosStructureSig, effectiveGroupByCategory, masterLevel, groupAnalysisSig]);
 
   useEffect(() => {
     onExpandedKeysChange?.(expandedKeys);
@@ -671,7 +680,7 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
     for (const row of rows) {
       maxHierDepth = Math.max(maxHierDepth, catalogHierDepth(row.level));
       if (row.type === 'group') labels.push(row.label);
-      else labels.push(row.produto?.nome);
+      else labels.push(catalogRowLabel(row.produto, hierarchyMode));
     }
     return computeCatalogProdutoColWidth(labels, {
       readOnly,
@@ -743,7 +752,7 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
       if (row.type === 'group') {
         return estimateCatalogProdutoRowHeight(row.label, { colWidth: produtoWidth, isGroup: true });
       }
-      return estimateCatalogProdutoRowHeight(row.produto?.nome, {
+      return estimateCatalogProdutoRowHeight(catalogRowLabel(row.produto, hierarchyMode), {
         colWidth: produtoWidth,
         codigoInterno: Boolean(row.produto?.codigo_interno),
       });
@@ -827,6 +836,7 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
                         produtoWidth={produtoWidth}
                         produtoCellStyle={produtoCellStyle}
                         readOnly={readOnly}
+                        hierarchyMode={hierarchyMode}
                         salesVelocityMap={salesVelocityMap}
                         catalogStockContext={catalogStockContext} />
                 )}

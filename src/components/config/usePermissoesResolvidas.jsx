@@ -242,10 +242,11 @@ export const ALL_MENU_ITEMS = [
           p?.estoque?.compras_ativo,
       },
       {
-        name: 'Catálogo Excel',
-        page: 'CatalogoExcel',
+        name: 'Catálogo 4×3',
+        page: 'ProdutosCatalogo4x3',
         icon: Sparkles,
         permissaoCheck: (p) =>
+          p?.estoque?.visualizar_produtos ||
           p?.estoque?.compras?.sugestoes ||
           p?.estoque?.compras?.cotacoes ||
           p?.estoque?.compras?.pedidos ||

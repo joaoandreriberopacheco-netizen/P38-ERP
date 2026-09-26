@@ -13,6 +13,7 @@ import {
   resolveExpandedKeysForMasterLevel,
   TREE_GRID_EXPAND_ALL_LEVEL,
 } from './treegrid/useTreeGrid';
+import { getCatalogo4x3DisplayName } from '@/lib/catalogo4x3Client';
 import {
   catalogGroupAnalysisSig,
   getCatalogFlattenOptions,
@@ -523,7 +524,7 @@ function CatalogoMobileTabulatedValues({ produto, catalogStockContext = null, cl
 }
 
 // ── Linha de SKU — cartão de produto (grelha completa, ≠ faixa de família) ─────
-const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing, catalogStockContext = null, underOpenGroup = false }) {
+const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing, catalogStockContext = null, underOpenGroup = false, hierarchyMode = 'cadastro' }) {
   const p = row.produto;
   const est = resolveCatalogEstoqueExibicao(p, catalogStockContext);
   const estoqueExibicao = est.quantidade;
@@ -570,7 +571,10 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onOpenPricing, catalo
                 </span>
               )}
             </div>
-            <CatalogoMobileDescBlock nome={p.nome} tier={tier} />
+            <CatalogoMobileDescBlock
+              nome={hierarchyMode === '4x3' ? (p.nome_catalogo || getCatalogo4x3DisplayName(p)) : p.nome}
+              tier={tier}
+            />
             <CatalogoMobileTabulatedValues produto={p} catalogStockContext={catalogStockContext} className="mt-0.5" />
             {apresent && (
               <p className="mt-2 text-[9px] text-muted-foreground truncate">
@@ -898,14 +902,14 @@ export function CatalogoMobileScrollShell({ catalogChrome, children }) {
 }
 
 // ── Componente principal ───────────────────────────────────────────────────────
-export default function MobileHierarquica({ produtos, onEdit, groupByCategory = false, masterLevel = 2, sortOrder = 'az', onExpandedKeysChange, catalogFilters = null, salesVelocityMap = {}, catalogStockContext = null, flatList = false }) {
+export default function MobileHierarquica({ produtos, onEdit, groupByCategory = false, hierarchyMode = 'cadastro', masterLevel = 2, sortOrder = 'az', onExpandedKeysChange, catalogFilters = null, salesVelocityMap = {}, catalogStockContext = null, flatList = false }) {
   const scrollElement = useCatalogoMobileScrollElement();
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const [pricingProduto, setPricingProduto] = useState(null);
   const pendingScrollRestoreRef = useRef(null);
 
-  const effectiveGroupByCategory = flatList ? false : groupByCategory;
-  const rawTree = useCatalogTreeGrid(produtos, { groupByCategory: effectiveGroupByCategory });
+  const effectiveGroupByCategory = flatList || hierarchyMode === '4x3' ? false : groupByCategory;
+  const rawTree = useCatalogTreeGrid(produtos, { groupByCategory: effectiveGroupByCategory, hierarchyMode });
   const tree = useMemo(
     () =>
       pruneTreeForGroupAnalysis(rawTree, {
@@ -916,8 +920,8 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
     [rawTree, catalogFilters, salesVelocityMap, catalogStockContext],
   );
   const produtosStructureSig = useMemo(
-    () => catalogProdutosStructureSig(produtos, { groupByCategory: effectiveGroupByCategory }),
-    [produtos, effectiveGroupByCategory]
+    () => catalogProdutosStructureSig(produtos, { groupByCategory: effectiveGroupByCategory, hierarchyMode }),
+    [produtos, effectiveGroupByCategory, hierarchyMode]
   );
   const groupAnalysisSig = useMemo(
     () => catalogGroupAnalysisSig(catalogFilters),
@@ -1057,6 +1061,7 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
                     onOpenPricing={setPricingProduto}
                     catalogStockContext={catalogStockContext}
                     underOpenGroup={underOpenGroup}
+                    hierarchyMode={hierarchyMode}
                   />
                 )}
               </div>

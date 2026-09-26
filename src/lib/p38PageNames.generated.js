@@ -82,6 +82,7 @@ export const P38_PAGE_NAMES = [
   "PrecoJustoDashboard",
   "PreviewTemaClaro",
   "Produtos",
+  "ProdutosCatalogo4x3",
   "ReimpressaoDocumentos",
   "RelatorioCatalogoEstoque",
   "RelatorioCatalogoEstoqueGlobal",

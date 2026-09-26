@@ -15,6 +15,7 @@ import ProdutosAnaliseAgrupamentoControl from '@/components/produtos/ProdutosAna
 import ProdutosAbcdQuickFilter from '@/components/produtos/ProdutosAbcdQuickFilter';
 import ProdutosNumericMetricFilter from '@/components/produtos/ProdutosNumericMetricFilter';
 import HierarquiaPortalEntry from '@/components/hierarquia-portal/HierarquiaPortalEntry';
+import CatalogoExcelEntry from '@/components/hierarquia-portal/CatalogoExcelEntry';
 import ModeloCatalogoEntry from '@/components/modelo-catalogo/ModeloCatalogoEntry';
 import CadastroProdutoV2Entry from '@/components/cadastro-produto-v2/CadastroProdutoV2Entry';
 import { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
@@ -80,6 +81,9 @@ function ProdutosHeader({
   estoqueVirtualCarregando = false,
   estoqueVirtualErro = false,
   onClearFilters,
+  catalogTitle = 'Catálogo',
+  catalogSubtitle,
+  hideGroupTreeByCategory = false,
 }) {
   const isMobileLayout = useCompactShell();
   const quantidadeOperador = filters.quantidadeOperador || 'all';
@@ -97,8 +101,11 @@ function ProdutosHeader({
       <div className="w-full min-w-0 px-3 py-2 space-y-2">
         <div className="flex items-center gap-2">
           <div className="flex-1 min-w-0">
-            <h1 className={cn(P38_SHELL_TITLE, 'truncate')}>Catálogo</h1>
+            <h1 className={cn(P38_SHELL_TITLE, 'truncate')}>{catalogTitle}</h1>
             <div className={cn(P38_SHELL_DESC, 'flex flex-wrap items-center gap-x-3 gap-y-0.5 min-w-0')}>
+              {catalogSubtitle && (
+                <span className="truncate opacity-90 w-full sm:w-auto">{catalogSubtitle}</span>
+              )}
               {isSummaryFiltered && (
                 <Filter
                   className="w-3 h-3 p38-text-accent flex-shrink-0"
@@ -120,6 +127,7 @@ function ProdutosHeader({
           <div className="flex items-center gap-1 flex-shrink-0 min-w-0 max-w-[58vw] sm:max-w-none overflow-x-auto overscroll-x-contain">
             <CadastroProdutoV2Entry size="icon" className="h-9 w-9 px-0" variant="ghost" />
             <HierarquiaPortalEntry size="icon" className="h-9 w-9 px-0" variant="ghost" />
+            <CatalogoExcelEntry size="icon" className="h-9 w-9 px-0" variant="ghost" />
             <ModeloCatalogoEntry size="icon" className="h-9 w-9 px-0" variant="ghost" />
             <Button
               type="button"
@@ -448,6 +456,7 @@ function ProdutosHeader({
                 </span>
                 <LevelControl level={treeLevel} onChange={setTreeLevel} />
               </div>
+              {!hideGroupTreeByCategory && (
               <div className={cn('col-span-2 flex items-center gap-2 px-3 h-9 min-w-0', PRODUTOS_FILTER_PANEL)}>
                 <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground flex-shrink-0">
                   Agrupamento
@@ -458,6 +467,7 @@ function ProdutosHeader({
                   className="h-9 bg-transparent px-0"
                 />
               </div>
+              )}
               <div className="col-span-4">
                 <ProdutosAnaliseAgrupamentoControl
                   filters={filters}

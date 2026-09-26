@@ -70,6 +70,7 @@ import {
 } from '@/hooks/useP38Entities';
 import { usePermissoesUsuario } from '@/hooks/usePermissoesUsuario';
 import { filtrarColunasCatalogoPorPermissao } from '@/lib/permissaoKit';
+import { enrichProdutosCatalogo4x3 } from '@/lib/catalogo4x3Client';
 
 const CATALOG_GROUP_BY_CATEGORY_KEY = 'catalogo.groupTreeByCategory';
 
@@ -172,7 +173,7 @@ function calculateProdutoStats(produtosList, catalogStockContext = null) {
   };
 }
 
-function ProdutosPageContent() {
+function ProdutosPageContent({ hierarchyMode = 'cadastro' } = {}) {
   const { tem: podePerm } = usePermissoesUsuario();
   const podeVerCusto = podePerm('estoque.ver_custo_compra', 'estoque.visualizar_produtos');
 
@@ -1233,6 +1234,11 @@ function ProdutosPageContent() {
     [filteredProdutosBase, sortOrder],
   );
 
+  const produtosArvore = useMemo(() => {
+    if (hierarchyMode !== '4x3') return filteredProdutos;
+    return enrichProdutosCatalogo4x3(filteredProdutos);
+  }, [filteredProdutos, hierarchyMode]);
+
   const hasFilteredProdutos = filteredProdutos.length > 0;
 
   const fornecedorMap = useMemo(() => {
@@ -1613,8 +1619,11 @@ function ProdutosPageContent() {
     onOpenMassCategory: handleOpenMassCategory,
     onOpenMassPrecificacao: handleOpenMassPrecificacao,
     onOpenPontosPedido: handleOpenPontosPedido,
-    groupTreeByCategory,
-    onGroupTreeByCategoryChange: handleGroupTreeByCategoryChange,
+    groupTreeByCategory: hierarchyMode === '4x3' ? false : groupTreeByCategory,
+    onGroupTreeByCategoryChange: hierarchyMode === '4x3' ? undefined : handleGroupTreeByCategoryChange,
+    catalogTitle: hierarchyMode === '4x3' ? 'Catálogo 4×3' : 'Catálogo',
+    catalogSubtitle: hierarchyMode === '4x3' ? 'Drill ETAPA → LINHA → produto compra → SKU (Excel)' : undefined,
+    hideGroupTreeByCategory: hierarchyMode === '4x3',
     estoqueVirtualCarregando: estoqueVirtualAtivo && pendenteEstoqueCarregando,
     estoqueVirtualErro: estoqueVirtualAtivo && pendenteEstoqueErro,
     onClearFilters: handleClearCatalogFilters,
@@ -1655,6 +1664,7 @@ function ProdutosPageContent() {
     handleOpenPontosPedido,
     groupTreeByCategory,
     handleGroupTreeByCategoryChange,
+    hierarchyMode,
     handleClearCatalogFilters,
     estoqueVirtualAtivo,
     pendenteEstoqueCarregando,
@@ -1690,13 +1700,13 @@ function ProdutosPageContent() {
 
         {!isDesktop && (
           <CatalogoMobileScrollShell catalogChrome={mobileCatalogChrome}>
-            <MobileHierarquica produtos={filteredProdutos} onEdit={handleEdit} flatList groupByCategory={false} masterLevel={treeLevel} sortOrder={sortOrder} onExpandedKeysChange={handleCatalogExpandedKeysChange} catalogFilters={filters} salesVelocityMap={salesVelocityMap} catalogStockContext={catalogStockContext} />
+            <MobileHierarquica produtos={produtosArvore} onEdit={handleEdit} flatList groupByCategory={false} hierarchyMode={hierarchyMode} masterLevel={treeLevel} sortOrder={sortOrder} onExpandedKeysChange={handleCatalogExpandedKeysChange} catalogFilters={filters} salesVelocityMap={salesVelocityMap} catalogStockContext={catalogStockContext} />
           </CatalogoMobileScrollShell>
         )}
 
         {isDesktop && viewMode === 'dinamica' && (
           <div className="flex flex-col w-full h-full min-h-0">
-            <TreeGrid produtos={filteredProdutos} onEdit={handleEdit} onDelete={setProdutoParaExcluir} visibleColumns={visibleColumnsEffective} masterLevel={treeLevel} sortOrder={sortOrder} groupByCategory={groupTreeByCategory} onExpandedKeysChange={handleCatalogExpandedKeysChange} salesVelocityMap={salesVelocityMap} catalogStockContext={catalogStockContext} catalogFilters={filters} />
+            <TreeGrid produtos={produtosArvore} onEdit={handleEdit} onDelete={setProdutoParaExcluir} visibleColumns={visibleColumnsEffective} masterLevel={treeLevel} sortOrder={sortOrder} groupByCategory={groupTreeByCategory} hierarchyMode={hierarchyMode} onExpandedKeysChange={handleCatalogExpandedKeysChange} salesVelocityMap={salesVelocityMap} catalogStockContext={catalogStockContext} catalogFilters={filters} />
           </div>
         )}
 
@@ -2204,6 +2214,8 @@ function ProdutosPageContent() {
     </div>
   );
 }
+
+export { ProdutosPageContent };
 
 export default function ProdutosPage() {
   return (

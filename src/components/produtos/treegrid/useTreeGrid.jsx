@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { getCatalogo4x3Row } from '@/lib/catalogo4x3Client';
 import { getCatalogoComercialView, formatEstoqueApresentacao, formatQuantidadeCatalogoApresentacao, resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
 import { compareTreeLabels, sortedTreeChildEntries } from '@/lib/treeSort';
 import {
@@ -236,6 +237,64 @@ export function buildCategoryTree(produtos) {
       children,
       skus: inner._rootSkus || [],
     };
+  }
+
+  function precompute(nodeMap) {
+    for (const node of Object.values(nodeMap)) {
+      if (node.children && Object.keys(node.children).length > 0) {
+        precompute(node.children);
+      }
+      const allSkus = collectSkus(node);
+      node._agg = aggregateSkus(allSkus);
+    }
+  }
+  precompute(root);
+
+  return root;
+}
+
+const SEM_4X3_KEY = '(fora do catálogo 4×3)';
+
+function levelLabel4x3(value, fallback = '—') {
+  const s = String(value ?? '').trim();
+  return s || fallback;
+}
+
+/** Árvore drill-down ETAPA → CATEGORIA → SUB → LINHA → comp1 → comp2 → comp3 → SKU */
+export function buildTree4x3(produtos) {
+  const root = {};
+
+  for (const p of produtos) {
+    const custo = calcCusto(p);
+    p.inventario_valorizado = custo * Math.max(0, Number(p.estoque_atual) || 0);
+    const row = getCatalogo4x3Row(p);
+    const path = row
+      ? [
+          levelLabel4x3(row.etapa),
+          levelLabel4x3(row.categoria),
+          levelLabel4x3(row.subcategoria),
+          levelLabel4x3(row.linha),
+          levelLabel4x3(row.comp1),
+          levelLabel4x3(row.comp2),
+          levelLabel4x3(row.comp3),
+        ]
+      : [SEM_4X3_KEY];
+
+    const ensure = (parent, key, level) => {
+      if (!parent[key]) parent[key] = { label: key, level, children: {}, skus: [] };
+      return parent[key];
+    };
+
+    let parent = root;
+    for (let i = 0; i < path.length; i += 1) {
+      const isLast = i === path.length - 1;
+      const node = ensure(parent, path[i], i + 1);
+      if (isLast) {
+        node.skus.push(p);
+      } else {
+        parent = node.children;
+      }
+    }
   }
 
   function precompute(nodeMap) {
@@ -570,8 +629,27 @@ export { resolveExpandedKeysForMasterLevel };
  * Assinatura só da estrutura (filtros / hierarquia) — não inclui preços nem ABCD/IEP.
  * Usada para reiniciar expansão sem colapsar a árvore quando métricas mudam.
  */
-export function catalogProdutosStructureSig(produtos, { groupByCategory = false } = {}) {
+export function catalogProdutosStructureSig(produtos, { groupByCategory = false, hierarchyMode = 'cadastro' } = {}) {
   if (!produtos?.length) return '';
+  if (hierarchyMode === '4x3') {
+    return produtos
+      .map((p) => {
+        const r = getCatalogo4x3Row(p);
+        return [
+          p?.id,
+          r?.etapa,
+          r?.categoria,
+          r?.subcategoria,
+          r?.linha,
+          r?.comp1,
+          r?.comp2,
+          r?.comp3,
+          p?.ativo ? 1 : 0,
+        ].join('|');
+      })
+      .filter(Boolean)
+      .join('\0');
+  }
   return produtos
     .map((p) =>
       [
@@ -635,13 +713,37 @@ export function useTreeGrid(produtos) {
   return useMemo(() => buildTree(produtos), [sig]);
 }
 
-export function useCatalogTreeGrid(produtos, { groupByCategory = false } = {}) {
-  const sig = useMemo(
-    () => (groupByCategory ? categoryTreeSignature(produtos) : catalogTreeSignature(produtos)),
-    [produtos, groupByCategory]
-  );
-  return useMemo(
-    () => (groupByCategory ? buildCategoryTree(produtos) : buildTree(produtos)),
-    [sig, groupByCategory]
-  );
+function catalogTreeSignature4x3(produtos) {
+  if (!produtos?.length) return '';
+  return produtos
+    .map((p) => {
+      const r = getCatalogo4x3Row(p);
+      return [
+        p?.id,
+        r?.etapa,
+        r?.categoria,
+        r?.subcategoria,
+        r?.linha,
+        r?.comp1,
+        r?.comp2,
+        r?.comp3,
+        p?.estoque_atual ?? '',
+        p?.preco_custo_calculado ?? '',
+        p?.preco_venda_padrao ?? '',
+        p?.ativo ? 1 : 0,
+      ].join('|');
+    })
+    .sort()
+    .join('\n');
+}
+
+export function useCatalogTreeGrid(produtos, { groupByCategory = false, hierarchyMode = 'cadastro' } = {}) {
+  const sig = useMemo(() => {
+    if (hierarchyMode === '4x3') return catalogTreeSignature4x3(produtos);
+    return groupByCategory ? categoryTreeSignature(produtos) : catalogTreeSignature(produtos);
+  }, [produtos, groupByCategory, hierarchyMode]);
+  return useMemo(() => {
+    if (hierarchyMode === '4x3') return buildTree4x3(produtos);
+    return groupByCategory ? buildCategoryTree(produtos) : buildTree(produtos);
+  }, [sig, groupByCategory, hierarchyMode]);
 }

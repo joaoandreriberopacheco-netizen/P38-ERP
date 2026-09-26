@@ -20,8 +20,8 @@ export default function CatalogoExcelEntry({ className, variant = 'outline', siz
       asChild
     >
       <Link
-        to={createPageUrl('CatalogoExcel')}
-        title="Catálogo Excel — árvore completa do manifest com drill-down"
+        to={createPageUrl('ProdutosCatalogo4x3')}
+        title="Catálogo 4×3 — mesma tela Produtos, drill-down Excel"
         aria-label="Catálogo Excel"
       >
         <FileSpreadsheet className="h-3.5 w-3.5 shrink-0" aria-hidden />
