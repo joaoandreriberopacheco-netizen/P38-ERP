@@ -9,7 +9,7 @@ import { cn } from '@/components/utils';
 export default function CadastroProdutoV2Entry({ className, variant = 'outline', size = 'sm' }) {
   if (!CADASTRO_PRODUTO_V2_ENABLED) return null;
 
-  const href = `${createPageUrl('HierarquiaPortal')}?tab=cadastro`;
+  const href = createPageUrl('CadastroProdutoV2');
 
   return (
     <Button

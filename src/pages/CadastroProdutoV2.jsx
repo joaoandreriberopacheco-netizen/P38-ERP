@@ -48,5 +48,5 @@ export default function CadastroProdutoV2Page() {
   if (!CADASTRO_PRODUTO_V2_ENABLED) {
     return <Navigate to={createPageUrl('Home')} replace />;
   }
-  return <Navigate to={`${createPageUrl('HierarquiaPortal')}?tab=cadastro`} replace />;
+  return <CadastroProdutoV2Inner />;
 }
