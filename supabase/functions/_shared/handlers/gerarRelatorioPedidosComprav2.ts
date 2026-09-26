@@ -1,5 +1,6 @@
 // Port automático de base44/functions/gerarRelatorioPedidosComprav2/entry.ts
 import type { createP38Client } from '../p38Client.ts';
+import { embarqueIsSaldoPendente } from '../embarqueTipoSaldoPendente.ts';
 
 import { jsPDF } from 'npm:jspdf@2.5.2';
 
@@ -414,7 +415,8 @@ const valorTotalLinhaPdf = (item = {}, pedido = {}) => {
 const getTransportadoraRelatorio = (pedido) => pedido._embarque?.transportadora_nome || 'Sem transportadora';
 const getEtaRelatorio = (pedido) => pedido._embarque?.eta || null;
 const getOrdinalRelatorio = (pedido) => pedido._display_ordinal || pedido._embarque?.numero || '#01';
-const isNecessidadeRelatorio = (pedido) => !!pedido._is_necessidade || pedido._embarque?.tipo === 'Necessidade';
+const isNecessidadeRelatorio = (pedido) =>
+  !!pedido._is_necessidade || embarqueIsSaldoPendente(pedido._embarque?.tipo);
 const getQuantidadeEfetivaItem = (item = {}) =>
   Number(item.quantidade) || Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || 0;
 

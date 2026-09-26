@@ -21,6 +21,7 @@ import {
   pedidoPermiteCardNecessidade,
   quantidadePendenteNecessidadePedido,
 } from '@/lib/pedidoCompraNecessidade';
+import { isEmbarqueSaldoPendente } from '@/lib/embarqueTipoSaldoPendente';
 import {
   SALDO_EMBARQUE_DISPLAY_STATUS,
   buildDisplayItensSaldoEmbarque,
@@ -451,7 +452,8 @@ export function cardEmbarqueContaEmTransito(card = {}) {
   const status = card._display_status || '';
   if (status === 'Concluído' || status === 'Rascunho') return false;
 
-  const ehNecessidade = !!card._is_necessidade || card._embarque?.tipo === 'Necessidade';
+  const ehNecessidade =
+    !!card._is_necessidade || isEmbarqueSaldoPendente(card._embarque);
   const aprovadoFinanceiro =
     pedidoLiberadoParaLogistica(card)
     || status === 'Aprovado'

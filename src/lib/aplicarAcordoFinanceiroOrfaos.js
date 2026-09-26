@@ -24,14 +24,15 @@ import {
   calcValorItensPedidoCompra,
   calcValorTotalPedidoCompra,
 } from '@/lib/pedidoCompraFinanceiro';
+import { isEmbarqueReal, isEmbarqueSaldoPendente } from '@/lib/embarqueTipoSaldoPendente';
 
 const MIN_BASE = 0.009;
 
-/** Soma recebida em embarques reais (exclui Necessidade). */
+/** Soma recebida em embarques reais (exclui saldo pendente pós-recepção). */
 export function calcularTotalRecebidoBasePorProduto(embarques = []) {
   const map = {};
   (embarques || [])
-    .filter((emb) => emb?.tipo !== 'Necessidade')
+    .filter((emb) => isEmbarqueReal(emb))
     .forEach((emb) => {
       getEmbarqueItensLinhas(emb).forEach((linha) => {
         const pid = linha?.produto_id;
@@ -43,11 +44,11 @@ export function calcularTotalRecebidoBasePorProduto(embarques = []) {
   return map;
 }
 
-/** Saldo em embarques tipo Necessidade (pós-recepção). */
+/** Saldo em embarques tipo Pendente (pós-recepção). */
 export function calcularNecessidadeBasePorProduto(embarques = []) {
   const map = {};
   (embarques || [])
-    .filter((emb) => emb?.tipo === 'Necessidade')
+    .filter((emb) => isEmbarqueSaldoPendente(emb))
     .forEach((emb) => {
       getEmbarqueItensLinhas(emb).forEach((linha) => {
         const pid = linha?.produto_id;
@@ -227,7 +228,7 @@ export async function aplicarBaixaLogisticaAcordoFinanceiroOrfaos(
 
     let aplicadoNecessidade = 0;
     if (plano.baixa_necessidade_base > MIN_BASE) {
-      const necessidadeEmbarques = embarquesLocal.filter((e) => e?.tipo === 'Necessidade');
+      const necessidadeEmbarques = embarquesLocal.filter((e) => isEmbarqueSaldoPendente(e));
       for (const emb of necessidadeEmbarques) {
         if (aplicadoNecessidade >= plano.baixa_necessidade_base - MIN_BASE) break;
         const faltante = roundToTwoDecimals(plano.baixa_necessidade_base - aplicadoNecessidade);

@@ -1,4 +1,5 @@
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
+import { isEmbarqueSaldoPendente } from '@/lib/embarqueTipoSaldoPendente';
 
 /**
  * Oculta registros tipo Necessidade em stand by (sem transporte/datas e sem itens pendentes).
@@ -11,7 +12,7 @@ import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
  */
 export function filterEmbarquesVisiveisParaPedido(embarques) {
   return (embarques || []).filter((emb) => {
-    const tipoNecessidade = emb?.tipo === 'Necessidade';
+    const tipoNecessidade = isEmbarqueSaldoPendente(emb);
     const semVidaOperacional = !emb?.transportadora_id && !emb?.transportadora_nome && !emb?.data_embarque && !emb?.eta;
     const statusDormindo = !emb?.status || emb?.status === 'Pendente';
     const temItensPendentes = getEmbarqueItensLinhas(emb).some(

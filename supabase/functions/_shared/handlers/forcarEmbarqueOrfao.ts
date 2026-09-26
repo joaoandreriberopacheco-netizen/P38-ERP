@@ -1,5 +1,9 @@
-// Cria embarque tipo Necessidade com linhas EmbarqueItem (SQL). Sem espelho JSON.
+// Cria embarque tipo Pendente (saldo pós-recepção) com linhas EmbarqueItem (SQL). Sem espelho JSON.
 import type { createP38Client } from '../p38Client.ts';
+import {
+  embarqueIsSaldoPendente,
+  embarqueTipoSaldoPendenteParaGravar,
+} from '../embarqueTipoSaldoPendente.ts';
 
 function toNumber(value: unknown) {
   return Number(value) || 0;
@@ -61,11 +65,11 @@ export async function handle(req: Request, base44: Awaited<ReturnType<typeof cre
       return Response.json({ success: true, created: false, reason: 'sem saldo órfão' });
     }
 
-    const existente = (embRows || []).find((emb) => emb?.tipo === 'Necessidade');
+    const existente = (embRows || []).find((emb) => embarqueIsSaldoPendente(emb?.tipo));
     let embarqueId = existente?.id as string | undefined;
 
     if (!embarqueId) {
-      const outros = (embRows || []).filter((emb) => emb?.tipo !== 'Necessidade');
+      const outros = (embRows || []).filter((emb) => !embarqueIsSaldoPendente(emb?.tipo));
       const letra = String.fromCharCode(65 + outros.length);
       const criado = await base44.asServiceRole.entities.Embarque.create({
         pedido_compra_id: pedido.id,
@@ -74,7 +78,7 @@ export async function handle(req: Request, base44: Awaited<ReturnType<typeof cre
         fornecedor_nome: pedido.fornecedor_nome,
         numero: String(outros.length + 1).padStart(2, '0'),
         codigo_exibicao: `${pedido.numero}-${letra}`,
-        tipo: 'Necessidade',
+        tipo: embarqueTipoSaldoPendenteParaGravar(),
         status: 'Pendente',
         status_recebimento: 'Pendente',
         observacoes: 'Embarque órfão forçado automaticamente para saldo pendente.',

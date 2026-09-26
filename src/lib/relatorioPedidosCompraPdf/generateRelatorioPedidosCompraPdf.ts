@@ -6,6 +6,7 @@ import {
   buildEmbarqueCardCountLabelRelatorio,
   resolveQuantidadeEmbarcadaCard,
 } from '@/lib/comprasEmbarqueCardResumo';
+import { isEmbarqueSaldoPendente } from '@/lib/embarqueTipoSaldoPendente';
 
 /** Escala só no eixo Y (glifos mais altos, largura inalterada). PDF Tm: sx=1, sy>1. */
 const PDF_GLYPH_STRETCH_Y = 1.1;
@@ -472,7 +473,8 @@ const valorTotalLinhaPdf = (item = {}, pedido = {}) => {
 const getTransportadoraRelatorio = (pedido) => pedido._embarque?.transportadora_nome || 'Sem transportadora';
 const getEtaRelatorio = (pedido) => pedido._embarque?.eta || null;
 const getOrdinalRelatorio = (pedido) => pedido._display_ordinal || pedido._embarque?.numero || '#01';
-const isNecessidadeRelatorio = (pedido) => !!pedido._is_necessidade || pedido._embarque?.tipo === 'Necessidade';
+const isNecessidadeRelatorio = (pedido) =>
+  !!pedido._is_necessidade || isEmbarqueSaldoPendente(pedido._embarque);
 const getQuantidadeEfetivaItem = (item = {}) =>
   Number(item.quantidade) || Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || 0;
 

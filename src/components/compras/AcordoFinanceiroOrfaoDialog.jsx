@@ -289,7 +289,7 @@ export default function AcordoFinanceiroOrfaoDialog({
             />
             <span className="text-xs text-muted-foreground leading-relaxed">
               Zerar ou reduzir o saldo pendente no pedido (recomendado): baixa primeiro embarques
-              Necessidade e depois reduz a quantidade comprada, como na folha logística.
+              Pendente (saldo pós-recepção) e depois reduz a quantidade comprada, como na folha logística.
             </span>
           </label>
 
@@ -298,7 +298,7 @@ export default function AcordoFinanceiroOrfaoDialog({
               <p className="font-medium text-foreground/80">Prévia da baixa</p>
               {planoPorItem.map(({ orfao, plano }) => (
                 <p key={orfao.produto_id}>
-                  {orfao.produto_nome}: Necessidade −{plano.baixa_necessidade_base}, comprada −
+                  {orfao.produto_nome}: Pendente −{plano.baixa_necessidade_base}, comprada −
                   {plano.baixa_comprada_base} (pend. {plano.folha_antes.saldoPendente} → estimado após acordo)
                 </p>
               ))}

@@ -11,7 +11,7 @@ function folha(item, embarques) {
   for (const emb of embarques) {
     for (const l of emb._linhas || []) {
       if (l.produto_id !== pid) continue;
-      if (emb.tipo === 'Necessidade') nec += l.quantidade_embarcada_base || 0;
+      if (emb.tipo === 'Pendente' || emb.tipo === 'Necessidade') nec += l.quantidade_embarcada_base || 0;
       else {
         desp += l.quantidade_embarcada_base || 0;
         rec += l.quantidade_recebida_base || 0;
@@ -30,7 +30,7 @@ const embarques = [
     tipo: 'Embarque',
     _linhas: [{ produto_id: 'p1', quantidade_embarcada_base: 60, quantidade_recebida_base: 50 }],
   },
-  { tipo: 'Necessidade', _linhas: [{ produto_id: 'p1', quantidade_embarcada_base: 5 }] },
+  { tipo: 'Pendente', _linhas: [{ produto_id: 'p1', quantidade_embarcada_base: 5 }] },
 ];
 
 const f = folha(item, embarques);

@@ -1,5 +1,7 @@
+import { isEmbarqueSaldoPendente } from '@/lib/embarqueTipoSaldoPendente';
+
 /**
- * Pedidos/embarques excluídos de Necessidade (legado / decisão operacional).
+ * Pedidos/embarques excluídos de saldo pendente (legado «Necessidade» / decisão operacional).
  * Normalização: trim, sem espaços, maiúsculas (ex.: E62-67G, NXJ-53K, 49K-PKG-A).
  *
  * Importante: despachos com estes códigos continuam na lista Embarques e na Consulta.
@@ -46,7 +48,7 @@ export function resolverCodigoEmbarqueExibicao(pedido, embarque) {
 
 function isNecessidadeEmbarque(embarque) {
   if (!embarque) return false;
-  if (embarque.tipo === 'Necessidade') return true;
+  if (isEmbarqueSaldoPendente(embarque)) return true;
   return (
     !!embarque.observacoes
     && String(embarque.observacoes).includes('criado automaticamente para itens pendentes')

@@ -31,6 +31,10 @@ import { calcValorItensPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { calculateBaseQuantity, commercialQuantityFromBase, getItemCompraExibicaoVitrine } from '@/lib/productUnits';
 import { toLocalDateKey } from '@/components/utils/dateUtils';
+import {
+  embarqueTipoSaldoPendenteParaGravar,
+  isEmbarqueSaldoPendente,
+} from '@/lib/embarqueTipoSaldoPendente';
 
 /** Mínimo por linha (unidade comercial) para contar como falta real. */
 export const MIN_LINHA_PENDENTE_COMERCIAL = 0.01;
@@ -55,7 +59,7 @@ function filtrarEmbarquesParaCalculoNecessidade(pedido, embarquesDoPedido = []) 
 
 export function isNecessidadeRenderizada(embarque) {
   if (!embarque) return false;
-  if (embarque?.tipo === 'Necessidade') return true;
+  if (isEmbarqueSaldoPendente(embarque)) return true;
   return (
     !!embarque?.observacoes &&
     String(embarque.observacoes).includes('criado automaticamente para itens pendentes')
@@ -318,7 +322,7 @@ export function buildEmbarqueVirtualNecessidade(pedido, embarquesDoPedido = [], 
     id: `virtual-necessidade-${pedido.id}`,
     pedido_compra_id: pedido.id,
     numero: `${pedido.numero || 'PC'}-NEC`,
-    tipo: 'Necessidade',
+    tipo: embarqueTipoSaldoPendenteParaGravar(),
     status: 'Pendente',
     status_recebimento: 'Pendente',
     observacoes: 'Embarque de necessidade criado automaticamente para itens pendentes.',

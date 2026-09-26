@@ -4,6 +4,7 @@ import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
 import { getEmbarqueItensLinhas, hydrateEmbarquesFromSql } from '@/lib/fetchEmbarqueItens';
 import { carregarProdutosMap } from '@/lib/embarqueVitrineHelpers';
 import { normalizarPedidoParaRelatorio } from '@/lib/comprasRelatorioPedidos';
+import { isEmbarqueSaldoPendente } from '@/lib/embarqueTipoSaldoPendente';
 
 function buildEmbarqueFallback(pedidoId, pedidoNumero) {
   return {
@@ -34,7 +35,7 @@ async function carregarPedidoParaMinutaAnexos(pedidoId) {
 
   const embarque =
     embarquesDb
-      .filter((item) => item?.tipo !== 'Necessidade')
+      .filter((item) => !isEmbarqueSaldoPendente(item))
       .sort((a, b) => new Date(a.created_date || 0) - new Date(b.created_date || 0))[0]
     || embarquesDb[0]
     || buildEmbarqueFallback(pedidoId, pedido.numero);
