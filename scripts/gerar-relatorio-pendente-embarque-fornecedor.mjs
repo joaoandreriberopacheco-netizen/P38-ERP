@@ -7,13 +7,13 @@
  *   npm run compras:relatorio-pendente-fornecedor
  *   npm run compras:relatorio-pendente-fornecedor -- --fornecedor=tintão --pdf
  *
- * Requer DATABASE_URL (Cursor Cloud / GitHub Actions — ver docs/migration/P38_SECRETS_CANONICOS.md).
+ * Requer Supabase: DATABASE_URL **ou** SUPABASE_SERVICE_ROLE_KEY + project ref (REST).
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import pg from 'pg';
 import { loadDotEnvFiles } from './base44-env.mjs';
-import { resolveP38Secrets } from './p38-secrets.mjs';
+import { resolveP38Secrets, P38_CANONICAL_PROJECT_REF } from './p38-secrets.mjs';
 import { pedidoCompraItemToLegacyMirror } from '../src/lib/pedidoCompraItemContract.js';
 import {
   rebuildEmbarqueItensMirror,
@@ -43,13 +43,90 @@ function parseArgs(argv) {
 function requireDatabaseUrl() {
   loadDotEnvFiles();
   const dbUrl = resolveP38Secrets('cloud-agent').DATABASE_URL || process.env.DATABASE_URL;
-  if (!dbUrl?.trim()) {
-    console.error('[P38] DATABASE_URL em falta — relatório lê pedidos/embarques directo do Supabase Postgres.');
+  if (!dbUrl?.trim()) return null;
+  return dbUrl.trim();
+}
+
+async function createSupabaseAdminClient() {
+  loadDotEnvFiles();
+  const secrets = resolveP38Secrets('cloud-agent');
+  const url =
+    secrets.supabaseUrl
+    || process.env.VITE_SUPABASE_URL
+    || process.env.NEXT_PUBLIC_SUPABASE_URL
+    || (secrets.projectRef || P38_CANONICAL_PROJECT_REF
+      ? `https://${secrets.projectRef || P38_CANONICAL_PROJECT_REF}.supabase.co`
+      : '');
+  const key = secrets.serviceRoleKey || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    console.error('[P38] Supabase em falta: SUPABASE_SERVICE_ROLE_KEY + URL (ou project ref).');
     console.error('Guia: docs/migration/P38_CONFIGURAR_SECRETS_PASSO_A_PASSO.md');
-    console.error('(Base44 não faz parte deste fluxo.)');
     process.exit(1);
   }
-  return dbUrl.trim();
+  const { createClient } = await import('@supabase/supabase-js');
+  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+}
+
+async function fetchInChunks(sb, table, column, ids, select = '*') {
+  const unique = [...new Set((ids || []).filter(Boolean))];
+  const rows = [];
+  for (let i = 0; i < unique.length; i += 80) {
+    const slice = unique.slice(i, i + 80);
+    const { data, error } = await sb.from(table).select(select).in(column, slice);
+    if (error) throw new Error(`${table}: ${error.message}`);
+    rows.push(...(data || []));
+  }
+  return rows;
+}
+
+function buildBundleFromRows(pedidosRows, pciRows, embRows, eiRows, produtoRows = []) {
+  const produtosMap = {};
+  for (const row of produtoRows) {
+    produtosMap[row.id] = mapProdutoRow(row);
+  }
+
+  const itensPorPedido = new Map();
+  for (const item of pciRows) {
+    const pid = item.pedido_compra_id;
+    if (!itensPorPedido.has(pid)) itensPorPedido.set(pid, []);
+    itensPorPedido.get(pid).push(pedidoCompraItemToLegacyMirror(item));
+  }
+
+  const pedidos = pedidosRows.map((row) =>
+    mapPedidoFromSqlRow(row, itensPorPedido.get(row.id) || []),
+  );
+
+  const embIds = embRows.map((r) => r.id);
+  const linhasPorEmb = new Map();
+  for (const eid of embIds) linhasPorEmb.set(eid, []);
+  for (const ei of eiRows) {
+    const eid = ei.embarque_id;
+    if (!linhasPorEmb.has(eid)) linhasPorEmb.set(eid, []);
+    linhasPorEmb.get(eid).push(ei);
+  }
+
+  const embarquesDb = embRows.map((row) => {
+    const pedidoItens = itensPorPedido.get(row.pedido_compra_id) || [];
+    const raw = linhasPorEmb.get(row.id) || [];
+    const mirror = rebuildEmbarqueItensMirror(raw).map((linha) =>
+      enrichEmbarqueMirrorFromPedidoItens(linha, pedidoItens),
+    );
+    return mapEmbarqueFromSqlRow(row, mirror);
+  });
+
+  if (!produtoRows.length) {
+    const produtoIds = [
+      ...new Set([
+        ...pciRows.map((i) => i.produto_id).filter(Boolean),
+        ...eiRows.map((i) => i.produto_id).filter(Boolean),
+      ]),
+    ];
+    for (const id of produtoIds) {
+      if (!produtosMap[id]) produtosMap[id] = { id, unidades: [] };
+    }
+  }
+
+  return { pedidos, embarquesDb, produtosMap };
 }
 
 function mapPedidoFromSqlRow(row, itens = []) {
@@ -118,10 +195,7 @@ async function fetchProdutosMap(client, produtoIds = []) {
   const chunk = 200;
   for (let i = 0; i < ids.length; i += chunk) {
     const slice = ids.slice(i, i + chunk);
-    const { rows } = await client.query(
-      `select id, nome, unidades, dados from public.produto where id = any($1::text[])`,
-      [slice],
-    );
+    const { rows } = await client.query('select * from public.produto where id = any($1::text[])', [slice]);
     for (const row of rows) {
       map[row.id] = mapProdutoRow(row);
     }
@@ -129,9 +203,10 @@ async function fetchProdutosMap(client, produtoIds = []) {
   return map;
 }
 
-/** Carga completa a partir do Postgres Supabase (text ids). */
-async function fetchFromSupabase(dataMin) {
+/** Postgres directo (preferido local). */
+async function fetchFromSupabasePg(dataMin) {
   const dbUrl = requireDatabaseUrl();
+  if (!dbUrl) throw new Error('NO_DATABASE_URL');
   const client = new pg.Client({ connectionString: dbUrl });
   await client.connect();
   try {
@@ -160,17 +235,6 @@ async function fetchFromSupabase(dataMin) {
       [pedidoIds],
     );
 
-    const itensPorPedido = new Map();
-    for (const item of pciRows) {
-      const pid = item.pedido_compra_id;
-      if (!itensPorPedido.has(pid)) itensPorPedido.set(pid, []);
-      itensPorPedido.get(pid).push(pedidoCompraItemToLegacyMirror(item));
-    }
-
-    const pedidos = pedidosRows.map((row) =>
-      mapPedidoFromSqlRow(row, itensPorPedido.get(row.id) || []),
-    );
-
     const { rows: embRows } = await client.query(
       `select * from public.embarque where pedido_compra_id = any($1::text[]) order by created_at`,
       [pedidoIds],
@@ -180,24 +244,6 @@ async function fetchFromSupabase(dataMin) {
       ? await client.query(`select * from public.embarque_item where embarque_id = any($1::text[])`, [embIds])
       : { rows: [] };
 
-    const pciByPedido = itensPorPedido;
-    const linhasPorEmb = new Map();
-    for (const eid of embIds) linhasPorEmb.set(eid, []);
-    for (const ei of eiRows) {
-      const eid = ei.embarque_id;
-      if (!linhasPorEmb.has(eid)) linhasPorEmb.set(eid, []);
-      linhasPorEmb.get(eid).push(ei);
-    }
-
-    const embarquesDb = embRows.map((row) => {
-      const pedidoItens = pciByPedido.get(row.pedido_compra_id) || [];
-      const raw = linhasPorEmb.get(row.id) || [];
-      const mirror = rebuildEmbarqueItensMirror(raw).map((linha) =>
-        enrichEmbarqueMirrorFromPedidoItens(linha, pedidoItens),
-      );
-      return mapEmbarqueFromSqlRow(row, mirror);
-    });
-
     const produtoIds = [
       ...new Set([
         ...pciRows.map((i) => i.produto_id).filter(Boolean),
@@ -205,10 +251,69 @@ async function fetchFromSupabase(dataMin) {
       ]),
     ];
     const produtosMap = await fetchProdutosMap(client, produtoIds);
-
-    return { pedidos, embarquesDb, produtosMap };
+    const bundle = buildBundleFromRows(pedidosRows, pciRows, embRows, eiRows);
+    bundle.produtosMap = { ...bundle.produtosMap, ...produtosMap };
+    return bundle;
   } finally {
     await client.end();
+  }
+}
+
+/** REST API (Cloud Agent quando pooler IPv6 falha). */
+async function fetchFromSupabaseRest(dataMin) {
+  const sb = await createSupabaseAdminClient();
+  const { data: pedidosRaw, error } = await sb
+    .from('pedido_compra')
+    .select('*')
+    .gte('data_emissao', dataMin)
+    .order('fornecedor_nome', { ascending: true })
+    .order('data_emissao', { ascending: true })
+    .limit(3000);
+  if (error) throw new Error(`pedido_compra: ${error.message}`);
+
+  const pedidosRows = (pedidosRaw || []).filter((p) => {
+    const st = String(p?.status || p?.dados?.status || '').trim();
+    return st && st !== 'Rascunho' && st !== 'Cancelado';
+  });
+
+  if (!pedidosRows.length) {
+    return { pedidos: [], embarquesDb: [], produtosMap: {} };
+  }
+
+  const pedidoIds = pedidosRows.map((r) => r.id);
+  const pciRows = await fetchInChunks(sb, 'pedido_compra_item', 'pedido_compra_id', pedidoIds);
+  const embRows = await fetchInChunks(sb, 'embarque', 'pedido_compra_id', pedidoIds);
+  const embIds = embRows.map((r) => r.id);
+  const eiRows = embIds.length
+    ? await fetchInChunks(sb, 'embarque_item', 'embarque_id', embIds)
+    : [];
+  const produtoIds = [
+    ...new Set([
+      ...pciRows.map((i) => i.produto_id).filter(Boolean),
+      ...eiRows.map((i) => i.produto_id).filter(Boolean),
+    ]),
+  ];
+  const produtoRows = produtoIds.length
+    ? await fetchInChunks(sb, 'produto', 'id', produtoIds, '*')
+    : [];
+
+  return buildBundleFromRows(pedidosRows, pciRows, embRows, eiRows, produtoRows);
+}
+
+async function fetchFromSupabase(dataMin) {
+  try {
+    const bundle = await fetchFromSupabasePg(dataMin);
+    return { ...bundle, fonte: 'supabase-postgres' };
+  } catch (err) {
+    const retryRest =
+      err?.message === 'NO_DATABASE_URL'
+      || err?.code === 'ENETUNREACH'
+      || err?.code === 'ECONNREFUSED'
+      || err?.code === 'ETIMEDOUT';
+    if (!retryRest) throw err;
+    console.warn('[P38] Postgres directo indisponível — a usar Supabase REST (service role).');
+    const bundle = await fetchFromSupabaseRest(dataMin);
+    return { ...bundle, fonte: 'supabase-rest' };
   }
 }
 
@@ -217,7 +322,7 @@ async function main() {
     process.argv.slice(2),
   );
 
-  const { pedidos, embarquesDb, produtosMap } = await fetchFromSupabase(dataMin);
+  const { pedidos, embarquesDb, produtosMap, fonte } = await fetchFromSupabase(dataMin);
 
   const relatorio = buildRelatorioPendenteEmbarqueFornecedor(pedidos, embarquesDb, produtosMap, {
     dataEmissaoMin: dataMin,
@@ -233,7 +338,7 @@ async function main() {
 
   fs.writeFileSync(
     jsonPath,
-    `${JSON.stringify({ ...relatorio, fonte: 'supabase' }, null, 2)}\n`,
+    `${JSON.stringify({ ...relatorio, fonte }, null, 2)}\n`,
     'utf8',
   );
   fs.writeFileSync(
@@ -242,7 +347,7 @@ async function main() {
     'utf8',
   );
 
-  console.log('Fonte: supabase (DATABASE_URL)');
+  console.log(`Fonte: ${fonte}`);
   console.log(`Pedidos carregados: ${pedidos.length}`);
   console.log(`Pedidos com saldo: ${relatorio.totalPedidos}`);
   console.log(`Embarques com pendência: ${relatorio.totalEmbarques}`);
@@ -265,6 +370,11 @@ async function main() {
     });
     await browser.close();
     console.log(`PDF: ${pdfPath}`);
+    const artifactsDir = '/opt/cursor/artifacts';
+    fs.mkdirSync(artifactsDir, { recursive: true });
+    const artifactPdf = path.join(artifactsDir, `pendente-embarque-fornecedor${suffix || ''}-${stamp}.pdf`);
+    fs.copyFileSync(pdfPath, artifactPdf);
+    console.log(`Artifact: ${artifactPdf}`);
   }
 
   if (json) {
