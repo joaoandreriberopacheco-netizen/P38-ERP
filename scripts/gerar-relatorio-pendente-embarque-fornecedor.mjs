@@ -15,10 +15,7 @@ import pg from 'pg';
 import { loadDotEnvFiles } from './base44-env.mjs';
 import { resolveP38Secrets, P38_CANONICAL_PROJECT_REF } from './p38-secrets.mjs';
 import { pedidoCompraItemToLegacyMirror } from '../src/lib/pedidoCompraItemContract.js';
-import {
-  rebuildEmbarqueItensMirror,
-  enrichEmbarqueMirrorFromPedidoItens,
-} from '../src/lib/embarqueItemContract.js';
+import { hydrateProdutoFromSupabaseRow } from '../src/lib/produtoSupabaseHydrate.js';
 import {
   buildRelatorioPendenteEmbarqueFornecedor,
   renderRelatorioPendenteEmbarqueFornecedorHtml,
@@ -193,21 +190,7 @@ function mapEmbarqueFromSqlRow(row, linhasMirror = []) {
 }
 
 function mapProdutoRow(row) {
-  const dados = row.dados && typeof row.dados === 'object' ? row.dados : {};
-  let unidades = row.unidades ?? dados.unidades;
-  if (typeof unidades === 'string') {
-    try {
-      unidades = JSON.parse(unidades);
-    } catch {
-      unidades = [];
-    }
-  }
-  return {
-    id: row.id,
-    nome: row.nome || dados.nome,
-    unidades: Array.isArray(unidades) ? unidades : [],
-    ...dados,
-  };
+  return hydrateProdutoFromSupabaseRow(row);
 }
 
 async function fetchProdutosMap(client, produtoIds = []) {

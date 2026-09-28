@@ -20,6 +20,7 @@ import {
   buildPurchaseUnitOptions,
   normalizeUnitCode,
   getUnidadeBySiglaCanonical,
+  getUnidadeByIdCanonical,
 } from '@/lib/productUnits';
 import {
   resolveEmbarqueCodigoExibicao,
@@ -126,47 +127,47 @@ export function resolveUnidadeCaixaRelatorio(produto, fallbackUnit = 'UN') {
   return resolveBoatLogisticsUnit(produto, fallbackUnit) || 'CX';
 }
 
-/** Ex.: "(2,5M²/ CX)" → 2.5; "BIANCO 2 M2 PEI4" → 2 */
-export function parseM2PorCaixaFromNome(nome = '') {
-  const s = String(nome || '');
-  const paren = s.match(/\(\s*([\d.,]+)\s*m[²2]\s*\/\s*cx\s*\)/i);
-  if (paren) {
-    const n = Number(String(paren[1]).replace(',', '.'));
-    if (Number.isFinite(n) && n > 0) return n;
-  }
-  const loose = s.match(/\b(\d+[,.]?\d*)\s*m\s*[²2]\b/i);
-  if (loose) {
-    const n = Number(String(loose[1]).replace(',', '.'));
-    // m²/CX típico em piso (evita capturar valores absurdos no nome)
-    if (Number.isFinite(n) && n > 0 && n <= 10) return n;
-  }
-  return null;
-}
-
-function fatorCaixaCadastroProduto(produto) {
-  const cx = getUnidadeBySiglaCanonical(produto, 'CX');
-  const f = Number(cx?.fator_conversao ?? 0) || 0;
-  return f > 1 ? f : 0;
-}
-
+/**
+ * Fator m²→CX (ou unidade logística) vindo do cadastro Supabase — sem regex no nome.
+ * Prioridade: unidade logística do produto → linha do pedido (`produto_unidade_id`) → fator da linha.
+ */
 function resolveFatorCaixaRelatorio(produto, contextoItem = {}, fallbackUnit = 'UN') {
-  const nome = produto?.nome || contextoItem?.produto_nome || '';
-  const m2PorCx = parseM2PorCaixaFromNome(nome);
-  if (m2PorCx) return { unidade: 'CX', fator: m2PorCx };
+  const unidadeLog = normalizeUnitCode(
+    resolveUnidadeCaixaRelatorio(produto, fallbackUnit) || fallbackUnit || 'CX',
+  );
 
-  const fCanon = fatorCaixaCadastroProduto(produto);
-  if (produto?.id && fCanon > 1) return { unidade: 'CX', fator: fCanon };
+  if (produto?.id) {
+    const uLog = getUnidadeBySiglaCanonical(produto, unidadeLog);
+    const fLog = Number(uLog?.fator_conversao ?? 0) || 0;
+    if (uLog && fLog > 0) {
+      return { unidade: normalizeUnitCode(uLog.sigla) || unidadeLog, fator: fLog };
+    }
+    const fatorProd = fatorConversaoUnidadeProduto(produto, unidadeLog);
+    if (fatorProd > 0) {
+      return { unidade: unidadeLog, fator: fatorProd };
+    }
+  }
 
-  const unidadeLog = resolveUnidadeCaixaRelatorio(produto, fallbackUnit);
-  const fatorProd = fatorConversaoUnidadeProduto(produto, unidadeLog);
-  if (produto?.id && fatorProd > 1 && normalizeUnitCode(unidadeLog) === 'CX') {
-    return { unidade: 'CX', fator: fatorProd };
+  const uid = contextoItem?.produto_unidade_id;
+  if (uid && produto?.id) {
+    const uLinha = getUnidadeByIdCanonical(produto, uid);
+    const fLinha = Number(uLinha?.fator_conversao ?? 0) || 0;
+    const siglaLinha = normalizeUnitCode(uLinha?.sigla);
+    if (uLinha && fLinha > 0 && siglaLinha === unidadeLog) {
+      return { unidade: siglaLinha, fator: fLinha };
+    }
   }
 
   const fItem = Number(contextoItem?.fator_conversao ?? 1) || 1;
-  if (fItem > 1) return { unidade: 'CX', fator: fItem };
+  const uItem = normalizeUnitCode(contextoItem?.unidade_medida || fallbackUnit);
+  if (fItem > 1) {
+    const dest = (unidadeLog && unidadeLog !== 'UN') ? unidadeLog : (uItem || 'CX');
+    if (!uItem || uItem === dest || uItem === normalizeUnitCode(fallbackUnit)) {
+      return { unidade: dest, fator: fItem };
+    }
+  }
 
-  return { unidade: normalizeUnitCode(fallbackUnit) || 'UN', fator: 1 };
+  return { unidade: unidadeLog || uItem || normalizeUnitCode(fallbackUnit) || 'UN', fator: 1 };
 }
 
 /** Converte quantidade_base (m²…) → caixas usando cadastro do produto. */

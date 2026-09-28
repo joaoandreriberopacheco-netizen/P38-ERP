@@ -5,17 +5,20 @@
 import {
   buildRelatorioPendenteEmbarqueFornecedor,
   renderRelatorioPendenteEmbarqueFornecedorHtml,
-  parseM2PorCaixaFromNome,
   qtyCaixaFromQuantidadeBase,
 } from '../src/lib/relatorioPendenteEmbarqueFornecedor.js';
+import { hydrateProdutoFromSupabaseRow } from '../src/lib/produtoSupabaseHydrate.js';
 
 const brancaNome = 'PISO 45x45 BRANCA LISA BIANCO 2 M2 PEI4 5505D';
-if (parseM2PorCaixaFromNome(brancaNome) !== 2) {
-  console.error('parseM2 Branca Lisa esperava 2');
-  process.exit(1);
-}
-if (qtyCaixaFromQuantidadeBase(168, null, 'M2', { produto_nome: brancaNome }) !== 84) {
-  console.error('168 m² Branca Lisa esperava 84 CX');
+const produtoBranca = hydrateProdutoFromSupabaseRow({
+  id: 'p-branca',
+  nome: brancaNome,
+  unidade_principal: 'M2',
+  unidade_show_logistica: 'CX',
+  unidades_alternativas: [{ id: 'cx1', unidade: 'CX', fator_conversao: 2, ativo: true, is_comercial: true }],
+});
+if (qtyCaixaFromQuantidadeBase(168, produtoBranca, 'M2', { produto_nome: brancaNome }) !== 84) {
+  console.error('168 m² Branca Lisa esperava 84 CX via cadastro (fator 2)');
   process.exit(1);
 }
 

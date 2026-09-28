@@ -12,7 +12,7 @@ Por **fornecedor** → **pedido**:
    - **Comprada** · **Trânsito** · **Recebida** · **Pendente** (avaria / falta a repor — não confundir com trânsito)
    - **% modelo** · **% pedido** · valor a repor
 
-No **rodapé de cada pedido** e no **total geral**: soma de **caixas (CX)** pedidas, caixas pendentes e **percentual proporcional**. Quantidades vêm de m² no ERP, convertidas para CX pelo texto do produto (ex. «2,5 m²/CX») ou cadastro de embalagem.
+No **rodapé de cada pedido** e no **total geral**: soma de **caixas (CX)** pedidas, caixas pendentes e **percentual proporcional**. Quantidades em m² (ou outra base) convertem para CX com o **fator de conversão do produto no Supabase** (`Produto.unidades[]` / embalagem CX), hidratado ao gerar o relatório — não se adivinha pelo nome.
 
 Por defeito entram só saldos **pós-embarque** (avaria, divergência, Necessidade). Não entra «falta embarcar» sem despacho.
 
