@@ -108,11 +108,11 @@ if (linha.quantidade_comprada !== 10 || linha.quantidade_em_transito !== 0 || li
 }
 
 const html = renderRelatorioPendenteEmbarqueFornecedorHtml(relatorio);
-if (!html.includes('Despacho principal') || !html.includes('TST-AAA')) {
-  console.error('HTML não contém contexto de pedido/despacho');
+if (!html.includes('TST-AAA') || !html.includes('cx')) {
+  console.error('HTML não contém pedido/resumo cx');
   process.exit(1);
 }
-if (!html.includes('Trânsito (cx)') || !html.includes('Pendente (cx)')) {
+if (!html.includes('Trânsito') || !html.includes('Avariada')) {
   console.error('HTML não contém colunas da folha logística');
   process.exit(1);
 }

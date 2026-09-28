@@ -197,13 +197,18 @@ export function buildLinhasFolhaLogisticaFornecedor(
   produtosMap = {},
   options = {},
 ) {
-  const { somenteSaldoAvaria = true, valorPedidoTotal = 0 } = options;
+  const {
+    somenteSaldoAvaria = true,
+    valorPedidoTotal = 0,
+    /** Inclui linhas com pendente 0 (ex. pedido só em trânsito/recebido — AB6-PPQ). */
+    incluirLinhasSemPendente = false,
+  } = options;
   const linhas = [];
 
   for (const item of pedido.itens || []) {
     const produto = produtosMap[item.produto_id] || null;
     const folha = calcularFolhaLogisticaLinha(item, embarquesDoPedido);
-    if (folha.saldoPendente <= MIN_SALDO_PENDENTE_BASE) continue;
+    if (!incluirLinhasSemPendente && folha.saldoPendente <= MIN_SALDO_PENDENTE_BASE) continue;
     if (somenteSaldoAvaria && folha.despachada <= MIN_SALDO_PENDENTE_BASE) continue;
 
     const ctx = { ...item, produto_nome: item.produto_nome };
@@ -211,7 +216,10 @@ export function buildLinhasFolhaLogisticaFornecedor(
     const qTransito = qtyCaixaFromQuantidadeBase(folha.emTransito, produto, item.unidade_medida, ctx);
     const qRecebida = qtyCaixaFromQuantidadeBase(folha.recebida, produto, item.unidade_medida, ctx);
     const qPendente = qtyCaixaFromQuantidadeBase(folha.saldoPendente, produto, item.unidade_medida, ctx);
-    if (qPendente <= 0) continue;
+    if (!incluirLinhasSemPendente && qPendente <= 0) continue;
+    if (incluirLinhasSemPendente && qComprada <= 0 && qTransito <= 0 && qRecebida <= 0 && qPendente <= 0) {
+      continue;
+    }
 
     const valorPedidoLinha = getTotalLinhaPedidoCompra(item);
     const valorPendente = folha.comprada > 0
@@ -376,10 +384,11 @@ function finalizarPedidoRelatorio(
   embarquesDoPedido = [],
   options = {},
 ) {
-  const { somenteSaldoAvaria = true } = options;
+  const { somenteSaldoAvaria = true, incluirLinhasSemPendente = false } = options;
   const totalCxPedido = totalCxComercialPedido(pedidoOrigem, produtosMap);
   const linhasFolha = buildLinhasFolhaLogisticaFornecedor(pedidoOrigem, embarquesDoPedido, produtosMap, {
     somenteSaldoAvaria,
+    incluirLinhasSemPendente,
     valorPedidoTotal: bloco.valor_pedido,
   });
   const linhas = consolidarLinhasPorProduto(linhasFolha, totalCxPedido);
@@ -433,7 +442,11 @@ export function buildRelatorioPendenteEmbarqueFornecedor(
     incluirCardsSemItensConsulta = false,
     /** Foco fornecedor: só saldo pós-embarque / divergência (não «falta embarcar»). */
     somenteSaldoAvaria = true,
+    /** Lista pedidos mesmo sem cx pendente (folha completa na tabela). */
+    incluirPedidosSemPendente = false,
   } = options;
+
+  const incluirLinhasSemPendente = incluirPedidosSemPendente;
 
   const fornecedorFiltro = String(fornecedorNorm || '').trim().toLowerCase();
   const fornecedorFiltroNorm = fornecedorFiltro.normalize('NFD').replace(/\p{M}/gu, '');
@@ -511,9 +524,10 @@ export function buildRelatorioPendenteEmbarqueFornecedor(
       pedido,
       embarquesDoPedido,
       produtosMap,
-      { somenteSaldoAvaria, valorPedidoTotal: valor },
+      { somenteSaldoAvaria, incluirLinhasSemPendente, valorPedidoTotal: valor },
     );
-    if (!linhasFolhaPreview.length) continue;
+    const cxPedido = totalCxComercialPedido(pedido, produtosMap);
+    if (!linhasFolhaPreview.length && !(incluirPedidosSemPendente && cxPedido > 0)) continue;
     ensurePedidoBloco(pedido.id, pedido.fornecedor_nome || '—');
   }
 
@@ -611,10 +625,10 @@ export function buildRelatorioPendenteEmbarqueFornecedor(
         pedidoOrigem,
         produtosMap,
         embarquesDoPedido,
-        { somenteSaldoAvaria },
+        { somenteSaldoAvaria, incluirLinhasSemPendente },
       );
     })
-    .filter((p) => p.linhas.length > 0)
+    .filter((p) => p.linhas.length > 0 || (incluirPedidosSemPendente && (p.total_cx_pedido || 0) > 0))
     .sort((a, b) => {
       const fa = a.fornecedor.localeCompare(b.fornecedor, 'pt-BR');
       if (fa !== 0) return fa;
@@ -674,6 +688,7 @@ export function buildRelatorioPendenteEmbarqueFornecedor(
     geradoEm: new Date().toISOString(),
     dataEmissaoMin,
     somenteSaldoAvaria,
+    incluirPedidosSemPendente,
     totalEmbarques: embarques.length,
     totalPedidos: pedidosLista.length,
     totalValorPendente,
@@ -724,31 +739,21 @@ export function renderRelatorioPendenteEmbarqueFornecedorHtml(relatorio = {}, ti
   });
   const dataMin = relatorio.dataEmissaoMin || RELATORIO_PENDENTE_EMBARQUE_DATA_MIN_DEFAULT;
   const titulo = tituloExtra || 'Saldo pendente — reposição ao comprador';
-  const escopoPosEmbarque = relatorio.somenteSaldoAvaria !== false;
 
   function renderPedidoArticle(ped) {
-    const princ = ped.despacho_principal;
-    const ctxDespacho = princ
-      ? `Despacho principal: <strong>${princ.codigo}</strong> · ${fmtData(princ.data_embarque)} · ${princ.transportadora} · recepção: ${princ.status_recebimento}`
-      : 'Despacho principal: ainda não informado no sistema';
-    const secaoLabel = ped.secao_relatorio === 'pos_recepcao'
-      ? 'Saldo após recepção (avaria / divergência / reposição)'
-      : 'Saldo em aberto (embarque ou trânsito — ainda não fechou na recepção)';
-    const cadastro = ped.fornecedor_cadastro && ped.fornecedor_cadastro !== ped.fornecedor
-      ? ` · cadastro: ${ped.fornecedor_cadastro}`
-      : '';
+    const resumo = `<strong>${Number(ped.total_cx_pedido || 0).toLocaleString('pt-BR')} cx</strong> no pedido · `
+      + `<strong>${Number(ped.total_cx_pendente || 0).toLocaleString('pt-BR')} cx</strong> avariadas · `
+      + `<strong>${pct(ped.pct_cx_avaria_sobre_pedido)}</strong> do pedido`;
 
     const gruposFmt = (ped.grupos_formato || []).map((gfmt) => {
         const rows = gfmt.linhas.map((l) => `
           <tr>
-            <td class="col-modelo">${l.produto_nome}<span class="emb-ref"> · ${l.embarque_codigo}</span></td>
+            <td class="col-modelo">${l.produto_nome}</td>
             <td class="col-num">${Number(l.quantidade_comprada ?? l.quantidade_pedido).toLocaleString('pt-BR')}</td>
             <td class="col-num">${Number(l.quantidade_em_transito ?? l.quantidade_embarcada).toLocaleString('pt-BR')}</td>
             <td class="col-num">${Number(l.quantidade_recebida).toLocaleString('pt-BR')}</td>
             <td class="col-num pend">${Number(l.quantidade_pendente).toLocaleString('pt-BR')}</td>
             <td class="col-num pct">${pct(l.pct_cx_sobre_linha_pedido)}</td>
-            <td class="col-num pct">${pct(l.pct_cx_sobre_pedido_total)}</td>
-            <td class="col-num">${brl(l.valor_pendente)}</td>
           </tr>`).join('');
 
         return `
@@ -758,86 +763,41 @@ export function renderRelatorioPendenteEmbarqueFornecedorHtml(relatorio = {}, ti
             <thead>
               <tr>
                 <th class="col-modelo">Modelo</th>
-                <th class="col-num">Comprada (cx)</th>
-                <th class="col-num">Trânsito (cx)</th>
-                <th class="col-num">Receb. (cx)</th>
-                <th class="col-num">Pendente (cx)</th>
-                <th class="col-num">% modelo</th>
-                <th class="col-num">% pedido</th>
-                <th class="col-num">Valor</th>
+                <th class="col-num">Comprada</th>
+                <th class="col-num">Trânsito</th>
+                <th class="col-num">Recebida</th>
+                <th class="col-num">Avariada</th>
+                <th class="col-num">% linha</th>
               </tr>
             </thead>
-            <tbody>
-              ${rows}
-              <tr class="subtotal">
-                <td class="col-modelo">Subtotal ${gfmt.formato}</td>
-                <td class="col-num"></td>
-                <td class="col-num"></td>
-                <td class="col-num"></td>
-                <td class="col-num">${Number(gfmt.quant_pendente).toLocaleString('pt-BR')}</td>
-                <td class="col-num"></td>
-                <td class="col-num"></td>
-                <td class="col-num">${brl(gfmt.valor_pendente)}</td>
-              </tr>
-            </tbody>
+            <tbody>${rows}</tbody>
           </table>
         </section>`;
       }).join('');
 
     return `
       <article class="pedido">
-        <h2 class="pedido-titulo">Pedido ${ped.pedido_numero}${cadastro}</h2>
-        <p class="secao-tag">${secaoLabel}</p>
-        <p class="pedido-meta">
-          Emissão ${fmtData(ped.data_emissao)} · Pedido original ${brl(ped.valor_pedido)} ·
-          Saldo a repor <strong>${brl(ped.valor_pendente)}</strong> (${pct(ped.pct_valor_pendente_sobre_pedido)} em valor)
-        </p>
-        <p class="pedido-resumo-cx">
-          <strong>${Number(ped.total_cx_pedido || 0).toLocaleString('pt-BR')} ${ped.unidade_pedido || 'CX'}</strong> pedidas no total ·
-          <strong>${Number(ped.total_cx_pendente || 0).toLocaleString('pt-BR')}</strong> pendentes ·
-          <strong class="pct">${pct(ped.pct_cx_avaria_sobre_pedido)}</strong> do pedido (caixas)
-        </p>
-        <p class="pedido-contexto">${ctxDespacho}</p>
+        <h2 class="pedido-titulo">Pedido ${ped.pedido_numero} · ${fmtData(ped.data_emissao)}</h2>
+        <p class="pedido-resumo-cx">${resumo}</p>
         ${gruposFmt}
       </article>`;
   }
 
   const blocosFornecedor = (relatorio.fornecedores || []).map((grupo) => {
     const pedidosOrdenados = [...(grupo.pedidos || [])].sort((a, b) => {
-      const sa = a.secao_relatorio === 'pos_recepcao' ? 0 : 1;
-      const sb = b.secao_relatorio === 'pos_recepcao' ? 0 : 1;
-      if (sa !== sb) return sa - sb;
       return String(a.data_emissao || '').localeCompare(String(b.data_emissao || ''));
     });
-    const cadastros = (grupo.fornecedores_cadastro || []).filter(Boolean);
-    const subCadastro = cadastros.length > 1
-      ? `<p class="sub">Cadastros no ERP: ${cadastros.join(' · ')}</p>`
-      : '';
 
-    let pedidosHtml = '';
-    if (!escopoPosEmbarque) {
-      const pos = pedidosOrdenados.filter((p) => p.secao_relatorio === 'pos_recepcao');
-      const aberto = pedidosOrdenados.filter((p) => p.secao_relatorio !== 'pos_recepcao');
-      if (pos.length) {
-        pedidosHtml += `<h3 class="secao-bloco">Após recepção (avaria / divergência)</h3>${pos.map(renderPedidoArticle).join('')}`;
-      }
-      if (aberto.length) {
-        pedidosHtml += `<h3 class="secao-bloco">Saldo em aberto no embarque</h3>${aberto.map(renderPedidoArticle).join('')}`;
-      }
-    } else {
-      pedidosHtml = pedidosOrdenados.map(renderPedidoArticle).join('');
-    }
+    const pedidosHtml = pedidosOrdenados.map(renderPedidoArticle).join('');
 
     return `
     <section class="fornecedor">
       <h2 class="fornecedor-nome">${grupo.fornecedor}</h2>
-      ${subCadastro}
-      <p class="sub">${grupo.pedidos.length} pedido(s) com emissão ≥ ${fmtData(dataMin)} · ${Number(grupo.total_cx_pedido || 0).toLocaleString('pt-BR')} cx nos pedidos · ${Number(grupo.total_cx_pendente || 0).toLocaleString('pt-BR')} pendentes · ${pct(grupo.pct_cx_avaria_sobre_pedidos)} · ${brl(grupo.valor_pendente)} a repor</p>
+      <p class="sub">${Number(grupo.total_cx_pedido || 0).toLocaleString('pt-BR')} cx pedidas · ${Number(grupo.total_cx_pendente || 0).toLocaleString('pt-BR')} avariadas · ${pct(grupo.pct_cx_avaria_sobre_pedidos)}</p>
       ${pedidosHtml}
     </section>`;
   }).join('');
 
-  const geralValor = relatorio.totalValorPendente || 0;
   const geralCxPedido = relatorio.totalCxPedido || 0;
   const geralCxAvaria = relatorio.totalCxPendente || 0;
   const geralPctCx = relatorio.pct_cx_avaria_geral || 0;
@@ -875,8 +835,8 @@ export function renderRelatorioPendenteEmbarqueFornecedorHtml(relatorio = {}, ti
       padding: 5px 0 6px; border-bottom: 1px solid #d9d9d9;
     }
     tbody td { padding: 6px 0; border-bottom: 1px solid #efefef; vertical-align: top; font-size: 11px; }
-    .col-modelo { width: 28%; padding-right: 8px; word-break: break-word; }
-    .col-num { width: 9%; text-align: right; white-space: nowrap; }
+    .col-modelo { width: 38%; padding-right: 8px; word-break: break-word; }
+    .col-num { width: 10.3%; text-align: right; white-space: nowrap; }
     thead .col-num { text-align: right; }
     .emb-ref { color: #888; font-size: 10px; }
     .pend { font-weight: 600; }
@@ -891,24 +851,14 @@ export function renderRelatorioPendenteEmbarqueFornecedorHtml(relatorio = {}, ti
   <div class="doc">
     <header class="header">
       <h1>${titulo}</h1>
-      <p class="meta">Gerado em ${geradoEm} · <strong>Só pedidos com emissão a partir de ${fmtData(dataMin)}</strong>${escopoPosEmbarque ? ' · Apenas saldo após recepção (avaria/divergência)' : ' · Todos os saldos pendentes no período'}</p>
+      <p class="meta">Gerado em ${geradoEm} · emissão ≥ ${fmtData(dataMin)}</p>
       <p class="resumo">
-        <strong>${Number(geralCxPedido).toLocaleString('pt-BR')} cx</strong> pedidas (soma dos pedidos) ·
-        <strong>${Number(geralCxAvaria).toLocaleString('pt-BR')} cx</strong> avaria ·
-        <strong class="pct">${pct(geralPctCx)}</strong> geral ·
-        <strong>${brl(geralValor)}</strong> a repor
+        <strong>${Number(geralCxPedido).toLocaleString('pt-BR')} cx</strong> pedidas ·
+        <strong>${Number(geralCxAvaria).toLocaleString('pt-BR')} cx</strong> avariadas ·
+        <strong class="pct">${pct(geralPctCx)}</strong>
       </p>
     </header>
-    ${blocosFornecedor || '<p class="meta">Nenhum saldo pendente no período.</p>'}
-    <section class="grupo geral">
-      <h3 class="formato">Total geral (todos os pedidos do relatório)</h3>
-      <p class="pedido-resumo-cx">
-        <strong>${Number(geralCxPedido).toLocaleString('pt-BR')} caixas</strong> pedidas ·
-        <strong>${Number(geralCxAvaria).toLocaleString('pt-BR')}</strong> com avaria ·
-        <strong class="pct">${pct(geralPctCx)}</strong> proporcional ·
-        ${brl(geralValor)} em valor a repor
-      </p>
-    </section>
+    ${blocosFornecedor || '<p class="meta">Nenhum pedido no período.</p>'}
   </div>
 </body>
 </html>`;

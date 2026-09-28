@@ -16,7 +16,7 @@ No **rodapé de cada pedido** e no **total geral**: soma de **caixas (CX)** pedi
 
 Por defeito entram só saldos **pós-embarque** (avaria, divergência, Necessidade). Não entra «falta embarcar» sem despacho.
 
-**Tintão (`--fornecedor=tint`):** por defeito entram **todos** os pedidos com saldo pendente **com emissão a partir de 20/07/2026**, agrupados como **Tintão** (Nova Cidade, Televendas, etc.). Use `--so-pos-embarque` para voltar ao recorte só avaria na recepção.
+**Tintão (`--fornecedor=tint`):** pedidos com emissão ≥ 20/07/2026 agrupados como **Tintão**; inclui pedidos **sem cx avariada** (folha completa na tabela, ex. só trânsito). PDF conciso: resumo **cx pedidas · cx avariadas · %** + tabela folha por formato.
 
 ## Gerar
 

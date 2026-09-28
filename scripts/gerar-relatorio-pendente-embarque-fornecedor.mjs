@@ -15,6 +15,10 @@ import pg from 'pg';
 import { loadDotEnvFiles } from './base44-env.mjs';
 import { resolveP38Secrets, P38_CANONICAL_PROJECT_REF } from './p38-secrets.mjs';
 import { pedidoCompraItemToLegacyMirror } from '../src/lib/pedidoCompraItemContract.js';
+import {
+  rebuildEmbarqueItensMirror,
+  enrichEmbarqueMirrorFromPedidoItens,
+} from '../src/lib/embarqueItemContract.js';
 import { hydrateProdutoFromSupabaseRow } from '../src/lib/produtoSupabaseHydrate.js';
 import {
   buildRelatorioPendenteEmbarqueFornecedor,
@@ -355,6 +359,7 @@ async function main() {
     dataEmissaoMin: dataMin,
     fornecedorNorm: fornecedor,
     somenteSaldoAvaria,
+    incluirPedidosSemPendente: isTintExport,
   });
 
   const outDir = resolveOutDir(fornecedor);
