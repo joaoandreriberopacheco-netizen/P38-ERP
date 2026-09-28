@@ -1,36 +1,42 @@
-# Relatório pendente por embarque (fornecedor)
+# Relatório saldo pós-embarque (fornecedor) — estilo órfãos Tintão
 
-Visão para partilhar com o fornecedor: **por cada embarque**, o que ainda está pendente em pedidos de compra **com emissão a partir de 20/07/2026**, com **% do valor (e da quantidade base) em relação ao pedido inteiro**.
+Documento para o **fornecedor** ver o que ainda falta **repor** após embarque/recepção, com **proporção face ao pedido original** (razoabilidade — saldo típico de cerâmica, não inventado).
 
-Usa a mesma regra da UI (**Consulta / Saldo a embarcar**): `materializePedidosCompraView` + `buildConsultaItensEmbarque` (modo `pendente`).
+## O que mostra
+
+Por **fornecedor** → **pedido**:
+
+1. **Pedido original** — emissão, valor total, **% do saldo pendente sobre o pedido**
+2. **Despacho principal** — primeiro split embarcado (ex. `EXC-FQZ-A`), data, transportadora, status recepção
+3. **Tabelas por formato** (como PDF órfãos Tintão) — colunas:
+   - Pedido / Embarcado / Recebido / **Pendente**
+   - Preço unit. e total do pendente
+   - **% pedido** (valor pendente ÷ valor total do pedido)
+
+Por defeito entram só saldos **pós-embarque** (avaria, divergência, Necessidade). Não entra «falta embarcar» sem despacho.
 
 ## Gerar
 
 ```bash
 npm run compras:relatorio-pendente-fornecedor
 npm run compras:relatorio-pendente-fornecedor -- --fornecedor=tintão
-npm run compras:relatorio-pendente-fornecedor -- --desde=2026-07-20
+npm run compras:relatorio-pendente-fornecedor -- --desde=2026-07-20 --pdf
+npm run compras:relatorio-pendente-fornecedor -- --incluir-aguardando-embarque
 ```
 
-Saída em `docs/imports-local/pendente-embarque-fornecedor/` (`.html` + `.json`).
+Saída: `docs/imports-local/pendente-embarque-fornecedor/` (`.html`, `.json`, opcional `.pdf`).
 
-## Credenciais
+Referência visual: `scripts/tintao-orfaos-pdf-export.mjs` e PDFs órfãos Tintão (set/2026).
 
-- **Postgres** (`DATABASE_URL`) — preferido no Cloud Agent  
-- ou **Base44** (`VITE_BASE44_APP_ID` + `BASE44_ACCESS_TOKEN`)
+## Dados
 
-## Teste local (sem BD)
+- **Postgres** (`DATABASE_URL`) ou **Base44** (secrets AGENTS.md)
+- Mesma matemática da consulta Embarques (`buildConsultaItensEmbarque` modo `pendente`) + contexto folha/desmembramento onde aplicável
+
+## Teste
 
 ```bash
 npm run compras:relatorio-pendente-fornecedor:test
 ```
 
-## Motivos no relatório
-
-| Rótulo | Significado |
-|--------|-------------|
-| Saldo não recebido (avaria / divergência) | Embarcado − recebido neste split, com recepção já iniciada ou status de divergência |
-| Reposição pós-recepção (Necessidade) | Card / split Necessidade |
-| Aguardando embarque / despacho | Pedido aprovado ainda sem despacho completo |
-
-Código: `src/lib/relatorioPendenteEmbarqueFornecedor.js`, script `scripts/gerar-relatorio-pendente-embarque-fornecedor.mjs`.
+Código: `src/lib/relatorioPendenteEmbarqueFornecedor.js`

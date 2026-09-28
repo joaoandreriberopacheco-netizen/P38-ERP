@@ -35,6 +35,8 @@ function parseArgs(argv) {
     fornecedor: fornecedorArg?.slice('--fornecedor='.length) || '',
     json: argv.includes('--json'),
     htmlOnly: argv.includes('--html'),
+    pdf: argv.includes('--pdf'),
+    incluirAguardandoEmbarque: argv.includes('--incluir-aguardando-embarque'),
   };
 }
 
@@ -188,7 +190,7 @@ async function fetchViaBase44(dataMin) {
 }
 
 async function main() {
-  const { dataMin, fornecedor, json, htmlOnly } = parseArgs(process.argv.slice(2));
+  const { dataMin, fornecedor, json, htmlOnly, pdf, incluirAguardandoEmbarque } = parseArgs(process.argv.slice(2));
 
   let bundle = await fetchViaPostgres(dataMin);
   let fonte = 'postgres';
@@ -214,6 +216,7 @@ async function main() {
   const relatorio = buildRelatorioPendenteEmbarqueFornecedor(pedidos, embarquesDb, produtosMap, {
     dataEmissaoMin: dataMin,
     fornecedorNorm: fornecedor,
+    somenteSaldoAvaria: !incluirAguardandoEmbarque,
   });
 
   fs.mkdirSync(OUT_DIR, { recursive: true });
@@ -231,9 +234,28 @@ async function main() {
 
   console.log(`Fonte: ${fonte}`);
   console.log(`Pedidos carregados: ${pedidos.length}`);
+  console.log(`Pedidos com saldo: ${relatorio.totalPedidos}`);
   console.log(`Embarques com pendência: ${relatorio.totalEmbarques}`);
+  console.log(`Total a repor: ${relatorio.totalValorPendente?.toFixed(2)} (${relatorio.totalCxPendente} un.)`);
   console.log(`JSON: ${jsonPath}`);
   console.log(`HTML: ${htmlPath}`);
+
+  if (pdf) {
+    const { chromium } = await import('playwright');
+    const pdfPath = path.join(OUT_DIR, `pendente-embarque${suffix}-${stamp}.pdf`);
+    const browser = await chromium.launch({ headless: true });
+    const page = await browser.newPage({ viewport: { width: 794, height: 1123 } });
+    await page.setContent(fs.readFileSync(htmlPath, 'utf8'), { waitUntil: 'networkidle' });
+    await page.waitForTimeout(200);
+    await page.pdf({
+      path: pdfPath,
+      format: 'A4',
+      printBackground: true,
+      margin: { top: '18mm', right: '16mm', bottom: '18mm', left: '16mm' },
+    });
+    await browser.close();
+    console.log(`PDF: ${pdfPath}`);
+  }
 
   if (json) {
     console.log(JSON.stringify(relatorio, null, 2));

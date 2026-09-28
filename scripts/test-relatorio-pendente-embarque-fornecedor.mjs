@@ -59,8 +59,14 @@ const relatorio = buildRelatorioPendenteEmbarqueFornecedor([pedido], [embarque],
   dataEmissaoMin: '2026-07-20',
 });
 
-if (relatorio.totalEmbarques !== 1) {
-  console.error('Esperava 1 embarque pendente, obteve', relatorio.totalEmbarques);
+if (relatorio.totalEmbarques !== 1 || relatorio.totalPedidos !== 1) {
+  console.error('Esperava 1 embarque e 1 pedido, obteve', relatorio.totalEmbarques, relatorio.totalPedidos);
+  process.exit(1);
+}
+
+const pedBloco = relatorio.pedidos[0];
+if (!pedBloco?.despacho_principal?.codigo?.includes('TST-AAA')) {
+  console.error('Despacho principal inesperado', pedBloco?.despacho_principal);
   process.exit(1);
 }
 
@@ -75,8 +81,8 @@ if (!/diverg|avaria/i.test(row.motivo)) {
 }
 
 const html = renderRelatorioPendenteEmbarqueFornecedorHtml(relatorio);
-if (!html.includes('Fornecedor Teste') || !html.includes('TST-AAA')) {
-  console.error('HTML não contém dados esperados');
+if (!html.includes('Despacho principal') || !html.includes('TST-AAA')) {
+  console.error('HTML não contém contexto de pedido/despacho');
   process.exit(1);
 }
 
