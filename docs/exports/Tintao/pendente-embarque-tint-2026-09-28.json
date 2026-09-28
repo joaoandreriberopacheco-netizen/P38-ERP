@@ -1,11 +1,13 @@
 {
-  "geradoEm": "2026-09-28T16:33:16.612Z",
+  "geradoEm": "2026-09-28T16:44:51.656Z",
   "dataEmissaoMin": "2026-07-20",
   "somenteSaldoAvaria": true,
   "totalEmbarques": 2,
   "totalPedidos": 1,
   "totalValorPendente": 969.2,
+  "totalCxPedido": 672,
   "totalCxPendente": 40,
+  "pct_cx_avaria_geral": 5.95,
   "embarques": [
     {
       "pedido_id": "1c59d8ea-3aa3-4295-ba0e-c14163af98b5",
@@ -36,6 +38,7 @@
           "valor_pedido_linha": 4070.64,
           "valor_pendente": 484.6,
           "preco_unitario_pendente": 24.23,
+          "pct_cx_sobre_linha_pedido": 11.9,
           "pct_valor_sobre_pedido": 2.98,
           "pct_valor_sobre_linha_pedido": 11.9
         }
@@ -70,6 +73,7 @@
           "valor_pedido_linha": 4070.64,
           "valor_pendente": 484.6,
           "preco_unitario_pendente": 24.23,
+          "pct_cx_sobre_linha_pedido": 11.9,
           "pct_valor_sobre_pedido": 2.98,
           "pct_valor_sobre_linha_pedido": 11.9
         }
@@ -98,33 +102,23 @@
           "produto_id": "880bd0d0-7ae5-4caf-820d-488bbcbab77f",
           "produto_nome": "PISO 45X45 TRAVERTINO CZ (2,00 M²/ CX) PE",
           "formato": "45x45",
-          "embarque_codigo": "AB6-PPQ-A",
+          "embarque_codigo": "AB6-PPQ-A, AB6-PPQ-C",
           "quantidade_pedido": 168,
           "quantidade_embarcada": 81,
           "quantidade_recebida": 71,
-          "quantidade_pendente": 20,
+          "quantidade_pendente": 40,
           "unidade": "UN",
           "valor_pedido_linha": 4070.64,
-          "valor_pendente": 484.6,
+          "valor_pendente": 969.2,
           "preco_unitario_pendente": 24.23,
+          "pct_cx_sobre_linha_pedido": 23.81,
           "pct_valor_sobre_pedido": 2.98,
-          "pct_valor_sobre_linha_pedido": 11.9
-        },
-        {
-          "produto_id": "880bd0d0-7ae5-4caf-820d-488bbcbab77f",
-          "produto_nome": "PISO 45X45 TRAVERTINO CZ (2,00 M²/ CX) PE",
-          "formato": "45x45",
-          "embarque_codigo": "AB6-PPQ-C",
-          "quantidade_pedido": 168,
-          "quantidade_embarcada": 10,
-          "quantidade_recebida": 0,
-          "quantidade_pendente": 20,
-          "unidade": "UN",
-          "valor_pedido_linha": 4070.64,
-          "valor_pendente": 484.6,
-          "preco_unitario_pendente": 24.23,
-          "pct_valor_sobre_pedido": 2.98,
-          "pct_valor_sobre_linha_pedido": 11.9
+          "pct_valor_sobre_linha_pedido": 11.9,
+          "embarque_codigos": [
+            "AB6-PPQ-A",
+            "AB6-PPQ-C"
+          ],
+          "pct_cx_sobre_pedido_total": 5.95
         }
       ],
       "embarques_resumo": [
@@ -141,6 +135,10 @@
           "pct_valor_sobre_pedido": 2.98
         }
       ],
+      "total_cx_pedido": 672,
+      "total_cx_pendente": 40,
+      "pct_cx_avaria_sobre_pedido": 5.95,
+      "unidade_pedido": "UN",
       "grupos_formato": [
         {
           "formato": "45x45",
@@ -149,33 +147,23 @@
               "produto_id": "880bd0d0-7ae5-4caf-820d-488bbcbab77f",
               "produto_nome": "PISO 45X45 TRAVERTINO CZ (2,00 M²/ CX) PE",
               "formato": "45x45",
-              "embarque_codigo": "AB6-PPQ-A",
+              "embarque_codigo": "AB6-PPQ-A, AB6-PPQ-C",
               "quantidade_pedido": 168,
               "quantidade_embarcada": 81,
               "quantidade_recebida": 71,
-              "quantidade_pendente": 20,
+              "quantidade_pendente": 40,
               "unidade": "UN",
               "valor_pedido_linha": 4070.64,
-              "valor_pendente": 484.6,
+              "valor_pendente": 969.2,
               "preco_unitario_pendente": 24.23,
+              "pct_cx_sobre_linha_pedido": 23.81,
               "pct_valor_sobre_pedido": 2.98,
-              "pct_valor_sobre_linha_pedido": 11.9
-            },
-            {
-              "produto_id": "880bd0d0-7ae5-4caf-820d-488bbcbab77f",
-              "produto_nome": "PISO 45X45 TRAVERTINO CZ (2,00 M²/ CX) PE",
-              "formato": "45x45",
-              "embarque_codigo": "AB6-PPQ-C",
-              "quantidade_pedido": 168,
-              "quantidade_embarcada": 10,
-              "quantidade_recebida": 0,
-              "quantidade_pendente": 20,
-              "unidade": "UN",
-              "valor_pedido_linha": 4070.64,
-              "valor_pendente": 484.6,
-              "preco_unitario_pendente": 24.23,
-              "pct_valor_sobre_pedido": 2.98,
-              "pct_valor_sobre_linha_pedido": 11.9
+              "pct_valor_sobre_linha_pedido": 11.9,
+              "embarque_codigos": [
+                "AB6-PPQ-A",
+                "AB6-PPQ-C"
+              ],
+              "pct_cx_sobre_pedido_total": 5.95
             }
           ],
           "quant_pendente": 40,
@@ -209,33 +197,23 @@
               "produto_id": "880bd0d0-7ae5-4caf-820d-488bbcbab77f",
               "produto_nome": "PISO 45X45 TRAVERTINO CZ (2,00 M²/ CX) PE",
               "formato": "45x45",
-              "embarque_codigo": "AB6-PPQ-A",
+              "embarque_codigo": "AB6-PPQ-A, AB6-PPQ-C",
               "quantidade_pedido": 168,
               "quantidade_embarcada": 81,
               "quantidade_recebida": 71,
-              "quantidade_pendente": 20,
+              "quantidade_pendente": 40,
               "unidade": "UN",
               "valor_pedido_linha": 4070.64,
-              "valor_pendente": 484.6,
+              "valor_pendente": 969.2,
               "preco_unitario_pendente": 24.23,
+              "pct_cx_sobre_linha_pedido": 23.81,
               "pct_valor_sobre_pedido": 2.98,
-              "pct_valor_sobre_linha_pedido": 11.9
-            },
-            {
-              "produto_id": "880bd0d0-7ae5-4caf-820d-488bbcbab77f",
-              "produto_nome": "PISO 45X45 TRAVERTINO CZ (2,00 M²/ CX) PE",
-              "formato": "45x45",
-              "embarque_codigo": "AB6-PPQ-C",
-              "quantidade_pedido": 168,
-              "quantidade_embarcada": 10,
-              "quantidade_recebida": 0,
-              "quantidade_pendente": 20,
-              "unidade": "UN",
-              "valor_pedido_linha": 4070.64,
-              "valor_pendente": 484.6,
-              "preco_unitario_pendente": 24.23,
-              "pct_valor_sobre_pedido": 2.98,
-              "pct_valor_sobre_linha_pedido": 11.9
+              "pct_valor_sobre_linha_pedido": 11.9,
+              "embarque_codigos": [
+                "AB6-PPQ-A",
+                "AB6-PPQ-C"
+              ],
+              "pct_cx_sobre_pedido_total": 5.95
             }
           ],
           "embarques_resumo": [
@@ -252,6 +230,10 @@
               "pct_valor_sobre_pedido": 2.98
             }
           ],
+          "total_cx_pedido": 672,
+          "total_cx_pendente": 40,
+          "pct_cx_avaria_sobre_pedido": 5.95,
+          "unidade_pedido": "UN",
           "grupos_formato": [
             {
               "formato": "45x45",
@@ -260,33 +242,23 @@
                   "produto_id": "880bd0d0-7ae5-4caf-820d-488bbcbab77f",
                   "produto_nome": "PISO 45X45 TRAVERTINO CZ (2,00 M²/ CX) PE",
                   "formato": "45x45",
-                  "embarque_codigo": "AB6-PPQ-A",
+                  "embarque_codigo": "AB6-PPQ-A, AB6-PPQ-C",
                   "quantidade_pedido": 168,
                   "quantidade_embarcada": 81,
                   "quantidade_recebida": 71,
-                  "quantidade_pendente": 20,
+                  "quantidade_pendente": 40,
                   "unidade": "UN",
                   "valor_pedido_linha": 4070.64,
-                  "valor_pendente": 484.6,
+                  "valor_pendente": 969.2,
                   "preco_unitario_pendente": 24.23,
+                  "pct_cx_sobre_linha_pedido": 23.81,
                   "pct_valor_sobre_pedido": 2.98,
-                  "pct_valor_sobre_linha_pedido": 11.9
-                },
-                {
-                  "produto_id": "880bd0d0-7ae5-4caf-820d-488bbcbab77f",
-                  "produto_nome": "PISO 45X45 TRAVERTINO CZ (2,00 M²/ CX) PE",
-                  "formato": "45x45",
-                  "embarque_codigo": "AB6-PPQ-C",
-                  "quantidade_pedido": 168,
-                  "quantidade_embarcada": 10,
-                  "quantidade_recebida": 0,
-                  "quantidade_pendente": 20,
-                  "unidade": "UN",
-                  "valor_pedido_linha": 4070.64,
-                  "valor_pendente": 484.6,
-                  "preco_unitario_pendente": 24.23,
-                  "pct_valor_sobre_pedido": 2.98,
-                  "pct_valor_sobre_linha_pedido": 11.9
+                  "pct_valor_sobre_linha_pedido": 11.9,
+                  "embarque_codigos": [
+                    "AB6-PPQ-A",
+                    "AB6-PPQ-C"
+                  ],
+                  "pct_cx_sobre_pedido_total": 5.95
                 }
               ],
               "quant_pendente": 40,
@@ -296,7 +268,10 @@
         }
       ],
       "valor_pendente": 969.2,
-      "pct_medio_sobre_pedidos": 5.95
+      "total_cx_pedido": 672,
+      "total_cx_pendente": 40,
+      "pct_cx_avaria_sobre_pedidos": 5.95,
+      "unidade": "UN"
     }
   ],
   "fonte": "supabase-rest"

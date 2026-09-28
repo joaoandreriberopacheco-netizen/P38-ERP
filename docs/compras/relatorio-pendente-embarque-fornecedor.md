@@ -9,9 +9,12 @@ Por **fornecedor** → **pedido**:
 1. **Pedido original** — emissão, valor total, **% do saldo pendente sobre o pedido**
 2. **Despacho principal** — primeiro split embarcado (ex. `EXC-FQZ-A`), data, transportadora, status recepção
 3. **Tabelas por formato** (como PDF órfãos Tintão) — colunas:
-   - Pedido / Embarcado / Recebido / **Pendente**
-   - Preço unit. e total do pendente
-   - **% pedido** (valor pendente ÷ valor total do pedido)
+   - Pedido / Embarcado / Recebido / **Avaria (cx)**
+   - **% modelo** (avaria ÷ caixas pedidas daquele item)
+   - **% pedido** (mesma avaria ÷ total de caixas do pedido — ex. 200+200+200=600, 15 avaria → 2,5% no rodapé)
+   - Valor a repor
+
+No **rodapé de cada pedido** e no **total geral**: soma de caixas pedidas, caixas com avaria e **percentual proporcional** (ex. 1000 cx nos pedidos, 40 avaria → 4%).
 
 Por defeito entram só saldos **pós-embarque** (avaria, divergência, Necessidade). Não entra «falta embarcar» sem despacho.
 

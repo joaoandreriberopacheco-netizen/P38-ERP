@@ -80,11 +80,29 @@ if (!/diverg|avaria/i.test(row.motivo)) {
   process.exit(1);
 }
 
+if (pedBloco.total_cx_pedido !== 10 || pedBloco.total_cx_pendente !== 2) {
+  console.error('Totais cx pedido inesperados:', pedBloco.total_cx_pedido, pedBloco.total_cx_pendente);
+  process.exit(1);
+}
+if (pedBloco.pct_cx_avaria_sobre_pedido !== 20 || relatorio.pct_cx_avaria_geral !== 20) {
+  console.error('pct cx inesperado:', pedBloco.pct_cx_avaria_sobre_pedido, relatorio.pct_cx_avaria_geral);
+  process.exit(1);
+}
+const linha = pedBloco.linhas[0];
+if (linha.pct_cx_sobre_linha_pedido !== 20 || linha.pct_cx_sobre_pedido_total !== 20) {
+  console.error('pct cx linha inesperado:', linha);
+  process.exit(1);
+}
+
 const html = renderRelatorioPendenteEmbarqueFornecedorHtml(relatorio);
 if (!html.includes('Despacho principal') || !html.includes('TST-AAA')) {
   console.error('HTML não contém contexto de pedido/despacho');
   process.exit(1);
 }
+if (!html.includes('% modelo') || !html.includes('do pedido (caixas)')) {
+  console.error('HTML não contém colunas/resumo de caixas');
+  process.exit(1);
+}
 
 console.log('OK — relatorio pendente embarque fornecedor');
-console.log(`  ${row.embarque_codigo}: ${row.pct_base_sobre_pedido}% base · ${row.pct_valor_sobre_pedido}% valor · ${row.motivo}`);
+console.log(`  ${row.embarque_codigo}: ${pedBloco.total_cx_pendente}/${pedBloco.total_cx_pedido} cx (${pedBloco.pct_cx_avaria_sobre_pedido}%) · ${row.motivo}`);

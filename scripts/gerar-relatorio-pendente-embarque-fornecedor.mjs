@@ -359,7 +359,11 @@ async function main() {
   console.log(`Pedidos carregados: ${pedidos.length}`);
   console.log(`Pedidos com saldo: ${relatorio.totalPedidos}`);
   console.log(`Embarques com pendência: ${relatorio.totalEmbarques}`);
-  console.log(`Total a repor: ${relatorio.totalValorPendente?.toFixed(2)} (${relatorio.totalCxPendente} un.)`);
+  console.log(
+    `Total a repor: ${relatorio.totalValorPendente?.toFixed(2)} · `
+    + `${relatorio.totalCxPendente} cx avaria / ${relatorio.totalCxPedido} cx pedidas `
+    + `(${relatorio.pct_cx_avaria_geral}%)`,
+  );
   console.log(`JSON: ${jsonPath}`);
   console.log(`HTML: ${htmlPath}`);
 
