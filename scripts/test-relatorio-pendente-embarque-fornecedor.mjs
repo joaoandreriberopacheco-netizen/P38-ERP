@@ -5,7 +5,19 @@
 import {
   buildRelatorioPendenteEmbarqueFornecedor,
   renderRelatorioPendenteEmbarqueFornecedorHtml,
+  parseM2PorCaixaFromNome,
+  qtyCaixaFromQuantidadeBase,
 } from '../src/lib/relatorioPendenteEmbarqueFornecedor.js';
+
+const brancaNome = 'PISO 45x45 BRANCA LISA BIANCO 2 M2 PEI4 5505D';
+if (parseM2PorCaixaFromNome(brancaNome) !== 2) {
+  console.error('parseM2 Branca Lisa esperava 2');
+  process.exit(1);
+}
+if (qtyCaixaFromQuantidadeBase(168, null, 'M2', { produto_nome: brancaNome }) !== 84) {
+  console.error('168 m² Branca Lisa esperava 84 CX');
+  process.exit(1);
+}
 
 const pedidoId = 'ped-1';
 const pedido = {

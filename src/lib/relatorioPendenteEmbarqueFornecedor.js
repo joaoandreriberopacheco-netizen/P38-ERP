@@ -19,6 +19,7 @@ import {
   resolveBoatLogisticsUnit,
   buildPurchaseUnitOptions,
   normalizeUnitCode,
+  getUnidadeBySiglaCanonical,
 } from '@/lib/productUnits';
 import {
   resolveEmbarqueCodigoExibicao,
@@ -125,18 +126,36 @@ export function resolveUnidadeCaixaRelatorio(produto, fallbackUnit = 'UN') {
   return resolveBoatLogisticsUnit(produto, fallbackUnit) || 'CX';
 }
 
-/** Ex.: "(2,5M²/ CX)" → 2.5 */
+/** Ex.: "(2,5M²/ CX)" → 2.5; "BIANCO 2 M2 PEI4" → 2 */
 export function parseM2PorCaixaFromNome(nome = '') {
-  const m = String(nome || '').match(/\(\s*([\d.,]+)\s*m[²2]\s*\/\s*cx\s*\)/i);
-  if (!m) return null;
-  const n = Number(String(m[1]).replace(',', '.'));
-  return Number.isFinite(n) && n > 0 ? n : null;
+  const s = String(nome || '');
+  const paren = s.match(/\(\s*([\d.,]+)\s*m[²2]\s*\/\s*cx\s*\)/i);
+  if (paren) {
+    const n = Number(String(paren[1]).replace(',', '.'));
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  const loose = s.match(/\b(\d+[,.]?\d*)\s*m\s*[²2]\b/i);
+  if (loose) {
+    const n = Number(String(loose[1]).replace(',', '.'));
+    // m²/CX típico em piso (evita capturar valores absurdos no nome)
+    if (Number.isFinite(n) && n > 0 && n <= 10) return n;
+  }
+  return null;
+}
+
+function fatorCaixaCadastroProduto(produto) {
+  const cx = getUnidadeBySiglaCanonical(produto, 'CX');
+  const f = Number(cx?.fator_conversao ?? 0) || 0;
+  return f > 1 ? f : 0;
 }
 
 function resolveFatorCaixaRelatorio(produto, contextoItem = {}, fallbackUnit = 'UN') {
   const nome = produto?.nome || contextoItem?.produto_nome || '';
   const m2PorCx = parseM2PorCaixaFromNome(nome);
   if (m2PorCx) return { unidade: 'CX', fator: m2PorCx };
+
+  const fCanon = fatorCaixaCadastroProduto(produto);
+  if (produto?.id && fCanon > 1) return { unidade: 'CX', fator: fCanon };
 
   const unidadeLog = resolveUnidadeCaixaRelatorio(produto, fallbackUnit);
   const fatorProd = fatorConversaoUnidadeProduto(produto, unidadeLog);
@@ -187,7 +206,7 @@ export function buildLinhasFolhaLogisticaFornecedor(
     if (somenteSaldoAvaria && folha.despachada <= MIN_SALDO_PENDENTE_BASE) continue;
 
     const ctx = { ...item, produto_nome: item.produto_nome };
-    const qComprada = qtyCaixaFromQuantidadeBase(folha.comprada, produto, item.unidade_medida, ctx);
+    const qComprada = qtyComercialPedidoItem(item, produto);
     const qTransito = qtyCaixaFromQuantidadeBase(folha.emTransito, produto, item.unidade_medida, ctx);
     const qRecebida = qtyCaixaFromQuantidadeBase(folha.recebida, produto, item.unidade_medida, ctx);
     const qPendente = qtyCaixaFromQuantidadeBase(folha.saldoPendente, produto, item.unidade_medida, ctx);
