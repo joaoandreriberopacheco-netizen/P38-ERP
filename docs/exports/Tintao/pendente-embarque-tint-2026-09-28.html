@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <title>Saldo pós-embarque — reposição ao comprador</title>
+  <title>Saldo pendente — reposição ao comprador</title>
   <style>
     @page { size: A4; margin: 18mm 16mm; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -38,41 +38,42 @@
     .pend { font-weight: 600; }
     .pct { color: #92400e; }
     .subtotal td { font-weight: 600; border-top: 1px solid #d9d9d9; border-bottom: none; padding-top: 8px; }
+    .secao-tag { font-size: 11px; color: #555; margin-bottom: 8px; font-style: italic; }
+    .secao-bloco { font-size: 14px; margin: 20px 0 10px; color: #333; }
     .geral { margin-top: 12px; }
   </style>
 </head>
 <body>
   <div class="doc">
     <header class="header">
-      <h1>Saldo pós-embarque — reposição ao comprador</h1>
-      <p class="meta">Gerado em 28/09/2026, 12:44:51 · Pedidos com emissão a partir de 20/07/2026 · Saldo pós-embarque (avaria / divergência / reposição)</p>
+      <h1>Saldo pendente — reposição ao comprador</h1>
+      <p class="meta">Gerado em 28/09/2026, 12:51:06 · <strong>Só pedidos com emissão a partir de 20/07/2026</strong> · Todos os saldos pendentes no período</p>
       <p class="resumo">
-        <strong>672 cx</strong> pedidas (soma dos pedidos) ·
-        <strong>40 cx</strong> avaria ·
-        <strong class="pct">5,95%</strong> geral ·
-        <strong>R$ 969,20</strong> a repor
+        <strong>3.354,5 cx</strong> pedidas (soma dos pedidos) ·
+        <strong>707,04 cx</strong> avaria ·
+        <strong class="pct">21,08%</strong> geral ·
+        <strong>R$ 30.594,99</strong> a repor
       </p>
     </header>
     
     <section class="fornecedor">
-      <h2 class="fornecedor-nome">TINTAO NOVA CIDADE</h2>
-      <p class="sub">1 pedido(s) · 672 cx nos pedidos · 40 avaria · 5,95% · R$ 969,20 a repor</p>
+      <h2 class="fornecedor-nome">Tintão</h2>
       
+      <p class="sub">7 pedido(s) com emissão ≥ 20/07/2026 · 3.354,5 cx nos pedidos · 707,04 pendentes · 21,08% · R$ 30.594,99 a repor</p>
+      <h3 class="secao-bloco">Após recepção (avaria / divergência)</h3>
       <article class="pedido">
-        <h2 class="pedido-titulo">Pedido AB6-PPQ</h2>
+        <h2 class="pedido-titulo">Pedido AB6-PPQ · cadastro: TINTAO NOVA CIDADE</h2>
+        <p class="secao-tag">Saldo após recepção (avaria / divergência / reposição)</p>
         <p class="pedido-meta">
           Emissão 27/08/2026 · Pedido original R$ 16.282,56 ·
-          Saldo a repor <strong>R$ 969,20</strong> (5,95% em valor)
+          Saldo a repor <strong>R$ 1.647,64</strong> (10,12% em valor)
         </p>
         <p class="pedido-resumo-cx">
           <strong>672 UN</strong> pedidas no total ·
-          <strong>40</strong> com avaria/divergência ·
-          <strong class="pct">5,95%</strong> do pedido (caixas)
+          <strong>68</strong> pendentes ·
+          <strong class="pct">10,12%</strong> do pedido (caixas)
         </p>
         <p class="pedido-contexto">Despacho principal: <strong>AB6-PPQ-A</strong> · 08/09/2026 · F/B SOLIMÕES · recepção: Com Divergência</p>
-        <p class="nota">
-          Por modelo: % modelo = avaria ÷ caixas pedidas daquele item; % pedido = mesma avaria ÷ total de caixas do pedido (ex.: 200+200+200=600, 15 avaria → 2,5% no rodapé do pedido).
-        </p>
         
         <section class="grupo">
           <h3 class="formato">45x45</h3>
@@ -92,24 +93,904 @@
             <tbody>
               
           <tr>
-            <td class="col-modelo">PISO 45X45 TRAVERTINO CZ (2,00 M²/ CX) PE<span class="emb-ref"> · AB6-PPQ-A, AB6-PPQ-C</span></td>
+            <td class="col-modelo">PISO 45x45 BRANCA LISA BIANCO 2 M2 PEI4 5505D<span class="emb-ref"> · AB6-PPQ-B</span></td>
+            <td class="col-num">168</td>
+            <td class="col-num">4</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">8</td>
+            <td class="col-num pct">4,76%</td>
+            <td class="col-num pct">1,19%</td>
+            <td class="col-num">R$ 193,84</td>
+          </tr>
+          <tr>
+            <td class="col-modelo">PISO 45X45 MONTANA AZUL PEI 5 (2,00M²/ CX)<span class="emb-ref"> · AB6-PPQ-B</span></td>
+            <td class="col-num">168</td>
+            <td class="col-num">4</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">8</td>
+            <td class="col-num pct">4,76%</td>
+            <td class="col-num pct">1,19%</td>
+            <td class="col-num">R$ 193,84</td>
+          </tr>
+          <tr>
+            <td class="col-modelo">PISO 45x45 TRAVERTINO BEGE (2,00 M²/ CX) PE<span class="emb-ref"> · AB6-PPQ-B</span></td>
+            <td class="col-num">168</td>
+            <td class="col-num">3</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">6</td>
+            <td class="col-num pct">3,57%</td>
+            <td class="col-num pct">0,89%</td>
+            <td class="col-num">R$ 145,38</td>
+          </tr>
+          <tr>
+            <td class="col-modelo">PISO 45X45 TRAVERTINO CZ (2,00 M²/ CX) PE<span class="emb-ref"> · AB6-PPQ-A, AB6-PPQ-B, AB6-PPQ-C</span></td>
             <td class="col-num">168</td>
             <td class="col-num">81</td>
             <td class="col-num">71</td>
-            <td class="col-num pend">40</td>
-            <td class="col-num pct">23,81%</td>
-            <td class="col-num pct">5,95%</td>
-            <td class="col-num">R$ 969,20</td>
+            <td class="col-num pend">46</td>
+            <td class="col-num pct">27,38%</td>
+            <td class="col-num pct">6,85%</td>
+            <td class="col-num">R$ 1.114,58</td>
           </tr>
               <tr class="subtotal">
                 <td class="col-modelo">Subtotal 45x45</td>
                 <td class="col-num"></td>
                 <td class="col-num"></td>
                 <td class="col-num"></td>
-                <td class="col-num">40</td>
+                <td class="col-num">68</td>
                 <td class="col-num"></td>
                 <td class="col-num"></td>
-                <td class="col-num">R$ 969,20</td>
+                <td class="col-num">R$ 1.647,64</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </article><h3 class="secao-bloco">Saldo em aberto no embarque</h3>
+      <article class="pedido">
+        <h2 class="pedido-titulo">Pedido EXC-FQZ · cadastro: TINTAO NOVA CIDADE</h2>
+        <p class="secao-tag">Saldo em aberto (embarque ou trânsito — ainda não fechou na recepção)</p>
+        <p class="pedido-meta">
+          Emissão 03/08/2026 · Pedido original R$ 18.279,75 ·
+          Saldo a repor <strong>R$ 60,58</strong> (0,33% em valor)
+        </p>
+        <p class="pedido-resumo-cx">
+          <strong>444,9 UN</strong> pedidas no total ·
+          <strong>2,5</strong> pendentes ·
+          <strong class="pct">0,56%</strong> do pedido (caixas)
+        </p>
+        <p class="pedido-contexto">Despacho principal: <strong>EXC-FQZ-A</strong> · 12/08/2026 · F/B RIO NEGRO · recepção: Recebido OK</p>
+        
+        <section class="grupo">
+          <h3 class="formato">50x50</h3>
+          <table>
+            <thead>
+              <tr>
+                <th class="col-modelo">Modelo / embarque</th>
+                <th class="col-num">Pedido</th>
+                <th class="col-num">Embarc.</th>
+                <th class="col-num">Receb.</th>
+                <th class="col-num">Avaria (cx)</th>
+                <th class="col-num">% modelo</th>
+                <th class="col-num">% pedido</th>
+                <th class="col-num">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+          <tr>
+            <td class="col-modelo">PISO 50x50 NATURALE BEGE PEI 3 (2,5M²/ CX)<span class="emb-ref"> · EXC-FQZ-B</span></td>
+            <td class="col-num">80</td>
+            <td class="col-num">2,5</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">2,5</td>
+            <td class="col-num pct">3,13%</td>
+            <td class="col-num pct">0,56%</td>
+            <td class="col-num">R$ 60,58</td>
+          </tr>
+              <tr class="subtotal">
+                <td class="col-modelo">Subtotal 50x50</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">2,5</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">R$ 60,58</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </article>
+      <article class="pedido">
+        <h2 class="pedido-titulo">Pedido KQL-J94 · cadastro: TINTAO NOVA CIDADE</h2>
+        <p class="secao-tag">Saldo em aberto (embarque ou trânsito — ainda não fechou na recepção)</p>
+        <p class="pedido-meta">
+          Emissão 15/08/2026 · Pedido original R$ 10.143,69 ·
+          Saldo a repor <strong>R$ 244,61</strong> (2,41% em valor)
+        </p>
+        <p class="pedido-resumo-cx">
+          <strong>325,08 UN</strong> pedidas no total ·
+          <strong>8,72</strong> pendentes ·
+          <strong class="pct">2,68%</strong> do pedido (caixas)
+        </p>
+        <p class="pedido-contexto">Despacho principal: <strong>KQL-J94-A</strong> · 02/09/2026 · F/B RIO NEGRO · recepção: Recebido OK</p>
+        
+        <section class="grupo">
+          <h3 class="formato">34x60</h3>
+          <table>
+            <thead>
+              <tr>
+                <th class="col-modelo">Modelo / embarque</th>
+                <th class="col-num">Pedido</th>
+                <th class="col-num">Embarc.</th>
+                <th class="col-num">Receb.</th>
+                <th class="col-num">Avaria (cx)</th>
+                <th class="col-num">% modelo</th>
+                <th class="col-num">% pedido</th>
+                <th class="col-num">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+          <tr>
+            <td class="col-modelo">PISO 34x60 AZULEJO PT HD  (CX 2,10 M²)<span class="emb-ref"> · KQL-J94-C</span></td>
+            <td class="col-num">33,6</td>
+            <td class="col-num">2,1</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">2,1</td>
+            <td class="col-num pct">6,25%</td>
+            <td class="col-num pct">0,65%</td>
+            <td class="col-num">R$ 59,81</td>
+          </tr>
+          <tr>
+            <td class="col-modelo">PISO 34X60 FOLHA HD (2,1 M²/CX)<span class="emb-ref"> · KQL-J94-C</span></td>
+            <td class="col-num">25,2</td>
+            <td class="col-num">2,1</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">2,1</td>
+            <td class="col-num pct">8,33%</td>
+            <td class="col-num pct">0,65%</td>
+            <td class="col-num">R$ 60,69</td>
+          </tr>
+          <tr>
+            <td class="col-modelo">PISO 34X60 WINDSOR BR (2,1 M²/CX)<span class="emb-ref"> · KQL-J94-C</span></td>
+            <td class="col-num">48,48</td>
+            <td class="col-num">2,02</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">2,02</td>
+            <td class="col-num pct">4,17%</td>
+            <td class="col-num pct">0,62%</td>
+            <td class="col-num">R$ 63,53</td>
+          </tr>
+              <tr class="subtotal">
+                <td class="col-modelo">Subtotal 34x60</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">6,22</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">R$ 184,03</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+        <section class="grupo">
+          <h3 class="formato">50x50</h3>
+          <table>
+            <thead>
+              <tr>
+                <th class="col-modelo">Modelo / embarque</th>
+                <th class="col-num">Pedido</th>
+                <th class="col-num">Embarc.</th>
+                <th class="col-num">Receb.</th>
+                <th class="col-num">Avaria (cx)</th>
+                <th class="col-num">% modelo</th>
+                <th class="col-num">% pedido</th>
+                <th class="col-num">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+          <tr>
+            <td class="col-modelo">PISO 50X50 NATURALE MARROM PEI 3 (2,5M²/ CX)<span class="emb-ref"> · KQL-J94-C</span></td>
+            <td class="col-num">62,5</td>
+            <td class="col-num">2,5</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">2,5</td>
+            <td class="col-num pct">4%</td>
+            <td class="col-num pct">0,77%</td>
+            <td class="col-num">R$ 60,58</td>
+          </tr>
+              <tr class="subtotal">
+                <td class="col-modelo">Subtotal 50x50</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">2,5</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">R$ 60,58</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </article>
+      <article class="pedido">
+        <h2 class="pedido-titulo">Pedido HHW-5NP · cadastro: TINTAO NOVA CIDADE</h2>
+        <p class="secao-tag">Saldo em aberto (embarque ou trânsito — ainda não fechou na recepção)</p>
+        <p class="pedido-meta">
+          Emissão 15/08/2026 · Pedido original R$ 10.041,86 ·
+          Saldo a repor <strong>R$ 637,76</strong> (6,35% em valor)
+        </p>
+        <p class="pedido-resumo-cx">
+          <strong>268,96 UN</strong> pedidas no total ·
+          <strong>21,32</strong> pendentes ·
+          <strong class="pct">7,93%</strong> do pedido (caixas)
+        </p>
+        <p class="pedido-contexto">Despacho principal: <strong>HHW-5NP-A</strong> · 02/09/2026 · F/B RIO NEGRO · recepção: Recebido OK</p>
+        
+        <section class="grupo">
+          <h3 class="formato">45x45</h3>
+          <table>
+            <thead>
+              <tr>
+                <th class="col-modelo">Modelo / embarque</th>
+                <th class="col-num">Pedido</th>
+                <th class="col-num">Embarc.</th>
+                <th class="col-num">Receb.</th>
+                <th class="col-num">Avaria (cx)</th>
+                <th class="col-num">% modelo</th>
+                <th class="col-num">% pedido</th>
+                <th class="col-num">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+          <tr>
+            <td class="col-modelo">PISO 45X45 JAVA AZUL PEI 5 (2,00M²/ CX)<span class="emb-ref"> · HHW-5NP-C</span></td>
+            <td class="col-num">48</td>
+            <td class="col-num">2</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">2</td>
+            <td class="col-num pct">4,17%</td>
+            <td class="col-num pct">0,74%</td>
+            <td class="col-num">R$ 48,46</td>
+          </tr>
+              <tr class="subtotal">
+                <td class="col-modelo">Subtotal 45x45</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">2</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">R$ 48,46</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+        <section class="grupo">
+          <h3 class="formato">50x50</h3>
+          <table>
+            <thead>
+              <tr>
+                <th class="col-modelo">Modelo / embarque</th>
+                <th class="col-num">Pedido</th>
+                <th class="col-num">Embarc.</th>
+                <th class="col-num">Receb.</th>
+                <th class="col-num">Avaria (cx)</th>
+                <th class="col-num">% modelo</th>
+                <th class="col-num">% pedido</th>
+                <th class="col-num">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+          <tr>
+            <td class="col-modelo">PISO 50X50 VERONA CINZA  PEI 4 (CX 2,50 M²)<span class="emb-ref"> · HHW-5NP-C</span></td>
+            <td class="col-num">60</td>
+            <td class="col-num">15</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">15</td>
+            <td class="col-num pct">25%</td>
+            <td class="col-num pct">5,58%</td>
+            <td class="col-num">R$ 363,45</td>
+          </tr>
+              <tr class="subtotal">
+                <td class="col-modelo">Subtotal 50x50</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">15</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">R$ 363,45</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+        <section class="grupo">
+          <h3 class="formato">60x120</h3>
+          <table>
+            <thead>
+              <tr>
+                <th class="col-modelo">Modelo / embarque</th>
+                <th class="col-num">Pedido</th>
+                <th class="col-num">Embarc.</th>
+                <th class="col-num">Receb.</th>
+                <th class="col-num">Avaria (cx)</th>
+                <th class="col-num">% modelo</th>
+                <th class="col-num">% pedido</th>
+                <th class="col-num">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+          <tr>
+            <td class="col-modelo">PISO 60x120 GRAN POLAR RT POL (2,16M²/ CX)<span class="emb-ref"> · HHW-5NP-C</span></td>
+            <td class="col-num">43,2</td>
+            <td class="col-num">2,16</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">2,16</td>
+            <td class="col-num pct">5%</td>
+            <td class="col-num pct">0,8%</td>
+            <td class="col-num">R$ 118,43</td>
+          </tr>
+          <tr>
+            <td class="col-modelo">PISO 60X120 POMPEI POL (2,16M²/ CX)<span class="emb-ref"> · HHW-5NP-C</span></td>
+            <td class="col-num">43,2</td>
+            <td class="col-num">2,16</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">2,16</td>
+            <td class="col-num pct">5%</td>
+            <td class="col-num pct">0,8%</td>
+            <td class="col-num">R$ 107,42</td>
+          </tr>
+              <tr class="subtotal">
+                <td class="col-modelo">Subtotal 60x120</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">4,32</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">R$ 225,85</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </article>
+      <article class="pedido">
+        <h2 class="pedido-titulo">Pedido SQF-7ZH · cadastro: TINTAO NOVA CIDADE</h2>
+        <p class="secao-tag">Saldo em aberto (embarque ou trânsito — ainda não fechou na recepção)</p>
+        <p class="pedido-meta">
+          Emissão 25/08/2026 · Pedido original R$ 30.076,46 ·
+          Saldo a repor <strong>R$ 1.194,76</strong> (3,97% em valor)
+        </p>
+        <p class="pedido-resumo-cx">
+          <strong>1.077,2 UN</strong> pedidas no total ·
+          <strong>40,14</strong> pendentes ·
+          <strong class="pct">3,73%</strong> do pedido (caixas)
+        </p>
+        <p class="pedido-contexto">Despacho principal: <strong>SQF-7ZH-A</strong> · 04/09/2026 · F/B M. MONTEIRO II · recepção: Recebido OK</p>
+        
+        <section class="grupo">
+          <h3 class="formato">45x45</h3>
+          <table>
+            <thead>
+              <tr>
+                <th class="col-modelo">Modelo / embarque</th>
+                <th class="col-num">Pedido</th>
+                <th class="col-num">Embarc.</th>
+                <th class="col-num">Receb.</th>
+                <th class="col-num">Avaria (cx)</th>
+                <th class="col-num">% modelo</th>
+                <th class="col-num">% pedido</th>
+                <th class="col-num">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+          <tr>
+            <td class="col-modelo">PISO 45x45 JAVA VERDE PEI 5 (2,00M²/ CX)<span class="emb-ref"> · SQF-7ZH-B</span></td>
+            <td class="col-num">80</td>
+            <td class="col-num">2</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">2</td>
+            <td class="col-num pct">2,5%</td>
+            <td class="col-num pct">0,19%</td>
+            <td class="col-num">R$ 48,46</td>
+          </tr>
+          <tr>
+            <td class="col-modelo">PISO 45X45 LAPA PEI 3 (2,00 M²/ CX)<span class="emb-ref"> · SQF-7ZH-B</span></td>
+            <td class="col-num">80</td>
+            <td class="col-num">2</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">2</td>
+            <td class="col-num pct">2,5%</td>
+            <td class="col-num pct">0,19%</td>
+            <td class="col-num">R$ 48,46</td>
+          </tr>
+              <tr class="subtotal">
+                <td class="col-modelo">Subtotal 45x45</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">4</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">R$ 96,92</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+        <section class="grupo">
+          <h3 class="formato">50x50</h3>
+          <table>
+            <thead>
+              <tr>
+                <th class="col-modelo">Modelo / embarque</th>
+                <th class="col-num">Pedido</th>
+                <th class="col-num">Embarc.</th>
+                <th class="col-num">Receb.</th>
+                <th class="col-num">Avaria (cx)</th>
+                <th class="col-num">% modelo</th>
+                <th class="col-num">% pedido</th>
+                <th class="col-num">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+          <tr>
+            <td class="col-modelo">PISO 50X50 ALLEGRO HD50  PEI 3 (2,5M²/ CX)<span class="emb-ref"> · SQF-7ZH-B</span></td>
+            <td class="col-num">75</td>
+            <td class="col-num">5</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">5</td>
+            <td class="col-num pct">6,67%</td>
+            <td class="col-num pct">0,46%</td>
+            <td class="col-num">R$ 121,15</td>
+          </tr>
+          <tr>
+            <td class="col-modelo">PISO 50x50 BIANCO 50 (2,50 M²/ CX)<span class="emb-ref"> · SQF-7ZH-B</span></td>
+            <td class="col-num">75</td>
+            <td class="col-num">2,5</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">2,5</td>
+            <td class="col-num pct">3,33%</td>
+            <td class="col-num pct">0,23%</td>
+            <td class="col-num">R$ 60,58</td>
+          </tr>
+          <tr>
+            <td class="col-modelo">PISO 50X50 BILBAO PEI 3 (2,5M²/ CX)<span class="emb-ref"> · SQF-7ZH-B</span></td>
+            <td class="col-num">75</td>
+            <td class="col-num">7,5</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">7,5</td>
+            <td class="col-num pct">10%</td>
+            <td class="col-num pct">0,7%</td>
+            <td class="col-num">R$ 181,73</td>
+          </tr>
+          <tr>
+            <td class="col-modelo">PISO 50X50 CASTANO PEI 3 (2,5M²/ CX)<span class="emb-ref"> · SQF-7ZH-B</span></td>
+            <td class="col-num">75</td>
+            <td class="col-num">5</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">5</td>
+            <td class="col-num pct">6,67%</td>
+            <td class="col-num pct">0,46%</td>
+            <td class="col-num">R$ 121,15</td>
+          </tr>
+          <tr>
+            <td class="col-modelo">PISO 50X50 SELVA PEI 3 (2,5M²/ CX)<span class="emb-ref"> · SQF-7ZH-B</span></td>
+            <td class="col-num">75</td>
+            <td class="col-num">5</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">5</td>
+            <td class="col-num pct">6,67%</td>
+            <td class="col-num pct">0,46%</td>
+            <td class="col-num">R$ 121,15</td>
+          </tr>
+          <tr>
+            <td class="col-modelo">PISO 50x50 SEM ARTICO HD  PEI 5 (CX 2,50 M²)<span class="emb-ref"> · SQF-7ZH-B</span></td>
+            <td class="col-num">75</td>
+            <td class="col-num">2,5</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">2,5</td>
+            <td class="col-num pct">3,33%</td>
+            <td class="col-num pct">0,23%</td>
+            <td class="col-num">R$ 60,58</td>
+          </tr>
+              <tr class="subtotal">
+                <td class="col-modelo">Subtotal 50x50</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">27,5</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">R$ 666,34</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+        <section class="grupo">
+          <h3 class="formato">60x120</h3>
+          <table>
+            <thead>
+              <tr>
+                <th class="col-modelo">Modelo / embarque</th>
+                <th class="col-num">Pedido</th>
+                <th class="col-num">Embarc.</th>
+                <th class="col-num">Receb.</th>
+                <th class="col-num">Avaria (cx)</th>
+                <th class="col-num">% modelo</th>
+                <th class="col-num">% pedido</th>
+                <th class="col-num">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+          <tr>
+            <td class="col-modelo">PISO 60X120 BELLA GOLD RT POL (2,16M²/ CX)<span class="emb-ref"> · SQF-7ZH-B</span></td>
+            <td class="col-num">64,8</td>
+            <td class="col-num">2,16</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">2,16</td>
+            <td class="col-num pct">3,33%</td>
+            <td class="col-num pct">0,2%</td>
+            <td class="col-num">R$ 109,25</td>
+          </tr>
+          <tr>
+            <td class="col-modelo">PISO 60X120 POMPEI POL (2,16M²/ CX)<span class="emb-ref"> · SQF-7ZH-B</span></td>
+            <td class="col-num">64,8</td>
+            <td class="col-num">6,48</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">6,48</td>
+            <td class="col-num pct">10%</td>
+            <td class="col-num pct">0,6%</td>
+            <td class="col-num">R$ 322,25</td>
+          </tr>
+              <tr class="subtotal">
+                <td class="col-modelo">Subtotal 60x120</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">8,64</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">R$ 431,50</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </article>
+      <article class="pedido">
+        <h2 class="pedido-titulo">Pedido PW8-WLV · cadastro: TINTAO NOVA CIDADE</h2>
+        <p class="secao-tag">Saldo em aberto (embarque ou trânsito — ainda não fechou na recepção)</p>
+        <p class="pedido-meta">
+          Emissão 31/08/2026 · Pedido original R$ 21.110,39 ·
+          Saldo a repor <strong>R$ 21.110,39</strong> (100% em valor)
+        </p>
+        <p class="pedido-resumo-cx">
+          <strong>511,36 UN</strong> pedidas no total ·
+          <strong>511,36</strong> pendentes ·
+          <strong class="pct">100%</strong> do pedido (caixas)
+        </p>
+        <p class="pedido-contexto">Despacho principal: <strong>PW8-WLV-A</strong> · 15/09/2026 · F/B VITÓRIA RÉGIA · recepção: Pendente</p>
+        
+        <section class="grupo">
+          <h3 class="formato">20x120</h3>
+          <table>
+            <thead>
+              <tr>
+                <th class="col-modelo">Modelo / embarque</th>
+                <th class="col-num">Pedido</th>
+                <th class="col-num">Embarc.</th>
+                <th class="col-num">Receb.</th>
+                <th class="col-num">Avaria (cx)</th>
+                <th class="col-num">% modelo</th>
+                <th class="col-num">% pedido</th>
+                <th class="col-num">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+          <tr>
+            <td class="col-modelo">PISO 20x120 CARVALHO NATURAL RET HD (1,68M² CAIXA)<span class="emb-ref"> · PW8-WLV-A</span></td>
+            <td class="col-num">33,6</td>
+            <td class="col-num">20</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">33,6</td>
+            <td class="col-num pct">100%</td>
+            <td class="col-num pct">6,57%</td>
+            <td class="col-num">R$ 1.413,89</td>
+          </tr>
+          <tr>
+            <td class="col-modelo">PISO 20X120 FRESNO CL (1,68 M²/CX)<span class="emb-ref"> · PW8-WLV-A</span></td>
+            <td class="col-num">33,6</td>
+            <td class="col-num">20</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">33,6</td>
+            <td class="col-num pct">100%</td>
+            <td class="col-num pct">6,57%</td>
+            <td class="col-num">R$ 1.413,89</td>
+          </tr>
+          <tr>
+            <td class="col-modelo">PISO 20X120 FRESNO MATE (1,68 M²/CX)<span class="emb-ref"> · PW8-WLV-A</span></td>
+            <td class="col-num">33,6</td>
+            <td class="col-num">20</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">33,6</td>
+            <td class="col-num pct">100%</td>
+            <td class="col-num pct">6,57%</td>
+            <td class="col-num">R$ 1.413,89</td>
+          </tr>
+              <tr class="subtotal">
+                <td class="col-modelo">Subtotal 20x120</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">100,8</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">R$ 4.241,67</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+        <section class="grupo">
+          <h3 class="formato">45x45</h3>
+          <table>
+            <thead>
+              <tr>
+                <th class="col-modelo">Modelo / embarque</th>
+                <th class="col-num">Pedido</th>
+                <th class="col-num">Embarc.</th>
+                <th class="col-num">Receb.</th>
+                <th class="col-num">Avaria (cx)</th>
+                <th class="col-num">% modelo</th>
+                <th class="col-num">% pedido</th>
+                <th class="col-num">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+          <tr>
+            <td class="col-modelo">PISO 45X45 TRAFEGO BEGE PEI 5 (2,0M²/ CX)<span class="emb-ref"> · PW8-WLV-A, PW8-WLV-B</span></td>
+            <td class="col-num">100</td>
+            <td class="col-num">47</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">100</td>
+            <td class="col-num pct">100%</td>
+            <td class="col-num pct">19,56%</td>
+            <td class="col-num">R$ 2.423,00</td>
+          </tr>
+              <tr class="subtotal">
+                <td class="col-modelo">Subtotal 45x45</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">100</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">R$ 2.423,00</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+        <section class="grupo">
+          <h3 class="formato">50x50</h3>
+          <table>
+            <thead>
+              <tr>
+                <th class="col-modelo">Modelo / embarque</th>
+                <th class="col-num">Pedido</th>
+                <th class="col-num">Embarc.</th>
+                <th class="col-num">Receb.</th>
+                <th class="col-num">Avaria (cx)</th>
+                <th class="col-num">% modelo</th>
+                <th class="col-num">% pedido</th>
+                <th class="col-num">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+          <tr>
+            <td class="col-modelo">PISO 50X50 COPACABANA PEI 4 (2,5M²/ CX)<span class="emb-ref"> · PW8-WLV-A</span></td>
+            <td class="col-num">60</td>
+            <td class="col-num">24</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">60</td>
+            <td class="col-num pct">100%</td>
+            <td class="col-num pct">11,73%</td>
+            <td class="col-num">R$ 1.453,80</td>
+          </tr>
+              <tr class="subtotal">
+                <td class="col-modelo">Subtotal 50x50</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">60</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">R$ 1.453,80</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+        <section class="grupo">
+          <h3 class="formato">60x120</h3>
+          <table>
+            <thead>
+              <tr>
+                <th class="col-modelo">Modelo / embarque</th>
+                <th class="col-num">Pedido</th>
+                <th class="col-num">Embarc.</th>
+                <th class="col-num">Receb.</th>
+                <th class="col-num">Avaria (cx)</th>
+                <th class="col-num">% modelo</th>
+                <th class="col-num">% pedido</th>
+                <th class="col-num">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+          <tr>
+            <td class="col-modelo">PISO 60X120 ARACRUZ RT POL (2,16M²/ CX)<span class="emb-ref"> · PW8-WLV-A</span></td>
+            <td class="col-num">64,8</td>
+            <td class="col-num">30</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">64,8</td>
+            <td class="col-num pct">100%</td>
+            <td class="col-num pct">12,67%</td>
+            <td class="col-num">R$ 3.525,12</td>
+          </tr>
+          <tr>
+            <td class="col-modelo">PISO 60x120 BRANCO RT POLIDO CX2,<span class="emb-ref"> · PW8-WLV-A</span></td>
+            <td class="col-num">43,2</td>
+            <td class="col-num">20</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">43,2</td>
+            <td class="col-num pct">100%</td>
+            <td class="col-num pct">8,45%</td>
+            <td class="col-num">R$ 2.239,92</td>
+          </tr>
+          <tr>
+            <td class="col-modelo">PISO 60X120 GRAN TERRAZO MATE (2,16M²/ CX)<span class="emb-ref"> · PW8-WLV-A</span></td>
+            <td class="col-num">12,96</td>
+            <td class="col-num">6</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">12,96</td>
+            <td class="col-num pct">100%</td>
+            <td class="col-num pct">2,53%</td>
+            <td class="col-num">R$ 644,50</td>
+          </tr>
+          <tr>
+            <td class="col-modelo">PISO 60X120 PERSA BEGE POL (2,16M²/ CX)<span class="emb-ref"> · PW8-WLV-A</span></td>
+            <td class="col-num">64,8</td>
+            <td class="col-num">30</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">64,8</td>
+            <td class="col-num pct">100%</td>
+            <td class="col-num pct">12,67%</td>
+            <td class="col-num">R$ 3.222,50</td>
+          </tr>
+          <tr>
+            <td class="col-modelo">PISO 60X120 STATUTARIO POLIDO (2,16M²/ CX)<span class="emb-ref"> · PW8-WLV-A, PW8-WLV-B</span></td>
+            <td class="col-num">64,8</td>
+            <td class="col-num">29</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">64,8</td>
+            <td class="col-num pct">100%</td>
+            <td class="col-num pct">12,67%</td>
+            <td class="col-num">R$ 3.359,88</td>
+          </tr>
+              <tr class="subtotal">
+                <td class="col-modelo">Subtotal 60x120</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">250,56</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">R$ 12.991,92</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </article>
+      <article class="pedido">
+        <h2 class="pedido-titulo">Pedido 7MW-ZZQ · cadastro: TINTAO NOVA CIDADE</h2>
+        <p class="secao-tag">Saldo em aberto (embarque ou trânsito — ainda não fechou na recepção)</p>
+        <p class="pedido-meta">
+          Emissão 14/09/2026 · Pedido original R$ 5.699,25 ·
+          Saldo a repor <strong>R$ 5.699,25</strong> (100% em valor)
+        </p>
+        <p class="pedido-resumo-cx">
+          <strong>55 UN</strong> pedidas no total ·
+          <strong>55</strong> pendentes ·
+          <strong class="pct">100%</strong> do pedido (caixas)
+        </p>
+        <p class="pedido-contexto">Despacho principal: <strong>7MW-ZZQ-A</strong> · 23/09/2026 · F/B RIO NEGRO · recepção: Pendente</p>
+        
+        <section class="grupo">
+          <h3 class="formato">60x120</h3>
+          <table>
+            <thead>
+              <tr>
+                <th class="col-modelo">Modelo / embarque</th>
+                <th class="col-num">Pedido</th>
+                <th class="col-num">Embarc.</th>
+                <th class="col-num">Receb.</th>
+                <th class="col-num">Avaria (cx)</th>
+                <th class="col-num">% modelo</th>
+                <th class="col-num">% pedido</th>
+                <th class="col-num">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+          <tr>
+            <td class="col-modelo">PISO 60X120 APULIA POLIDO (2,16M²/ CX)<span class="emb-ref"> · 7MW-ZZQ-A</span></td>
+            <td class="col-num">20</td>
+            <td class="col-num">20</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">20</td>
+            <td class="col-num pct">100%</td>
+            <td class="col-num pct">36,36%</td>
+            <td class="col-num">R$ 2.423,60</td>
+          </tr>
+              <tr class="subtotal">
+                <td class="col-modelo">Subtotal 60x120</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">20</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">R$ 2.423,60</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+        <section class="grupo">
+          <h3 class="formato">66x66</h3>
+          <table>
+            <thead>
+              <tr>
+                <th class="col-modelo">Modelo / embarque</th>
+                <th class="col-num">Pedido</th>
+                <th class="col-num">Embarc.</th>
+                <th class="col-num">Receb.</th>
+                <th class="col-num">Avaria (cx)</th>
+                <th class="col-num">% modelo</th>
+                <th class="col-num">% pedido</th>
+                <th class="col-num">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+          <tr>
+            <td class="col-modelo">PISO 66X66 ROBLE RETIF POLIDO (2,18 M²/ CX)<span class="emb-ref"> · 7MW-ZZQ-A, 7MW-ZZQ-B</span></td>
+            <td class="col-num">35</td>
+            <td class="col-num">34</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">35</td>
+            <td class="col-num pct">100%</td>
+            <td class="col-num pct">63,64%</td>
+            <td class="col-num">R$ 3.275,65</td>
+          </tr>
+              <tr class="subtotal">
+                <td class="col-modelo">Subtotal 66x66</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">35</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">R$ 3.275,65</td>
               </tr>
             </tbody>
           </table>
@@ -119,10 +1000,10 @@
     <section class="grupo geral">
       <h3 class="formato">Total geral (todos os pedidos do relatório)</h3>
       <p class="pedido-resumo-cx">
-        <strong>672 caixas</strong> pedidas ·
-        <strong>40</strong> com avaria ·
-        <strong class="pct">5,95%</strong> proporcional ·
-        R$ 969,20 em valor a repor
+        <strong>3.354,5 caixas</strong> pedidas ·
+        <strong>707,04</strong> com avaria ·
+        <strong class="pct">21,08%</strong> proporcional ·
+        R$ 30.594,99 em valor a repor
       </p>
     </section>
   </div>

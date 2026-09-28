@@ -44,7 +44,23 @@ function parseArgs(argv) {
     htmlOnly: argv.includes('--html'),
     pdf: argv.includes('--pdf'),
     incluirAguardandoEmbarque: argv.includes('--incluir-aguardando-embarque'),
+    somentePosEmbarque: argv.includes('--so-pos-embarque'),
   };
+}
+
+function resolveDataEmissaoRow(row = {}) {
+  const raw = row.data_emissao
+    ? String(row.data_emissao).slice(0, 10)
+    : String(row?.dados?.data_emissao || '').slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : null;
+}
+
+function filterPedidosRowsPorDataMin(rows = [], dataMin = '') {
+  if (!dataMin) return rows;
+  return rows.filter((row) => {
+    const d = resolveDataEmissaoRow(row);
+    return d && d >= dataMin;
+  });
 }
 
 function requireDatabaseUrl() {
@@ -278,10 +294,13 @@ async function fetchFromSupabaseRest(dataMin) {
     .limit(3000);
   if (error) throw new Error(`pedido_compra: ${error.message}`);
 
-  const pedidosRows = (pedidosRaw || []).filter((p) => {
-    const st = String(p?.status || p?.dados?.status || '').trim();
-    return st && st !== 'Rascunho' && st !== 'Cancelado';
-  });
+  const pedidosRows = filterPedidosRowsPorDataMin(
+    (pedidosRaw || []).filter((p) => {
+      const st = String(p?.status || p?.dados?.status || '').trim();
+      return st && st !== 'Rascunho' && st !== 'Cancelado';
+    }),
+    dataMin,
+  );
 
   if (!pedidosRows.length) {
     return { pedidos: [], embarquesDb: [], produtosMap: {} };
@@ -325,16 +344,29 @@ async function fetchFromSupabase(dataMin) {
 }
 
 async function main() {
-  const { dataMin, fornecedor, json, htmlOnly, pdf, incluirAguardandoEmbarque } = parseArgs(
-    process.argv.slice(2),
-  );
+  const {
+    dataMin,
+    fornecedor,
+    json,
+    htmlOnly,
+    pdf,
+    incluirAguardandoEmbarque,
+    somentePosEmbarque,
+  } = parseArgs(process.argv.slice(2));
 
   const { pedidos, embarquesDb, produtosMap, fonte } = await fetchFromSupabase(dataMin);
+
+  const fornecedorNorm = String(fornecedor || '').trim();
+  const isTintExport = fornecedorNorm.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '').includes('tint');
+  let somenteSaldoAvaria = true;
+  if (incluirAguardandoEmbarque) somenteSaldoAvaria = false;
+  else if (somentePosEmbarque) somenteSaldoAvaria = true;
+  else if (isTintExport) somenteSaldoAvaria = false;
 
   const relatorio = buildRelatorioPendenteEmbarqueFornecedor(pedidos, embarquesDb, produtosMap, {
     dataEmissaoMin: dataMin,
     fornecedorNorm: fornecedor,
-    somenteSaldoAvaria: !incluirAguardandoEmbarque,
+    somenteSaldoAvaria,
   });
 
   const outDir = resolveOutDir(fornecedor);
@@ -356,8 +388,17 @@ async function main() {
   );
 
   console.log(`Fonte: ${fonte}`);
-  console.log(`Pedidos carregados: ${pedidos.length}`);
-  console.log(`Pedidos com saldo: ${relatorio.totalPedidos}`);
+  console.log(`Corte de emissão: >= ${dataMin}`);
+  console.log(`Pedidos carregados (BD no período): ${pedidos.length}`);
+  if (fornecedorNorm) {
+    const fn = fornecedorNorm.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
+    const noFiltro = pedidos.filter((p) => {
+      const n = String(p.fornecedor_nome || '').toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
+      return fn.includes('tint') ? n.includes('tint') : n.includes(fn);
+    }).length;
+    console.log(`Fornecedor «${fornecedorNorm}»: ${noFiltro} pedido(s) no período`);
+  }
+  console.log(`Pedidos no relatório: ${relatorio.totalPedidos} · escopo: ${somenteSaldoAvaria ? 'só pós-recepção' : 'todos os pendentes'}`);
   console.log(`Embarques com pendência: ${relatorio.totalEmbarques}`);
   console.log(
     `Total a repor: ${relatorio.totalValorPendente?.toFixed(2)} · `
