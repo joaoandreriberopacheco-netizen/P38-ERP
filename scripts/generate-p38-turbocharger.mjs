@@ -49,6 +49,13 @@ const FACT_COLS = [
   { key: 'sku_atual', label: 'SKU antigo (cadastro)', editavel: true, width: 42 },
   { key: 'codigo_4x', label: 'Código caminho 4', editavel: false, width: 12, calculado: true },
   { key: 'legenda', label: 'Legenda caminho', editavel: false, width: 48, calculado: true },
+  {
+    key: 'observacoes',
+    label: 'Observações (revisão)',
+    editavel: true,
+    width: 48,
+    revisao: true,
+  },
 ];
 
 function cellStr(cell) {
@@ -96,6 +103,38 @@ async function loadFactRowsFrom4x3() {
     });
   });
   return rows;
+}
+
+/** Preserva notas humanas ao regenerar (coluna «Observações» na Fact). */
+async function loadObservacoesFromExistingTurbo() {
+  if (!fs.existsSync(OUT)) return new Map();
+  try {
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.readFile(OUT);
+    const ws = wb.getWorksheet('Fact_Catalogo_4x3');
+    if (!ws) return new Map();
+
+    let codCol = null;
+    let obsCol = null;
+    ws.getRow(1).eachCell((cell, colNumber) => {
+      const h = cellStr(cell).toLowerCase();
+      if (h.includes('cód') && h.includes('interno')) codCol = colNumber;
+      if (h.includes('observ')) obsCol = colNumber;
+    });
+    if (codCol == null) codCol = 1;
+    if (obsCol == null) return new Map();
+
+    const map = new Map();
+    ws.eachRow((row, n) => {
+      if (n === 1) return;
+      const cod = cellStr(row.getCell(codCol)).toUpperCase();
+      const obs = cellStr(row.getCell(obsCol));
+      if (cod && obs) map.set(cod, obs);
+    });
+    return map;
+  } catch {
+    return new Map();
+  }
 }
 
 function uniqueSorted(values) {
@@ -238,6 +277,10 @@ async function fetchProdutosSupabase() {
 
 async function main() {
   const factRows = await loadFactRowsFrom4x3();
+  const observacoesByCod = await loadObservacoesFromExistingTurbo();
+  for (const row of factRows) {
+    row.observacoes = observacoesByCod.get(row.codigo_interno) ?? '';
+  }
   const dim = buildDimensions(factRows);
 
   const wb = new ExcelJS.Workbook();
@@ -256,6 +299,10 @@ async function main() {
       'A–G visão geral · colunas I+ cascatas pai→filho — dropdowns na Fact filtram automaticamente',
     ],
     ['Fact_Catalogo_4x3', 'Uma linha por SKU — alimenta a UI Catálogo 4×3 após publicar'],
+    [
+      'Observações (revisão)',
+      'Suas notas ao editar — não entram no catálogo publicado; guia o «anexar e aplicar». Regenerar o ficheiro mantém o texto desta coluna.',
+    ],
     ['SKU_Completo', 'Snapshot do cadastro (Supabase) — npm run turbocharger:generate -- --with-supabase'],
     ['Regenerar', 'npm run turbocharger:generate'],
     ['Fonte fact (seed)', fs.existsSync(SRC_4X3) ? path.relative(ROOT, SRC_4X3) : '(4×3 em falta)'],
@@ -287,6 +334,7 @@ async function main() {
       styleDataCell(cell, {
         editavel: cfg?.editavel !== false,
         calculado: cfg?.calculado === true,
+        revisao: cfg?.revisao === true,
       });
     });
   }

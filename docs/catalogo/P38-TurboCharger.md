@@ -62,6 +62,13 @@ Na fact sheet: sete dropdowns encadeados (4 + 3) mais nome vitrine e colunas cal
 
 ---
 
+## Fluxo de revisão (editar → anexar → aplicar)
+
+1. **Editar** no Excel: classificação 4×3, `novo_sku`, etc.  
+2. **Observações (revisão)** — coluna no fim da `Fact_Catalogo_4x3` (fundo âmbar claro): suas notas («mover para linha X», «confirmar com fornecedor», …). **Não publica** no catálogo; serve para quando **anexar** o ficheiro e pedir para **aplicar** as mudanças.  
+3. **Regenerar** com `npm run turbocharger:generate` **mantém** o texto das observações já gravado no TurboCharger anterior (por `codigo_interno`).  
+4. **Publicar / aplicar** (próximo passo no repo): importar a Fact e materializar alterações — observações entram só como guia, salvo combinarmos regras explícitas.
+
 ## Fluxos (futuros)
 
 1. **Editar** TurboCharger (dims + fact) no Excel.  
