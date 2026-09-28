@@ -37,6 +37,20 @@ Referência visual: `scripts/tintao-orfaos-pdf-export.mjs` e PDFs órfãos Tint�
 - Script: `scripts/gerar-relatorio-pendente-embarque-fornecedor.mjs` (sem Base44).
 - Linhas de embarque: `embarque_item` + espelho `rebuildEmbarqueItensMirror` (mesma leitura que a app).
 
+### Postgres vs jsonb `dados`
+
+O ERP **não inventa** fator de conversão: lê **colunas SQL**.
+
+| O quê | Onde no Postgres |
+|--------|------------------|
+| Fator CX → m² (base) | `produto.unidades_alternativas` (jsonb **coluna**, lista de embalagens) + `unidade_principal` / `unidade_vitrine` |
+| Quantidade do pedido | `pedido_compra_item.quantidade_base`, `fator_aplicado`, `unidade_sigla`, `produto_unidade_id` |
+| Embarque / recepção | `embarque_item` (colunas normalizadas; ver migrações 108+) |
+
+O campo **`dados` jsonb** em `produto` / `pedido_compra` é **resto da era Base44** (tudo num saco). A migração **029** promoveu dezenas de campos para colunas tipadas (`text`, `numeric`, `jsonb` dedicado). Relatórios e scripts usam **`mergeProdutoSqlRowWithDadosFallback`**: coluna SQL manda; `dados` só se a coluna estiver vazia. Não se parseia nome de produto para achar m²/CX.
+
+Código de hidratação: `src/lib/produtoSupabaseHydrate.js`.
+
 ## Teste
 
 ```bash

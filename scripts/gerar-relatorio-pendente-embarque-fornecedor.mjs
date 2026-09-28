@@ -201,7 +201,12 @@ async function fetchProdutosMap(client, produtoIds = []) {
   const chunk = 200;
   for (let i = 0; i < ids.length; i += chunk) {
     const slice = ids.slice(i, i + chunk);
-    const { rows } = await client.query('select * from public.produto where id = any($1::text[])', [slice]);
+    const { rows } = await client.query(
+      `select id, nome, unidade_principal, unidade_vitrine, unidades_alternativas, unidades,
+              valor_compra, dados
+       from public.produto where id = any($1::text[])`,
+      [slice],
+    );
     for (const row of rows) {
       map[row.id] = mapProdutoRow(row);
     }

@@ -1,6 +1,13 @@
 /**
- * Hidrata linha `produto` do Postgres/Supabase para consumo de unidades (relatórios, scripts).
- * Fonte de verdade: `unidades[]` no cadastro ou migração de `unidades_alternativas` legado.
+ * Linha `public.produto` (Postgres) → objeto Produto para relatórios/scripts.
+ *
+ * **Autoridade:** colunas SQL (migração 029+), por exemplo:
+ *   `unidade_principal`, `unidade_vitrine`, `unidades_alternativas` (jsonb de embalagens).
+ *
+ * O jsonb `dados` é **legado Base44** (documento único antes do Postgres relacional).
+ * Só entra aqui como **fallback** quando a coluna SQL ainda está vazia — nunca sobrescreve coluna preenchida.
+ *
+ * `unidades[]` canónico monta-se com `migrateLegacyToUnidades` (mesma regra do formulário de produto).
  */
 import { migrateLegacyToUnidades } from '@/lib/productUnitsCrud';
 
@@ -16,18 +23,26 @@ function parseJsonField(value, fallback) {
   return value;
 }
 
-export function hydrateProdutoFromSupabaseRow(row = {}) {
+/** Coluna SQL preenchida ganha; `dados` só preenche lacunas. */
+export function mergeProdutoSqlRowWithDadosFallback(row = {}) {
   const dados = row.dados && typeof row.dados === 'object' ? row.dados : {};
-  let unidades = row.unidades ?? dados.unidades;
+  const merged = { ...dados };
+  for (const [key, value] of Object.entries(row)) {
+    if (key === 'dados') continue;
+    if (value !== null && value !== undefined) {
+      merged[key] = value;
+    }
+  }
+  merged.id = row.id ?? merged.id ?? dados.id;
+  merged.nome = row.nome ?? merged.nome ?? dados.nome;
+  return merged;
+}
+
+export function hydrateProdutoFromSupabaseRow(row = {}) {
+  const base = mergeProdutoSqlRowWithDadosFallback(row);
+  let unidades = base.unidades;
   unidades = parseJsonField(unidades, unidades);
-  const base = {
-    ...dados,
-    ...row,
-    id: row.id || dados.id,
-    nome: row.nome || dados.nome,
-    unidades: Array.isArray(unidades) ? unidades : [],
-  };
-  delete base.dados;
+  base.unidades = Array.isArray(unidades) ? unidades : [];
   const { unidades: unidadesCanon } = migrateLegacyToUnidades(base);
   return {
     ...base,
