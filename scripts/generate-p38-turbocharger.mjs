@@ -14,8 +14,16 @@ import {
   styleDataCell,
   colLetter,
   addListValidation,
+  addDependentListValidation,
   FILL_DIM,
 } from './lib/turboChargerExcelStyle.mjs';
+import {
+  buildCascadeTables,
+  dependentListFormula,
+  emptyGuardForCascade,
+  excelCascadeJoinExpr,
+  writeCascadeBlocks,
+} from './lib/turboChargerCascade.mjs';
 import { TURBO_SKU_COMPLETO_COLS } from './lib/turboChargerSkuCols.mjs';
 
 const ROOT = process.cwd();
@@ -31,12 +39,12 @@ const LIST_EXTRA_ROWS = 80;
 const FACT_COLS = [
   { key: 'codigo_interno', label: 'Cód. Interno (*)', editavel: true, width: 14 },
   { key: 'etapa', label: 'ETAPA (lista)', editavel: true, width: 18, listCol: 'A' },
-  { key: 'categoria', label: 'CATEGORIA (lista)', editavel: true, width: 22, listCol: 'B' },
-  { key: 'subcategoria', label: 'SUB (lista)', editavel: true, width: 20, listCol: 'C' },
-  { key: 'linha', label: 'LINHA (lista)', editavel: true, width: 22, listCol: 'D' },
-  { key: 'comp1', label: 'Produto compra (lista)', editavel: true, width: 28, listCol: 'E' },
-  { key: 'comp2', label: 'Eixo A (lista)', editavel: true, width: 18, listCol: 'F' },
-  { key: 'comp3', label: 'Eixo B (lista)', editavel: true, width: 18, listCol: 'G' },
+  { key: 'categoria', label: 'CATEGORIA (filtra ETAPA)', editavel: true, width: 22, cascade: 'etapa_categoria' },
+  { key: 'subcategoria', label: 'SUB (filtra acima)', editavel: true, width: 20, cascade: 'categoria_sub' },
+  { key: 'linha', label: 'LINHA (filtra acima)', editavel: true, width: 22, cascade: 'sub_linha' },
+  { key: 'comp1', label: 'Produto compra (filtra LINHA)', editavel: true, width: 28, cascade: 'linha_comp1' },
+  { key: 'comp2', label: 'Eixo A (filtra comp1)', editavel: true, width: 18, cascade: 'comp1_comp2' },
+  { key: 'comp3', label: 'Eixo B (filtra comp2)', editavel: true, width: 18, cascade: 'comp2_comp3' },
   { key: 'novo_sku', label: 'Nome vitrine 4×3', editavel: true, width: 42 },
   { key: 'codigo_4x', label: 'Código caminho 4', editavel: false, width: 12, calculado: true },
   { key: 'legenda', label: 'Legenda caminho', editavel: false, width: 48, calculado: true },
@@ -117,8 +125,8 @@ function listasColumnSpecs(dim) {
   ];
 }
 
-/** @returns {Record<string, number>} fim da validação por coluna (A…G) — linha Excel inclusive */
-function writeListasHorizontal(wb, dim) {
+/** @returns {{ ws, endRowByCol: Record<string, number>, cascadeMeta: Record<string, object> }} */
+function writeListasSheet(wb, dim, cascades) {
   const specs = listasColumnSpecs(dim);
   const bodyRows = Math.max(...specs.map((s) => s.values.length), 1) + LIST_EXTRA_ROWS;
   const ws = wb.addWorksheet(LISTAS_SHEET, { views: [{ state: 'frozen', ySplit: 1 }] });
@@ -147,7 +155,62 @@ function writeListasHorizontal(wb, dim) {
     const letter = colLetter(colIdx + 1);
     endRowByCol[letter] = Math.max(spec.values.length + 1, 2) + LIST_EXTRA_ROWS;
   });
-  return endRowByCol;
+
+  const cascadeMeta = writeCascadeBlocks(ws, cascades, {
+    extraRows: LIST_EXTRA_ROWS,
+    styleHeaderRow,
+    FILL_DIM,
+  });
+
+  return { ws, endRowByCol, cascadeMeta };
+}
+
+function factParentExprForCascade(cascadeId) {
+  switch (cascadeId) {
+    case 'etapa_categoria':
+      return '$B2';
+    case 'categoria_sub':
+      return excelCascadeJoinExpr('$B2', '$C2');
+    case 'sub_linha':
+      return excelCascadeJoinExpr('$B2', '$C2', '$D2');
+    case 'linha_comp1':
+      return excelCascadeJoinExpr('$B2', '$C2', '$D2', '$E2');
+    case 'comp1_comp2':
+      return excelCascadeJoinExpr('$B2', '$C2', '$D2', '$E2', '$F2');
+    case 'comp2_comp3':
+      return excelCascadeJoinExpr('$B2', '$C2', '$D2', '$E2', '$F2', '$G2');
+    default:
+      return '$B2';
+  }
+}
+
+function applyFactListValidations(factWs, maxFactRow, listEndRowByCol, cascadeMeta) {
+  FACT_COLS.forEach((col, idx) => {
+    const factLetter = colLetter(idx + 1);
+    const range = `${factLetter}2:${factLetter}${maxFactRow}`;
+
+    if (col.listCol) {
+      const endRow = listEndRowByCol[col.listCol] ?? 500;
+      addListValidation(factWs, range, dimListFormula(LISTAS_SHEET, col.listCol, 2, endRow));
+      return;
+    }
+
+    if (!col.cascade) return;
+    const block = cascadeMeta[col.cascade];
+    if (!block) return;
+
+    const parentExpr = factParentExprForCascade(col.cascade);
+    const formula = dependentListFormula({
+      sheet: LISTAS_SHEET,
+      parentCol: block.parentCol,
+      childCol: block.childCol,
+      startRow: block.startRow,
+      endRow: block.endRow,
+      factParentExpr: parentExpr,
+      emptyGuard: emptyGuardForCascade(col.cascade),
+    });
+    addDependentListValidation(factWs, range, formula);
+  });
 }
 
 function dimListFormula(sheetName, col = 'A', start = 2, end = 500) {
@@ -186,7 +249,10 @@ async function main() {
   const lines = [
     ['P38 · TurboCharger', 'Base de catálogo 4×3 — interface alimentada por Excel'],
     ['Design', 'Igual importador em massa: cabeçalho cinza, células editáveis claras, Supabase em azul'],
-    ['Aba «Listas»', '7 colunas horizontais (ETAPA → … → comp3) — edite ou preencha linhas vazias no fim'],
+    [
+      'Aba «Listas»',
+      'A–G visão geral · colunas I+ cascatas pai→filho — dropdowns na Fact filtram automaticamente',
+    ],
     ['Fact_Catalogo_4x3', 'Uma linha por SKU — alimenta a UI Catálogo 4×3 após publicar'],
     ['SKU_Completo', 'Snapshot do cadastro (Supabase) — npm run turbocharger:generate -- --with-supabase'],
     ['Regenerar', 'npm run turbocharger:generate'],
@@ -199,7 +265,8 @@ async function main() {
     if (i === 0) readme.getCell(`A${i + 1}`).font = { bold: true, size: 14 };
   });
 
-  const listEndRowByCol = writeListasHorizontal(wb, dim);
+  const cascades = buildCascadeTables(factRows);
+  const { endRowByCol: listEndRowByCol, cascadeMeta } = writeListasSheet(wb, dim, cascades);
 
   // ── Fact ──
   const factWs = wb.addWorksheet('Fact_Catalogo_4x3', { views: [{ state: 'frozen', ySplit: 1 }] });
@@ -209,16 +276,7 @@ async function main() {
   const extraBlank = 200;
   const maxFactRow = 1 + Math.max(factRows.length, 1) + extraBlank;
 
-  FACT_COLS.forEach((col, idx) => {
-    if (!col.listCol) return;
-    const factLetter = colLetter(idx + 1);
-    const endRow = listEndRowByCol[col.listCol] ?? 500;
-    addListValidation(
-      factWs,
-      `${factLetter}2:${factLetter}${maxFactRow}`,
-      dimListFormula(LISTAS_SHEET, col.listCol, 2, endRow),
-    );
-  });
+  applyFactListValidations(factWs, maxFactRow, listEndRowByCol, cascadeMeta);
 
   for (const row of factRows) {
     const r = factWs.addRow(row);

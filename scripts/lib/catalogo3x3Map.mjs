@@ -70,11 +70,14 @@ export function categoriaSemPrefixo(categoria = '') {
   return String(categoria ?? '').replace(/^\d+\.\s*/, '').trim() || String(categoria ?? '').trim();
 }
 
+/** Separador entre níveis de caminho (padrão PT — legenda e chaves Excel). */
+export const LEGENDA_CAMINHO_SEP = ' · ';
+
 /** Legenda legível: Edificações · Alvenaria · Armaduras */
 export function legendaCaminho3x(etapa, categoria, linha) {
   const e = etapaSemPrefixo(etapa);
   const c = categoriaSemPrefixo(categoria);
-  return `${e} · ${c} · ${linha}`;
+  return `${e}${LEGENDA_CAMINHO_SEP}${c}${LEGENDA_CAMINHO_SEP}${linha}`;
 }
 
 function etapaCodigoLetra(etapa) {
@@ -1521,7 +1524,7 @@ export function classify4x3(row, abHit) {
 export function legendaCaminho4x(etapa, categoria, subcategoria, linha) {
   const e = etapaSemPrefixo(etapa);
   const c = categoriaSemPrefixo(categoria);
-  return `${e} · ${c} · ${subcategoria} · ${linha}`;
+  return `${e}${LEGENDA_CAMINHO_SEP}${c}${LEGENDA_CAMINHO_SEP}${subcategoria}${LEGENDA_CAMINHO_SEP}${linha}`;
 }
 
 export function pathKey4(etapa, categoria, subcategoria, linha) {

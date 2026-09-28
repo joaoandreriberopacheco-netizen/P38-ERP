@@ -50,3 +50,16 @@ export function addListValidation(ws, range, listFormula) {
     formulae: [listFormula],
   });
 }
+
+/** Lista dependente (OFFSET + MATCH + COUNTIF). `excelFormula` sem prefixo «=». */
+export function addDependentListValidation(ws, range, excelFormula) {
+  ws.dataValidations.add(range, {
+    type: 'list',
+    allowBlank: true,
+    showDropDown: true,
+    showErrorMessage: true,
+    errorTitle: 'Combinação inválida',
+    error: 'Escolha um valor permitido para o nível anterior.',
+    formulae: [excelFormula],
+  });
+}

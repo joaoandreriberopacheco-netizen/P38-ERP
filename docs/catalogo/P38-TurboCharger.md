@@ -31,11 +31,16 @@
 | F — EIXO A | comp2 |
 | G — EIXO B | comp3 |
 
-Validação na `Fact_Catalogo_4x3`: cada campo de lista aponta para `Listas!$A$2:$A$n` … `$G$2:$G$n` (com linhas vazias no fim para novos valores).
+Validação na `Fact_Catalogo_4x3`:
 
-**Evolução:** listas dependentes (categoria filtrada por etapa) pode usar colunas extra ou tabelas nomeadas; v0 = listas planas lado a lado.
+- **ETAPA** → lista fixa (`Listas!$A$2:$A$n`).
+- **CATEGORIA → EIXO B** → dropdowns **dependentes** (OFFSET + MATCH + COUNTIF) sobre blocos **Cascata** na mesma aba (colunas I em diante): só aparecem valores válidos para ETAPA / caminho já escolhido.
 
-Na fact sheet: sete dropdowns (4 + 3) mais nome vitrine e colunas calculadas.
+Chave composta entre níveis: `etapa · categoria · sub · …` ( separador **` · `** — ponto médio, igual à legenda do catálogo ).
+
+Para **novos** pares pai→filho: acrescente linhas no bloco cascata correspondente (mesma chave pai repetida, novo valor na coluna «Valor permitido») ou regenere com `npm run turbocharger:generate`.
+
+Na fact sheet: sete dropdowns encadeados (4 + 3) mais nome vitrine e colunas calculadas.
 
 ### Fact — o que a UI monta
 
