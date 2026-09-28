@@ -46,6 +46,7 @@ const FACT_COLS = [
   { key: 'comp2', label: 'Eixo A (filtra comp1)', editavel: true, width: 18, cascade: 'comp1_comp2' },
   { key: 'comp3', label: 'Eixo B (filtra comp2)', editavel: true, width: 18, cascade: 'comp2_comp3' },
   { key: 'novo_sku', label: 'Nome vitrine 4×3', editavel: true, width: 42 },
+  { key: 'sku_atual', label: 'SKU antigo (cadastro)', editavel: true, width: 42 },
   { key: 'codigo_4x', label: 'Código caminho 4', editavel: false, width: 12, calculado: true },
   { key: 'legenda', label: 'Legenda caminho', editavel: false, width: 48, calculado: true },
 ];
@@ -89,6 +90,7 @@ async function loadFactRowsFrom4x3() {
       comp2: pick(row, 'comp2'),
       comp3: pick(row, 'comp3'),
       novo_sku: pick(row, 'novo_sku'),
+      sku_atual: pick(row, 'sku_atual'),
       codigo_4x: pick(row, 'codigo_4x'),
       legenda: pick(row, 'legenda'),
     });
