@@ -11,8 +11,14 @@ import {
 } from '@/lib/embarqueLogisticaHelpers';
 import { isNecessidadeRenderizada } from '@/lib/pedidoCompraNecessidade';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
-import { resolveEmbarqueQuantidadeBase, resolveEmbarqueQuantidadeComercial } from '@/lib/embarqueQuantityResolve';
-import { getItemCompraExibicaoVitrine, commercialQuantityFromBase } from '@/lib/productUnits';
+import { resolveEmbarqueQuantidadeBase, resolveEmbarqueLinhaUnidade } from '@/lib/embarqueQuantityResolve';
+import {
+  getItemCompraExibicaoVitrine,
+  commercialQuantityFromBase,
+  resolveBoatLogisticsUnit,
+  buildPurchaseUnitOptions,
+  normalizeUnitCode,
+} from '@/lib/productUnits';
 import {
   resolveEmbarqueCodigoExibicao,
   sortEmbarquesParaExibicao,
@@ -105,6 +111,64 @@ export function resolveDespachoPrincipalPedido(pedido = {}, embarquesDoPedido = 
   };
 }
 
+function fatorConversaoUnidadeProduto(produto, unidadeAlvo) {
+  if (!produto) return 1;
+  const alvo = normalizeUnitCode(unidadeAlvo);
+  const opt = buildPurchaseUnitOptions(produto).find((o) => normalizeUnitCode(o.unidade) === alvo);
+  return Number(opt?.fator_conversao ?? 1) || 1;
+}
+
+/** Unidade de caixa/logística do produto (cerâmica → CX, não M²). */
+export function resolveUnidadeCaixaRelatorio(produto, fallbackUnit = 'UN') {
+  if (!produto?.id) return normalizeUnitCode(fallbackUnit) || 'CX';
+  return resolveBoatLogisticsUnit(produto, fallbackUnit) || 'CX';
+}
+
+/** Ex.: "(2,5M²/ CX)" → 2.5 */
+export function parseM2PorCaixaFromNome(nome = '') {
+  const m = String(nome || '').match(/\(\s*([\d.,]+)\s*m[²2]\s*\/\s*cx\s*\)/i);
+  if (!m) return null;
+  const n = Number(String(m[1]).replace(',', '.'));
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function resolveFatorCaixaRelatorio(produto, contextoItem = {}, fallbackUnit = 'UN') {
+  const nome = produto?.nome || contextoItem?.produto_nome || '';
+  const m2PorCx = parseM2PorCaixaFromNome(nome);
+  if (m2PorCx) return { unidade: 'CX', fator: m2PorCx };
+
+  const unidadeLog = resolveUnidadeCaixaRelatorio(produto, fallbackUnit);
+  const fatorProd = fatorConversaoUnidadeProduto(produto, unidadeLog);
+  if (produto?.id && fatorProd > 1 && normalizeUnitCode(unidadeLog) === 'CX') {
+    return { unidade: 'CX', fator: fatorProd };
+  }
+
+  const fItem = Number(contextoItem?.fator_conversao ?? 1) || 1;
+  if (fItem > 1) return { unidade: 'CX', fator: fItem };
+
+  return { unidade: normalizeUnitCode(fallbackUnit) || 'UN', fator: 1 };
+}
+
+/** Converte quantidade_base (m²…) → caixas usando cadastro do produto. */
+export function qtyCaixaFromQuantidadeBase(quantidadeBase, produto, fallbackUnit = 'UN', contextoItem = null) {
+  const base = Number(quantidadeBase) || 0;
+  if (!(base > 0)) return 0;
+  const ctx = contextoItem && typeof contextoItem === 'object' ? contextoItem : {};
+  const { unidade, fator } = resolveFatorCaixaRelatorio(produto, ctx, fallbackUnit);
+  return commercialQuantityFromBase(base, fator, unidade);
+}
+
+function qtyCaixaEmbarqueKind(pedidoItem, sqlLine, produto, kind) {
+  const merged = { ...(pedidoItem || {}), ...(sqlLine || {}) };
+  const base = resolveEmbarqueQuantidadeBase(merged, kind);
+  return qtyCaixaFromQuantidadeBase(
+    base,
+    produto,
+    resolveEmbarqueLinhaUnidade(merged) || pedidoItem?.unidade_medida,
+    merged,
+  );
+}
+
 function buildLinhaDetalheFornecedor({
   pedido,
   pedidoItem,
@@ -115,21 +179,17 @@ function buildLinhaDetalheFornecedor({
   valorPedidoTotal,
 }) {
   const exib = getItemCompraExibicaoVitrine(pedidoItem, produto);
+  const unidadeCx = 'CX';
   const qPedido = qtyComercialPedidoItem(pedidoItem, produto);
-  const qEmbarcada = resolveEmbarqueQuantidadeComercial(sqlLine || {}, 'embarcada');
-  const qRecebida = resolveEmbarqueQuantidadeComercial(sqlLine || {}, 'recebida');
-  const unidade = consultaItem?.unidade_medida || exib.unidade_medida || 'UN';
-  const fatorExib = Number(pedidoItem?.fator_conversao ?? exib.fator_conversao ?? 1) || 1;
+  const qEmbarcada = sqlLine ? qtyCaixaEmbarqueKind(pedidoItem, sqlLine, produto, 'embarcada') : 0;
+  const qRecebida = sqlLine ? qtyCaixaEmbarqueKind(pedidoItem, sqlLine, produto, 'recebida') : 0;
   const qPendenteBase = Number(consultaItem?.quantidade_base)
     || (sqlLine ? resolveSaldoPendenteEmbarqueBase(sqlLine) : 0)
     || 0;
-  let qPendente = Number(consultaItem?.quantidade) || 0;
-  if (qPendenteBase > MIN_SALDO_PENDENTE_BASE && fatorExib > 1) {
-    const com = commercialQuantityFromBase(qPendenteBase, fatorExib, unidade);
-    if (com > 0) qPendente = com;
-  } else if (qPedido > 0 && qPendente > qPedido * 1.01 && fatorExib > 1) {
-    qPendente = roundToTwoDecimals(qPendente / fatorExib);
-  }
+  const qPendente = qPendenteBase > MIN_SALDO_PENDENTE_BASE
+    ? qtyCaixaFromQuantidadeBase(qPendenteBase, produto, unidadeCx, { ...pedidoItem, produto_nome: consultaItem?.produto_nome })
+    : roundToTwoDecimals(Number(consultaItem?.quantidade) || 0);
+  const unidade = unidadeCx;
   const valorPedidoLinha = getTotalLinhaPedidoCompra(pedidoItem);
   const valorPendente = Number(consultaItem?.valor_total_item) || Number(consultaItem?.total) || 0;
   const precoUnitPendente = qPendente > 0 ? roundToTwoDecimals(valorPendente / qPendente) : 0;
@@ -159,22 +219,19 @@ function buildLinhaDetalheFornecedor({
   };
 }
 
-/** Quantidade comercial (caixa/vitrine) pedida na linha do pedido de compra. */
+/** Caixas pedidas na linha (sempre via quantidade_base + cadastro CX). */
 export function qtyComercialPedidoItem(item = {}, produto = null) {
-  const qItem = Number(item?.quantidade);
-  const fator = Number(item?.fator_conversao ?? 1) || 1;
-  const base = Number(item?.quantidade_base);
-  if (Number.isFinite(qItem) && qItem > 0) {
-    if (fator > 1 && Number.isFinite(base) && base > 0) {
-      const expectedBase = qItem * fator;
-      if (Math.abs(expectedBase - base) <= 0.02 * Math.max(1, expectedBase)) {
-        return roundToTwoDecimals(qItem);
-      }
-    }
-    if (fator <= 1) return roundToTwoDecimals(qItem);
-  }
   const exib = getItemCompraExibicaoVitrine(item, produto);
-  return roundToTwoDecimals(Number(exib.quantidade) || qItem || 0);
+  const base = Number(item?.quantidade_base ?? exib.quantidade_base) || 0;
+  if (base > 0) {
+    return qtyCaixaFromQuantidadeBase(
+      base,
+      produto,
+      exib.unidade_medida || item?.unidade_medida,
+      item,
+    );
+  }
+  return roundToTwoDecimals(Number(exib.quantidade) || Number(item?.quantidade) || 0);
 }
 
 /** Soma caixas (vitrine) de todo o pedido de compra — denominador do % por pedido. */
@@ -255,7 +312,7 @@ function finalizarPedidoRelatorio(bloco, pedidoOrigem = {}, produtosMap = {}) {
     total_cx_pedido: totalCxPedido,
     total_cx_pendente: totalCxPendente,
     pct_cx_avaria_sobre_pedido: pctCxAvariaSobrePedido,
-    unidade_pedido: linhas[0]?.unidade || 'CX',
+    unidade_pedido: 'CX',
     grupos_formato: agruparLinhasPorFormato(linhas),
     pct_valor_pendente_sobre_pedido: bloco.valor_pedido > 0
       ? roundToTwoDecimals((bloco.valor_pendente / bloco.valor_pedido) * 100)

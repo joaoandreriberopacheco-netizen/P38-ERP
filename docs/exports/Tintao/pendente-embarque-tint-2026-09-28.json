@@ -1,13 +1,13 @@
 {
-  "geradoEm": "2026-09-28T16:51:06.803Z",
+  "geradoEm": "2026-09-28T16:57:56.586Z",
   "dataEmissaoMin": "2026-07-20",
   "somenteSaldoAvaria": false,
   "totalEmbarques": 11,
   "totalPedidos": 7,
   "totalValorPendente": 30594.99,
-  "totalCxPedido": 3354.5,
-  "totalCxPendente": 707.04,
-  "pct_cx_avaria_geral": 21.08,
+  "totalCxPedido": 1879.7,
+  "totalCxPendente": 423,
+  "pct_cx_avaria_geral": 22.5,
   "embarques": [
     {
       "pedido_id": "710378c0-616d-45e7-8fe1-2cdaf451ca11",
@@ -30,14 +30,14 @@
           "produto_nome": "PISO 50x50 NATURALE BEGE PEI 3 (2,5M²/ CX)",
           "formato": "50x50",
           "embarque_codigo": "EXC-FQZ-B",
-          "quantidade_pedido": 80,
-          "quantidade_embarcada": 2.5,
+          "quantidade_pedido": 32,
+          "quantidade_embarcada": 1,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 2.5,
-          "unidade": "UN",
+          "quantidade_pendente": 1,
+          "unidade": "CX",
           "valor_pedido_linha": 1938.4,
           "valor_pendente": 60.58,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 60.58,
           "pct_cx_sobre_linha_pedido": 3.13,
           "pct_valor_sobre_pedido": 0.33,
           "pct_valor_sobre_linha_pedido": 3.13
@@ -65,14 +65,14 @@
           "produto_nome": "PISO 45X45 JAVA AZUL PEI 5 (2,00M²/ CX)",
           "formato": "45x45",
           "embarque_codigo": "HHW-5NP-C",
-          "quantidade_pedido": 48,
-          "quantidade_embarcada": 2,
+          "quantidade_pedido": 24,
+          "quantidade_embarcada": 1,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 2,
-          "unidade": "UN",
+          "quantidade_pendente": 1,
+          "unidade": "CX",
           "valor_pedido_linha": 1163.04,
           "valor_pendente": 48.46,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 48.46,
           "pct_cx_sobre_linha_pedido": 4.17,
           "pct_valor_sobre_pedido": 0.48,
           "pct_valor_sobre_linha_pedido": 4.17
@@ -86,7 +86,7 @@
           "quantidade_embarcada": 15,
           "quantidade_recebida": 0,
           "quantidade_pendente": 15,
-          "unidade": "UN",
+          "unidade": "CX",
           "valor_pedido_linha": 1453.8,
           "valor_pendente": 363.45,
           "preco_unitario_pendente": 24.23,
@@ -99,14 +99,14 @@
           "produto_nome": "PISO 60x120 GRAN POLAR RT POL (2,16M²/ CX)",
           "formato": "60x120",
           "embarque_codigo": "HHW-5NP-C",
-          "quantidade_pedido": 43.2,
-          "quantidade_embarcada": 2.16,
+          "quantidade_pedido": 20,
+          "quantidade_embarcada": 1,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 2.16,
-          "unidade": "UN",
+          "quantidade_pendente": 1,
+          "unidade": "CX",
           "valor_pedido_linha": 2368.66,
           "valor_pendente": 118.43,
-          "preco_unitario_pendente": 54.83,
+          "preco_unitario_pendente": 118.43,
           "pct_cx_sobre_linha_pedido": 5,
           "pct_valor_sobre_pedido": 1.18,
           "pct_valor_sobre_linha_pedido": 5
@@ -116,14 +116,14 @@
           "produto_nome": "PISO 60X120 POMPEI POL (2,16M²/ CX)",
           "formato": "60x120",
           "embarque_codigo": "HHW-5NP-C",
-          "quantidade_pedido": 43.2,
-          "quantidade_embarcada": 2.16,
+          "quantidade_pedido": 20,
+          "quantidade_embarcada": 1,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 2.16,
-          "unidade": "UN",
+          "quantidade_pendente": 1,
+          "unidade": "CX",
           "valor_pedido_linha": 2148.34,
           "valor_pendente": 107.42,
-          "preco_unitario_pendente": 49.73,
+          "preco_unitario_pendente": 107.42,
           "pct_cx_sobre_linha_pedido": 5,
           "pct_valor_sobre_pedido": 1.07,
           "pct_valor_sobre_linha_pedido": 5
@@ -154,12 +154,12 @@
           "quantidade_pedido": 33.6,
           "quantidade_embarcada": 2.1,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 2.1,
-          "unidade": "UN",
+          "quantidade_pendente": 2,
+          "unidade": "CX",
           "valor_pedido_linha": 956.93,
           "valor_pendente": 59.81,
-          "preco_unitario_pendente": 28.48,
-          "pct_cx_sobre_linha_pedido": 6.25,
+          "preco_unitario_pendente": 29.91,
+          "pct_cx_sobre_linha_pedido": 5.95,
           "pct_valor_sobre_pedido": 0.59,
           "pct_valor_sobre_linha_pedido": 6.25
         },
@@ -168,14 +168,14 @@
           "produto_nome": "PISO 34X60 FOLHA HD (2,1 M²/CX)",
           "formato": "34x60",
           "embarque_codigo": "KQL-J94-C",
-          "quantidade_pedido": 25.2,
-          "quantidade_embarcada": 2.1,
+          "quantidade_pedido": 12,
+          "quantidade_embarcada": 1,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 2.1,
-          "unidade": "UN",
+          "quantidade_pendente": 1,
+          "unidade": "CX",
           "valor_pedido_linha": 728.28,
           "valor_pendente": 60.69,
-          "preco_unitario_pendente": 28.9,
+          "preco_unitario_pendente": 60.69,
           "pct_cx_sobre_linha_pedido": 8.33,
           "pct_valor_sobre_pedido": 0.6,
           "pct_valor_sobre_linha_pedido": 8.33
@@ -185,14 +185,14 @@
           "produto_nome": "PISO 34X60 WINDSOR BR (2,1 M²/CX)",
           "formato": "34x60",
           "embarque_codigo": "KQL-J94-C",
-          "quantidade_pedido": 48.48,
-          "quantidade_embarcada": 2.02,
+          "quantidade_pedido": 24,
+          "quantidade_embarcada": 1,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 2.02,
-          "unidade": "UN",
+          "quantidade_pendente": 1,
+          "unidade": "CX",
           "valor_pedido_linha": 1524.7,
           "valor_pendente": 63.53,
-          "preco_unitario_pendente": 31.45,
+          "preco_unitario_pendente": 63.53,
           "pct_cx_sobre_linha_pedido": 4.17,
           "pct_valor_sobre_pedido": 0.63,
           "pct_valor_sobre_linha_pedido": 4.17
@@ -202,14 +202,14 @@
           "produto_nome": "PISO 50X50 NATURALE MARROM PEI 3 (2,5M²/ CX)",
           "formato": "50x50",
           "embarque_codigo": "KQL-J94-C",
-          "quantidade_pedido": 62.5,
-          "quantidade_embarcada": 2.5,
+          "quantidade_pedido": 25,
+          "quantidade_embarcada": 1,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 2.5,
-          "unidade": "UN",
+          "quantidade_pendente": 1,
+          "unidade": "CX",
           "valor_pedido_linha": 1514.38,
           "valor_pendente": 60.58,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 60.58,
           "pct_cx_sobre_linha_pedido": 4,
           "pct_valor_sobre_pedido": 0.6,
           "pct_valor_sobre_linha_pedido": 4
@@ -237,14 +237,14 @@
           "produto_nome": "PISO 45x45 JAVA VERDE PEI 5 (2,00M²/ CX)",
           "formato": "45x45",
           "embarque_codigo": "SQF-7ZH-B",
-          "quantidade_pedido": 80,
-          "quantidade_embarcada": 2,
+          "quantidade_pedido": 40,
+          "quantidade_embarcada": 1,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 2,
-          "unidade": "UN",
+          "quantidade_pendente": 1,
+          "unidade": "CX",
           "valor_pedido_linha": 1938.4,
           "valor_pendente": 48.46,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 48.46,
           "pct_cx_sobre_linha_pedido": 2.5,
           "pct_valor_sobre_pedido": 0.16,
           "pct_valor_sobre_linha_pedido": 2.5
@@ -254,14 +254,14 @@
           "produto_nome": "PISO 45X45 LAPA PEI 3 (2,00 M²/ CX)",
           "formato": "45x45",
           "embarque_codigo": "SQF-7ZH-B",
-          "quantidade_pedido": 80,
-          "quantidade_embarcada": 2,
+          "quantidade_pedido": 40,
+          "quantidade_embarcada": 1,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 2,
-          "unidade": "UN",
+          "quantidade_pendente": 1,
+          "unidade": "CX",
           "valor_pedido_linha": 1938.4,
           "valor_pendente": 48.46,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 48.46,
           "pct_cx_sobre_linha_pedido": 2.5,
           "pct_valor_sobre_pedido": 0.16,
           "pct_valor_sobre_linha_pedido": 2.5
@@ -271,14 +271,14 @@
           "produto_nome": "PISO 50X50 ALLEGRO HD50  PEI 3 (2,5M²/ CX)",
           "formato": "50x50",
           "embarque_codigo": "SQF-7ZH-B",
-          "quantidade_pedido": 75,
-          "quantidade_embarcada": 5,
+          "quantidade_pedido": 30,
+          "quantidade_embarcada": 2,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 5,
-          "unidade": "UN",
+          "quantidade_pendente": 2,
+          "unidade": "CX",
           "valor_pedido_linha": 1817.25,
           "valor_pendente": 121.15,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 60.58,
           "pct_cx_sobre_linha_pedido": 6.67,
           "pct_valor_sobre_pedido": 0.4,
           "pct_valor_sobre_linha_pedido": 6.67
@@ -291,12 +291,12 @@
           "quantidade_pedido": 75,
           "quantidade_embarcada": 2.5,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 2.5,
-          "unidade": "UN",
+          "quantidade_pendente": 3,
+          "unidade": "CX",
           "valor_pedido_linha": 1817.25,
           "valor_pendente": 60.58,
-          "preco_unitario_pendente": 24.23,
-          "pct_cx_sobre_linha_pedido": 3.33,
+          "preco_unitario_pendente": 20.19,
+          "pct_cx_sobre_linha_pedido": 4,
           "pct_valor_sobre_pedido": 0.2,
           "pct_valor_sobre_linha_pedido": 3.33
         },
@@ -305,14 +305,14 @@
           "produto_nome": "PISO 50x50 BIANCO 50 (2,50 M²/ CX)",
           "formato": "50x50",
           "embarque_codigo": "SQF-7ZH-B",
-          "quantidade_pedido": 75,
-          "quantidade_embarcada": 2.5,
+          "quantidade_pedido": 30,
+          "quantidade_embarcada": 1,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 2.5,
-          "unidade": "UN",
+          "quantidade_pendente": 1,
+          "unidade": "CX",
           "valor_pedido_linha": 1817.25,
           "valor_pendente": 60.58,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 60.58,
           "pct_cx_sobre_linha_pedido": 3.33,
           "pct_valor_sobre_pedido": 0.2,
           "pct_valor_sobre_linha_pedido": 3.33
@@ -322,14 +322,14 @@
           "produto_nome": "PISO 50X50 BILBAO PEI 3 (2,5M²/ CX)",
           "formato": "50x50",
           "embarque_codigo": "SQF-7ZH-B",
-          "quantidade_pedido": 75,
-          "quantidade_embarcada": 7.5,
+          "quantidade_pedido": 30,
+          "quantidade_embarcada": 3,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 7.5,
-          "unidade": "UN",
+          "quantidade_pendente": 3,
+          "unidade": "CX",
           "valor_pedido_linha": 1817.25,
           "valor_pendente": 181.73,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 60.58,
           "pct_cx_sobre_linha_pedido": 10,
           "pct_valor_sobre_pedido": 0.6,
           "pct_valor_sobre_linha_pedido": 10
@@ -339,14 +339,14 @@
           "produto_nome": "PISO 50X50 CASTANO PEI 3 (2,5M²/ CX)",
           "formato": "50x50",
           "embarque_codigo": "SQF-7ZH-B",
-          "quantidade_pedido": 75,
-          "quantidade_embarcada": 5,
+          "quantidade_pedido": 30,
+          "quantidade_embarcada": 2,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 5,
-          "unidade": "UN",
+          "quantidade_pendente": 2,
+          "unidade": "CX",
           "valor_pedido_linha": 1817.25,
           "valor_pendente": 121.15,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 60.58,
           "pct_cx_sobre_linha_pedido": 6.67,
           "pct_valor_sobre_pedido": 0.4,
           "pct_valor_sobre_linha_pedido": 6.67
@@ -356,14 +356,14 @@
           "produto_nome": "PISO 50X50 SELVA PEI 3 (2,5M²/ CX)",
           "formato": "50x50",
           "embarque_codigo": "SQF-7ZH-B",
-          "quantidade_pedido": 75,
-          "quantidade_embarcada": 5,
+          "quantidade_pedido": 30,
+          "quantidade_embarcada": 2,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 5,
-          "unidade": "UN",
+          "quantidade_pendente": 2,
+          "unidade": "CX",
           "valor_pedido_linha": 1817.25,
           "valor_pendente": 121.15,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 60.58,
           "pct_cx_sobre_linha_pedido": 6.67,
           "pct_valor_sobre_pedido": 0.4,
           "pct_valor_sobre_linha_pedido": 6.67
@@ -373,14 +373,14 @@
           "produto_nome": "PISO 60X120 BELLA GOLD RT POL (2,16M²/ CX)",
           "formato": "60x120",
           "embarque_codigo": "SQF-7ZH-B",
-          "quantidade_pedido": 64.8,
-          "quantidade_embarcada": 2.16,
+          "quantidade_pedido": 30,
+          "quantidade_embarcada": 1,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 2.16,
-          "unidade": "UN",
+          "quantidade_pendente": 1,
+          "unidade": "CX",
           "valor_pedido_linha": 3277.58,
           "valor_pendente": 109.25,
-          "preco_unitario_pendente": 50.58,
+          "preco_unitario_pendente": 109.25,
           "pct_cx_sobre_linha_pedido": 3.33,
           "pct_valor_sobre_pedido": 0.36,
           "pct_valor_sobre_linha_pedido": 3.33
@@ -390,14 +390,14 @@
           "produto_nome": "PISO 60X120 POMPEI POL (2,16M²/ CX)",
           "formato": "60x120",
           "embarque_codigo": "SQF-7ZH-B",
-          "quantidade_pedido": 64.8,
-          "quantidade_embarcada": 6.48,
+          "quantidade_pedido": 30,
+          "quantidade_embarcada": 3,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 6.48,
-          "unidade": "UN",
+          "quantidade_pendente": 3,
+          "unidade": "CX",
           "valor_pedido_linha": 3222.5,
           "valor_pendente": 322.25,
-          "preco_unitario_pendente": 49.73,
+          "preco_unitario_pendente": 107.42,
           "pct_cx_sobre_linha_pedido": 10,
           "pct_valor_sobre_pedido": 1.07,
           "pct_valor_sobre_linha_pedido": 10
@@ -425,14 +425,14 @@
           "produto_nome": "PISO 45X45 TRAVERTINO CZ (2,00 M²/ CX) PE",
           "formato": "45x45",
           "embarque_codigo": "AB6-PPQ-A",
-          "quantidade_pedido": 168,
+          "quantidade_pedido": 84,
           "quantidade_embarcada": 81,
           "quantidade_recebida": 71,
-          "quantidade_pendente": 20,
-          "unidade": "UN",
+          "quantidade_pendente": 10,
+          "unidade": "CX",
           "valor_pedido_linha": 4070.64,
           "valor_pendente": 484.6,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 48.46,
           "pct_cx_sobre_linha_pedido": 11.9,
           "pct_valor_sobre_pedido": 2.98,
           "pct_valor_sobre_linha_pedido": 11.9
@@ -460,14 +460,14 @@
           "produto_nome": "PISO 45X45 MONTANA AZUL PEI 5 (2,00M²/ CX)",
           "formato": "45x45",
           "embarque_codigo": "AB6-PPQ-B",
-          "quantidade_pedido": 168,
+          "quantidade_pedido": 84,
           "quantidade_embarcada": 4,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 8,
-          "unidade": "UN",
+          "quantidade_pendente": 4,
+          "unidade": "CX",
           "valor_pedido_linha": 4070.64,
           "valor_pendente": 193.84,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 48.46,
           "pct_cx_sobre_linha_pedido": 4.76,
           "pct_valor_sobre_pedido": 1.19,
           "pct_valor_sobre_linha_pedido": 4.76
@@ -478,10 +478,10 @@
           "formato": "45x45",
           "embarque_codigo": "AB6-PPQ-B",
           "quantidade_pedido": 168,
-          "quantidade_embarcada": 4,
+          "quantidade_embarcada": 8,
           "quantidade_recebida": 0,
           "quantidade_pendente": 8,
-          "unidade": "UN",
+          "unidade": "CX",
           "valor_pedido_linha": 4070.64,
           "valor_pendente": 193.84,
           "preco_unitario_pendente": 24.23,
@@ -494,14 +494,14 @@
           "produto_nome": "PISO 45x45 TRAVERTINO BEGE (2,00 M²/ CX) PE",
           "formato": "45x45",
           "embarque_codigo": "AB6-PPQ-B",
-          "quantidade_pedido": 168,
+          "quantidade_pedido": 84,
           "quantidade_embarcada": 3,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 6,
-          "unidade": "UN",
+          "quantidade_pendente": 3,
+          "unidade": "CX",
           "valor_pedido_linha": 4070.64,
           "valor_pendente": 145.38,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 48.46,
           "pct_cx_sobre_linha_pedido": 3.57,
           "pct_valor_sobre_pedido": 0.89,
           "pct_valor_sobre_linha_pedido": 3.57
@@ -511,14 +511,14 @@
           "produto_nome": "PISO 45X45 TRAVERTINO CZ (2,00 M²/ CX) PE",
           "formato": "45x45",
           "embarque_codigo": "AB6-PPQ-B",
-          "quantidade_pedido": 168,
+          "quantidade_pedido": 84,
           "quantidade_embarcada": 3,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 6,
-          "unidade": "UN",
+          "quantidade_pendente": 3,
+          "unidade": "CX",
           "valor_pedido_linha": 4070.64,
           "valor_pendente": 145.38,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 48.46,
           "pct_cx_sobre_linha_pedido": 3.57,
           "pct_valor_sobre_pedido": 0.89,
           "pct_valor_sobre_linha_pedido": 3.57
@@ -546,14 +546,14 @@
           "produto_nome": "PISO 45X45 TRAVERTINO CZ (2,00 M²/ CX) PE",
           "formato": "45x45",
           "embarque_codigo": "AB6-PPQ-C",
-          "quantidade_pedido": 168,
+          "quantidade_pedido": 84,
           "quantidade_embarcada": 10,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 20,
-          "unidade": "UN",
+          "quantidade_pendente": 10,
+          "unidade": "CX",
           "valor_pedido_linha": 4070.64,
           "valor_pendente": 484.6,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 48.46,
           "pct_cx_sobre_linha_pedido": 11.9,
           "pct_valor_sobre_pedido": 2.98,
           "pct_valor_sobre_linha_pedido": 11.9
@@ -581,14 +581,14 @@
           "produto_nome": "PISO 60X120 GRAN TERRAZO MATE (2,16M²/ CX)",
           "formato": "60x120",
           "embarque_codigo": "PW8-WLV-A",
-          "quantidade_pedido": 12.96,
+          "quantidade_pedido": 6,
           "quantidade_embarcada": 6,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 12.96,
-          "unidade": "UN",
+          "quantidade_pendente": 6,
+          "unidade": "CX",
           "valor_pedido_linha": 644.5,
           "valor_pendente": 644.5,
-          "preco_unitario_pendente": 49.73,
+          "preco_unitario_pendente": 107.42,
           "pct_cx_sobre_linha_pedido": 100,
           "pct_valor_sobre_pedido": 3.05,
           "pct_valor_sobre_linha_pedido": 100
@@ -598,14 +598,14 @@
           "produto_nome": "PISO 60X120 ARACRUZ RT POL (2,16M²/ CX)",
           "formato": "60x120",
           "embarque_codigo": "PW8-WLV-A",
-          "quantidade_pedido": 64.8,
+          "quantidade_pedido": 30,
           "quantidade_embarcada": 30,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 64.8,
-          "unidade": "UN",
+          "quantidade_pendente": 30,
+          "unidade": "CX",
           "valor_pedido_linha": 3525.12,
           "valor_pendente": 3525.12,
-          "preco_unitario_pendente": 54.4,
+          "preco_unitario_pendente": 117.5,
           "pct_cx_sobre_linha_pedido": 100,
           "pct_valor_sobre_pedido": 16.7,
           "pct_valor_sobre_linha_pedido": 100
@@ -616,14 +616,14 @@
           "formato": "20x120",
           "embarque_codigo": "PW8-WLV-A",
           "quantidade_pedido": 33.6,
-          "quantidade_embarcada": 20,
+          "quantidade_embarcada": 34,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 33.6,
-          "unidade": "UN",
+          "quantidade_pendente": 34,
+          "unidade": "CX",
           "valor_pedido_linha": 1413.89,
           "valor_pendente": 1413.89,
-          "preco_unitario_pendente": 42.08,
-          "pct_cx_sobre_linha_pedido": 100,
+          "preco_unitario_pendente": 41.59,
+          "pct_cx_sobre_linha_pedido": 101.19,
           "pct_valor_sobre_pedido": 6.7,
           "pct_valor_sobre_linha_pedido": 100
         },
@@ -633,14 +633,14 @@
           "formato": "60x120",
           "embarque_codigo": "PW8-WLV-A",
           "quantidade_pedido": 43.2,
-          "quantidade_embarcada": 20,
+          "quantidade_embarcada": 43,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 43.2,
-          "unidade": "UN",
+          "quantidade_pendente": 43,
+          "unidade": "CX",
           "valor_pedido_linha": 2239.92,
           "valor_pendente": 2239.92,
-          "preco_unitario_pendente": 51.85,
-          "pct_cx_sobre_linha_pedido": 100,
+          "preco_unitario_pendente": 52.09,
+          "pct_cx_sobre_linha_pedido": 99.54,
           "pct_valor_sobre_pedido": 10.61,
           "pct_valor_sobre_linha_pedido": 100
         },
@@ -649,14 +649,14 @@
           "produto_nome": "PISO 45X45 TRAFEGO BEGE PEI 5 (2,0M²/ CX)",
           "formato": "45x45",
           "embarque_codigo": "PW8-WLV-A",
-          "quantidade_pedido": 100,
+          "quantidade_pedido": 50,
           "quantidade_embarcada": 47,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 94,
-          "unidade": "UN",
+          "quantidade_pendente": 47,
+          "unidade": "CX",
           "valor_pedido_linha": 2423,
           "valor_pendente": 2277.62,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 48.46,
           "pct_cx_sobre_linha_pedido": 94,
           "pct_valor_sobre_pedido": 10.79,
           "pct_valor_sobre_linha_pedido": 94
@@ -666,14 +666,14 @@
           "produto_nome": "PISO 60X120 PERSA BEGE POL (2,16M²/ CX)",
           "formato": "60x120",
           "embarque_codigo": "PW8-WLV-A",
-          "quantidade_pedido": 64.8,
+          "quantidade_pedido": 30,
           "quantidade_embarcada": 30,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 64.8,
-          "unidade": "UN",
+          "quantidade_pendente": 30,
+          "unidade": "CX",
           "valor_pedido_linha": 3222.5,
           "valor_pendente": 3222.5,
-          "preco_unitario_pendente": 49.73,
+          "preco_unitario_pendente": 107.42,
           "pct_cx_sobre_linha_pedido": 100,
           "pct_valor_sobre_pedido": 15.26,
           "pct_valor_sobre_linha_pedido": 100
@@ -683,14 +683,14 @@
           "produto_nome": "PISO 20X120 FRESNO CL (1,68 M²/CX)",
           "formato": "20x120",
           "embarque_codigo": "PW8-WLV-A",
-          "quantidade_pedido": 33.6,
+          "quantidade_pedido": 20,
           "quantidade_embarcada": 20,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 33.6,
-          "unidade": "UN",
+          "quantidade_pendente": 20,
+          "unidade": "CX",
           "valor_pedido_linha": 1413.89,
           "valor_pendente": 1413.89,
-          "preco_unitario_pendente": 42.08,
+          "preco_unitario_pendente": 70.69,
           "pct_cx_sobre_linha_pedido": 100,
           "pct_valor_sobre_pedido": 6.7,
           "pct_valor_sobre_linha_pedido": 100
@@ -700,14 +700,14 @@
           "produto_nome": "PISO 20X120 FRESNO MATE (1,68 M²/CX)",
           "formato": "20x120",
           "embarque_codigo": "PW8-WLV-A",
-          "quantidade_pedido": 33.6,
+          "quantidade_pedido": 20,
           "quantidade_embarcada": 20,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 33.6,
-          "unidade": "UN",
+          "quantidade_pendente": 20,
+          "unidade": "CX",
           "valor_pedido_linha": 1413.89,
           "valor_pendente": 1413.89,
-          "preco_unitario_pendente": 42.08,
+          "preco_unitario_pendente": 70.69,
           "pct_cx_sobre_linha_pedido": 100,
           "pct_valor_sobre_pedido": 6.7,
           "pct_valor_sobre_linha_pedido": 100
@@ -717,14 +717,14 @@
           "produto_nome": "PISO 50X50 COPACABANA PEI 4 (2,5M²/ CX)",
           "formato": "50x50",
           "embarque_codigo": "PW8-WLV-A",
-          "quantidade_pedido": 60,
+          "quantidade_pedido": 24,
           "quantidade_embarcada": 24,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 60,
-          "unidade": "UN",
+          "quantidade_pendente": 24,
+          "unidade": "CX",
           "valor_pedido_linha": 1453.8,
           "valor_pendente": 1453.8,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 60.58,
           "pct_cx_sobre_linha_pedido": 100,
           "pct_valor_sobre_pedido": 6.89,
           "pct_valor_sobre_linha_pedido": 100
@@ -734,14 +734,14 @@
           "produto_nome": "PISO 60X120 STATUTARIO POLIDO (2,16M²/ CX)",
           "formato": "60x120",
           "embarque_codigo": "PW8-WLV-A",
-          "quantidade_pedido": 64.8,
+          "quantidade_pedido": 30,
           "quantidade_embarcada": 29,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 62.64,
-          "unidade": "UN",
+          "quantidade_pendente": 29,
+          "unidade": "CX",
           "valor_pedido_linha": 3359.88,
           "valor_pendente": 3247.88,
-          "preco_unitario_pendente": 51.85,
+          "preco_unitario_pendente": 112,
           "pct_cx_sobre_linha_pedido": 96.67,
           "pct_valor_sobre_pedido": 15.39,
           "pct_valor_sobre_linha_pedido": 96.67
@@ -769,14 +769,14 @@
           "produto_nome": "PISO 60X120 STATUTARIO POLIDO (2,16M²/ CX)",
           "formato": "60x120",
           "embarque_codigo": "PW8-WLV-B",
-          "quantidade_pedido": 64.8,
+          "quantidade_pedido": 30,
           "quantidade_embarcada": 1,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 2.16,
-          "unidade": "UN",
+          "quantidade_pendente": 1,
+          "unidade": "CX",
           "valor_pedido_linha": 3359.88,
           "valor_pendente": 112,
-          "preco_unitario_pendente": 51.85,
+          "preco_unitario_pendente": 112,
           "pct_cx_sobre_linha_pedido": 3.33,
           "pct_valor_sobre_pedido": 0.53,
           "pct_valor_sobre_linha_pedido": 3.33
@@ -786,14 +786,14 @@
           "produto_nome": "PISO 45X45 TRAFEGO BEGE PEI 5 (2,0M²/ CX)",
           "formato": "45x45",
           "embarque_codigo": "PW8-WLV-B",
-          "quantidade_pedido": 100,
+          "quantidade_pedido": 50,
           "quantidade_embarcada": 3,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 6,
-          "unidade": "UN",
+          "quantidade_pendente": 3,
+          "unidade": "CX",
           "valor_pedido_linha": 2423,
           "valor_pendente": 145.38,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 48.46,
           "pct_cx_sobre_linha_pedido": 6,
           "pct_valor_sobre_pedido": 0.69,
           "pct_valor_sobre_linha_pedido": 6
@@ -825,7 +825,7 @@
           "quantidade_embarcada": 20,
           "quantidade_recebida": 0,
           "quantidade_pendente": 20,
-          "unidade": "UN",
+          "unidade": "CX",
           "valor_pedido_linha": 2423.6,
           "valor_pendente": 2423.6,
           "preco_unitario_pendente": 121.18,
@@ -842,7 +842,7 @@
           "quantidade_embarcada": 34,
           "quantidade_recebida": 0,
           "quantidade_pendente": 34,
-          "unidade": "UN",
+          "unidade": "CX",
           "valor_pedido_linha": 3275.65,
           "valor_pendente": 3182.06,
           "preco_unitario_pendente": 93.59,
@@ -874,10 +874,10 @@
           "formato": "66x66",
           "embarque_codigo": "7MW-ZZQ-B",
           "quantidade_pedido": 35,
-          "quantidade_embarcada": 2.18,
+          "quantidade_embarcada": 1,
           "quantidade_recebida": 0,
           "quantidade_pendente": 1,
-          "unidade": "UN",
+          "unidade": "CX",
           "valor_pedido_linha": 3275.65,
           "valor_pendente": 93.59,
           "preco_unitario_pendente": 93.59,
@@ -911,21 +911,21 @@
           "produto_nome": "PISO 50x50 NATURALE BEGE PEI 3 (2,5M²/ CX)",
           "formato": "50x50",
           "embarque_codigo": "EXC-FQZ-B",
-          "quantidade_pedido": 80,
-          "quantidade_embarcada": 2.5,
+          "quantidade_pedido": 32,
+          "quantidade_embarcada": 1,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 2.5,
-          "unidade": "UN",
+          "quantidade_pendente": 1,
+          "unidade": "CX",
           "valor_pedido_linha": 1938.4,
           "valor_pendente": 60.58,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 60.58,
           "pct_cx_sobre_linha_pedido": 3.13,
           "pct_valor_sobre_pedido": 0.33,
           "pct_valor_sobre_linha_pedido": 3.13,
           "embarque_codigos": [
             "EXC-FQZ-B"
           ],
-          "pct_cx_sobre_pedido_total": 0.56
+          "pct_cx_sobre_pedido_total": 0.39
         }
       ],
       "embarques_resumo": [
@@ -941,10 +941,10 @@
       "motivos_resumo": [
         "Aguardando embarque / despacho"
       ],
-      "total_cx_pedido": 444.9,
-      "total_cx_pendente": 2.5,
-      "pct_cx_avaria_sobre_pedido": 0.56,
-      "unidade_pedido": "UN",
+      "total_cx_pedido": 255.3,
+      "total_cx_pendente": 1,
+      "pct_cx_avaria_sobre_pedido": 0.39,
+      "unidade_pedido": "CX",
       "grupos_formato": [
         {
           "formato": "50x50",
@@ -954,24 +954,24 @@
               "produto_nome": "PISO 50x50 NATURALE BEGE PEI 3 (2,5M²/ CX)",
               "formato": "50x50",
               "embarque_codigo": "EXC-FQZ-B",
-              "quantidade_pedido": 80,
-              "quantidade_embarcada": 2.5,
+              "quantidade_pedido": 32,
+              "quantidade_embarcada": 1,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 2.5,
-              "unidade": "UN",
+              "quantidade_pendente": 1,
+              "unidade": "CX",
               "valor_pedido_linha": 1938.4,
               "valor_pendente": 60.58,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 60.58,
               "pct_cx_sobre_linha_pedido": 3.13,
               "pct_valor_sobre_pedido": 0.33,
               "pct_valor_sobre_linha_pedido": 3.13,
               "embarque_codigos": [
                 "EXC-FQZ-B"
               ],
-              "pct_cx_sobre_pedido_total": 0.56
+              "pct_cx_sobre_pedido_total": 0.39
             }
           ],
-          "quant_pendente": 2.5,
+          "quant_pendente": 1,
           "valor_pendente": 60.58
         }
       ]
@@ -1001,81 +1001,81 @@
           "quantidade_pedido": 33.6,
           "quantidade_embarcada": 2.1,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 2.1,
-          "unidade": "UN",
+          "quantidade_pendente": 2,
+          "unidade": "CX",
           "valor_pedido_linha": 956.93,
           "valor_pendente": 59.81,
-          "preco_unitario_pendente": 28.48,
-          "pct_cx_sobre_linha_pedido": 6.25,
+          "preco_unitario_pendente": 29.91,
+          "pct_cx_sobre_linha_pedido": 5.95,
           "pct_valor_sobre_pedido": 0.59,
           "pct_valor_sobre_linha_pedido": 6.25,
           "embarque_codigos": [
             "KQL-J94-C"
           ],
-          "pct_cx_sobre_pedido_total": 0.65
+          "pct_cx_sobre_pedido_total": 1.25
         },
         {
           "produto_id": "69bd5c8234a3dad263014446",
           "produto_nome": "PISO 34X60 FOLHA HD (2,1 M²/CX)",
           "formato": "34x60",
           "embarque_codigo": "KQL-J94-C",
-          "quantidade_pedido": 25.2,
-          "quantidade_embarcada": 2.1,
+          "quantidade_pedido": 12,
+          "quantidade_embarcada": 1,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 2.1,
-          "unidade": "UN",
+          "quantidade_pendente": 1,
+          "unidade": "CX",
           "valor_pedido_linha": 728.28,
           "valor_pendente": 60.69,
-          "preco_unitario_pendente": 28.9,
+          "preco_unitario_pendente": 60.69,
           "pct_cx_sobre_linha_pedido": 8.33,
           "pct_valor_sobre_pedido": 0.6,
           "pct_valor_sobre_linha_pedido": 8.33,
           "embarque_codigos": [
             "KQL-J94-C"
           ],
-          "pct_cx_sobre_pedido_total": 0.65
+          "pct_cx_sobre_pedido_total": 0.63
         },
         {
           "produto_id": "a62eb19e-ccba-485a-831b-0ad3d622d861",
           "produto_nome": "PISO 34X60 WINDSOR BR (2,1 M²/CX)",
           "formato": "34x60",
           "embarque_codigo": "KQL-J94-C",
-          "quantidade_pedido": 48.48,
-          "quantidade_embarcada": 2.02,
+          "quantidade_pedido": 24,
+          "quantidade_embarcada": 1,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 2.02,
-          "unidade": "UN",
+          "quantidade_pendente": 1,
+          "unidade": "CX",
           "valor_pedido_linha": 1524.7,
           "valor_pendente": 63.53,
-          "preco_unitario_pendente": 31.45,
+          "preco_unitario_pendente": 63.53,
           "pct_cx_sobre_linha_pedido": 4.17,
           "pct_valor_sobre_pedido": 0.63,
           "pct_valor_sobre_linha_pedido": 4.17,
           "embarque_codigos": [
             "KQL-J94-C"
           ],
-          "pct_cx_sobre_pedido_total": 0.62
+          "pct_cx_sobre_pedido_total": 0.63
         },
         {
           "produto_id": "6a54fe0dba7cee724077c827",
           "produto_nome": "PISO 50X50 NATURALE MARROM PEI 3 (2,5M²/ CX)",
           "formato": "50x50",
           "embarque_codigo": "KQL-J94-C",
-          "quantidade_pedido": 62.5,
-          "quantidade_embarcada": 2.5,
+          "quantidade_pedido": 25,
+          "quantidade_embarcada": 1,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 2.5,
-          "unidade": "UN",
+          "quantidade_pendente": 1,
+          "unidade": "CX",
           "valor_pedido_linha": 1514.38,
           "valor_pendente": 60.58,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 60.58,
           "pct_cx_sobre_linha_pedido": 4,
           "pct_valor_sobre_pedido": 0.6,
           "pct_valor_sobre_linha_pedido": 4,
           "embarque_codigos": [
             "KQL-J94-C"
           ],
-          "pct_cx_sobre_pedido_total": 0.77
+          "pct_cx_sobre_pedido_total": 0.63
         }
       ],
       "embarques_resumo": [
@@ -1091,10 +1091,10 @@
       "motivos_resumo": [
         "Aguardando embarque / despacho"
       ],
-      "total_cx_pedido": 325.08,
-      "total_cx_pendente": 8.72,
-      "pct_cx_avaria_sobre_pedido": 2.68,
-      "unidade_pedido": "UN",
+      "total_cx_pedido": 159.6,
+      "total_cx_pendente": 5,
+      "pct_cx_avaria_sobre_pedido": 3.13,
+      "unidade_pedido": "CX",
       "grupos_formato": [
         {
           "formato": "34x60",
@@ -1107,63 +1107,63 @@
               "quantidade_pedido": 33.6,
               "quantidade_embarcada": 2.1,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 2.1,
-              "unidade": "UN",
+              "quantidade_pendente": 2,
+              "unidade": "CX",
               "valor_pedido_linha": 956.93,
               "valor_pendente": 59.81,
-              "preco_unitario_pendente": 28.48,
-              "pct_cx_sobre_linha_pedido": 6.25,
+              "preco_unitario_pendente": 29.91,
+              "pct_cx_sobre_linha_pedido": 5.95,
               "pct_valor_sobre_pedido": 0.59,
               "pct_valor_sobre_linha_pedido": 6.25,
               "embarque_codigos": [
                 "KQL-J94-C"
               ],
-              "pct_cx_sobre_pedido_total": 0.65
+              "pct_cx_sobre_pedido_total": 1.25
             },
             {
               "produto_id": "69bd5c8234a3dad263014446",
               "produto_nome": "PISO 34X60 FOLHA HD (2,1 M²/CX)",
               "formato": "34x60",
               "embarque_codigo": "KQL-J94-C",
-              "quantidade_pedido": 25.2,
-              "quantidade_embarcada": 2.1,
+              "quantidade_pedido": 12,
+              "quantidade_embarcada": 1,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 2.1,
-              "unidade": "UN",
+              "quantidade_pendente": 1,
+              "unidade": "CX",
               "valor_pedido_linha": 728.28,
               "valor_pendente": 60.69,
-              "preco_unitario_pendente": 28.9,
+              "preco_unitario_pendente": 60.69,
               "pct_cx_sobre_linha_pedido": 8.33,
               "pct_valor_sobre_pedido": 0.6,
               "pct_valor_sobre_linha_pedido": 8.33,
               "embarque_codigos": [
                 "KQL-J94-C"
               ],
-              "pct_cx_sobre_pedido_total": 0.65
+              "pct_cx_sobre_pedido_total": 0.63
             },
             {
               "produto_id": "a62eb19e-ccba-485a-831b-0ad3d622d861",
               "produto_nome": "PISO 34X60 WINDSOR BR (2,1 M²/CX)",
               "formato": "34x60",
               "embarque_codigo": "KQL-J94-C",
-              "quantidade_pedido": 48.48,
-              "quantidade_embarcada": 2.02,
+              "quantidade_pedido": 24,
+              "quantidade_embarcada": 1,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 2.02,
-              "unidade": "UN",
+              "quantidade_pendente": 1,
+              "unidade": "CX",
               "valor_pedido_linha": 1524.7,
               "valor_pendente": 63.53,
-              "preco_unitario_pendente": 31.45,
+              "preco_unitario_pendente": 63.53,
               "pct_cx_sobre_linha_pedido": 4.17,
               "pct_valor_sobre_pedido": 0.63,
               "pct_valor_sobre_linha_pedido": 4.17,
               "embarque_codigos": [
                 "KQL-J94-C"
               ],
-              "pct_cx_sobre_pedido_total": 0.62
+              "pct_cx_sobre_pedido_total": 0.63
             }
           ],
-          "quant_pendente": 6.220000000000001,
+          "quant_pendente": 4,
           "valor_pendente": 184.03
         },
         {
@@ -1174,24 +1174,24 @@
               "produto_nome": "PISO 50X50 NATURALE MARROM PEI 3 (2,5M²/ CX)",
               "formato": "50x50",
               "embarque_codigo": "KQL-J94-C",
-              "quantidade_pedido": 62.5,
-              "quantidade_embarcada": 2.5,
+              "quantidade_pedido": 25,
+              "quantidade_embarcada": 1,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 2.5,
-              "unidade": "UN",
+              "quantidade_pendente": 1,
+              "unidade": "CX",
               "valor_pedido_linha": 1514.38,
               "valor_pendente": 60.58,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 60.58,
               "pct_cx_sobre_linha_pedido": 4,
               "pct_valor_sobre_pedido": 0.6,
               "pct_valor_sobre_linha_pedido": 4,
               "embarque_codigos": [
                 "KQL-J94-C"
               ],
-              "pct_cx_sobre_pedido_total": 0.77
+              "pct_cx_sobre_pedido_total": 0.63
             }
           ],
-          "quant_pendente": 2.5,
+          "quant_pendente": 1,
           "valor_pendente": 60.58
         }
       ]
@@ -1218,21 +1218,21 @@
           "produto_nome": "PISO 45X45 JAVA AZUL PEI 5 (2,00M²/ CX)",
           "formato": "45x45",
           "embarque_codigo": "HHW-5NP-C",
-          "quantidade_pedido": 48,
-          "quantidade_embarcada": 2,
+          "quantidade_pedido": 24,
+          "quantidade_embarcada": 1,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 2,
-          "unidade": "UN",
+          "quantidade_pendente": 1,
+          "unidade": "CX",
           "valor_pedido_linha": 1163.04,
           "valor_pendente": 48.46,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 48.46,
           "pct_cx_sobre_linha_pedido": 4.17,
           "pct_valor_sobre_pedido": 0.48,
           "pct_valor_sobre_linha_pedido": 4.17,
           "embarque_codigos": [
             "HHW-5NP-C"
           ],
-          "pct_cx_sobre_pedido_total": 0.74
+          "pct_cx_sobre_pedido_total": 0.64
         },
         {
           "produto_id": "69bd5ca06af4061bb3246195",
@@ -1243,7 +1243,7 @@
           "quantidade_embarcada": 15,
           "quantidade_recebida": 0,
           "quantidade_pendente": 15,
-          "unidade": "UN",
+          "unidade": "CX",
           "valor_pedido_linha": 1453.8,
           "valor_pendente": 363.45,
           "preco_unitario_pendente": 24.23,
@@ -1253,49 +1253,49 @@
           "embarque_codigos": [
             "HHW-5NP-C"
           ],
-          "pct_cx_sobre_pedido_total": 5.58
+          "pct_cx_sobre_pedido_total": 9.62
         },
         {
           "produto_id": "69bd5ca906423580f877e9ce",
           "produto_nome": "PISO 60x120 GRAN POLAR RT POL (2,16M²/ CX)",
           "formato": "60x120",
           "embarque_codigo": "HHW-5NP-C",
-          "quantidade_pedido": 43.2,
-          "quantidade_embarcada": 2.16,
+          "quantidade_pedido": 20,
+          "quantidade_embarcada": 1,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 2.16,
-          "unidade": "UN",
+          "quantidade_pendente": 1,
+          "unidade": "CX",
           "valor_pedido_linha": 2368.66,
           "valor_pendente": 118.43,
-          "preco_unitario_pendente": 54.83,
+          "preco_unitario_pendente": 118.43,
           "pct_cx_sobre_linha_pedido": 5,
           "pct_valor_sobre_pedido": 1.18,
           "pct_valor_sobre_linha_pedido": 5,
           "embarque_codigos": [
             "HHW-5NP-C"
           ],
-          "pct_cx_sobre_pedido_total": 0.8
+          "pct_cx_sobre_pedido_total": 0.64
         },
         {
           "produto_id": "6a5504e375823119ca051f19",
           "produto_nome": "PISO 60X120 POMPEI POL (2,16M²/ CX)",
           "formato": "60x120",
           "embarque_codigo": "HHW-5NP-C",
-          "quantidade_pedido": 43.2,
-          "quantidade_embarcada": 2.16,
+          "quantidade_pedido": 20,
+          "quantidade_embarcada": 1,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 2.16,
-          "unidade": "UN",
+          "quantidade_pendente": 1,
+          "unidade": "CX",
           "valor_pedido_linha": 2148.34,
           "valor_pendente": 107.42,
-          "preco_unitario_pendente": 49.73,
+          "preco_unitario_pendente": 107.42,
           "pct_cx_sobre_linha_pedido": 5,
           "pct_valor_sobre_pedido": 1.07,
           "pct_valor_sobre_linha_pedido": 5,
           "embarque_codigos": [
             "HHW-5NP-C"
           ],
-          "pct_cx_sobre_pedido_total": 0.8
+          "pct_cx_sobre_pedido_total": 0.64
         }
       ],
       "embarques_resumo": [
@@ -1311,10 +1311,10 @@
       "motivos_resumo": [
         "Aguardando embarque / despacho"
       ],
-      "total_cx_pedido": 268.96,
-      "total_cx_pendente": 21.32,
-      "pct_cx_avaria_sobre_pedido": 7.93,
-      "unidade_pedido": "UN",
+      "total_cx_pedido": 156,
+      "total_cx_pendente": 18,
+      "pct_cx_avaria_sobre_pedido": 11.54,
+      "unidade_pedido": "CX",
       "grupos_formato": [
         {
           "formato": "45x45",
@@ -1324,24 +1324,24 @@
               "produto_nome": "PISO 45X45 JAVA AZUL PEI 5 (2,00M²/ CX)",
               "formato": "45x45",
               "embarque_codigo": "HHW-5NP-C",
-              "quantidade_pedido": 48,
-              "quantidade_embarcada": 2,
+              "quantidade_pedido": 24,
+              "quantidade_embarcada": 1,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 2,
-              "unidade": "UN",
+              "quantidade_pendente": 1,
+              "unidade": "CX",
               "valor_pedido_linha": 1163.04,
               "valor_pendente": 48.46,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 48.46,
               "pct_cx_sobre_linha_pedido": 4.17,
               "pct_valor_sobre_pedido": 0.48,
               "pct_valor_sobre_linha_pedido": 4.17,
               "embarque_codigos": [
                 "HHW-5NP-C"
               ],
-              "pct_cx_sobre_pedido_total": 0.74
+              "pct_cx_sobre_pedido_total": 0.64
             }
           ],
-          "quant_pendente": 2,
+          "quant_pendente": 1,
           "valor_pendente": 48.46
         },
         {
@@ -1356,7 +1356,7 @@
               "quantidade_embarcada": 15,
               "quantidade_recebida": 0,
               "quantidade_pendente": 15,
-              "unidade": "UN",
+              "unidade": "CX",
               "valor_pedido_linha": 1453.8,
               "valor_pendente": 363.45,
               "preco_unitario_pendente": 24.23,
@@ -1366,7 +1366,7 @@
               "embarque_codigos": [
                 "HHW-5NP-C"
               ],
-              "pct_cx_sobre_pedido_total": 5.58
+              "pct_cx_sobre_pedido_total": 9.62
             }
           ],
           "quant_pendente": 15,
@@ -1380,45 +1380,45 @@
               "produto_nome": "PISO 60x120 GRAN POLAR RT POL (2,16M²/ CX)",
               "formato": "60x120",
               "embarque_codigo": "HHW-5NP-C",
-              "quantidade_pedido": 43.2,
-              "quantidade_embarcada": 2.16,
+              "quantidade_pedido": 20,
+              "quantidade_embarcada": 1,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 2.16,
-              "unidade": "UN",
+              "quantidade_pendente": 1,
+              "unidade": "CX",
               "valor_pedido_linha": 2368.66,
               "valor_pendente": 118.43,
-              "preco_unitario_pendente": 54.83,
+              "preco_unitario_pendente": 118.43,
               "pct_cx_sobre_linha_pedido": 5,
               "pct_valor_sobre_pedido": 1.18,
               "pct_valor_sobre_linha_pedido": 5,
               "embarque_codigos": [
                 "HHW-5NP-C"
               ],
-              "pct_cx_sobre_pedido_total": 0.8
+              "pct_cx_sobre_pedido_total": 0.64
             },
             {
               "produto_id": "6a5504e375823119ca051f19",
               "produto_nome": "PISO 60X120 POMPEI POL (2,16M²/ CX)",
               "formato": "60x120",
               "embarque_codigo": "HHW-5NP-C",
-              "quantidade_pedido": 43.2,
-              "quantidade_embarcada": 2.16,
+              "quantidade_pedido": 20,
+              "quantidade_embarcada": 1,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 2.16,
-              "unidade": "UN",
+              "quantidade_pendente": 1,
+              "unidade": "CX",
               "valor_pedido_linha": 2148.34,
               "valor_pendente": 107.42,
-              "preco_unitario_pendente": 49.73,
+              "preco_unitario_pendente": 107.42,
               "pct_cx_sobre_linha_pedido": 5,
               "pct_valor_sobre_pedido": 1.07,
               "pct_valor_sobre_linha_pedido": 5,
               "embarque_codigos": [
                 "HHW-5NP-C"
               ],
-              "pct_cx_sobre_pedido_total": 0.8
+              "pct_cx_sobre_pedido_total": 0.64
             }
           ],
-          "quant_pendente": 4.32,
+          "quant_pendente": 2,
           "valor_pendente": 225.85
         }
       ]
@@ -1445,147 +1445,147 @@
           "produto_nome": "PISO 45x45 JAVA VERDE PEI 5 (2,00M²/ CX)",
           "formato": "45x45",
           "embarque_codigo": "SQF-7ZH-B",
-          "quantidade_pedido": 80,
-          "quantidade_embarcada": 2,
+          "quantidade_pedido": 40,
+          "quantidade_embarcada": 1,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 2,
-          "unidade": "UN",
+          "quantidade_pendente": 1,
+          "unidade": "CX",
           "valor_pedido_linha": 1938.4,
           "valor_pendente": 48.46,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 48.46,
           "pct_cx_sobre_linha_pedido": 2.5,
           "pct_valor_sobre_pedido": 0.16,
           "pct_valor_sobre_linha_pedido": 2.5,
           "embarque_codigos": [
             "SQF-7ZH-B"
           ],
-          "pct_cx_sobre_pedido_total": 0.19
+          "pct_cx_sobre_pedido_total": 0.18
         },
         {
           "produto_id": "9b37254b-f0eb-43cf-a48f-860494903b26",
           "produto_nome": "PISO 45X45 LAPA PEI 3 (2,00 M²/ CX)",
           "formato": "45x45",
           "embarque_codigo": "SQF-7ZH-B",
-          "quantidade_pedido": 80,
-          "quantidade_embarcada": 2,
+          "quantidade_pedido": 40,
+          "quantidade_embarcada": 1,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 2,
-          "unidade": "UN",
+          "quantidade_pendente": 1,
+          "unidade": "CX",
           "valor_pedido_linha": 1938.4,
           "valor_pendente": 48.46,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 48.46,
           "pct_cx_sobre_linha_pedido": 2.5,
           "pct_valor_sobre_pedido": 0.16,
           "pct_valor_sobre_linha_pedido": 2.5,
           "embarque_codigos": [
             "SQF-7ZH-B"
           ],
-          "pct_cx_sobre_pedido_total": 0.19
+          "pct_cx_sobre_pedido_total": 0.18
         },
         {
           "produto_id": "6d459947-9749-481f-9a09-667106738a2d",
           "produto_nome": "PISO 50X50 ALLEGRO HD50  PEI 3 (2,5M²/ CX)",
           "formato": "50x50",
           "embarque_codigo": "SQF-7ZH-B",
-          "quantidade_pedido": 75,
-          "quantidade_embarcada": 5,
+          "quantidade_pedido": 30,
+          "quantidade_embarcada": 2,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 5,
-          "unidade": "UN",
+          "quantidade_pendente": 2,
+          "unidade": "CX",
           "valor_pedido_linha": 1817.25,
           "valor_pendente": 121.15,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 60.58,
           "pct_cx_sobre_linha_pedido": 6.67,
           "pct_valor_sobre_pedido": 0.4,
           "pct_valor_sobre_linha_pedido": 6.67,
           "embarque_codigos": [
             "SQF-7ZH-B"
           ],
-          "pct_cx_sobre_pedido_total": 0.46
+          "pct_cx_sobre_pedido_total": 0.37
         },
         {
           "produto_id": "69bd5c9c73f3e2e5b4a36e6b",
           "produto_nome": "PISO 50x50 BIANCO 50 (2,50 M²/ CX)",
           "formato": "50x50",
           "embarque_codigo": "SQF-7ZH-B",
-          "quantidade_pedido": 75,
-          "quantidade_embarcada": 2.5,
+          "quantidade_pedido": 30,
+          "quantidade_embarcada": 1,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 2.5,
-          "unidade": "UN",
+          "quantidade_pendente": 1,
+          "unidade": "CX",
           "valor_pedido_linha": 1817.25,
           "valor_pendente": 60.58,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 60.58,
           "pct_cx_sobre_linha_pedido": 3.33,
           "pct_valor_sobre_pedido": 0.2,
           "pct_valor_sobre_linha_pedido": 3.33,
           "embarque_codigos": [
             "SQF-7ZH-B"
           ],
-          "pct_cx_sobre_pedido_total": 0.23
+          "pct_cx_sobre_pedido_total": 0.18
         },
         {
           "produto_id": "cc766137-a6bd-4df5-9e7c-d40c5124be57",
           "produto_nome": "PISO 50X50 BILBAO PEI 3 (2,5M²/ CX)",
           "formato": "50x50",
           "embarque_codigo": "SQF-7ZH-B",
-          "quantidade_pedido": 75,
-          "quantidade_embarcada": 7.5,
+          "quantidade_pedido": 30,
+          "quantidade_embarcada": 3,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 7.5,
-          "unidade": "UN",
+          "quantidade_pendente": 3,
+          "unidade": "CX",
           "valor_pedido_linha": 1817.25,
           "valor_pendente": 181.73,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 60.58,
           "pct_cx_sobre_linha_pedido": 10,
           "pct_valor_sobre_pedido": 0.6,
           "pct_valor_sobre_linha_pedido": 10,
           "embarque_codigos": [
             "SQF-7ZH-B"
           ],
-          "pct_cx_sobre_pedido_total": 0.7
+          "pct_cx_sobre_pedido_total": 0.55
         },
         {
           "produto_id": "5b986242-e588-4334-9dc0-12e19306263a",
           "produto_nome": "PISO 50X50 CASTANO PEI 3 (2,5M²/ CX)",
           "formato": "50x50",
           "embarque_codigo": "SQF-7ZH-B",
-          "quantidade_pedido": 75,
-          "quantidade_embarcada": 5,
+          "quantidade_pedido": 30,
+          "quantidade_embarcada": 2,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 5,
-          "unidade": "UN",
+          "quantidade_pendente": 2,
+          "unidade": "CX",
           "valor_pedido_linha": 1817.25,
           "valor_pendente": 121.15,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 60.58,
           "pct_cx_sobre_linha_pedido": 6.67,
           "pct_valor_sobre_pedido": 0.4,
           "pct_valor_sobre_linha_pedido": 6.67,
           "embarque_codigos": [
             "SQF-7ZH-B"
           ],
-          "pct_cx_sobre_pedido_total": 0.46
+          "pct_cx_sobre_pedido_total": 0.37
         },
         {
           "produto_id": "4b38f30d-4da0-4fb4-8f75-adcf382d5e5f",
           "produto_nome": "PISO 50X50 SELVA PEI 3 (2,5M²/ CX)",
           "formato": "50x50",
           "embarque_codigo": "SQF-7ZH-B",
-          "quantidade_pedido": 75,
-          "quantidade_embarcada": 5,
+          "quantidade_pedido": 30,
+          "quantidade_embarcada": 2,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 5,
-          "unidade": "UN",
+          "quantidade_pendente": 2,
+          "unidade": "CX",
           "valor_pedido_linha": 1817.25,
           "valor_pendente": 121.15,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 60.58,
           "pct_cx_sobre_linha_pedido": 6.67,
           "pct_valor_sobre_pedido": 0.4,
           "pct_valor_sobre_linha_pedido": 6.67,
           "embarque_codigos": [
             "SQF-7ZH-B"
           ],
-          "pct_cx_sobre_pedido_total": 0.46
+          "pct_cx_sobre_pedido_total": 0.37
         },
         {
           "produto_id": "69bd5c9f41436cd0e528595c",
@@ -1595,60 +1595,60 @@
           "quantidade_pedido": 75,
           "quantidade_embarcada": 2.5,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 2.5,
-          "unidade": "UN",
+          "quantidade_pendente": 3,
+          "unidade": "CX",
           "valor_pedido_linha": 1817.25,
           "valor_pendente": 60.58,
-          "preco_unitario_pendente": 24.23,
-          "pct_cx_sobre_linha_pedido": 3.33,
+          "preco_unitario_pendente": 20.19,
+          "pct_cx_sobre_linha_pedido": 4,
           "pct_valor_sobre_pedido": 0.2,
           "pct_valor_sobre_linha_pedido": 3.33,
           "embarque_codigos": [
             "SQF-7ZH-B"
           ],
-          "pct_cx_sobre_pedido_total": 0.23
+          "pct_cx_sobre_pedido_total": 0.55
         },
         {
           "produto_id": "50e23ddf-0973-4309-a613-f35b9aa34112",
           "produto_nome": "PISO 60X120 BELLA GOLD RT POL (2,16M²/ CX)",
           "formato": "60x120",
           "embarque_codigo": "SQF-7ZH-B",
-          "quantidade_pedido": 64.8,
-          "quantidade_embarcada": 2.16,
+          "quantidade_pedido": 30,
+          "quantidade_embarcada": 1,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 2.16,
-          "unidade": "UN",
+          "quantidade_pendente": 1,
+          "unidade": "CX",
           "valor_pedido_linha": 3277.58,
           "valor_pendente": 109.25,
-          "preco_unitario_pendente": 50.58,
+          "preco_unitario_pendente": 109.25,
           "pct_cx_sobre_linha_pedido": 3.33,
           "pct_valor_sobre_pedido": 0.36,
           "pct_valor_sobre_linha_pedido": 3.33,
           "embarque_codigos": [
             "SQF-7ZH-B"
           ],
-          "pct_cx_sobre_pedido_total": 0.2
+          "pct_cx_sobre_pedido_total": 0.18
         },
         {
           "produto_id": "6a5504e375823119ca051f19",
           "produto_nome": "PISO 60X120 POMPEI POL (2,16M²/ CX)",
           "formato": "60x120",
           "embarque_codigo": "SQF-7ZH-B",
-          "quantidade_pedido": 64.8,
-          "quantidade_embarcada": 6.48,
+          "quantidade_pedido": 30,
+          "quantidade_embarcada": 3,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 6.48,
-          "unidade": "UN",
+          "quantidade_pendente": 3,
+          "unidade": "CX",
           "valor_pedido_linha": 3222.5,
           "valor_pendente": 322.25,
-          "preco_unitario_pendente": 49.73,
+          "preco_unitario_pendente": 107.42,
           "pct_cx_sobre_linha_pedido": 10,
           "pct_valor_sobre_pedido": 1.07,
           "pct_valor_sobre_linha_pedido": 10,
           "embarque_codigos": [
             "SQF-7ZH-B"
           ],
-          "pct_cx_sobre_pedido_total": 0.6
+          "pct_cx_sobre_pedido_total": 0.55
         }
       ],
       "embarques_resumo": [
@@ -1664,10 +1664,10 @@
       "motivos_resumo": [
         "Aguardando embarque / despacho"
       ],
-      "total_cx_pedido": 1077.2,
-      "total_cx_pendente": 40.14,
-      "pct_cx_avaria_sobre_pedido": 3.73,
-      "unidade_pedido": "UN",
+      "total_cx_pedido": 547,
+      "total_cx_pendente": 19,
+      "pct_cx_avaria_sobre_pedido": 3.47,
+      "unidade_pedido": "CX",
       "grupos_formato": [
         {
           "formato": "45x45",
@@ -1677,45 +1677,45 @@
               "produto_nome": "PISO 45x45 JAVA VERDE PEI 5 (2,00M²/ CX)",
               "formato": "45x45",
               "embarque_codigo": "SQF-7ZH-B",
-              "quantidade_pedido": 80,
-              "quantidade_embarcada": 2,
+              "quantidade_pedido": 40,
+              "quantidade_embarcada": 1,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 2,
-              "unidade": "UN",
+              "quantidade_pendente": 1,
+              "unidade": "CX",
               "valor_pedido_linha": 1938.4,
               "valor_pendente": 48.46,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 48.46,
               "pct_cx_sobre_linha_pedido": 2.5,
               "pct_valor_sobre_pedido": 0.16,
               "pct_valor_sobre_linha_pedido": 2.5,
               "embarque_codigos": [
                 "SQF-7ZH-B"
               ],
-              "pct_cx_sobre_pedido_total": 0.19
+              "pct_cx_sobre_pedido_total": 0.18
             },
             {
               "produto_id": "9b37254b-f0eb-43cf-a48f-860494903b26",
               "produto_nome": "PISO 45X45 LAPA PEI 3 (2,00 M²/ CX)",
               "formato": "45x45",
               "embarque_codigo": "SQF-7ZH-B",
-              "quantidade_pedido": 80,
-              "quantidade_embarcada": 2,
+              "quantidade_pedido": 40,
+              "quantidade_embarcada": 1,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 2,
-              "unidade": "UN",
+              "quantidade_pendente": 1,
+              "unidade": "CX",
               "valor_pedido_linha": 1938.4,
               "valor_pendente": 48.46,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 48.46,
               "pct_cx_sobre_linha_pedido": 2.5,
               "pct_valor_sobre_pedido": 0.16,
               "pct_valor_sobre_linha_pedido": 2.5,
               "embarque_codigos": [
                 "SQF-7ZH-B"
               ],
-              "pct_cx_sobre_pedido_total": 0.19
+              "pct_cx_sobre_pedido_total": 0.18
             }
           ],
-          "quant_pendente": 4,
+          "quant_pendente": 2,
           "valor_pendente": 96.92
         },
         {
@@ -1726,105 +1726,105 @@
               "produto_nome": "PISO 50X50 ALLEGRO HD50  PEI 3 (2,5M²/ CX)",
               "formato": "50x50",
               "embarque_codigo": "SQF-7ZH-B",
-              "quantidade_pedido": 75,
-              "quantidade_embarcada": 5,
+              "quantidade_pedido": 30,
+              "quantidade_embarcada": 2,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 5,
-              "unidade": "UN",
+              "quantidade_pendente": 2,
+              "unidade": "CX",
               "valor_pedido_linha": 1817.25,
               "valor_pendente": 121.15,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 60.58,
               "pct_cx_sobre_linha_pedido": 6.67,
               "pct_valor_sobre_pedido": 0.4,
               "pct_valor_sobre_linha_pedido": 6.67,
               "embarque_codigos": [
                 "SQF-7ZH-B"
               ],
-              "pct_cx_sobre_pedido_total": 0.46
+              "pct_cx_sobre_pedido_total": 0.37
             },
             {
               "produto_id": "69bd5c9c73f3e2e5b4a36e6b",
               "produto_nome": "PISO 50x50 BIANCO 50 (2,50 M²/ CX)",
               "formato": "50x50",
               "embarque_codigo": "SQF-7ZH-B",
-              "quantidade_pedido": 75,
-              "quantidade_embarcada": 2.5,
+              "quantidade_pedido": 30,
+              "quantidade_embarcada": 1,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 2.5,
-              "unidade": "UN",
+              "quantidade_pendente": 1,
+              "unidade": "CX",
               "valor_pedido_linha": 1817.25,
               "valor_pendente": 60.58,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 60.58,
               "pct_cx_sobre_linha_pedido": 3.33,
               "pct_valor_sobre_pedido": 0.2,
               "pct_valor_sobre_linha_pedido": 3.33,
               "embarque_codigos": [
                 "SQF-7ZH-B"
               ],
-              "pct_cx_sobre_pedido_total": 0.23
+              "pct_cx_sobre_pedido_total": 0.18
             },
             {
               "produto_id": "cc766137-a6bd-4df5-9e7c-d40c5124be57",
               "produto_nome": "PISO 50X50 BILBAO PEI 3 (2,5M²/ CX)",
               "formato": "50x50",
               "embarque_codigo": "SQF-7ZH-B",
-              "quantidade_pedido": 75,
-              "quantidade_embarcada": 7.5,
+              "quantidade_pedido": 30,
+              "quantidade_embarcada": 3,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 7.5,
-              "unidade": "UN",
+              "quantidade_pendente": 3,
+              "unidade": "CX",
               "valor_pedido_linha": 1817.25,
               "valor_pendente": 181.73,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 60.58,
               "pct_cx_sobre_linha_pedido": 10,
               "pct_valor_sobre_pedido": 0.6,
               "pct_valor_sobre_linha_pedido": 10,
               "embarque_codigos": [
                 "SQF-7ZH-B"
               ],
-              "pct_cx_sobre_pedido_total": 0.7
+              "pct_cx_sobre_pedido_total": 0.55
             },
             {
               "produto_id": "5b986242-e588-4334-9dc0-12e19306263a",
               "produto_nome": "PISO 50X50 CASTANO PEI 3 (2,5M²/ CX)",
               "formato": "50x50",
               "embarque_codigo": "SQF-7ZH-B",
-              "quantidade_pedido": 75,
-              "quantidade_embarcada": 5,
+              "quantidade_pedido": 30,
+              "quantidade_embarcada": 2,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 5,
-              "unidade": "UN",
+              "quantidade_pendente": 2,
+              "unidade": "CX",
               "valor_pedido_linha": 1817.25,
               "valor_pendente": 121.15,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 60.58,
               "pct_cx_sobre_linha_pedido": 6.67,
               "pct_valor_sobre_pedido": 0.4,
               "pct_valor_sobre_linha_pedido": 6.67,
               "embarque_codigos": [
                 "SQF-7ZH-B"
               ],
-              "pct_cx_sobre_pedido_total": 0.46
+              "pct_cx_sobre_pedido_total": 0.37
             },
             {
               "produto_id": "4b38f30d-4da0-4fb4-8f75-adcf382d5e5f",
               "produto_nome": "PISO 50X50 SELVA PEI 3 (2,5M²/ CX)",
               "formato": "50x50",
               "embarque_codigo": "SQF-7ZH-B",
-              "quantidade_pedido": 75,
-              "quantidade_embarcada": 5,
+              "quantidade_pedido": 30,
+              "quantidade_embarcada": 2,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 5,
-              "unidade": "UN",
+              "quantidade_pendente": 2,
+              "unidade": "CX",
               "valor_pedido_linha": 1817.25,
               "valor_pendente": 121.15,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 60.58,
               "pct_cx_sobre_linha_pedido": 6.67,
               "pct_valor_sobre_pedido": 0.4,
               "pct_valor_sobre_linha_pedido": 6.67,
               "embarque_codigos": [
                 "SQF-7ZH-B"
               ],
-              "pct_cx_sobre_pedido_total": 0.46
+              "pct_cx_sobre_pedido_total": 0.37
             },
             {
               "produto_id": "69bd5c9f41436cd0e528595c",
@@ -1834,21 +1834,21 @@
               "quantidade_pedido": 75,
               "quantidade_embarcada": 2.5,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 2.5,
-              "unidade": "UN",
+              "quantidade_pendente": 3,
+              "unidade": "CX",
               "valor_pedido_linha": 1817.25,
               "valor_pendente": 60.58,
-              "preco_unitario_pendente": 24.23,
-              "pct_cx_sobre_linha_pedido": 3.33,
+              "preco_unitario_pendente": 20.19,
+              "pct_cx_sobre_linha_pedido": 4,
               "pct_valor_sobre_pedido": 0.2,
               "pct_valor_sobre_linha_pedido": 3.33,
               "embarque_codigos": [
                 "SQF-7ZH-B"
               ],
-              "pct_cx_sobre_pedido_total": 0.23
+              "pct_cx_sobre_pedido_total": 0.55
             }
           ],
-          "quant_pendente": 27.5,
+          "quant_pendente": 13,
           "valor_pendente": 666.34
         },
         {
@@ -1859,45 +1859,45 @@
               "produto_nome": "PISO 60X120 BELLA GOLD RT POL (2,16M²/ CX)",
               "formato": "60x120",
               "embarque_codigo": "SQF-7ZH-B",
-              "quantidade_pedido": 64.8,
-              "quantidade_embarcada": 2.16,
+              "quantidade_pedido": 30,
+              "quantidade_embarcada": 1,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 2.16,
-              "unidade": "UN",
+              "quantidade_pendente": 1,
+              "unidade": "CX",
               "valor_pedido_linha": 3277.58,
               "valor_pendente": 109.25,
-              "preco_unitario_pendente": 50.58,
+              "preco_unitario_pendente": 109.25,
               "pct_cx_sobre_linha_pedido": 3.33,
               "pct_valor_sobre_pedido": 0.36,
               "pct_valor_sobre_linha_pedido": 3.33,
               "embarque_codigos": [
                 "SQF-7ZH-B"
               ],
-              "pct_cx_sobre_pedido_total": 0.2
+              "pct_cx_sobre_pedido_total": 0.18
             },
             {
               "produto_id": "6a5504e375823119ca051f19",
               "produto_nome": "PISO 60X120 POMPEI POL (2,16M²/ CX)",
               "formato": "60x120",
               "embarque_codigo": "SQF-7ZH-B",
-              "quantidade_pedido": 64.8,
-              "quantidade_embarcada": 6.48,
+              "quantidade_pedido": 30,
+              "quantidade_embarcada": 3,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 6.48,
-              "unidade": "UN",
+              "quantidade_pendente": 3,
+              "unidade": "CX",
               "valor_pedido_linha": 3222.5,
               "valor_pendente": 322.25,
-              "preco_unitario_pendente": 49.73,
+              "preco_unitario_pendente": 107.42,
               "pct_cx_sobre_linha_pedido": 10,
               "pct_valor_sobre_pedido": 1.07,
               "pct_valor_sobre_linha_pedido": 10,
               "embarque_codigos": [
                 "SQF-7ZH-B"
               ],
-              "pct_cx_sobre_pedido_total": 0.6
+              "pct_cx_sobre_pedido_total": 0.55
             }
           ],
-          "quant_pendente": 8.64,
+          "quant_pendente": 4,
           "valor_pendente": 431.5
         }
       ]
@@ -1925,10 +1925,10 @@
           "formato": "45x45",
           "embarque_codigo": "AB6-PPQ-B",
           "quantidade_pedido": 168,
-          "quantidade_embarcada": 4,
+          "quantidade_embarcada": 8,
           "quantidade_recebida": 0,
           "quantidade_pendente": 8,
-          "unidade": "UN",
+          "unidade": "CX",
           "valor_pedido_linha": 4070.64,
           "valor_pendente": 193.84,
           "preco_unitario_pendente": 24.23,
@@ -1938,63 +1938,63 @@
           "embarque_codigos": [
             "AB6-PPQ-B"
           ],
-          "pct_cx_sobre_pedido_total": 1.19
+          "pct_cx_sobre_pedido_total": 1.9
         },
         {
           "produto_id": "6a3ab9956db5d3b8dfa34d86",
           "produto_nome": "PISO 45X45 MONTANA AZUL PEI 5 (2,00M²/ CX)",
           "formato": "45x45",
           "embarque_codigo": "AB6-PPQ-B",
-          "quantidade_pedido": 168,
+          "quantidade_pedido": 84,
           "quantidade_embarcada": 4,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 8,
-          "unidade": "UN",
+          "quantidade_pendente": 4,
+          "unidade": "CX",
           "valor_pedido_linha": 4070.64,
           "valor_pendente": 193.84,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 48.46,
           "pct_cx_sobre_linha_pedido": 4.76,
           "pct_valor_sobre_pedido": 1.19,
           "pct_valor_sobre_linha_pedido": 4.76,
           "embarque_codigos": [
             "AB6-PPQ-B"
           ],
-          "pct_cx_sobre_pedido_total": 1.19
+          "pct_cx_sobre_pedido_total": 0.95
         },
         {
           "produto_id": "69bd5c974f9521186107ec8d",
           "produto_nome": "PISO 45x45 TRAVERTINO BEGE (2,00 M²/ CX) PE",
           "formato": "45x45",
           "embarque_codigo": "AB6-PPQ-B",
-          "quantidade_pedido": 168,
+          "quantidade_pedido": 84,
           "quantidade_embarcada": 3,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 6,
-          "unidade": "UN",
+          "quantidade_pendente": 3,
+          "unidade": "CX",
           "valor_pedido_linha": 4070.64,
           "valor_pendente": 145.38,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 48.46,
           "pct_cx_sobre_linha_pedido": 3.57,
           "pct_valor_sobre_pedido": 0.89,
           "pct_valor_sobre_linha_pedido": 3.57,
           "embarque_codigos": [
             "AB6-PPQ-B"
           ],
-          "pct_cx_sobre_pedido_total": 0.89
+          "pct_cx_sobre_pedido_total": 0.71
         },
         {
           "produto_id": "880bd0d0-7ae5-4caf-820d-488bbcbab77f",
           "produto_nome": "PISO 45X45 TRAVERTINO CZ (2,00 M²/ CX) PE",
           "formato": "45x45",
           "embarque_codigo": "AB6-PPQ-A, AB6-PPQ-B, AB6-PPQ-C",
-          "quantidade_pedido": 168,
+          "quantidade_pedido": 84,
           "quantidade_embarcada": 81,
           "quantidade_recebida": 71,
-          "quantidade_pendente": 46,
-          "unidade": "UN",
+          "quantidade_pendente": 23,
+          "unidade": "CX",
           "valor_pedido_linha": 4070.64,
           "valor_pendente": 1114.58,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 48.46,
           "pct_cx_sobre_linha_pedido": 27.38,
           "pct_valor_sobre_pedido": 2.98,
           "pct_valor_sobre_linha_pedido": 11.9,
@@ -2003,7 +2003,7 @@
             "AB6-PPQ-B",
             "AB6-PPQ-C"
           ],
-          "pct_cx_sobre_pedido_total": 6.85
+          "pct_cx_sobre_pedido_total": 5.48
         }
       ],
       "embarques_resumo": [
@@ -2033,10 +2033,10 @@
         "Aguardando embarque / despacho",
         "Reposição pós-recepção (Necessidade)"
       ],
-      "total_cx_pedido": 672,
-      "total_cx_pendente": 68,
-      "pct_cx_avaria_sobre_pedido": 10.12,
-      "unidade_pedido": "UN",
+      "total_cx_pedido": 420,
+      "total_cx_pendente": 38,
+      "pct_cx_avaria_sobre_pedido": 9.05,
+      "unidade_pedido": "CX",
       "grupos_formato": [
         {
           "formato": "45x45",
@@ -2047,10 +2047,10 @@
               "formato": "45x45",
               "embarque_codigo": "AB6-PPQ-B",
               "quantidade_pedido": 168,
-              "quantidade_embarcada": 4,
+              "quantidade_embarcada": 8,
               "quantidade_recebida": 0,
               "quantidade_pendente": 8,
-              "unidade": "UN",
+              "unidade": "CX",
               "valor_pedido_linha": 4070.64,
               "valor_pendente": 193.84,
               "preco_unitario_pendente": 24.23,
@@ -2060,63 +2060,63 @@
               "embarque_codigos": [
                 "AB6-PPQ-B"
               ],
-              "pct_cx_sobre_pedido_total": 1.19
+              "pct_cx_sobre_pedido_total": 1.9
             },
             {
               "produto_id": "6a3ab9956db5d3b8dfa34d86",
               "produto_nome": "PISO 45X45 MONTANA AZUL PEI 5 (2,00M²/ CX)",
               "formato": "45x45",
               "embarque_codigo": "AB6-PPQ-B",
-              "quantidade_pedido": 168,
+              "quantidade_pedido": 84,
               "quantidade_embarcada": 4,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 8,
-              "unidade": "UN",
+              "quantidade_pendente": 4,
+              "unidade": "CX",
               "valor_pedido_linha": 4070.64,
               "valor_pendente": 193.84,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 48.46,
               "pct_cx_sobre_linha_pedido": 4.76,
               "pct_valor_sobre_pedido": 1.19,
               "pct_valor_sobre_linha_pedido": 4.76,
               "embarque_codigos": [
                 "AB6-PPQ-B"
               ],
-              "pct_cx_sobre_pedido_total": 1.19
+              "pct_cx_sobre_pedido_total": 0.95
             },
             {
               "produto_id": "69bd5c974f9521186107ec8d",
               "produto_nome": "PISO 45x45 TRAVERTINO BEGE (2,00 M²/ CX) PE",
               "formato": "45x45",
               "embarque_codigo": "AB6-PPQ-B",
-              "quantidade_pedido": 168,
+              "quantidade_pedido": 84,
               "quantidade_embarcada": 3,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 6,
-              "unidade": "UN",
+              "quantidade_pendente": 3,
+              "unidade": "CX",
               "valor_pedido_linha": 4070.64,
               "valor_pendente": 145.38,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 48.46,
               "pct_cx_sobre_linha_pedido": 3.57,
               "pct_valor_sobre_pedido": 0.89,
               "pct_valor_sobre_linha_pedido": 3.57,
               "embarque_codigos": [
                 "AB6-PPQ-B"
               ],
-              "pct_cx_sobre_pedido_total": 0.89
+              "pct_cx_sobre_pedido_total": 0.71
             },
             {
               "produto_id": "880bd0d0-7ae5-4caf-820d-488bbcbab77f",
               "produto_nome": "PISO 45X45 TRAVERTINO CZ (2,00 M²/ CX) PE",
               "formato": "45x45",
               "embarque_codigo": "AB6-PPQ-A, AB6-PPQ-B, AB6-PPQ-C",
-              "quantidade_pedido": 168,
+              "quantidade_pedido": 84,
               "quantidade_embarcada": 81,
               "quantidade_recebida": 71,
-              "quantidade_pendente": 46,
-              "unidade": "UN",
+              "quantidade_pendente": 23,
+              "unidade": "CX",
               "valor_pedido_linha": 4070.64,
               "valor_pendente": 1114.58,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 48.46,
               "pct_cx_sobre_linha_pedido": 27.38,
               "pct_valor_sobre_pedido": 2.98,
               "pct_valor_sobre_linha_pedido": 11.9,
@@ -2125,10 +2125,10 @@
                 "AB6-PPQ-B",
                 "AB6-PPQ-C"
               ],
-              "pct_cx_sobre_pedido_total": 6.85
+              "pct_cx_sobre_pedido_total": 5.48
             }
           ],
-          "quant_pendente": 68,
+          "quant_pendente": 38,
           "valor_pendente": 1647.64
         }
       ]
@@ -2156,76 +2156,76 @@
           "formato": "20x120",
           "embarque_codigo": "PW8-WLV-A",
           "quantidade_pedido": 33.6,
-          "quantidade_embarcada": 20,
+          "quantidade_embarcada": 34,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 33.6,
-          "unidade": "UN",
+          "quantidade_pendente": 34,
+          "unidade": "CX",
           "valor_pedido_linha": 1413.89,
           "valor_pendente": 1413.89,
-          "preco_unitario_pendente": 42.08,
-          "pct_cx_sobre_linha_pedido": 100,
+          "preco_unitario_pendente": 41.59,
+          "pct_cx_sobre_linha_pedido": 101.19,
           "pct_valor_sobre_pedido": 6.7,
           "pct_valor_sobre_linha_pedido": 100,
           "embarque_codigos": [
             "PW8-WLV-A"
           ],
-          "pct_cx_sobre_pedido_total": 6.57
+          "pct_cx_sobre_pedido_total": 11.85
         },
         {
           "produto_id": "510a0195-06c9-48c9-b19b-e49817f6b3a9",
           "produto_nome": "PISO 20X120 FRESNO CL (1,68 M²/CX)",
           "formato": "20x120",
           "embarque_codigo": "PW8-WLV-A",
-          "quantidade_pedido": 33.6,
+          "quantidade_pedido": 20,
           "quantidade_embarcada": 20,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 33.6,
-          "unidade": "UN",
+          "quantidade_pendente": 20,
+          "unidade": "CX",
           "valor_pedido_linha": 1413.89,
           "valor_pendente": 1413.89,
-          "preco_unitario_pendente": 42.08,
+          "preco_unitario_pendente": 70.69,
           "pct_cx_sobre_linha_pedido": 100,
           "pct_valor_sobre_pedido": 6.7,
           "pct_valor_sobre_linha_pedido": 100,
           "embarque_codigos": [
             "PW8-WLV-A"
           ],
-          "pct_cx_sobre_pedido_total": 6.57
+          "pct_cx_sobre_pedido_total": 6.97
         },
         {
           "produto_id": "edea28c8-2aad-4788-a2d1-c0de892a2141",
           "produto_nome": "PISO 20X120 FRESNO MATE (1,68 M²/CX)",
           "formato": "20x120",
           "embarque_codigo": "PW8-WLV-A",
-          "quantidade_pedido": 33.6,
+          "quantidade_pedido": 20,
           "quantidade_embarcada": 20,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 33.6,
-          "unidade": "UN",
+          "quantidade_pendente": 20,
+          "unidade": "CX",
           "valor_pedido_linha": 1413.89,
           "valor_pendente": 1413.89,
-          "preco_unitario_pendente": 42.08,
+          "preco_unitario_pendente": 70.69,
           "pct_cx_sobre_linha_pedido": 100,
           "pct_valor_sobre_pedido": 6.7,
           "pct_valor_sobre_linha_pedido": 100,
           "embarque_codigos": [
             "PW8-WLV-A"
           ],
-          "pct_cx_sobre_pedido_total": 6.57
+          "pct_cx_sobre_pedido_total": 6.97
         },
         {
           "produto_id": "6a55036bd31d7a107be871f0",
           "produto_nome": "PISO 45X45 TRAFEGO BEGE PEI 5 (2,0M²/ CX)",
           "formato": "45x45",
           "embarque_codigo": "PW8-WLV-A, PW8-WLV-B",
-          "quantidade_pedido": 100,
+          "quantidade_pedido": 50,
           "quantidade_embarcada": 47,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 100,
-          "unidade": "UN",
+          "quantidade_pendente": 50,
+          "unidade": "CX",
           "valor_pedido_linha": 2423,
           "valor_pendente": 2423,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 48.46,
           "pct_cx_sobre_linha_pedido": 100,
           "pct_valor_sobre_pedido": 10.79,
           "pct_valor_sobre_linha_pedido": 94,
@@ -2233,49 +2233,49 @@
             "PW8-WLV-A",
             "PW8-WLV-B"
           ],
-          "pct_cx_sobre_pedido_total": 19.56
+          "pct_cx_sobre_pedido_total": 17.43
         },
         {
           "produto_id": "6fe8ce17-eba5-48b0-8a92-feefb7b21b79",
           "produto_nome": "PISO 50X50 COPACABANA PEI 4 (2,5M²/ CX)",
           "formato": "50x50",
           "embarque_codigo": "PW8-WLV-A",
-          "quantidade_pedido": 60,
+          "quantidade_pedido": 24,
           "quantidade_embarcada": 24,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 60,
-          "unidade": "UN",
+          "quantidade_pendente": 24,
+          "unidade": "CX",
           "valor_pedido_linha": 1453.8,
           "valor_pendente": 1453.8,
-          "preco_unitario_pendente": 24.23,
+          "preco_unitario_pendente": 60.58,
           "pct_cx_sobre_linha_pedido": 100,
           "pct_valor_sobre_pedido": 6.89,
           "pct_valor_sobre_linha_pedido": 100,
           "embarque_codigos": [
             "PW8-WLV-A"
           ],
-          "pct_cx_sobre_pedido_total": 11.73
+          "pct_cx_sobre_pedido_total": 8.37
         },
         {
           "produto_id": "8bd7f5d0-bafc-4edb-9267-6d3b3c6495cb",
           "produto_nome": "PISO 60X120 ARACRUZ RT POL (2,16M²/ CX)",
           "formato": "60x120",
           "embarque_codigo": "PW8-WLV-A",
-          "quantidade_pedido": 64.8,
+          "quantidade_pedido": 30,
           "quantidade_embarcada": 30,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 64.8,
-          "unidade": "UN",
+          "quantidade_pendente": 30,
+          "unidade": "CX",
           "valor_pedido_linha": 3525.12,
           "valor_pendente": 3525.12,
-          "preco_unitario_pendente": 54.4,
+          "preco_unitario_pendente": 117.5,
           "pct_cx_sobre_linha_pedido": 100,
           "pct_valor_sobre_pedido": 16.7,
           "pct_valor_sobre_linha_pedido": 100,
           "embarque_codigos": [
             "PW8-WLV-A"
           ],
-          "pct_cx_sobre_pedido_total": 12.67
+          "pct_cx_sobre_pedido_total": 10.46
         },
         {
           "produto_id": "69bd5ca55969ccc03a160cc9",
@@ -2283,76 +2283,76 @@
           "formato": "60x120",
           "embarque_codigo": "PW8-WLV-A",
           "quantidade_pedido": 43.2,
-          "quantidade_embarcada": 20,
+          "quantidade_embarcada": 43,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 43.2,
-          "unidade": "UN",
+          "quantidade_pendente": 43,
+          "unidade": "CX",
           "valor_pedido_linha": 2239.92,
           "valor_pendente": 2239.92,
-          "preco_unitario_pendente": 51.85,
-          "pct_cx_sobre_linha_pedido": 100,
+          "preco_unitario_pendente": 52.09,
+          "pct_cx_sobre_linha_pedido": 99.54,
           "pct_valor_sobre_pedido": 10.61,
           "pct_valor_sobre_linha_pedido": 100,
           "embarque_codigos": [
             "PW8-WLV-A"
           ],
-          "pct_cx_sobre_pedido_total": 8.45
+          "pct_cx_sobre_pedido_total": 14.99
         },
         {
           "produto_id": "79e10224-5219-41d0-8e1c-a30315863b11",
           "produto_nome": "PISO 60X120 GRAN TERRAZO MATE (2,16M²/ CX)",
           "formato": "60x120",
           "embarque_codigo": "PW8-WLV-A",
-          "quantidade_pedido": 12.96,
+          "quantidade_pedido": 6,
           "quantidade_embarcada": 6,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 12.96,
-          "unidade": "UN",
+          "quantidade_pendente": 6,
+          "unidade": "CX",
           "valor_pedido_linha": 644.5,
           "valor_pendente": 644.5,
-          "preco_unitario_pendente": 49.73,
+          "preco_unitario_pendente": 107.42,
           "pct_cx_sobre_linha_pedido": 100,
           "pct_valor_sobre_pedido": 3.05,
           "pct_valor_sobre_linha_pedido": 100,
           "embarque_codigos": [
             "PW8-WLV-A"
           ],
-          "pct_cx_sobre_pedido_total": 2.53
+          "pct_cx_sobre_pedido_total": 2.09
         },
         {
           "produto_id": "6a5504c1d7d6fedda15dda1b",
           "produto_nome": "PISO 60X120 PERSA BEGE POL (2,16M²/ CX)",
           "formato": "60x120",
           "embarque_codigo": "PW8-WLV-A",
-          "quantidade_pedido": 64.8,
+          "quantidade_pedido": 30,
           "quantidade_embarcada": 30,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 64.8,
-          "unidade": "UN",
+          "quantidade_pendente": 30,
+          "unidade": "CX",
           "valor_pedido_linha": 3222.5,
           "valor_pendente": 3222.5,
-          "preco_unitario_pendente": 49.73,
+          "preco_unitario_pendente": 107.42,
           "pct_cx_sobre_linha_pedido": 100,
           "pct_valor_sobre_pedido": 15.26,
           "pct_valor_sobre_linha_pedido": 100,
           "embarque_codigos": [
             "PW8-WLV-A"
           ],
-          "pct_cx_sobre_pedido_total": 12.67
+          "pct_cx_sobre_pedido_total": 10.46
         },
         {
           "produto_id": "6a10e0fa4408c5c869b8e06a",
           "produto_nome": "PISO 60X120 STATUTARIO POLIDO (2,16M²/ CX)",
           "formato": "60x120",
           "embarque_codigo": "PW8-WLV-A, PW8-WLV-B",
-          "quantidade_pedido": 64.8,
+          "quantidade_pedido": 30,
           "quantidade_embarcada": 29,
           "quantidade_recebida": 0,
-          "quantidade_pendente": 64.8,
-          "unidade": "UN",
+          "quantidade_pendente": 30,
+          "unidade": "CX",
           "valor_pedido_linha": 3359.88,
           "valor_pendente": 3359.88,
-          "preco_unitario_pendente": 51.85,
+          "preco_unitario_pendente": 112,
           "pct_cx_sobre_linha_pedido": 100,
           "pct_valor_sobre_pedido": 15.39,
           "pct_valor_sobre_linha_pedido": 96.67,
@@ -2360,7 +2360,7 @@
             "PW8-WLV-A",
             "PW8-WLV-B"
           ],
-          "pct_cx_sobre_pedido_total": 12.67
+          "pct_cx_sobre_pedido_total": 10.46
         }
       ],
       "embarques_resumo": [
@@ -2382,10 +2382,10 @@
       "motivos_resumo": [
         "Aguardando embarque / despacho"
       ],
-      "total_cx_pedido": 511.36,
-      "total_cx_pendente": 511.36,
-      "pct_cx_avaria_sobre_pedido": 100,
-      "unidade_pedido": "UN",
+      "total_cx_pedido": 286.8,
+      "total_cx_pendente": 287,
+      "pct_cx_avaria_sobre_pedido": 100.07,
+      "unidade_pedido": "CX",
       "grupos_formato": [
         {
           "formato": "20x120",
@@ -2396,65 +2396,65 @@
               "formato": "20x120",
               "embarque_codigo": "PW8-WLV-A",
               "quantidade_pedido": 33.6,
-              "quantidade_embarcada": 20,
+              "quantidade_embarcada": 34,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 33.6,
-              "unidade": "UN",
+              "quantidade_pendente": 34,
+              "unidade": "CX",
               "valor_pedido_linha": 1413.89,
               "valor_pendente": 1413.89,
-              "preco_unitario_pendente": 42.08,
-              "pct_cx_sobre_linha_pedido": 100,
+              "preco_unitario_pendente": 41.59,
+              "pct_cx_sobre_linha_pedido": 101.19,
               "pct_valor_sobre_pedido": 6.7,
               "pct_valor_sobre_linha_pedido": 100,
               "embarque_codigos": [
                 "PW8-WLV-A"
               ],
-              "pct_cx_sobre_pedido_total": 6.57
+              "pct_cx_sobre_pedido_total": 11.85
             },
             {
               "produto_id": "510a0195-06c9-48c9-b19b-e49817f6b3a9",
               "produto_nome": "PISO 20X120 FRESNO CL (1,68 M²/CX)",
               "formato": "20x120",
               "embarque_codigo": "PW8-WLV-A",
-              "quantidade_pedido": 33.6,
+              "quantidade_pedido": 20,
               "quantidade_embarcada": 20,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 33.6,
-              "unidade": "UN",
+              "quantidade_pendente": 20,
+              "unidade": "CX",
               "valor_pedido_linha": 1413.89,
               "valor_pendente": 1413.89,
-              "preco_unitario_pendente": 42.08,
+              "preco_unitario_pendente": 70.69,
               "pct_cx_sobre_linha_pedido": 100,
               "pct_valor_sobre_pedido": 6.7,
               "pct_valor_sobre_linha_pedido": 100,
               "embarque_codigos": [
                 "PW8-WLV-A"
               ],
-              "pct_cx_sobre_pedido_total": 6.57
+              "pct_cx_sobre_pedido_total": 6.97
             },
             {
               "produto_id": "edea28c8-2aad-4788-a2d1-c0de892a2141",
               "produto_nome": "PISO 20X120 FRESNO MATE (1,68 M²/CX)",
               "formato": "20x120",
               "embarque_codigo": "PW8-WLV-A",
-              "quantidade_pedido": 33.6,
+              "quantidade_pedido": 20,
               "quantidade_embarcada": 20,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 33.6,
-              "unidade": "UN",
+              "quantidade_pendente": 20,
+              "unidade": "CX",
               "valor_pedido_linha": 1413.89,
               "valor_pendente": 1413.89,
-              "preco_unitario_pendente": 42.08,
+              "preco_unitario_pendente": 70.69,
               "pct_cx_sobre_linha_pedido": 100,
               "pct_valor_sobre_pedido": 6.7,
               "pct_valor_sobre_linha_pedido": 100,
               "embarque_codigos": [
                 "PW8-WLV-A"
               ],
-              "pct_cx_sobre_pedido_total": 6.57
+              "pct_cx_sobre_pedido_total": 6.97
             }
           ],
-          "quant_pendente": 100.80000000000001,
+          "quant_pendente": 74,
           "valor_pendente": 4241.67
         },
         {
@@ -2465,14 +2465,14 @@
               "produto_nome": "PISO 45X45 TRAFEGO BEGE PEI 5 (2,0M²/ CX)",
               "formato": "45x45",
               "embarque_codigo": "PW8-WLV-A, PW8-WLV-B",
-              "quantidade_pedido": 100,
+              "quantidade_pedido": 50,
               "quantidade_embarcada": 47,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 100,
-              "unidade": "UN",
+              "quantidade_pendente": 50,
+              "unidade": "CX",
               "valor_pedido_linha": 2423,
               "valor_pendente": 2423,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 48.46,
               "pct_cx_sobre_linha_pedido": 100,
               "pct_valor_sobre_pedido": 10.79,
               "pct_valor_sobre_linha_pedido": 94,
@@ -2480,10 +2480,10 @@
                 "PW8-WLV-A",
                 "PW8-WLV-B"
               ],
-              "pct_cx_sobre_pedido_total": 19.56
+              "pct_cx_sobre_pedido_total": 17.43
             }
           ],
-          "quant_pendente": 100,
+          "quant_pendente": 50,
           "valor_pendente": 2423
         },
         {
@@ -2494,24 +2494,24 @@
               "produto_nome": "PISO 50X50 COPACABANA PEI 4 (2,5M²/ CX)",
               "formato": "50x50",
               "embarque_codigo": "PW8-WLV-A",
-              "quantidade_pedido": 60,
+              "quantidade_pedido": 24,
               "quantidade_embarcada": 24,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 60,
-              "unidade": "UN",
+              "quantidade_pendente": 24,
+              "unidade": "CX",
               "valor_pedido_linha": 1453.8,
               "valor_pendente": 1453.8,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 60.58,
               "pct_cx_sobre_linha_pedido": 100,
               "pct_valor_sobre_pedido": 6.89,
               "pct_valor_sobre_linha_pedido": 100,
               "embarque_codigos": [
                 "PW8-WLV-A"
               ],
-              "pct_cx_sobre_pedido_total": 11.73
+              "pct_cx_sobre_pedido_total": 8.37
             }
           ],
-          "quant_pendente": 60,
+          "quant_pendente": 24,
           "valor_pendente": 1453.8
         },
         {
@@ -2522,21 +2522,21 @@
               "produto_nome": "PISO 60X120 ARACRUZ RT POL (2,16M²/ CX)",
               "formato": "60x120",
               "embarque_codigo": "PW8-WLV-A",
-              "quantidade_pedido": 64.8,
+              "quantidade_pedido": 30,
               "quantidade_embarcada": 30,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 64.8,
-              "unidade": "UN",
+              "quantidade_pendente": 30,
+              "unidade": "CX",
               "valor_pedido_linha": 3525.12,
               "valor_pendente": 3525.12,
-              "preco_unitario_pendente": 54.4,
+              "preco_unitario_pendente": 117.5,
               "pct_cx_sobre_linha_pedido": 100,
               "pct_valor_sobre_pedido": 16.7,
               "pct_valor_sobre_linha_pedido": 100,
               "embarque_codigos": [
                 "PW8-WLV-A"
               ],
-              "pct_cx_sobre_pedido_total": 12.67
+              "pct_cx_sobre_pedido_total": 10.46
             },
             {
               "produto_id": "69bd5ca55969ccc03a160cc9",
@@ -2544,76 +2544,76 @@
               "formato": "60x120",
               "embarque_codigo": "PW8-WLV-A",
               "quantidade_pedido": 43.2,
-              "quantidade_embarcada": 20,
+              "quantidade_embarcada": 43,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 43.2,
-              "unidade": "UN",
+              "quantidade_pendente": 43,
+              "unidade": "CX",
               "valor_pedido_linha": 2239.92,
               "valor_pendente": 2239.92,
-              "preco_unitario_pendente": 51.85,
-              "pct_cx_sobre_linha_pedido": 100,
+              "preco_unitario_pendente": 52.09,
+              "pct_cx_sobre_linha_pedido": 99.54,
               "pct_valor_sobre_pedido": 10.61,
               "pct_valor_sobre_linha_pedido": 100,
               "embarque_codigos": [
                 "PW8-WLV-A"
               ],
-              "pct_cx_sobre_pedido_total": 8.45
+              "pct_cx_sobre_pedido_total": 14.99
             },
             {
               "produto_id": "79e10224-5219-41d0-8e1c-a30315863b11",
               "produto_nome": "PISO 60X120 GRAN TERRAZO MATE (2,16M²/ CX)",
               "formato": "60x120",
               "embarque_codigo": "PW8-WLV-A",
-              "quantidade_pedido": 12.96,
+              "quantidade_pedido": 6,
               "quantidade_embarcada": 6,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 12.96,
-              "unidade": "UN",
+              "quantidade_pendente": 6,
+              "unidade": "CX",
               "valor_pedido_linha": 644.5,
               "valor_pendente": 644.5,
-              "preco_unitario_pendente": 49.73,
+              "preco_unitario_pendente": 107.42,
               "pct_cx_sobre_linha_pedido": 100,
               "pct_valor_sobre_pedido": 3.05,
               "pct_valor_sobre_linha_pedido": 100,
               "embarque_codigos": [
                 "PW8-WLV-A"
               ],
-              "pct_cx_sobre_pedido_total": 2.53
+              "pct_cx_sobre_pedido_total": 2.09
             },
             {
               "produto_id": "6a5504c1d7d6fedda15dda1b",
               "produto_nome": "PISO 60X120 PERSA BEGE POL (2,16M²/ CX)",
               "formato": "60x120",
               "embarque_codigo": "PW8-WLV-A",
-              "quantidade_pedido": 64.8,
+              "quantidade_pedido": 30,
               "quantidade_embarcada": 30,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 64.8,
-              "unidade": "UN",
+              "quantidade_pendente": 30,
+              "unidade": "CX",
               "valor_pedido_linha": 3222.5,
               "valor_pendente": 3222.5,
-              "preco_unitario_pendente": 49.73,
+              "preco_unitario_pendente": 107.42,
               "pct_cx_sobre_linha_pedido": 100,
               "pct_valor_sobre_pedido": 15.26,
               "pct_valor_sobre_linha_pedido": 100,
               "embarque_codigos": [
                 "PW8-WLV-A"
               ],
-              "pct_cx_sobre_pedido_total": 12.67
+              "pct_cx_sobre_pedido_total": 10.46
             },
             {
               "produto_id": "6a10e0fa4408c5c869b8e06a",
               "produto_nome": "PISO 60X120 STATUTARIO POLIDO (2,16M²/ CX)",
               "formato": "60x120",
               "embarque_codigo": "PW8-WLV-A, PW8-WLV-B",
-              "quantidade_pedido": 64.8,
+              "quantidade_pedido": 30,
               "quantidade_embarcada": 29,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 64.8,
-              "unidade": "UN",
+              "quantidade_pendente": 30,
+              "unidade": "CX",
               "valor_pedido_linha": 3359.88,
               "valor_pendente": 3359.88,
-              "preco_unitario_pendente": 51.85,
+              "preco_unitario_pendente": 112,
               "pct_cx_sobre_linha_pedido": 100,
               "pct_valor_sobre_pedido": 15.39,
               "pct_valor_sobre_linha_pedido": 96.67,
@@ -2621,10 +2621,10 @@
                 "PW8-WLV-A",
                 "PW8-WLV-B"
               ],
-              "pct_cx_sobre_pedido_total": 12.67
+              "pct_cx_sobre_pedido_total": 10.46
             }
           ],
-          "quant_pendente": 250.56,
+          "quant_pendente": 139,
           "valor_pendente": 12991.92
         }
       ]
@@ -2655,7 +2655,7 @@
           "quantidade_embarcada": 20,
           "quantidade_recebida": 0,
           "quantidade_pendente": 20,
-          "unidade": "UN",
+          "unidade": "CX",
           "valor_pedido_linha": 2423.6,
           "valor_pendente": 2423.6,
           "preco_unitario_pendente": 121.18,
@@ -2676,7 +2676,7 @@
           "quantidade_embarcada": 34,
           "quantidade_recebida": 0,
           "quantidade_pendente": 35,
-          "unidade": "UN",
+          "unidade": "CX",
           "valor_pedido_linha": 3275.65,
           "valor_pendente": 3275.65,
           "preco_unitario_pendente": 93.59,
@@ -2712,7 +2712,7 @@
       "total_cx_pedido": 55,
       "total_cx_pendente": 55,
       "pct_cx_avaria_sobre_pedido": 100,
-      "unidade_pedido": "UN",
+      "unidade_pedido": "CX",
       "grupos_formato": [
         {
           "formato": "60x120",
@@ -2726,7 +2726,7 @@
               "quantidade_embarcada": 20,
               "quantidade_recebida": 0,
               "quantidade_pendente": 20,
-              "unidade": "UN",
+              "unidade": "CX",
               "valor_pedido_linha": 2423.6,
               "valor_pendente": 2423.6,
               "preco_unitario_pendente": 121.18,
@@ -2754,7 +2754,7 @@
               "quantidade_embarcada": 34,
               "quantidade_recebida": 0,
               "quantidade_pendente": 35,
-              "unidade": "UN",
+              "unidade": "CX",
               "valor_pedido_linha": 3275.65,
               "valor_pendente": 3275.65,
               "preco_unitario_pendente": 93.59,
@@ -2803,21 +2803,21 @@
               "produto_nome": "PISO 50x50 NATURALE BEGE PEI 3 (2,5M²/ CX)",
               "formato": "50x50",
               "embarque_codigo": "EXC-FQZ-B",
-              "quantidade_pedido": 80,
-              "quantidade_embarcada": 2.5,
+              "quantidade_pedido": 32,
+              "quantidade_embarcada": 1,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 2.5,
-              "unidade": "UN",
+              "quantidade_pendente": 1,
+              "unidade": "CX",
               "valor_pedido_linha": 1938.4,
               "valor_pendente": 60.58,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 60.58,
               "pct_cx_sobre_linha_pedido": 3.13,
               "pct_valor_sobre_pedido": 0.33,
               "pct_valor_sobre_linha_pedido": 3.13,
               "embarque_codigos": [
                 "EXC-FQZ-B"
               ],
-              "pct_cx_sobre_pedido_total": 0.56
+              "pct_cx_sobre_pedido_total": 0.39
             }
           ],
           "embarques_resumo": [
@@ -2833,10 +2833,10 @@
           "motivos_resumo": [
             "Aguardando embarque / despacho"
           ],
-          "total_cx_pedido": 444.9,
-          "total_cx_pendente": 2.5,
-          "pct_cx_avaria_sobre_pedido": 0.56,
-          "unidade_pedido": "UN",
+          "total_cx_pedido": 255.3,
+          "total_cx_pendente": 1,
+          "pct_cx_avaria_sobre_pedido": 0.39,
+          "unidade_pedido": "CX",
           "grupos_formato": [
             {
               "formato": "50x50",
@@ -2846,24 +2846,24 @@
                   "produto_nome": "PISO 50x50 NATURALE BEGE PEI 3 (2,5M²/ CX)",
                   "formato": "50x50",
                   "embarque_codigo": "EXC-FQZ-B",
-                  "quantidade_pedido": 80,
-                  "quantidade_embarcada": 2.5,
+                  "quantidade_pedido": 32,
+                  "quantidade_embarcada": 1,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 2.5,
-                  "unidade": "UN",
+                  "quantidade_pendente": 1,
+                  "unidade": "CX",
                   "valor_pedido_linha": 1938.4,
                   "valor_pendente": 60.58,
-                  "preco_unitario_pendente": 24.23,
+                  "preco_unitario_pendente": 60.58,
                   "pct_cx_sobre_linha_pedido": 3.13,
                   "pct_valor_sobre_pedido": 0.33,
                   "pct_valor_sobre_linha_pedido": 3.13,
                   "embarque_codigos": [
                     "EXC-FQZ-B"
                   ],
-                  "pct_cx_sobre_pedido_total": 0.56
+                  "pct_cx_sobre_pedido_total": 0.39
                 }
               ],
-              "quant_pendente": 2.5,
+              "quant_pendente": 1,
               "valor_pendente": 60.58
             }
           ]
@@ -2893,81 +2893,81 @@
               "quantidade_pedido": 33.6,
               "quantidade_embarcada": 2.1,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 2.1,
-              "unidade": "UN",
+              "quantidade_pendente": 2,
+              "unidade": "CX",
               "valor_pedido_linha": 956.93,
               "valor_pendente": 59.81,
-              "preco_unitario_pendente": 28.48,
-              "pct_cx_sobre_linha_pedido": 6.25,
+              "preco_unitario_pendente": 29.91,
+              "pct_cx_sobre_linha_pedido": 5.95,
               "pct_valor_sobre_pedido": 0.59,
               "pct_valor_sobre_linha_pedido": 6.25,
               "embarque_codigos": [
                 "KQL-J94-C"
               ],
-              "pct_cx_sobre_pedido_total": 0.65
+              "pct_cx_sobre_pedido_total": 1.25
             },
             {
               "produto_id": "69bd5c8234a3dad263014446",
               "produto_nome": "PISO 34X60 FOLHA HD (2,1 M²/CX)",
               "formato": "34x60",
               "embarque_codigo": "KQL-J94-C",
-              "quantidade_pedido": 25.2,
-              "quantidade_embarcada": 2.1,
+              "quantidade_pedido": 12,
+              "quantidade_embarcada": 1,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 2.1,
-              "unidade": "UN",
+              "quantidade_pendente": 1,
+              "unidade": "CX",
               "valor_pedido_linha": 728.28,
               "valor_pendente": 60.69,
-              "preco_unitario_pendente": 28.9,
+              "preco_unitario_pendente": 60.69,
               "pct_cx_sobre_linha_pedido": 8.33,
               "pct_valor_sobre_pedido": 0.6,
               "pct_valor_sobre_linha_pedido": 8.33,
               "embarque_codigos": [
                 "KQL-J94-C"
               ],
-              "pct_cx_sobre_pedido_total": 0.65
+              "pct_cx_sobre_pedido_total": 0.63
             },
             {
               "produto_id": "a62eb19e-ccba-485a-831b-0ad3d622d861",
               "produto_nome": "PISO 34X60 WINDSOR BR (2,1 M²/CX)",
               "formato": "34x60",
               "embarque_codigo": "KQL-J94-C",
-              "quantidade_pedido": 48.48,
-              "quantidade_embarcada": 2.02,
+              "quantidade_pedido": 24,
+              "quantidade_embarcada": 1,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 2.02,
-              "unidade": "UN",
+              "quantidade_pendente": 1,
+              "unidade": "CX",
               "valor_pedido_linha": 1524.7,
               "valor_pendente": 63.53,
-              "preco_unitario_pendente": 31.45,
+              "preco_unitario_pendente": 63.53,
               "pct_cx_sobre_linha_pedido": 4.17,
               "pct_valor_sobre_pedido": 0.63,
               "pct_valor_sobre_linha_pedido": 4.17,
               "embarque_codigos": [
                 "KQL-J94-C"
               ],
-              "pct_cx_sobre_pedido_total": 0.62
+              "pct_cx_sobre_pedido_total": 0.63
             },
             {
               "produto_id": "6a54fe0dba7cee724077c827",
               "produto_nome": "PISO 50X50 NATURALE MARROM PEI 3 (2,5M²/ CX)",
               "formato": "50x50",
               "embarque_codigo": "KQL-J94-C",
-              "quantidade_pedido": 62.5,
-              "quantidade_embarcada": 2.5,
+              "quantidade_pedido": 25,
+              "quantidade_embarcada": 1,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 2.5,
-              "unidade": "UN",
+              "quantidade_pendente": 1,
+              "unidade": "CX",
               "valor_pedido_linha": 1514.38,
               "valor_pendente": 60.58,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 60.58,
               "pct_cx_sobre_linha_pedido": 4,
               "pct_valor_sobre_pedido": 0.6,
               "pct_valor_sobre_linha_pedido": 4,
               "embarque_codigos": [
                 "KQL-J94-C"
               ],
-              "pct_cx_sobre_pedido_total": 0.77
+              "pct_cx_sobre_pedido_total": 0.63
             }
           ],
           "embarques_resumo": [
@@ -2983,10 +2983,10 @@
           "motivos_resumo": [
             "Aguardando embarque / despacho"
           ],
-          "total_cx_pedido": 325.08,
-          "total_cx_pendente": 8.72,
-          "pct_cx_avaria_sobre_pedido": 2.68,
-          "unidade_pedido": "UN",
+          "total_cx_pedido": 159.6,
+          "total_cx_pendente": 5,
+          "pct_cx_avaria_sobre_pedido": 3.13,
+          "unidade_pedido": "CX",
           "grupos_formato": [
             {
               "formato": "34x60",
@@ -2999,63 +2999,63 @@
                   "quantidade_pedido": 33.6,
                   "quantidade_embarcada": 2.1,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 2.1,
-                  "unidade": "UN",
+                  "quantidade_pendente": 2,
+                  "unidade": "CX",
                   "valor_pedido_linha": 956.93,
                   "valor_pendente": 59.81,
-                  "preco_unitario_pendente": 28.48,
-                  "pct_cx_sobre_linha_pedido": 6.25,
+                  "preco_unitario_pendente": 29.91,
+                  "pct_cx_sobre_linha_pedido": 5.95,
                   "pct_valor_sobre_pedido": 0.59,
                   "pct_valor_sobre_linha_pedido": 6.25,
                   "embarque_codigos": [
                     "KQL-J94-C"
                   ],
-                  "pct_cx_sobre_pedido_total": 0.65
+                  "pct_cx_sobre_pedido_total": 1.25
                 },
                 {
                   "produto_id": "69bd5c8234a3dad263014446",
                   "produto_nome": "PISO 34X60 FOLHA HD (2,1 M²/CX)",
                   "formato": "34x60",
                   "embarque_codigo": "KQL-J94-C",
-                  "quantidade_pedido": 25.2,
-                  "quantidade_embarcada": 2.1,
+                  "quantidade_pedido": 12,
+                  "quantidade_embarcada": 1,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 2.1,
-                  "unidade": "UN",
+                  "quantidade_pendente": 1,
+                  "unidade": "CX",
                   "valor_pedido_linha": 728.28,
                   "valor_pendente": 60.69,
-                  "preco_unitario_pendente": 28.9,
+                  "preco_unitario_pendente": 60.69,
                   "pct_cx_sobre_linha_pedido": 8.33,
                   "pct_valor_sobre_pedido": 0.6,
                   "pct_valor_sobre_linha_pedido": 8.33,
                   "embarque_codigos": [
                     "KQL-J94-C"
                   ],
-                  "pct_cx_sobre_pedido_total": 0.65
+                  "pct_cx_sobre_pedido_total": 0.63
                 },
                 {
                   "produto_id": "a62eb19e-ccba-485a-831b-0ad3d622d861",
                   "produto_nome": "PISO 34X60 WINDSOR BR (2,1 M²/CX)",
                   "formato": "34x60",
                   "embarque_codigo": "KQL-J94-C",
-                  "quantidade_pedido": 48.48,
-                  "quantidade_embarcada": 2.02,
+                  "quantidade_pedido": 24,
+                  "quantidade_embarcada": 1,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 2.02,
-                  "unidade": "UN",
+                  "quantidade_pendente": 1,
+                  "unidade": "CX",
                   "valor_pedido_linha": 1524.7,
                   "valor_pendente": 63.53,
-                  "preco_unitario_pendente": 31.45,
+                  "preco_unitario_pendente": 63.53,
                   "pct_cx_sobre_linha_pedido": 4.17,
                   "pct_valor_sobre_pedido": 0.63,
                   "pct_valor_sobre_linha_pedido": 4.17,
                   "embarque_codigos": [
                     "KQL-J94-C"
                   ],
-                  "pct_cx_sobre_pedido_total": 0.62
+                  "pct_cx_sobre_pedido_total": 0.63
                 }
               ],
-              "quant_pendente": 6.220000000000001,
+              "quant_pendente": 4,
               "valor_pendente": 184.03
             },
             {
@@ -3066,24 +3066,24 @@
                   "produto_nome": "PISO 50X50 NATURALE MARROM PEI 3 (2,5M²/ CX)",
                   "formato": "50x50",
                   "embarque_codigo": "KQL-J94-C",
-                  "quantidade_pedido": 62.5,
-                  "quantidade_embarcada": 2.5,
+                  "quantidade_pedido": 25,
+                  "quantidade_embarcada": 1,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 2.5,
-                  "unidade": "UN",
+                  "quantidade_pendente": 1,
+                  "unidade": "CX",
                   "valor_pedido_linha": 1514.38,
                   "valor_pendente": 60.58,
-                  "preco_unitario_pendente": 24.23,
+                  "preco_unitario_pendente": 60.58,
                   "pct_cx_sobre_linha_pedido": 4,
                   "pct_valor_sobre_pedido": 0.6,
                   "pct_valor_sobre_linha_pedido": 4,
                   "embarque_codigos": [
                     "KQL-J94-C"
                   ],
-                  "pct_cx_sobre_pedido_total": 0.77
+                  "pct_cx_sobre_pedido_total": 0.63
                 }
               ],
-              "quant_pendente": 2.5,
+              "quant_pendente": 1,
               "valor_pendente": 60.58
             }
           ]
@@ -3110,21 +3110,21 @@
               "produto_nome": "PISO 45X45 JAVA AZUL PEI 5 (2,00M²/ CX)",
               "formato": "45x45",
               "embarque_codigo": "HHW-5NP-C",
-              "quantidade_pedido": 48,
-              "quantidade_embarcada": 2,
+              "quantidade_pedido": 24,
+              "quantidade_embarcada": 1,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 2,
-              "unidade": "UN",
+              "quantidade_pendente": 1,
+              "unidade": "CX",
               "valor_pedido_linha": 1163.04,
               "valor_pendente": 48.46,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 48.46,
               "pct_cx_sobre_linha_pedido": 4.17,
               "pct_valor_sobre_pedido": 0.48,
               "pct_valor_sobre_linha_pedido": 4.17,
               "embarque_codigos": [
                 "HHW-5NP-C"
               ],
-              "pct_cx_sobre_pedido_total": 0.74
+              "pct_cx_sobre_pedido_total": 0.64
             },
             {
               "produto_id": "69bd5ca06af4061bb3246195",
@@ -3135,7 +3135,7 @@
               "quantidade_embarcada": 15,
               "quantidade_recebida": 0,
               "quantidade_pendente": 15,
-              "unidade": "UN",
+              "unidade": "CX",
               "valor_pedido_linha": 1453.8,
               "valor_pendente": 363.45,
               "preco_unitario_pendente": 24.23,
@@ -3145,49 +3145,49 @@
               "embarque_codigos": [
                 "HHW-5NP-C"
               ],
-              "pct_cx_sobre_pedido_total": 5.58
+              "pct_cx_sobre_pedido_total": 9.62
             },
             {
               "produto_id": "69bd5ca906423580f877e9ce",
               "produto_nome": "PISO 60x120 GRAN POLAR RT POL (2,16M²/ CX)",
               "formato": "60x120",
               "embarque_codigo": "HHW-5NP-C",
-              "quantidade_pedido": 43.2,
-              "quantidade_embarcada": 2.16,
+              "quantidade_pedido": 20,
+              "quantidade_embarcada": 1,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 2.16,
-              "unidade": "UN",
+              "quantidade_pendente": 1,
+              "unidade": "CX",
               "valor_pedido_linha": 2368.66,
               "valor_pendente": 118.43,
-              "preco_unitario_pendente": 54.83,
+              "preco_unitario_pendente": 118.43,
               "pct_cx_sobre_linha_pedido": 5,
               "pct_valor_sobre_pedido": 1.18,
               "pct_valor_sobre_linha_pedido": 5,
               "embarque_codigos": [
                 "HHW-5NP-C"
               ],
-              "pct_cx_sobre_pedido_total": 0.8
+              "pct_cx_sobre_pedido_total": 0.64
             },
             {
               "produto_id": "6a5504e375823119ca051f19",
               "produto_nome": "PISO 60X120 POMPEI POL (2,16M²/ CX)",
               "formato": "60x120",
               "embarque_codigo": "HHW-5NP-C",
-              "quantidade_pedido": 43.2,
-              "quantidade_embarcada": 2.16,
+              "quantidade_pedido": 20,
+              "quantidade_embarcada": 1,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 2.16,
-              "unidade": "UN",
+              "quantidade_pendente": 1,
+              "unidade": "CX",
               "valor_pedido_linha": 2148.34,
               "valor_pendente": 107.42,
-              "preco_unitario_pendente": 49.73,
+              "preco_unitario_pendente": 107.42,
               "pct_cx_sobre_linha_pedido": 5,
               "pct_valor_sobre_pedido": 1.07,
               "pct_valor_sobre_linha_pedido": 5,
               "embarque_codigos": [
                 "HHW-5NP-C"
               ],
-              "pct_cx_sobre_pedido_total": 0.8
+              "pct_cx_sobre_pedido_total": 0.64
             }
           ],
           "embarques_resumo": [
@@ -3203,10 +3203,10 @@
           "motivos_resumo": [
             "Aguardando embarque / despacho"
           ],
-          "total_cx_pedido": 268.96,
-          "total_cx_pendente": 21.32,
-          "pct_cx_avaria_sobre_pedido": 7.93,
-          "unidade_pedido": "UN",
+          "total_cx_pedido": 156,
+          "total_cx_pendente": 18,
+          "pct_cx_avaria_sobre_pedido": 11.54,
+          "unidade_pedido": "CX",
           "grupos_formato": [
             {
               "formato": "45x45",
@@ -3216,24 +3216,24 @@
                   "produto_nome": "PISO 45X45 JAVA AZUL PEI 5 (2,00M²/ CX)",
                   "formato": "45x45",
                   "embarque_codigo": "HHW-5NP-C",
-                  "quantidade_pedido": 48,
-                  "quantidade_embarcada": 2,
+                  "quantidade_pedido": 24,
+                  "quantidade_embarcada": 1,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 2,
-                  "unidade": "UN",
+                  "quantidade_pendente": 1,
+                  "unidade": "CX",
                   "valor_pedido_linha": 1163.04,
                   "valor_pendente": 48.46,
-                  "preco_unitario_pendente": 24.23,
+                  "preco_unitario_pendente": 48.46,
                   "pct_cx_sobre_linha_pedido": 4.17,
                   "pct_valor_sobre_pedido": 0.48,
                   "pct_valor_sobre_linha_pedido": 4.17,
                   "embarque_codigos": [
                     "HHW-5NP-C"
                   ],
-                  "pct_cx_sobre_pedido_total": 0.74
+                  "pct_cx_sobre_pedido_total": 0.64
                 }
               ],
-              "quant_pendente": 2,
+              "quant_pendente": 1,
               "valor_pendente": 48.46
             },
             {
@@ -3248,7 +3248,7 @@
                   "quantidade_embarcada": 15,
                   "quantidade_recebida": 0,
                   "quantidade_pendente": 15,
-                  "unidade": "UN",
+                  "unidade": "CX",
                   "valor_pedido_linha": 1453.8,
                   "valor_pendente": 363.45,
                   "preco_unitario_pendente": 24.23,
@@ -3258,7 +3258,7 @@
                   "embarque_codigos": [
                     "HHW-5NP-C"
                   ],
-                  "pct_cx_sobre_pedido_total": 5.58
+                  "pct_cx_sobre_pedido_total": 9.62
                 }
               ],
               "quant_pendente": 15,
@@ -3272,45 +3272,45 @@
                   "produto_nome": "PISO 60x120 GRAN POLAR RT POL (2,16M²/ CX)",
                   "formato": "60x120",
                   "embarque_codigo": "HHW-5NP-C",
-                  "quantidade_pedido": 43.2,
-                  "quantidade_embarcada": 2.16,
+                  "quantidade_pedido": 20,
+                  "quantidade_embarcada": 1,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 2.16,
-                  "unidade": "UN",
+                  "quantidade_pendente": 1,
+                  "unidade": "CX",
                   "valor_pedido_linha": 2368.66,
                   "valor_pendente": 118.43,
-                  "preco_unitario_pendente": 54.83,
+                  "preco_unitario_pendente": 118.43,
                   "pct_cx_sobre_linha_pedido": 5,
                   "pct_valor_sobre_pedido": 1.18,
                   "pct_valor_sobre_linha_pedido": 5,
                   "embarque_codigos": [
                     "HHW-5NP-C"
                   ],
-                  "pct_cx_sobre_pedido_total": 0.8
+                  "pct_cx_sobre_pedido_total": 0.64
                 },
                 {
                   "produto_id": "6a5504e375823119ca051f19",
                   "produto_nome": "PISO 60X120 POMPEI POL (2,16M²/ CX)",
                   "formato": "60x120",
                   "embarque_codigo": "HHW-5NP-C",
-                  "quantidade_pedido": 43.2,
-                  "quantidade_embarcada": 2.16,
+                  "quantidade_pedido": 20,
+                  "quantidade_embarcada": 1,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 2.16,
-                  "unidade": "UN",
+                  "quantidade_pendente": 1,
+                  "unidade": "CX",
                   "valor_pedido_linha": 2148.34,
                   "valor_pendente": 107.42,
-                  "preco_unitario_pendente": 49.73,
+                  "preco_unitario_pendente": 107.42,
                   "pct_cx_sobre_linha_pedido": 5,
                   "pct_valor_sobre_pedido": 1.07,
                   "pct_valor_sobre_linha_pedido": 5,
                   "embarque_codigos": [
                     "HHW-5NP-C"
                   ],
-                  "pct_cx_sobre_pedido_total": 0.8
+                  "pct_cx_sobre_pedido_total": 0.64
                 }
               ],
-              "quant_pendente": 4.32,
+              "quant_pendente": 2,
               "valor_pendente": 225.85
             }
           ]
@@ -3337,147 +3337,147 @@
               "produto_nome": "PISO 45x45 JAVA VERDE PEI 5 (2,00M²/ CX)",
               "formato": "45x45",
               "embarque_codigo": "SQF-7ZH-B",
-              "quantidade_pedido": 80,
-              "quantidade_embarcada": 2,
+              "quantidade_pedido": 40,
+              "quantidade_embarcada": 1,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 2,
-              "unidade": "UN",
+              "quantidade_pendente": 1,
+              "unidade": "CX",
               "valor_pedido_linha": 1938.4,
               "valor_pendente": 48.46,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 48.46,
               "pct_cx_sobre_linha_pedido": 2.5,
               "pct_valor_sobre_pedido": 0.16,
               "pct_valor_sobre_linha_pedido": 2.5,
               "embarque_codigos": [
                 "SQF-7ZH-B"
               ],
-              "pct_cx_sobre_pedido_total": 0.19
+              "pct_cx_sobre_pedido_total": 0.18
             },
             {
               "produto_id": "9b37254b-f0eb-43cf-a48f-860494903b26",
               "produto_nome": "PISO 45X45 LAPA PEI 3 (2,00 M²/ CX)",
               "formato": "45x45",
               "embarque_codigo": "SQF-7ZH-B",
-              "quantidade_pedido": 80,
-              "quantidade_embarcada": 2,
+              "quantidade_pedido": 40,
+              "quantidade_embarcada": 1,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 2,
-              "unidade": "UN",
+              "quantidade_pendente": 1,
+              "unidade": "CX",
               "valor_pedido_linha": 1938.4,
               "valor_pendente": 48.46,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 48.46,
               "pct_cx_sobre_linha_pedido": 2.5,
               "pct_valor_sobre_pedido": 0.16,
               "pct_valor_sobre_linha_pedido": 2.5,
               "embarque_codigos": [
                 "SQF-7ZH-B"
               ],
-              "pct_cx_sobre_pedido_total": 0.19
+              "pct_cx_sobre_pedido_total": 0.18
             },
             {
               "produto_id": "6d459947-9749-481f-9a09-667106738a2d",
               "produto_nome": "PISO 50X50 ALLEGRO HD50  PEI 3 (2,5M²/ CX)",
               "formato": "50x50",
               "embarque_codigo": "SQF-7ZH-B",
-              "quantidade_pedido": 75,
-              "quantidade_embarcada": 5,
+              "quantidade_pedido": 30,
+              "quantidade_embarcada": 2,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 5,
-              "unidade": "UN",
+              "quantidade_pendente": 2,
+              "unidade": "CX",
               "valor_pedido_linha": 1817.25,
               "valor_pendente": 121.15,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 60.58,
               "pct_cx_sobre_linha_pedido": 6.67,
               "pct_valor_sobre_pedido": 0.4,
               "pct_valor_sobre_linha_pedido": 6.67,
               "embarque_codigos": [
                 "SQF-7ZH-B"
               ],
-              "pct_cx_sobre_pedido_total": 0.46
+              "pct_cx_sobre_pedido_total": 0.37
             },
             {
               "produto_id": "69bd5c9c73f3e2e5b4a36e6b",
               "produto_nome": "PISO 50x50 BIANCO 50 (2,50 M²/ CX)",
               "formato": "50x50",
               "embarque_codigo": "SQF-7ZH-B",
-              "quantidade_pedido": 75,
-              "quantidade_embarcada": 2.5,
+              "quantidade_pedido": 30,
+              "quantidade_embarcada": 1,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 2.5,
-              "unidade": "UN",
+              "quantidade_pendente": 1,
+              "unidade": "CX",
               "valor_pedido_linha": 1817.25,
               "valor_pendente": 60.58,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 60.58,
               "pct_cx_sobre_linha_pedido": 3.33,
               "pct_valor_sobre_pedido": 0.2,
               "pct_valor_sobre_linha_pedido": 3.33,
               "embarque_codigos": [
                 "SQF-7ZH-B"
               ],
-              "pct_cx_sobre_pedido_total": 0.23
+              "pct_cx_sobre_pedido_total": 0.18
             },
             {
               "produto_id": "cc766137-a6bd-4df5-9e7c-d40c5124be57",
               "produto_nome": "PISO 50X50 BILBAO PEI 3 (2,5M²/ CX)",
               "formato": "50x50",
               "embarque_codigo": "SQF-7ZH-B",
-              "quantidade_pedido": 75,
-              "quantidade_embarcada": 7.5,
+              "quantidade_pedido": 30,
+              "quantidade_embarcada": 3,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 7.5,
-              "unidade": "UN",
+              "quantidade_pendente": 3,
+              "unidade": "CX",
               "valor_pedido_linha": 1817.25,
               "valor_pendente": 181.73,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 60.58,
               "pct_cx_sobre_linha_pedido": 10,
               "pct_valor_sobre_pedido": 0.6,
               "pct_valor_sobre_linha_pedido": 10,
               "embarque_codigos": [
                 "SQF-7ZH-B"
               ],
-              "pct_cx_sobre_pedido_total": 0.7
+              "pct_cx_sobre_pedido_total": 0.55
             },
             {
               "produto_id": "5b986242-e588-4334-9dc0-12e19306263a",
               "produto_nome": "PISO 50X50 CASTANO PEI 3 (2,5M²/ CX)",
               "formato": "50x50",
               "embarque_codigo": "SQF-7ZH-B",
-              "quantidade_pedido": 75,
-              "quantidade_embarcada": 5,
+              "quantidade_pedido": 30,
+              "quantidade_embarcada": 2,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 5,
-              "unidade": "UN",
+              "quantidade_pendente": 2,
+              "unidade": "CX",
               "valor_pedido_linha": 1817.25,
               "valor_pendente": 121.15,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 60.58,
               "pct_cx_sobre_linha_pedido": 6.67,
               "pct_valor_sobre_pedido": 0.4,
               "pct_valor_sobre_linha_pedido": 6.67,
               "embarque_codigos": [
                 "SQF-7ZH-B"
               ],
-              "pct_cx_sobre_pedido_total": 0.46
+              "pct_cx_sobre_pedido_total": 0.37
             },
             {
               "produto_id": "4b38f30d-4da0-4fb4-8f75-adcf382d5e5f",
               "produto_nome": "PISO 50X50 SELVA PEI 3 (2,5M²/ CX)",
               "formato": "50x50",
               "embarque_codigo": "SQF-7ZH-B",
-              "quantidade_pedido": 75,
-              "quantidade_embarcada": 5,
+              "quantidade_pedido": 30,
+              "quantidade_embarcada": 2,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 5,
-              "unidade": "UN",
+              "quantidade_pendente": 2,
+              "unidade": "CX",
               "valor_pedido_linha": 1817.25,
               "valor_pendente": 121.15,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 60.58,
               "pct_cx_sobre_linha_pedido": 6.67,
               "pct_valor_sobre_pedido": 0.4,
               "pct_valor_sobre_linha_pedido": 6.67,
               "embarque_codigos": [
                 "SQF-7ZH-B"
               ],
-              "pct_cx_sobre_pedido_total": 0.46
+              "pct_cx_sobre_pedido_total": 0.37
             },
             {
               "produto_id": "69bd5c9f41436cd0e528595c",
@@ -3487,60 +3487,60 @@
               "quantidade_pedido": 75,
               "quantidade_embarcada": 2.5,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 2.5,
-              "unidade": "UN",
+              "quantidade_pendente": 3,
+              "unidade": "CX",
               "valor_pedido_linha": 1817.25,
               "valor_pendente": 60.58,
-              "preco_unitario_pendente": 24.23,
-              "pct_cx_sobre_linha_pedido": 3.33,
+              "preco_unitario_pendente": 20.19,
+              "pct_cx_sobre_linha_pedido": 4,
               "pct_valor_sobre_pedido": 0.2,
               "pct_valor_sobre_linha_pedido": 3.33,
               "embarque_codigos": [
                 "SQF-7ZH-B"
               ],
-              "pct_cx_sobre_pedido_total": 0.23
+              "pct_cx_sobre_pedido_total": 0.55
             },
             {
               "produto_id": "50e23ddf-0973-4309-a613-f35b9aa34112",
               "produto_nome": "PISO 60X120 BELLA GOLD RT POL (2,16M²/ CX)",
               "formato": "60x120",
               "embarque_codigo": "SQF-7ZH-B",
-              "quantidade_pedido": 64.8,
-              "quantidade_embarcada": 2.16,
+              "quantidade_pedido": 30,
+              "quantidade_embarcada": 1,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 2.16,
-              "unidade": "UN",
+              "quantidade_pendente": 1,
+              "unidade": "CX",
               "valor_pedido_linha": 3277.58,
               "valor_pendente": 109.25,
-              "preco_unitario_pendente": 50.58,
+              "preco_unitario_pendente": 109.25,
               "pct_cx_sobre_linha_pedido": 3.33,
               "pct_valor_sobre_pedido": 0.36,
               "pct_valor_sobre_linha_pedido": 3.33,
               "embarque_codigos": [
                 "SQF-7ZH-B"
               ],
-              "pct_cx_sobre_pedido_total": 0.2
+              "pct_cx_sobre_pedido_total": 0.18
             },
             {
               "produto_id": "6a5504e375823119ca051f19",
               "produto_nome": "PISO 60X120 POMPEI POL (2,16M²/ CX)",
               "formato": "60x120",
               "embarque_codigo": "SQF-7ZH-B",
-              "quantidade_pedido": 64.8,
-              "quantidade_embarcada": 6.48,
+              "quantidade_pedido": 30,
+              "quantidade_embarcada": 3,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 6.48,
-              "unidade": "UN",
+              "quantidade_pendente": 3,
+              "unidade": "CX",
               "valor_pedido_linha": 3222.5,
               "valor_pendente": 322.25,
-              "preco_unitario_pendente": 49.73,
+              "preco_unitario_pendente": 107.42,
               "pct_cx_sobre_linha_pedido": 10,
               "pct_valor_sobre_pedido": 1.07,
               "pct_valor_sobre_linha_pedido": 10,
               "embarque_codigos": [
                 "SQF-7ZH-B"
               ],
-              "pct_cx_sobre_pedido_total": 0.6
+              "pct_cx_sobre_pedido_total": 0.55
             }
           ],
           "embarques_resumo": [
@@ -3556,10 +3556,10 @@
           "motivos_resumo": [
             "Aguardando embarque / despacho"
           ],
-          "total_cx_pedido": 1077.2,
-          "total_cx_pendente": 40.14,
-          "pct_cx_avaria_sobre_pedido": 3.73,
-          "unidade_pedido": "UN",
+          "total_cx_pedido": 547,
+          "total_cx_pendente": 19,
+          "pct_cx_avaria_sobre_pedido": 3.47,
+          "unidade_pedido": "CX",
           "grupos_formato": [
             {
               "formato": "45x45",
@@ -3569,45 +3569,45 @@
                   "produto_nome": "PISO 45x45 JAVA VERDE PEI 5 (2,00M²/ CX)",
                   "formato": "45x45",
                   "embarque_codigo": "SQF-7ZH-B",
-                  "quantidade_pedido": 80,
-                  "quantidade_embarcada": 2,
+                  "quantidade_pedido": 40,
+                  "quantidade_embarcada": 1,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 2,
-                  "unidade": "UN",
+                  "quantidade_pendente": 1,
+                  "unidade": "CX",
                   "valor_pedido_linha": 1938.4,
                   "valor_pendente": 48.46,
-                  "preco_unitario_pendente": 24.23,
+                  "preco_unitario_pendente": 48.46,
                   "pct_cx_sobre_linha_pedido": 2.5,
                   "pct_valor_sobre_pedido": 0.16,
                   "pct_valor_sobre_linha_pedido": 2.5,
                   "embarque_codigos": [
                     "SQF-7ZH-B"
                   ],
-                  "pct_cx_sobre_pedido_total": 0.19
+                  "pct_cx_sobre_pedido_total": 0.18
                 },
                 {
                   "produto_id": "9b37254b-f0eb-43cf-a48f-860494903b26",
                   "produto_nome": "PISO 45X45 LAPA PEI 3 (2,00 M²/ CX)",
                   "formato": "45x45",
                   "embarque_codigo": "SQF-7ZH-B",
-                  "quantidade_pedido": 80,
-                  "quantidade_embarcada": 2,
+                  "quantidade_pedido": 40,
+                  "quantidade_embarcada": 1,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 2,
-                  "unidade": "UN",
+                  "quantidade_pendente": 1,
+                  "unidade": "CX",
                   "valor_pedido_linha": 1938.4,
                   "valor_pendente": 48.46,
-                  "preco_unitario_pendente": 24.23,
+                  "preco_unitario_pendente": 48.46,
                   "pct_cx_sobre_linha_pedido": 2.5,
                   "pct_valor_sobre_pedido": 0.16,
                   "pct_valor_sobre_linha_pedido": 2.5,
                   "embarque_codigos": [
                     "SQF-7ZH-B"
                   ],
-                  "pct_cx_sobre_pedido_total": 0.19
+                  "pct_cx_sobre_pedido_total": 0.18
                 }
               ],
-              "quant_pendente": 4,
+              "quant_pendente": 2,
               "valor_pendente": 96.92
             },
             {
@@ -3618,105 +3618,105 @@
                   "produto_nome": "PISO 50X50 ALLEGRO HD50  PEI 3 (2,5M²/ CX)",
                   "formato": "50x50",
                   "embarque_codigo": "SQF-7ZH-B",
-                  "quantidade_pedido": 75,
-                  "quantidade_embarcada": 5,
+                  "quantidade_pedido": 30,
+                  "quantidade_embarcada": 2,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 5,
-                  "unidade": "UN",
+                  "quantidade_pendente": 2,
+                  "unidade": "CX",
                   "valor_pedido_linha": 1817.25,
                   "valor_pendente": 121.15,
-                  "preco_unitario_pendente": 24.23,
+                  "preco_unitario_pendente": 60.58,
                   "pct_cx_sobre_linha_pedido": 6.67,
                   "pct_valor_sobre_pedido": 0.4,
                   "pct_valor_sobre_linha_pedido": 6.67,
                   "embarque_codigos": [
                     "SQF-7ZH-B"
                   ],
-                  "pct_cx_sobre_pedido_total": 0.46
+                  "pct_cx_sobre_pedido_total": 0.37
                 },
                 {
                   "produto_id": "69bd5c9c73f3e2e5b4a36e6b",
                   "produto_nome": "PISO 50x50 BIANCO 50 (2,50 M²/ CX)",
                   "formato": "50x50",
                   "embarque_codigo": "SQF-7ZH-B",
-                  "quantidade_pedido": 75,
-                  "quantidade_embarcada": 2.5,
+                  "quantidade_pedido": 30,
+                  "quantidade_embarcada": 1,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 2.5,
-                  "unidade": "UN",
+                  "quantidade_pendente": 1,
+                  "unidade": "CX",
                   "valor_pedido_linha": 1817.25,
                   "valor_pendente": 60.58,
-                  "preco_unitario_pendente": 24.23,
+                  "preco_unitario_pendente": 60.58,
                   "pct_cx_sobre_linha_pedido": 3.33,
                   "pct_valor_sobre_pedido": 0.2,
                   "pct_valor_sobre_linha_pedido": 3.33,
                   "embarque_codigos": [
                     "SQF-7ZH-B"
                   ],
-                  "pct_cx_sobre_pedido_total": 0.23
+                  "pct_cx_sobre_pedido_total": 0.18
                 },
                 {
                   "produto_id": "cc766137-a6bd-4df5-9e7c-d40c5124be57",
                   "produto_nome": "PISO 50X50 BILBAO PEI 3 (2,5M²/ CX)",
                   "formato": "50x50",
                   "embarque_codigo": "SQF-7ZH-B",
-                  "quantidade_pedido": 75,
-                  "quantidade_embarcada": 7.5,
+                  "quantidade_pedido": 30,
+                  "quantidade_embarcada": 3,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 7.5,
-                  "unidade": "UN",
+                  "quantidade_pendente": 3,
+                  "unidade": "CX",
                   "valor_pedido_linha": 1817.25,
                   "valor_pendente": 181.73,
-                  "preco_unitario_pendente": 24.23,
+                  "preco_unitario_pendente": 60.58,
                   "pct_cx_sobre_linha_pedido": 10,
                   "pct_valor_sobre_pedido": 0.6,
                   "pct_valor_sobre_linha_pedido": 10,
                   "embarque_codigos": [
                     "SQF-7ZH-B"
                   ],
-                  "pct_cx_sobre_pedido_total": 0.7
+                  "pct_cx_sobre_pedido_total": 0.55
                 },
                 {
                   "produto_id": "5b986242-e588-4334-9dc0-12e19306263a",
                   "produto_nome": "PISO 50X50 CASTANO PEI 3 (2,5M²/ CX)",
                   "formato": "50x50",
                   "embarque_codigo": "SQF-7ZH-B",
-                  "quantidade_pedido": 75,
-                  "quantidade_embarcada": 5,
+                  "quantidade_pedido": 30,
+                  "quantidade_embarcada": 2,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 5,
-                  "unidade": "UN",
+                  "quantidade_pendente": 2,
+                  "unidade": "CX",
                   "valor_pedido_linha": 1817.25,
                   "valor_pendente": 121.15,
-                  "preco_unitario_pendente": 24.23,
+                  "preco_unitario_pendente": 60.58,
                   "pct_cx_sobre_linha_pedido": 6.67,
                   "pct_valor_sobre_pedido": 0.4,
                   "pct_valor_sobre_linha_pedido": 6.67,
                   "embarque_codigos": [
                     "SQF-7ZH-B"
                   ],
-                  "pct_cx_sobre_pedido_total": 0.46
+                  "pct_cx_sobre_pedido_total": 0.37
                 },
                 {
                   "produto_id": "4b38f30d-4da0-4fb4-8f75-adcf382d5e5f",
                   "produto_nome": "PISO 50X50 SELVA PEI 3 (2,5M²/ CX)",
                   "formato": "50x50",
                   "embarque_codigo": "SQF-7ZH-B",
-                  "quantidade_pedido": 75,
-                  "quantidade_embarcada": 5,
+                  "quantidade_pedido": 30,
+                  "quantidade_embarcada": 2,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 5,
-                  "unidade": "UN",
+                  "quantidade_pendente": 2,
+                  "unidade": "CX",
                   "valor_pedido_linha": 1817.25,
                   "valor_pendente": 121.15,
-                  "preco_unitario_pendente": 24.23,
+                  "preco_unitario_pendente": 60.58,
                   "pct_cx_sobre_linha_pedido": 6.67,
                   "pct_valor_sobre_pedido": 0.4,
                   "pct_valor_sobre_linha_pedido": 6.67,
                   "embarque_codigos": [
                     "SQF-7ZH-B"
                   ],
-                  "pct_cx_sobre_pedido_total": 0.46
+                  "pct_cx_sobre_pedido_total": 0.37
                 },
                 {
                   "produto_id": "69bd5c9f41436cd0e528595c",
@@ -3726,21 +3726,21 @@
                   "quantidade_pedido": 75,
                   "quantidade_embarcada": 2.5,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 2.5,
-                  "unidade": "UN",
+                  "quantidade_pendente": 3,
+                  "unidade": "CX",
                   "valor_pedido_linha": 1817.25,
                   "valor_pendente": 60.58,
-                  "preco_unitario_pendente": 24.23,
-                  "pct_cx_sobre_linha_pedido": 3.33,
+                  "preco_unitario_pendente": 20.19,
+                  "pct_cx_sobre_linha_pedido": 4,
                   "pct_valor_sobre_pedido": 0.2,
                   "pct_valor_sobre_linha_pedido": 3.33,
                   "embarque_codigos": [
                     "SQF-7ZH-B"
                   ],
-                  "pct_cx_sobre_pedido_total": 0.23
+                  "pct_cx_sobre_pedido_total": 0.55
                 }
               ],
-              "quant_pendente": 27.5,
+              "quant_pendente": 13,
               "valor_pendente": 666.34
             },
             {
@@ -3751,45 +3751,45 @@
                   "produto_nome": "PISO 60X120 BELLA GOLD RT POL (2,16M²/ CX)",
                   "formato": "60x120",
                   "embarque_codigo": "SQF-7ZH-B",
-                  "quantidade_pedido": 64.8,
-                  "quantidade_embarcada": 2.16,
+                  "quantidade_pedido": 30,
+                  "quantidade_embarcada": 1,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 2.16,
-                  "unidade": "UN",
+                  "quantidade_pendente": 1,
+                  "unidade": "CX",
                   "valor_pedido_linha": 3277.58,
                   "valor_pendente": 109.25,
-                  "preco_unitario_pendente": 50.58,
+                  "preco_unitario_pendente": 109.25,
                   "pct_cx_sobre_linha_pedido": 3.33,
                   "pct_valor_sobre_pedido": 0.36,
                   "pct_valor_sobre_linha_pedido": 3.33,
                   "embarque_codigos": [
                     "SQF-7ZH-B"
                   ],
-                  "pct_cx_sobre_pedido_total": 0.2
+                  "pct_cx_sobre_pedido_total": 0.18
                 },
                 {
                   "produto_id": "6a5504e375823119ca051f19",
                   "produto_nome": "PISO 60X120 POMPEI POL (2,16M²/ CX)",
                   "formato": "60x120",
                   "embarque_codigo": "SQF-7ZH-B",
-                  "quantidade_pedido": 64.8,
-                  "quantidade_embarcada": 6.48,
+                  "quantidade_pedido": 30,
+                  "quantidade_embarcada": 3,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 6.48,
-                  "unidade": "UN",
+                  "quantidade_pendente": 3,
+                  "unidade": "CX",
                   "valor_pedido_linha": 3222.5,
                   "valor_pendente": 322.25,
-                  "preco_unitario_pendente": 49.73,
+                  "preco_unitario_pendente": 107.42,
                   "pct_cx_sobre_linha_pedido": 10,
                   "pct_valor_sobre_pedido": 1.07,
                   "pct_valor_sobre_linha_pedido": 10,
                   "embarque_codigos": [
                     "SQF-7ZH-B"
                   ],
-                  "pct_cx_sobre_pedido_total": 0.6
+                  "pct_cx_sobre_pedido_total": 0.55
                 }
               ],
-              "quant_pendente": 8.64,
+              "quant_pendente": 4,
               "valor_pendente": 431.5
             }
           ]
@@ -3817,10 +3817,10 @@
               "formato": "45x45",
               "embarque_codigo": "AB6-PPQ-B",
               "quantidade_pedido": 168,
-              "quantidade_embarcada": 4,
+              "quantidade_embarcada": 8,
               "quantidade_recebida": 0,
               "quantidade_pendente": 8,
-              "unidade": "UN",
+              "unidade": "CX",
               "valor_pedido_linha": 4070.64,
               "valor_pendente": 193.84,
               "preco_unitario_pendente": 24.23,
@@ -3830,63 +3830,63 @@
               "embarque_codigos": [
                 "AB6-PPQ-B"
               ],
-              "pct_cx_sobre_pedido_total": 1.19
+              "pct_cx_sobre_pedido_total": 1.9
             },
             {
               "produto_id": "6a3ab9956db5d3b8dfa34d86",
               "produto_nome": "PISO 45X45 MONTANA AZUL PEI 5 (2,00M²/ CX)",
               "formato": "45x45",
               "embarque_codigo": "AB6-PPQ-B",
-              "quantidade_pedido": 168,
+              "quantidade_pedido": 84,
               "quantidade_embarcada": 4,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 8,
-              "unidade": "UN",
+              "quantidade_pendente": 4,
+              "unidade": "CX",
               "valor_pedido_linha": 4070.64,
               "valor_pendente": 193.84,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 48.46,
               "pct_cx_sobre_linha_pedido": 4.76,
               "pct_valor_sobre_pedido": 1.19,
               "pct_valor_sobre_linha_pedido": 4.76,
               "embarque_codigos": [
                 "AB6-PPQ-B"
               ],
-              "pct_cx_sobre_pedido_total": 1.19
+              "pct_cx_sobre_pedido_total": 0.95
             },
             {
               "produto_id": "69bd5c974f9521186107ec8d",
               "produto_nome": "PISO 45x45 TRAVERTINO BEGE (2,00 M²/ CX) PE",
               "formato": "45x45",
               "embarque_codigo": "AB6-PPQ-B",
-              "quantidade_pedido": 168,
+              "quantidade_pedido": 84,
               "quantidade_embarcada": 3,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 6,
-              "unidade": "UN",
+              "quantidade_pendente": 3,
+              "unidade": "CX",
               "valor_pedido_linha": 4070.64,
               "valor_pendente": 145.38,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 48.46,
               "pct_cx_sobre_linha_pedido": 3.57,
               "pct_valor_sobre_pedido": 0.89,
               "pct_valor_sobre_linha_pedido": 3.57,
               "embarque_codigos": [
                 "AB6-PPQ-B"
               ],
-              "pct_cx_sobre_pedido_total": 0.89
+              "pct_cx_sobre_pedido_total": 0.71
             },
             {
               "produto_id": "880bd0d0-7ae5-4caf-820d-488bbcbab77f",
               "produto_nome": "PISO 45X45 TRAVERTINO CZ (2,00 M²/ CX) PE",
               "formato": "45x45",
               "embarque_codigo": "AB6-PPQ-A, AB6-PPQ-B, AB6-PPQ-C",
-              "quantidade_pedido": 168,
+              "quantidade_pedido": 84,
               "quantidade_embarcada": 81,
               "quantidade_recebida": 71,
-              "quantidade_pendente": 46,
-              "unidade": "UN",
+              "quantidade_pendente": 23,
+              "unidade": "CX",
               "valor_pedido_linha": 4070.64,
               "valor_pendente": 1114.58,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 48.46,
               "pct_cx_sobre_linha_pedido": 27.38,
               "pct_valor_sobre_pedido": 2.98,
               "pct_valor_sobre_linha_pedido": 11.9,
@@ -3895,7 +3895,7 @@
                 "AB6-PPQ-B",
                 "AB6-PPQ-C"
               ],
-              "pct_cx_sobre_pedido_total": 6.85
+              "pct_cx_sobre_pedido_total": 5.48
             }
           ],
           "embarques_resumo": [
@@ -3925,10 +3925,10 @@
             "Aguardando embarque / despacho",
             "Reposição pós-recepção (Necessidade)"
           ],
-          "total_cx_pedido": 672,
-          "total_cx_pendente": 68,
-          "pct_cx_avaria_sobre_pedido": 10.12,
-          "unidade_pedido": "UN",
+          "total_cx_pedido": 420,
+          "total_cx_pendente": 38,
+          "pct_cx_avaria_sobre_pedido": 9.05,
+          "unidade_pedido": "CX",
           "grupos_formato": [
             {
               "formato": "45x45",
@@ -3939,10 +3939,10 @@
                   "formato": "45x45",
                   "embarque_codigo": "AB6-PPQ-B",
                   "quantidade_pedido": 168,
-                  "quantidade_embarcada": 4,
+                  "quantidade_embarcada": 8,
                   "quantidade_recebida": 0,
                   "quantidade_pendente": 8,
-                  "unidade": "UN",
+                  "unidade": "CX",
                   "valor_pedido_linha": 4070.64,
                   "valor_pendente": 193.84,
                   "preco_unitario_pendente": 24.23,
@@ -3952,63 +3952,63 @@
                   "embarque_codigos": [
                     "AB6-PPQ-B"
                   ],
-                  "pct_cx_sobre_pedido_total": 1.19
+                  "pct_cx_sobre_pedido_total": 1.9
                 },
                 {
                   "produto_id": "6a3ab9956db5d3b8dfa34d86",
                   "produto_nome": "PISO 45X45 MONTANA AZUL PEI 5 (2,00M²/ CX)",
                   "formato": "45x45",
                   "embarque_codigo": "AB6-PPQ-B",
-                  "quantidade_pedido": 168,
+                  "quantidade_pedido": 84,
                   "quantidade_embarcada": 4,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 8,
-                  "unidade": "UN",
+                  "quantidade_pendente": 4,
+                  "unidade": "CX",
                   "valor_pedido_linha": 4070.64,
                   "valor_pendente": 193.84,
-                  "preco_unitario_pendente": 24.23,
+                  "preco_unitario_pendente": 48.46,
                   "pct_cx_sobre_linha_pedido": 4.76,
                   "pct_valor_sobre_pedido": 1.19,
                   "pct_valor_sobre_linha_pedido": 4.76,
                   "embarque_codigos": [
                     "AB6-PPQ-B"
                   ],
-                  "pct_cx_sobre_pedido_total": 1.19
+                  "pct_cx_sobre_pedido_total": 0.95
                 },
                 {
                   "produto_id": "69bd5c974f9521186107ec8d",
                   "produto_nome": "PISO 45x45 TRAVERTINO BEGE (2,00 M²/ CX) PE",
                   "formato": "45x45",
                   "embarque_codigo": "AB6-PPQ-B",
-                  "quantidade_pedido": 168,
+                  "quantidade_pedido": 84,
                   "quantidade_embarcada": 3,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 6,
-                  "unidade": "UN",
+                  "quantidade_pendente": 3,
+                  "unidade": "CX",
                   "valor_pedido_linha": 4070.64,
                   "valor_pendente": 145.38,
-                  "preco_unitario_pendente": 24.23,
+                  "preco_unitario_pendente": 48.46,
                   "pct_cx_sobre_linha_pedido": 3.57,
                   "pct_valor_sobre_pedido": 0.89,
                   "pct_valor_sobre_linha_pedido": 3.57,
                   "embarque_codigos": [
                     "AB6-PPQ-B"
                   ],
-                  "pct_cx_sobre_pedido_total": 0.89
+                  "pct_cx_sobre_pedido_total": 0.71
                 },
                 {
                   "produto_id": "880bd0d0-7ae5-4caf-820d-488bbcbab77f",
                   "produto_nome": "PISO 45X45 TRAVERTINO CZ (2,00 M²/ CX) PE",
                   "formato": "45x45",
                   "embarque_codigo": "AB6-PPQ-A, AB6-PPQ-B, AB6-PPQ-C",
-                  "quantidade_pedido": 168,
+                  "quantidade_pedido": 84,
                   "quantidade_embarcada": 81,
                   "quantidade_recebida": 71,
-                  "quantidade_pendente": 46,
-                  "unidade": "UN",
+                  "quantidade_pendente": 23,
+                  "unidade": "CX",
                   "valor_pedido_linha": 4070.64,
                   "valor_pendente": 1114.58,
-                  "preco_unitario_pendente": 24.23,
+                  "preco_unitario_pendente": 48.46,
                   "pct_cx_sobre_linha_pedido": 27.38,
                   "pct_valor_sobre_pedido": 2.98,
                   "pct_valor_sobre_linha_pedido": 11.9,
@@ -4017,10 +4017,10 @@
                     "AB6-PPQ-B",
                     "AB6-PPQ-C"
                   ],
-                  "pct_cx_sobre_pedido_total": 6.85
+                  "pct_cx_sobre_pedido_total": 5.48
                 }
               ],
-              "quant_pendente": 68,
+              "quant_pendente": 38,
               "valor_pendente": 1647.64
             }
           ]
@@ -4048,76 +4048,76 @@
               "formato": "20x120",
               "embarque_codigo": "PW8-WLV-A",
               "quantidade_pedido": 33.6,
-              "quantidade_embarcada": 20,
+              "quantidade_embarcada": 34,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 33.6,
-              "unidade": "UN",
+              "quantidade_pendente": 34,
+              "unidade": "CX",
               "valor_pedido_linha": 1413.89,
               "valor_pendente": 1413.89,
-              "preco_unitario_pendente": 42.08,
-              "pct_cx_sobre_linha_pedido": 100,
+              "preco_unitario_pendente": 41.59,
+              "pct_cx_sobre_linha_pedido": 101.19,
               "pct_valor_sobre_pedido": 6.7,
               "pct_valor_sobre_linha_pedido": 100,
               "embarque_codigos": [
                 "PW8-WLV-A"
               ],
-              "pct_cx_sobre_pedido_total": 6.57
+              "pct_cx_sobre_pedido_total": 11.85
             },
             {
               "produto_id": "510a0195-06c9-48c9-b19b-e49817f6b3a9",
               "produto_nome": "PISO 20X120 FRESNO CL (1,68 M²/CX)",
               "formato": "20x120",
               "embarque_codigo": "PW8-WLV-A",
-              "quantidade_pedido": 33.6,
+              "quantidade_pedido": 20,
               "quantidade_embarcada": 20,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 33.6,
-              "unidade": "UN",
+              "quantidade_pendente": 20,
+              "unidade": "CX",
               "valor_pedido_linha": 1413.89,
               "valor_pendente": 1413.89,
-              "preco_unitario_pendente": 42.08,
+              "preco_unitario_pendente": 70.69,
               "pct_cx_sobre_linha_pedido": 100,
               "pct_valor_sobre_pedido": 6.7,
               "pct_valor_sobre_linha_pedido": 100,
               "embarque_codigos": [
                 "PW8-WLV-A"
               ],
-              "pct_cx_sobre_pedido_total": 6.57
+              "pct_cx_sobre_pedido_total": 6.97
             },
             {
               "produto_id": "edea28c8-2aad-4788-a2d1-c0de892a2141",
               "produto_nome": "PISO 20X120 FRESNO MATE (1,68 M²/CX)",
               "formato": "20x120",
               "embarque_codigo": "PW8-WLV-A",
-              "quantidade_pedido": 33.6,
+              "quantidade_pedido": 20,
               "quantidade_embarcada": 20,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 33.6,
-              "unidade": "UN",
+              "quantidade_pendente": 20,
+              "unidade": "CX",
               "valor_pedido_linha": 1413.89,
               "valor_pendente": 1413.89,
-              "preco_unitario_pendente": 42.08,
+              "preco_unitario_pendente": 70.69,
               "pct_cx_sobre_linha_pedido": 100,
               "pct_valor_sobre_pedido": 6.7,
               "pct_valor_sobre_linha_pedido": 100,
               "embarque_codigos": [
                 "PW8-WLV-A"
               ],
-              "pct_cx_sobre_pedido_total": 6.57
+              "pct_cx_sobre_pedido_total": 6.97
             },
             {
               "produto_id": "6a55036bd31d7a107be871f0",
               "produto_nome": "PISO 45X45 TRAFEGO BEGE PEI 5 (2,0M²/ CX)",
               "formato": "45x45",
               "embarque_codigo": "PW8-WLV-A, PW8-WLV-B",
-              "quantidade_pedido": 100,
+              "quantidade_pedido": 50,
               "quantidade_embarcada": 47,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 100,
-              "unidade": "UN",
+              "quantidade_pendente": 50,
+              "unidade": "CX",
               "valor_pedido_linha": 2423,
               "valor_pendente": 2423,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 48.46,
               "pct_cx_sobre_linha_pedido": 100,
               "pct_valor_sobre_pedido": 10.79,
               "pct_valor_sobre_linha_pedido": 94,
@@ -4125,49 +4125,49 @@
                 "PW8-WLV-A",
                 "PW8-WLV-B"
               ],
-              "pct_cx_sobre_pedido_total": 19.56
+              "pct_cx_sobre_pedido_total": 17.43
             },
             {
               "produto_id": "6fe8ce17-eba5-48b0-8a92-feefb7b21b79",
               "produto_nome": "PISO 50X50 COPACABANA PEI 4 (2,5M²/ CX)",
               "formato": "50x50",
               "embarque_codigo": "PW8-WLV-A",
-              "quantidade_pedido": 60,
+              "quantidade_pedido": 24,
               "quantidade_embarcada": 24,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 60,
-              "unidade": "UN",
+              "quantidade_pendente": 24,
+              "unidade": "CX",
               "valor_pedido_linha": 1453.8,
               "valor_pendente": 1453.8,
-              "preco_unitario_pendente": 24.23,
+              "preco_unitario_pendente": 60.58,
               "pct_cx_sobre_linha_pedido": 100,
               "pct_valor_sobre_pedido": 6.89,
               "pct_valor_sobre_linha_pedido": 100,
               "embarque_codigos": [
                 "PW8-WLV-A"
               ],
-              "pct_cx_sobre_pedido_total": 11.73
+              "pct_cx_sobre_pedido_total": 8.37
             },
             {
               "produto_id": "8bd7f5d0-bafc-4edb-9267-6d3b3c6495cb",
               "produto_nome": "PISO 60X120 ARACRUZ RT POL (2,16M²/ CX)",
               "formato": "60x120",
               "embarque_codigo": "PW8-WLV-A",
-              "quantidade_pedido": 64.8,
+              "quantidade_pedido": 30,
               "quantidade_embarcada": 30,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 64.8,
-              "unidade": "UN",
+              "quantidade_pendente": 30,
+              "unidade": "CX",
               "valor_pedido_linha": 3525.12,
               "valor_pendente": 3525.12,
-              "preco_unitario_pendente": 54.4,
+              "preco_unitario_pendente": 117.5,
               "pct_cx_sobre_linha_pedido": 100,
               "pct_valor_sobre_pedido": 16.7,
               "pct_valor_sobre_linha_pedido": 100,
               "embarque_codigos": [
                 "PW8-WLV-A"
               ],
-              "pct_cx_sobre_pedido_total": 12.67
+              "pct_cx_sobre_pedido_total": 10.46
             },
             {
               "produto_id": "69bd5ca55969ccc03a160cc9",
@@ -4175,76 +4175,76 @@
               "formato": "60x120",
               "embarque_codigo": "PW8-WLV-A",
               "quantidade_pedido": 43.2,
-              "quantidade_embarcada": 20,
+              "quantidade_embarcada": 43,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 43.2,
-              "unidade": "UN",
+              "quantidade_pendente": 43,
+              "unidade": "CX",
               "valor_pedido_linha": 2239.92,
               "valor_pendente": 2239.92,
-              "preco_unitario_pendente": 51.85,
-              "pct_cx_sobre_linha_pedido": 100,
+              "preco_unitario_pendente": 52.09,
+              "pct_cx_sobre_linha_pedido": 99.54,
               "pct_valor_sobre_pedido": 10.61,
               "pct_valor_sobre_linha_pedido": 100,
               "embarque_codigos": [
                 "PW8-WLV-A"
               ],
-              "pct_cx_sobre_pedido_total": 8.45
+              "pct_cx_sobre_pedido_total": 14.99
             },
             {
               "produto_id": "79e10224-5219-41d0-8e1c-a30315863b11",
               "produto_nome": "PISO 60X120 GRAN TERRAZO MATE (2,16M²/ CX)",
               "formato": "60x120",
               "embarque_codigo": "PW8-WLV-A",
-              "quantidade_pedido": 12.96,
+              "quantidade_pedido": 6,
               "quantidade_embarcada": 6,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 12.96,
-              "unidade": "UN",
+              "quantidade_pendente": 6,
+              "unidade": "CX",
               "valor_pedido_linha": 644.5,
               "valor_pendente": 644.5,
-              "preco_unitario_pendente": 49.73,
+              "preco_unitario_pendente": 107.42,
               "pct_cx_sobre_linha_pedido": 100,
               "pct_valor_sobre_pedido": 3.05,
               "pct_valor_sobre_linha_pedido": 100,
               "embarque_codigos": [
                 "PW8-WLV-A"
               ],
-              "pct_cx_sobre_pedido_total": 2.53
+              "pct_cx_sobre_pedido_total": 2.09
             },
             {
               "produto_id": "6a5504c1d7d6fedda15dda1b",
               "produto_nome": "PISO 60X120 PERSA BEGE POL (2,16M²/ CX)",
               "formato": "60x120",
               "embarque_codigo": "PW8-WLV-A",
-              "quantidade_pedido": 64.8,
+              "quantidade_pedido": 30,
               "quantidade_embarcada": 30,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 64.8,
-              "unidade": "UN",
+              "quantidade_pendente": 30,
+              "unidade": "CX",
               "valor_pedido_linha": 3222.5,
               "valor_pendente": 3222.5,
-              "preco_unitario_pendente": 49.73,
+              "preco_unitario_pendente": 107.42,
               "pct_cx_sobre_linha_pedido": 100,
               "pct_valor_sobre_pedido": 15.26,
               "pct_valor_sobre_linha_pedido": 100,
               "embarque_codigos": [
                 "PW8-WLV-A"
               ],
-              "pct_cx_sobre_pedido_total": 12.67
+              "pct_cx_sobre_pedido_total": 10.46
             },
             {
               "produto_id": "6a10e0fa4408c5c869b8e06a",
               "produto_nome": "PISO 60X120 STATUTARIO POLIDO (2,16M²/ CX)",
               "formato": "60x120",
               "embarque_codigo": "PW8-WLV-A, PW8-WLV-B",
-              "quantidade_pedido": 64.8,
+              "quantidade_pedido": 30,
               "quantidade_embarcada": 29,
               "quantidade_recebida": 0,
-              "quantidade_pendente": 64.8,
-              "unidade": "UN",
+              "quantidade_pendente": 30,
+              "unidade": "CX",
               "valor_pedido_linha": 3359.88,
               "valor_pendente": 3359.88,
-              "preco_unitario_pendente": 51.85,
+              "preco_unitario_pendente": 112,
               "pct_cx_sobre_linha_pedido": 100,
               "pct_valor_sobre_pedido": 15.39,
               "pct_valor_sobre_linha_pedido": 96.67,
@@ -4252,7 +4252,7 @@
                 "PW8-WLV-A",
                 "PW8-WLV-B"
               ],
-              "pct_cx_sobre_pedido_total": 12.67
+              "pct_cx_sobre_pedido_total": 10.46
             }
           ],
           "embarques_resumo": [
@@ -4274,10 +4274,10 @@
           "motivos_resumo": [
             "Aguardando embarque / despacho"
           ],
-          "total_cx_pedido": 511.36,
-          "total_cx_pendente": 511.36,
-          "pct_cx_avaria_sobre_pedido": 100,
-          "unidade_pedido": "UN",
+          "total_cx_pedido": 286.8,
+          "total_cx_pendente": 287,
+          "pct_cx_avaria_sobre_pedido": 100.07,
+          "unidade_pedido": "CX",
           "grupos_formato": [
             {
               "formato": "20x120",
@@ -4288,65 +4288,65 @@
                   "formato": "20x120",
                   "embarque_codigo": "PW8-WLV-A",
                   "quantidade_pedido": 33.6,
-                  "quantidade_embarcada": 20,
+                  "quantidade_embarcada": 34,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 33.6,
-                  "unidade": "UN",
+                  "quantidade_pendente": 34,
+                  "unidade": "CX",
                   "valor_pedido_linha": 1413.89,
                   "valor_pendente": 1413.89,
-                  "preco_unitario_pendente": 42.08,
-                  "pct_cx_sobre_linha_pedido": 100,
+                  "preco_unitario_pendente": 41.59,
+                  "pct_cx_sobre_linha_pedido": 101.19,
                   "pct_valor_sobre_pedido": 6.7,
                   "pct_valor_sobre_linha_pedido": 100,
                   "embarque_codigos": [
                     "PW8-WLV-A"
                   ],
-                  "pct_cx_sobre_pedido_total": 6.57
+                  "pct_cx_sobre_pedido_total": 11.85
                 },
                 {
                   "produto_id": "510a0195-06c9-48c9-b19b-e49817f6b3a9",
                   "produto_nome": "PISO 20X120 FRESNO CL (1,68 M²/CX)",
                   "formato": "20x120",
                   "embarque_codigo": "PW8-WLV-A",
-                  "quantidade_pedido": 33.6,
+                  "quantidade_pedido": 20,
                   "quantidade_embarcada": 20,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 33.6,
-                  "unidade": "UN",
+                  "quantidade_pendente": 20,
+                  "unidade": "CX",
                   "valor_pedido_linha": 1413.89,
                   "valor_pendente": 1413.89,
-                  "preco_unitario_pendente": 42.08,
+                  "preco_unitario_pendente": 70.69,
                   "pct_cx_sobre_linha_pedido": 100,
                   "pct_valor_sobre_pedido": 6.7,
                   "pct_valor_sobre_linha_pedido": 100,
                   "embarque_codigos": [
                     "PW8-WLV-A"
                   ],
-                  "pct_cx_sobre_pedido_total": 6.57
+                  "pct_cx_sobre_pedido_total": 6.97
                 },
                 {
                   "produto_id": "edea28c8-2aad-4788-a2d1-c0de892a2141",
                   "produto_nome": "PISO 20X120 FRESNO MATE (1,68 M²/CX)",
                   "formato": "20x120",
                   "embarque_codigo": "PW8-WLV-A",
-                  "quantidade_pedido": 33.6,
+                  "quantidade_pedido": 20,
                   "quantidade_embarcada": 20,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 33.6,
-                  "unidade": "UN",
+                  "quantidade_pendente": 20,
+                  "unidade": "CX",
                   "valor_pedido_linha": 1413.89,
                   "valor_pendente": 1413.89,
-                  "preco_unitario_pendente": 42.08,
+                  "preco_unitario_pendente": 70.69,
                   "pct_cx_sobre_linha_pedido": 100,
                   "pct_valor_sobre_pedido": 6.7,
                   "pct_valor_sobre_linha_pedido": 100,
                   "embarque_codigos": [
                     "PW8-WLV-A"
                   ],
-                  "pct_cx_sobre_pedido_total": 6.57
+                  "pct_cx_sobre_pedido_total": 6.97
                 }
               ],
-              "quant_pendente": 100.80000000000001,
+              "quant_pendente": 74,
               "valor_pendente": 4241.67
             },
             {
@@ -4357,14 +4357,14 @@
                   "produto_nome": "PISO 45X45 TRAFEGO BEGE PEI 5 (2,0M²/ CX)",
                   "formato": "45x45",
                   "embarque_codigo": "PW8-WLV-A, PW8-WLV-B",
-                  "quantidade_pedido": 100,
+                  "quantidade_pedido": 50,
                   "quantidade_embarcada": 47,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 100,
-                  "unidade": "UN",
+                  "quantidade_pendente": 50,
+                  "unidade": "CX",
                   "valor_pedido_linha": 2423,
                   "valor_pendente": 2423,
-                  "preco_unitario_pendente": 24.23,
+                  "preco_unitario_pendente": 48.46,
                   "pct_cx_sobre_linha_pedido": 100,
                   "pct_valor_sobre_pedido": 10.79,
                   "pct_valor_sobre_linha_pedido": 94,
@@ -4372,10 +4372,10 @@
                     "PW8-WLV-A",
                     "PW8-WLV-B"
                   ],
-                  "pct_cx_sobre_pedido_total": 19.56
+                  "pct_cx_sobre_pedido_total": 17.43
                 }
               ],
-              "quant_pendente": 100,
+              "quant_pendente": 50,
               "valor_pendente": 2423
             },
             {
@@ -4386,24 +4386,24 @@
                   "produto_nome": "PISO 50X50 COPACABANA PEI 4 (2,5M²/ CX)",
                   "formato": "50x50",
                   "embarque_codigo": "PW8-WLV-A",
-                  "quantidade_pedido": 60,
+                  "quantidade_pedido": 24,
                   "quantidade_embarcada": 24,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 60,
-                  "unidade": "UN",
+                  "quantidade_pendente": 24,
+                  "unidade": "CX",
                   "valor_pedido_linha": 1453.8,
                   "valor_pendente": 1453.8,
-                  "preco_unitario_pendente": 24.23,
+                  "preco_unitario_pendente": 60.58,
                   "pct_cx_sobre_linha_pedido": 100,
                   "pct_valor_sobre_pedido": 6.89,
                   "pct_valor_sobre_linha_pedido": 100,
                   "embarque_codigos": [
                     "PW8-WLV-A"
                   ],
-                  "pct_cx_sobre_pedido_total": 11.73
+                  "pct_cx_sobre_pedido_total": 8.37
                 }
               ],
-              "quant_pendente": 60,
+              "quant_pendente": 24,
               "valor_pendente": 1453.8
             },
             {
@@ -4414,21 +4414,21 @@
                   "produto_nome": "PISO 60X120 ARACRUZ RT POL (2,16M²/ CX)",
                   "formato": "60x120",
                   "embarque_codigo": "PW8-WLV-A",
-                  "quantidade_pedido": 64.8,
+                  "quantidade_pedido": 30,
                   "quantidade_embarcada": 30,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 64.8,
-                  "unidade": "UN",
+                  "quantidade_pendente": 30,
+                  "unidade": "CX",
                   "valor_pedido_linha": 3525.12,
                   "valor_pendente": 3525.12,
-                  "preco_unitario_pendente": 54.4,
+                  "preco_unitario_pendente": 117.5,
                   "pct_cx_sobre_linha_pedido": 100,
                   "pct_valor_sobre_pedido": 16.7,
                   "pct_valor_sobre_linha_pedido": 100,
                   "embarque_codigos": [
                     "PW8-WLV-A"
                   ],
-                  "pct_cx_sobre_pedido_total": 12.67
+                  "pct_cx_sobre_pedido_total": 10.46
                 },
                 {
                   "produto_id": "69bd5ca55969ccc03a160cc9",
@@ -4436,76 +4436,76 @@
                   "formato": "60x120",
                   "embarque_codigo": "PW8-WLV-A",
                   "quantidade_pedido": 43.2,
-                  "quantidade_embarcada": 20,
+                  "quantidade_embarcada": 43,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 43.2,
-                  "unidade": "UN",
+                  "quantidade_pendente": 43,
+                  "unidade": "CX",
                   "valor_pedido_linha": 2239.92,
                   "valor_pendente": 2239.92,
-                  "preco_unitario_pendente": 51.85,
-                  "pct_cx_sobre_linha_pedido": 100,
+                  "preco_unitario_pendente": 52.09,
+                  "pct_cx_sobre_linha_pedido": 99.54,
                   "pct_valor_sobre_pedido": 10.61,
                   "pct_valor_sobre_linha_pedido": 100,
                   "embarque_codigos": [
                     "PW8-WLV-A"
                   ],
-                  "pct_cx_sobre_pedido_total": 8.45
+                  "pct_cx_sobre_pedido_total": 14.99
                 },
                 {
                   "produto_id": "79e10224-5219-41d0-8e1c-a30315863b11",
                   "produto_nome": "PISO 60X120 GRAN TERRAZO MATE (2,16M²/ CX)",
                   "formato": "60x120",
                   "embarque_codigo": "PW8-WLV-A",
-                  "quantidade_pedido": 12.96,
+                  "quantidade_pedido": 6,
                   "quantidade_embarcada": 6,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 12.96,
-                  "unidade": "UN",
+                  "quantidade_pendente": 6,
+                  "unidade": "CX",
                   "valor_pedido_linha": 644.5,
                   "valor_pendente": 644.5,
-                  "preco_unitario_pendente": 49.73,
+                  "preco_unitario_pendente": 107.42,
                   "pct_cx_sobre_linha_pedido": 100,
                   "pct_valor_sobre_pedido": 3.05,
                   "pct_valor_sobre_linha_pedido": 100,
                   "embarque_codigos": [
                     "PW8-WLV-A"
                   ],
-                  "pct_cx_sobre_pedido_total": 2.53
+                  "pct_cx_sobre_pedido_total": 2.09
                 },
                 {
                   "produto_id": "6a5504c1d7d6fedda15dda1b",
                   "produto_nome": "PISO 60X120 PERSA BEGE POL (2,16M²/ CX)",
                   "formato": "60x120",
                   "embarque_codigo": "PW8-WLV-A",
-                  "quantidade_pedido": 64.8,
+                  "quantidade_pedido": 30,
                   "quantidade_embarcada": 30,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 64.8,
-                  "unidade": "UN",
+                  "quantidade_pendente": 30,
+                  "unidade": "CX",
                   "valor_pedido_linha": 3222.5,
                   "valor_pendente": 3222.5,
-                  "preco_unitario_pendente": 49.73,
+                  "preco_unitario_pendente": 107.42,
                   "pct_cx_sobre_linha_pedido": 100,
                   "pct_valor_sobre_pedido": 15.26,
                   "pct_valor_sobre_linha_pedido": 100,
                   "embarque_codigos": [
                     "PW8-WLV-A"
                   ],
-                  "pct_cx_sobre_pedido_total": 12.67
+                  "pct_cx_sobre_pedido_total": 10.46
                 },
                 {
                   "produto_id": "6a10e0fa4408c5c869b8e06a",
                   "produto_nome": "PISO 60X120 STATUTARIO POLIDO (2,16M²/ CX)",
                   "formato": "60x120",
                   "embarque_codigo": "PW8-WLV-A, PW8-WLV-B",
-                  "quantidade_pedido": 64.8,
+                  "quantidade_pedido": 30,
                   "quantidade_embarcada": 29,
                   "quantidade_recebida": 0,
-                  "quantidade_pendente": 64.8,
-                  "unidade": "UN",
+                  "quantidade_pendente": 30,
+                  "unidade": "CX",
                   "valor_pedido_linha": 3359.88,
                   "valor_pendente": 3359.88,
-                  "preco_unitario_pendente": 51.85,
+                  "preco_unitario_pendente": 112,
                   "pct_cx_sobre_linha_pedido": 100,
                   "pct_valor_sobre_pedido": 15.39,
                   "pct_valor_sobre_linha_pedido": 96.67,
@@ -4513,10 +4513,10 @@
                     "PW8-WLV-A",
                     "PW8-WLV-B"
                   ],
-                  "pct_cx_sobre_pedido_total": 12.67
+                  "pct_cx_sobre_pedido_total": 10.46
                 }
               ],
-              "quant_pendente": 250.56,
+              "quant_pendente": 139,
               "valor_pendente": 12991.92
             }
           ]
@@ -4547,7 +4547,7 @@
               "quantidade_embarcada": 20,
               "quantidade_recebida": 0,
               "quantidade_pendente": 20,
-              "unidade": "UN",
+              "unidade": "CX",
               "valor_pedido_linha": 2423.6,
               "valor_pendente": 2423.6,
               "preco_unitario_pendente": 121.18,
@@ -4568,7 +4568,7 @@
               "quantidade_embarcada": 34,
               "quantidade_recebida": 0,
               "quantidade_pendente": 35,
-              "unidade": "UN",
+              "unidade": "CX",
               "valor_pedido_linha": 3275.65,
               "valor_pendente": 3275.65,
               "preco_unitario_pendente": 93.59,
@@ -4604,7 +4604,7 @@
           "total_cx_pedido": 55,
           "total_cx_pendente": 55,
           "pct_cx_avaria_sobre_pedido": 100,
-          "unidade_pedido": "UN",
+          "unidade_pedido": "CX",
           "grupos_formato": [
             {
               "formato": "60x120",
@@ -4618,7 +4618,7 @@
                   "quantidade_embarcada": 20,
                   "quantidade_recebida": 0,
                   "quantidade_pendente": 20,
-                  "unidade": "UN",
+                  "unidade": "CX",
                   "valor_pedido_linha": 2423.6,
                   "valor_pendente": 2423.6,
                   "preco_unitario_pendente": 121.18,
@@ -4646,7 +4646,7 @@
                   "quantidade_embarcada": 34,
                   "quantidade_recebida": 0,
                   "quantidade_pendente": 35,
-                  "unidade": "UN",
+                  "unidade": "CX",
                   "valor_pedido_linha": 3275.65,
                   "valor_pendente": 3275.65,
                   "preco_unitario_pendente": 93.59,
@@ -4667,10 +4667,10 @@
         }
       ],
       "valor_pendente": 30594.99,
-      "total_cx_pedido": 3354.5,
-      "total_cx_pendente": 707.04,
-      "pct_cx_avaria_sobre_pedidos": 21.08,
-      "unidade": "UN"
+      "total_cx_pedido": 1879.7,
+      "total_cx_pendente": 423,
+      "pct_cx_avaria_sobre_pedidos": 22.5,
+      "unidade": "CX"
     }
   ],
   "fonte": "supabase-rest"

@@ -14,7 +14,7 @@ Por **fornecedor** → **pedido**:
    - **% pedido** (mesma avaria ÷ total de caixas do pedido — ex. 200+200+200=600, 15 avaria → 2,5% no rodapé)
    - Valor a repor
 
-No **rodapé de cada pedido** e no **total geral**: soma de caixas pedidas, caixas com avaria e **percentual proporcional** (ex. 1000 cx nos pedidos, 40 avaria → 4%).
+No **rodapé de cada pedido** e no **total geral**: soma de **caixas (CX)** pedidas, caixas pendentes e **percentual proporcional**. Quantidades vêm de m² no ERP, convertidas para CX pelo texto do produto (ex. «2,5 m²/CX») ou cadastro de embalagem.
 
 Por defeito entram só saldos **pós-embarque** (avaria, divergência, Necessidade). Não entra «falta embarcar» sem despacho.
 
