@@ -46,7 +46,7 @@ Na fact sheet: sete dropdowns encadeados (4 + 3) mais nome vitrine e colunas cal
 
 | Aba | Conteúdo |
 |-----|----------|
-| `Fact_Catalogo_4x3` | Uma linha por SKU: `codigo_interno`, FKs/códigos 4+3, `novo_sku`, flags catálogo |
+| `Fact_Catalogo_4x3` | Uma linha por SKU: `codigo_interno`, FKs/códigos 4+3, `novo_sku`, `sku_atual` (SKU antigo do cadastro), códigos/legenda |
 
 ### Snapshot operacional (Supabase → Excel)
 
