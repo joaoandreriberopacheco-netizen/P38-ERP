@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Saldo pós-embarque — reposição ao comprador</title>
+  <style>
+    @page { size: A4; margin: 18mm 16mm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+      font-size: 12px; line-height: 1.45; color: #111; background: #fff;
+      -webkit-font-smoothing: antialiased;
+    }
+    .doc { max-width: 680px; margin: 0 auto; padding: 8px 0 24px; }
+    .header { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e8e8e8; }
+    .header h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 6px; }
+    .header .meta { font-size: 12px; color: #666; }
+    .header .resumo { margin-top: 10px; font-size: 13px; color: #333; }
+    .fornecedor-nome { font-size: 17px; margin: 24px 0 6px; border-bottom: 1px solid #e5e5e5; padding-bottom: 6px; }
+    .sub { color: #555; margin: 0 0 16px; font-size: 12px; }
+    .pedido { margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid #efefef; }
+    .pedido-titulo { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .pedido-meta, .pedido-contexto { font-size: 12px; color: #444; margin-bottom: 6px; }
+    .nota { font-size: 11px; color: #666; margin: 8px 0 12px; line-height: 1.4; }
+    .grupo { margin-bottom: 18px; }
+    .formato { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    thead th {
+      font-size: 10px; font-weight: 600; color: #111; text-align: left;
+      padding: 5px 0 6px; border-bottom: 1px solid #d9d9d9;
+    }
+    tbody td { padding: 6px 0; border-bottom: 1px solid #efefef; vertical-align: top; font-size: 11px; }
+    .col-modelo { width: 28%; padding-right: 8px; word-break: break-word; }
+    .col-num { width: 9%; text-align: right; white-space: nowrap; }
+    thead .col-num { text-align: right; }
+    .emb-ref { color: #888; font-size: 10px; }
+    .pend { font-weight: 600; }
+    .pct { color: #92400e; }
+    .subtotal td { font-weight: 600; border-top: 1px solid #d9d9d9; border-bottom: none; padding-top: 8px; }
+    .geral { margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <div class="doc">
+    <header class="header">
+      <h1>Saldo pós-embarque — reposição ao comprador</h1>
+      <p class="meta">Gerado em 28/09/2026, 12:33:16 · Pedidos com emissão a partir de 20/07/2026 · Saldo pós-embarque (avaria / divergência / reposição)</p>
+      <p class="resumo"><strong>40 un. pendentes</strong> · <strong>R$ 969,20</strong> a repor</p>
+    </header>
+    
+    <section class="fornecedor">
+      <h2 class="fornecedor-nome">TINTAO NOVA CIDADE</h2>
+      <p class="sub">1 pedido(s) · total a repor R$ 969,20</p>
+      
+      <article class="pedido">
+        <h2 class="pedido-titulo">Pedido AB6-PPQ</h2>
+        <p class="pedido-meta">
+          Emissão 27/08/2026 · Pedido original R$ 16.282,56 ·
+          Saldo a repor <strong>R$ 969,20</strong> (5,95% do pedido)
+        </p>
+        <p class="pedido-contexto">Despacho principal: <strong>AB6-PPQ-A</strong> · 08/09/2026 · F/B SOLIMÕES · recepção: Com Divergência</p>
+        <p class="nota">
+          Itens pendentes = diferença entre o que foi embarcado e o que entrou na recepção (ou split de reposição).
+          O percentual mostra a proporção face ao pedido completo — saldos típicos de embarque cerâmico, não valores isolados.
+        </p>
+        
+        <section class="grupo">
+          <h3 class="formato">45x45</h3>
+          <table>
+            <thead>
+              <tr>
+                <th class="col-modelo">Modelo / embarque</th>
+                <th class="col-num">Pedido</th>
+                <th class="col-num">Embarc.</th>
+                <th class="col-num">Receb.</th>
+                <th class="col-num">Pendente</th>
+                <th class="col-num">Preço unit.</th>
+                <th class="col-num">Total pend.</th>
+                <th class="col-num">% pedido</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+          <tr>
+            <td class="col-modelo">PISO 45X45 TRAVERTINO CZ (2,00 M²/ CX) PE<span class="emb-ref"> · AB6-PPQ-A</span></td>
+            <td class="col-num">168</td>
+            <td class="col-num">81</td>
+            <td class="col-num">71</td>
+            <td class="col-num pend">20 UN</td>
+            <td class="col-num">R$ 24,23</td>
+            <td class="col-num">R$ 484,60</td>
+            <td class="col-num pct">2,98%</td>
+          </tr>
+          <tr>
+            <td class="col-modelo">PISO 45X45 TRAVERTINO CZ (2,00 M²/ CX) PE<span class="emb-ref"> · AB6-PPQ-C</span></td>
+            <td class="col-num">168</td>
+            <td class="col-num">10</td>
+            <td class="col-num">0</td>
+            <td class="col-num pend">20 UN</td>
+            <td class="col-num">R$ 24,23</td>
+            <td class="col-num">R$ 484,60</td>
+            <td class="col-num pct">2,98%</td>
+          </tr>
+              <tr class="subtotal">
+                <td class="col-modelo">Subtotal 45x45</td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num"></td>
+                <td class="col-num">40</td>
+                <td class="col-num"></td>
+                <td class="col-num">R$ 969,20</td>
+                <td class="col-num"></td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </article>
+    </section>
+    <section class="grupo geral">
+      <h3 class="formato">Total geral</h3>
+      <table>
+        <tbody>
+          <tr class="subtotal">
+            <td class="col-modelo">Geral</td>
+            <td class="col-num"></td>
+            <td class="col-num"></td>
+            <td class="col-num"></td>
+            <td class="col-num">40</td>
+            <td class="col-num"></td>
+            <td class="col-num">R$ 969,20</td>
+            <td class="col-num"></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+</body>
+</html>

@@ -24,7 +24,7 @@ npm run compras:relatorio-pendente-fornecedor -- --desde=2026-07-20 --pdf
 npm run compras:relatorio-pendente-fornecedor -- --incluir-aguardando-embarque
 ```
 
-Saída: `docs/imports-local/pendente-embarque-fornecedor/` (`.html`, `.json`, opcional `.pdf`).
+Com `--fornecedor=tint…` a saída vai para **`docs/exports/Tintao/`** (PDF/HTML/JSON). Outros fornecedores: `docs/imports-local/pendente-embarque-fornecedor/`.
 
 Referência visual: `scripts/tintao-orfaos-pdf-export.mjs` e PDFs órfãos Tintão (set/2026).
 

@@ -25,7 +25,14 @@ import {
   RELATORIO_PENDENTE_EMBARQUE_DATA_MIN_DEFAULT,
 } from '../src/lib/relatorioPendenteEmbarqueFornecedor.js';
 
-const OUT_DIR = path.join(process.cwd(), 'docs', 'imports-local', 'pendente-embarque-fornecedor');
+const OUT_DIR_DEFAULT = path.join(process.cwd(), 'docs', 'imports-local', 'pendente-embarque-fornecedor');
+
+function resolveOutDir(fornecedorNorm = '') {
+  if (String(fornecedorNorm || '').trim().toLowerCase().includes('tint')) {
+    return path.join(process.cwd(), 'docs', 'exports', 'Tintao');
+  }
+  return OUT_DIR_DEFAULT;
+}
 
 function parseArgs(argv) {
   const desdeArg = argv.find((a) => a.startsWith('--desde='));
@@ -330,11 +337,12 @@ async function main() {
     somenteSaldoAvaria: !incluirAguardandoEmbarque,
   });
 
-  fs.mkdirSync(OUT_DIR, { recursive: true });
+  const outDir = resolveOutDir(fornecedor);
+  fs.mkdirSync(outDir, { recursive: true });
   const stamp = new Date().toISOString().slice(0, 10);
   const suffix = fornecedor ? `-${fornecedor.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}` : '';
-  const jsonPath = path.join(OUT_DIR, `pendente-embarque${suffix}-${stamp}.json`);
-  const htmlPath = path.join(OUT_DIR, `pendente-embarque${suffix}-${stamp}.html`);
+  const jsonPath = path.join(outDir, `pendente-embarque${suffix}-${stamp}.json`);
+  const htmlPath = path.join(outDir, `pendente-embarque${suffix}-${stamp}.html`);
 
   fs.writeFileSync(
     jsonPath,
@@ -357,7 +365,7 @@ async function main() {
 
   if (pdf) {
     const { chromium } = await import('playwright');
-    const pdfPath = path.join(OUT_DIR, `pendente-embarque${suffix}-${stamp}.pdf`);
+    const pdfPath = path.join(outDir, `pendente-embarque${suffix}-${stamp}.pdf`);
     const browser = await chromium.launch({ headless: true });
     const page = await browser.newPage({ viewport: { width: 794, height: 1123 } });
     await page.setContent(fs.readFileSync(htmlPath, 'utf8'), { waitUntil: 'networkidle' });
