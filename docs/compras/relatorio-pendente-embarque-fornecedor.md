@@ -30,8 +30,9 @@ Referência visual: `scripts/tintao-orfaos-pdf-export.mjs` e PDFs órfãos Tint�
 
 ## Dados
 
-- **Postgres** (`DATABASE_URL`) ou **Base44** (secrets AGENTS.md)
-- Mesma matemática da consulta Embarques (`buildConsultaItensEmbarque` modo `pendente`) + contexto folha/desmembramento onde aplicável
+- **Supabase Postgres** — `DATABASE_URL` (Cursor Cloud / GitHub Actions). Ver `docs/migration/P38_SECRETS_CANONICOS.md`.
+- Script: `scripts/gerar-relatorio-pendente-embarque-fornecedor.mjs` (sem Base44).
+- Linhas de embarque: `embarque_item` + espelho `rebuildEmbarqueItensMirror` (mesma leitura que a app).
 
 ## Teste
 
