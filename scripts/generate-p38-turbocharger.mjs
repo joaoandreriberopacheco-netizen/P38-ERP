@@ -23,15 +23,20 @@ const OUT = path.join(ROOT, 'docs', 'exports', 'P38-TurboCharger.xlsx');
 const SRC_4X3 = path.join(ROOT, 'docs', 'exports', 'P38-catalogo-4x3.xlsx');
 const WITH_SB = process.argv.includes('--with-supabase');
 
+/** Uma aba horizontal: colunas A–G = listas para dropdowns na Fact. */
+const LISTAS_SHEET = 'Listas';
+/** Linhas vazias no fim de cada coluna para o utilizador acrescentar valores. */
+const LIST_EXTRA_ROWS = 80;
+
 const FACT_COLS = [
   { key: 'codigo_interno', label: 'Cód. Interno (*)', editavel: true, width: 14 },
-  { key: 'etapa', label: 'ETAPA (lista)', editavel: true, width: 18, list: 'Dim_Etapa' },
-  { key: 'categoria', label: 'CATEGORIA (lista)', editavel: true, width: 22, list: 'Dim_Categoria' },
-  { key: 'subcategoria', label: 'SUB (lista)', editavel: true, width: 20, list: 'Dim_Sub' },
-  { key: 'linha', label: 'LINHA (lista)', editavel: true, width: 22, list: 'Dim_Linha' },
-  { key: 'comp1', label: 'Produto compra (lista)', editavel: true, width: 28, list: 'Dim_ProdutoCompra' },
-  { key: 'comp2', label: 'Eixo A (lista)', editavel: true, width: 18, list: 'Dim_Comp2' },
-  { key: 'comp3', label: 'Eixo B (lista)', editavel: true, width: 18, list: 'Dim_Comp3' },
+  { key: 'etapa', label: 'ETAPA (lista)', editavel: true, width: 18, listCol: 'A' },
+  { key: 'categoria', label: 'CATEGORIA (lista)', editavel: true, width: 22, listCol: 'B' },
+  { key: 'subcategoria', label: 'SUB (lista)', editavel: true, width: 20, listCol: 'C' },
+  { key: 'linha', label: 'LINHA (lista)', editavel: true, width: 22, listCol: 'D' },
+  { key: 'comp1', label: 'Produto compra (lista)', editavel: true, width: 28, listCol: 'E' },
+  { key: 'comp2', label: 'Eixo A (lista)', editavel: true, width: 18, listCol: 'F' },
+  { key: 'comp3', label: 'Eixo B (lista)', editavel: true, width: 18, listCol: 'G' },
   { key: 'novo_sku', label: 'Nome vitrine 4×3', editavel: true, width: 42 },
   { key: 'codigo_4x', label: 'Código caminho 4', editavel: false, width: 12, calculado: true },
   { key: 'legenda', label: 'Legenda caminho', editavel: false, width: 48, calculado: true },
@@ -100,20 +105,49 @@ function buildDimensions(factRows) {
   return { etapas, categorias, subs, linhas, pc, c2, c3 };
 }
 
-function writeDimSheet(wb, name, headers, dataRows) {
-  const ws = wb.addWorksheet(name, { views: [{ state: 'frozen', ySplit: 1 }] });
-  ws.columns = headers.map((h) => ({ header: h.label, key: h.key, width: h.width || 18 }));
+function listasColumnSpecs(dim) {
+  return [
+    { label: 'ETAPA', width: 20, values: dim.etapas },
+    { label: 'CATEGORIA', width: 24, values: dim.categorias },
+    { label: 'SUBCATEGORIA', width: 22, values: dim.subs },
+    { label: 'LINHA', width: 24, values: dim.linhas },
+    { label: 'PRODUTO COMPRA (comp1)', width: 30, values: dim.pc },
+    { label: 'EIXO A (comp2)', width: 20, values: dim.c2 },
+    { label: 'EIXO B (comp3)', width: 20, values: dim.c3 },
+  ];
+}
+
+/** @returns {Record<string, number>} fim da validação por coluna (A…G) — linha Excel inclusive */
+function writeListasHorizontal(wb, dim) {
+  const specs = listasColumnSpecs(dim);
+  const bodyRows = Math.max(...specs.map((s) => s.values.length), 1) + LIST_EXTRA_ROWS;
+  const ws = wb.addWorksheet(LISTAS_SHEET, { views: [{ state: 'frozen', ySplit: 1 }] });
+
+  specs.forEach((spec, colIdx) => {
+    ws.getColumn(colIdx + 1).width = spec.width;
+    ws.getCell(1, colIdx + 1).value = spec.label;
+  });
   styleHeaderRow(ws.getRow(1));
-  for (const row of dataRows) {
-    const r = ws.addRow(row);
-    r.eachCell((cell) => {
+
+  for (let r = 0; r < bodyRows; r += 1) {
+    const rowNum = r + 2;
+    specs.forEach((spec, colIdx) => {
+      const val = spec.values[r];
+      if (!val) return;
+      const cell = ws.getCell(rowNum, colIdx + 1);
+      cell.value = val;
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: FILL_DIM } };
     });
   }
-  if (dataRows.length) {
-    ws.autoFilter = { from: 'A1', to: `${colLetter(headers.length)}${dataRows.length + 1}` };
-  }
-  return ws;
+
+  ws.autoFilter = { from: 'A1', to: `${colLetter(specs.length)}${bodyRows + 1}` };
+
+  const endRowByCol = {};
+  specs.forEach((spec, colIdx) => {
+    const letter = colLetter(colIdx + 1);
+    endRowByCol[letter] = Math.max(spec.values.length + 1, 2) + LIST_EXTRA_ROWS;
+  });
+  return endRowByCol;
 }
 
 function dimListFormula(sheetName, col = 'A', start = 2, end = 500) {
@@ -152,7 +186,7 @@ async function main() {
   const lines = [
     ['P38 · TurboCharger', 'Base de catálogo 4×3 — interface alimentada por Excel'],
     ['Design', 'Igual importador em massa: cabeçalho cinza, células editáveis claras, Supabase em azul'],
-    ['Abas «Dim»', 'Listas para dropdowns — edite para incluir novos valores'],
+    ['Aba «Listas»', '7 colunas horizontais (ETAPA → … → comp3) — edite ou preencha linhas vazias no fim'],
     ['Fact_Catalogo_4x3', 'Uma linha por SKU — alimenta a UI Catálogo 4×3 após publicar'],
     ['SKU_Completo', 'Snapshot do cadastro (Supabase) — npm run turbocharger:generate -- --with-supabase'],
     ['Regenerar', 'npm run turbocharger:generate'],
@@ -165,48 +199,7 @@ async function main() {
     if (i === 0) readme.getCell(`A${i + 1}`).font = { bold: true, size: 14 };
   });
 
-  writeDimSheet(
-    wb,
-    'Dim_Etapa',
-    [{ key: 'nome', label: 'ETAPA' }],
-    dim.etapas.map((nome) => ({ nome })),
-  );
-  writeDimSheet(
-    wb,
-    'Dim_Categoria',
-    [{ key: 'nome', label: 'CATEGORIA' }],
-    dim.categorias.map((nome) => ({ nome })),
-  );
-  writeDimSheet(
-    wb,
-    'Dim_Sub',
-    [{ key: 'nome', label: 'SUBCATEGORIA' }],
-    dim.subs.map((nome) => ({ nome })),
-  );
-  writeDimSheet(
-    wb,
-    'Dim_Linha',
-    [{ key: 'nome', label: 'LINHA' }],
-    dim.linhas.map((nome) => ({ nome })),
-  );
-  writeDimSheet(
-    wb,
-    'Dim_ProdutoCompra',
-    [{ key: 'nome', label: 'PRODUTO COMPRA (comp1)' }],
-    dim.pc.map((nome) => ({ nome })),
-  );
-  writeDimSheet(
-    wb,
-    'Dim_Comp2',
-    [{ key: 'nome', label: 'EIXO A (comp2)' }],
-    dim.c2.map((nome) => ({ nome })),
-  );
-  writeDimSheet(
-    wb,
-    'Dim_Comp3',
-    [{ key: 'nome', label: 'EIXO B (comp3)' }],
-    dim.c3.map((nome) => ({ nome })),
-  );
+  const listEndRowByCol = writeListasHorizontal(wb, dim);
 
   // ── Fact ──
   const factWs = wb.addWorksheet('Fact_Catalogo_4x3', { views: [{ state: 'frozen', ySplit: 1 }] });
@@ -217,10 +210,14 @@ async function main() {
   const maxFactRow = 1 + Math.max(factRows.length, 1) + extraBlank;
 
   FACT_COLS.forEach((col, idx) => {
-    if (!col.list) return;
-    const letter = colLetter(idx + 1);
-    const sheet = col.list;
-    addListValidation(factWs, `${letter}2:${letter}${maxFactRow}`, dimListFormula(sheet, 'A'));
+    if (!col.listCol) return;
+    const factLetter = colLetter(idx + 1);
+    const endRow = listEndRowByCol[col.listCol] ?? 500;
+    addListValidation(
+      factWs,
+      `${factLetter}2:${factLetter}${maxFactRow}`,
+      dimListFormula(LISTAS_SHEET, col.listCol, 2, endRow),
+    );
   });
 
   for (const row of factRows) {

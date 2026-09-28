@@ -19,25 +19,23 @@
 
 ## Abas previstas (interligadas)
 
-### Caminho «4» — classificação (listas suspensas)
+### Listas (dropdowns — uma aba horizontal)
 
-| Aba | Conteúdo |
-|-----|----------|
-| `Dim_Etapa` | Etapas ordenadas |
-| `Dim_Categoria` | FK etapa |
-| `Dim_Sub` | FK categoria |
-| `Dim_Linha` | FK sub; tipo LINHA (solo / mix / portfolio) quando aplicável |
+| Coluna na aba `Listas` | Conteúdo |
+|------------------------|----------|
+| A — ETAPA | Etapas ordenadas |
+| B — CATEGORIA | Categorias (lista plana v0) |
+| C — SUBCATEGORIA | Subcategorias |
+| D — LINHA | Linhas (solo / mix / portfolio no futuro) |
+| E — PRODUTO COMPRA | comp1 |
+| F — EIXO A | comp2 |
+| G — EIXO B | comp3 |
 
-Validação de dados: cada nível filho referencia a aba pai.
+Validação na `Fact_Catalogo_4x3`: cada campo de lista aponta para `Listas!$A$2:$A$n` … `$G$2:$G$n` (com linhas vazias no fim para novos valores).
 
-### «3» — elementos da descrição / grade
+**Evolução:** listas dependentes (categoria filtrada por etapa) pode usar colunas extra ou tabelas nomeadas; v0 = listas planas lado a lado.
 
-| Aba | Conteúdo |
-|-----|----------|
-| `Dim_ProdutoCompra` | comp1 por LINHA |
-| `Dim_EixoA` / `Dim_EixoB` (ou `Dim_Componentes`) | comp2 / comp3 dependentes de comp1 |
-
-Na fact sheet: três dropdowns (comp1 → comp2 → comp3).
+Na fact sheet: sete dropdowns (4 + 3) mais nome vitrine e colunas calculadas.
 
 ### Fact — o que a UI monta
 
