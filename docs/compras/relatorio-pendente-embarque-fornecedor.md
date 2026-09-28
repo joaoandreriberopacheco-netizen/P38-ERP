@@ -8,11 +8,9 @@ Por **fornecedor** → **pedido**:
 
 1. **Pedido original** — emissão, valor total, **% do saldo pendente sobre o pedido**
 2. **Despacho principal** — primeiro split embarcado (ex. `EXC-FQZ-A`), data, transportadora, status recepção
-3. **Tabelas por formato** (como PDF órfãos Tintão) — colunas:
-   - Pedido / Embarcado / Recebido / **Avaria (cx)**
-   - **% modelo** (avaria ÷ caixas pedidas daquele item)
-   - **% pedido** (mesma avaria ÷ total de caixas do pedido — ex. 200+200+200=600, 15 avaria → 2,5% no rodapé)
-   - Valor a repor
+3. **Tabelas por formato** — folha logística (igual compras), em **caixas (CX)**:
+   - **Comprada** · **Trânsito** · **Recebida** · **Pendente** (avaria / falta a repor — não confundir com trânsito)
+   - **% modelo** · **% pedido** · valor a repor
 
 No **rodapé de cada pedido** e no **total geral**: soma de **caixas (CX)** pedidas, caixas pendentes e **percentual proporcional**. Quantidades vêm de m² no ERP, convertidas para CX pelo texto do produto (ex. «2,5 m²/CX») ou cadastro de embalagem.
 

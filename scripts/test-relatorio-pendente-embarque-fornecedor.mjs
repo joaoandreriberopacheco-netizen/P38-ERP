@@ -36,17 +36,18 @@ const embarque = {
   tipo: 'Despacho',
   status_recebimento: 'Com Divergência',
   data_embarque: '2026-08-10',
+  transportadora_nome: 'Transporte Teste',
   created_date: '2026-08-10T12:00:00Z',
   _linhas: [
     {
       produto_id: 'p1',
       produto_nome: 'Produto A',
-      quantidade_embarcada_comercial: 10,
+      quantidade_embarcada_comercial: 8,
       quantidade_recebida_comercial: 8,
       quantidade_pedida_comercial: 10,
-      quantidade_embarcada: 10,
-      quantidade_recebida: 8,
-      quantidade_embarcada_base: 100,
+      quantidade_embarcada: 80,
+      quantidade_recebida: 80,
+      quantidade_embarcada_base: 80,
       quantidade_recebida_base: 80,
       quantidade_pedida_base: 100,
       fator_conversao: 10,
@@ -57,6 +58,7 @@ const embarque = {
 
 const relatorio = buildRelatorioPendenteEmbarqueFornecedor([pedido], [embarque], {}, {
   dataEmissaoMin: '2026-07-20',
+  somenteSaldoAvaria: false,
 });
 
 if (relatorio.totalEmbarques !== 1 || relatorio.totalPedidos !== 1) {
@@ -89,8 +91,8 @@ if (pedBloco.pct_cx_avaria_sobre_pedido !== 20 || relatorio.pct_cx_avaria_geral 
   process.exit(1);
 }
 const linha = pedBloco.linhas[0];
-if (linha.pct_cx_sobre_linha_pedido !== 20 || linha.pct_cx_sobre_pedido_total !== 20) {
-  console.error('pct cx linha inesperado:', linha);
+if (linha.quantidade_comprada !== 10 || linha.quantidade_em_transito !== 0 || linha.quantidade_recebida !== 8 || linha.quantidade_pendente !== 2) {
+  console.error('Folha 4 colunas inesperada:', linha);
   process.exit(1);
 }
 
@@ -99,8 +101,8 @@ if (!html.includes('Despacho principal') || !html.includes('TST-AAA')) {
   console.error('HTML não contém contexto de pedido/despacho');
   process.exit(1);
 }
-if (!html.includes('% modelo') || !html.includes('do pedido (caixas)')) {
-  console.error('HTML não contém colunas/resumo de caixas');
+if (!html.includes('Trânsito (cx)') || !html.includes('Pendente (cx)')) {
+  console.error('HTML não contém colunas da folha logística');
   process.exit(1);
 }
 

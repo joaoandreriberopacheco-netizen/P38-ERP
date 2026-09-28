@@ -6,8 +6,9 @@ import {
   MIN_SALDO_PENDENTE_BASE,
   embarqueTemDespachoInformado,
   embarqueTemSaldoPendente,
-  qtyRecebidaBaseLinha,
+  calcularFolhaLogisticaLinha,
   resolveSaldoPendenteEmbarqueBase,
+  qtyRecebidaBaseLinha,
 } from '@/lib/embarqueLogisticaHelpers';
 import { isNecessidadeRenderizada } from '@/lib/pedidoCompraNecessidade';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
@@ -169,6 +170,65 @@ function qtyCaixaEmbarqueKind(pedidoItem, sqlLine, produto, kind) {
   );
 }
 
+/** Linhas do pedido na folha 4 colunas (comprada → trânsito → recebida → pendente/avaria), em CX. */
+export function buildLinhasFolhaLogisticaFornecedor(
+  pedido = {},
+  embarquesDoPedido = [],
+  produtosMap = {},
+  options = {},
+) {
+  const { somenteSaldoAvaria = true, valorPedidoTotal = 0 } = options;
+  const linhas = [];
+
+  for (const item of pedido.itens || []) {
+    const produto = produtosMap[item.produto_id] || null;
+    const folha = calcularFolhaLogisticaLinha(item, embarquesDoPedido);
+    if (folha.saldoPendente <= MIN_SALDO_PENDENTE_BASE) continue;
+    if (somenteSaldoAvaria && folha.despachada <= MIN_SALDO_PENDENTE_BASE) continue;
+
+    const ctx = { ...item, produto_nome: item.produto_nome };
+    const qComprada = qtyCaixaFromQuantidadeBase(folha.comprada, produto, item.unidade_medida, ctx);
+    const qTransito = qtyCaixaFromQuantidadeBase(folha.emTransito, produto, item.unidade_medida, ctx);
+    const qRecebida = qtyCaixaFromQuantidadeBase(folha.recebida, produto, item.unidade_medida, ctx);
+    const qPendente = qtyCaixaFromQuantidadeBase(folha.saldoPendente, produto, item.unidade_medida, ctx);
+    if (qPendente <= 0) continue;
+
+    const valorPedidoLinha = getTotalLinhaPedidoCompra(item);
+    const valorPendente = folha.comprada > 0
+      ? roundToTwoDecimals(valorPedidoLinha * (folha.saldoPendente / folha.comprada))
+      : 0;
+
+    linhas.push({
+      produto_id: item.produto_id,
+      produto_nome: item.produto_nome,
+      formato: extractFormatoProduto(item.produto_nome),
+      embarque_codigo: '—',
+      quantidade_comprada: qComprada,
+      quantidade_em_transito: qTransito,
+      quantidade_recebida: qRecebida,
+      quantidade_pendente: qPendente,
+      quantidade_pedido: qComprada,
+      quantidade_embarcada: qTransito,
+      unidade: 'CX',
+      valor_pedido_linha: valorPedidoLinha,
+      valor_pendente: valorPendente,
+      preco_unitario_pendente: qPendente > 0 ? roundToTwoDecimals(valorPendente / qPendente) : 0,
+      pct_cx_sobre_linha_pedido: qComprada > 0
+        ? roundToTwoDecimals((qPendente / qComprada) * 100)
+        : 0,
+      pct_valor_sobre_pedido: valorPedidoTotal > 0
+        ? roundToTwoDecimals((valorPendente / valorPedidoTotal) * 100)
+        : 0,
+      pct_valor_sobre_linha_pedido: valorPedidoLinha > 0
+        ? roundToTwoDecimals((valorPendente / valorPedidoLinha) * 100)
+        : 0,
+      folha_base: folha,
+    });
+  }
+
+  return linhas;
+}
+
 function buildLinhaDetalheFornecedor({
   pedido,
   pedidoItem,
@@ -254,33 +314,33 @@ export function consolidarLinhasPorProduto(linhas = [], totalCxPedido = 0) {
       map.set(key, {
         ...linha,
         quantidade_pendente: 0,
+        quantidade_em_transito: 0,
+        quantidade_recebida: 0,
+        quantidade_comprada: 0,
         valor_pendente: 0,
         embarque_codigos: [],
       });
     }
     const acc = map.get(key);
+    acc.quantidade_comprada = Number(linha.quantidade_comprada ?? linha.quantidade_pedido) || acc.quantidade_comprada;
+    acc.quantidade_pedido = acc.quantidade_comprada;
+    acc.quantidade_em_transito = Number(linha.quantidade_em_transito ?? linha.quantidade_embarcada) || 0;
+    acc.quantidade_embarcada = acc.quantidade_em_transito;
+    acc.quantidade_recebida = Number(linha.quantidade_recebida) || 0;
     acc.quantidade_pendente = roundToTwoDecimals(
       acc.quantidade_pendente + (Number(linha.quantidade_pendente) || 0),
     );
     acc.valor_pendente = roundToTwoDecimals(acc.valor_pendente + (Number(linha.valor_pendente) || 0));
     const cod = linha.embarque_codigo;
-    if (cod && !acc.embarque_codigos.includes(cod)) acc.embarque_codigos.push(cod);
-    acc.quantidade_embarcada = Math.max(
-      Number(acc.quantidade_embarcada) || 0,
-      Number(linha.quantidade_embarcada) || 0,
-    );
-    acc.quantidade_recebida = Math.max(
-      Number(acc.quantidade_recebida) || 0,
-      Number(linha.quantidade_recebida) || 0,
-    );
+    if (cod && cod !== '—' && !acc.embarque_codigos.includes(cod)) acc.embarque_codigos.push(cod);
   }
 
   return [...map.values()]
     .map((l) => ({
       ...l,
       embarque_codigo: (l.embarque_codigos || []).join(', ') || l.embarque_codigo,
-      pct_cx_sobre_linha_pedido: l.quantidade_pedido > 0
-        ? roundToTwoDecimals((l.quantidade_pendente / l.quantidade_pedido) * 100)
+      pct_cx_sobre_linha_pedido: (l.quantidade_comprada ?? l.quantidade_pedido) > 0
+        ? roundToTwoDecimals((l.quantidade_pendente / (l.quantidade_comprada ?? l.quantidade_pedido)) * 100)
         : 0,
       pct_cx_sobre_pedido_total: totalCxPedido > 0
         ? roundToTwoDecimals((l.quantidade_pendente / totalCxPedido) * 100)
@@ -289,18 +349,34 @@ export function consolidarLinhasPorProduto(linhas = [], totalCxPedido = 0) {
     .sort((a, b) => String(a.produto_nome).localeCompare(String(b.produto_nome), 'pt-BR'));
 }
 
-function finalizarPedidoRelatorio(bloco, pedidoOrigem = {}, produtosMap = {}) {
+function finalizarPedidoRelatorio(
+  bloco,
+  pedidoOrigem = {},
+  produtosMap = {},
+  embarquesDoPedido = [],
+  options = {},
+) {
+  const { somenteSaldoAvaria = true } = options;
   const totalCxPedido = totalCxComercialPedido(pedidoOrigem, produtosMap);
-  const linhas = consolidarLinhasPorProduto(bloco.linhas, totalCxPedido);
+  const linhasFolha = buildLinhasFolhaLogisticaFornecedor(pedidoOrigem, embarquesDoPedido, produtosMap, {
+    somenteSaldoAvaria,
+    valorPedidoTotal: bloco.valor_pedido,
+  });
+  const linhas = consolidarLinhasPorProduto(linhasFolha, totalCxPedido);
   const totalCxPendente = roundToTwoDecimals(
     linhas.reduce((s, l) => s + (Number(l.quantidade_pendente) || 0), 0),
+  );
+  const valorPendente = roundToTwoDecimals(linhas.reduce((s, l) => s + (Number(l.valor_pendente) || 0), 0));
+  const basePendente = roundToTwoDecimals(
+    linhas.reduce((s, l) => s + (Number(l.folha_base?.saldoPendente) || 0), 0),
   );
   const pctCxAvariaSobrePedido = totalCxPedido > 0
     ? roundToTwoDecimals((totalCxPendente / totalCxPedido) * 100)
     : 0;
+  const temDespacho = linhas.some((l) => (Number(l.quantidade_em_transito) || 0) > 0
+    || (Number(l.quantidade_recebida) || 0) > 0);
+  const secaoRelatorio = temDespacho ? 'pos_recepcao' : 'aguardando_embarque';
   const motivos = [...new Set((bloco.embarques_resumo || []).map((e) => e.motivo).filter(Boolean))];
-  const temPosRecepcao = motivos.some((m) => m !== MOTIVO_AGUARDANDO_EMBARQUE);
-  const secaoRelatorio = temPosRecepcao ? 'pos_recepcao' : 'aguardando_embarque';
 
   return {
     ...bloco,
@@ -309,13 +385,15 @@ function finalizarPedidoRelatorio(bloco, pedidoOrigem = {}, produtosMap = {}) {
     linhas,
     secao_relatorio: secaoRelatorio,
     motivos_resumo: motivos,
+    valor_pendente: valorPendente,
+    base_pendente: basePendente,
     total_cx_pedido: totalCxPedido,
     total_cx_pendente: totalCxPendente,
     pct_cx_avaria_sobre_pedido: pctCxAvariaSobrePedido,
     unidade_pedido: 'CX',
     grupos_formato: agruparLinhasPorFormato(linhas),
     pct_valor_pendente_sobre_pedido: bloco.valor_pedido > 0
-      ? roundToTwoDecimals((bloco.valor_pendente / bloco.valor_pedido) * 100)
+      ? roundToTwoDecimals((valorPendente / bloco.valor_pedido) * 100)
       : 0,
   };
 }
@@ -401,6 +479,24 @@ export function buildRelatorioPendenteEmbarqueFornecedor(
 
   const embarques = [];
 
+  for (const pedido of pedidos) {
+    if (!pedidoPassaCorteDataEmissao(pedido, dataEmissaoMin)) continue;
+    if (!pedidoElegivelFornecedor(pedido)) continue;
+    const embarquesDoPedido = sortEmbarquesParaExibicao(
+      embarquesPorPedido[pedido.id] || [],
+      pedido,
+    );
+    const { valor } = getTotaisPedido(pedido.id);
+    const linhasFolhaPreview = buildLinhasFolhaLogisticaFornecedor(
+      pedido,
+      embarquesDoPedido,
+      produtosMap,
+      { somenteSaldoAvaria, valorPedidoTotal: valor },
+    );
+    if (!linhasFolhaPreview.length) continue;
+    ensurePedidoBloco(pedido.id, pedido.fornecedor_nome || '—');
+  }
+
   for (const card of cardsDeEmbarque) {
     const pedidoRef = pedidoPorId.get(card.id) || card;
     if (!pedidoPassaCorteDataEmissao(pedidoRef, dataEmissaoMin)) continue;
@@ -457,9 +553,6 @@ export function buildRelatorioPendenteEmbarqueFornecedor(
     });
 
     const blocoPedido = ensurePedidoBloco(card.id, fornecedor);
-    blocoPedido.linhas.push(...linhasDetalhe);
-    blocoPedido.valor_pendente = roundToTwoDecimals(blocoPedido.valor_pendente + valorPendente);
-    blocoPedido.base_pendente = roundToTwoDecimals(blocoPedido.base_pendente + basePendente);
     blocoPedido.embarques_resumo.push({
       embarque_codigo: embarqueCodigo,
       motivo,
@@ -487,8 +580,21 @@ export function buildRelatorioPendenteEmbarqueFornecedor(
   }
 
   const pedidosLista = [...pedidosRelatorio.values()]
+    .map((p) => {
+      const pedidoOrigem = pedidoPorId.get(p.pedido_id) || {};
+      const embarquesDoPedido = sortEmbarquesParaExibicao(
+        embarquesPorPedido[p.pedido_id] || [],
+        pedidoOrigem,
+      );
+      return finalizarPedidoRelatorio(
+        p,
+        pedidoOrigem,
+        produtosMap,
+        embarquesDoPedido,
+        { somenteSaldoAvaria },
+      );
+    })
     .filter((p) => p.linhas.length > 0)
-    .map((p) => finalizarPedidoRelatorio(p, pedidoPorId.get(p.pedido_id) || {}, produtosMap))
     .sort((a, b) => {
       const fa = a.fornecedor.localeCompare(b.fornecedor, 'pt-BR');
       if (fa !== 0) return fa;
@@ -616,8 +722,8 @@ export function renderRelatorioPendenteEmbarqueFornecedorHtml(relatorio = {}, ti
         const rows = gfmt.linhas.map((l) => `
           <tr>
             <td class="col-modelo">${l.produto_nome}<span class="emb-ref"> · ${l.embarque_codigo}</span></td>
-            <td class="col-num">${Number(l.quantidade_pedido).toLocaleString('pt-BR')}</td>
-            <td class="col-num">${Number(l.quantidade_embarcada).toLocaleString('pt-BR')}</td>
+            <td class="col-num">${Number(l.quantidade_comprada ?? l.quantidade_pedido).toLocaleString('pt-BR')}</td>
+            <td class="col-num">${Number(l.quantidade_em_transito ?? l.quantidade_embarcada).toLocaleString('pt-BR')}</td>
             <td class="col-num">${Number(l.quantidade_recebida).toLocaleString('pt-BR')}</td>
             <td class="col-num pend">${Number(l.quantidade_pendente).toLocaleString('pt-BR')}</td>
             <td class="col-num pct">${pct(l.pct_cx_sobre_linha_pedido)}</td>
@@ -631,11 +737,11 @@ export function renderRelatorioPendenteEmbarqueFornecedorHtml(relatorio = {}, ti
           <table>
             <thead>
               <tr>
-                <th class="col-modelo">Modelo / embarque</th>
-                <th class="col-num">Pedido</th>
-                <th class="col-num">Embarc.</th>
-                <th class="col-num">Receb.</th>
-                <th class="col-num">Avaria (cx)</th>
+                <th class="col-modelo">Modelo</th>
+                <th class="col-num">Comprada (cx)</th>
+                <th class="col-num">Trânsito (cx)</th>
+                <th class="col-num">Receb. (cx)</th>
+                <th class="col-num">Pendente (cx)</th>
                 <th class="col-num">% modelo</th>
                 <th class="col-num">% pedido</th>
                 <th class="col-num">Valor</th>
