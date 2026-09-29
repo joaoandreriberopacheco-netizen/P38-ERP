@@ -1,7 +1,10 @@
 # Fecha KPI de vendas do dashboard com a mesma lógica do Relatório de Margem.
-# Corre após o cron Postgres (05:05 UTC) para gravar ontem com custos de hoje.
 #
-# 05:10 UTC = 00:10 Tabatinga
+# Cron diário DESACTIVADO (set/2026 — pedido João André). Só manual:
+#   GitHub Actions → "Dashboard KPI margem" → Run workflow
+#   ou local: npm run dashboard:kpi-margem-fechar
+#
+# Postgres ainda corre job_fechar_dashboard_kpi_ontem (estoque/anotações) — ver migration 085.
 
 name: Dashboard KPI margem
 
@@ -10,8 +13,6 @@ concurrency:
   cancel-in-progress: false
 
 on:
-  schedule:
-    - cron: '10 5 * * *'
   workflow_dispatch:
     inputs:
       month:

@@ -29,7 +29,7 @@ Documento para a equipa: como o P38 trata **resultado histórico** (mês encerra
 
 Gráficos e KPIs de **lucro** (diário, acumulado, 6 meses, rosca, donuts) leem `profit` / `profitByDay` do snapshot KPI (`relatorio_margem_v1`), com prioridade sobre células legadas.
 
-Comando do job (também em GitHub Actions, ~05:10 UTC):
+Comando do job (**manual** — cron GitHub desactivado set/2026; Actions → *Dashboard KPI margem* → Run workflow):
 
 ```bash
 npm run dashboard:kpi-margem-fechar
