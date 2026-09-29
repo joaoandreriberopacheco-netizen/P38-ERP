@@ -327,8 +327,8 @@ function ProdutosPlanaTable({
   const visibleProdutos = filteredProdutos.slice(virtualRows.startIndex, virtualRows.endIndex);
   const colSpan = 1 + visibleColumns.length;
   const containerClass = embedded
-    ? 'w-full h-full overflow-auto bg-background'
-    : 'hidden desktop-layout:block w-full h-full overflow-auto border border-border/40 rounded bg-background';
+    ? 'flex flex-1 min-h-0 w-full overflow-auto bg-background'
+    : 'hidden desktop-layout:flex desktop-layout:flex-1 desktop-layout:min-h-0 desktop-layout:w-full desktop-layout:overflow-auto border border-border/40 rounded bg-background';
 
   return (
     <div

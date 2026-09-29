@@ -1,6 +1,7 @@
 import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
 import { inicioDiaSistemaISO, fimDiaSistemaISO } from '@/components/utils/dateUtils';
+import { hydratePedidosVendaItensFromSql } from '@/lib/fetchPedidoVendaItens';
 import {
   iso90DiasAtras,
   isoDiasAtrasDateKey,
@@ -262,7 +263,8 @@ async function buscarPedidos90dBase() {
 export async function fetchPedidosVenda90d() {
   const dataKey = isoDiasAtrasDateKey(90);
   const pedidosBase = await buscarPedidos90dBase();
-  return hidratarPedidosSemItens(pedidosBase, dataKey);
+  const hydratedLegacy = await hidratarPedidosSemItens(pedidosBase, dataKey);
+  return hydratePedidosVendaItensFromSql(base44, hydratedLegacy);
 }
 
 /**

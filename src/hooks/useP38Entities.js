@@ -241,17 +241,15 @@ export function usePedidosCompraGestaoInicialQuery(options = {}) {
 }
 
 export function usePedidosVenda90dQuery(options = {}) {
-  const queryClient = useQueryClient();
-  const cachedPedidos = queryClient.getQueryData(p38Keys.dadosVendaAbcd90d())?.pedidos90d;
+  const { enabled = true, ...rest } = options;
 
   return useQuery({
     queryKey: p38Keys.pedidosVenda90d(),
     queryFn: fetchPedidosVenda90d,
     staleTime: 10 * 60 * 1000,
     gcTime: P38_GC_TIME,
-    enabled: (options.enabled ?? true) && !cachedPedidos?.length,
-    placeholderData: cachedPedidos,
-    ...options,
+    enabled,
+    ...rest,
   });
 }
 

@@ -66,7 +66,7 @@ import { downloadBlob } from '@/lib/mobilePrintAndShare';
 import {
   useProdutosComIepQuery,
   useFornecedoresQuery,
-  usePedidosVenda90dQuery,
+  useDadosVendaAbcd90dQuery,
 } from '@/hooks/useP38Entities';
 import { usePermissoesUsuario } from '@/hooks/usePermissoesUsuario';
 import { filtrarColunasCatalogoPorPermissao } from '@/lib/permissaoKit';
@@ -1215,14 +1215,15 @@ function ProdutosPageContent({ hierarchyMode = 'cadastro' } = {}) {
     return filtersNeedSalesVelocity(filters);
   }, [visibleColumns, filters]);
 
-  const { data: pedidosVenda90d = [] } = usePedidosVenda90dQuery({
-    enabled: needsSalesVelocity,
+  const { data: dadosVenda90d } = useDadosVendaAbcd90dQuery({
+    enabled: needsSalesVelocity && produtos.length > 0,
   });
 
   const salesVelocityMap = useMemo(() => {
     if (!needsSalesVelocity) return {};
-    return buildCatalogSalesVelocityMap(produtos, pedidosVenda90d);
-  }, [needsSalesVelocity, produtos, pedidosVenda90d]);
+    const pedidos = dadosVenda90d?.pedidos90d ?? [];
+    return buildCatalogSalesVelocityMap(produtos, pedidos);
+  }, [needsSalesVelocity, produtos, dadosVenda90d?.pedidos90d]);
 
   const filteredProdutosBase = useMemo(
     () => filterProdutos(produtos, filters, { salesVelocityMap, catalogStockContext }),
@@ -1713,17 +1714,19 @@ function ProdutosPageContent({ hierarchyMode = 'cadastro' } = {}) {
         )}
 
         {isDesktop && viewMode === 'plana' && (
-          <ProdutosPlanaTable
-            filteredProdutos={filteredProdutos}
-            visibleColumns={visibleColumnsEffective}
-            handleEdit={handleEdit}
-            setProdutoParaExcluir={setProdutoParaExcluir}
-            formatarNumero={formatarNumero}
-            fornecedorMap={fornecedorMap}
-            handleCreateSimilar={handleCreateSimilar}
-            salesVelocityMap={salesVelocityMap}
-            catalogStockContext={catalogStockContext}
-          />
+          <div className="flex flex-1 flex-col w-full min-h-0 overflow-hidden">
+            <ProdutosPlanaTable
+              filteredProdutos={filteredProdutos}
+              visibleColumns={visibleColumnsEffective}
+              handleEdit={handleEdit}
+              setProdutoParaExcluir={setProdutoParaExcluir}
+              formatarNumero={formatarNumero}
+              fornecedorMap={fornecedorMap}
+              handleCreateSimilar={handleCreateSimilar}
+              salesVelocityMap={salesVelocityMap}
+              catalogStockContext={catalogStockContext}
+            />
+          </div>
         )}
       </div>
 
