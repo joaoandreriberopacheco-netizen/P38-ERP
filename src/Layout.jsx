@@ -30,6 +30,7 @@ const MobileFunctionSelector = React.lazy(() => import('@/components/navigation/
 /** Mobile: scroll interno na página (evita body + nested scroll). */
 const MOBILE_FULL_VIEWPORT_PAGES = new Set([
   'Produtos',
+  'ProdutosCatalogo4x3',
   'RelatorioMargem',
   'PrecoJustoDashboard',
   'RelatorioCatalogoEstoque',
@@ -48,6 +49,7 @@ const MOBILE_FULL_VIEWPORT_PAGES = new Set([
 /** Desktop: catálogo/relatórios densos ocupam altura do viewport. */
 const DESKTOP_FULL_HEIGHT_PAGES = new Set([
   'Produtos',
+  'ProdutosCatalogo4x3',
   'RelatorioMargem',
   'PrecoJustoDashboard',
   'RelatorioCatalogoEstoque',
@@ -66,7 +68,7 @@ const DESKTOP_FULL_HEIGHT_PAGES = new Set([
 /** Rotas PDV no mobile: mantêm GlacialBottomNav (atalho rápido em overlay continua fullscreen). */
 const MOBILE_PDV_IN_SHELL_ROUTES = new Set(['PDV', 'PDVCaixa', 'PDVVendedor']);
 /** Páginas pesadas onde expandir o menu não deve reflowar todo o conteúdo. */
-const DESKTOP_OVERLAY_SIDEBAR_PAGES = new Set(['VendasGestao', 'Produtos']);
+const DESKTOP_OVERLAY_SIDEBAR_PAGES = new Set(['VendasGestao', 'Produtos', 'ProdutosCatalogo4x3']);
 
 const LayoutOutlet = React.memo(function LayoutOutlet({ children }) {
   return children;

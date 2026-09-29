@@ -861,7 +861,7 @@ function useCatalogColumnHeaderPin(scrollElement) {
   return { sentinelRef, pinned, pinFrame };
 }
 
-/** Catálogo mobile — amarelo some ao rolar; colunas fixam no topo (scroll flex, não caixa com maxHeight). */
+/** Catálogo mobile — cabeçalho fixo; lista com scroll interno (flex-1/min-h-0, padrão Margem/VendasGestao). */
 export function CatalogoMobileScrollShell({ catalogChrome, children }) {
   const scrollRef = useRef(null);
   const [scrollElement, setScrollElement] = useState(null);
@@ -878,24 +878,26 @@ export function CatalogoMobileScrollShell({ catalogChrome, children }) {
 
   return (
     <CatalogoMobileScrollContext.Provider value={scrollElement}>
-      <div
-        ref={scrollRef}
-        className="flex flex-1 min-h-0 w-full min-w-0 flex-col p38-stage-panel-scroll overflow-x-hidden touch-pan-y pb-[var(--p38-scroll-pad-below-nav)]"
-        style={{ WebkitOverflowScrolling: 'touch' }}
-      >
-        {catalogChrome}
-        <div ref={sentinelRef} className="h-px w-full shrink-0" aria-hidden />
-        <CatalogoMobileColumnHeader
-          className="border-x border-border/40 dark:border-white/10"
-          invisible={pinned}
-        />
-        {pinned ? (
+      <div className="flex flex-1 min-h-0 h-full w-full min-w-0 flex-col overflow-hidden">
+        {catalogChrome ? <div className="flex-none shrink-0 min-w-0">{catalogChrome}</div> : null}
+        <div
+          ref={scrollRef}
+          className="flex-1 min-h-0 w-full min-w-0 overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y pb-[var(--p38-scroll-pad-below-nav)]"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
+          <div ref={sentinelRef} className="h-px w-full shrink-0" aria-hidden />
           <CatalogoMobileColumnHeader
             className="border-x border-border/40 dark:border-white/10"
-            pinStyle={pinStyle}
+            invisible={pinned}
           />
-        ) : null}
-        {children}
+          {pinned ? (
+            <CatalogoMobileColumnHeader
+              className="border-x border-border/40 dark:border-white/10"
+              pinStyle={pinStyle}
+            />
+          ) : null}
+          {children}
+        </div>
       </div>
     </CatalogoMobileScrollContext.Provider>
   );
@@ -1023,6 +1025,18 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
         </div>
         <p className="text-sm font-medium text-muted-foreground">Nenhum produto encontrado</p>
         <p className="text-xs text-muted-foreground mt-1">Tente ajustar os filtros de busca</p>
+      </div>
+    );
+  }
+
+  if (rows.length === 0) {
+    return (
+      <div className="py-16 text-center px-8 border-x border-t-0 border-border/40 dark:border-white/10">
+        <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-3">
+          <Package className="w-7 h-7 text-muted-foreground dark:text-muted-foreground" />
+        </div>
+        <p className="text-sm font-medium text-muted-foreground">Nenhum produto nesta vista</p>
+        <p className="text-xs text-muted-foreground mt-1">Expanda níveis da árvore ou limpe filtros</p>
       </div>
     );
   }

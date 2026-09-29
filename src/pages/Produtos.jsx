@@ -1677,7 +1677,7 @@ function ProdutosPageContent({ hierarchyMode = 'cadastro' } = {}) {
   );
 
   return (
-    <div className="flex flex-1 min-h-0 flex-col overflow-hidden w-full max-w-full bg-background">
+    <div className="flex flex-1 min-h-0 h-full flex-col overflow-hidden w-full max-w-full bg-background">
       {isDesktop && (
         <div className="flex-none">
           <ProdutosHeader key="catalog-desktop" {...produtosHeaderProps} />
@@ -1699,9 +1699,11 @@ function ProdutosPageContent({ hierarchyMode = 'cadastro' } = {}) {
         )}
 
         {!isDesktop && (
-          <CatalogoMobileScrollShell catalogChrome={mobileCatalogChrome}>
-            <MobileHierarquica produtos={produtosArvore} onEdit={handleEdit} flatList groupByCategory={false} hierarchyMode={hierarchyMode} masterLevel={treeLevel} sortOrder={sortOrder} onExpandedKeysChange={handleCatalogExpandedKeysChange} catalogFilters={filters} salesVelocityMap={salesVelocityMap} catalogStockContext={catalogStockContext} />
-          </CatalogoMobileScrollShell>
+          <div className="flex flex-1 min-h-0 h-full w-full min-w-0 flex-col overflow-hidden">
+            <CatalogoMobileScrollShell catalogChrome={mobileCatalogChrome}>
+              <MobileHierarquica produtos={produtosArvore} onEdit={handleEdit} flatList groupByCategory={false} hierarchyMode={hierarchyMode} masterLevel={treeLevel} sortOrder={sortOrder} onExpandedKeysChange={handleCatalogExpandedKeysChange} catalogFilters={filters} salesVelocityMap={salesVelocityMap} catalogStockContext={catalogStockContext} />
+            </CatalogoMobileScrollShell>
+          </div>
         )}
 
         {isDesktop && viewMode === 'dinamica' && (
