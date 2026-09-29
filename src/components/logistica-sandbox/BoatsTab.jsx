@@ -27,6 +27,7 @@ import FluvialMapDetailPanel from '@/components/logistica-sandbox/FluvialMapDeta
 import FluvialTimeline from '@/components/logistica-sandbox/FluvialTimeline';
 import FluvialMapLegend from '@/components/logistica-sandbox/FluvialMapLegend';
 import '@/components/logistica-sandbox/fluvial-map-premium.css';
+import { useEnsureFluvialViagensHorizon } from '@/hooks/useEnsureFluvialViagensHorizon';
 
 const LAYER_OPTIONS = [
   { value: 'lista', label: 'Lista', icon: List },
@@ -276,6 +277,8 @@ export default function BoatsTab() {
   const { data: embarquesData = [], isPending: embarquesPending } = useLogisticaEmbarquesQuery();
   const { data: lancamentosFretesData = [], isPending: lancamentosPending } = useLogisticaLancamentosFretesQuery();
   const viagensCarregando = eventosPending || embarquesPending || lancamentosPending;
+
+  useEnsureFluvialViagensHorizon({ enabled: !isPending && transportadorasData.length > 0 });
 
   const eventosEnriquecidos = useMemo(() => buildFluvialEvents({
     eventosLogisticos: eventosData,

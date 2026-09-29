@@ -23,6 +23,7 @@ import BoatsTab from '@/components/logistica-sandbox/BoatsTab';
 import ItinerarioFluvialMobile from '@/components/logistica-sandbox/mobile/ItinerarioFluvialMobile';
 import FreteDetailPanel from '@/components/logistica-sandbox/FreteDetailPanel';
 import FluvialActionFab from '@/components/logistica-sandbox/FluvialActionFab';
+import { useEnsureFluvialViagensHorizon } from '@/hooks/useEnsureFluvialViagensHorizon';
 
 export default function ItinerarioFluvial() {
   const [routeType, setRouteType] = useState('Fluvial');
@@ -35,6 +36,8 @@ export default function ItinerarioFluvial() {
   const [periodoFiltro, setPeriodoFiltro] = useState(FLUVIAL_DEFAULT_PERIOD);
   const todayRef = React.useRef(null);
   const queryClient = useQueryClient();
+
+  useEnsureFluvialViagensHorizon();
 
   const { data: eventosLogisticos = [], isPending: eventosPending, isFetching: eventosFetching } = useLogisticaEventosQuery();
   const { data: embarques = [], isPending: embarquesPending } = useLogisticaEmbarquesQuery();

@@ -1,5 +1,6 @@
 // Port automático de base44/functions/gerarViagensTransportadora/entry.ts
 import type { createP38Client } from '../p38Client.ts';
+import { fluvialLimiteProspectivoKey } from '../fluvialForecastHorizon.ts';
 
 function createUtcDate(dateString, hour = 12) {
   const [year, month, day] = dateString.split('-').map(Number);
@@ -60,12 +61,6 @@ function isSameOrBefore(dateA, dateB) {
   return createUtcDate(dateA).getTime() <= createUtcDate(dateB).getTime();
 }
 
-function addMonths(dateString, months) {
-  const date = createUtcDate(dateString, 12);
-  date.setUTCMonth(date.getUTCMonth() + months);
-  return formatDate(date);
-}
-
 export async function handle(req: Request, base44: Awaited<ReturnType<typeof createP38Client>>): Promise<Response> {
   try {
     // base44 injetado por servePorted
@@ -92,8 +87,7 @@ export async function handle(req: Request, base44: Awaited<ReturnType<typeof cre
       return Response.json({ error: 'Transportadora sem saída de referência' }, { status: 400 });
     }
 
-    const hoje = formatDate(new Date());
-    const limiteProspectivo = addMonths(hoje, 3);
+    const limiteProspectivo = fluvialLimiteProspectivoKey();
     const sequenciaMaxima = 999;
 
     const viagensDaTransportadora = await base44.asServiceRole.entities.EventoLogisticoSandbox.filter(

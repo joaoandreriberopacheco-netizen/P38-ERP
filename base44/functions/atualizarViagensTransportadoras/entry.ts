@@ -16,7 +16,6 @@ Deno.serve(async (req) => {
       if (!transportadora.saida_referencia) continue;
       const response = await base44.asServiceRole.functions.invoke('gerarViagensTransportadora', {
         transportadoraId: transportadora.id,
-        ensureNextMonthOnly: true,
       });
       resultados.push({ transportadoraId: transportadora.id, ...response.data });
     }
