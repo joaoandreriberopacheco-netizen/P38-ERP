@@ -8,6 +8,43 @@ import { dataHoje, formatarLogTime } from '@/components/utils/dateUtils';
 
 const roundToTwoDecimals = (n) => Math.round((Number(n) || 0) * 100) / 100;
 
+function qtdComercialItemPedido(item = {}) {
+  const q = Number(item?.quantidade ?? item?.quantidade_comercial);
+  return Number.isFinite(q) && q > 0 ? q : 0;
+}
+
+/**
+ * Valor sugerido do acordo órfão: soma (qtd no acordo × custo unit. da linha do pedido),
+ * na mesma unidade comercial do pedido.
+ */
+export function calcularValorSugeridoAcordoOrfao(
+  itensOrfaos = [],
+  qtdBaixaComercialMap = {},
+  pedido = {},
+) {
+  let total = 0;
+  for (const orfao of itensOrfaos) {
+    const itemPedido = (pedido?.itens || []).find(
+      (it) => String(it?.produto_id) === String(orfao?.produto_id),
+    );
+    if (!itemPedido) continue;
+    const qAcordo = parseFloat(qtdBaixaComercialMap[orfao.produto_id]) || 0;
+    if (qAcordo <= 0) continue;
+
+    const unitApres = Number(itemPedido.custo_final_unitario_apresentacao);
+    if (Number.isFinite(unitApres) && unitApres > 0) {
+      total += qAcordo * unitApres;
+      continue;
+    }
+
+    const qPed = qtdComercialItemPedido(itemPedido);
+    if (qPed > 0) {
+      total += (qAcordo / qPed) * getTotalLinhaPedidoCompra(itemPedido);
+    }
+  }
+  return roundToTwoDecimals(total);
+}
+
 /** Total da linha: prioriza `total` gravado no item (formulário); senão recalcula. */
 export function getTotalLinhaPedidoCompra(item = {}) {
   const totalDireto = Number(item?.total ?? item?.valor_total_item ?? item?.subtotal);

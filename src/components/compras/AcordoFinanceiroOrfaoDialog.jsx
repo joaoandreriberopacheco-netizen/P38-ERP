@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog.jsx';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +15,10 @@ import {
 } from '@/lib/aplicarAcordoFinanceiroOrfaos';
 import { calculateBaseQuantity } from '@/lib/productUnits';
 import { listarAcordosOrfaoComBaixaPendente } from '@/lib/acordoFinanceiroOrfaoLancamento';
-import { listarLancamentosPedidoCompra } from '@/lib/pedidoCompraFinanceiro';
+import {
+  calcularValorSugeridoAcordoOrfao,
+  listarLancamentosPedidoCompra,
+} from '@/lib/pedidoCompraFinanceiro';
 import { invokeRecalcularConclusaoPedidoCompra } from '@/lib/p38StockRecalc';
 
 // itensOrfaos: [{ produto_id, produto_nome, qtd_pendente, unidade_medida, qtd_pendente_comercial }]
@@ -37,10 +40,20 @@ export default function AcordoFinanceiroOrfaoDialog({
   const [qtdBaixaComercial, setQtdBaixaComercial] = useState({});
   /** Acordo financeiro já lançado sem baixa na folha — não se resolve neste ecrã (ex.: legado KA2-K4Q). */
   const [acordoLegadoSemBaixa, setAcordoLegadoSemBaixa] = useState(null);
+  const valorEditadoManualRef = useRef(false);
+
+  const valorSugerido = useMemo(
+    () => calcularValorSugeridoAcordoOrfao(itensOrfaos, qtdBaixaComercial, pedido),
+    [itensOrfaos, qtdBaixaComercial, pedido],
+  );
 
   useEffect(() => {
     if (!isOpen) return;
-    base44.entities.ContasFinanceiras.list().then(setContas).catch(() => {});
+    valorEditadoManualRef.current = false;
+    base44.entities.ContasFinanceiras.list().then((lista) => {
+      setContas(lista || []);
+      if (!contaId && lista?.length === 1) setContaId(lista[0].id);
+    }).catch(() => {});
     listarLancamentosPedidoCompra(base44, pedido?.id)
       .then((lancs) => {
         const pendentes = listarAcordosOrfaoComBaixaPendente(pedido, lancs);
@@ -57,6 +70,13 @@ export default function AcordoFinanceiroOrfaoDialog({
   }, [isOpen, itensOrfaos, pedido?.id, pedido?.historico]);
 
   const bloqueadoLegado = Boolean(acordoLegadoSemBaixa);
+
+  useEffect(() => {
+    if (!isOpen || acordoLegadoSemBaixa || valorEditadoManualRef.current) return;
+    if (valorSugerido > 0) {
+      setValor(String(valorSugerido).replace('.', ','));
+    }
+  }, [isOpen, valorSugerido, acordoLegadoSemBaixa]);
 
   const buildItensComBaixa = () =>
     (itensOrfaos || []).map((orfao) => {
@@ -91,12 +111,22 @@ export default function AcordoFinanceiroOrfaoDialog({
 
   const handleConfirmar = async () => {
     if (bloqueadoLegado) return;
-    if (!valor || parseFloat(valor) <= 0) return toast.error('Informe o valor do acordo');
+    const valorNum = parseFloat(String(valor).replace(',', '.'));
+    if (!Number.isFinite(valorNum) || valorNum <= 0) {
+      return toast.error('Informe o valor do acordo');
+    }
     if (!contaId) return toast.error('Selecione a conta financeira');
 
     setLoading(true);
     try {
       const itensComBaixa = buildItensComBaixa();
+      const temBaixa = itensComBaixa.some((i) => (Number(i.qtd_baixa_base) || 0) > 0.009);
+      if (!temBaixa) {
+        toast.error('Informe a quantidade em pelo menos um item do acordo');
+        return;
+      }
+
+      const contaSelecionada = contas.find((c) => c.id === contaId);
 
       const descricaoItens = itensComBaixa.map((i) => {
         const qtd = qtdBaixaComercial[i.produto_id] ?? i.qtd_pendente_comercial ?? i.qtd_pendente;
@@ -108,10 +138,13 @@ export default function AcordoFinanceiroOrfaoDialog({
         tipo: 'Receita',
         terceiro_id: pedido.fornecedor_id,
         terceiro_nome: pedido.fornecedor_nome,
-        valor: parseFloat(valor),
+        valor: valorNum,
+        valor_liquido: valorNum,
         data_vencimento: dataHoje(),
         status: 'Em Aberto',
+        categoria: 'Acordo — Pedido de Compra',
         conta_financeira_id: contaId,
+        conta_financeira_nome: contaSelecionada?.nome || '',
         referencia_id: pedido.id,
         referencia_tipo: 'PedidoCompra',
         referencia_numero: pedido.numero,
@@ -135,22 +168,28 @@ export default function AcordoFinanceiroOrfaoDialog({
       );
 
       const lancamentoId = lancamento?.id;
-      if (lancamentoId) {
-        const { ok, error, resumo } = await aplicarBaixaLogisticaAcordoFinanceiroOrfaos(base44, {
-          pedido,
-          embarques,
-          itensOrfaos: itensComBaixa,
-          lancamentoId,
-          produtosMap,
-          baixarQuantidades: true,
+      if (!lancamentoId) {
+        throw new Error('O lançamento financeiro não foi gravado (resposta sem ID).');
+      }
+
+      const { ok, error, resumo } = await aplicarBaixaLogisticaAcordoFinanceiroOrfaos(base44, {
+        pedido,
+        embarques,
+        itensOrfaos: itensComBaixa,
+        lancamentoId,
+        produtosMap,
+        baixarQuantidades: true,
+      });
+      if (!ok) {
+        toast.error(
+          error || 'Acordo financeiro criado, mas o ajuste na folha logística falhou. Revise o financeiro.',
+        );
+        return;
+      }
+      if (resumo?.some((r) => r.nao_aplicado_base > 0.009)) {
+        toast.message('Acordo registrado com ressalva', {
+          description: 'Parte da quantidade não pôde ser baixada na folha — revise o pedido.',
         });
-        if (!ok) {
-          toast.error(error || 'Acordo financeiro criado, mas o ajuste na folha logística falhou.');
-        } else if (resumo?.some((r) => r.nao_aplicado_base > 0.009)) {
-          toast.message('Acordo registrado com ressalva', {
-            description: 'Parte da quantidade não pôde ser baixada na folha — revise o pedido.',
-          });
-        }
       }
 
       await invokeRecalcularConclusaoPedidoCompra(base44, pedido.id);
@@ -294,9 +333,19 @@ export default function AcordoFinanceiroOrfaoDialog({
                   inputMode="decimal"
                   placeholder="0,00"
                   value={valor}
-                  onChange={(e) => setValor(e.target.value.replace(',', '.'))}
+                  onChange={(e) => {
+                    valorEditadoManualRef.current = true;
+                    setValor(e.target.value.replace(',', '.'));
+                  }}
                   className="bg-muted/50 border-0 shadow-sm text-foreground dark:text-foreground placeholder:text-muted-foreground"
                 />
+                {valorSugerido > 0 && (
+                  <p className="text-[10px] text-muted-foreground">
+                    Sugerido: R${' '}
+                    {valorSugerido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (quantidade ×
+                    custo unit. do pedido)
+                  </p>
+                )}
               </div>
 
               <div className="space-y-1.5">
