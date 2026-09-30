@@ -1,0 +1,849 @@
+{
+  "generated_at": "2026-09-11T18:46:43.176Z",
+  "apply": true,
+  "fonte": "Iquine (iquine.com.br) + Verbras (verbrascorp.com.br)",
+  "resolved": [
+    {
+      "codigo_interno": "1DC-3WD",
+      "nome": "COLA BRANCA IQUINE 1KG",
+      "marca": "iquine",
+      "base": "cola",
+      "cor": null,
+      "hex": "#f5f5f5",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/1dc-3wd-iquine-cola.png",
+      "fonte_ref": "iquine:cola-branca"
+    },
+    {
+      "codigo_interno": "JGO-LM0",
+      "nome": "COLORANTE BASE AGUA (3,6L) IQUINE PRETO",
+      "marca": "iquine",
+      "base": "colorante",
+      "cor": "PRETO",
+      "hex": "#1a1a1a",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/jgo-lm0-iquine-preto.png",
+      "fonte_ref": "iquine:colorante-base-agua:preto"
+    },
+    {
+      "codigo_interno": "S56-FAX",
+      "nome": "COLORANTE BASE AGUA (3,6L) IQUINE PRETO",
+      "marca": "iquine",
+      "base": "colorante",
+      "cor": "PRETO",
+      "hex": "#1a1a1a",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/s56-fax-iquine-preto.png",
+      "fonte_ref": "iquine:colorante-base-agua:preto"
+    },
+    {
+      "codigo_interno": "29C-UHG",
+      "nome": "SELADOR P/ MADEIRA INCOLOR IQUINE - GL",
+      "marca": "iquine",
+      "base": "selador",
+      "cor": null,
+      "hex": "#f5f5f5",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/29c-uhg-iquine-selador.png",
+      "fonte_ref": "iquine:selador-incolor"
+    },
+    {
+      "codigo_interno": "B26-D8C",
+      "nome": "SELADOR P/ MADEIRA INCOLOR IQUINE - LT",
+      "marca": "iquine",
+      "base": "selador",
+      "cor": null,
+      "hex": "#f5f5f5",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/b26-d8c-iquine-selador.png",
+      "fonte_ref": "iquine:selador-incolor"
+    },
+    {
+      "codigo_interno": "NVM-2J1",
+      "nome": "TINTA (18 L) P/ PISO IQUINE BRANCO NEVE #G",
+      "marca": "iquine",
+      "base": "piso",
+      "cor": "BRANCO NEVE",
+      "hex": "#F5F4F2",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/nvm-2j1-iquine-branco-neve.png",
+      "fonte_ref": "iquine:diapiso-super-res:branco-neve"
+    },
+    {
+      "codigo_interno": "2JY-BXZ",
+      "nome": "TINTA (3,0L) ESMALTE VERBRAS AMARELO",
+      "marca": "verbras",
+      "base": "esmalte",
+      "cor": "AMARELO",
+      "hex": "#ffac00",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/2jy-bxz-verbras-amarelo.png",
+      "fonte_ref": "verbras:esmalte-secagem-rapida:amarelo"
+    },
+    {
+      "codigo_interno": "CR1-H4I",
+      "nome": "TINTA (3,0L) ESMALTE VERBRAS AMARELO CATERPILAR",
+      "marca": "verbras",
+      "base": "esmalte",
+      "cor": "AMARELO CATERPILAR",
+      "hex": "#ffcc00",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/cr1-h4i-verbras-amarelo-caterpilar.png",
+      "fonte_ref": "verbras:esmalte-secagem-rapida:amarelo-caterpilar"
+    },
+    {
+      "codigo_interno": "TGJ-H9W",
+      "nome": "TINTA (3,0L) ESMALTE VERBRAS AZUL FRANÇA",
+      "marca": "verbras",
+      "base": "esmalte",
+      "cor": "AZUL FRANÇA",
+      "hex": "#0066cc",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/tgj-h9w-verbras-azul-frana.png",
+      "fonte_ref": "verbras:esmalte-secagem-rapida:azul-franca"
+    },
+    {
+      "codigo_interno": "599-YVT",
+      "nome": "TINTA (3,0L) ESMALTE VERBRAS BRANCO",
+      "marca": "verbras",
+      "base": "esmalte",
+      "cor": "BRANCO",
+      "hex": "#f8f8f8",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/599-yvt-verbras-branco.png",
+      "fonte_ref": "verbras:esmalte-secagem-rapida:branco"
+    },
+    {
+      "codigo_interno": "TYN-6BR",
+      "nome": "TINTA (3,0L) ESMALTE VERBRAS CINZA MEDIO",
+      "marca": "verbras",
+      "base": "esmalte",
+      "cor": "CINZA MEDIO",
+      "hex": "#808080",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/tyn-6br-verbras-cinza-medio.png",
+      "fonte_ref": "verbras:esmalte-secagem-rapida:cinza-medio"
+    },
+    {
+      "codigo_interno": "WWR-Q2J",
+      "nome": "TINTA (3,0L) ESMALTE VERBRAS CREME",
+      "marca": "verbras",
+      "base": "esmalte",
+      "cor": "CREME",
+      "hex": "#f5f0dc",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/wwr-q2j-verbras-creme.png",
+      "fonte_ref": "verbras:esmalte-secagem-rapida:creme"
+    },
+    {
+      "codigo_interno": "31Y-X8Q",
+      "nome": "TINTA (3,0L) ESMALTE VERBRAS VERMELHO",
+      "marca": "verbras",
+      "base": "esmalte",
+      "cor": "VERMELHO",
+      "hex": "#cc0000",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/31y-x8q-verbras-vermelho.png",
+      "fonte_ref": "verbras:esmalte-secagem-rapida:vermelho"
+    },
+    {
+      "codigo_interno": "I29-LIP",
+      "nome": "TINTA (3,6 L) P/ PISO IQUINE AMARELO DEMARÇÃO",
+      "marca": "iquine",
+      "base": "piso",
+      "cor": "AMARELO DEMARÇÃO",
+      "hex": "#ffcc00",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/i29-lip-iquine-amarelo-demaro.png",
+      "fonte_ref": "iquine:diapiso-super-res:amarelo-demarcao"
+    },
+    {
+      "codigo_interno": "974-AQP",
+      "nome": "TINTA (3,6 L) P/ PISO IQUINE AZUL PROFUNDO",
+      "marca": "iquine",
+      "base": "piso",
+      "cor": "AZUL PROFUNDO",
+      "hex": "#003366",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/974-aqp-iquine-azul-profundo.png",
+      "fonte_ref": "iquine:diapiso-super-res:azul-profundo"
+    },
+    {
+      "codigo_interno": "YVN-8CA",
+      "nome": "TINTA (3,6 L) P/ PISO IQUINE BRRANCO NEVE",
+      "marca": "iquine",
+      "base": "piso",
+      "cor": "BRRANCO NEVE",
+      "hex": "#F5F4F2",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/yvn-8ca-iquine-brranco-neve.png",
+      "fonte_ref": "iquine:diapiso-super-res:brranco-neve"
+    },
+    {
+      "codigo_interno": "Q1P-V4O",
+      "nome": "TINTA (3,6 L) P/ PISO IQUINE CINZA ESCURO #G",
+      "marca": "iquine",
+      "base": "piso",
+      "cor": "CINZA ESCURO",
+      "hex": "#4a4a4a",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/q1p-v4o-iquine-cinza-escuro.png",
+      "fonte_ref": "iquine:diapiso-super-res:cinza-escuro"
+    },
+    {
+      "codigo_interno": "NU3-549",
+      "nome": "TINTA (3,6 L) P/ PISO IQUINE CINZA MEDIO",
+      "marca": "iquine",
+      "base": "piso",
+      "cor": "CINZA MEDIO",
+      "hex": "#808080",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/nu3-549-iquine-cinza-medio.png",
+      "fonte_ref": "iquine:diapiso-super-res:cinza-medio"
+    },
+    {
+      "codigo_interno": "73O-L22",
+      "nome": "TINTA (3,6 L) P/ PISO IQUINE VERMELHO #G",
+      "marca": "iquine",
+      "base": "piso",
+      "cor": "VERMELHO",
+      "hex": "#cc0000",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/73o-l22-iquine-vermelho.png",
+      "fonte_ref": "iquine:diapiso-super-res:vermelho"
+    },
+    {
+      "codigo_interno": "8EF-L4I",
+      "nome": "TINTA (3,6 L) STANDARD POUPE+ VERBRAS AMARELO FREVO",
+      "marca": "verbras",
+      "base": "poupe-fosco",
+      "cor": "AMARELO FREVO",
+      "hex": "#ffd700",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/8ef-l4i-verbras-amarelo-frevo.png",
+      "fonte_ref": "verbras:linha-poupe-standard-fosco:amarelo-frevo"
+    },
+    {
+      "codigo_interno": "98Y-LVX",
+      "nome": "TINTA (3,6 L) STANDARD POUPE+ VERBRAS AREIA",
+      "marca": "verbras",
+      "base": "poupe-fosco",
+      "cor": "AREIA",
+      "hex": "#E0CDB4",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/98y-lvx-verbras-areia.png",
+      "fonte_ref": "verbras:linha-poupe-standard-fosco:areia"
+    },
+    {
+      "codigo_interno": "ZO6-M1D",
+      "nome": "TINTA (3,6 L) STANDARD POUPE+ VERBRAS CREME",
+      "marca": "verbras",
+      "base": "poupe-fosco",
+      "cor": "CREME",
+      "hex": "#f5f0dc",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/zo6-m1d-verbras-creme.png",
+      "fonte_ref": "verbras:linha-poupe-standard-fosco:creme"
+    },
+    {
+      "codigo_interno": "UV1-2H4",
+      "nome": "TINTA (3,6 L) STANDARD POUPE+ VERBRAS GEADA",
+      "marca": "verbras",
+      "base": "poupe-fosco",
+      "cor": "GEADA",
+      "hex": "#e8eaf0",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/uv1-2h4-verbras-geada.png",
+      "fonte_ref": "verbras:linha-poupe-standard-fosco:geada"
+    },
+    {
+      "codigo_interno": "2ZG-NH3",
+      "nome": "TINTA (3,6 L) STANDARD POUPE+ VERBRAS MARFIM",
+      "marca": "verbras",
+      "base": "poupe-fosco",
+      "cor": "MARFIM",
+      "hex": "#fffff0",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/2zg-nh3-verbras-marfim.png",
+      "fonte_ref": "verbras:linha-poupe-standard-fosco:marfim"
+    },
+    {
+      "codigo_interno": "0PT-X6A",
+      "nome": "TINTA (3,6 L) STANDARD POUPE+ VERBRAS POENTE",
+      "marca": "verbras",
+      "base": "poupe-fosco",
+      "cor": "POENTE",
+      "hex": "#ff7f50",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/0pt-x6a-verbras-poente.png",
+      "fonte_ref": "verbras:linha-poupe-standard-fosco:poente"
+    },
+    {
+      "codigo_interno": "Z4M-40A",
+      "nome": "TINTA (3,6L) ESMALTE VERBRAS AMARELO CARTEPILA",
+      "marca": "verbras",
+      "base": "esmalte",
+      "cor": "AMARELO CARTEPILA",
+      "hex": "#ffcc00",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/z4m-40a-verbras-amarelo-cartepila.png",
+      "fonte_ref": "verbras:esmalte-secagem-rapida:amarelo-cartepila"
+    },
+    {
+      "codigo_interno": "KWQ-0FN",
+      "nome": "TINTA (3,6L) ESMALTE VERBRAS LARANJA",
+      "marca": "verbras",
+      "base": "esmalte",
+      "cor": "LARANJA",
+      "hex": "#ff6600",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/kwq-0fn-verbras-laranja.png",
+      "fonte_ref": "verbras:esmalte-secagem-rapida:laranja"
+    },
+    {
+      "codigo_interno": "HLI-7PN",
+      "nome": "TINTA (750 ML) ESMALTE VERBRAS AMARELO",
+      "marca": "verbras",
+      "base": "esmalte",
+      "cor": "AMARELO",
+      "hex": "#ffac00",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/hli-7pn-verbras-amarelo.png",
+      "fonte_ref": "verbras:esmalte-secagem-rapida:amarelo"
+    },
+    {
+      "codigo_interno": "K3E-BEU",
+      "nome": "TINTA (750 ML) ESMALTE VERBRAS AZUL FRANÇA",
+      "marca": "verbras",
+      "base": "esmalte",
+      "cor": "AZUL FRANÇA",
+      "hex": "#0066cc",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/k3e-beu-verbras-azul-frana.png",
+      "fonte_ref": "verbras:esmalte-secagem-rapida:azul-franca"
+    },
+    {
+      "codigo_interno": "8K7-EQG",
+      "nome": "TINTA (750 ML) ESMALTE VERBRAS CINZA MEDIO",
+      "marca": "verbras",
+      "base": "esmalte",
+      "cor": "CINZA MEDIO",
+      "hex": "#808080",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/8k7-eqg-verbras-cinza-medio.png",
+      "fonte_ref": "verbras:esmalte-secagem-rapida:cinza-medio"
+    },
+    {
+      "codigo_interno": "W2V-WM4",
+      "nome": "TINTA (750 ML) ESMALTE VERBRAS VERMELHO",
+      "marca": "verbras",
+      "base": "esmalte",
+      "cor": "VERMELHO",
+      "hex": "#cc0000",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/w2v-wm4-verbras-vermelho.png",
+      "fonte_ref": "verbras:esmalte-secagem-rapida:vermelho"
+    },
+    {
+      "codigo_interno": "PM4-4LX",
+      "nome": "TINTA (900 ML) ESMALTE VERBRAS AMARELO CARTEPILA",
+      "marca": "verbras",
+      "base": "esmalte",
+      "cor": "AMARELO CARTEPILA",
+      "hex": "#ffcc00",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/pm4-4lx-verbras-amarelo-cartepila.png",
+      "fonte_ref": "verbras:esmalte-secagem-rapida:amarelo-cartepila"
+    },
+    {
+      "codigo_interno": "J0K-IKQ",
+      "nome": "TINTA (900 ML) ESMALTE VERBRAS CREME",
+      "marca": "verbras",
+      "base": "esmalte",
+      "cor": "CREME",
+      "hex": "#f5f0dc",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/j0k-ikq-verbras-creme.png",
+      "fonte_ref": "verbras:esmalte-secagem-rapida:creme"
+    },
+    {
+      "codigo_interno": "9QD-SLQ",
+      "nome": "TINTA ANTICORROSIVA IQUINE 3,6 L PRETO",
+      "marca": "iquine",
+      "base": "anticorrosiva",
+      "cor": "PRETO",
+      "hex": "#1a1a1a",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/9qd-slq-iquine-preto.png",
+      "fonte_ref": "iquine:zarcofer:preto"
+    },
+    {
+      "codigo_interno": "A8D-NVQ",
+      "nome": "TINTA ANTICORROSIVA IQUINE 900 ML CINZA",
+      "marca": "iquine",
+      "base": "anticorrosiva",
+      "cor": "CINZA",
+      "hex": "#9e9e9e",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/a8d-nvq-iquine-cinza.png",
+      "fonte_ref": "iquine:zarcofer:cinza"
+    },
+    {
+      "codigo_interno": "M4N-1X0",
+      "nome": "TINTA ANTICORROSIVA IQUINE 900 ML LARANJA",
+      "marca": "iquine",
+      "base": "anticorrosiva",
+      "cor": "LARANJA",
+      "hex": "#ff6600",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/m4n-1x0-iquine-laranja.png",
+      "fonte_ref": "iquine:zarcofer:laranja"
+    },
+    {
+      "codigo_interno": "QCM-N40",
+      "nome": "TINTA ANTICORROSIVA IQUINE 900 ML PRETO",
+      "marca": "iquine",
+      "base": "anticorrosiva",
+      "cor": "PRETO",
+      "hex": "#1a1a1a",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/qcm-n40-iquine-preto.png",
+      "fonte_ref": "iquine:zarcofer:preto"
+    },
+    {
+      "codigo_interno": "9RT-LHD",
+      "nome": "TINTA ANTICORROSIVA ZARCOFER 3,6 L CINZA",
+      "marca": "iquine",
+      "base": "anticorrosiva",
+      "cor": "ZARCOFER CINZA",
+      "hex": "#9e9e9e",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/9rt-lhd-iquine-zarcofer-cinza.png",
+      "fonte_ref": "iquine:zarcofer:zarcofer-cinza"
+    },
+    {
+      "codigo_interno": null,
+      "nome": "TINTA ESMALTE IQUINE 3,0 L AMARELO",
+      "marca": "iquine",
+      "base": "esmalte",
+      "cor": "AMARELO",
+      "hex": "#ffac00",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/96ac8165-e97e-4b9a-92e8-18f48b7a8caa-iquine-amarelo.png",
+      "fonte_ref": "iquine:dialine-seca-rapido:amarelo"
+    },
+    {
+      "codigo_interno": null,
+      "nome": "TINTA ESMALTE IQUINE 3,0 L AZUL FRANÇA",
+      "marca": "iquine",
+      "base": "esmalte",
+      "cor": "AZUL FRANÇA",
+      "hex": "#0066cc",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/866cb4b5-1a5f-4e2c-8103-d8dc6ac60f3e-iquine-azul-frana.png",
+      "fonte_ref": "iquine:dialine-seca-rapido:azul-franca"
+    },
+    {
+      "codigo_interno": null,
+      "nome": "TINTA ESMALTE IQUINE 3,0 L AZUL MAR",
+      "marca": "iquine",
+      "base": "esmalte",
+      "cor": "AZUL MAR",
+      "hex": "#1a3a5c",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/0df9d9cb-5273-4eff-8bda-3ff2f9013971-iquine-azul-mar.png",
+      "fonte_ref": "iquine:dialine-seca-rapido:azul-mar"
+    },
+    {
+      "codigo_interno": null,
+      "nome": "TINTA ESMALTE IQUINE 3,0 L BRANCO NEVE",
+      "marca": "iquine",
+      "base": "esmalte",
+      "cor": "BRANCO NEVE",
+      "hex": "#F5F4F2",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/868217d9-1a41-4c68-984d-f7b17cea48fb-iquine-branco-neve.png",
+      "fonte_ref": "iquine:dialine-seca-rapido:branco-neve"
+    },
+    {
+      "codigo_interno": null,
+      "nome": "TINTA ESMALTE IQUINE 3,0 L CINZA MEDIO",
+      "marca": "iquine",
+      "base": "esmalte",
+      "cor": "CINZA MEDIO",
+      "hex": "#808080",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/4850494e-be5a-40d9-8b01-4175131fe4fa-iquine-cinza-medio.png",
+      "fonte_ref": "iquine:dialine-seca-rapido:cinza-medio"
+    },
+    {
+      "codigo_interno": null,
+      "nome": "TINTA ESMALTE IQUINE 3,0 L LARANJA",
+      "marca": "iquine",
+      "base": "esmalte",
+      "cor": "LARANJA",
+      "hex": "#ff6600",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/4607a41b-59b4-449a-b4ad-51d73a75fccc-iquine-laranja.png",
+      "fonte_ref": "iquine:dialine-seca-rapido:laranja"
+    },
+    {
+      "codigo_interno": null,
+      "nome": "TINTA ESMALTE IQUINE 3,0 L PRETO",
+      "marca": "iquine",
+      "base": "esmalte",
+      "cor": "PRETO",
+      "hex": "#1a1a1a",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/fc7a91ae-f01d-47f3-8cdf-1e4f770fd5cf-iquine-preto.png",
+      "fonte_ref": "iquine:dialine-seca-rapido:preto"
+    },
+    {
+      "codigo_interno": null,
+      "nome": "TINTA ESMALTE IQUINE 3,0 L TABACO",
+      "marca": "iquine",
+      "base": "esmalte",
+      "cor": "TABACO",
+      "hex": "#573512",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/3a425521-89eb-4375-92d1-413cede19efe-iquine-tabaco.png",
+      "fonte_ref": "iquine:dialine-seca-rapido:tabaco"
+    },
+    {
+      "codigo_interno": null,
+      "nome": "TINTA ESMALTE IQUINE 3,0 L VERDE FOLHA",
+      "marca": "iquine",
+      "base": "esmalte",
+      "cor": "VERDE FOLHA",
+      "hex": "#228B22",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/89bc81a6-fd79-4b21-8610-965a1e47221e-iquine-verde-folha.png",
+      "fonte_ref": "iquine:dialine-seca-rapido:verde-folha"
+    },
+    {
+      "codigo_interno": null,
+      "nome": "TINTA ESMALTE IQUINE 3,0 L VERDE LIMAO",
+      "marca": "iquine",
+      "base": "esmalte",
+      "cor": "VERDE LIMAO",
+      "hex": "#adff2f",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/f48afa20-2637-4dab-9a16-fa33bbcd6085-iquine-verde-limao.png",
+      "fonte_ref": "iquine:dialine-seca-rapido:verde-limao"
+    },
+    {
+      "codigo_interno": null,
+      "nome": "TINTA ESMALTE IQUINE 750 ML AMARELO",
+      "marca": "iquine",
+      "base": "esmalte",
+      "cor": "AMARELO",
+      "hex": "#ffac00",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/60d906b0-d870-4d4b-8859-e4ef5dda4d79-iquine-amarelo.png",
+      "fonte_ref": "iquine:dialine-seca-rapido:amarelo"
+    },
+    {
+      "codigo_interno": null,
+      "nome": "TINTA ESMALTE IQUINE 750 ML AZUL FRANÇA",
+      "marca": "iquine",
+      "base": "esmalte",
+      "cor": "AZUL FRANÇA",
+      "hex": "#0066cc",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/6277a734-0f75-40f6-b635-3cb42c77b236-iquine-azul-frana.png",
+      "fonte_ref": "iquine:dialine-seca-rapido:azul-franca"
+    },
+    {
+      "codigo_interno": null,
+      "nome": "TINTA ESMALTE IQUINE 750 ML AZUL MAR",
+      "marca": "iquine",
+      "base": "esmalte",
+      "cor": "AZUL MAR",
+      "hex": "#1a3a5c",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/a61e626d-df6a-4c7e-8581-bc32469bd63a-iquine-azul-mar.png",
+      "fonte_ref": "iquine:dialine-seca-rapido:azul-mar"
+    },
+    {
+      "codigo_interno": null,
+      "nome": "TINTA ESMALTE IQUINE 750 ML BRANCO NEVE",
+      "marca": "iquine",
+      "base": "esmalte",
+      "cor": "BRANCO NEVE",
+      "hex": "#F5F4F2",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/58c31cfe-09ca-43e8-ab65-f9e71ab942da-iquine-branco-neve.png",
+      "fonte_ref": "iquine:dialine-seca-rapido:branco-neve"
+    },
+    {
+      "codigo_interno": null,
+      "nome": "TINTA ESMALTE IQUINE 750 ML CINZA MEDIO",
+      "marca": "iquine",
+      "base": "esmalte",
+      "cor": "CINZA MEDIO",
+      "hex": "#808080",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/16412a6b-0e1b-4c3c-8a05-fd907e7f5022-iquine-cinza-medio.png",
+      "fonte_ref": "iquine:dialine-seca-rapido:cinza-medio"
+    },
+    {
+      "codigo_interno": null,
+      "nome": "TINTA ESMALTE IQUINE 750 ML LARANJA",
+      "marca": "iquine",
+      "base": "esmalte",
+      "cor": "LARANJA",
+      "hex": "#ff6600",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/e8b3484e-b745-4291-9178-7a8bd14a899c-iquine-laranja.png",
+      "fonte_ref": "iquine:dialine-seca-rapido:laranja"
+    },
+    {
+      "codigo_interno": null,
+      "nome": "TINTA ESMALTE IQUINE 750 ML PRETO",
+      "marca": "iquine",
+      "base": "esmalte",
+      "cor": "PRETO",
+      "hex": "#1a1a1a",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/738dad81-1464-4b0f-9527-08f5c1de0d6a-iquine-preto.png",
+      "fonte_ref": "iquine:dialine-seca-rapido:preto"
+    },
+    {
+      "codigo_interno": null,
+      "nome": "TINTA ESMALTE IQUINE 750 ML TABACO",
+      "marca": "iquine",
+      "base": "esmalte",
+      "cor": "TABACO",
+      "hex": "#573512",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/5863e1b4-cf4b-4535-9367-35bbf3f126be-iquine-tabaco.png",
+      "fonte_ref": "iquine:dialine-seca-rapido:tabaco"
+    },
+    {
+      "codigo_interno": null,
+      "nome": "TINTA ESMALTE IQUINE 750 ML VERDE FOLHA",
+      "marca": "iquine",
+      "base": "esmalte",
+      "cor": "VERDE FOLHA",
+      "hex": "#228B22",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/8f909029-a0cf-4cb9-adbb-d70d3185b178-iquine-verde-folha.png",
+      "fonte_ref": "iquine:dialine-seca-rapido:verde-folha"
+    },
+    {
+      "codigo_interno": null,
+      "nome": "TINTA ESMALTE IQUINE 750 ML VERDE LIMAO",
+      "marca": "iquine",
+      "base": "esmalte",
+      "cor": "VERDE LIMAO",
+      "hex": "#adff2f",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/daafe0eb-162d-4488-9e0b-49e187f0d7e4-iquine-verde-limao.png",
+      "fonte_ref": "iquine:dialine-seca-rapido:verde-limao"
+    },
+    {
+      "codigo_interno": "7PV-DMY",
+      "nome": "VERNIZ (3,0 L) VERBRAS INCOLOR",
+      "marca": "verbras",
+      "base": "verniz",
+      "cor": "INCOLOR",
+      "hex": "#f5f0e8",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/7pv-dmy-verbras-incolor.png",
+      "fonte_ref": "verbras:verniz-triplo-filtro-solar:incolor"
+    },
+    {
+      "codigo_interno": "VJ8-9KX",
+      "nome": "VERNIZ (3,0 L) VERBRAS MOGNO",
+      "marca": "verbras",
+      "base": "verniz",
+      "cor": "MOGNO",
+      "hex": "#5C3317",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/vj8-9kx-verbras-mogno.png",
+      "fonte_ref": "verbras:verniz-triplo-filtro-solar:mogno"
+    },
+    {
+      "codigo_interno": "MUL-BT4",
+      "nome": "VERNIZ (3,0 L) VERBRAS MOGNO COLONIAL",
+      "marca": "verbras",
+      "base": "verniz",
+      "cor": "MOGNO COLONIAL",
+      "hex": "#6B3A2A",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/mul-bt4-verbras-mogno-colonial.png",
+      "fonte_ref": "verbras:verniz-triplo-filtro-solar:mogno-colonial"
+    },
+    {
+      "codigo_interno": "T00-7ZL",
+      "nome": "VERNIZ (3,0 L) VERBRAS VINHO",
+      "marca": "verbras",
+      "base": "verniz",
+      "cor": "VINHO",
+      "hex": "#722F37",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/t00-7zl-verbras-vinho.png",
+      "fonte_ref": "verbras:verniz-triplo-filtro-solar:vinho"
+    },
+    {
+      "codigo_interno": "M6K-FUP",
+      "nome": "VERNIZ (3,6 L) IQUINE CEREJEIRA",
+      "marca": "iquine",
+      "base": "verniz",
+      "cor": "CEREJEIRA",
+      "hex": "#C96B4B",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/m6k-fup-iquine-cerejeira.png",
+      "fonte_ref": "iquine:verniz-selador-ref:cerejeira"
+    },
+    {
+      "codigo_interno": "4Q8-8IY",
+      "nome": "VERNIZ (3,6 L) IQUINE IMBUIA",
+      "marca": "iquine",
+      "base": "verniz",
+      "cor": "IMBUIA",
+      "hex": "#C4A574",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/4q8-8iy-iquine-imbuia.png",
+      "fonte_ref": "iquine:verniz-selador-ref:imbuia"
+    },
+    {
+      "codigo_interno": "CRS-4G4",
+      "nome": "VERNIZ (3,6 L) IQUINE INCOLOR",
+      "marca": "iquine",
+      "base": "verniz",
+      "cor": "INCOLOR",
+      "hex": "#f5f0e8",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/crs-4g4-iquine-incolor.png",
+      "fonte_ref": "iquine:verniz-selador-ref:incolor"
+    },
+    {
+      "codigo_interno": "QP6-C5A",
+      "nome": "VERNIZ (3,6 L) IQUINE MOGNO",
+      "marca": "iquine",
+      "base": "verniz",
+      "cor": "MOGNO",
+      "hex": "#5C3317",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/qp6-c5a-iquine-mogno.png",
+      "fonte_ref": "iquine:verniz-selador-ref:mogno"
+    },
+    {
+      "codigo_interno": "FP7-4XF",
+      "nome": "VERNIZ (3,6 L) IQUINE MOGNO COLONIAL",
+      "marca": "iquine",
+      "base": "verniz",
+      "cor": "MOGNO COLONIAL",
+      "hex": "#6B3A2A",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/fp7-4xf-iquine-mogno-colonial.png",
+      "fonte_ref": "iquine:verniz-selador-ref:mogno-colonial"
+    },
+    {
+      "codigo_interno": "0CD-53K",
+      "nome": "VERNIZ (3,6 L) IQUINE NOGUEIRA",
+      "marca": "iquine",
+      "base": "verniz",
+      "cor": "NOGUEIRA",
+      "hex": "#8B5A2B",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/0cd-53k-iquine-nogueira.png",
+      "fonte_ref": "iquine:verniz-selador-ref:nogueira"
+    },
+    {
+      "codigo_interno": "J1M-CQX",
+      "nome": "VERNIZ (3,6 L) IQUINE VINHO",
+      "marca": "iquine",
+      "base": "verniz",
+      "cor": "VINHO",
+      "hex": "#722F37",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/j1m-cqx-iquine-vinho.png",
+      "fonte_ref": "iquine:verniz-selador-ref:vinho"
+    },
+    {
+      "codigo_interno": "MB2-Y0U",
+      "nome": "VERNIZ (3,6 L) VERBRAS COPAIBA",
+      "marca": "verbras",
+      "base": "verniz",
+      "cor": "COPAIBA",
+      "hex": "#D4A574",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/mb2-y0u-verbras-copaiba.png",
+      "fonte_ref": "verbras:verniz-triplo-filtro-solar:copaiba"
+    },
+    {
+      "codigo_interno": "D1J-LIE",
+      "nome": "VERNIZ (3,6 L) VERBRAS IMBUIA",
+      "marca": "verbras",
+      "base": "verniz",
+      "cor": "IMBUIA",
+      "hex": "#C4A574",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/d1j-lie-verbras-imbuia.png",
+      "fonte_ref": "verbras:verniz-triplo-filtro-solar:imbuia"
+    },
+    {
+      "codigo_interno": "5GI-RPS",
+      "nome": "VERNIZ (3,6 L) VERBRAS MOGNO",
+      "marca": "verbras",
+      "base": "verniz",
+      "cor": "MOGNO",
+      "hex": "#5C3317",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/5gi-rps-verbras-mogno.png",
+      "fonte_ref": "verbras:verniz-triplo-filtro-solar:mogno"
+    },
+    {
+      "codigo_interno": "Z6P-1X2",
+      "nome": "VERNIZ (3,6 L) VERBRAS NOGUEIRA",
+      "marca": "verbras",
+      "base": "verniz",
+      "cor": "NOGUEIRA",
+      "hex": "#8B5A2B",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/z6p-1x2-verbras-nogueira.png",
+      "fonte_ref": "verbras:verniz-triplo-filtro-solar:nogueira"
+    },
+    {
+      "codigo_interno": "23G-UE3",
+      "nome": "VERNIZ (3,6 L) VERBRAS YPE",
+      "marca": "verbras",
+      "base": "verniz",
+      "cor": "YPE",
+      "hex": "#C9A86C",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/23g-ue3-verbras-ype.png",
+      "fonte_ref": "verbras:verniz-triplo-filtro-solar:ype"
+    },
+    {
+      "codigo_interno": "PHX-L8Q",
+      "nome": "VERNIZ (750 ML) VERBRAS INCOLOR",
+      "marca": "verbras",
+      "base": "verniz",
+      "cor": "INCOLOR",
+      "hex": "#f5f0e8",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/phx-l8q-verbras-incolor.png",
+      "fonte_ref": "verbras:verniz-triplo-filtro-solar:incolor"
+    },
+    {
+      "codigo_interno": "NVA-D0S",
+      "nome": "VERNIZ (750 ML) VERBRAS MOGNO",
+      "marca": "verbras",
+      "base": "verniz",
+      "cor": "MOGNO",
+      "hex": "#5C3317",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/nva-d0s-verbras-mogno.png",
+      "fonte_ref": "verbras:verniz-triplo-filtro-solar:mogno"
+    },
+    {
+      "codigo_interno": "MLO-S2I",
+      "nome": "VERNIZ (750 ML) VERBRAS MOGNO COLONIAL",
+      "marca": "verbras",
+      "base": "verniz",
+      "cor": "MOGNO COLONIAL",
+      "hex": "#6B3A2A",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/mlo-s2i-verbras-mogno-colonial.png",
+      "fonte_ref": "verbras:verniz-triplo-filtro-solar:mogno-colonial"
+    },
+    {
+      "codigo_interno": "78O-L3A",
+      "nome": "VERNIZ (750 ML) VERBRAS VINHO",
+      "marca": "verbras",
+      "base": "verniz",
+      "cor": "VINHO",
+      "hex": "#722F37",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/78o-l3a-verbras-vinho.png",
+      "fonte_ref": "verbras:verniz-triplo-filtro-solar:vinho"
+    },
+    {
+      "codigo_interno": "H2R-MS0",
+      "nome": "VERNIZ (900 ML) IQUINE IMBUIA",
+      "marca": "iquine",
+      "base": "verniz",
+      "cor": "IMBUIA",
+      "hex": "#C4A574",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/h2r-ms0-iquine-imbuia.png",
+      "fonte_ref": "iquine:verniz-selador-ref:imbuia"
+    },
+    {
+      "codigo_interno": "MS3-NF9",
+      "nome": "VERNIZ (900 ML) IQUINE INCOLOR",
+      "marca": "iquine",
+      "base": "verniz",
+      "cor": "INCOLOR",
+      "hex": "#f5f0e8",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/ms3-nf9-iquine-incolor.png",
+      "fonte_ref": "iquine:verniz-selador-ref:incolor"
+    },
+    {
+      "codigo_interno": "YY0-V35",
+      "nome": "VERNIZ (900 ML) IQUINE MOGNO",
+      "marca": "iquine",
+      "base": "verniz",
+      "cor": "MOGNO",
+      "hex": "#5C3317",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/yy0-v35-iquine-mogno.png",
+      "fonte_ref": "iquine:verniz-selador-ref:mogno"
+    },
+    {
+      "codigo_interno": "A1J-94M",
+      "nome": "VERNIZ (900 ML) VERBRAS COPAIBA",
+      "marca": "verbras",
+      "base": "verniz",
+      "cor": "COPAIBA",
+      "hex": "#D4A574",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/a1j-94m-verbras-copaiba.png",
+      "fonte_ref": "verbras:verniz-triplo-filtro-solar:copaiba"
+    },
+    {
+      "codigo_interno": "ED6-WA2",
+      "nome": "VERNIZ (900 ML) VERBRAS IMBUIA",
+      "marca": "verbras",
+      "base": "verniz",
+      "cor": "IMBUIA",
+      "hex": "#C4A574",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/ed6-wa2-verbras-imbuia.png",
+      "fonte_ref": "verbras:verniz-triplo-filtro-solar:imbuia"
+    },
+    {
+      "codigo_interno": "ZA7-VZJ",
+      "nome": "VERNIZ (900 ML) VERBRAS IPÊ",
+      "marca": "verbras",
+      "base": "verniz",
+      "cor": "IPÊ",
+      "hex": "#DAA520",
+      "url": "https://zhonvxkkqabfdyehyxpu.supabase.co/storage/v1/object/public/produtos-imagens/catalogo/tintas/za7-vzj-verbras-ip.png",
+      "fonte_ref": "verbras:verniz-triplo-filtro-solar:ipe"
+    }
+  ],
+  "skipped": [],
+  "missing": []
+}
