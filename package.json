@@ -51,6 +51,7 @@
     "compras:relatorio-pendente-fornecedor:test": "npx vite-node --config legacy/vite/vite.config.js scripts/test-relatorio-pendente-embarque-fornecedor.mjs",
     "compras:saldo-por-fornecedor": "node scripts/saldo-pizza-por-fornecedor.mjs",
     "compras:orfaos-por-fornecedor": "node scripts/orfaos-por-fornecedor.mjs",
+    "compras:tintao-levantamento": "node scripts/tintao-levantamento.mjs",
     "compras:saldo-auditoria-tintao": "node scripts/tintao-saldo-view-auditoria.mjs",
     "compras:desmembramento:auditoria": "node scripts/backfill-desmembramento-auditoria.mjs",
     "compras:desmembramento:aplicar": "node scripts/backfill-desmembramento-auditoria.mjs --apply",
