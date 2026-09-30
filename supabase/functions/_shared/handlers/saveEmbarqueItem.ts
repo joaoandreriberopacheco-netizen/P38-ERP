@@ -1,5 +1,11 @@
 // Port automático de base44/functions/saveEmbarqueItem/entry.ts
 import type { createP38Client } from '../p38Client.ts';
+import {
+  resolveFatorParaGravacaoEmbarque,
+  resolveFatorPedidoCompraLinha,
+  resolveUnidadeSiglaParaGravacaoEmbarque,
+  normalizeUnitCodeEmbarque,
+} from '../resolveEmbarqueFatorPersistencia.ts';
 
 /* ============================================================================
  * saveEmbarqueItem
@@ -93,25 +99,25 @@ const deriveEmbarqueItem = (embarque: any, produto: any, pedidoCompraItem: any, 
     errors.push(`produto_unidade_id ${input.produto_unidade_id} nao encontrado em Produto.unidades[]`);
   }
   const u = resolvido.unidade;
-  const fatorInput = asNumber(input?.fator_aplicado ?? input?.fator_apresentacao, 0);
-  const fatorPedido = asNumber(
-    pedidoCompraItem?.fator_aplicado ?? pedidoCompraItem?.fator_conversao,
-    0,
+  const fatorAcao = resolveFatorParaGravacaoEmbarque(pedidoCompraItem || {}, input || {});
+  const fatorPed = resolveFatorPedidoCompraLinha(pedidoCompraItem || {});
+  const unidadeSiglaGrav = resolveUnidadeSiglaParaGravacaoEmbarque(
+    pedidoCompraItem || {},
+    {
+      ...input,
+      unidade_sigla: input?.unidade_sigla || input?.unidade_medida || input?.unidade_apresentacao,
+    },
   );
-  const fatorUnidade = asNumber(u?.fator_conversao, 1) || 1;
-  const siglaInput = normalizeSigla(input?.unidade_sigla || input?.unidade_medida || input?.unidade_apresentacao);
-  const siglaUnidade = normalizeSigla(u?.sigla);
-  const fator =
-    fatorPedido > 0
-      ? fatorPedido
-      : fatorInput > 0 && siglaInput && (siglaInput === siglaUnidade || !resolvido.found)
-        ? fatorInput
-        : fatorUnidade;
 
   const qPedida = asNumber(input?.quantidade_pedida_comercial ?? input?.quantidade_pedida, 0);
   const qEmbarcada = asNumber(input?.quantidade_embarcada_comercial ?? input?.quantidade_embarcada, 0);
   const qRecebida = asNumber(input?.quantidade_recebida_comercial ?? input?.quantidade_recebida, 0);
   if (qEmbarcada <= 0) errors.push('quantidade_embarcada_comercial deve ser > 0');
+
+  const pedBaseStored = asNumber(pedidoCompraItem?.quantidade_base, 0);
+  const quantidadePedidaBase = pedBaseStored > 0
+    ? round6(pedBaseStored)
+    : round6(qPedida * fatorPed);
 
   return {
     valid: errors.length === 0,
@@ -123,15 +129,15 @@ const deriveEmbarqueItem = (embarque: any, produto: any, pedidoCompraItem: any, 
       pedido_compra_item_id: pedidoCompraItem?.id || input?.pedido_compra_item_id || '',
       produto_id: produto?.id || '',
       produto_nome: produto?.nome || input?.produto_nome || '',
-      produto_unidade_id: u?.id || '',
-      unidade_sigla: normalizeSigla(u?.sigla) || 'UN',
-      fator_aplicado: fator,
+      produto_unidade_id: input?.produto_unidade_id || u?.id || '',
+      unidade_sigla: normalizeUnitCodeEmbarque(unidadeSiglaGrav) || normalizeSigla(u?.sigla) || 'UN',
+      fator_aplicado: fatorAcao,
       quantidade_pedida_comercial: round6(qPedida),
-      quantidade_pedida_base: round6(qPedida * fator),
+      quantidade_pedida_base: quantidadePedidaBase,
       quantidade_embarcada_comercial: round6(qEmbarcada),
-      quantidade_embarcada_base: round6(qEmbarcada * fator),
+      quantidade_embarcada_base: round6(qEmbarcada * fatorAcao),
       quantidade_recebida_comercial: round6(qRecebida),
-      quantidade_recebida_base: round6(qRecebida * fator),
+      quantidade_recebida_base: round6(qRecebida * fatorAcao),
       divergencia_tipo: input?.divergencia_tipo || 'Nenhuma',
       produto_id_recebido_diferente: typeof input?.produto_id_recebido_diferente === 'string' ? input.produto_id_recebido_diferente : '',
       produto_nome_recebido_diferente: typeof input?.produto_nome_recebido_diferente === 'string' ? input.produto_nome_recebido_diferente : '',
