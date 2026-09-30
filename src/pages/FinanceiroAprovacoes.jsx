@@ -16,6 +16,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { runOperacaoAuthBypass } from '@/components/auth/runOperacaoAuthBypass';
 import PedidoCompraForm from '@/components/compras/PedidoCompraForm';
 import AprovacaoPedidoMobile from '@/components/compras/AprovacaoPedidoMobile';
+import { loadPedidosCompraComItensCanonico } from '@/lib/fetchPedidoCompraItens';
 import {
   aprovarPedidoCompraFinanceiro,
   pedidoAguardandoAprovacaoFinanceira,
@@ -70,7 +71,7 @@ export default function FinanceiroAprovacoesPage() {
       pedidoStatusFilter = 'Rejeitado Financeiramente';
     }
 
-    const [pedidosData, contasData, solicitacoesData] = await Promise.all([
+    const [pedidosDataRaw, contasData, solicitacoesDataRaw] = await Promise.all([
       base44.entities.PedidoCompra.filter({ 
         status_aprovacao_financeira: pedidoStatusFilter
       }),
@@ -78,6 +79,11 @@ export default function FinanceiroAprovacoesPage() {
       base44.entities.PedidoCompra.filter({
         status_aprovacao_financeira: 'Solicitação de Edição Pendente'
       })
+    ]);
+
+    const [pedidosData, solicitacoesData] = await Promise.all([
+      loadPedidosCompraComItensCanonico(base44, pedidosDataRaw || []),
+      loadPedidosCompraComItensCanonico(base44, solicitacoesDataRaw || []),
     ]);
 
     const transactionsData = await Promise.all(

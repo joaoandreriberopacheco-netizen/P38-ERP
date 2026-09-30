@@ -1,4 +1,5 @@
 import { gerarRelatorioPedidosCompra } from '@/functions/gerarRelatorioPedidosCompra';
+import { loadPedidosCompraComItensCanonico } from '@/lib/fetchPedidoCompraItens';
 import { fetchAnexosPorPedidos, coletarPedidoIdsParaRelatorio } from '@/lib/fetchAnexosPorPedidos';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { normalizeItemCompraParaExibicao, custoApresentacaoParaFator1 } from '@/lib/productUnits';
@@ -170,8 +171,22 @@ export async function gerarComprasRelatorioPdf({
   groupBy = 'eta_transportadora',
   sortOrder = 'asc',
 }) {
+  onProgress?.('Sincronizando itens do pedido (SQL)...');
+  const pedidosSql = await loadPedidosCompraComItensCanonico(base44, pedidos || []);
+  const gruposSql = Array.isArray(grupos) && grupos.length
+    ? await Promise.all(
+      (grupos || []).map(async (g) => {
+        if (!g?.pedidos?.length) return g;
+        return {
+          ...g,
+          pedidos: await loadPedidosCompraComItensCanonico(base44, g.pedidos),
+        };
+      }),
+    )
+    : grupos;
+
   if (version === VERSAO_SALDO_EMBARQUE) {
-    const cardsSaldo = (pedidos || []).filter((p) => p._is_saldo_embarcar || p._consulta_papel === 'saldo_a_embarcar');
+    const cardsSaldo = (pedidosSql || []).filter((p) => p._is_saldo_embarcar || p._consulta_papel === 'saldo_a_embarcar');
     const somaFalta = cardsSaldo.reduce((acc, c) => acc + Number(c._quantidade_falta_operacional ?? c._quantidade_pendente ?? 0), 0);
     const totalValor = cardsSaldo.reduce((acc, c) => acc + Number(c._display_valor ?? 0), 0);
     await gerarRelatorioSaldoEmbarquePdf({
@@ -185,7 +200,7 @@ export async function gerarComprasRelatorioPdf({
 
   if (VERSOES_HTML_CONSULTA.has(version)) {
     onProgress?.('Carregando produtos...');
-    const ids = coletarProdutoIds([pedidos, grupos]);
+    const ids = coletarProdutoIds([pedidosSql, gruposSql]);
     const produtosMap = { ...produtosMapInput };
     const missingIds = ids.filter((id) => !produtosMap[id]);
     if (missingIds.length > 0) {
@@ -208,7 +223,7 @@ export async function gerarComprasRelatorioPdf({
 
     await gerarConsultaComprasHtmlPdf({
       version,
-      pedidos,
+      pedidos: pedidosSql,
       filtrosDesc,
       produtosMap,
       groupBy,
@@ -219,7 +234,7 @@ export async function gerarComprasRelatorioPdf({
   }
 
   onProgress?.('Carregando produtos...');
-  const ids = coletarProdutoIds([pedidos, grupos]);
+  const ids = coletarProdutoIds([pedidosSql, gruposSql]);
   const produtosMap = {};
   if (ids.length > 0) {
     try {
@@ -239,13 +254,13 @@ export async function gerarComprasRelatorioPdf({
     }
   }
 
-  const pedidosNormalizados = (pedidos || []).map((p) => normalizarPedidoParaRelatorio(p, produtosMap));
-  const gruposNormalizados = normalizarGruposParaRelatorio(grupos || [], produtosMap);
+  const pedidosNormalizados = (pedidosSql || []).map((p) => normalizarPedidoParaRelatorio(p, produtosMap));
+  const gruposNormalizados = normalizarGruposParaRelatorio(gruposSql || [], produtosMap);
 
   let anexosPorPedido = {};
   if (VERSOES_RELATORIO_COM_ANEXOS.has(version)) {
     onProgress?.('Carregando anexos dos pedidos filtrados...');
-    const pedidoIds = coletarPedidoIdsParaRelatorio(pedidos, grupos);
+    const pedidoIds = coletarPedidoIdsParaRelatorio(pedidosSql, gruposSql);
     anexosPorPedido = await fetchAnexosPorPedidos(pedidoIds);
     onProgress?.(
       version === 'expandida_com_anexos_a4'

@@ -23,7 +23,8 @@ async function carregarPedidoParaMinutaAnexos(pedidoId) {
     throw new Error('Pedido não encontrado para gerar a minuta.');
   }
 
-  await hydratePedidosCompraItensFromSql(base44, [pedido]);
+  const [pedidoHidratado] = await hydratePedidosCompraItensFromSql(base44, [pedido]);
+  Object.assign(pedido, pedidoHidratado || {});
 
   let embarquesDb = [];
   try {

@@ -1,6 +1,7 @@
 // Port automático de base44/functions/gerarRelatorioPedidosComprav2/entry.ts
 import type { createP38Client } from '../p38Client.ts';
 import { embarqueIsSaldoPendente } from '../embarqueTipoSaldoPendente.ts';
+import { hydratePedidosCompraItensFromSqlEdge } from '../pedidoCompraItensHydrate.ts';
 
 import { jsPDF } from 'npm:jspdf@2.5.2';
 
@@ -1034,13 +1035,17 @@ export async function handle(req: Request, base44: Awaited<ReturnType<typeof cre
 
     const payload = await req.json();
     const {
-      pedidos = [],
+      pedidos: pedidosPayload = [],
       version = 'compacta',
       filtros_desc = 'Pedidos filtrados na tela',
       kpis = {},
       grupos = [],
       produtos_map: produtosMapPayload = null,
     } = payload;
+    const pedidos = await hydratePedidosCompraItensFromSqlEdge(
+      base44,
+      Array.isArray(pedidosPayload) ? pedidosPayload : [],
+    );
     const normalizedVersion = normalizeReportVersion(version);
 
     const isMobile = normalizedVersion === 'expandida_mobile';

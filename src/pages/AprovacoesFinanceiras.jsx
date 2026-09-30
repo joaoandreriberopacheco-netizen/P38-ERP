@@ -11,6 +11,7 @@ import { runOperacaoAuthBypass } from '@/components/auth/runOperacaoAuthBypass';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import { calcValorTotalPedidoCompra, listarLancamentosPedidoCompra, pedidoPrecisaSincronizarAprovacaoFinanceira } from '@/lib/pedidoCompraFinanceiro';
+import { loadPedidosCompraComItensCanonico } from '@/lib/fetchPedidoCompraItens';
 import {
   aprovarPedidoCompraFinanceiro,
   pedidoAguardandoAprovacaoFinanceira,
@@ -49,8 +50,11 @@ export default function AprovacoesFinanceirasPage() {
       if (p?.id) pedidosPorId.set(p.id, p);
     });
 
+    const pedidosHidratados = await loadPedidosCompraComItensCanonico(base44, [...pedidosPorId.values()]);
+    const pedidosPorIdSql = new Map(pedidosHidratados.map((p) => [p.id, p]));
+
     const pedidosPendentes = [];
-    for (const p of pedidosPorId.values()) {
+    for (const p of pedidosPorIdSql.values()) {
       const lancs = await listarLancamentosPedidoCompra(base44, p.id);
       if (pedidoAguardandoAprovacaoFinanceira(p, lancs)) {
         pedidosPendentes.push(p);

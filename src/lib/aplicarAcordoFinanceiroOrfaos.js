@@ -24,10 +24,6 @@ import {
   commercialQuantityFromBase,
   getItemCompraExibicaoVitrine,
 } from '@/lib/productUnits';
-import {
-  calcValorItensPedidoCompra,
-  calcValorTotalPedidoCompra,
-} from '@/lib/pedidoCompraFinanceiro';
 import { isEmbarqueReal, isEmbarqueSaldoPendente } from '@/lib/embarqueTipoSaldoPendente';
 import { syncPedidoCompraItensAfterLogisticaMutation } from '@/lib/fetchPedidoCompraItens';
 
@@ -349,12 +345,6 @@ export async function aplicarBaixaLogisticaAcordoFinanceiroOrfaos(
     });
   }
 
-  const pedidoPatch = {
-    itens: pedidoItens,
-    valor_itens: calcValorItensPedidoCompra({ ...pedido, itens: pedidoItens }),
-  };
-  pedidoPatch.valor_total = calcValorTotalPedidoCompra({ ...pedido, ...pedidoPatch });
-
   const resumoTxt = resumo
     .map(
       (r) =>
@@ -362,16 +352,15 @@ export async function aplicarBaixaLogisticaAcordoFinanceiroOrfaos(
     )
     .join('; ');
 
+  let novoHistorico = pedido.historico || '';
   if (appendHistorico) {
     const extra = historicoSufixoExtra ? ` ${historicoSufixoExtra}` : '';
-    pedidoPatch.historico =
-      `${pedido.historico || ''}\n[ACORDO FINANCEIRO ÓRFÃOS | lançamento=${lancamentoId} | ${resumoTxt}${extra} | ${formatarLogTime()}]`.trim();
+    novoHistorico =
+      `${novoHistorico}\n[ACORDO FINANCEIRO ÓRFÃOS | lançamento=${lancamentoId} | ${resumoTxt}${extra} | ${formatarLogTime()}]`.trim();
   } else if (historicoSufixoExtra) {
-    pedidoPatch.historico =
-      `${pedido.historico || ''}\n[${historicoSufixoExtra} | lançamento=${lancamentoId} | ${resumoTxt} | ${formatarLogTime()}]`.trim();
+    novoHistorico =
+      `${novoHistorico}\n[${historicoSufixoExtra} | lançamento=${lancamentoId} | ${resumoTxt} | ${formatarLogTime()}]`.trim();
   }
-
-  await base44.entities.PedidoCompra.update(pedido.id, pedidoPatch);
 
   try {
     await syncPedidoCompraItensAfterLogisticaMutation(base44, pedido.id, pedidoItens);
@@ -380,11 +369,15 @@ export async function aplicarBaixaLogisticaAcordoFinanceiroOrfaos(
     return {
       ok: false,
       error:
-        'O acordo foi gravado no pedido, mas as linhas SQL (PedidoCompraItem) não sincronizaram — '
-        + 'a tela de logística pode continuar mostrando pendências antigas. '
+        'As linhas do pedido (SQL) não atualizaram após o acordo — '
+        + 'revise logística e financeiro antes de repetir. '
         + msg,
       resumo,
     };
+  }
+
+  if (novoHistorico !== (pedido.historico || '')) {
+    await base44.entities.PedidoCompra.update(pedido.id, { historico: novoHistorico });
   }
 
   return { ok: true, resumo };

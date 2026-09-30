@@ -71,7 +71,23 @@ function attachItensPedido(pedido, itens, fonte) {
   };
 }
 
-/** Espelho legado: coluna `itens` ou `dados.itens` (só leitura). */
+/**
+ * Carrega um pedido com `itens` sempre da fonte canónica (PedidoCompraItem), quando existir SQL.
+ * Use em financeiro, PDFs e detalhe — evita ler só o JSON do cabeçalho.
+ */
+export async function loadPedidoCompraComItensCanonico(base44, pedidoId) {
+  if (!pedidoId) return null;
+  const [cab] = await base44.entities.PedidoCompra.filter({ id: pedidoId });
+  if (!cab) return null;
+  return ensurePedidoCompraItensCanonico(base44, cab);
+}
+
+/** Batch — listagens, relatórios, aprovações financeiras. */
+export async function loadPedidosCompraComItensCanonico(base44, pedidos = []) {
+  return hydratePedidosCompraItensFromSql(base44, pedidos);
+}
+
+/** Espelho legado: coluna `itens` ou `dados.itens` (só leitura; preferir load*Canonico). */
 export function readLegacyItensPedidoCompra(pedido = {}) {
   if (Array.isArray(pedido?.itens) && pedido.itens.some((item) => item?.produto_id)) {
     return pedido.itens.filter((item) => item?.produto_id);

@@ -1,6 +1,11 @@
 /**
  * Consistência entre PedidoCompra e LancamentoFinanceiro na reabertura / reenvio ao financeiro.
+ * Itens do pedido: fonte canónica PedidoCompraItem — ver loadPedidosCompraComItensCanonico.
  */
+export {
+  loadPedidoCompraComItensCanonico,
+  loadPedidosCompraComItensCanonico,
+} from '@/lib/fetchPedidoCompraItens';
 
 import { calcTotalItemCompraPedido } from '@/lib/productUnits';
 import { isLancamentoCancelado, isLancamentoPago } from '@/lib/lancamentoFinanceiroStatus';

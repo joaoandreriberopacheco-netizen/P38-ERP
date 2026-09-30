@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { prefetchPedidosCompraGestao } from '@/lib/prefetchPedidosCompraGestao';
 import { base44 } from '@/api/base44Client';
+import { loadPedidosCompraComItensCanonico } from '@/lib/fetchPedidoCompraItens';
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -73,7 +74,8 @@ const PedidosCompraTab = () => {
   const loadPedidos = async () => {
     try {
       const data = await base44.entities.PedidoCompra.list('-created_date');
-      setPedidos(data);
+      const hidratados = await loadPedidosCompraComItensCanonico(base44, data || []);
+      setPedidos(hidratados);
     } catch (error) {
       console.error("Erro ao carregar pedidos:", error);
     }
