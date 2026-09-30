@@ -31,6 +31,7 @@ import { useCompactShell } from '@/hooks/use-breakpoint';
 import ImportadorOcrItemCard from '@/components/compras/ImportadorOcrItemCard';
 import OcrSugestaoCriarProduto from '@/components/compras/OcrSugestaoCriarProduto';
 import { cn } from '@/lib/utils';
+import { isArquivoPlanilhaPedido } from '@/lib/importarPlanilhaPedidoFlex';
 
 export default function ImportadorPedidoCompra({
   isOpen,
@@ -39,7 +40,7 @@ export default function ImportadorPedidoCompra({
   launchPdfFilePickerOnce = false,
   onLaunchPdfFilePickerConsumed,
 }) {
-  const [mode, setMode] = useState('pdf');
+  const [mode, setMode] = useState('pdf'); // pdf | foto | planilha
   const [step, setStep] = useState('upload');
   const [isUploading, setIsUploading] = useState(false);
   const [items, setItems] = useState([]);
@@ -237,8 +238,9 @@ export default function ImportadorPedidoCompra({
     setProcessingStatus('Carregando arquivo');
 
     try {
+      const ehPlanilha = isArquivoPlanilhaPedido(arquivo) || mode === 'planilha';
       const fileUpload =
-        mode === 'pdf' ? await normalizarArquivoParaImportBoleto(arquivo) : arquivo;
+        mode === 'pdf' && !ehPlanilha ? await normalizarArquivoParaImportBoleto(arquivo) : arquivo;
       const uploadRes = await base44.integrations.Core.UploadFile({ file: fileUpload });
       const fileUrl = uploadRes.file_url;
 
@@ -278,7 +280,9 @@ export default function ImportadorPedidoCompra({
         );
       }
 
-      if (modo === 'ocr_local+groq' || modo === 'ocr_local+groq_primario') {
+      if (modo === 'planilha_colunas') {
+        setProcessingStatus('Itens lidos da planilha (revisar vínculos ao catálogo)');
+      } else if (modo === 'ocr_local+groq' || modo === 'ocr_local+groq_primario' || modo === 'ocr_local+groq_reforco') {
         setProcessingStatus('Itens identificados com IA flexível (revisar vínculos)');
       } else if (modo === 'ocr_local+parser_fallback') {
         setProcessingStatus('Itens pelo parser local (revisar vínculos)');
@@ -339,10 +343,11 @@ export default function ImportadorPedidoCompra({
   const aplicarArquivoSelecionado = async (rawFile, opts = {}) => {
     if (!rawFile) return;
     const usarPdf =
-      opts.assumePdf === true || mode === 'pdf';
+      (opts.assumePdf === true || mode === 'pdf') && !isArquivoPlanilhaPedido(rawFile);
     try {
       const file =
         usarPdf ? await normalizarArquivoParaImportBoleto(rawFile) : rawFile;
+      if (isArquivoPlanilhaPedido(file)) setMode('planilha');
       selectedFileRef.current = file;
       setSelectedFile(file);
       if (opts.assumePdf) setMode('pdf');
@@ -473,7 +478,7 @@ export default function ImportadorPedidoCompra({
           custo_final_unitario_apresentacao: precoAjustado,
           total: totalEconomico,
           valor_desconto_item: 0,
-          observacao_item: `${mode === 'pdf' ? 'Importado via PDF' : 'Importado via foto'}${discountNumber ? ` • ${isAcrescimo ? 'acréscimo' : 'desconto'} ${discountNumber}%` : ''}`
+          observacao_item: `${mode === 'planilha' ? 'Importado via planilha' : mode === 'pdf' ? 'Importado via PDF' : 'Importado via foto'}${discountNumber ? ` • ${isAcrescimo ? 'acréscimo' : 'desconto'} ${discountNumber}%` : ''}`
         });
         importedItems.push(itemImportado);
       }
@@ -510,7 +515,7 @@ export default function ImportadorPedidoCompra({
               <p className="text-xs text-muted-foreground">
                 {step === 'review' && isMobile
                   ? 'Vincule cada linha ao catálogo'
-                  : 'Lê PDF e boas imagens para preencher os itens'}
+                  : 'PDF, planilha do fornecedor ou imagem — interpretação flexível'}
               </p>
             </div>
           </div>
@@ -538,12 +543,15 @@ export default function ImportadorPedidoCompra({
       <div className={cn('p-4 md:p-6 max-w-5xl mx-auto', step === 'review' && isMobile && 'pb-32')}>
         {step === 'upload' && (
           <div className="space-y-4">
-            <div className="flex gap-2">
-              <Button variant={mode === 'pdf' ? 'default' : 'outline'} onClick={() => setMode('pdf')} className="flex-1 border-0 shadow-sm">
+            <div className="flex gap-2 flex-wrap">
+              <Button variant={mode === 'pdf' ? 'default' : 'outline'} onClick={() => setMode('pdf')} className="flex-1 min-w-[7rem] border-0 shadow-sm">
                 <FileText className="w-4 h-4 mr-2" />PDF
               </Button>
-                <Button variant={mode === 'foto' ? 'default' : 'outline'} onClick={() => setMode('foto')} className="flex-1 border-0 shadow-sm">
-                  <Camera className="w-4 h-4 mr-2" />Imagem
+              <Button variant={mode === 'planilha' ? 'default' : 'outline'} onClick={() => setMode('planilha')} className="flex-1 min-w-[7rem] border-0 shadow-sm">
+                <Package className="w-4 h-4 mr-2" />Planilha
+              </Button>
+              <Button variant={mode === 'foto' ? 'default' : 'outline'} onClick={() => setMode('foto')} className="flex-1 min-w-[7rem] border-0 shadow-sm">
+                <Camera className="w-4 h-4 mr-2" />Imagem
               </Button>
             </div>
             <div
@@ -562,17 +570,27 @@ export default function ImportadorPedidoCompra({
                 {mode === 'pdf' ? <FileText className="w-8 h-8 text-muted-foreground" /> : <Sparkles className="w-8 h-8 text-muted-foreground" />}
               </div>
               <p className="font-glacial text-xl text-foreground mb-2">
-                {mode === 'pdf' ? 'Enviar PDF do fornecedor' : 'Enviar imagem da lista'}
+                {mode === 'planilha'
+                  ? 'Enviar planilha do fornecedor (.xlsx ou .csv)'
+                  : mode === 'pdf'
+                    ? 'Enviar PDF do fornecedor'
+                    : 'Enviar imagem da lista'}
               </p>
-              <p className="text-sm text-muted-foreground mb-6">A importação vai preencher os itens do pedido.</p>
+              <p className="text-sm text-muted-foreground mb-6">
+                {mode === 'planilha'
+                  ? 'Detectamos colunas de descrição, quantidade e preço — sem precisar do template P38.'
+                  : 'A importação interpreta quantidades, preços e descrições e sugere o vínculo ao catálogo.'}
+              </p>
               <div className="relative inline-block">
                 <input
                   ref={fileInputRef}
                   type="file"
                   accept={
-                    mode === 'pdf'
-                      ? '.pdf,application/pdf,application/octet-stream,*/*'
-                      : 'image/*,.pdf,application/pdf,*/*'
+                    mode === 'planilha'
+                      ? '.xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv'
+                      : mode === 'pdf'
+                        ? '.pdf,application/pdf,application/octet-stream,*/*'
+                        : 'image/*,.pdf,application/pdf,*/*'
                   }
                   onChange={handleFileUpload}
                   className="hidden"

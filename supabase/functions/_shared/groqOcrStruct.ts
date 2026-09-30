@@ -118,6 +118,8 @@ Regras:
 - Não invente código de barras/EAN; foque no texto legível da descrição + quantidade + preço unitário.
 - Extraia TODOS os itens de produto; ignore cabeçalhos, subtotais, rodapés e frete.
 - Se não houver itens, devolva "itens": [].
+- Planilhas Excel/CSV: identifique a linha de cabeçalho pelo significado (descrição/produto, quantidade, preço unitário); ignore colunas de total, imposto e frete; cada linha de dados é um item.
+- Layouts de PDF variam (MaxAndroid, Tintão, MASS, ERP genérico): use quantidade × preço unitário ≈ total da linha quando ambíguo.
 
 Schema esperado:
 ${schema}

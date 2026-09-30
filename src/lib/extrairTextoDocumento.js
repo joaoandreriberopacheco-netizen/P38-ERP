@@ -6,6 +6,7 @@
 
 import { loadPdfJsBrowser } from '@/lib/loadPdfJsBrowser';
 import { reconhecerTextoImagem } from '@/lib/paddleOcrBrowser';
+import { isArquivoPlanilhaPedido, planilhaPedidoParaTexto } from '@/lib/importarPlanilhaPedidoFlex';
 
 const MIN_TEXTO_DIGITAL = 80;
 const MAX_PAGINAS_OCR = 8;
@@ -101,6 +102,15 @@ export async function extrairTextoDocumento(file) {
   if (isImageFile(file)) {
     const texto = await reconhecerTextoImagem(file);
     return { texto, origem: texto ? 'paddle_imagem' : 'vazio' };
+  }
+
+  if (isArquivoPlanilhaPedido(file)) {
+    try {
+      const texto = await planilhaPedidoParaTexto(file);
+      return { texto, origem: texto ? 'planilha_tsv' : 'vazio' };
+    } catch {
+      return { texto: '', origem: 'planilha_erro' };
+    }
   }
 
   return { texto: '', origem: 'tipo_desconhecido' };
