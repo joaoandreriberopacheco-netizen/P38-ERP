@@ -114,6 +114,8 @@ export function findInSnapshot(snapshot, desc, { minScore = 30, requireFormato =
 
   let best = null;
   let bestScore = -999;
+  let bestNameHits = -1;
+  const nameTokens = parsed.name_tokens?.length ? parsed.name_tokens : parsed.busca.split(' ').filter(Boolean);
   for (const p of pool) {
     const prod = {
       ...p,
@@ -122,8 +124,14 @@ export function findInSnapshot(snapshot, desc, { minScore = 30, requireFormato =
       imagem_url: p.imagem_url,
     };
     const sc = scoreMatch(prod, parsed);
-    if (sc > bestScore) {
+    const titleU = stripAccents(p.titulo).toUpperCase();
+    const nameHits = nameTokens.filter((t) => {
+      const q = stripAccents(t).toUpperCase();
+      return titleU.includes(q);
+    }).length;
+    if (sc > bestScore || (sc === bestScore && nameHits > bestNameHits)) {
       bestScore = sc;
+      bestNameHits = nameHits;
       best = p;
     }
   }
