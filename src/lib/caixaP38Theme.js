@@ -21,8 +21,37 @@ export const CAIXA_OLIVE = {
 
 export const caixaAccentDot = 'bg-[#4a5240] dark:bg-[#636B2F]';
 export const caixaAccentBorder = 'border-l-[#4a5240] dark:border-l-[#636B2F]/55';
-export const caixaFormaBadgeDinheiro =
-  'dark:bg-[rgba(99,107,47,0.22)] dark:text-[#A8B56E] dark:border-[rgba(99,107,47,0.4)]';
+
+/**
+ * Badges de forma de pagamento (Dinheiro, PIX, Crédito…) — paleta cítrica P38
+ * com matiz distinto por forma (claro + escuro). Usado por FormaPagamentoBadges palette="caixa".
+ */
+export const CAIXA_FORMA_PAGAMENTO_BADGE = {
+  dinheiro:
+    'bg-[#e8b824]/16 text-[#a8942e] border-[#e8b824]/35 ' +
+    'dark:bg-[rgba(232,184,36,0.22)] dark:text-[#f0d458] dark:border-[rgba(232,184,36,0.45)]',
+  pix:
+    'bg-[#c8d42e]/18 text-[#7a8820] border-[#c8d42e]/38 ' +
+    'dark:bg-[rgba(200,212,46,0.20)] dark:text-[#dce858] dark:border-[rgba(200,212,46,0.42)]',
+  debito:
+    'bg-[#d4a820]/16 text-[#8a7018] border-[#d4a820]/36 ' +
+    'dark:bg-[rgba(232,176,64,0.20)] dark:text-[#f0c868] dark:border-[rgba(232,176,64,0.40)]',
+  credito:
+    'bg-[#e89420]/16 text-[#9c6018] border-[#e89420]/38 ' +
+    'dark:bg-[rgba(232,152,64,0.22)] dark:text-[#f0a860] dark:border-[rgba(232,152,64,0.44)]',
+  fiado:
+    'bg-[#e87828]/14 text-[#9c5020] border-[#e87828]/36 ' +
+    'dark:bg-[rgba(232,120,72,0.20)] dark:text-[#f08858] dark:border-[rgba(232,120,72,0.40)]',
+  vale:
+    'bg-[#dce028]/18 text-[#848018] border-[#dce028]/35 ' +
+    'dark:bg-[rgba(220,224,72,0.18)] dark:text-[#ece858] dark:border-[rgba(220,224,72,0.38)]',
+  outro:
+    'bg-[#e8b824]/8 text-[#8a7824] border-[#e8b824]/22 ' +
+    'dark:bg-[rgba(232,184,36,0.12)] dark:text-[#c8b848] dark:border-[rgba(232,184,36,0.28)]',
+};
+
+/** @deprecated Prefer CAIXA_FORMA_PAGAMENTO_BADGE.dinheiro */
+export const caixaFormaBadgeDinheiro = CAIXA_FORMA_PAGAMENTO_BADGE.dinheiro;
 
 /** Listas mobile (Caixas Ativos, Turnos Fechados) — oliva em vez de limão no escuro. */
 export const caixaMobileAccents = {
