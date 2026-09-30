@@ -29,6 +29,7 @@ import {
   calcValorTotalPedidoCompra,
 } from '@/lib/pedidoCompraFinanceiro';
 import { isEmbarqueReal, isEmbarqueSaldoPendente } from '@/lib/embarqueTipoSaldoPendente';
+import { syncPedidoCompraItensAfterLogisticaMutation } from '@/lib/fetchPedidoCompraItens';
 
 const MIN_BASE = 0.009;
 
@@ -371,6 +372,20 @@ export async function aplicarBaixaLogisticaAcordoFinanceiroOrfaos(
   }
 
   await base44.entities.PedidoCompra.update(pedido.id, pedidoPatch);
+
+  try {
+    await syncPedidoCompraItensAfterLogisticaMutation(base44, pedido.id, pedidoItens);
+  } catch (syncErr) {
+    const msg = syncErr?.message || String(syncErr);
+    return {
+      ok: false,
+      error:
+        'O acordo foi gravado no pedido, mas as linhas SQL (PedidoCompraItem) não sincronizaram — '
+        + 'a tela de logística pode continuar mostrando pendências antigas. '
+        + msg,
+      resumo,
+    };
+  }
 
   return { ok: true, resumo };
 }

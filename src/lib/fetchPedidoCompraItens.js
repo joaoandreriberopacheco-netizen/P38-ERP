@@ -177,6 +177,55 @@ export async function ensurePedidoCompraItensCanonico(base44, pedido) {
 }
 
 /** Recarrega cabeçalho + itens canónicos + embarques hidratados (Logística/Recepção). */
+/**
+ * Após mutação logística no JSON do pedido (ex.: acordo órfão), alinha PedidoCompraItem (SQL).
+ * A UI de logística hidrata itens a partir do SQL — sem isto as pendências parecem não baixar.
+ */
+export async function syncPedidoCompraItensAfterLogisticaMutation(base44, pedidoId, pedidoItens = []) {
+  if (!pedidoId) throw new Error('pedido_compra_id obrigatório');
+
+  const payloadItems = legacyItensPedidoCompraToCanonicalPayload(pedidoItens);
+  try {
+    await savePedidoCompraItem({
+      action: 'replaceAll',
+      pedido_compra_id: pedidoId,
+      items: payloadItems,
+    });
+    return { ok: true, via: 'edge' };
+  } catch (edgeErr) {
+    const pci = base44?.entities?.PedidoCompraItem;
+    if (!pci?.filter || !pci?.delete || !pci?.update) {
+      throw edgeErr;
+    }
+
+    const byProdJson = new Map(
+      (pedidoItens || [])
+        .filter(
+          (it) =>
+            (Number(it?.quantidade) || 0) > 0
+            || (Number(it?.quantidade_base) || 0) > 0,
+        )
+        .map((it) => [String(it.produto_id), it]),
+    );
+    const rows = await pci.filter({ pedido_compra_id: pedidoId });
+    for (const row of rows || []) {
+      const leg = byProdJson.get(String(row.produto_id));
+      if (!leg) {
+        await pci.delete(row.id);
+        continue;
+      }
+      const qty = Number(leg.quantidade) || 0;
+      const qtyBase = Number(leg.quantidade_base) || qty;
+      await pci.update(row.id, {
+        quantidade_comercial: qty,
+        quantidade_base: qtyBase,
+        total: Number(leg.total) || Number(row.total) || 0,
+      });
+    }
+    return { ok: true, via: 'entities-fallback' };
+  }
+}
+
 export async function refreshPedidoCompraComLogistica(base44, pedidoId, { filterEmbarques } = {}) {
   if (!pedidoId) return null;
 

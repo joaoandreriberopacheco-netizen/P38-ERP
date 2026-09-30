@@ -1812,6 +1812,7 @@ export default function PedidoCompraForm({
                   if (!pedidoCompleto) return;
                   setPedidoLogistica(pedidoCompleto);
                   setFormData((prev) => ({ ...prev, ...pedidoCompleto }));
+                  if (onPedidoRefresh) await onPedidoRefresh();
                 }}
               />
             ) : (
