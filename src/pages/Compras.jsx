@@ -419,7 +419,11 @@ export default function ComprasPage() {
             return (
               <button
                 key={tab.value}
-                {...(tab.value === 'sugestoes' ? { 'data-pulse-sensor': 'compras.tab-sugestoes' } : {})}
+                {...(tab.value === 'sugestoes'
+                  ? { 'data-pulse-sensor': 'compras.tab-sugestoes' }
+                  : tab.value === 'cotacoes'
+                    ? { 'data-pulse-sensor': 'compras.tab-cotacoes' }
+                    : {})}
                 onClick={() => handleTabChange(tab.value)}
                 className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-xl text-xs font-medium transition-all duration-200 whitespace-nowrap ${
                   isActive
@@ -443,7 +447,7 @@ export default function ComprasPage() {
                 'flex-1 min-h-0 px-4 desktop-layout:px-0',
                 tabContentScrolls
                   ? 'overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y pb-6'
-                  : 'overflow-hidden',
+                  : 'flex flex-col overflow-hidden',
               )
             : 'px-4 md:px-0 pt-4 min-w-0 max-w-full overflow-x-clip',
         )}

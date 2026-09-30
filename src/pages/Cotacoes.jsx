@@ -26,7 +26,7 @@ export default function CotacoesPage() {
           Lista manda · Disputa compara · Aprovar gera pedido
         </p>
       </div>
-      <div className="mt-3 flex min-h-[min(70dvh,720px)] flex-col sm:mt-4 sm:min-h-[480px]">
+      <div className="mt-3 flex min-h-[min(70dvh,720px)] flex-col overflow-hidden sm:mt-4 sm:min-h-[480px]">
         <CotacoesManager />
       </div>
     </div>
