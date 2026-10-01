@@ -62,23 +62,42 @@ function itemPedidoMinimoValido(item) {
   return true;
 }
 
-/** Parser local devolveu poucos itens face ao tamanho do documento — tentar IA. */
+/**
+ * Parser local devolveu poucos itens face ao documento — sinal para tentar IA.
+ * Não usar para descartar resposta da IA (cotações têm muitas colunas R$/imposto por linha).
+ */
 export function pedidoExtracaoPareceIncompleta(texto, dados) {
   const itens = Array.isArray(dados?.itens) ? dados.itens : [];
   const validos = itens.filter(itemPedidoMinimoValido);
   if (!validos.length) return true;
 
   const flat = String(texto || '').replace(/\s+/g, ' ');
-  const moedas = (flat.match(/\d{1,3}(?:\.\d{3})*,\d{2}/g) || []).length;
-  if (moedas >= validos.length * 2 + 3 && validos.length < 6) return true;
-
   if (flat.length > 1200 && validos.length < 2) return true;
   if (validos.length < itens.length * 0.4 && itens.length >= 3) return true;
 
   return false;
 }
 
-/** Indica se o passo na nuvem deve tentar complementar (resultado ainda incompleto). */
+/** Resultado da IA ainda insuficiente? (só valida itens — sem heurística de “retalho” por fornecedor). */
+export function precisaFallbackNuvemIa(dados, tipo) {
+  if (!dados) return true;
+  switch (tipo) {
+    case OCR_IMPORT_TIPOS.PEDIDO_COMPRA:
+    case OCR_IMPORT_TIPOS.COTACAO_PDF:
+    case OCR_IMPORT_TIPOS.LISTA_FOTO: {
+      const itens = Array.isArray(dados.itens) ? dados.itens : [];
+      if (!itens.length) return true;
+      if (tipo === OCR_IMPORT_TIPOS.PEDIDO_COMPRA) {
+        return itens.filter(itemPedidoMinimoValido).length === 0;
+      }
+      return false;
+    }
+    default:
+      return precisaFallbackNuvem(dados, tipo, '');
+  }
+}
+
+/** Indica se o passo na nuvem deve tentar complementar (resultado do parser local ainda incompleto). */
 export function precisaFallbackNuvem(dados, tipo, texto = '') {
   if (!dados) return true;
   switch (tipo) {
@@ -125,7 +144,7 @@ async function estruturarComGroq(texto, tipo, onProgress) {
   onProgress?.('Interpretando documento (IA flexível)');
   const { dados: raw, model } = await estruturarDocumentoOcrNaNuvem({ texto, tipo });
   const dados = normalizarRespostaGroq(tipo, raw);
-  if (!dados || precisaFallbackNuvem(dados, tipo, texto)) return null;
+  if (!dados || precisaFallbackNuvemIa(dados, tipo)) return null;
   return { dados, model };
 }
 
@@ -187,15 +206,16 @@ export async function processarImportOcrEmSerie({
 
   onProgress?.('Lendo documento (local)');
 
+  let textoPlanilhaPreload = '';
   if (isArquivoPlanilhaPedido(file)) {
     onProgress?.('Interpretando planilha (colunas flexíveis)');
     try {
       const flex = await parsePlanilhaPedidoFlexFromFile(file);
+      textoPlanilhaPreload = await planilhaPedidoParaTexto(file);
       if (flex?.itens?.length) {
-        const textoPlan = await planilhaPedidoParaTexto(file);
         return resultadoBase({
           dados: flex,
-          texto: textoPlan,
+          texto: textoPlanilhaPreload,
           origem: 'planilha_flex',
           modo: 'planilha_colunas',
           etapas: ['planilha_flex'],
@@ -206,7 +226,9 @@ export async function processarImportOcrEmSerie({
     }
   }
 
-  const { texto, origem } = await extrairTextoLocal(file);
+  const { texto, origem } = textoPlanilhaPreload
+    ? { texto: textoPlanilhaPreload, origem: 'planilha_tsv' }
+    : await extrairTextoLocal(file);
 
   const leituraFlexivel = usaLeituraFlexivelGroq(tipo);
 
