@@ -7,8 +7,10 @@ import type { LlmUsage } from './llmTelemetry.ts';
 
 const env = (k: string): string => Deno.env.get(k) ?? '';
 
-const DEFAULT_MODEL = 'llama-3.3-70b-versatile';
-const FALLBACK_MODEL = 'llama-3.1-8b-instant';
+/** Modelos ativos na Groq (evitar IDs Llama antigos que retornam 404). */
+const DEFAULT_MODEL = 'openai/gpt-oss-20b';
+const FALLBACK_MODEL = 'qwen/qwen3.8-27b';
+const MODEL_CANDIDATES = [DEFAULT_MODEL, FALLBACK_MODEL, 'openai/gpt-oss-120b'];
 
 export type OcrStructTipo =
   | 'pedido_compra'
@@ -108,6 +110,13 @@ Responda APENAS com JSON válido, sem markdown, sem comentários.
 
 Tipo de documento: ${tipo}
 
+Lógica universal (independente do ERP ou fornecedor):
+- Cada linha de produto tem: descrição legível, quantidade comercial, preço unitário (ou derive unitário = total da linha ÷ quantidade).
+- "quantidade" é a coluna QTDE/QTY da tabela (ex.: 80 barras), NÃO confundir com medidas dentro da descrição (ex.: 8,00 MM, 12,0 M).
+- Valide: quantidade × preço unitário ≈ total da linha (tolerância ~2%).
+- Ignore colunas fiscais (ICMS, IPI, peso, data prevista) e totais do rodapé.
+- Não dependa de layout fixo: encontre a tabela pelo significado das colunas, não pelo nome do sistema.
+
 Regras:
 - Use números decimais com ponto (ex.: 4.28), não vírgula.
 - CNPJ só se aparecer formatado (XX.XXX.XXX/XXXX-XX); nunca invente.
@@ -118,6 +127,8 @@ Regras:
 - Não invente código de barras/EAN; foque no texto legível da descrição + quantidade + preço unitário.
 - Extraia TODOS os itens de produto; ignore cabeçalhos, subtotais, rodapés e frete.
 - Se não houver itens, devolva "itens": [].
+- Planilhas Excel/CSV: identifique a linha de cabeçalho pelo significado (descrição/produto, quantidade, preço unitário); ignore colunas de total, imposto e frete; cada linha de dados é um item.
+- Layouts de PDF variam (MaxAndroid, Tintão, MASS, ERP genérico): use quantidade × preço unitário ≈ total da linha quando ambíguo.
 
 Schema esperado:
 ${schema}
@@ -211,15 +222,25 @@ export async function structurarDocumentoOcrGroq({
     throw new Error('Texto em falta para estruturação na nuvem.');
   }
 
-  const primaryModel = resolveGroqModel();
+  const envModel = resolveGroqModel();
+  const models = [
+    envModel,
+    ...MODEL_CANDIDATES.filter((m) => m !== envModel),
+  ];
   const prompt = buildPrompt(tipo, trimmed);
 
-  try {
-    const { data, usage } = await callGroqChat(primaryModel, prompt);
-    return { dados: data, usage, model: usage.model };
-  } catch (primaryErr) {
-    if (primaryModel === FALLBACK_MODEL) throw primaryErr;
-    const { data, usage } = await callGroqChat(FALLBACK_MODEL, prompt);
-    return { dados: data, usage, model: usage.model };
+  let lastErr: Error | null = null;
+  for (const model of models) {
+    try {
+      const { data, usage } = await callGroqChat(model, prompt);
+      return { dados: data, usage, model: usage.model };
+    } catch (err) {
+      lastErr = err instanceof Error ? err : new Error(String(err));
+      const msg = lastErr.message;
+      const retry =
+        /model.*not found|does not exist/i.test(msg) || /HTTP 404/.test(msg);
+      if (!retry) throw lastErr;
+    }
   }
+  throw lastErr ?? new Error('Nenhum modelo Groq disponível.');
 }
