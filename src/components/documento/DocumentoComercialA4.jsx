@@ -13,6 +13,7 @@ import {
   itensTemColunaCaixas,
   labelColunaPrecoUnit,
   labelColunaQuantidade,
+  formatTituloApresentacao,
 } from '@/lib/documentoComercialA4';
 
 const lineBottom = `1px solid ${DOCUMENTO_COMERCIAL_A4_BORDER}`;
@@ -107,10 +108,13 @@ export default function DocumentoComercialA4({
   const tot = Number(total) || Math.max(st - desc, 0);
   const resumo = buildResumoDocumentoComercial(lista, tot);
 
-  const tituloDoc = titulo
+  const tituloDocBruto = titulo
     || (tipo === 'pedido_venda'
       ? `Pedido de venda${numero ? ` nº ${numero}` : ''}`
       : 'Orçamento');
+  const tituloDoc = formatTituloApresentacao(tituloDocBruto);
+  const nomeEmpresaExibicao = empresaNorm?.nome ? formatTituloApresentacao(empresaNorm.nome) : '';
+  const clienteExibicao = clienteNome ? formatTituloApresentacao(clienteNome) : '';
 
   const metaData = fmtDataDocumento(data);
   const labelQty = labelColunaQuantidade(lista);
@@ -160,8 +164,8 @@ export default function DocumentoComercialA4({
                   style={{ maxWidth: '140px', maxHeight: '56px', display: 'block', marginBottom: '10px', objectFit: 'contain' }}
                 />
               )}
-              <div style={{ fontSize: '16px', fontWeight: 600, letterSpacing: '-0.02em', marginBottom: '4px' }}>
-                {empresaNorm.nome}
+              <div style={{ fontSize: '22px', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '6px', lineHeight: 1.2 }}>
+                {nomeEmpresaExibicao}
               </div>
               {empresaNorm.razaoSocial && (
                 <div style={{ fontSize: '12px', color: '#555', marginBottom: '2px' }}>{empresaNorm.razaoSocial}</div>
@@ -182,12 +186,11 @@ export default function DocumentoComercialA4({
           <div style={{ flex: '0 1 46%', textAlign: 'right', minWidth: '200px' }}>
             <h1
               style={{
-                fontSize: '14px',
-                fontWeight: 600,
-                letterSpacing: '0.02em',
-                textTransform: 'uppercase',
+                fontSize: '18px',
+                fontWeight: 700,
+                letterSpacing: '-0.01em',
                 margin: 0,
-                lineHeight: 1.35,
+                lineHeight: 1.3,
                 color: '#111',
               }}
             >
@@ -195,19 +198,15 @@ export default function DocumentoComercialA4({
             </h1>
             {subtitulo && <p style={{ ...metaLinhaStyle, color: '#444' }}>{subtitulo}</p>}
             <p style={metaLinhaStyle}>
-              <span style={{ textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '11px' }}>Data</span>
-              {' '}
-              {metaData}
+              Data {metaData}
             </p>
             {vendedorNome && (
               <p style={metaLinhaStyle}>
-                <span style={{ textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '11px' }}>Vendedor:</span>
-                {' '}
-                {vendedorNome}
+                Vendedor: {vendedorNome}
               </p>
             )}
             {lista.length > 0 && (
-              <p style={{ marginTop: '10px', fontSize: '13px', fontWeight: 600, color: '#111' }}>{resumo}</p>
+              <p style={{ marginTop: '10px', fontSize: '14px', fontWeight: 600, color: '#111' }}>{resumo}</p>
             )}
           </div>
         </header>
@@ -217,8 +216,8 @@ export default function DocumentoComercialA4({
             <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#666', marginBottom: '4px' }}>
               Cliente
             </div>
-            <div style={{ fontSize: '15px', fontWeight: 600, color: '#111' }}>
-              {String(clienteNome).toUpperCase()}
+            <div style={{ fontSize: '16px', fontWeight: 600, color: '#111' }}>
+              {clienteExibicao}
             </div>
           </div>
         )}

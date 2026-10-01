@@ -25,8 +25,11 @@ export function ensureDocumentoComercialA4FontLoaded() {
       document.head.appendChild(link);
     }
     if (document.fonts?.load) {
-      await document.fonts.load('400 13px Inter');
-      await document.fonts.load('600 13px Inter');
+      await Promise.all([
+        document.fonts.load('400 14px Inter'),
+        document.fonts.load('600 18px Inter'),
+        document.fonts.load('700 22px Inter'),
+      ]);
     }
   })().catch(() => {});
 

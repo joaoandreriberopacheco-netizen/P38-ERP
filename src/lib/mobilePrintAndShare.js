@@ -4,6 +4,8 @@
  */
 import { CUPOM_LARGURA_IMPRESSAO_MM, CUPOM_MARGEM_LATERAL_MM, CUPOM_PAPEL_MM } from '@/lib/cupomTermicoConstants';
 import { ORCAMENTO_CUPOM_PAPEL_MM } from '@/lib/orcamentoCupomFormato';
+import { ensureDocumentoComercialA4FontLoaded } from '@/lib/documentoComercialA4Font';
+import { html2canvasDocumentoComercialA4 } from '@/lib/documentoComercialPdfCapture';
 export function shouldUseMobileDocumentExport() {
   if (typeof window === 'undefined') return false;
   try {
@@ -64,14 +66,19 @@ export async function renderElementToPdfBlob(element, { formato = '80mm' } = {})
   if (!element) throw new Error('Elemento inválido');
   const { html2canvas, jsPDF } = await loadPdfCaptureLibs();
   const isA4 = formato === 'a4';
-  const canvas = await html2canvas(element, {
-    scale: 2,
-    useCORS: true,
-    backgroundColor: '#ffffff',
-    logging: false,
-    ignoreElements: (node) =>
-      typeof node?.classList?.contains === 'function' && node.classList.contains('no-pdf-capture'),
-  });
+  if (isA4) {
+    await ensureDocumentoComercialA4FontLoaded();
+  }
+  const canvas = isA4
+    ? await html2canvasDocumentoComercialA4(element, html2canvas, { scale: 2 })
+    : await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      ignoreElements: (node) =>
+        typeof node?.classList?.contains === 'function' && node.classList.contains('no-pdf-capture'),
+    });
   const imgData = canvas.toDataURL('image/png');
   let pdf;
   if (isA4) {

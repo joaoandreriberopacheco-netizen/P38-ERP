@@ -35,6 +35,26 @@ export const fmtNumeroPt = (n, frac = 2) =>
     maximumFractionDigits: frac,
   });
 
+const PARTICULAS_TITULO_PT = new Set(['de', 'da', 'do', 'das', 'dos', 'e', 'o', 'a']);
+
+/** Ex.: CASA ISRAEL → Casa Israel; PEDIDO DE VENDA → Pedido de venda */
+export function formatTituloApresentacao(texto) {
+  const bruto = String(texto || '').trim();
+  if (!bruto) return '';
+  const palavras = bruto.toLocaleLowerCase('pt-BR').split(/\s+/).filter(Boolean);
+  return palavras
+    .map((palavra, idx) => {
+      if (palavra === 'nº') return 'nº';
+      if (/^[a-z]{1,4}-\d/i.test(palavra) || /^\d/.test(palavra)) {
+        return palavra.toLocaleUpperCase('pt-BR');
+      }
+      if (idx > 0 && PARTICULAS_TITULO_PT.has(palavra)) return palavra;
+      if (palavra.length <= 1) return palavra.toLocaleUpperCase('pt-BR');
+      return palavra.charAt(0).toLocaleUpperCase('pt-BR') + palavra.slice(1);
+    })
+    .join(' ');
+}
+
 export const fmtDataDocumento = (d = new Date()) => {
   const dt = d instanceof Date ? d : new Date(d);
   if (Number.isNaN(dt.getTime())) return '—';
@@ -92,7 +112,7 @@ export const documentoComercialA4PageStyle = {
   minHeight: '297mm',
   fontFamily: DOCUMENTO_COMERCIAL_A4_FONT,
   fontWeight: 400,
-  fontSize: '13px',
+  fontSize: '14px',
   lineHeight: 1.45,
   color: '#111',
   background: '#fff',

@@ -40,6 +40,7 @@ import {
   ensureDocumentoComercialA4FontLoaded,
   mapPedidoVendaParaDocumentoComercial,
 } from '@/lib/documentoComercialA4';
+import { html2canvasDocumentoComercialA4 } from '@/lib/documentoComercialPdfCapture';
 
 /** Exibição de data/hora no fuso do negócio (Tabatinga — `TIMEZONE_SISTEMA`). */
 const fmtDtTZ = (d) => d ? new Intl.DateTimeFormat('pt-BR', { timeZone: TIMEZONE_SISTEMA, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(d)) : '-';
@@ -527,12 +528,14 @@ export default function ComprovanteCompra({ pedido, open = true, onClose }) {
     const html2canvas = await loadHtml2Canvas();
     const JsPDF = await loadJsPDF();
 
-    const canvas = await html2canvas(el, {
-      scale: 3,
-      useCORS: true,
-      backgroundColor: '#ffffff',
-      logging: false,
-    });
+    const canvas = isA4
+      ? await html2canvasDocumentoComercialA4(el, html2canvas, { scale: 2 })
+      : await html2canvas(el, {
+        scale: 3,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
 
     const imgData = canvas.toDataURL('image/png');
 
