@@ -1,10 +1,15 @@
 #!/usr/bin/env node
 /**
  * Simula o fluxo de importação de pedido (parser local + heurística + Groq opcional).
- * Uso: node scripts/simular-import-pedido-pdf.mjs [caminho.pdf]
+ * Uso: npx vite-node --config legacy/vite/vite.config.js scripts/simular-import-pedido-pdf.mjs [arquivo.pdf|.jpg|...]
  */
 import fs from 'fs';
+import path from 'path';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
+
+const execFileAsync = promisify(execFile);
 import { parsePedidoCompraDocumento } from '../src/lib/ocrDocumentParser.js';
 import {
   pedidoExtracaoPareceIncompleta,
@@ -14,9 +19,29 @@ import {
 } from '../src/lib/ocrImportPipeline.js';
 import { normalizarRespostaGroq } from '../src/lib/ocrGroqNormalize.js';
 
-const pdfPath =
+const inputPath =
   process.argv[2] ||
   '/home/ubuntu/.cursor/projects/workspace/uploads/Cota__o__30-09-2026_11h56_4407.pdf';
+
+async function extrairTextoImagemPaddle(imgPath) {
+  const { stdout } = await execFileAsync(
+    'npx',
+    ['ppu-paddle-ocr', 'recognize', imgPath, '--flatten', '-q'],
+    { cwd: process.cwd(), maxBuffer: 8 * 1024 * 1024, env: process.env },
+  );
+  const texto = String(stdout || '').replace(/\x1b\[[0-9;]*m/g, '').trim();
+  const lines = texto.split('\n').filter((l) => !l.includes('[PaddleOcrService]'));
+  return { texto: lines.join('\n').trim(), paginas: 1, origem: 'paddle_imagem' };
+}
+
+async function extrairTextoArquivo(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  if (/\.(jpe?g|png|webp|bmp|gif|tiff?)$/i.test(ext)) {
+    return extrairTextoImagemPaddle(filePath);
+  }
+  const pdf = await extrairTextoPdf(filePath);
+  return { ...pdf, origem: 'pdf_digital' };
+}
 
 async function extrairTextoPdf(path) {
   const data = new Uint8Array(fs.readFileSync(path));
@@ -35,7 +60,14 @@ async function tentarGroq(texto, tipo) {
   const key = process.env.GROQ_API_KEY || '';
   if (!key) return { skip: 'GROQ_API_KEY não definido no ambiente' };
 
-  const model = process.env.GROQ_OCR_MODEL || 'llama-3.3-70b-versatile';
+  const envModel = process.env.GROQ_OCR_MODEL || '';
+  const models = [
+    envModel,
+    'openai/gpt-oss-20b',
+    'qwen/qwen3.8-27b',
+    'openai/gpt-oss-120b',
+  ].filter(Boolean);
+  const uniqueModels = [...new Set(models)];
   const trim = texto.length > 28000 ? `${texto.slice(0, 28000)}\n[truncado]` : texto;
   const schema = `{"fornecedor":{"nome_identificado":"","cnpj_identificado":""},"itens":[{"descricao":"","codigo":"","quantidade":0,"preco_unitario":0,"unidade_medida_documento":"UN"}]}`;
 
@@ -48,23 +80,32 @@ Texto:
 ${trim}
 ---`;
 
-  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${key}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model,
-      temperature: 0.1,
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: 'json_object' },
-    }),
-  });
-  if (!res.ok) {
+  let res;
+  let modelUsado = uniqueModels[0];
+  let lastErr = '';
+  for (const model of uniqueModels) {
+    modelUsado = model;
+    res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${key}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0.1,
+        messages: [{ role: 'user', content: prompt }],
+        response_format: { type: 'json_object' },
+      }),
+    });
+    if (res.ok) break;
     const errText = await res.text();
-    return { erro: `Groq HTTP ${res.status}: ${errText.slice(0, 200)}` };
+    lastErr = `Groq HTTP ${res.status}: ${errText.slice(0, 200)}`;
+    if (!/model.*not found|does not exist/i.test(errText) && res.status !== 404) {
+      return { erro: lastErr };
+    }
   }
+  if (!res?.ok) return { erro: lastErr || 'Groq indisponível' };
   const json = await res.json();
   const content = json.choices?.[0]?.message?.content || '';
   let raw;
@@ -75,7 +116,7 @@ ${trim}
     raw = m ? JSON.parse(m[0]) : null;
   }
   const dados = normalizarRespostaGroq(tipo, raw);
-  return { dados, model };
+  return { dados, model: json?.model || modelUsado };
 }
 
 function resumir(dados, label) {
@@ -93,11 +134,11 @@ function resumir(dados, label) {
   if (itens.length > 30) console.log(`  … +${itens.length - 30} itens`);
 }
 
-console.log('PDF:', pdfPath);
-const { texto, paginas } = await extrairTextoPdf(pdfPath);
-console.log(`Páginas: ${paginas} | Caracteres de texto: ${texto.length}`);
+console.log('Arquivo:', inputPath);
+const { texto, paginas, origem: origemTexto } = await extrairTextoArquivo(inputPath);
+console.log(`Origem texto: ${origemTexto || 'pdf'} | Páginas: ${paginas} | Caracteres: ${texto.length}`);
 if (!texto) {
-  console.error('PDF sem camada de texto (scan) — no browser usaria OCR Paddle.');
+  console.error('Não foi possível extrair texto (PDF vazio ou OCR falhou).');
   process.exit(1);
 }
 
