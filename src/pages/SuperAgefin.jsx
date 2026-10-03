@@ -46,6 +46,7 @@ import {
 import {
   carregarBudgetsAgrupadosParaRelatorio,
   carregarModelosFolhaParaSuperAgefin,
+  competenciaDoMes,
   contaSuperAgefinSomenteLeitura,
   listaJaTemFolhaPagamento,
   montarContaSinteticaFolhaDia5,
@@ -83,7 +84,10 @@ import {
 } from '@/lib/p38VirtualList';
 import { cn } from '@/lib/utils';
 import { fetchLancamentosSuperAgefinMes } from '@/lib/fetchLancamentosExtratoAgefin';
-import { listarModelos as listarModelosAgefin } from '@/lib/agefinPrevisaoService';
+import {
+  listarModelos as listarModelosAgefin,
+  repararFilhosDuplicadosCompetenciaPlanejamento,
+} from '@/lib/agefinPrevisaoService';
 import { listarParcelamentos } from '@/lib/agefinParcelamentoService';
 import {
   lancamentoEntraPautaAgefinPrevisao,
@@ -395,6 +399,7 @@ export default function SuperAgefin() {
   const [parcelamentosAgefin, setParcelamentosAgefin] = useState([]);
   const debounceRef = useRef(null);
   const scrollMesAplicadoRef = useRef('');
+  const reparoDuplicatasMesRef = useRef(new Set());
 
   const abrirConta = useCallback((conta) => {
     if (contaSuperAgefinSomenteLeitura(conta)) {
@@ -415,6 +420,22 @@ export default function SuperAgefin() {
   const loadContas = useCallback(async () => {
     setLoading(true);
     try {
+      const competenciaChave = competenciaDoMes(currentMonth);
+      if (!reparoDuplicatasMesRef.current.has(competenciaChave)) {
+        try {
+          const { seriesComDuplicata, canceladosEstimados } =
+            await repararFilhosDuplicadosCompetenciaPlanejamento(competenciaChave);
+          reparoDuplicatasMesRef.current.add(competenciaChave);
+          if (seriesComDuplicata > 0 && canceladosEstimados > 0) {
+            console.info(
+              `[AGEFIN] Reparo ${competenciaChave}: ${seriesComDuplicata} série(s), ~${canceladosEstimados} duplicata(s) cancelada(s)`,
+            );
+          }
+        } catch (reparoErr) {
+          console.error('AGEFIN: falha ao reparar filhos duplicados do planejamento', reparoErr);
+        }
+      }
+
       const [data, modelos, parcelamentos] = await Promise.all([
         fetchLancamentosSuperAgefinMes(currentMonth),
         listarModelosAgefin(),

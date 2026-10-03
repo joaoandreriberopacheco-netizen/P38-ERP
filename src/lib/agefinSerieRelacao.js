@@ -4,6 +4,7 @@
  */
 
 import { lancamentoCancelado, lancamentoPago } from '@/lib/agefinConsultaFilters';
+import { TAG_LF_GERADO_AUTO } from '@/lib/agefinLancamentosRecorrencia';
 
 export function serieIdFromGrupoLancamento(grupoId) {
   if (!grupoId) return undefined;
@@ -58,9 +59,21 @@ export function escolherFilhoCanonicRelacional(candidatos = [], modelo) {
   const porRef = candidatos.filter((lf) => lf.referencia_id && refs.has(lf.referencia_id));
   const pool = doGrupo.length ? doGrupo : porRef.length ? porRef : candidatos;
 
+  const pontuacao = (lf) => {
+    let score = 0;
+    if (lancamentoPago(lf)) score += 1000;
+    if (lancamentoCancelado(lf)) score -= 5000;
+    const tags = Array.isArray(lf?.tags) ? lf.tags : [];
+    if (!tags.includes(TAG_LF_GERADO_AUTO)) score += 200;
+    if (modelo?.grupo_lancamento_id && lf?.grupo_lancamento_id === modelo.grupo_lancamento_id) {
+      score += 50;
+    }
+    return score;
+  };
+
   return [...pool].sort((a, b) => {
-    if (lancamentoCancelado(a) !== lancamentoCancelado(b)) return lancamentoCancelado(a) ? 1 : -1;
-    if (lancamentoPago(a) !== lancamentoPago(b)) return lancamentoPago(a) ? -1 : 1;
+    const diff = pontuacao(b) - pontuacao(a);
+    if (diff !== 0) return diff;
     return String(a.id).localeCompare(String(b.id));
   })[0];
 }

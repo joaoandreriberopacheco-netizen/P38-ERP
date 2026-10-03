@@ -858,6 +858,21 @@ function payloadLancamentoAuto(modelo, competencia) {
   };
 }
 
+/** Grupos já usados por filhos desta série (inclui grupo legado após edição no mês). */
+async function gruposHistoricosFilhosSerie(modelo) {
+  const grupos = new Set();
+  if (modelo?.grupo_lancamento_id) grupos.add(modelo.grupo_lancamento_id);
+  for (const ref of referenciaIdsSerieModelo(modelo)) {
+    const rows = await base44.entities.LancamentoFinanceiro.filter({
+      referencia_id: ref,
+    }).catch(() => []);
+    for (const lf of rows || []) {
+      if (lf?.grupo_lancamento_id) grupos.add(lf.grupo_lancamento_id);
+    }
+  }
+  return [...grupos];
+}
+
 /**
  * Filhos da competência: chave (grupo_lancamento_id + YYYY-MM) ou referencia_id da série + YYYY-MM.
  */
@@ -865,10 +880,14 @@ async function listarLancamentosFilhosCompetencia(modelo, competencia, { lancame
   const comp = String(competencia || '').slice(0, 7);
   if (!comp || !modelo) return [];
 
+  const grupos = await gruposHistoricosFilhosSerie(modelo);
   const porId = new Map();
   const registrar = (lf) => {
     if (!lf?.id || mesReferenciaLancamento(lf) !== comp) return;
-    if (!lancamentoFilhoPertenceSerie(lf, modelo)) return;
+    const pertence =
+      lancamentoFilhoPertenceSerie(lf, modelo) ||
+      (lf.grupo_lancamento_id && grupos.includes(lf.grupo_lancamento_id));
+    if (!pertence) return;
     porId.set(lf.id, lf);
   };
 
@@ -880,10 +899,9 @@ async function listarLancamentosFilhosCompetencia(modelo, competencia, { lancame
       /* ignore */
     }
   }
-
-  if (modelo.grupo_lancamento_id) {
+  for (const gid of grupos) {
     const rows = await base44.entities.LancamentoFinanceiro.filter({
-      grupo_lancamento_id: modelo.grupo_lancamento_id,
+      grupo_lancamento_id: gid,
     });
     (rows || []).forEach(registrar);
   }
@@ -896,6 +914,34 @@ async function listarLancamentosFilhosCompetencia(modelo, competencia, { lancame
   }
 
   return [...porId.values()];
+}
+
+/**
+ * Repara outubro (e qualquer mês): um filho aberto por série; cancela extras do planejamento.
+ * Idempotente — seguro chamar ao abrir a AGEFIN Consulta.
+ */
+export async function repararFilhosDuplicadosCompetenciaPlanejamento(competencia) {
+  const comp = String(competencia || '').slice(0, 7);
+  if (!comp) return { seriesComDuplicata: 0, canceladosEstimados: 0 };
+
+  const modelos = await listarModelos();
+  let seriesComDuplicata = 0;
+  let canceladosEstimados = 0;
+
+  for (const modelo of modelos) {
+    if (!serieDeveAparecerNaCompetencia(modelo, comp)) continue;
+    const abertos = (await listarLancamentosFilhosCompetencia(modelo, comp)).filter(
+      (lf) => !lancamentoCancelado(lf),
+    );
+    if (abertos.length < 2) continue;
+
+    seriesComDuplicata += 1;
+    canceladosEstimados += abertos.length - 1;
+    await resolverLancamentoFilhoCompetencia(modelo, comp, { reconciliar: true });
+  }
+
+  if (canceladosEstimados) invalidarCacheLancamentosFinanceiros();
+  return { seriesComDuplicata, canceladosEstimados };
 }
 
 async function vincularLancamentoFilhoAoTemplate(modelo, lf) {
