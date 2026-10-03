@@ -13,6 +13,7 @@ import ExportarEmbalagensPlanilha from '@/components/produtos/massa/ExportarEmba
 import ExportarEstoque from '@/components/produtos/massa/ExportarEstoque';
 import { P38_SECTION_TITLE } from '@/lib/p38FormTypography';
 import { P38PageHeader } from '@/components/layout/P38PageHeader';
+import { toast } from 'sonner';
 
 const TAMANHO_LOTE = 25;
 
@@ -35,23 +36,44 @@ export default function ImportacaoProdutosPage() {
   const [parsedEmbalagens, setParsedEmbalagens] = useState(null);
   const [parsedEstoque, setParsedEstoque] = useState(null);
   const [salvando, setSalvando] = useState(false);
-  const [salvouOk, setSalvouOk] = useState(false);
+  const [salvouProdutosOk, setSalvouProdutosOk] = useState(false);
   const [salvouEmbalagensOk, setSalvouEmbalagensOk] = useState(false);
+  const [salvouEstoqueOk, setSalvouEstoqueOk] = useState(false);
+  const [resultadoSucesso, setResultadoSucesso] = useState(null);
+  const [resultadoEmbalagensSucesso, setResultadoEmbalagensSucesso] = useState(null);
+  const [resultadoEstoqueSucesso, setResultadoEstoqueSucesso] = useState(null);
   const [progresso, setProgresso] = useState({ atual: 0, total: 0, lote: 0, totalLotes: 0 });
+
+  const resumirAlterados = (alterados = []) => ({
+    total: alterados.length,
+    novos: alterados.filter((item) => item.isNew).length,
+    atualizados: alterados.filter((item) => !item.isNew).length,
+  });
+
+  const mensagemImportacaoConcluida = ({ total, novos, atualizados, totalLotes, tipo = 'produto' }) => {
+    const partes = [`Processo finalizado: ${total} ${tipo}(s) processado(s)`];
+    if (novos > 0) partes.push(`${novos} criado(s)`);
+    if (atualizados > 0) partes.push(`${atualizados} atualizado(s)`);
+    if (totalLotes > 1) partes.push(`${totalLotes} lote(s)`);
+    return partes.join(' · ');
+  };
 
   const handleParsed = useCallback((data) => {
     setParsedData(data);
-    setSalvouOk(false);
+    setSalvouProdutosOk(false);
+    setResultadoSucesso(null);
   }, []);
 
   const handleParsedEmbalagens = useCallback((data) => {
     setParsedEmbalagens(data);
     setSalvouEmbalagensOk(false);
+    setResultadoEmbalagensSucesso(null);
   }, []);
 
   const handleParsedEstoque = useCallback((data) => {
     setParsedEstoque(data);
-    setSalvouOk(false);
+    setSalvouEstoqueOk(false);
+    setResultadoEstoqueSucesso(null);
   }, []);
 
   const handleConfirmar = async () => {
@@ -61,6 +83,7 @@ export default function ImportacaoProdutosPage() {
     }
 
     const total = parsedData.alterados.length;
+    const resumo = resumirAlterados(parsedData.alterados);
     const totalLotes = Math.ceil(total / TAMANHO_LOTE);
     const grupoId = `GRP-${Date.now()}`;
     setSalvando(true);
@@ -87,11 +110,13 @@ export default function ImportacaoProdutosPage() {
         setProgresso({ atual: Math.min(inicio + TAMANHO_LOTE, total), total, lote: i + 1, totalLotes });
       }
 
-      toast.success(`✓ Sincronização concluída! ${total} produto(s) em ${totalLotes} lote(s).`);
+      const mensagem = mensagemImportacaoConcluida({ ...resumo, totalLotes });
+      toast.success(mensagem);
       if (avisoServidor) {
         toast.warning(avisoServidor);
       }
-      setSalvouOk(true);
+      setResultadoSucesso({ ...resumo, totalLotes, mensagem });
+      setSalvouProdutosOk(true);
       setParsedData(null);
       // Invalidar cache global para que Produtos recarregue ao retornar
       window.dispatchEvent(new Event('produtos:refresh'));
@@ -111,6 +136,7 @@ export default function ImportacaoProdutosPage() {
     }
 
     const total = parsedEmbalagens.alterados.length;
+    const resumo = resumirAlterados(parsedEmbalagens.alterados);
     const totalLotes = Math.ceil(total / TAMANHO_LOTE);
     const grupoId = `GRP-${Date.now()}`;
     setSalvando(true);
@@ -137,10 +163,12 @@ export default function ImportacaoProdutosPage() {
         setProgresso({ atual: Math.min(inicio + TAMANHO_LOTE, total), total, lote: i + 1, totalLotes });
       }
 
-      toast.success(`Embalagens atualizadas: ${total} produto(s) em ${totalLotes} lote(s).`);
+      const mensagem = mensagemImportacaoConcluida({ ...resumo, totalLotes, tipo: 'embalagem' });
+      toast.success(mensagem);
       if (avisoServidorEmb) {
         toast.warning(avisoServidorEmb);
       }
+      setResultadoEmbalagensSucesso({ ...resumo, totalLotes, mensagem });
       setSalvouEmbalagensOk(true);
       setParsedEmbalagens(null);
       window.dispatchEvent(new Event('produtos:refresh'));
@@ -190,8 +218,10 @@ export default function ImportacaoProdutosPage() {
         setProgresso({ atual: Math.min(inicio + TAMANHO_LOTE, total), total, lote: i + 1, totalLotes });
       }
 
-      toast.success(`✓ Estoque atualizado! ${total} produto(s) em ${totalLotes} lote(s).`);
-      setSalvouOk(true);
+      const mensagem = `Processo finalizado: ${total} produto(s) com estoque atualizado em ${totalLotes} lote(s).`;
+      toast.success(mensagem);
+      setResultadoEstoqueSucesso({ total, totalLotes, mensagem });
+      setSalvouEstoqueOk(true);
       setParsedEstoque(null);
       // Invalidar cache global para que Produtos recarregue ao retornar
       window.dispatchEvent(new Event('produtos:refresh'));
@@ -295,7 +325,7 @@ export default function ImportacaoProdutosPage() {
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
                       <div
-                        className="bg-background dark:bg-card h-2 rounded-full transition-all duration-300"
+                        className="bg-primary h-2 rounded-full transition-all duration-300"
                         style={{ width: `${Math.round((progresso.atual / progresso.total) * 100)}%` }}
                       />
                     </div>
@@ -308,7 +338,7 @@ export default function ImportacaoProdutosPage() {
                 <Button
                   onClick={handleConfirmar}
                   disabled={!podeConfirmar || salvando}
-                  className="w-full bg-background dark:bg-card dark:text-foreground hover:bg-primary/90 dark:hover:bg-muted h-11 text-sm font-medium rounded-xl"
+                  className="w-full h-11 text-sm font-medium rounded-xl"
                 >
                   {salvando
                     ? `Sincronizando lote ${progresso.lote}/${progresso.totalLotes}...`
@@ -317,14 +347,17 @@ export default function ImportacaoProdutosPage() {
               </div>
             )}
 
-            {salvouOk && !parsedEstoque && (
+            {salvouProdutosOk && resultadoSucesso && (
               <div className="rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 p-4 text-center">
                 <div className="flex items-center justify-center gap-2 mb-1">
                   <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />
                   <p className="text-sm font-medium text-green-700 dark:text-green-400">
-                    Sincronização concluída com sucesso!
+                    Importação concluída com sucesso
                   </p>
                 </div>
+                <p className="text-sm text-green-800 dark:text-green-200">
+                  {resultadoSucesso.mensagem}
+                </p>
               </div>
             )}
           </TabsContent>
@@ -390,7 +423,7 @@ export default function ImportacaoProdutosPage() {
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
                       <div
-                        className="bg-background dark:bg-card h-2 rounded-full transition-all duration-300"
+                        className="bg-primary h-2 rounded-full transition-all duration-300"
                         style={{ width: `${Math.round((progresso.atual / progresso.total) * 100)}%` }}
                       />
                     </div>
@@ -403,7 +436,7 @@ export default function ImportacaoProdutosPage() {
                 <Button
                   onClick={handleConfirmarEmbalagens}
                   disabled={!podeConfirmarEmbalagens || salvando}
-                  className="w-full bg-background dark:bg-card dark:text-foreground hover:bg-primary/90 dark:hover:bg-muted h-11 text-sm font-medium rounded-xl"
+                  className="w-full h-11 text-sm font-medium rounded-xl"
                 >
                   {salvando
                     ? `Sincronizando lote ${progresso.lote}/${progresso.totalLotes}...`
@@ -412,14 +445,17 @@ export default function ImportacaoProdutosPage() {
               </div>
             )}
 
-            {salvouEmbalagensOk && (
+            {salvouEmbalagensOk && resultadoEmbalagensSucesso && (
               <div className="rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 p-4 text-center">
                 <div className="flex items-center justify-center gap-2 mb-1">
                   <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />
                   <p className="text-sm font-medium text-green-700 dark:text-green-400">
-                    Embalagens e unidades atualizadas com sucesso!
+                    Embalagens atualizadas com sucesso
                   </p>
                 </div>
+                <p className="text-sm text-green-800 dark:text-green-200">
+                  {resultadoEmbalagensSucesso.mensagem}
+                </p>
               </div>
             )}
           </TabsContent>
@@ -512,7 +548,7 @@ export default function ImportacaoProdutosPage() {
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
                       <div
-                        className="bg-background dark:bg-card h-2 rounded-full transition-all duration-300"
+                        className="bg-primary h-2 rounded-full transition-all duration-300"
                         style={{ width: `${Math.round((progresso.atual / progresso.total) * 100)}%` }}
                       />
                     </div>
@@ -525,7 +561,7 @@ export default function ImportacaoProdutosPage() {
                 <Button
                   onClick={handleConfirmarEstoque}
                   disabled={!podeConfirmarEstoque || salvando}
-                  className="w-full bg-background dark:bg-card dark:text-foreground hover:bg-primary/90 dark:hover:bg-muted h-11 text-sm font-medium rounded-xl"
+                  className="w-full h-11 text-sm font-medium rounded-xl"
                 >
                   {salvando
                     ? `Atualizando lote ${progresso.lote}/${progresso.totalLotes}...`
@@ -534,14 +570,17 @@ export default function ImportacaoProdutosPage() {
               </div>
             )}
 
-            {salvouOk && parsedEstoque === null && (
+            {salvouEstoqueOk && resultadoEstoqueSucesso && (
               <div className="rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 p-4 text-center">
                 <div className="flex items-center justify-center gap-2 mb-1">
                   <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />
                   <p className="text-sm font-medium text-green-700 dark:text-green-400">
-                    Estoque atualizado e movimentações registradas com sucesso!
+                    Estoque atualizado com sucesso
                   </p>
                 </div>
+                <p className="text-sm text-green-800 dark:text-green-200">
+                  {resultadoEstoqueSucesso.mensagem}
+                </p>
               </div>
             )}
           </TabsContent>
