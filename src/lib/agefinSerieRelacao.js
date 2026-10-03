@@ -4,7 +4,6 @@
  */
 
 import { lancamentoCancelado, lancamentoPago } from '@/lib/agefinConsultaFilters';
-import { TAG_LF_GERADO_AUTO } from '@/lib/agefinLancamentosRecorrencia';
 
 export function serieIdFromGrupoLancamento(grupoId) {
   if (!grupoId) return undefined;
@@ -59,30 +58,16 @@ export function escolherFilhoCanonicRelacional(candidatos = [], modelo) {
   const porRef = candidatos.filter((lf) => lf.referencia_id && refs.has(lf.referencia_id));
   const pool = doGrupo.length ? doGrupo : porRef.length ? porRef : candidatos;
 
-  const ehGeradoAuto = (lf) => {
-    const tags = Array.isArray(lf?.tags) ? lf.tags : [];
-    return tags.includes(TAG_LF_GERADO_AUTO);
-  };
-
   const instanteAtualizacao = (lf) =>
     String(lf?.updated_date || lf?.updated_at || lf?.created_date || lf?.created_at || '');
 
-  const pontuacao = (lf) => {
-    let score = 0;
-    if (lancamentoPago(lf)) score += 1000;
-    if (lancamentoCancelado(lf)) score -= 5000;
-    if (!ehGeradoAuto(lf)) score += 500;
-    if (modelo?.grupo_lancamento_id && lf?.grupo_lancamento_id === modelo.grupo_lancamento_id) {
-      score += 50;
-    }
-    return score;
-  };
-
   return [...pool].sort((a, b) => {
-    const diff = pontuacao(b) - pontuacao(a);
-    if (diff !== 0) return diff;
-    const tb = instanteAtualizacao(b).localeCompare(instanteAtualizacao(a));
-    if (tb !== 0) return tb;
+    if (lancamentoCancelado(a) !== lancamentoCancelado(b)) {
+      return lancamentoCancelado(a) ? 1 : -1;
+    }
+    const porData = instanteAtualizacao(b).localeCompare(instanteAtualizacao(a));
+    if (porData !== 0) return porData;
+    if (lancamentoPago(a) !== lancamentoPago(b)) return lancamentoPago(a) ? -1 : 1;
     return String(a.id).localeCompare(String(b.id));
   })[0];
 }

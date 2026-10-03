@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Repara filhos duplicados do planejamento na competência (mantém a editada no mês).
+ * Repara filhos duplicados do planejamento na competência (mantém o filho mais recente).
  *
  *   npx vite-node --config legacy/vite/vite.config.js scripts/reparar-agefin-duplicatas.mjs --competencia=2026-10
  *   npx vite-node --config legacy/vite/vite.config.js scripts/reparar-agefin-duplicatas.mjs --competencia=2026-10 --apply
@@ -41,7 +41,7 @@ const { repararFilhosDuplicadosCompetenciaPlanejamento } = await import(
 console.log(`AGEFIN reparo | competência=${competencia} | apply=${apply}`);
 
 if (!apply) {
-  console.log('Dry-run: nada gravado. Adicione --apply para cancelar duplicatas (fica a editada no mês).');
+  console.log('Dry-run: nada gravado. Adicione --apply para cancelar duplicatas (fica o mais recente).');
   process.exit(0);
 }
 
