@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import SearchableFilterSelect from '@/components/compras/SearchableFilterSelect';
+import { labelFornecedor, sortFornecedoresByNome } from '@/lib/fornecedorSelectUtils';
 
 const FORNECEDOR_VAZIO = '__none__';
 
@@ -12,7 +13,10 @@ export default function FornecedorLinhaSelect({
   const options = useMemo(
     () => [
       { value: FORNECEDOR_VAZIO, label: 'Selecione...' },
-      ...fornecedores.map((f) => ({ value: f.id, label: f.nome || f.razao_social || 'Sem nome' })),
+      ...sortFornecedoresByNome(fornecedores).map((f) => ({
+        value: f.id,
+        label: labelFornecedor(f),
+      })),
     ],
     [fornecedores],
   );
