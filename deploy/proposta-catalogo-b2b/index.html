@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Proposta Comercial — Catálogo B2B P38</title>
+  <meta name="description" content="Catálogo digital B2B para lojistas e distribuidores: link partilhável, pedido com m² e peso, PDF pronto e regime Suframa. Demonstração ao vivo." />
+  <meta property="og:title" content="Catálogo B2B P38 — proposta comercial" />
+  <meta property="og:description" content="Seu cliente monta o pedido sozinho no telemóvel. Você recebe PDF organizado — sem planilha paralela." />
+  <meta property="og:type" content="website" />
+  <link rel="icon" type="image/png" href="/brand/p38-app-icon.png" />
+  <meta name="theme-color" content="#121214" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #121214;
+      --surface: #1c1c20;
+      --surface-2: #242428;
+      --border: rgba(255,255,255,.1);
+      --text: #ececf0;
+      --muted: #9a9aa4;
+      --dim: #787884;
+      --accent: #a4ce33;
+      --accent-dark: #4a5d23;
+      --accent-soft: rgba(164,206,51,.12);
+      --accent-border: rgba(164,206,51,.35);
+      --warn: #c9956a;
+      --max: 920px;
+      --radius: 8px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: "Libre Franklin", system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 50% at 100% 0%, rgba(164,206,51,.06), transparent 55%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .wrap {
+      position: relative;
+      z-index: 1;
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 0 1.25rem;
+    }
+
+    header {
+      padding: 1.1rem 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: .65rem;
+      font-weight: 700;
+      font-size: .9375rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .logo:hover { text-decoration: none; color: #fff; }
+    .logo img { width: 32px; height: 32px; border-radius: 7px; }
+
+    .header-tag {
+      font-size: .72rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: .4rem;
+      background: var(--accent);
+      color: #1a1a1a;
+      font-weight: 600;
+      padding: .65rem 1.15rem;
+      border-radius: var(--radius);
+      text-decoration: none;
+      font-size: .875rem;
+      border: 1px solid var(--accent);
+      cursor: pointer;
+    }
+
+    .btn:hover { filter: brightness(1.06); text-decoration: none; }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--accent);
+      border-color: var(--accent-border);
+    }
+
+    .btn-outline:hover { background: var(--accent-soft); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text);
+      border-color: var(--border);
+    }
+
+    .btn-ghost:hover { background: var(--surface-2); text-decoration: none; }
+
+    .hero { padding: 3rem 0 2rem; }
+
+    .eyebrow {
+      display: inline-block;
+      font-size: .6875rem;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-soft);
+      border: 1px solid var(--accent-border);
+      padding: .35rem .65rem;
+      border-radius: 999px;
+      margin-bottom: 1.1rem;
+    }
+
+    .hero h1 {
+      font-size: clamp(1.75rem, 5vw, 2.65rem);
+      line-height: 1.15;
+      font-weight: 700;
+      max-width: 22ch;
+      letter-spacing: -.02em;
+    }
+
+    .hero h1 em {
+      font-style: normal;
+      color: var(--accent);
+    }
+
+    .hero .lead {
+      margin-top: 1.2rem;
+      color: var(--muted);
+      font-size: 1.05rem;
+      max-width: 54ch;
+    }
+
+    .hero-cta {
+      margin-top: 1.75rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .65rem;
+    }
+
+    .hero-meta {
+      margin-top: 1.25rem;
+      font-size: .8125rem;
+      color: var(--dim);
+    }
+
+    section { padding: 2.25rem 0; border-top: 1px solid var(--border); }
+
+    section h2 {
+      font-size: .75rem;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 1.1rem;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: .85rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.15rem;
+    }
+
+    .card h3 {
+      font-size: .9375rem;
+      margin-bottom: .45rem;
+      color: var(--text);
+    }
+
+    .card p {
+      font-size: .875rem;
+      color: var(--muted);
+    }
+
+    .card .icon {
+      font-size: 1.25rem;
+      margin-bottom: .55rem;
+      opacity: .9;
+    }
+
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .85rem;
+    }
+
+    @media (max-width: 640px) { .compare { grid-template-columns: 1fr; } }
+
+    .compare-col {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.15rem;
+    }
+
+    .compare-col h3 {
+      font-size: .8125rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-bottom: .75rem;
+    }
+
+    .compare-col ul { list-style: none; }
+    .compare-col li {
+      font-size: .875rem;
+      color: var(--muted);
+      padding: .4rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .compare-col li:last-child { border-bottom: 0; }
+    .compare-col.before h3 { color: #e57373; }
+    .compare-col.after h3 { color: var(--accent); }
+    .compare-col.before li::before { content: "✕ "; color: #e57373; }
+    .compare-col.after li::before { content: "✓ "; color: var(--accent); }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: .85rem;
+      counter-reset: step;
+    }
+
+    .step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.15rem;
+      position: relative;
+      padding-top: 2.5rem;
+    }
+
+    .step::before {
+      counter-increment: step;
+      content: counter(step);
+      position: absolute;
+      top: 1rem;
+      left: 1.15rem;
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 50%;
+      background: var(--accent-soft);
+      border: 1px solid var(--accent-border);
+      color: var(--accent);
+      font-size: .75rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .step h3 { font-size: .9375rem; margin-bottom: .35rem; }
+    .step p { font-size: .875rem; color: var(--muted); }
+
+    .demo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: .85rem;
+    }
+
+    .demo-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.15rem;
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+    }
+
+    .demo-card .badge {
+      align-self: flex-start;
+      font-size: .65rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      padding: .25rem .5rem;
+      border-radius: 999px;
+      background: var(--surface-2);
+      color: var(--dim);
+    }
+
+    .demo-card .badge.live { background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-border); }
+
+    .demo-card h3 { font-size: 1rem; }
+    .demo-card p { font-size: .84rem; color: var(--muted); flex: 1; }
+    .demo-card .btn { width: 100%; margin-top: .35rem; }
+
+    .offer {
+      background: linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%);
+      border: 1px solid var(--accent-border);
+      border-radius: calc(var(--radius) + 2px);
+      padding: 1.5rem;
+    }
+
+    .offer h3 {
+      font-size: 1.125rem;
+      margin-bottom: .65rem;
+    }
+
+    .offer ul {
+      margin: .75rem 0 1rem 1.1rem;
+      color: var(--muted);
+      font-size: .875rem;
+    }
+
+    .offer li { margin: .35rem 0; }
+
+    .faq details {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: .85rem 1rem;
+      margin-bottom: .55rem;
+    }
+
+    .faq summary {
+      cursor: pointer;
+      font-weight: 600;
+      font-size: .9rem;
+      list-style: none;
+    }
+
+    .faq summary::-webkit-details-marker { display: none; }
+
+    .faq p {
+      margin-top: .65rem;
+      font-size: .875rem;
+      color: var(--muted);
+    }
+
+    .cta-block {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius) + 2px);
+      margin: 1rem 0 2rem;
+    }
+
+    .cta-block h2 {
+      font-size: 1.35rem;
+      letter-spacing: normal;
+      text-transform: none;
+      color: var(--text);
+      margin-bottom: .65rem;
+    }
+
+    .cta-block p {
+      color: var(--muted);
+      font-size: .9375rem;
+      max-width: 42ch;
+      margin: 0 auto 1.25rem;
+    }
+
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .65rem;
+      justify-content: center;
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 1.75rem 0 2.5rem;
+      font-size: .8125rem;
+      color: var(--dim);
+      text-align: center;
+    }
+
+    footer strong { color: var(--muted); }
+
+    @media print {
+      body::before { display: none; }
+      .btn, header .btn { display: none; }
+      body { background: #fff; color: #222; }
+      .card, .compare-col, .step, .demo-card, .offer, .faq details, .cta-block {
+        break-inside: avoid;
+        border-color: #ddd;
+        background: #fafafa;
+      }
+      a { color: #222; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <a class="logo" href="/landing.html">
+        <img src="/brand/p38-app-icon.png" alt="" width="32" height="32" />
+        P38 sistemas
+      </a>
+      <span class="header-tag">Proposta comercial · Catálogo B2B</span>
+      <a class="btn btn-outline" href="#contato">Falar connosco</a>
+    </header>
+
+    <section class="hero">
+      <span class="eyebrow">Para distribuidores e lojistas</span>
+      <h1>Catálogo B2B que o cliente <em>usa sozinho</em></h1>
+      <p class="lead">
+        Link partilhável no WhatsApp. O lojista compara modelos, marca caixas ou paletes,
+        vê m², peso e total — e manda o PDF do pedido pronto. Sem planilha paralela nem catálogo desatualizado.
+      </p>
+      <div class="hero-cta">
+        <a class="btn" href="#demos">Ver demonstração ao vivo</a>
+        <a class="btn btn-ghost" href="mailto:contato@p38erp.com.br?subject=Cat%C3%A1logo%20B2B%20%E2%80%94%20proposta&amp;body=Ol%C3%A1%2C%20tenho%20interesse%20no%20cat%C3%A1logo%20B2B%20P38.%0A%0AEmpresa%3A%20%0ACidade%2FUF%3A%20%0A%0A">Pedir proposta personalizada</a>
+      </div>
+      <p class="hero-meta">Site isolado do ERP · funciona no telemóvel · PDF do pedido incluído</p>
+    </section>
+
+    <section>
+      <h2>O problema hoje</h2>
+      <div class="compare">
+        <div class="compare-col before">
+          <h3>Como costuma ser</h3>
+          <ul>
+            <li>PDF ou foto de tabela no grupo do WhatsApp</li>
+            <li>Preço e referência repetidos a cada cliente</li>
+            <li>Erro de m², caixa ou palete na hora de fechar</li>
+            <li>Vendedor vira “calculadora humana”</li>
+          </ul>
+        </div>
+        <div class="compare-col after">
+          <h3>Com catálogo B2B P38</h3>
+          <ul>
+            <li>Um link único — sempre atualizado</li>
+            <li>Cliente monta o pedido no telemóvel ou PC</li>
+            <li>Total, peso e m² calculados na hora</li>
+            <li>PDF organizado para fechar ou enviar de volta</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>O que está incluído</h2>
+      <div class="grid-3">
+        <div class="card">
+          <div class="icon" aria-hidden="true">📋</div>
+          <h3>Tabela inteligente</h3>
+          <p>Busca por nome, código e formato. Agrupamento por linha. Fotos e variantes (geminadas) quando aplicável.</p>
+        </div>
+        <div class="card">
+          <div class="icon" aria-hidden="true">🛒</div>
+          <h3>Carrinho B2B</h3>
+          <p>Quantidade em caixa ou palete, subtotal por item, resumo de m², peso e valor estimado antes de exportar.</p>
+        </div>
+        <div class="card">
+          <div class="icon" aria-hidden="true">📄</div>
+          <h3>PDF do pedido</h3>
+          <p>Documento pronto para imprimir ou reenviar — layout pensado para conferência comercial, não folheto marketing.</p>
+        </div>
+        <div class="card">
+          <div class="icon" aria-hidden="true">🏷️</div>
+          <h3>Desconto comercial</h3>
+          <p>Percentual configurável pelo lojista. Ideal para simular condição antes de fechar com o representante.</p>
+        </div>
+        <div class="card">
+          <div class="icon" aria-hidden="true">🌿</div>
+          <h3>Regime Suframa</h3>
+          <p>Para operações ZFM: incentivo interestadual calculado sobre valor já descontado, conforme UF do comprador.</p>
+        </div>
+        <div class="card">
+          <div class="icon" aria-hidden="true">📱</div>
+          <h3>Mobile-first</h3>
+          <p>Cards no telemóvel, tour guiado na primeira visita. Pensado para quem está na loja, não no escritório.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="demos">
+      <h2>Demonstrações ao vivo</h2>
+      <p style="color:var(--muted);font-size:.9rem;margin:-.35rem 0 1rem;max-width:60ch">
+        Abra no telemóvel como se fosse um lojista em prospecção. Não precisa de login — sites isolados, só o catálogo.
+      </p>
+      <div class="demo-grid">
+        <article class="demo-card">
+          <span class="badge">Demonstração · linha completa</span>
+          <h3>Formigres</h3>
+          <p>~1 500 modelos, visual alinhado ao site da marca. Paletes, m² e peso no carrinho.</p>
+          <a class="btn btn-outline" href="https://catalogo-formigres-p38.vercel.app/" target="_blank" rel="noopener">Abrir catálogo Formigres</a>
+        </article>
+        <article class="demo-card">
+          <span class="badge">Demonstração · marca Arielle</span>
+          <h3>Arielle · Carmelo Fior</h3>
+          <p>Catálogo B2B com identidade da marca e regime Suframa (origem SE).</p>
+          <a class="btn btn-outline" href="https://catalogo-arielle-p38.vercel.app/" target="_blank" rel="noopener">Abrir catálogo Arielle</a>
+        </article>
+        <article class="demo-card">
+          <span class="badge live">Operação real</span>
+          <h3>Tintão · Formigres</h3>
+          <p>Caso em produção: lojista monta pedido em caixas, revisa total e exporta PDF.</p>
+          <a class="btn" href="https://catalogo-tintao-formigres.vercel.app/" target="_blank" rel="noopener">Abrir catálogo Tintão</a>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2>Como implantamos</h2>
+      <div class="steps">
+        <div class="step">
+          <h3>Montamos seu catálogo</h3>
+          <p>Produtos, preços, embalagem (caixa/palete), fotos e regras comerciais da sua operação.</p>
+        </div>
+        <div class="step">
+          <h3>Entregamos o link</h3>
+          <p>URL própria ou subdomínio isolado — partilhável no WhatsApp sem expor o ERP interno.</p>
+        </div>
+        <div class="step">
+          <h3>Cliente pede, você fecha</h3>
+          <p>Lojista monta o pedido, baixa PDF e devolve. Equipe comercial confere e confirma no ERP.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Proposta piloto</h2>
+      <div class="offer">
+        <h3>30 dias · 1 operação · prova no chão</h3>
+        <p style="color:var(--muted);font-size:.9rem">
+          Para quem quer testar com clientes reais antes de escalar — distribuidor, representante ou rede de lojas.
+        </p>
+        <ul>
+          <li>Catálogo com sua marca e tabela de preços vigente</li>
+          <li>Link partilhável + PDF do pedido</li>
+          <li>Ajustes com base no uso real (busca, agrupamento, condições)</li>
+          <li>Integração futura com pedido de compra no P38 ERP, se fizer sentido</li>
+        </ul>
+        <a class="btn" href="mailto:contato@p38erp.com.br?subject=Cat%C3%A1logo%20B2B%20%E2%80%94%20piloto%2030%20dias&amp;body=Ol%C3%A1%2C%20quero%20saber%20mais%20sobre%20o%20piloto%20de%2030%20dias%20do%20cat%C3%A1logo%20B2B.%0A%0AEmpresa%3A%20%0ACidade%2FUF%3A%20%0AQuantos%20clientes%20B2B%20atende%3F%20%0A">Solicitar piloto</a>
+      </div>
+    </section>
+
+    <section class="faq">
+      <h2>Perguntas frequentes</h2>
+      <details>
+        <summary>Substitui o ERP?</summary>
+        <p>Não. O catálogo é a vitrine B2B para o cliente montar pedido. Fechamento, estoque e financeiro continuam no seu processo — idealmente no P38 ERP.</p>
+      </details>
+      <details>
+        <summary>Precisa instalar app?</summary>
+        <p>Não. Abre no browser do telemóvel ou computador, como um site. Pode fixar no ecrã inicial se quiser.</p>
+      </details>
+      <details>
+        <summary>Funciona para outras marcas além de cerâmica?</summary>
+        <p>O template nasceu em pisos e revestimentos (m², palete, peso), mas a lógica B2B adapta-se a outros distribuidores com tabela e embalagem definidas.</p>
+      </details>
+      <details>
+        <summary>Quem atualiza preços?</summary>
+        <p>Você define a rotina: regeneração a partir da sua base (planilha, ERP ou snapshot do fornecedor). O link público reflete a versão publicada.</p>
+      </details>
+    </section>
+
+    <section id="contato">
+      <div class="cta-block">
+        <h2>Próximo passo</h2>
+        <p>Envie esta página a quem está em prospecção ou marque 30 minutos para ver o fluxo completo no telemóvel.</p>
+        <div class="cta-row">
+          <a class="btn" href="mailto:contato@p38erp.com.br?subject=Cat%C3%A1logo%20B2B%20%E2%80%94%20reuni%C3%A3o&amp;body=Ol%C3%A1%2C%20gostaria%20de%20agendar%20uma%20conversa%20sobre%20o%20cat%C3%A1logo%20B2B.%0A%0AEmpresa%3A%20%0AContacto%3A%20">Agendar conversa</a>
+          <button type="button" class="btn btn-outline" id="btn-share">Copiar link desta proposta</button>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      Powered by <strong>P38 sistemas</strong> ·
+      <a href="/landing.html">P38 ERP</a> ·
+      Catálogo B2B para varejo e distribuição
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      var btn = document.getElementById('btn-share');
+      if (!btn) return;
+      var url = window.location.href.split('#')[0];
+      btn.addEventListener('click', function () {
+        var done = function () {
+          btn.textContent = 'Link copiado ✓';
+          setTimeout(function () { btn.textContent = 'Copiar link desta proposta'; }, 2200);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(done).catch(function () {
+            window.prompt('Copie o link:', url);
+          });
+        } else {
+          window.prompt('Copie o link:', url);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
