@@ -686,13 +686,15 @@ export default function OrcamentoPanel({
       )}
 
       {flowScreen === 'salvos' && (
-        <OrcamentosRapidosSalvosSheet
-          isOpen
-          onClose={() => setShowSalvos(false)}
-          onCarregar={handleCarregarSalvo}
-          tabelaNome={tabelaSelecionada?.nome_tabela || tabelaSelecionada?.nome || ''}
-          empresa={empresa}
-        />
+        <div className="flex flex-1 min-h-0 w-full flex-col overflow-hidden">
+          <OrcamentosRapidosSalvosSheet
+            isOpen
+            onClose={() => setShowSalvos(false)}
+            onCarregar={handleCarregarSalvo}
+            tabelaNome={tabelaSelecionada?.nome_tabela || tabelaSelecionada?.nome || ''}
+            empresa={empresa}
+          />
+        </div>
       )}
 
       <OrcamentoRapidoCupomOverlay

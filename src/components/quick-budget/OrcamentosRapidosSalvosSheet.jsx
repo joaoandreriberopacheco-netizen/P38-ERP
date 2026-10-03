@@ -33,6 +33,10 @@ import {
   labelOrcamentoSalvosPeriodo,
 } from '@/lib/orcamentoSalvosPeriodoFiltro';
 import OrcamentosSalvosPeriodoFiltro from '@/components/quick-budget/OrcamentosSalvosPeriodoFiltro';
+import {
+  QUICK_ACCESS_NESTED_CHILD_DIALOG_CLASS,
+  QUICK_ACCESS_NESTED_DIALOG_CLASS,
+} from '@/lib/quickAccessOverlay';
 
 export default function OrcamentosRapidosSalvosSheet({
   isOpen,
@@ -114,7 +118,7 @@ export default function OrcamentosRapidosSalvosSheet({
 
   return (
     <>
-      <div className="absolute inset-0 z-[2] flex min-h-0 flex-col font-din-1451 bg-muted/40 dark:bg-background">
+      <div className="flex flex-1 min-h-0 w-full flex-col font-din-1451 bg-muted/40 dark:bg-background">
         <div className="flex-shrink-0 px-3 pt-3 pb-2">
           <div className={cn('rounded-[28px] bg-card dark:bg-background shadow-sm px-4 py-3', P38_FIELD_SURFACE)}>
             <div className="flex items-center gap-3">
@@ -188,7 +192,7 @@ export default function OrcamentosRapidosSalvosSheet({
               Nenhum orçamento salvo neste período. Abra os filtros e escolha outro intervalo (ex. mês anterior).
             </div>
           ) : (
-            <P38MobileLineList className="rounded-2xl overflow-hidden">
+            <P38MobileLineList allViewports className="rounded-2xl overflow-hidden">
               {filtrados.map((orc, idx) => {
                 const dataCriacao = new Date(orc.created_at || orc.created_date);
                 const qtdItens = (orc.itens || []).length;
@@ -262,7 +266,13 @@ export default function OrcamentosRapidosSalvosSheet({
 
       <Drawer open={showFiltros} onOpenChange={setShowFiltros}>
         {showFiltros ? (
-          <DrawerContent className="border-0 rounded-t-[28px] bg-card dark:bg-card px-4 pb-6">
+          <DrawerContent
+            overlayClassName={QUICK_ACCESS_NESTED_DIALOG_CLASS}
+            className={cn(
+              'border-0 rounded-t-[28px] bg-card dark:bg-card px-4 pb-6',
+              QUICK_ACCESS_NESTED_CHILD_DIALOG_CLASS,
+            )}
+          >
             <DrawerHeader className="px-0 pb-2 text-left">
               <DrawerTitle className="font-glacial text-foreground">Filtros</DrawerTitle>
             </DrawerHeader>
