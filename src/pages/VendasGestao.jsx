@@ -8,6 +8,7 @@ import { base44 } from '@/api/base44Client';
 import {
   usePedidosVendaGestaoQuery,
   useRascunhosPedidoVendaGestaoQuery,
+  useOrcamentosGestaoQuery,
   useP38QueryInvalidation,
 } from '@/hooks/useP38Entities';
 import { hydratePedidosVendaItensFromSql } from '@/lib/fetchPedidoVendaItens';
@@ -494,6 +495,11 @@ function VendasGestaoPage() {
     isLoading: rascunhosLoading,
     refetch: refetchRascunhos,
   } = useRascunhosPedidoVendaGestaoQuery({ dataInicio, dataFim });
+  const {
+    data: orcamentosEntidade = [],
+    isLoading: orcamentosLoading,
+    refetch: refetchOrcamentos,
+  } = useOrcamentosGestaoQuery({ dataInicio, dataFim });
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFiltro, setStatusFiltro] = useState('todos');
   const [formasPagamentoFiltro, setFormasPagamentoFiltro] = useState([]);
@@ -514,7 +520,7 @@ function VendasGestaoPage() {
   const [pedidoParaImprimir, setPedidoParaImprimir] = useState(null);
   const [showFiltros, setShowFiltros] = useState(false);
 
-  const isLoading = pedidosLoading || rascunhosLoading || isRefreshing;
+  const isLoading = pedidosLoading || rascunhosLoading || orcamentosLoading || isRefreshing;
 
   const formasPagamentoOpcoes = useMemo(
     () => listarFormasPagamentoParaFiltro(pedidos),
@@ -548,7 +554,7 @@ function VendasGestaoPage() {
   const loadPedidos = async () => {
     setIsRefreshing(true);
     try {
-      await Promise.all([refetchPedidos(), refetchRascunhos()]);
+      await Promise.all([refetchPedidos(), refetchRascunhos(), refetchOrcamentos()]);
       await invalidateHomeKpis();
     } finally {
       setIsRefreshing(false);
@@ -559,10 +565,16 @@ function VendasGestaoPage() {
     () => pedidos.filter((p) => !isPedidoOrcamento(p)),
     [pedidos],
   );
-  const pedidosOrcamento = useMemo(
-    () => pedidos.filter(isPedidoOrcamento),
-    [pedidos],
-  );
+  const pedidosOrcamento = useMemo(() => {
+    const fromPedido = pedidos.filter(isPedidoOrcamento);
+    const byId = new Map();
+    for (const row of [...orcamentosEntidade, ...fromPedido]) {
+      if (row?.id) byId.set(row.id, row);
+    }
+    return [...byId.values()].sort((a, b) =>
+      String(b.created_date || b.created_at || '').localeCompare(String(a.created_date || a.created_at || '')),
+    );
+  }, [pedidos, orcamentosEntidade]);
 
   const pedidosFiltrados = useMemo(() => {
     let currentFiltered = pedidosVenda;

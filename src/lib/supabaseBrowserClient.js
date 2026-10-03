@@ -1,7 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 import { isP38Dev, p38PublicEnv } from '@/lib/p38PublicEnv';
 
+/** Projecto P38 em produção — fallback quando a URL não entrou no bundle (só com anon key). */
+const P38_SUPABASE_URL_FALLBACK = 'https://zhonvxkkqabfdyehyxpu.supabase.co';
+
 let cached;
+
+function resolveBrowserSupabaseProjectUrl() {
+  const fromEnv = normalizeSupabaseProjectUrl(p38PublicEnv('VITE_SUPABASE_URL') || '');
+  if (fromEnv) return fromEnv;
+  const anonKey = (p38PublicEnv('VITE_SUPABASE_ANON_KEY') || '').trim();
+  if (anonKey) return P38_SUPABASE_URL_FALLBACK;
+  return '';
+}
 
 /**
  * Aceita só a raiz do projeto: `https://<ref>.supabase.co`.
@@ -27,7 +38,7 @@ export function getSupabaseBrowserClient() {
     return cached;
   }
 
-  const url = normalizeSupabaseProjectUrl(p38PublicEnv('VITE_SUPABASE_URL') || '');
+  const url = resolveBrowserSupabaseProjectUrl();
   const anonKey = (p38PublicEnv('VITE_SUPABASE_ANON_KEY') || '').trim();
 
   if (!url || !anonKey) {
@@ -53,7 +64,7 @@ export function getSupabaseBrowserClient() {
 }
 
 export function isSupabaseBrowserConfigured() {
-  const url = normalizeSupabaseProjectUrl(p38PublicEnv('VITE_SUPABASE_URL') || '');
+  const url = resolveBrowserSupabaseProjectUrl();
   const key = (p38PublicEnv('VITE_SUPABASE_ANON_KEY') || '').trim();
   return Boolean(url && key);
 }

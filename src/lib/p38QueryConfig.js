@@ -13,6 +13,7 @@ export const p38Keys = {
   fornecedores: () => [...p38Keys.all, 'terceiro', 'fornecedores'],
   pedidosVenda: (sort = '-created_date') => [...p38Keys.all, 'pedido-venda', 'list', sort],
   pedidosVendaGestao: (dataInicio, dataFim) => [...p38Keys.all, 'pedido-venda', 'gestao', dataInicio, dataFim],
+  orcamentosGestao: (dataInicio, dataFim) => [...p38Keys.all, 'orcamento', 'gestao', dataInicio, dataFim],
   pedidosVenda90d: () => [...p38Keys.all, 'pedido-venda', '90d'],
   dadosVendaAbcd90d: () => [...p38Keys.pedidosVenda90d(), 'abcd-itens'],
   rascunhosPedidoVenda: (sort = '-created_date') => [...p38Keys.all, 'rascunho-pedido-venda', 'list', sort],

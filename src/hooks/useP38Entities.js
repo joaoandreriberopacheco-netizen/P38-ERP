@@ -19,6 +19,7 @@ import {
   fetchRascunhosPedidoVendaGestaoHeaders,
   isValidGestaoDateKey,
 } from '@/lib/fetchPedidosVendaGestao';
+import { fetchOrcamentosGestaoHeaders } from '@/lib/fetchOrcamentosGestao';
 import { keepPreviousData } from '@tanstack/react-query';
 
 export { fetchPedidosVenda90d, fetchDadosVendaAbcd90d };
@@ -338,6 +339,19 @@ export function useRascunhosPedidoVendaGestaoQuery({ dataInicio, dataFim, enable
   return useQuery({
     queryKey: p38Keys.rascunhosPedidoVendaGestao(dataInicio, dataFim),
     queryFn: () => fetchRascunhosPedidoVendaGestaoHeaders({ dataInicio, dataFim }),
+    enabled: enabled && datesOk,
+    placeholderData: keepPreviousData,
+    staleTime: getGestaoDateRangeStaleTime(dataFim),
+    gcTime: P38_GC_TIME,
+    ...rest,
+  });
+}
+
+export function useOrcamentosGestaoQuery({ dataInicio, dataFim, enabled = true, ...rest } = {}) {
+  const datesOk = isValidGestaoDateKey(dataInicio) && isValidGestaoDateKey(dataFim);
+  return useQuery({
+    queryKey: p38Keys.orcamentosGestao(dataInicio, dataFim),
+    queryFn: () => fetchOrcamentosGestaoHeaders({ dataInicio, dataFim }),
     enabled: enabled && datesOk,
     placeholderData: keepPreviousData,
     staleTime: getGestaoDateRangeStaleTime(dataFim),
