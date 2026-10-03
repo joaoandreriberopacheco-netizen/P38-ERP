@@ -54,7 +54,7 @@ export const PEDIDO_COMPRA_COLUMNS = [
   'data_despacho', 'data_chegada', 'data_conclusao', 'motivo_rejeicao_financeira',
   'status_conferencia_pedido', 'solicitacao_edicao_data', 'solicitacao_edicao_motivo',
   'solicitacao_edicao_solicitante', 'solicitacao_cancelamento_data', 'solicitacao_cancelamento_motivo',
-  'manifesto_entrada_id',
+  'manifesto_entrada_id', 'is_encomenda',
 ];
 
 export const EMBARQUE_COLUMNS = [

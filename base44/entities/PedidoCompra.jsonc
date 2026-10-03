@@ -117,6 +117,11 @@
       "type": "boolean",
       "default": false
     },
+    "is_encomenda": {
+      "type": "boolean",
+      "default": false,
+      "description": "Compra encomenda (cliente). Não entra no trânsito do Resumo global de estoque."
+    },
     "conta_pagamento_id": {
       "type": "string"
     },

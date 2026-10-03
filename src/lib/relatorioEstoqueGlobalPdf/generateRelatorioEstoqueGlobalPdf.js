@@ -23,8 +23,9 @@ import {
   valorPendenteCardEmbarque,
 } from '@/lib/comprasEmbarqueCards';
 import { buildConsultaItensEmbarque } from '@/lib/consultaComprasEmbarques';
+import { isPedidoCompraEncomenda, pedidosCompraReposicaoEstoque } from '@/lib/pedidoCompraEncomenda';
 
-export const PDF_BUILD = 'estoque-reuniao-v22';
+export const PDF_BUILD = 'estoque-reuniao-v23';
 
 const BRL_KPI = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -557,10 +558,12 @@ function buildResumoTransitoData(
   },
 ) {
   const { pedidosAbertos, embarquesHydrated } = compraContext;
+  const pedidosReposicao = pedidosCompraReposicaoEstoque(pedidosAbertos);
+  const pedidosEncomenda = (pedidosAbertos || []).filter((p) => isPedidoCompraEncomenda(p));
 
   const produtosMap = buildProdutosLookup(produtos);
   const produtoMap = new Map(produtos.map((produto) => [String(produto.id), produto]));
-  const { cardsDeEmbarque } = materializePedidosCompraView(pedidosAbertos, embarquesHydrated, produtosMap);
+  const { cardsDeEmbarque } = materializePedidosCompraView(pedidosReposicao, embarquesHydrated, produtosMap);
   const cardsEmTransito = filtrarCardsEmbarqueEmTransito(cardsDeEmbarque)
     .filter((card) => valorPendenteCardEmbarque(card, produtosMap) > 0);
 
@@ -712,6 +715,7 @@ function buildResumoTransitoData(
   return {
     totalTransito,
     pedidosAbertos: pedidosEmTransito.size,
+    pedidosEncomendaExcluidos: pedidosEncomenda.length,
     embarquesTransito: cardsEmTransito.length,
     volumesTotal,
     embarquesPorEtaTransportadora,
@@ -1378,6 +1382,11 @@ function drawPage2Transito(doc, fontFamily, normalizePdfText, transito, layout) 
     kpiNotes: [
       `${QTD.format(transito.pedidosAbertos)} pedidos · ${QTD.format(transito.embarquesTransito)} embarques · ${QTD.format(transito.volumesTotal)} volumes`,
       'Compras com financeiro aprovado e pedido ainda não concluído',
+      ...(transito.pedidosEncomendaExcluidos > 0
+        ? [
+            `${QTD.format(transito.pedidosEncomendaExcluidos)} pedido(s) encomenda omitido(s) deste total`,
+          ]
+        : []),
     ],
   });
 

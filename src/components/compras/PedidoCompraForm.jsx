@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog.jsx';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 // Dialog still used for isSolicitarEdicao modal
@@ -100,6 +101,7 @@ import {
 } from '@/lib/comprasP38Theme';
 import { P38_PAGE_KICKER, P38_PAGE_SUBTITLE, P38_PAGE_TITLE } from '@/lib/p38FormTypography';
 import { valorEmbarqueSplit } from '@/lib/pedidoCompraValorExibicao';
+import { isPedidoCompraEncomenda } from '@/lib/pedidoCompraEncomenda';
 
 export default function PedidoCompraForm({
   pedido,
@@ -136,6 +138,7 @@ export default function PedidoCompraForm({
     historico: '',
     condicoes_pagamento: '',
     tags: [],
+    is_encomenda: false,
     // Logística
     evento_logistico_id: '',
     nfe_emitida: false,
@@ -299,6 +302,7 @@ export default function PedidoCompraForm({
       const pedidoComData = {
         ...pedido,
         data_emissao: dataEmissao,
+        is_encomenda: isPedidoCompraEncomenda(pedido),
         itens: (pedido.itens || []).map((item) => syncPedidoCompraItemQuantities(item)),
       };
       setFormData(pedidoComData);
@@ -1559,6 +1563,30 @@ export default function PedidoCompraForm({
           <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-6 touch-pan-y">
             <TabsContent value="dados-gerais" className="mt-0 space-y-6" data-tour="pedido-tab-dados-gerais">
               <div className="grid grid-cols-12 gap-x-6 gap-y-6">
+                <div
+                  className="col-span-12 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-border/60 bg-muted/30 px-4 py-3"
+                  data-pulse-sensor="pedido-compra-toggle-encomenda"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground">Encomenda</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Compra para cliente (estoque pode ficar negativo até receber). Não entra no trânsito do{' '}
+                      <span className="whitespace-nowrap">Resumo global</span> de estoque.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="text-xs text-muted-foreground">
+                      {isPedidoCompraEncomenda(formData) ? 'Sim' : 'Não'}
+                    </span>
+                    <Switch
+                      checked={!!formData.is_encomenda}
+                      onCheckedChange={(checked) => handleChange('is_encomenda', checked === true)}
+                      disabled={isLocked}
+                      aria-label="Pedido de encomenda"
+                    />
+                  </div>
+                </div>
+
                 {/* Fornecedor */}
                 <div className="col-span-12 lg:col-span-6">
                   <Label className="text-sm font-light text-muted-foreground mb-2 block">Fornecedor *</Label>
