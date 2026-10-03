@@ -41,6 +41,14 @@ import {
 } from '@/lib/agefinConsultaData';
 import { competenciaParaIntervalo } from '@/lib/relatorioMargemCalculos';
 import { salvarOverrideCompetenciaMes } from '@/lib/agefinCompetenciaMesService';
+import {
+  escolherFilhoCanonicRelacional,
+  lancamentoFilhoPertenceSerie,
+  referenciaIdsSerieModelo,
+  serieIdFromGrupoLancamento,
+} from '@/lib/agefinSerieRelacao';
+
+export { serieIdFromGrupoLancamento };
 
 export { listarCentrosCustoRegistros };
 
@@ -164,12 +172,6 @@ function prioridadeSerieId(id = '') {
   if (String(id).startsWith('serie-recuperada-')) return 1;
   if (String(id).startsWith('serie-import-') || String(id).startsWith('serie-agefin-')) return 2;
   return 5;
-}
-
-/** ID estável da série — derivado do grupo recorrente no LancamentoFinanceiro. */
-export function serieIdFromGrupoLancamento(grupoId) {
-  if (!grupoId) return undefined;
-  return `serie-lf-${grupoId}`;
 }
 
 function agruparLancamentosPorGrupo(lancamentos = []) {
@@ -646,7 +648,8 @@ async function sincronizarSerieNoFinanceiro(modelo, { competenciaMinima } = {}) 
       categoria_id: modelo.categoria_id || lf.categoria_id,
       centro_custo: modelo.centro_custo || lf.centro_custo || '',
       centro_custo_id: modelo.centro_custo_id || lf.centro_custo_id || '',
-      referencia_id: serieIdFromGrupoLancamento(modelo.grupo_lancamento_id) || modelo.id,
+      referencia_id: modelo.id,
+      referencia_tipo: 'AgefinSerieModelo',
       is_recorrente: true,
       frequencia_recorrencia: freq,
       tags: tagsSerieFinanceiro(lf.tags),
@@ -845,8 +848,8 @@ function payloadLancamentoAuto(modelo, competencia) {
     categoria_id: modelo.categoria_id || undefined,
     centro_custo: String(modelo.centro_custo || '').trim() || undefined,
     centro_custo_id: modelo.centro_custo_id || undefined,
-    referencia_tipo: 'Manual',
-    referencia_id: serieIdFromGrupoLancamento(modelo.grupo_lancamento_id) || modelo.id,
+    referencia_tipo: 'AgefinSerieModelo',
+    referencia_id: modelo.id,
     observacoes: `Competência ${competencia} — aberta pelo planejamento financeiro. Conta financeira será definida na execução.`,
     tags: ['conta_pagar', 'recorrente', TAG_LF_GERADO_AUTO, 'agefin_previsao', 'conta_a_definir'],
     is_recorrente: true,
@@ -855,40 +858,28 @@ function payloadLancamentoAuto(modelo, competencia) {
   };
 }
 
-function normalizarNomePlanejamento(valor) {
-  return String(valor || '').trim().toLocaleLowerCase('pt-BR');
-}
-
-function lancamentoAssinaturaPlanejamento(lf, modelo) {
-  const nomeModelo = normalizarNomePlanejamento(modelo?.nome);
-  if (!nomeModelo) return false;
-  const tags = Array.isArray(lf?.tags) ? lf.tags : [];
-  if (!tags.includes('agefin_previsao') && !lf?.is_recorrente) return false;
-  if (normalizarNomePlanejamento(lf?.descricao) !== nomeModelo) return false;
-  const terceiroModelo = normalizarNomePlanejamento(modelo?.terceiro_nome);
-  const terceiroLf = normalizarNomePlanejamento(lf?.terceiro_nome);
-  if (terceiroModelo && terceiroLf && terceiroModelo !== terceiroLf) return false;
-  return true;
-}
-
-async function buscarLancamentoMesPorSerie(modelo, competencia) {
-  if (!modelo?.id) return null;
-  const comp = String(competencia || '').slice(0, 7);
-  const rows = await base44.entities.LancamentoFinanceiro.filter({
-    referencia_id: modelo.id,
-  }).catch(() => []);
-  return (rows || []).find((lf) => mesReferenciaLancamento(lf) === comp) || null;
-}
-
-async function listarLancamentosFilhosCompetencia(modelo, competencia) {
+/**
+ * Filhos da competência: chave (grupo_lancamento_id + YYYY-MM) ou referencia_id da série + YYYY-MM.
+ */
+async function listarLancamentosFilhosCompetencia(modelo, competencia, { lancamentoId = null } = {}) {
   const comp = String(competencia || '').slice(0, 7);
   if (!comp || !modelo) return [];
 
   const porId = new Map();
   const registrar = (lf) => {
     if (!lf?.id || mesReferenciaLancamento(lf) !== comp) return;
+    if (!lancamentoFilhoPertenceSerie(lf, modelo)) return;
     porId.set(lf.id, lf);
   };
+
+  if (lancamentoId) {
+    try {
+      const lf = await base44.entities.LancamentoFinanceiro.get(lancamentoId);
+      if (lf) registrar(lf);
+    } catch {
+      /* ignore */
+    }
+  }
 
   if (modelo.grupo_lancamento_id) {
     const rows = await base44.entities.LancamentoFinanceiro.filter({
@@ -897,55 +888,26 @@ async function listarLancamentosFilhosCompetencia(modelo, competencia) {
     (rows || []).forEach(registrar);
   }
 
-  if (modelo.id) {
+  for (const ref of referenciaIdsSerieModelo(modelo)) {
     const rows = await base44.entities.LancamentoFinanceiro.filter({
-      referencia_id: modelo.id,
+      referencia_id: ref,
     }).catch(() => []);
     (rows || []).forEach(registrar);
   }
-
-  const refGrupo = modelo.grupo_lancamento_id
-    ? serieIdFromGrupoLancamento(modelo.grupo_lancamento_id)
-    : null;
-  if (refGrupo && refGrupo !== modelo.id) {
-    const rows = await base44.entities.LancamentoFinanceiro.filter({
-      referencia_id: refGrupo,
-    }).catch(() => []);
-    (rows || []).forEach(registrar);
-  }
-
-  let candidatos = await listarLancamentosVencimentoCompetenciaCache(comp).catch(() => []);
-  if (!candidatos?.length) {
-    const todos = await listarLancamentosFinanceirosAgefinBruto();
-    candidatos = (todos || []).filter((lf) => mesReferenciaLancamento(lf) === comp);
-  }
-  (candidatos || []).filter((lf) => lancamentoAssinaturaPlanejamento(lf, modelo)).forEach(registrar);
 
   return [...porId.values()];
 }
 
-function pontuacaoLancamentoFilhoCompetencia(lf, modelo, lancamentoIdPreferido = null) {
-  let score = 0;
-  if (lf?.id && lancamentoIdPreferido && lf.id === lancamentoIdPreferido) score += 500;
-  if (lancamentoPago(lf)) score += 200;
-  if (lancamentoCancelado(lf)) score -= 300;
-  const tags = Array.isArray(lf?.tags) ? lf.tags : [];
-  if (!tags.includes(TAG_LF_GERADO_AUTO)) score += 80;
-  if (lf?.grupo_lancamento_id && lf.grupo_lancamento_id === modelo?.grupo_lancamento_id) score += 60;
-  if (tags.includes('agefin_previsao')) score += 10;
-  return score;
-}
-
 async function vincularLancamentoFilhoAoTemplate(modelo, lf) {
-  if (!lf?.id || !modelo?.grupo_lancamento_id) return lf;
-  const ref = serieIdFromGrupoLancamento(modelo.grupo_lancamento_id) || modelo.id;
+  if (!lf?.id || !modelo?.grupo_lancamento_id || !modelo?.id) return lf;
   const precisaGrupo = lf.grupo_lancamento_id !== modelo.grupo_lancamento_id;
-  const precisaRef = ref && lf.referencia_id !== ref && lf.referencia_id !== modelo.id;
+  const precisaRef = lf.referencia_id !== modelo.id;
   if (!precisaGrupo && !precisaRef) return lf;
 
   const atualizado = await base44.entities.LancamentoFinanceiro.update(lf.id, {
     grupo_lancamento_id: modelo.grupo_lancamento_id,
-    referencia_id: ref || modelo.id,
+    referencia_id: modelo.id,
+    referencia_tipo: 'AgefinSerieModelo',
     is_recorrente: true,
   });
   invalidarCacheLancamentosFinanceiros();
@@ -959,11 +921,9 @@ async function reconciliarDuplicatasFilhoCompetencia(modelo, competencia, manter
   for (const lf of todos) {
     if (!lf?.id || lf.id === manterId) continue;
     if (lancamentoPago(lf) || lancamentoCancelado(lf)) continue;
-    const tags = Array.isArray(lf.tags) ? lf.tags : [];
-    const ehPlanejamento =
-      tags.includes('agefin_previsao') || tags.includes(TAG_LF_GERADO_AUTO) || lf.is_recorrente;
-    if (!ehPlanejamento) continue;
+    if (!lancamentoFilhoPertenceSerie(lf, modelo)) continue;
 
+    const tags = Array.isArray(lf.tags) ? lf.tags : [];
     await base44.entities.LancamentoFinanceiro.update(lf.id, {
       status: 'Cancelado',
       tags: [...new Set([...tags, 'cancelado', 'agefin_duplicata_reconciliada'])],
@@ -976,8 +936,7 @@ async function reconciliarDuplicatasFilhoCompetencia(modelo, competencia, manter
 }
 
 /**
- * Resolve o lançamento filho (competência) do template (pai).
- * Realinha grupo/referência e, se pedido, cancela duplicatas abertas do planejamento.
+ * Resolve o filho da competência pelo vínculo relacional (grupo + mês, referencia_id + mês).
  */
 async function resolverLancamentoFilhoCompetencia(
   modelo,
@@ -987,17 +946,15 @@ async function resolverLancamentoFilhoCompetencia(
   const comp = String(competencia || '').slice(0, 7);
   if (!comp || !modelo) return null;
 
-  const todos = await listarLancamentosFilhosCompetencia(modelo, comp);
+  const todos = await listarLancamentosFilhosCompetencia(modelo, comp, { lancamentoId });
   if (!todos.length) return null;
 
-  const ordenados = [...todos].sort(
-    (a, b) =>
-      pontuacaoLancamentoFilhoCompetencia(b, modelo, lancamentoId) -
-      pontuacaoLancamentoFilhoCompetencia(a, modelo, lancamentoId),
-  );
-  let preferido = ordenados[0];
+  let preferido = null;
   if (lancamentoId) {
-    preferido = todos.find((lf) => lf.id === lancamentoId) || preferido;
+    preferido = todos.find((lf) => lf.id === lancamentoId) || null;
+  }
+  if (!preferido) {
+    preferido = escolherFilhoCanonicRelacional(todos, modelo);
   }
 
   preferido = await vincularLancamentoFilhoAoTemplate(modelo, preferido);
