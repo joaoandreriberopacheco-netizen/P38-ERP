@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -8,11 +8,12 @@ import {
   Printer,
   Search,
   ShoppingCart,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import {
-  P38_CHIP_ACTIVE,
   P38_CHIP_INACTIVE,
   P38_FIELD_SURFACE,
   P38_FILTROS_STICKY,
@@ -26,8 +27,12 @@ import OrcamentoRapidoCupomOverlay from './OrcamentoRapidoCupomOverlay';
 import OrcamentoTotalComDesconto from '@/components/orcamento/OrcamentoTotalComDesconto';
 import { ORCAMENTO_CUPOM_FORMATO, ORCAMENTO_CUPOM_LABEL } from '@/lib/orcamentoCupomFormato';
 import { toast } from 'sonner';
-
-const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+import { isValidGestaoDateKey } from '@/lib/fetchPedidosVendaGestao';
+import {
+  getOrcamentoSalvosPeriodoPadrao,
+  labelOrcamentoSalvosPeriodo,
+} from '@/lib/orcamentoSalvosPeriodoFiltro';
+import OrcamentosSalvosPeriodoFiltro from '@/components/quick-budget/OrcamentosSalvosPeriodoFiltro';
 
 export default function OrcamentosRapidosSalvosSheet({
   isOpen,
@@ -36,31 +41,39 @@ export default function OrcamentosRapidosSalvosSheet({
   tabelaNome = '',
   empresa = null,
 }) {
+  const padrao = getOrcamentoSalvosPeriodoPadrao();
   const [orcamentos, setOrcamentos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [busca, setBusca] = useState('');
   const [printState, setPrintState] = useState(null);
+  const [showFiltros, setShowFiltros] = useState(false);
+  const [periodoPreset, setPeriodoPreset] = useState(padrao.preset);
+  const [dataInicio, setDataInicio] = useState(padrao.start);
+  const [dataFim, setDataFim] = useState(padrao.end);
+
+  const carregarLista = useCallback(async () => {
+    if (!isValidGestaoDateKey(dataInicio) || !isValidGestaoDateKey(dataFim)) return;
+    setLoading(true);
+    try {
+      const rows = await listarOrcamentosRapidos({
+        limite: 100,
+        dataInicio,
+        dataFim,
+      });
+      setOrcamentos(rows);
+    } catch (e) {
+      console.error(e);
+      setOrcamentos([]);
+      toast.error(e?.message || 'Não foi possível carregar os orçamentos salvos');
+    } finally {
+      setLoading(false);
+    }
+  }, [dataInicio, dataFim]);
 
   useEffect(() => {
     if (!isOpen) return;
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      try {
-        const rows = await listarOrcamentosRapidos({ dias: 30, limite: 100 });
-        if (!cancelled) setOrcamentos(rows);
-      } catch (e) {
-        console.error(e);
-        if (!cancelled) {
-          setOrcamentos([]);
-          toast.error(e?.message || 'Não foi possível carregar os orçamentos salvos');
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [isOpen]);
+    carregarLista();
+  }, [isOpen, carregarLista]);
 
   const filtrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
@@ -70,6 +83,25 @@ export default function OrcamentosRapidosSalvosSheet({
         .some((v) => String(v || '').toLowerCase().includes(termo)),
     );
   }, [orcamentos, busca]);
+
+  const periodoLabel = labelOrcamentoSalvosPeriodo(periodoPreset, dataInicio, dataFim);
+
+  const totalFiltrado = useMemo(
+    () => filtrados.reduce((acc, o) => acc + Number(o.valor_total ?? 0), 0),
+    [filtrados],
+  );
+
+  const filtrosForaDoPadrao = periodoPreset !== padrao.preset
+    || dataInicio !== padrao.start
+    || dataFim !== padrao.end;
+
+  const limparFiltros = () => {
+    const p = getOrcamentoSalvosPeriodoPadrao();
+    setPeriodoPreset(p.preset);
+    setDataInicio(p.start);
+    setDataFim(p.end);
+    setBusca('');
+  };
 
   const handleReimprimir = (orcamento, formato) => {
     setPrintState({
@@ -98,7 +130,9 @@ export default function OrcamentosRapidosSalvosSheet({
                 <h2 className="text-lg font-semibold text-foreground font-glacial leading-tight truncate">
                   Orçamentos salvos
                 </h2>
-                <p className="text-xs text-muted-foreground mt-0.5">Últimos 30 dias · reimprimir ou abrir</p>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                  {periodoLabel} · reimprimir ou abrir
+                </p>
               </div>
               <div className="w-10 h-10 rounded-2xl bg-muted dark:bg-card flex items-center justify-center shrink-0">
                 <FileText className="w-4 h-4 text-muted-foreground" />
@@ -107,15 +141,40 @@ export default function OrcamentosRapidosSalvosSheet({
           </div>
         </div>
 
-        <div className={cn('px-3 pb-2 flex-shrink-0', P38_FILTROS_STICKY)}>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-            <Input
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              placeholder="Buscar cliente, número ou observação..."
-              className={cn('pl-10 h-11 rounded-2xl', P38_SEARCH)}
-            />
+        <div className={cn('px-3 pb-2 flex-shrink-0 space-y-2', P38_FILTROS_STICKY)}>
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="relative flex-1 min-w-0">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+              <Input
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                placeholder="Buscar cliente, número ou observação..."
+                className={cn('pl-10 h-11 rounded-2xl', P38_SEARCH)}
+              />
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-11 w-11 rounded-2xl bg-card dark:bg-muted shrink-0 relative"
+              onClick={() => setShowFiltros(true)}
+              aria-label="Filtros de período"
+            >
+              <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
+              {filtrosForaDoPadrao ? (
+                <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-primary-foreground">
+                  ·
+                </span>
+              ) : null}
+            </Button>
+          </div>
+          <div className="flex items-center justify-between gap-2 px-1 text-[11px] text-muted-foreground">
+            <span>
+              {filtrados.length} orçamento{filtrados.length !== 1 ? 's' : ''}
+            </span>
+            <span className="font-medium text-foreground tabular-nums">
+              R$ {totalFiltrado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
           </div>
         </div>
 
@@ -126,7 +185,7 @@ export default function OrcamentosRapidosSalvosSheet({
             </div>
           ) : filtrados.length === 0 ? (
             <div className={cn('rounded-2xl px-4 py-10 text-center text-sm text-muted-foreground', P38_FIELD_SURFACE)}>
-              Nenhum orçamento salvo encontrado
+              Nenhum orçamento salvo neste período. Abra os filtros e escolha outro intervalo (ex. mês anterior).
             </div>
           ) : (
             <P38MobileLineList className="rounded-2xl overflow-hidden">
@@ -200,6 +259,53 @@ export default function OrcamentosRapidosSalvosSheet({
           )}
         </div>
       </div>
+
+      <Drawer open={showFiltros} onOpenChange={setShowFiltros}>
+        {showFiltros ? (
+          <DrawerContent className="border-0 rounded-t-[28px] bg-card dark:bg-card px-4 pb-6">
+            <DrawerHeader className="px-0 pb-2 text-left">
+              <DrawerTitle className="font-glacial text-foreground">Filtros</DrawerTitle>
+            </DrawerHeader>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs text-muted-foreground mb-2">Período</label>
+                <OrcamentosSalvosPeriodoFiltro
+                  periodoPreset={periodoPreset}
+                  onPeriodoPresetChange={setPeriodoPreset}
+                  dataInicio={dataInicio}
+                  dataFim={dataFim}
+                  onDateRangeChange={(inicio, fim) => {
+                    if (!isValidGestaoDateKey(inicio) || !isValidGestaoDateKey(fim)) return;
+                    setDataInicio(inicio);
+                    setDataFim(fim);
+                  }}
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex-1 h-11 rounded-2xl"
+                  onClick={() => {
+                    limparFiltros();
+                  }}
+                >
+                  Limpar
+                </Button>
+                <Button
+                  size="sm"
+                  className="flex-1 h-11 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground border border-primary/80 dark:border-transparent"
+                  onClick={() => setShowFiltros(false)}
+                >
+                  Aplicar
+                </Button>
+              </div>
+            </div>
+          </DrawerContent>
+        ) : null}
+      </Drawer>
 
       <OrcamentoRapidoCupomOverlay
         open={Boolean(printState)}

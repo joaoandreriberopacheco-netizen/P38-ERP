@@ -4,6 +4,7 @@
  */
 import { base44 } from '@/api/base44Client';
 import { inicioDiaSistemaISO, fimDiaSistemaISO } from '@/components/utils/dateUtils';
+import { isValidGestaoDateKey } from '@/lib/fetchPedidosVendaGestao';
 import { getSupabaseBrowserClient, isSupabaseBrowserConfigured } from '@/lib/supabaseBrowserClient';
 import { gerarNumeroSequencial } from '@/lib/gerarNumeroSequencial';
 import { linhasPedidoVendaToLegacyItens } from '@/lib/fetchPedidoVendaItens';
@@ -254,16 +255,45 @@ async function hydrateItensLegadoPedido(pedidos = []) {
   });
 }
 
-async function listarOrcamentosEntidadeTable({ dias = 7, busca = '', limite = 50 } = {}) {
-  const client = sb();
+function resolveOrcamentoListDateBounds({ dias = 7, dataInicio, dataFim } = {}) {
+  if (isValidGestaoDateKey(dataInicio) && isValidGestaoDateKey(dataFim)) {
+    return {
+      gteIso: inicioDiaSistemaISO(dataInicio),
+      lteIso: fimDiaSistemaISO(dataFim),
+      useClientWindow: false,
+      desdeMs: null,
+    };
+  }
   const windowDays = Math.max(1, Number(dias) || 7);
-  const desdeMs = Date.now() - windowDays * 86400000;
+  return {
+    gteIso: null,
+    lteIso: null,
+    useClientWindow: true,
+    desdeMs: Date.now() - windowDays * 86400000,
+  };
+}
+
+async function listarOrcamentosEntidadeTable({
+  dias = 7,
+  busca = '',
+  limite = 50,
+  dataInicio,
+  dataFim,
+} = {}) {
+  const client = sb();
+  const bounds = resolveOrcamentoListDateBounds({ dias, dataInicio, dataFim });
   const maxRows = Math.min(Math.max(Number(limite) || 50, 50) * 4, 400);
 
-  const { data, error } = await client
+  let query = client
     .from('orcamento')
     .select('*')
-    .neq('status', 'Cancelado')
+    .neq('status', 'Cancelado');
+
+  if (bounds.gteIso && bounds.lteIso) {
+    query = query.gte('created_at', bounds.gteIso).lte('created_at', bounds.lteIso);
+  }
+
+  const { data, error } = await query
     .order('updated_at', { ascending: false })
     .limit(maxRows);
 
@@ -273,7 +303,7 @@ async function listarOrcamentosEntidadeTable({ dias = 7, busca = '', limite = 50
   }
 
   const recentRows = (data || [])
-    .filter((row) => rowWithinWindow(row, desdeMs))
+    .filter((row) => !bounds.useClientWindow || rowWithinWindow(row, bounds.desdeMs))
     .sort((a, b) => rowTimestampMs(b) - rowTimestampMs(a))
     .slice(0, Math.max(1, Number(limite) || 50));
 
@@ -281,23 +311,38 @@ async function listarOrcamentosEntidadeTable({ dias = 7, busca = '', limite = 50
   return hydrateOrcamentoItens(headers);
 }
 
-async function listarOrcamentosRapidosLegadoPedido({ dias = 7, busca = '', limite = 50 } = {}) {
+async function listarOrcamentosRapidosLegadoPedido({
+  dias = 7,
+  busca = '',
+  limite = 50,
+  dataInicio,
+  dataFim,
+} = {}) {
   const client = sb();
-  const windowDays = Math.max(1, Number(dias) || 7);
-  const desdeMs = Date.now() - windowDays * 86400000;
+  const bounds = resolveOrcamentoListDateBounds({ dias, dataInicio, dataFim });
   const maxRows = Math.min(Math.max(Number(limite) || 50, 50) * 4, 400);
 
-  const { data, error } = await client
+  let query = client
     .from('pedido_venda')
     .select('*')
-    .or(orcamentoPedidoVendaSqlOrFilter())
+    .or(orcamentoPedidoVendaSqlOrFilter());
+
+  if (bounds.gteIso && bounds.lteIso) {
+    query = query.gte('created_at', bounds.gteIso).lte('created_at', bounds.lteIso);
+  }
+
+  const { data, error } = await query
     .order('updated_at', { ascending: false })
     .limit(maxRows);
 
   if (error) throw new Error(error.message);
 
   const recentRows = (data || [])
-    .filter((row) => isOrcamentoPedidoVendaRow(row) && rowWithinWindow(row, desdeMs))
+    .filter(
+      (row) =>
+        isOrcamentoPedidoVendaRow(row)
+        && (!bounds.useClientWindow || rowWithinWindow(row, bounds.desdeMs)),
+    )
     .sort((a, b) => rowTimestampMs(b) - rowTimestampMs(a))
     .slice(0, Math.max(1, Number(limite) || 50));
 
@@ -305,17 +350,31 @@ async function listarOrcamentosRapidosLegadoPedido({ dias = 7, busca = '', limit
   return hydrateItensLegadoPedido(headers);
 }
 
-async function listarOrcamentosRapidosEntidades({ dias = 7, busca = '', limite = 50 } = {}) {
-  const windowDays = Math.max(1, Number(dias) || 7);
-  const end = new Date();
-  const start = new Date();
-  start.setDate(start.getDate() - windowDays);
-  const startKey = start.toISOString().slice(0, 10);
-  const endKey = end.toISOString().slice(0, 10);
-  const created_date = {
-    $gte: inicioDiaSistemaISO(startKey),
-    $lte: fimDiaSistemaISO(endKey),
-  };
+async function listarOrcamentosRapidosEntidades({
+  dias = 7,
+  busca = '',
+  limite = 50,
+  dataInicio,
+  dataFim,
+} = {}) {
+  let created_date;
+  if (isValidGestaoDateKey(dataInicio) && isValidGestaoDateKey(dataFim)) {
+    created_date = {
+      $gte: inicioDiaSistemaISO(dataInicio),
+      $lte: fimDiaSistemaISO(dataFim),
+    };
+  } else {
+    const windowDays = Math.max(1, Number(dias) || 7);
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - windowDays);
+    const startKey = start.toISOString().slice(0, 10);
+    const endKey = end.toISOString().slice(0, 10);
+    created_date = {
+      $gte: inicioDiaSistemaISO(startKey),
+      $lte: fimDiaSistemaISO(endKey),
+    };
+  }
   const cap = Math.min(Math.max(Number(limite) || 50, 50) * 3, 300);
   const rows = await base44.entities.PedidoVenda.filter({ created_date }, '-created_date', cap);
   const headers = applyBuscaOrcamentos(
@@ -329,26 +388,34 @@ async function listarOrcamentosRapidosEntidades({ dias = 7, busca = '', limite =
 }
 
 /** Lista orçamentos (tabela `orcamento`; fallback legado `pedido_venda`). */
-export async function listarOrcamentosRapidos({ dias = 7, busca = '', limite = 50 } = {}) {
+export async function listarOrcamentosRapidos({
+  dias = 7,
+  busca = '',
+  limite = 50,
+  dataInicio,
+  dataFim,
+} = {}) {
+  const listOpts = { dias, busca, limite, dataInicio, dataFim };
+
   if (!isSupabaseBrowserConfigured()) {
-    return listarOrcamentosRapidosEntidades({ dias, busca, limite });
+    return listarOrcamentosRapidosEntidades(listOpts);
   }
 
   try {
-    const fromOrcamento = await listarOrcamentosEntidadeTable({ dias, busca, limite });
+    const fromOrcamento = await listarOrcamentosEntidadeTable(listOpts);
     if (fromOrcamento !== null) return fromOrcamento;
   } catch (e) {
     console.warn('[orcamentoRapido] listagem orcamento:', e);
   }
 
   try {
-    const fromLegado = await listarOrcamentosRapidosLegadoPedido({ dias, busca, limite });
+    const fromLegado = await listarOrcamentosRapidosLegadoPedido(listOpts);
     if (fromLegado.length > 0) return fromLegado;
   } catch (e) {
     console.warn('[orcamentoRapido] listagem legado pedido_venda:', e);
   }
 
-  return listarOrcamentosRapidosEntidades({ dias, busca, limite });
+  return listarOrcamentosRapidosEntidades(listOpts);
 }
 
 /** Carrega um orçamento com itens. */
