@@ -19,6 +19,17 @@
 
 ## Abas previstas (interligadas)
 
+### Categorias canónicas por etapa
+
+| Etapa | Categorias (dropdown) |
+|--------|------------------------|
+| **a. Edificações** | Alvenaria · Drywall · Madeira · Telhado |
+| **b. Instalações** | Hidráulica · Elétrica |
+| **c. Acabamentos** | Pintura · Elétrica · Hidráulica · Revestimentos · Esquadrias |
+
+No Excel: `01. Alvenaria`, `02. Drywall`, … — ver `scripts/lib/turboChargerCategorias.mjs`.  
+Legado (`Portas`, `Forro`, numeração antiga em acabamentos) normaliza ao regenerar / `node scripts/patch-catalogo-4x3-categorias.mjs`.
+
 ### Listas (dropdowns — uma aba horizontal)
 
 | Coluna na aba `Listas` | Conteúdo |

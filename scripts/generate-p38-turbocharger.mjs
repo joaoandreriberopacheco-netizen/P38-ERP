@@ -25,6 +25,7 @@ import {
   writeCascadeBlocks,
 } from './lib/turboChargerCascade.mjs';
 import { TURBO_SKU_COMPLETO_COLS } from './lib/turboChargerSkuCols.mjs';
+import { normalizeFactRowTaxonomy } from './lib/turboChargerCategorias.mjs';
 
 const ROOT = process.cwd();
 const OUT = path.join(ROOT, 'docs', 'exports', 'P38-TurboCharger.xlsx');
@@ -276,7 +277,8 @@ async function fetchProdutosSupabase() {
 }
 
 async function main() {
-  const factRows = await loadFactRowsFrom4x3();
+  let factRows = await loadFactRowsFrom4x3();
+  factRows = factRows.map((row) => normalizeFactRowTaxonomy({ ...row }));
   const observacoesByCod = await loadObservacoesFromExistingTurbo();
   for (const row of factRows) {
     row.observacoes = observacoesByCod.get(row.codigo_interno) ?? '';

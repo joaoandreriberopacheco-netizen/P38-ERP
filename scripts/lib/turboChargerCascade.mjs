@@ -1,6 +1,7 @@
 /** Tabelas pai→filho para dropdowns dependentes no Excel (OFFSET/MATCH/COUNTIF). */
 
 import { LEGENDA_CAMINHO_SEP } from './catalogo3x3Map.mjs';
+import { mergeCanonEtapaCategoriaPairs } from './turboChargerCategorias.mjs';
 
 /** Chave composta — mesmo « · » da legenda 4×3 (`legendaCaminho4x`). */
 export const CASCADE_KEY_SEP = LEGENDA_CAMINHO_SEP;
@@ -78,12 +79,16 @@ export function emptyGuardForCascade(cascadeId) {
 }
 
 export function buildCascadeTables(factRows) {
-  return {
-    etapa_categoria: uniqueParentChildPairs(
+  const etapa_categoria = mergeCanonEtapaCategoriaPairs(
+    uniqueParentChildPairs(
       factRows,
       (r) => String(r.etapa ?? '').trim(),
       (r) => r.categoria,
     ),
+  );
+
+  return {
+    etapa_categoria,
     categoria_sub: uniqueParentChildPairs(
       factRows,
       (r) => joinCascadeKey([r.etapa, r.categoria]),

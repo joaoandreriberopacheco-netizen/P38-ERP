@@ -5,13 +5,17 @@
  */
 
 export const CATEGORIA_ACAB = {
-  REVESTIMENTOS: '01. Revestimentos',
-  FORRO: '02. Forro',
-  PINTURA: '03. Pintura',
-  PORTAS: '04. Portas',
-  HIDRAULICA: '05. Hidráulica',
-  ELETRICA: '06. Elétrica',
-  CALCAMENTOS: '07. Calçamentos',
+  PINTURA: '01. Pintura',
+  ELETRICA: '02. Elétrica',
+  HIDRAULICA: '03. Hidráulica',
+  REVESTIMENTOS: '04. Revestimentos',
+  ESQUADRIAS: '05. Esquadrias',
+  /** @deprecated usar REVESTIMENTOS */
+  FORRO: '04. Revestimentos',
+  /** @deprecated usar ESQUADRIAS */
+  PORTAS: '05. Esquadrias',
+  /** @deprecated agrupar em REVESTIMENTOS */
+  CALCAMENTOS: '04. Revestimentos',
 };
 
 /** Subcategorias de acabamento — função (não ambiente). */
@@ -1321,7 +1325,7 @@ export function classify3x3(row, abHit) {
   if (isForro(row)) {
     return {
       etapa: ETAPA.ACABAMENTOS,
-      categoria: CATEGORIA_ACAB.FORRO,
+      categoria: CATEGORIA_ACAB.REVESTIMENTOS,
       linha: isPerfilForro(row) ? 'Perfis' : 'Forro PVC',
     };
   }
@@ -1338,12 +1342,12 @@ export function classify3x3(row, abHit) {
   if (isFechadura(row)) {
     return {
       etapa: ETAPA.ACABAMENTOS,
-      categoria: CATEGORIA_ACAB.PORTAS,
+      categoria: CATEGORIA_ACAB.ESQUADRIAS,
       linha: acabLinha('Ferragens', deriveLinhaFechadura(row)),
     };
   }
   if (isPortasEsquadrias(row)) {
-    return { etapa: ETAPA.ACABAMENTOS, categoria: CATEGORIA_ACAB.PORTAS, linha: 'Esquadrias' };
+    return { etapa: ETAPA.ACABAMENTOS, categoria: CATEGORIA_ACAB.ESQUADRIAS, linha: 'Esquadrias' };
   }
   if (isIluminacao(row)) {
     return {
