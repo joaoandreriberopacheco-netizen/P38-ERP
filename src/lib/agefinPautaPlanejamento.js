@@ -5,8 +5,6 @@
 
 import { boundsMesCivil } from '@/components/utils/dateUtils';
 import { dataVencimentoNaCompetencia, serieEhParcelada } from '@/lib/agefinPrevisaoCalculos';
-import { lancamentoPago } from '@/lib/agefinConsultaFilters';
-import { TAG_LF_GERADO_AUTO } from '@/lib/agefinLancamentosRecorrencia';
 import { competenciaDoMes, listaJaTemFolhaPagamento } from '@/lib/superAgefinCompromissos';
 
 function tagsLancamento(lancamento) {
@@ -149,73 +147,6 @@ export function enriquecerContasParcelaPlanejamentoAgefin(
   );
 }
 
-function normalizarTextoDedupAgefin(valor) {
-  return String(valor || '')
-    .trim()
-    .toLocaleLowerCase('pt-BR')
-    .replace(/\s+/g, ' ');
-}
-
-function chaveDedupLancamentoConsultaAgefin(lancamento) {
-  const vencimento = String(lancamento?.data_vencimento || '').slice(0, 10);
-  if (!vencimento) return null;
-  const valor = Math.abs(Number(lancamento?.valor_liquido ?? lancamento?.valor) || 0);
-  const valorChave = valor.toFixed(2);
-  const grupo = lancamento?.grupo_lancamento_id;
-  if (grupo) return `grupo:${grupo}:${vencimento}:${valorChave}`;
-  const nome = normalizarTextoDedupAgefin(lancamento?.descricao);
-  const terceiro = normalizarTextoDedupAgefin(lancamento?.terceiro_nome);
-  return `avulso:${nome}|${terceiro}|${vencimento}|${valorChave}`;
-}
-
-function pontuacaoPreferenciaLancamentoConsultaAgefin(lancamento) {
-  let score = 0;
-  if (lancamentoPago(lancamento)) score += 200;
-  const tags = Array.isArray(lancamento?.tags) ? lancamento.tags : [];
-  if (!tags.includes(TAG_LF_GERADO_AUTO)) score += 80;
-  if (tags.includes('agefin_previsao')) score += 10;
-  if (lancamento?.grupo_lancamento_id) score += 5;
-  return score;
-}
-
-/**
- * Remove duplicatas na consulta (template + mês a mês com grupos distintos, ou abertura repetida).
- * Mantém o lançamento “mais forte” (pago, boleto/manual, com grupo).
- */
-export function deduplicarLancamentosReaisConsultaAgefin(lancamentos = []) {
-  const vencedores = new Map();
-
-  for (const lf of lancamentos || []) {
-    const chave = chaveDedupLancamentoConsultaAgefin(lf);
-    if (!chave) continue;
-    const anterior = vencedores.get(chave);
-    if (
-      !anterior ||
-      pontuacaoPreferenciaLancamentoConsultaAgefin(lf) >
-        pontuacaoPreferenciaLancamentoConsultaAgefin(anterior)
-    ) {
-      vencedores.set(chave, lf);
-    }
-  }
-
-  const semChave = (lancamentos || []).filter((lf) => !chaveDedupLancamentoConsultaAgefin(lf));
-  const vistos = new Set();
-  const ordenados = [];
-
-  for (const lf of lancamentos || []) {
-    const chave = chaveDedupLancamentoConsultaAgefin(lf);
-    if (!chave) continue;
-    if (vistos.has(chave)) continue;
-    const vencedor = vencedores.get(chave);
-    if (vencedor) {
-      vistos.add(chave);
-      ordenados.push(vencedor);
-    }
-  }
-
-  return [...semChave, ...ordenados];
-}
-
 /**
  * Contas do mês na consulta AGEFIN: reais + parcelas virtuais + sócios + folha.
  */
@@ -229,13 +160,11 @@ export function mesclarContasConsultaAgefinMes({
 }) {
   const monthDate = currentMonth instanceof Date ? currentMonth : new Date(currentMonth);
   const { start, end } = boundsMesCivil(monthDate.getFullYear(), monthDate.getMonth());
-  const reais = deduplicarLancamentosReaisConsultaAgefin(
-    (contas || []).filter((conta) => {
-      if (!conta?.data_vencimento) return false;
-      const vencimento = `${conta.data_vencimento}`.slice(0, 10);
-      return vencimento >= start && vencimento <= end;
-    }),
-  );
+  const reais = (contas || []).filter((conta) => {
+    if (!conta?.data_vencimento) return false;
+    const vencimento = `${conta.data_vencimento}`.slice(0, 10);
+    return vencimento >= start && vencimento <= end;
+  });
   const reaisEnriquecidos = enriquecerContasParcelaPlanejamentoAgefin(
     reais,
     modelosAgefin,

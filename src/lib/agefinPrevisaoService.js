@@ -659,8 +659,13 @@ async function sincronizarSerieNoFinanceiro(modelo, { competenciaMinima } = {}) 
     const compAtual = getCompetenciaAtual();
     const comp =
       serieDeveAparecerNaCompetencia(modelo, compAtual) ? compAtual : competenciaAncoraSerie(modelo, compAtual);
-    await base44.entities.LancamentoFinanceiro.create(payloadLancamentoAuto(modelo, comp));
-    criados = 1;
+    const existente = await resolverLancamentoFilhoCompetencia(modelo, comp, { reconciliar: true });
+    if (existente) {
+      atualizados += 1;
+    } else {
+      await base44.entities.LancamentoFinanceiro.create(payloadLancamentoAuto(modelo, comp));
+      criados = 1;
+    }
   }
 
   if (atualizados || criados) invalidarCacheLancamentosFinanceiros();
@@ -854,47 +859,49 @@ function normalizarNomePlanejamento(valor) {
   return String(valor || '').trim().toLocaleLowerCase('pt-BR');
 }
 
-/** Mesmo mês + nome (e terceiro, se houver) — evita 2ª conta ao abrir mês com grupo diferente do template. */
-async function buscarLancamentoMesPorAssinaturaPlanejamento(modelo, competencia) {
-  const comp = String(competencia || '').slice(0, 7);
-  if (!comp) return null;
+function lancamentoAssinaturaPlanejamento(lf, modelo) {
   const nomeModelo = normalizarNomePlanejamento(modelo?.nome);
-  if (!nomeModelo) return null;
+  if (!nomeModelo) return false;
+  const tags = Array.isArray(lf?.tags) ? lf.tags : [];
+  if (!tags.includes('agefin_previsao') && !lf?.is_recorrente) return false;
+  if (normalizarNomePlanejamento(lf?.descricao) !== nomeModelo) return false;
   const terceiroModelo = normalizarNomePlanejamento(modelo?.terceiro_nome);
-
-  let candidatos = await listarLancamentosVencimentoCompetenciaCache(comp).catch(() => []);
-  if (!candidatos?.length) {
-    const todos = await listarLancamentosFinanceirosAgefinBruto();
-    candidatos = (todos || []).filter((lf) => mesReferenciaLancamento(lf) === comp);
-  }
-
-  return (
-    (candidatos || []).find((lf) => {
-      const tags = Array.isArray(lf?.tags) ? lf.tags : [];
-      if (!tags.includes('agefin_previsao') && !lf?.is_recorrente) return false;
-      if (normalizarNomePlanejamento(lf?.descricao) !== nomeModelo) return false;
-      const terceiroLf = normalizarNomePlanejamento(lf?.terceiro_nome);
-      if (terceiroModelo && terceiroLf && terceiroModelo !== terceiroLf) return false;
-      return true;
-    }) || null
-  );
+  const terceiroLf = normalizarNomePlanejamento(lf?.terceiro_nome);
+  if (terceiroModelo && terceiroLf && terceiroModelo !== terceiroLf) return false;
+  return true;
 }
 
-async function buscarLancamentoMes(modelo, competencia) {
+async function buscarLancamentoMesPorSerie(modelo, competencia) {
+  if (!modelo?.id) return null;
   const comp = String(competencia || '').slice(0, 7);
-  if (!comp || !modelo) return null;
+  const rows = await base44.entities.LancamentoFinanceiro.filter({
+    referencia_id: modelo.id,
+  }).catch(() => []);
+  return (rows || []).find((lf) => mesReferenciaLancamento(lf) === comp) || null;
+}
+
+async function listarLancamentosFilhosCompetencia(modelo, competencia) {
+  const comp = String(competencia || '').slice(0, 7);
+  if (!comp || !modelo) return [];
+
+  const porId = new Map();
+  const registrar = (lf) => {
+    if (!lf?.id || mesReferenciaLancamento(lf) !== comp) return;
+    porId.set(lf.id, lf);
+  };
 
   if (modelo.grupo_lancamento_id) {
     const rows = await base44.entities.LancamentoFinanceiro.filter({
       grupo_lancamento_id: modelo.grupo_lancamento_id,
     });
-    const porGrupo = (rows || []).find((lf) => mesReferenciaLancamento(lf) === comp);
-    if (porGrupo) return porGrupo;
+    (rows || []).forEach(registrar);
   }
 
   if (modelo.id) {
-    const porSerie = await buscarLancamentoMesPorSerie(modelo, comp);
-    if (porSerie) return porSerie;
+    const rows = await base44.entities.LancamentoFinanceiro.filter({
+      referencia_id: modelo.id,
+    }).catch(() => []);
+    (rows || []).forEach(registrar);
   }
 
   const refGrupo = modelo.grupo_lancamento_id
@@ -904,11 +911,106 @@ async function buscarLancamentoMes(modelo, competencia) {
     const rows = await base44.entities.LancamentoFinanceiro.filter({
       referencia_id: refGrupo,
     }).catch(() => []);
-    const porRef = (rows || []).find((lf) => mesReferenciaLancamento(lf) === comp);
-    if (porRef) return porRef;
+    (rows || []).forEach(registrar);
   }
 
-  return buscarLancamentoMesPorAssinaturaPlanejamento(modelo, comp);
+  let candidatos = await listarLancamentosVencimentoCompetenciaCache(comp).catch(() => []);
+  if (!candidatos?.length) {
+    const todos = await listarLancamentosFinanceirosAgefinBruto();
+    candidatos = (todos || []).filter((lf) => mesReferenciaLancamento(lf) === comp);
+  }
+  (candidatos || []).filter((lf) => lancamentoAssinaturaPlanejamento(lf, modelo)).forEach(registrar);
+
+  return [...porId.values()];
+}
+
+function pontuacaoLancamentoFilhoCompetencia(lf, modelo, lancamentoIdPreferido = null) {
+  let score = 0;
+  if (lf?.id && lancamentoIdPreferido && lf.id === lancamentoIdPreferido) score += 500;
+  if (lancamentoPago(lf)) score += 200;
+  if (lancamentoCancelado(lf)) score -= 300;
+  const tags = Array.isArray(lf?.tags) ? lf.tags : [];
+  if (!tags.includes(TAG_LF_GERADO_AUTO)) score += 80;
+  if (lf?.grupo_lancamento_id && lf.grupo_lancamento_id === modelo?.grupo_lancamento_id) score += 60;
+  if (tags.includes('agefin_previsao')) score += 10;
+  return score;
+}
+
+async function vincularLancamentoFilhoAoTemplate(modelo, lf) {
+  if (!lf?.id || !modelo?.grupo_lancamento_id) return lf;
+  const ref = serieIdFromGrupoLancamento(modelo.grupo_lancamento_id) || modelo.id;
+  const precisaGrupo = lf.grupo_lancamento_id !== modelo.grupo_lancamento_id;
+  const precisaRef = ref && lf.referencia_id !== ref && lf.referencia_id !== modelo.id;
+  if (!precisaGrupo && !precisaRef) return lf;
+
+  const atualizado = await base44.entities.LancamentoFinanceiro.update(lf.id, {
+    grupo_lancamento_id: modelo.grupo_lancamento_id,
+    referencia_id: ref || modelo.id,
+    is_recorrente: true,
+  });
+  invalidarCacheLancamentosFinanceiros();
+  return atualizado;
+}
+
+async function reconciliarDuplicatasFilhoCompetencia(modelo, competencia, manterId) {
+  const todos = await listarLancamentosFilhosCompetencia(modelo, competencia);
+  let cancelados = 0;
+
+  for (const lf of todos) {
+    if (!lf?.id || lf.id === manterId) continue;
+    if (lancamentoPago(lf) || lancamentoCancelado(lf)) continue;
+    const tags = Array.isArray(lf.tags) ? lf.tags : [];
+    const ehPlanejamento =
+      tags.includes('agefin_previsao') || tags.includes(TAG_LF_GERADO_AUTO) || lf.is_recorrente;
+    if (!ehPlanejamento) continue;
+
+    await base44.entities.LancamentoFinanceiro.update(lf.id, {
+      status: 'Cancelado',
+      tags: [...new Set([...tags, 'cancelado', 'agefin_duplicata_reconciliada'])],
+    });
+    cancelados += 1;
+  }
+
+  if (cancelados) invalidarCacheLancamentosFinanceiros();
+  return cancelados;
+}
+
+/**
+ * Resolve o lançamento filho (competência) do template (pai).
+ * Realinha grupo/referência e, se pedido, cancela duplicatas abertas do planejamento.
+ */
+async function resolverLancamentoFilhoCompetencia(
+  modelo,
+  competencia,
+  { lancamentoId = null, reconciliar = false } = {},
+) {
+  const comp = String(competencia || '').slice(0, 7);
+  if (!comp || !modelo) return null;
+
+  const todos = await listarLancamentosFilhosCompetencia(modelo, comp);
+  if (!todos.length) return null;
+
+  const ordenados = [...todos].sort(
+    (a, b) =>
+      pontuacaoLancamentoFilhoCompetencia(b, modelo, lancamentoId) -
+      pontuacaoLancamentoFilhoCompetencia(a, modelo, lancamentoId),
+  );
+  let preferido = ordenados[0];
+  if (lancamentoId) {
+    preferido = todos.find((lf) => lf.id === lancamentoId) || preferido;
+  }
+
+  preferido = await vincularLancamentoFilhoAoTemplate(modelo, preferido);
+
+  if (reconciliar && preferido?.id) {
+    await reconciliarDuplicatasFilhoCompetencia(modelo, comp, preferido.id);
+  }
+
+  return preferido;
+}
+
+async function buscarLancamentoMes(modelo, competencia) {
+  return resolverLancamentoFilhoCompetencia(modelo, competencia, { reconciliar: false });
 }
 
 export async function abrirCompetenciasDoMes(competencia) {
@@ -921,7 +1023,9 @@ export async function abrirCompetenciasDoMes(competencia) {
       pulados.push(modelo.nome);
       continue;
     }
-    const existente = await buscarLancamentoMes(modelo, competencia);
+    const existente = await resolverLancamentoFilhoCompetencia(modelo, competencia, {
+      reconciliar: true,
+    });
     if (existente) {
       pulados.push(modelo.nome);
       continue;
@@ -941,7 +1045,9 @@ export async function abrirCompetenciaSerie(modelo, competencia) {
   if (!serieDeveAparecerNaCompetencia(modelo, competencia)) {
     throw new Error('Esta conta não entra neste mês.');
   }
-  const existente = await buscarLancamentoMes(modelo, competencia);
+  const existente = await resolverLancamentoFilhoCompetencia(modelo, competencia, {
+    reconciliar: true,
+  });
   if (existente) return existente;
   return base44.entities.LancamentoFinanceiro.create(payloadLancamentoAuto(modelo, competencia));
 }
@@ -1014,6 +1120,14 @@ export async function sincronizarLancamentoFinanceiro(competencia, opcoes = {}) 
     return base44.entities.LancamentoFinanceiro.update(competencia.lancamento_id, payload);
   }
 
+  const existente = await resolverLancamentoFilhoCompetencia(modelo, competencia.competencia, {
+    reconciliar: true,
+  });
+  if (existente?.id) {
+    invalidarCacheLancamentosFinanceiros();
+    return base44.entities.LancamentoFinanceiro.update(existente.id, payload);
+  }
+
   return base44.entities.LancamentoFinanceiro.create(payload);
 }
 
@@ -1078,9 +1192,11 @@ async function gravarLancamentoCompetenciaManual({
       lf = null;
     }
   }
-  if (!lf) lf = await buscarLancamentoMes(modelo, comp);
-  if (!lf && modelo?.id) {
-    lf = await buscarLancamentoMesPorSerie(modelo, comp);
+  if (!lf) {
+    lf = await resolverLancamentoFilhoCompetencia(modelo, comp, {
+      lancamentoId,
+      reconciliar: true,
+    });
   }
 
   if (!lf) {
@@ -1105,14 +1221,6 @@ async function gravarLancamentoCompetenciaManual({
   });
   invalidarCacheLancamentosFinanceiros();
   return atualizado;
-}
-
-async function buscarLancamentoMesPorSerie(modelo, competencia) {
-  if (!modelo?.id) return null;
-  const rows = await base44.entities.LancamentoFinanceiro.filter({
-    referencia_id: modelo.id,
-  }).catch(() => []);
-  return (rows || []).find((lf) => mesReferenciaLancamento(lf) === competencia) || null;
 }
 
 /**

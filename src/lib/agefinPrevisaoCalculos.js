@@ -565,6 +565,16 @@ export function competenciaFromLancamento(lf, modelo, competencia) {
  * Mescla lançamentos do mês (fonte AGEFIN / LancamentoFinanceiro) com linhas de planejamento.
  * overridesPorSerie: ajustes manuais por competência (sem alterar o template).
  */
+function pontuacaoLfFilhoNaVisao(lf, modelo) {
+  let score = 0;
+  if (lancamentoPago(lf)) score += 200;
+  if (lf?.grupo_lancamento_id && lf.grupo_lancamento_id === modelo?.grupo_lancamento_id) score += 80;
+  const tags = Array.isArray(lf?.tags) ? lf.tags : [];
+  if (!tags.includes('lf_gerado_auto')) score += 40;
+  if (tags.includes('agefin_previsao')) score += 10;
+  return score;
+}
+
 export function montarCompetenciasVisao(
   competenciaMes,
   modelos,
@@ -577,6 +587,7 @@ export function montarCompetenciasVisao(
   const lfByGrupo = {};
   const modelosByGrupo = {};
   const modelosById = mapaModelosPorId(modelos);
+  const filhosPorSerie = new Map();
 
   for (const lf of lancamentosMes || []) {
     const gid = lf.grupo_lancamento_id;
@@ -586,16 +597,28 @@ export function montarCompetenciasVisao(
     if (modelo?.grupo_lancamento_id) modelosByGrupo[modelo.grupo_lancamento_id] = modelo;
   }
 
-  // 1) Lançamentos reais do mês — mesma base que a AGEFIN Consulta
+  // 1) Um filho por série (template) — evita duas linhas no mês quando há LF duplicado
   for (const lf of lancamentosMes || []) {
     const modelo =
       (lf.grupo_lancamento_id ? modelosByGrupo[lf.grupo_lancamento_id] : null) ||
       modelosById[lf.referencia_id] ||
       null;
+    if (!modelo?.id) {
+      const comp = competenciaFromLancamento(lf, modelo, competenciaMes);
+      comp.serie_id = comp.serie_id || `lf-${lf.id}`;
+      byKey.set(`lf-${lf.id}`, comp);
+      continue;
+    }
+    const prev = filhosPorSerie.get(modelo.id);
+    if (!prev || pontuacaoLfFilhoNaVisao(lf, modelo) > pontuacaoLfFilhoNaVisao(prev.lf, modelo)) {
+      filhosPorSerie.set(modelo.id, { lf, modelo });
+    }
+  }
+
+  for (const [serieId, { lf, modelo }] of filhosPorSerie) {
     const comp = competenciaFromLancamento(lf, modelo, competenciaMes);
-    const key = modelo?.id || `lf-${lf.id}`;
-    comp.serie_id = comp.serie_id || key;
-    byKey.set(key, comp);
+    comp.serie_id = comp.serie_id || serieId;
+    byKey.set(serieId, comp);
   }
 
   // 2) Séries cadastradas sem LF no mês (modo planejamento)
