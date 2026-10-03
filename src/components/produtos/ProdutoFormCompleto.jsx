@@ -39,8 +39,6 @@ import {
 import { embalagensRowsToLegacyProdutoPatch, legacyProdutoToEmbalagensRows } from '@/lib/produtoEmbalagensAdapter';
 import { syncIsComercialOnAlternativas } from '@/components/produtos/massa/embalagensPlanilhaUtils';
 import { cn } from '@/components/utils';
-import { useCompactShell } from '@/hooks/use-breakpoint';
-import { useScrollVisibility } from '@/hooks/useScrollVisibility';
 import { formatProductCode, generateRandomProductCode } from '@/lib/productCode';
 import {
   PRODUTOS_DIVIDER_TOP,
@@ -240,9 +238,6 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
   const [movimentacoes, setMovimentacoes] = useState([]);
   const [loadingMovimentacoes, setLoadingMovimentacoes] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState('descritivo');
-  const isMobile = useCompactShell();
-  const historicoChromeExpanded = useScrollVisibility(isMobile && abaAtiva === 'historico');
-  const collapseHistoricoShell = isMobile && abaAtiva === 'historico';
   const [temAlteracoesNaoSalvas, setTemAlteracoesNaoSalvas] = useState(false);
   const { toast } = useToast();
   
@@ -1165,14 +1160,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
   return (
     <div className={P38_FORM_ROOT}>
       <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        <div
-          className={cn(
-            'flex-none transition-[max-height,opacity] duration-300 ease-out',
-            collapseHistoricoShell ? 'overflow-hidden' : 'overflow-visible',
-            collapseHistoricoShell && (historicoChromeExpanded ? 'max-h-[22rem] opacity-100' : 'max-h-0 opacity-0')
-          )}
-          aria-hidden={collapseHistoricoShell && !historicoChromeExpanded}
-        >
+        <div className="flex-none overflow-visible">
           {/* Header — grid: kicker + ícones na mesma linha; título na linha de baixo (largura total) */}
           <div className={P38_FORM_HEADER}>
             <span className={PRODUTOS_HEADER_ACCENT} />
@@ -2085,7 +2073,6 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
               produto={formData}
               loading={loadingMovimentacoes}
               onRefresh={loadMovimentacoes}
-              chromeExpanded={historicoChromeExpanded}
             />
           </TabsContent>
 
