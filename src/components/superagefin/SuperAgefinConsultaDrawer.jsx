@@ -8,6 +8,7 @@ import { referenciasAnexosBaseParaLancamento } from '@/lib/anexosReferenciasInte
 import { salvarEdicaoLancamentoFinanceiro } from '@/lib/editarLancamentoFinanceiro';
 import { isLancamentoPago } from '@/lib/lancamentoFinanceiroStatus';
 import { dataHoje, formatarSoData } from '@/components/utils/dateUtils';
+import { lancamentoVencidoOuAtrasado } from '@/lib/agefinConsultaFilters';
 import { useToast } from '@/components/ui/use-toast';
 import { P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
 import { cn } from '@/lib/utils';
@@ -84,7 +85,7 @@ export default function SuperAgefinConsultaDrawer({ open, onClose, conta, onSave
 
   const isPaid = isLancamentoPago(conta);
   const todayKey = dataHoje();
-  const isOverdue = conta.status === 'Vencido' || (!isPaid && conta.data_vencimento && conta.data_vencimento < todayKey);
+  const isOverdue = lancamentoVencidoOuAtrasado(conta, todayKey);
   const valorNumerico = parseFloat(valorInput) || 0;
   const valorMudou = Math.abs(valorNumerico - (Number(conta.valor) || 0)) > 0.009;
   const vencimentoMudou = (vencimentoInput || '').slice(0, 10) !== (conta.data_vencimento || '').slice(0, 10);

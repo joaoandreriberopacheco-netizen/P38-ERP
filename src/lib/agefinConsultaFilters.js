@@ -39,10 +39,27 @@ export function lancamentoCancelado(l) {
   return s === 'cancelado' || s === 'cancelada';
 }
 
+/**
+ * Conta em atraso = não paga, não cancelada, vencimento **anterior** ao dia civil de hoje (Tabatinga).
+ * O campo `status` no banco pode ficar desatualizado (ex.: «Vencido» com data futura após adiar vencimento);
+ * a UI e o PDF usam só a data.
+ */
 export function lancamentoVencidoOuAtrasado(l, todayKey = dataHoje()) {
   if (!l?.data_vencimento || lancamentoPago(l) || lancamentoCancelado(l)) return false;
-  if (l.status === 'Vencido') return true;
   return `${l.data_vencimento}`.slice(0, 10) < todayKey;
+}
+
+/**
+ * Ao gravar, alinha status «Em Aberto» / «Vencido» ao vencimento (não altera Pago/Cancelado).
+ */
+export function reconciliarStatusLancamentoPorVencimento(lancamento, dataVencimentoYmd, todayKey = dataHoje()) {
+  if (!lancamento || lancamentoPago(lancamento) || lancamentoCancelado(lancamento)) return {};
+  const ven = `${dataVencimentoYmd ?? lancamento.data_vencimento ?? ''}`.slice(0, 10);
+  if (!ven) return {};
+  const s = String(lancamento.status || 'Em Aberto').trim();
+  if (ven < todayKey && s === 'Em Aberto') return { status: 'Vencido' };
+  if (ven >= todayKey && s === 'Vencido') return { status: 'Em Aberto' };
+  return {};
 }
 
 export function lancamentoEmDia(l, todayKey = dataHoje()) {

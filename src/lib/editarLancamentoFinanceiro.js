@@ -11,6 +11,7 @@ import { isLancamentoPago } from '@/lib/lancamentoFinanceiroStatus';
 import { sincronizarSaldosAposAlteracao } from '@/lib/sincronizarSaldoContasFinanceiras';
 import { normalizeDataText } from '@/lib/normalizeDataText';
 import { lancamentoEhValeFolha, sincronizarValeFolhaComLancamento } from '@/lib/folhaValeFluxo';
+import { reconciliarStatusLancamentoPorVencimento } from '@/lib/agefinConsultaFilters';
 
 function loteRecorrenciaAmbiguo(lancamento, grupo) {
   const refAtual = lancamento.referencia_id || '';
@@ -127,10 +128,12 @@ export async function salvarEdicaoLancamentoFinanceiro({
     (realizado && contaId !== (lancamento.conta_financeira_id || ''));
 
   const metaPayload = buildMetaPayload(lancamento, dataLancamentoInput, tags || []);
+  const statusPorVencimento = reconciliarStatusLancamentoPorVencimento(lancamento, venAtual);
   const baseUpdate = {
     ...(cadastroDirty ? cadastroPayload : {}),
     ...pagamentoPayload,
     ...metaPayload,
+    ...statusPorVencimento,
   };
 
   if (Object.keys(baseUpdate).length === 0) {
