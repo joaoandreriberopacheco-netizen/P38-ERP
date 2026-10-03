@@ -850,12 +850,65 @@ function payloadLancamentoAuto(modelo, competencia) {
   };
 }
 
+function normalizarNomePlanejamento(valor) {
+  return String(valor || '').trim().toLocaleLowerCase('pt-BR');
+}
+
+/** Mesmo mês + nome (e terceiro, se houver) — evita 2ª conta ao abrir mês com grupo diferente do template. */
+async function buscarLancamentoMesPorAssinaturaPlanejamento(modelo, competencia) {
+  const comp = String(competencia || '').slice(0, 7);
+  if (!comp) return null;
+  const nomeModelo = normalizarNomePlanejamento(modelo?.nome);
+  if (!nomeModelo) return null;
+  const terceiroModelo = normalizarNomePlanejamento(modelo?.terceiro_nome);
+
+  let candidatos = await listarLancamentosVencimentoCompetenciaCache(comp).catch(() => []);
+  if (!candidatos?.length) {
+    const todos = await listarLancamentosFinanceirosAgefinBruto();
+    candidatos = (todos || []).filter((lf) => mesReferenciaLancamento(lf) === comp);
+  }
+
+  return (
+    (candidatos || []).find((lf) => {
+      const tags = Array.isArray(lf?.tags) ? lf.tags : [];
+      if (!tags.includes('agefin_previsao') && !lf?.is_recorrente) return false;
+      if (normalizarNomePlanejamento(lf?.descricao) !== nomeModelo) return false;
+      const terceiroLf = normalizarNomePlanejamento(lf?.terceiro_nome);
+      if (terceiroModelo && terceiroLf && terceiroModelo !== terceiroLf) return false;
+      return true;
+    }) || null
+  );
+}
+
 async function buscarLancamentoMes(modelo, competencia) {
-  if (!modelo?.grupo_lancamento_id) return null;
-  const rows = await base44.entities.LancamentoFinanceiro.filter({
-    grupo_lancamento_id: modelo.grupo_lancamento_id,
-  });
-  return (rows || []).find((lf) => mesReferenciaLancamento(lf) === competencia) || null;
+  const comp = String(competencia || '').slice(0, 7);
+  if (!comp || !modelo) return null;
+
+  if (modelo.grupo_lancamento_id) {
+    const rows = await base44.entities.LancamentoFinanceiro.filter({
+      grupo_lancamento_id: modelo.grupo_lancamento_id,
+    });
+    const porGrupo = (rows || []).find((lf) => mesReferenciaLancamento(lf) === comp);
+    if (porGrupo) return porGrupo;
+  }
+
+  if (modelo.id) {
+    const porSerie = await buscarLancamentoMesPorSerie(modelo, comp);
+    if (porSerie) return porSerie;
+  }
+
+  const refGrupo = modelo.grupo_lancamento_id
+    ? serieIdFromGrupoLancamento(modelo.grupo_lancamento_id)
+    : null;
+  if (refGrupo && refGrupo !== modelo.id) {
+    const rows = await base44.entities.LancamentoFinanceiro.filter({
+      referencia_id: refGrupo,
+    }).catch(() => []);
+    const porRef = (rows || []).find((lf) => mesReferenciaLancamento(lf) === comp);
+    if (porRef) return porRef;
+  }
+
+  return buscarLancamentoMesPorAssinaturaPlanejamento(modelo, comp);
 }
 
 export async function abrirCompetenciasDoMes(competencia) {
