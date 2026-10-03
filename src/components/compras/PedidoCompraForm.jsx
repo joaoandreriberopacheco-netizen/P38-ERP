@@ -30,6 +30,7 @@ import { cn } from '@/components/utils';
 import { registrarTransicao } from './transicaoHelper';
 import { buildBypassAuthPayload } from '@/components/auth/operacaoAuthFlags';
 import MobileProductSelector from './MobileProductSelector';
+import TrocaRapidaItemDialog from './TrocaRapidaItemDialog';
 import AtualizarPrecosDialog from './AtualizarPrecosDialog';
 import PendenciasPedido from './PendenciasPedido';
 import LogsPedidoCompra from './LogsPedidoCompra';
@@ -75,6 +76,7 @@ import {
   normalizePedidoCompraItemCustoLiquidoParaPersist,
 } from '@/lib/productUnits';
 import { savePedidoCompraItem } from '@/functions/savePedidoCompraItem';
+import { executarTrocaRapidaPedidoCompra } from '@/lib/trocaRapidaPedidoCompra';
 import { uploadAnexoParaPedidoCompra } from '@/lib/uploadAnexoReferencia';
 import { mergeLoteIntoItems, parseLoteQuantidade } from '@/lib/catalogLoteUtils';
 import {
@@ -100,6 +102,13 @@ import {
 } from '@/lib/comprasP38Theme';
 import { P38_PAGE_KICKER, P38_PAGE_SUBTITLE, P38_PAGE_TITLE } from '@/lib/p38FormTypography';
 import { valorEmbarqueSplit } from '@/lib/pedidoCompraValorExibicao';
+import { formatQuantidadeDisplay } from '@/lib/parseQuantidadeInput';
+
+function formatTrocaQuantidadeResumo(item = {}) {
+  const qty = formatQuantidadeDisplay(Number(item.quantidade) || 0);
+  const unidade = item.unidade_medida || item.unidade_apresentacao || 'UN';
+  return `${qty} ${unidade}`;
+}
 
 export default function PedidoCompraForm({
   pedido,
@@ -202,6 +211,8 @@ export default function PedidoCompraForm({
   );
   const [lancamentosRefreshKey, setLancamentosRefreshKey] = useState(0);
   const [lancamentosPedido, setLancamentosPedido] = useState([]);
+  const [trocaRapidaState, setTrocaRapidaState] = useState({ open: false, itemIndex: -1, itemOriginal: null });
+  const [submittingTrocaRapida, setSubmittingTrocaRapida] = useState(false);
   const { toast } = useToast();
 
   const pedidoAtual = pedidoLogistica || pedido;
@@ -1023,6 +1034,81 @@ export default function PedidoCompraForm({
 
   const isLogisticaEnabled = true;
 
+  const podeTrocarItemRapido = Boolean(
+    pedido?.id &&
+    isLocked &&
+    Array.isArray(formData.itens) &&
+    formData.itens.length > 0,
+  );
+
+  const handleAbrirTrocaRapida = (itemIndex, itemOriginal) => {
+    setTrocaRapidaState({ open: true, itemIndex, itemOriginal });
+  };
+
+  const handleConfirmTrocaRapida = async ({ itemIndex, produtoSubstituto, substituicao, motivo, preview }) => {
+    if (!pedido?.id) return;
+
+    const diff = preview?.diferencaPedido ?? 0;
+    const diffAbs = Math.abs(diff).toFixed(2);
+    const direcao = diff > 0 ? 'a pagar' : diff < 0 ? 'a receber' : 'sem alteração';
+    const msgDiff =
+      Math.abs(diff) >= 0.01
+        ? `\n\nDiferença ${direcao}: R$ ${diffAbs}.`
+        : '\n\nSem alteração de valor.';
+    const qtdAntes = formatTrocaQuantidadeResumo(preview?.itemOriginal);
+    const qtdDepois = formatTrocaQuantidadeResumo(preview?.itemNovo);
+
+    const confirmou = window.confirm(
+      `Confirmar troca?\n\n` +
+      `${preview?.itemOriginal?.produto_nome} (${qtdAntes})\n→ ${preview?.itemNovo?.produto_nome} (${qtdDepois})` +
+      msgDiff +
+      `\n\nA troca ficará registrada no histórico do pedido.`
+    );
+    if (!confirmou) return;
+
+    setSubmittingTrocaRapida(true);
+    try {
+      const responsavel = currentUser?.full_name || currentUser?.email || '';
+      const resultado = await executarTrocaRapidaPedidoCompra(base44, {
+        pedido: { ...formData, id: pedido.id, numero: pedido.numero },
+        itemIndex,
+        produtoSubstituto,
+        substituicao,
+        motivo,
+        responsavel,
+        onSave,
+      });
+
+      setFormData((prev) => ({
+        ...prev,
+        itens: resultado.preview.itensNovos,
+        valor_itens: resultado.preview.valorItens,
+        valor_total: resultado.preview.valorNovo,
+        historico: `${prev.historico || ''}${resultado.notaHistorico}`,
+      }));
+      setLancamentosRefreshKey((k) => k + 1);
+      if (typeof onPedidoRefresh === 'function') {
+        await onPedidoRefresh();
+      }
+
+      toast({
+        title: 'Troca registrada',
+        description: resultado.ajusteFinanceiro
+          ? 'Item trocado e conta de ajuste gerada no financeiro.'
+          : 'Item trocado com sucesso no pedido.',
+      });
+      setTrocaRapidaState({ open: false, itemIndex: -1, itemOriginal: null });
+    } catch (error) {
+      toast({
+        title: 'Erro na troca',
+        description: error?.message || 'Não foi possível concluir a troca.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSubmittingTrocaRapida(false);
+    }
+  };
+
   const canReopen = currentUser?.role === 'admin' && isLocked;
 
   const handlePrintReport = async (tipo = 'pedido') => {
@@ -1697,10 +1783,23 @@ export default function PedidoCompraForm({
                 formatCurrency={formatCurrency}
                 onOpenAdjustPrices={() => setShowAtualizarPrecos(true)}
                 isLocked={isLocked}
+                onTrocarItem={podeTrocarItemRapido ? handleAbrirTrocaRapida : undefined}
                 onProductCreated={(novoProduto) => {
                   setProdutos(prev => [...prev, novoProduto]);
                 }}
                 onOpenImporter={() => setIsImportadorPedidoOpen(true)}
+              />
+              <TrocaRapidaItemDialog
+                open={trocaRapidaState.open}
+                onOpenChange={(open) => {
+                  if (!open) setTrocaRapidaState({ open: false, itemIndex: -1, itemOriginal: null });
+                }}
+                pedido={formData}
+                itemIndex={trocaRapidaState.itemIndex}
+                itemOriginal={trocaRapidaState.itemOriginal}
+                products={produtos}
+                onConfirm={handleConfirmTrocaRapida}
+                submitting={submittingTrocaRapida}
               />
             </TabsContent>
 

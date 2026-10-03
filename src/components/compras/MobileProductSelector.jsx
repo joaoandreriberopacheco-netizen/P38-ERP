@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Plus, Minus, ShoppingCart, ChevronLeft, Trash2, DollarSign, AlertCircle, ArrowRight, TrendingDown, TrendingUp, Boxes } from 'lucide-react';
+import { Search, Plus, Minus, ShoppingCart, ChevronLeft, Trash2, DollarSign, AlertCircle, ArrowRight, TrendingDown, TrendingUp, Boxes, RefreshCw } from 'lucide-react';
 import NovoProdutoRapidoDialog from './NovoProdutoRapidoDialog';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
@@ -96,6 +96,7 @@ export default function MobileProductSelector({
   formatCurrency,
   onOpenAdjustPrices,
   isLocked,
+  onTrocarItem,
   onProductCreated,
   onOpenImporter,
   onAddItemsBatch,
@@ -1331,6 +1332,21 @@ export default function MobileProductSelector({
                       </span>
                     </div>
                   </div>
+                  {isLocked && onTrocarItem ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-9 shrink-0 rounded-xl border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900/20"
+                      data-pulse-sensor="pedido-compra.troca-rapida.abrir"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onTrocarItem(originalIndex, item);
+                      }}
+                    >
+                      <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+                      Trocar
+                    </Button>
+                  ) : null}
                   {!isLocked && (
                     <Button
                       variant="ghost"
