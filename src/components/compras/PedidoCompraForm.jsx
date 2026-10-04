@@ -156,7 +156,8 @@ export default function PedidoCompraForm({
   const [searchFornecedor, setSearchFornecedor] = useState('');
   const [selectedProductIndex, setSelectedProductIndex] = useState(-1);
   const [selectedFornecedorIndex, setSelectedFornecedorIndex] = useState(-1);
-  
+  const [salvandoEncomenda, setSalvandoEncomenda] = useState(false);
+
   const filteredProducts = useMemo(() => {
     if (!search.trim()) return [];
     const lower = search.toLowerCase();
@@ -475,6 +476,40 @@ export default function PedidoCompraForm({
       saveToHistory(newData);
       return newData;
     });
+  };
+
+  const [salvandoEncomenda, setSalvandoEncomenda] = useState(false);
+
+  /** Grava só a flag — permitido com pedido aprovado/bloqueado (sem reabrir itens). */
+  const handleEncomendaToggle = async (checked) => {
+    const next = checked === true;
+    const prev = !!formData.is_encomenda;
+    if (next === prev) return;
+
+    handleChange('is_encomenda', next);
+    if (!pedido?.id) return;
+
+    setSalvandoEncomenda(true);
+    try {
+      await base44.entities.PedidoCompra.update(pedido.id, { is_encomenda: next });
+      setPedidoLogistica((p) => (p ? { ...p, is_encomenda: next } : p));
+      if (onPedidoRefresh) await onPedidoRefresh();
+      toast({
+        title: next ? 'Marcado como encomenda' : 'Marcado como reposição',
+        description: next
+          ? 'O trânsito deste pedido não entra no Resumo global de estoque.'
+          : 'O trânsito deste pedido volta a entrar no Resumo global.',
+      });
+    } catch (error) {
+      handleChange('is_encomenda', prev);
+      toast({
+        title: 'Não foi possível gravar',
+        description: error?.message || 'Tente novamente.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSalvandoEncomenda(false);
+    }
   };
 
   const saveToHistory = (newData) => {
@@ -1571,7 +1606,8 @@ export default function PedidoCompraForm({
                     <p className="text-sm font-medium text-foreground">Encomenda</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       Compra para cliente (estoque pode ficar negativo até receber). Não entra no trânsito do{' '}
-                      <span className="whitespace-nowrap">Resumo global</span> de estoque.
+                      <span className="whitespace-nowrap">Resumo global</span> de estoque. Pode alterar mesmo com
+                      pedido já aprovado.
                     </p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
@@ -1580,8 +1616,8 @@ export default function PedidoCompraForm({
                     </span>
                     <Switch
                       checked={!!formData.is_encomenda}
-                      onCheckedChange={(checked) => handleChange('is_encomenda', checked === true)}
-                      disabled={isLocked}
+                      onCheckedChange={handleEncomendaToggle}
+                      disabled={salvandoEncomenda}
                       aria-label="Pedido de encomenda"
                     />
                   </div>
