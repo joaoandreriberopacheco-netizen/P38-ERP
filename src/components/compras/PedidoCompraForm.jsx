@@ -478,8 +478,6 @@ export default function PedidoCompraForm({
     });
   };
 
-  const [salvandoEncomenda, setSalvandoEncomenda] = useState(false);
-
   /** Grava só a flag — permitido com pedido aprovado/bloqueado (sem reabrir itens). */
   const handleEncomendaToggle = async (checked) => {
     const next = checked === true;
