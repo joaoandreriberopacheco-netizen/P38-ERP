@@ -77,6 +77,7 @@
     "supabase:align:check": "node scripts/verify-supabase-project-alignment.mjs",
     "supabase:deploy:functions": "node scripts/deploy-supabase-functions.mjs",
     "viagens:ensure": "vite-node scripts/invoke-gerar-viagens-fluvial.mjs",
+    "viagens-fluvial:dedup": "node scripts/dedup-viagens-fluvial.mjs",
     "supabase:port-functions": "node scripts/port-base44-functions.mjs",
     "db:cold-start-keep-produto": "node scripts/cold-start-keep-produto.mjs",
     "migrate:base44-to-supabase": "node scripts/migrate-base44-to-supabase.mjs",
