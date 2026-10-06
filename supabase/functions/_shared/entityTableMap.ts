@@ -18,6 +18,7 @@ import {
   PEDIDO_VENDA_ITEM_COLUMNS,
   PEDIDO_COMPRA_ITEM_COLUMNS,
   EMBARQUE_ITEM_COLUMNS,
+  AGENDA_LOGISTICA_COLUMNS,
   TABLE_PROMOTION_MANIFEST,
 } from './entityColumnManifest.ts';
 
@@ -60,7 +61,11 @@ export const ENTITY_TO_TABLE = {
     mode: 'columns',
     columns: CATEGORIA_FINANCEIRA_COLUMNS,
   },
-  AgendaLogistica: { table: 'agenda_logistica', mode: 'columns' },
+  AgendaLogistica: {
+    table: 'agenda_logistica',
+    mode: 'columns',
+    columns: AGENDA_LOGISTICA_COLUMNS,
+  },
   MovimentosCaixa: {
     table: 'movimentos_caixa',
     mode: 'columns',
