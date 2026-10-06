@@ -4,8 +4,8 @@ import { ArrowLeft, Printer, Share2, Loader2, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
-import { printOrShareElementAsPdf, shareOrDownloadBlob } from '@/lib/mobilePrintAndShare';
-import { loadHtml2Canvas, loadJsPDF } from '@/lib/lazyPdfLibs';
+import { exportPdfDocumentAndShare, printOrShareElementAsPdf } from '@/lib/mobilePrintAndShare';
+import { createConsumoInternoPdf } from '@/lib/consumoInternoPdf';
 import { CONSUMO_FORM_COMPROVANTE_Z } from '@/lib/consumoInternoOverlay';
 
 const formatCurrency = (value) => `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -74,9 +74,9 @@ export default function ComprovanteConsumoInterno({ open, onClose, consumo, auto
     if (!el) return;
     try {
       await printOrShareElementAsPdf('consumo-print', {
-        formato: formato === 'a4' ? 'a4' : '80mm',
         fileBaseName: `minuta-${consumo?.numero || 'consumo'}`,
         title: `Minuta ${consumo?.numero || ''}`,
+        createPdfDocument: () => createConsumoInternoPdf({ consumo, dadosEmpresa, formato }),
         onDesktopPrint: () => {
           const pageSize = formato === 'a4' ? 'A4 portrait' : '80mm auto';
           const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${consumo?.numero || 'Minuta'}</title><style>*{box-sizing:border-box} @page { size:${pageSize}; margin:0; } body{margin:0;background:#fff}</style></head><body>${el.outerHTML}</body></html>`;
@@ -107,24 +107,11 @@ export default function ComprovanteConsumoInterno({ open, onClose, consumo, auto
   const handleShare = async () => {
     setGerando(true);
     try {
-      const el = document.getElementById('consumo-print');
-      if (!el) return;
-      const html2canvas = await loadHtml2Canvas();
-      const JsPDF = await loadJsPDF();
-      const canvas = await html2canvas(el, { scale: 3, useCORS: true, backgroundColor: '#ffffff', logging: false });
-      const imgData = canvas.toDataURL('image/png');
-      let pdf;
-      if (formato === 'a4') {
-        pdf = new JsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-        pdf.addImage(imgData, 'PNG', 0, 0, 210, Math.min((canvas.height / canvas.width) * 210, 297));
-      } else {
-        const widthMm = 80;
-        const heightMm = (canvas.height / canvas.width) * widthMm;
-        pdf = new JsPDF({ orientation: 'portrait', unit: 'mm', format: [widthMm, heightMm] });
-        pdf.addImage(imgData, 'PNG', 0, 0, widthMm, heightMm);
-      }
-      const fileName = `minuta-${consumo?.numero || 'consumo'}.pdf`;
-      const r = await shareOrDownloadBlob(pdf.output('blob'), fileName, 'application/pdf', `Minuta ${consumo?.numero || ''}`);
+      const r = await exportPdfDocumentAndShare({
+        createPdfDocument: () => createConsumoInternoPdf({ consumo, dadosEmpresa, formato }),
+        fileBaseName: `minuta-${consumo?.numero || 'consumo'}`,
+        title: `Minuta ${consumo?.numero || ''}`,
+      });
       if (r === 'downloaded') toast.success('PDF gerado');
     } catch {
       toast.error('Erro ao gerar a minuta');

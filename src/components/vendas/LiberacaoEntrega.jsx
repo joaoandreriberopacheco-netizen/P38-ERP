@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Printer, X } from "lucide-react";
 import { format } from 'date-fns';
 import { printOrShareElementAsPdf, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
+import { createPedidoFormularioTextPdf } from '@/lib/pedidoFormularioTextPdf';
 
 export default function LiberacaoEntrega({ open, onClose, pedido }) {
   
@@ -113,9 +114,15 @@ export default function LiberacaoEntrega({ open, onClose, pedido }) {
             <Button
               onClick={() => {
                 void printOrShareElementAsPdf('area-liberacao', {
-                  formato: '80mm',
                   fileBaseName: `liberacao-${pedido?.numero || 'pedido'}`,
                   title: 'Liberação de entrega',
+                  createPdfDocument: () => {
+                    const el = document.getElementById('area-liberacao');
+                    return createPedidoFormularioTextPdf(el?.innerText || '', {
+                      titulo: `Liberação pedido ${pedido?.numero || ''}`,
+                    });
+                  },
+                  onDesktopPrint: () => window.print(),
                 });
               }}
               size="sm"

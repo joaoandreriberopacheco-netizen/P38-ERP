@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { printOrShareElementAsPdf, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
+import { printOrShareElementAsPdf } from '@/lib/mobilePrintAndShare';
+import { createFechamentoCaixaPdf } from '@/lib/fechamentoCaixaPdf';
 import { Dialog } from '@/components/ui/dialog';
 import { CaixaDialogContent } from './CaixaDialogContent';
 import { Button } from '@/components/ui/button';
@@ -159,9 +160,10 @@ export default function RelatorioFechamentoCaixa({ turno, caixaData, open, onClo
             variant="outline"
             onClick={() => {
               void printOrShareElementAsPdf('relatorio-fechamento-caixa-print', {
-                formato: '80mm',
                 fileBaseName: `fechamento-${turno?.numero || 'caixa'}`,
                 title: 'Relatório de fechamento',
+                createPdfDocument: () => createFechamentoCaixaPdf({ turno, caixaData }),
+                onDesktopPrint: () => window.print(),
               });
             }}
             className="flex-1 gap-2"

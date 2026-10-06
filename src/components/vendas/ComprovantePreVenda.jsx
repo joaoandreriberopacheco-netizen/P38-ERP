@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { ArrowLeft, Loader2, Printer } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportCupomToPdfAndShareOrDownload, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
+import { createPreVendaSenhaPdf } from '@/lib/preVendaSenhaPdf';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { getUnidadeMedidaItemPedidoVenda } from '@/lib/productUnits';
@@ -200,9 +201,9 @@ export default function ComprovantePreVenda({ preVenda, open, onClose }) {
       setExportingPdf(true);
       try {
         await exportCupomToPdfAndShareOrDownload('cupom-print', {
-          formato: '80mm',
           fileBaseName: `senha-${(preVenda.senha_atendimento || '').slice(-4) || 'atendimento'}`,
           title: `Senha ${(preVenda.senha_atendimento || '').slice(-4)}`,
+          createPdfDocument: () => createPreVendaSenhaPdf(preVenda),
         });
       } catch (e) {
         if (e?.name !== 'AbortError') toast.error('Não foi possível gerar o PDF');

@@ -3,8 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Save, Download, Printer, X } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import FormularioPedidoImpresso from './FormularioPedidoImpresso';
-import { loadHtml2Canvas, loadJsPDF } from '@/lib/lazyPdfLibs';
-import { openPrintWindowOrShareHtml, shareOrDownloadBlob, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
+import { exportPdfDocumentAndShare, openPrintWindowOrShareHtml, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
+import { createPedidoFormularioTextPdf } from '@/lib/pedidoFormularioTextPdf';
 
 export default function PedidoFAB({ pedido, onSave, isSaving, isDisabled, empresa }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -41,32 +41,19 @@ export default function PedidoFAB({ pedido, onSave, isSaving, isDisabled, empres
     const element = document.getElementById('formulario-impresso');
     if (!element) return;
 
-    const html2canvas = await loadHtml2Canvas();
-    const JsPDF = await loadJsPDF();
+    const name = `Pedido-${pedido.numero || 'novo'}`;
+    const createPdf = () =>
+      createPedidoFormularioTextPdf(element.textContent, { titulo: `Pedido ${pedido.numero || ''}` });
 
-    const canvas = await html2canvas(element, {
-      scale: 2,
-      backgroundColor: '#ffffff',
-      logging: false,
-    });
-
-    const pdf = new JsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4',
-    });
-
-    const imgData = canvas.toDataURL('image/png');
-    const imgWidth = 210;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-    const name = `Pedido-${pedido.numero || 'novo'}.pdf`;
-    const blob = pdf.output('blob');
     if (shouldUseMobileDocumentExport()) {
-      await shareOrDownloadBlob(blob, name, 'application/pdf', `Pedido ${pedido.numero || ''}`);
+      await exportPdfDocumentAndShare({
+        createPdfDocument: createPdf,
+        fileBaseName: name,
+        title: `Pedido ${pedido.numero || ''}`,
+      });
     } else {
-      pdf.save(name);
+      const pdf = await createPdf();
+      pdf.save(`${name}.pdf`);
     }
   };
 

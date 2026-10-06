@@ -2,13 +2,14 @@ import React, { useRef, useEffect, useState } from 'react';
 import { ArrowLeft, Loader2, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { exportCupomToPdfAndShareOrDownload, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
+import { createDocumentoComercialA4Pdf } from '@/lib/documentoComercialA4Pdf';
+import { createOrcamentoCupom72Pdf } from '@/lib/orcamentoCupom72Pdf';
 import { toast } from 'sonner';
 import { CupomTotalComDesconto } from '@/components/orcamento/OrcamentoTotalComDesconto';
 import DocumentoComercialA4 from '@/components/documento/DocumentoComercialA4';
 import { ORCAMENTO_RAPIDO_AVISO_PRECO } from '@/lib/orcamentoRapidoCupom';
 import {
   isOrcamentoFormatoCupom,
-  normalizeOrcamentoFormatoCupom,
   orcamentoCupomContainerStyle,
   orcamentoCupomLarguraPreviewPx,
   orcamentoCupomPageSizeCss,
@@ -167,10 +168,34 @@ export default function OrcamentoCupom({ itens, total, desconto, subtotal, obser
     if (shouldUseMobileDocumentExport()) {
       setExportingPdf(true);
       try {
+        const isA4 = formato === 'a4';
         await exportCupomToPdfAndShareOrDownload('cupom-print', {
-          formato: normalizeOrcamentoFormatoCupom(formato),
           fileBaseName: `orcamento-${new Date().toISOString().slice(0, 10)}`,
           title: 'Orçamento',
+          createPdfDocument: () =>
+            isA4
+              ? createDocumentoComercialA4Pdf({
+                tipo: 'orcamento',
+                empresa,
+                clienteNome,
+                subtitulo: nomeTabela ? `Tabela: ${nomeTabela}` : '',
+                itens,
+                subtotal,
+                desconto,
+                total,
+                observacoes,
+                avisoPreco: ORCAMENTO_RAPIDO_AVISO_PRECO,
+                rodapeLegal: 'Documento sem validade fiscal · Orçamento para consulta de preços',
+              })
+              : createOrcamentoCupom72Pdf({
+                itens,
+                total,
+                desconto,
+                subtotal,
+                observacoes,
+                clienteNome,
+                empresa,
+              }),
         });
       } catch (e) {
         if (e?.name !== 'AbortError') toast.error('Não foi possível gerar o PDF');

@@ -3,6 +3,7 @@ import { Download, Target, BrainCircuit, AlertTriangle, Building2, Mail, Info, X
 import { Button } from '@/components/ui/button';
 import DecomposicaoIEP from '@/components/relatorios/DecomposicaoIEP';
 import { printOrShareElementAsPdf } from '@/lib/mobilePrintAndShare';
+import { createPedidoFormularioTextPdf } from '@/lib/pedidoFormularioTextPdf';
 
 const RelatorioPerformance = ({ dados, onClose }) => {
   // Mock de dados com contexto de negócio (categoria, lucro 90d, médias categoria)
@@ -78,9 +79,12 @@ const RelatorioPerformance = ({ dados, onClose }) => {
 
   const handleImprimir = () => {
     void printOrShareElementAsPdf('dossie-performance-print', {
-      formato: 'a4',
       fileBaseName: `dossie-${String(nome || 'produto').replace(/[^\w.-]+/g, '-')}`,
       title: `Dossiê ${nome}`,
+      createPdfDocument: () => {
+        const el = document.getElementById('dossie-performance-print');
+        return createPedidoFormularioTextPdf(el?.innerText || '', { titulo: `Dossiê ${nome}` });
+      },
       onDesktopPrint: () => window.print(),
     });
   };

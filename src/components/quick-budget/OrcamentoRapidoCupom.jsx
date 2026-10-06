@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Loader2, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { exportCupomToPdfAndShareOrDownload, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
+import { createDocumentoComercialA4Pdf } from '@/lib/documentoComercialA4Pdf';
+import { createOrcamentoCupom72Pdf } from '@/lib/orcamentoCupom72Pdf';
 import { toast } from 'sonner';
 import {
   extractObservacoesUsuario,
@@ -240,10 +242,35 @@ export default function OrcamentoRapidoCupom({
     if (shouldUseMobileDocumentExport()) {
       setExportingPdf(true);
       try {
+        const isA4Fmt = formato === 'a4';
         await exportCupomToPdfAndShareOrDownload('cupom-print', {
-          formato: normalizeOrcamentoFormatoCupom(formato),
           fileBaseName: `orcamento-${new Date().toISOString().slice(0, 10)}`,
           title: 'Orçamento',
+          createPdfDocument: () =>
+            isA4Fmt
+              ? createDocumentoComercialA4Pdf({
+                tipo: 'orcamento',
+                empresa,
+                clienteNome,
+                subtitulo: nomeTabela ? `Tabela: ${nomeTabela}` : '',
+                numero,
+                itens,
+                subtotal,
+                desconto,
+                total,
+                observacoes: observacoesUsuario,
+                avisoPreco: ORCAMENTO_RAPIDO_AVISO_PRECO,
+                rodapeLegal: 'Documento sem validade fiscal · Orçamento para consulta de preços',
+              })
+              : createOrcamentoCupom72Pdf({
+                itens,
+                total,
+                desconto,
+                subtotal,
+                observacoes: observacoesUsuario,
+                clienteNome,
+                empresa,
+              }),
         });
       } catch (e) {
         if (e?.name !== 'AbortError') toast.error('Não foi possível gerar o PDF');

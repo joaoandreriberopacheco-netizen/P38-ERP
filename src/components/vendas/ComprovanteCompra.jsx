@@ -1,25 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Printer, Zap, Share2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Printer, Share2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
-import {
-  isValidPairingCode,
-  maskPairingCodeInput,
-  normalizePairingCode,
-} from '@/lib/printAgentPairingCode';
-import {
-  enqueueRemotePrint,
-  getStoredAgentId,
-  getStoredAgentNome,
-  printCupomViaLocalAgent,
-  registerPrintAgent,
-} from '@/lib/p38PrintAgent';
-import { loadHtml2Canvas, loadJsPDF } from '@/lib/lazyPdfLibs';
 import { getUnidadeMedidaItemPedidoVenda } from '@/lib/productUnits';
 import { TIMEZONE_SISTEMA } from '@/components/utils/dateUtils';
-import { shareOrDownloadBlob, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
+import { exportPdfDocumentAndShare, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
+import { createDocumentoComercialA4Pdf } from '@/lib/documentoComercialA4Pdf';
+import { createCupomPedidoVendaPdf } from '@/lib/cupomPedidoVendaPdf';
 import { useCaixaNestedDialogZ } from '@/components/vendas/caixa/CaixaOverlayStackContext';
 import { cn } from '@/components/utils';
 import {
@@ -40,7 +28,6 @@ import {
   ensureDocumentoComercialA4FontLoaded,
   mapPedidoVendaParaDocumentoComercial,
 } from '@/lib/documentoComercialA4';
-import { html2canvasDocumentoComercialA4 } from '@/lib/documentoComercialPdfCapture';
 
 /** Exibição de data/hora no fuso do negócio (Tabatinga — `TIMEZONE_SISTEMA`). */
 const fmtDtTZ = (d) => d ? new Intl.DateTimeFormat('pt-BR', { timeZone: TIMEZONE_SISTEMA, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(d)) : '-';
@@ -366,13 +353,6 @@ export default function ComprovanteCompra({ pedido, open = true, onClose }) {
   const nestedZ = useCaixaNestedDialogZ();
   const [dadosEmpresa, setDadosEmpresa] = useState(null);
   const [dadosCliente, setDadosCliente] = useState(null);
-  const [ipImpressora, setIpImpressora] = useState('');
-  const [imprimindoTermica, setImprimindoTermica] = useState(false);
-  const [agenteLocalOk, setAgenteLocalOk] = useState(false);
-  const [agenteRemotoId, setAgenteRemotoId] = useState(() => getStoredAgentId());
-  const [agenteRemotoNome, setAgenteRemotoNome] = useState(() => getStoredAgentNome());
-  const [agentTokenRegistro, setAgentTokenRegistro] = useState('');
-  const [ligandoAgente, setLigandoAgente] = useState(false);
   const [formato, setFormato] = useState(() => readLocalStorage('comprovante_formato_venda', 'a4'));
   const [gerando, setGerando] = useState(false);
 
@@ -389,28 +369,12 @@ export default function ComprovanteCompra({ pedido, open = true, onClose }) {
     if (pedido?.cliente_id) {
       base44.entities.Terceiro.get(pedido.cliente_id).then(setDadosCliente).catch(() => {});
     }
-    const ip = readLocalStorage('ip_impressora_termica');
-    if (ip) setIpImpressora(ip);
-    setAgenteRemotoId(getStoredAgentId());
-    setAgenteRemotoNome(getStoredAgentNome());
-    let cancelled = false;
-    import('@/lib/p38PrintAgent')
-      .then(({ checkPrintAgentHealth }) => checkPrintAgentHealth())
-      .then((health) => {
-        if (!cancelled) setAgenteLocalOk(Boolean(health?.ok));
-      })
-      .catch(() => {
-        if (!cancelled) setAgenteLocalOk(false);
-      });
     const fmtAberto = readLocalStorage('comprovante_formato_venda', 'a4');
     if (fmtAberto === 'a4') {
       ensureDocumentoComercialA4FontLoaded().catch(() => {});
     } else {
       ensureCupomTermicoFontLoaded().catch(() => {});
     }
-    return () => {
-      cancelled = true;
-    };
   }, [open, pedido?.cliente_id]);
 
   const handlePrint = async () => {
@@ -420,13 +384,11 @@ export default function ComprovanteCompra({ pedido, open = true, onClose }) {
     if (shouldUseMobileDocumentExport()) {
       setGerando(true);
       try {
-        const pdf = await gerarPDF();
-        if (!pdf) {
-          toast.error('Não foi possível montar o PDF');
-          return;
-        }
-        const fileName = `pedido-${pedido?.numero || 'comprovante'}.pdf`;
-        const r = await shareOrDownloadBlob(pdf.output('blob'), fileName, 'application/pdf', `Pedido ${pedido?.numero || ''}`);
+        const r = await exportPdfDocumentAndShare({
+          createPdfDocument: () => gerarPDF(),
+          fileBaseName: `pedido-${pedido?.numero || 'comprovante'}`,
+          title: `Pedido ${pedido?.numero || ''}`,
+        });
         if (r === 'downloaded') toast.success('PDF pronto — use Abrir em para imprimir');
       } catch (e) {
         if (e?.name !== 'AbortError') toast.error('Erro ao gerar PDF');
@@ -515,122 +477,32 @@ export default function ComprovanteCompra({ pedido, open = true, onClose }) {
   };
 
   const gerarPDF = async () => {
-    const el = document.getElementById('cupom-print');
-    if (!el) return null;
-
-    const isA4 = formato === 'a4';
-    if (isA4) {
-      await ensureDocumentoComercialA4FontLoaded();
-    } else {
-      await ensureCupomTermicoFontLoaded();
+    if (formato === 'a4') {
+      const props = mapPedidoVendaParaDocumentoComercial(
+        pedido,
+        dadosEmpresa,
+        dadosCliente,
+        getUnidadeMedidaItemPedidoVenda,
+      );
+      return createDocumentoComercialA4Pdf(props);
     }
-
-    const html2canvas = await loadHtml2Canvas();
-    const JsPDF = await loadJsPDF();
-
-    const canvas = isA4
-      ? await html2canvasDocumentoComercialA4(el, html2canvas, { scale: 2 })
-      : await html2canvas(el, {
-        scale: 3,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-      });
-
-    const imgData = canvas.toDataURL('image/png');
-
-    let pdf;
-    if (isA4) {
-      pdf = new JsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-      const pageW = 210;
-      const pageH = 297;
-      const ratio = canvas.width / canvas.height;
-      const imgH = pageW / ratio;
-      pdf.addImage(imgData, 'PNG', 0, 0, pageW, Math.min(imgH, pageH));
-    } else {
-      // Rolo 80mm — conteúdo 60mm centrado (10mm margem de cada lado)
-      const widthMm = CUPOM_LARGURA_MM;
-      const pageWidthMm = CUPOM_PAPEL_MM;
-      const heightMm = (canvas.height / canvas.width) * widthMm;
-      pdf = new JsPDF({ orientation: 'portrait', unit: 'mm', format: [pageWidthMm, heightMm] });
-      pdf.addImage(imgData, 'PNG', CUPOM_MARGEM_LATERAL_MM, 0, widthMm, heightMm);
-    }
-
-    return pdf;
+    return createCupomPedidoVendaPdf({ pedido, dadosEmpresa });
   };
 
   const handleShare = async () => {
     setGerando(true);
     try {
-      const pdf = await gerarPDF();
-      if (!pdf) {
-        toast.error('Não foi possível montar o PDF');
-        return;
-      }
-
-      const fileName = `pedido-${pedido?.numero || 'comprovante'}.pdf`;
-      const r = await shareOrDownloadBlob(pdf.output('blob'), fileName, 'application/pdf', `Pedido ${pedido?.numero || ''}`);
+      const fileName = `pedido-${pedido?.numero || 'comprovante'}`;
+      const r = await exportPdfDocumentAndShare({
+        createPdfDocument: () => gerarPDF(),
+        fileBaseName: fileName,
+        title: `Pedido ${pedido?.numero || ''}`,
+      });
       if (r === 'downloaded') toast.success('PDF gerado com sucesso');
     } catch (e) {
       if (e.name !== 'AbortError') toast.error('Erro ao gerar PDF');
     } finally {
       setGerando(false);
-    }
-  };
-
-  const handleLigarAgente = async () => {
-    const token = normalizePairingCode(agentTokenRegistro);
-    if (!isValidPairingCode(token)) {
-      toast.error('Digite o código de 6 dígitos do PC (000-000)');
-      return;
-    }
-    setLigandoAgente(true);
-    try {
-      const agente = await registerPrintAgent({
-        token,
-        nome: 'Caixa principal',
-        ip_impressora: ipImpressora || undefined,
-      });
-      toast.success(`Agente "${agente.nome}" ligado — pode imprimir térmica`);
-      setAgenteRemotoId(agente.id);
-      setAgenteRemotoNome(agente.nome);
-      setAgentTokenRegistro('');
-    } catch (e) {
-      toast.error(e?.message || 'Não foi possível ligar o agente');
-    } finally {
-      setLigandoAgente(false);
-    }
-  };
-
-  const handleImprimirTermica = async () => {
-    if (!ipImpressora) { toast.error('Informe o IP da impressora térmica'); return; }
-    setImprimindoTermica(true);
-    try {
-      localStorage.setItem('ip_impressora_termica', ipImpressora);
-
-      if (agenteLocalOk) {
-        await printCupomViaLocalAgent({
-          pedido_id: pedido.id,
-          ip_impressora: ipImpressora,
-        });
-        toast.success('Cupom enviado para impressora térmica!');
-        return;
-      }
-
-      if (agenteRemotoId) {
-        await enqueueRemotePrint({
-          pedido_id: pedido.id,
-          ip_impressora: ipImpressora,
-        });
-        toast.success('Enviado para a loja — o cupom sai quando o PC do caixa estiver online');
-        return;
-      }
-
-      toast.error('Instale o P38 Print Agent no PC do caixa (ver docs/print-agent) ou use Imprimir pelo browser');
-    } catch (e) {
-      toast.error(e?.message || 'Falha na comunicação com a impressora');
-    } finally {
-      setImprimindoTermica(false);
     }
   };
 
@@ -671,8 +543,7 @@ export default function ComprovanteCompra({ pedido, open = true, onClose }) {
         </div>
       </div>
 
-      {/* Opções de formato e impressora térmica */}
-      <div className="px-4 py-2 bg-card border-b border-border/40 flex-shrink-0 space-y-2">
+      <div className="px-4 py-2 bg-card border-b border-border/40 flex-shrink-0">
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground">Formato:</span>
           <Button
@@ -680,9 +551,9 @@ export default function ComprovanteCompra({ pedido, open = true, onClose }) {
             size="sm"
             variant={formato === '80mm' ? 'default' : 'outline'}
             className="h-8 text-xs"
-            title={`Rolo ${CUPOM_PAPEL_MM}mm · útil ${CUPOM_LARGURA_MM}mm (${CUPOM_MARGEM_LATERAL_MM}mm margem/lado)`}
+            title={`Cupom ${CUPOM_PAPEL_MM}mm (texto no PDF)`}
           >
-            Térmica
+            Cupom 80mm
           </Button>
           <Button
             onClick={() => escolherFormato('a4')}
@@ -693,50 +564,6 @@ export default function ComprovanteCompra({ pedido, open = true, onClose }) {
             A4
           </Button>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className={`text-[11px] px-2 py-0.5 rounded-full ${agenteLocalOk ? 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200' : agenteRemotoId ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-100' : 'bg-muted text-muted-foreground'}`}>
-            {agenteLocalOk ? 'Agente local OK' : agenteRemotoId ? `Remoto: ${agenteRemotoNome || 'loja'}` : 'Sem agente no PC'}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Input
-            placeholder="IP impressora térmica (ex: 192.168.1.100)"
-            value={ipImpressora}
-            onChange={(e) => setIpImpressora(e.target.value)}
-            className="h-8 text-xs flex-1"
-          />
-          <Button
-            onClick={handleImprimirTermica}
-            disabled={imprimindoTermica}
-            size="sm"
-            className="h-8 bg-green-600 hover:bg-green-700 text-white whitespace-nowrap gap-1.5 text-xs"
-          >
-            <Zap className="w-3.5 h-3.5" />
-            {imprimindoTermica ? 'Enviando...' : 'Térmica'}
-          </Button>
-        </div>
-        {!agenteRemotoId && (
-          <div className="flex items-center gap-2">
-            <Input
-              placeholder="000-000"
-              inputMode="numeric"
-              autoComplete="off"
-              value={agentTokenRegistro}
-              onChange={(e) => setAgentTokenRegistro(maskPairingCodeInput(e.target.value))}
-              className="h-8 text-xs flex-1 font-mono tracking-widest text-center max-w-[7rem]"
-              maxLength={7}
-            />
-            <Button
-              onClick={handleLigarAgente}
-              disabled={ligandoAgente}
-              size="sm"
-              variant="outline"
-              className="h-8 text-xs whitespace-nowrap"
-            >
-              {ligandoAgente ? 'Ligando...' : 'Ligar agente'}
-            </Button>
-          </div>
-        )}
       </div>
 
       {/* Preview com scale - ocupa toda a tela */}

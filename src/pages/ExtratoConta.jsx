@@ -19,6 +19,7 @@ import {
 import { format, subMonths } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
 import { printOrShareElementAsPdf } from '@/lib/mobilePrintAndShare';
+import { createPedidoFormularioTextPdf } from '@/lib/pedidoFormularioTextPdf';
 import { dataHoje, dataMenosDiasSistema, boundsMesCivil, formatarDataHora, formatarSoData, inicioSemanaCivilDesdeYmd, toLocalDateKey } from '@/components/utils/dateUtils';
 import { getDataAncoraFluxoKey } from '@/lib/lancamentoFinanceiroStatus';
 import {
@@ -674,9 +675,12 @@ export default function ExtratoContaPage() {
   const imprimir = () => {
     if (!conta) return;
     void printOrShareElementAsPdf('extrato-print-root', {
-      formato: 'a4',
       fileBaseName: `extrato-${String(conta.nome || 'conta').replace(/\s+/g, '_')}-${format(new Date(), 'yyyy-MM-dd')}`,
       title: `Extrato ${conta.nome}`,
+      createPdfDocument: () => {
+        const el = document.getElementById('extrato-print-root');
+        return createPedidoFormularioTextPdf(el?.innerText || '', { titulo: `Extrato ${conta.nome}` });
+      },
       onDesktopPrint: () => window.print(),
     });
   };
