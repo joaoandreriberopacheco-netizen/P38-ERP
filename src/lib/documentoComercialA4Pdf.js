@@ -22,9 +22,36 @@ import {
   splitLines,
 } from '@/lib/pdf/pdfLayoutHelpers';
 
-const M = 15;
+/** Margens alinhadas ao preview A4 (`documentoComercialA4PageStyle`: 18mm vertical, 16mm horizontal). */
+const M = 16;
 const CONTENT_W = A4_WIDTH_MM - M * 2;
 const FOOTER_Y = A4_HEIGHT_MM - 12;
+const TABLE_TOP = 20;
+const ROW_LINE_H = 4.2;
+
+/** Mesmas proporções da tabela em `DocumentoComercialA4.jsx` (12% / 40% / 10% cx / 14% / 14%). */
+function buildTableColumns(comCaixas) {
+  const sep = 2.5;
+  const w = CONTENT_W;
+  const qtyW = w * 0.12;
+  const descW = w * (comCaixas ? 0.32 : 0.4);
+  const cxW = comCaixas ? w * 0.1 : 0;
+  const numW = w * 0.14;
+
+  let x = M;
+  const qtyRight = x + qtyW;
+  x = qtyRight + sep;
+  const descLeft = x;
+  const descRight = descLeft + descW;
+  x = descRight + sep;
+  const cxRight = comCaixas ? x + cxW : null;
+  if (comCaixas) x = cxRight + sep;
+  const unitRight = x + numW;
+  x = unitRight + sep;
+  const totalRight = M + w;
+
+  return { qtyRight, descLeft, descRight, descWidth: descW, cxRight, unitRight, totalRight };
+}
 
 function linhaItemTotal(item) {
   if (item.total_liquido != null) return Number(item.total_liquido) || 0;
@@ -150,86 +177,122 @@ export async function createDocumentoComercialA4Pdf(props) {
     y += 10;
   }
 
-  // Tabela — colunas (mm a partir da esquerda da página)
-  const colQtyR = M + 14;
-  const colDescL = M + 18;
-  const colDescR = comCaixas ? M + 98 : M + 108;
-  const colCxR = M + 108;
-  const colUnitR = comCaixas ? M + 148 : M + 158;
-  const colTotalR = A4_WIDTH_MM - M;
+  const cols = buildTableColumns(comCaixas);
 
   const drawTableHeader = () => {
     doc.setFont('NotoSans', 'bold');
-    doc.setFontSize(8);
+    doc.setFontSize(7.5);
     doc.setTextColor(30);
-    doc.text(normalizePdfText(labelQty), colQtyR, y, { align: 'right' });
-    doc.text('DESCRIÇÃO', colDescL, y);
-    if (comCaixas) doc.text('CAIXAS', colCxR, y, { align: 'right' });
-    doc.text(normalizePdfText(labelUnit), colUnitR, y, { align: 'right' });
-    doc.text('VALOR TOTAL', colTotalR, y, { align: 'right' });
-    y += 3;
+    const headerY = y;
+    doc.text(normalizePdfText(labelQty), cols.qtyRight, headerY, { align: 'right' });
+    doc.text('DESCRIÇÃO', cols.descLeft, headerY);
+    if (comCaixas) doc.text('CAIXAS', cols.cxRight, headerY, { align: 'right' });
+    const unitLabelMaxW = Math.max(18, cols.totalRight - cols.unitRight - 6);
+    const unitLabelLines = splitLines(doc, normalizePdfText(labelUnit), unitLabelMaxW);
+    unitLabelLines.forEach((line, i) => {
+      doc.text(line, cols.unitRight, headerY + i * (ROW_LINE_H - 0.5), { align: 'right' });
+    });
+    doc.text('VALOR TOTAL', cols.totalRight, headerY, { align: 'right' });
+    y = headerY + Math.max(ROW_LINE_H, unitLabelLines.length * (ROW_LINE_H - 0.5)) + 1;
     doc.setDrawColor(217);
     doc.line(M, y, A4_WIDTH_MM - M, y);
-    y += 5;
+    y += 4;
+  };
+
+  const drawTableRow = ({
+    qtyText = '',
+    descText = '',
+    cxText = '',
+    unitText = '',
+    totalText = '',
+    bold = false,
+    descFontSize = 9,
+  }) => {
+    const yBefore = y;
+    y = ensureVerticalSpace(doc, y, ROW_LINE_H * 2, { top: TABLE_TOP, bottom: FOOTER_Y - 8 });
+    if (y < yBefore - 1) drawTableHeader();
+
+    doc.setFont('NotoSans', bold ? 'bold' : 'normal');
+    doc.setFontSize(descFontSize);
+    doc.setTextColor(20);
+
+    const rowY = y;
+    if (qtyText) doc.text(qtyText, cols.qtyRight, rowY, { align: 'right' });
+
+    let rowH = ROW_LINE_H;
+    if (descText) {
+      const descLines = splitLines(doc, descText, cols.descWidth);
+      drawLines(doc, descLines, cols.descLeft, rowY, ROW_LINE_H);
+      rowH = Math.max(rowH, descLines.length * ROW_LINE_H);
+    }
+
+    if (comCaixas && cxText) doc.text(cxText, cols.cxRight, rowY, { align: 'right' });
+    if (unitText) doc.text(unitText, cols.unitRight, rowY, { align: 'right' });
+    if (totalText) doc.text(totalText, cols.totalRight, rowY, { align: 'right' });
+
+    y = rowY + rowH + 2;
+    doc.setDrawColor(232);
+    doc.setLineWidth(0.15);
+    doc.line(M, y - 0.5, A4_WIDTH_MM - M, y - 0.5);
   };
 
   drawTableHeader();
 
-  doc.setFont('NotoSans', 'normal');
-  doc.setFontSize(9);
-
   for (const item of lista) {
     const qtd = Number(item.qtd ?? item.quantidade) || 0;
     const nome = normalizePdfText(item.nome || item.produto_nome || '');
-    const nomeLines = splitLines(doc, nome, colDescR - colDescL);
-    const rowH = Math.max(8, nomeLines.length * 4.2 + 2);
-    y = ensureVerticalSpace(doc, y, rowH + 2);
-    if (y <= M + 5) drawTableHeader();
-
-    doc.text(fmtNumeroPt(qtd), colQtyR, y, { align: 'right' });
-    drawLines(doc, nomeLines, colDescL, y - 3.5, 4.2);
-    if (comCaixas) {
-      const cx = Number(item.caixas ?? item.quantidade_caixas);
-      if (Number.isFinite(cx) && cx > 0) doc.text(fmtNumeroPt(cx, 0), colCxR, y, { align: 'right' });
-    }
-    doc.text(fmtMoedaBRL(linhaItemPrecoUnit(item)), colUnitR, y, { align: 'right' });
-    doc.text(fmtMoedaBRL(linhaItemTotal(item)), colTotalR, y, { align: 'right' });
-    y += rowH;
-    doc.setDrawColor(232);
-    doc.line(M, y - 1, A4_WIDTH_MM - M, y - 1);
+    const cx = Number(item.caixas ?? item.quantidade_caixas);
+    drawTableRow({
+      qtyText: fmtNumeroPt(qtd),
+      descText: nome,
+      cxText: comCaixas && Number.isFinite(cx) && cx > 0 ? fmtNumeroPt(cx, 0) : '',
+      unitText: fmtMoedaBRL(linhaItemPrecoUnit(item)),
+      totalText: fmtMoedaBRL(linhaItemTotal(item)),
+    });
   }
 
   if (lista.length > 0) {
-    y = ensureVerticalSpace(doc, y, 28);
+    y = ensureVerticalSpace(doc, y, 24, { top: TABLE_TOP, bottom: FOOTER_Y - 8 });
     doc.setDrawColor(217);
+    doc.setLineWidth(0.25);
     doc.line(M, y, A4_WIDTH_MM - M, y);
-    y += 6;
-    doc.setFont('NotoSans', 'bold');
+    y += 5;
+
     const somaQty = lista.reduce((s, i) => s + (Number(i.qtd ?? i.quantidade) || 0), 0);
-    doc.text(fmtNumeroPt(somaQty), colQtyR, y, { align: 'right' });
-    doc.text('Subtotal', colDescL, y);
-    doc.text(fmtMoedaBRL(st), colTotalR, y, { align: 'right' });
-    y += 6;
+    const somaCaixas = comCaixas
+      ? lista.reduce((s, i) => s + (Number(i.caixas ?? i.quantidade_caixas) || 0), 0)
+      : 0;
+
+    drawTableRow({
+      qtyText: fmtNumeroPt(somaQty),
+      descText: 'Subtotal',
+      cxText: comCaixas && somaCaixas > 0 ? fmtNumeroPt(somaCaixas, 0) : '',
+      totalText: fmtMoedaBRL(st),
+      bold: true,
+    });
 
     if (desc > 0) {
-      doc.setFont('NotoSans', 'normal');
-      doc.text('Desconto comercial', colDescL, y);
-      doc.text(`− ${fmtMoedaBRL(desc)}`, colTotalR, y, { align: 'right' });
-      y += 6;
+      drawTableRow({
+        descText: 'Desconto comercial',
+        totalText: `− ${fmtMoedaBRL(desc)}`,
+      });
     }
     if (temFreteLinha) {
-      doc.setFont('NotoSans', 'bold');
-      doc.text('Frete', colDescL, y);
-      doc.setFont('NotoSans', 'normal');
       const freteTxt = props.freteIncluso ? 'Incluso' : (freteValor > 0 ? fmtMoedaBRL(freteValor) : '—');
-      doc.text(freteTxt, colTotalR, y, { align: 'right' });
-      y += 6;
+      drawTableRow({
+        descText: 'Frete',
+        unitText: props.freteIncluso ? 'Incluso' : '',
+        totalText: props.freteIncluso ? '—' : freteTxt,
+        bold: true,
+      });
     }
-    doc.setFont('NotoSans', 'bold');
-    doc.setFontSize(11);
-    doc.text('Total', colDescL, y);
-    doc.text(fmtMoedaBRL(tot), colTotalR, y, { align: 'right' });
-    y += 10;
+    drawTableRow({
+      descText: 'Total',
+      totalText: fmtMoedaBRL(tot),
+      bold: true,
+      descFontSize: 11,
+    });
+    y += 4;
   }
 
   doc.setFont('NotoSans', 'normal');
