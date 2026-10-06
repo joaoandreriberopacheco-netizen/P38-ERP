@@ -1,0 +1,4307 @@
+{
+  "generated": "2026-09-15",
+  "source": "CCG DISTRIBUIDORA — Relatório Produtos/Preço — Almoxarifado",
+  "brands": {
+    "Iquine": {
+      "skus": 188,
+      "lines": 14,
+      "lines_data": [
+        {
+          "name": "Esmalte",
+          "skus": 87,
+          "colors": 26,
+          "price_gl": {
+            "min": 77.51,
+            "max": 130.91,
+            "count": 32
+          },
+          "price_lt": {
+            "min": 6.43,
+            "max": 53.38,
+            "count": 33
+          },
+          "price_bd": null,
+          "colors_detail": [
+            {
+              "color": "Alumínio",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3 L",
+                  "price": 130.91,
+                  "code": "21644"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 35.77,
+                  "code": "21643"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 53.38,
+                  "code": "5134"
+                },
+                {
+                  "ap": "Out",
+                  "vol": "5 ml",
+                  "price": 8.89,
+                  "code": "5664"
+                }
+              ]
+            },
+            {
+              "color": "Amarelo",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3 L",
+                  "price": 81.38,
+                  "code": "18301"
+                },
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 101.1,
+                  "code": "2389"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 24.2,
+                  "code": "18302"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 31.13,
+                  "code": "2388"
+                },
+                {
+                  "ap": "Fr",
+                  "vol": "225 ml",
+                  "price": 11.84,
+                  "code": "6582"
+                },
+                {
+                  "ap": "Out",
+                  "vol": "5 ml",
+                  "price": 4.83,
+                  "code": "21111"
+                },
+                {
+                  "ap": "Out",
+                  "vol": "5 ml",
+                  "price": 7.44,
+                  "code": "4976"
+                }
+              ]
+            },
+            {
+              "color": "Azul França",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3 L",
+                  "price": 82.2,
+                  "code": "18328"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 24.2,
+                  "code": "18305"
+                },
+                {
+                  "ap": "Fr",
+                  "vol": "225 ml",
+                  "price": 12.05,
+                  "code": "13715"
+                },
+                {
+                  "ap": "Out",
+                  "vol": "5 ml",
+                  "price": 8.8,
+                  "code": "4977"
+                }
+              ]
+            },
+            {
+              "color": "Azul celeste",
+              "formats": [
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 6.43,
+                  "code": "4731"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 23.05,
+                  "code": "18303"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 34.07,
+                  "code": "2384"
+                }
+              ]
+            },
+            {
+              "color": "Azul del rey",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3 L",
+                  "price": 82.2,
+                  "code": "18327"
+                },
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 107.3,
+                  "code": "63"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 22.71,
+                  "code": "18304"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 38.84,
+                  "code": "3865"
+                },
+                {
+                  "ap": "Fr",
+                  "vol": "225 ml",
+                  "price": 12.52,
+                  "code": "6538"
+                },
+                {
+                  "ap": "Out",
+                  "vol": "5 ml",
+                  "price": 8.11,
+                  "code": "4978"
+                }
+              ]
+            },
+            {
+              "color": "Azul mar",
+              "formats": [
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 33.44,
+                  "code": "3871"
+                }
+              ]
+            },
+            {
+              "color": "Branco",
+              "formats": [
+                {
+                  "ap": "Out",
+                  "vol": "5 ml",
+                  "price": 8.67,
+                  "code": "5006"
+                }
+              ]
+            },
+            {
+              "color": "Branco gelo",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3 L",
+                  "price": 81.38,
+                  "code": "18346"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 23.05,
+                  "code": "18322"
+                },
+                {
+                  "ap": "Out",
+                  "vol": "5 ml",
+                  "price": 7.11,
+                  "code": "21646"
+                }
+              ]
+            },
+            {
+              "color": "Branco neve",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3 L",
+                  "price": 82.2,
+                  "code": "18331"
+                },
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 104.74,
+                  "code": "2387"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 24.2,
+                  "code": "18323"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 33.44,
+                  "code": "2385"
+                },
+                {
+                  "ap": "Fr",
+                  "vol": "225 ml",
+                  "price": 11.73,
+                  "code": "6581"
+                }
+              ]
+            },
+            {
+              "color": "Caterpillar",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3 L",
+                  "price": 82.2,
+                  "code": "18325"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 24.2,
+                  "code": "18324"
+                }
+              ]
+            },
+            {
+              "color": "Cerâmica",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3 L",
+                  "price": 77.51,
+                  "code": "18332"
+                },
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 106.11,
+                  "code": "3866"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 24.2,
+                  "code": "18308"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 35.58,
+                  "code": "3867"
+                }
+              ]
+            },
+            {
+              "color": "Cinza escuro",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3 L",
+                  "price": 81.38,
+                  "code": "18333"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 23.95,
+                  "code": "18309"
+                }
+              ]
+            },
+            {
+              "color": "Cinza médio",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3 L",
+                  "price": 81.38,
+                  "code": "18334"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 33.05,
+                  "code": "3855"
+                },
+                {
+                  "ap": "Fr",
+                  "vol": "225 ml",
+                  "price": 11.25,
+                  "code": "9724"
+                },
+                {
+                  "ap": "Out",
+                  "vol": "5 ml",
+                  "price": 7.94,
+                  "code": "13170"
+                }
+              ]
+            },
+            {
+              "color": "Conhaque",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3 L",
+                  "price": 81.38,
+                  "code": "18343"
+                },
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 105.99,
+                  "code": "16093"
+                }
+              ]
+            },
+            {
+              "color": "ESMAL. AZUL CEU 3LT DIALINE IQUINE",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3 L",
+                  "price": 83.46,
+                  "code": "18330"
+                }
+              ]
+            },
+            {
+              "color": "Laranja",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3 L",
+                  "price": 82.2,
+                  "code": "18335"
+                },
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 113.72,
+                  "code": "6915"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 24.2,
+                  "code": "18311"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 33.06,
+                  "code": "3849"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 44.74,
+                  "code": "6866"
+                },
+                {
+                  "ap": "Out",
+                  "vol": "5 ml",
+                  "price": 8.17,
+                  "code": "4979"
+                }
+              ]
+            },
+            {
+              "color": "Marfim",
+              "formats": [
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 23.95,
+                  "code": "18312"
+                }
+              ]
+            },
+            {
+              "color": "Marrom",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 84.03,
+                  "code": "16094"
+                }
+              ]
+            },
+            {
+              "color": "Platina",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3 L",
+                  "price": 81.38,
+                  "code": "18337"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 27.4,
+                  "code": "18313"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 30.28,
+                  "code": "3847"
+                },
+                {
+                  "ap": "Out",
+                  "vol": "5 ml",
+                  "price": 6.78,
+                  "code": "21647"
+                }
+              ]
+            },
+            {
+              "color": "Preto",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 107.3,
+                  "code": "3850"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 24.2,
+                  "code": "18314"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 33.06,
+                  "code": "3851"
+                },
+                {
+                  "ap": "Fr",
+                  "vol": "225 ml",
+                  "price": 12.61,
+                  "code": "6558"
+                },
+                {
+                  "ap": "Out",
+                  "vol": "5 ml",
+                  "price": 7.93,
+                  "code": "4980"
+                }
+              ]
+            },
+            {
+              "color": "Tabaco",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 106.11,
+                  "code": "13269"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 23.95,
+                  "code": "18315"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 36.27,
+                  "code": "14082"
+                }
+              ]
+            },
+            {
+              "color": "Verde folha",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 97.51,
+                  "code": "3860"
+                },
+                {
+                  "ap": "Fr",
+                  "vol": "225 ml",
+                  "price": 11.65,
+                  "code": "6537"
+                },
+                {
+                  "ap": "Out",
+                  "vol": "5 ml",
+                  "price": 7.49,
+                  "code": "4982"
+                }
+              ]
+            },
+            {
+              "color": "Verde limão",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3 L",
+                  "price": 82.2,
+                  "code": "18341"
+                },
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 97.52,
+                  "code": "3874"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 24.2,
+                  "code": "18317"
+                },
+                {
+                  "ap": "Fr",
+                  "vol": "225 ml",
+                  "price": 11.18,
+                  "code": "9314"
+                }
+              ]
+            },
+            {
+              "color": "Verde nilo",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3 L",
+                  "price": 81.38,
+                  "code": "18345"
+                },
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 105.93,
+                  "code": "3872"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 6.96,
+                  "code": "4743"
+                }
+              ]
+            },
+            {
+              "color": "Vermelho",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3 L",
+                  "price": 82.2,
+                  "code": "18344"
+                },
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 106.96,
+                  "code": "3856"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 24.2,
+                  "code": "18320"
+                },
+                {
+                  "ap": "Fr",
+                  "vol": "225 ml",
+                  "price": 12.05,
+                  "code": "6583"
+                },
+                {
+                  "ap": "Out",
+                  "vol": "5 ml",
+                  "price": 7.89,
+                  "code": "5007"
+                }
+              ]
+            },
+            {
+              "color": "Vermelho vinho",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3 L",
+                  "price": 82.2,
+                  "code": "18342"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 24.2,
+                  "code": "18318"
+                }
+              ]
+            },
+            {
+              "color": "Vinho",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 81.14,
+                  "code": "4228"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Outros",
+          "skus": 32,
+          "colors": 20,
+          "price_gl": {
+            "min": 54.27,
+            "max": 103.32,
+            "count": 9
+          },
+          "price_lt": {
+            "min": 22.6,
+            "max": 163.72,
+            "count": 10
+          },
+          "price_bd": {
+            "min": 17.52,
+            "max": 473.77,
+            "count": 5
+          },
+          "colors_detail": [
+            {
+              "color": "13485 ICORES LIMPA FACIL P 3,2 LT IQUINE",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,2 L",
+                  "price": 67.28,
+                  "code": "80"
+                }
+              ]
+            },
+            {
+              "color": "ALTO BRILHO",
+              "formats": [
+                {
+                  "ap": "Out",
+                  "vol": "",
+                  "price": 6.96,
+                  "code": "4735"
+                }
+              ]
+            },
+            {
+              "color": "Amarelo",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,0 L",
+                  "price": 57.27,
+                  "code": "17412"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 22.6,
+                  "code": "21116"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "900 ml",
+                  "price": 132.22,
+                  "code": "14090"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "900 ml",
+                  "price": 163.72,
+                  "code": "13487"
+                },
+                {
+                  "ap": "Out",
+                  "vol": "50 ml",
+                  "price": 2.92,
+                  "code": "14075"
+                }
+              ]
+            },
+            {
+              "color": "Azul celeste",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,0 L",
+                  "price": 57.27,
+                  "code": "17415"
+                }
+              ]
+            },
+            {
+              "color": "Branco",
+              "formats": [
+                {
+                  "ap": "LT",
+                  "vol": "900 ml",
+                  "price": 148.02,
+                  "code": "14085"
+                }
+              ]
+            },
+            {
+              "color": "Branco neve",
+              "formats": [
+                {
+                  "ap": "Out",
+                  "vol": "5 ml",
+                  "price": 4.83,
+                  "code": "21113"
+                }
+              ]
+            },
+            {
+              "color": "COLA BRANCA 1KG DIKOLA IQUINE",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "1 kg",
+                  "price": 23.8,
+                  "code": "3757"
+                }
+              ]
+            },
+            {
+              "color": "Cinza claro",
+              "formats": [
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 36.79,
+                  "code": "8797"
+                }
+              ]
+            },
+            {
+              "color": "DECORATO PRIMER 3,6L  IQUINE",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 54.27,
+                  "code": "22563"
+                }
+              ]
+            },
+            {
+              "color": "ESM.SINT.AZ FRANÇA 112,5ML HIDRACOR",
+              "formats": [
+                {
+                  "ap": "Out",
+                  "vol": "5 ml",
+                  "price": 4.83,
+                  "code": "21112"
+                }
+              ]
+            },
+            {
+              "color": "ESM.SINT.BRA NEVE 750ML HIDRACOR",
+              "formats": [
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 22.6,
+                  "code": "21117"
+                }
+              ]
+            },
+            {
+              "color": "ESM.SINT.VD FOLHA 112,5ML HIDRACOR",
+              "formats": [
+                {
+                  "ap": "Out",
+                  "vol": "5 ml",
+                  "price": 4.83,
+                  "code": "21115"
+                }
+              ]
+            },
+            {
+              "color": "ESM.SINT.VD FOLHA 750ML HIDRACOR",
+              "formats": [
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 22.6,
+                  "code": "21119"
+                }
+              ]
+            },
+            {
+              "color": "FOSCO AVELUDADO",
+              "formats": [
+                {
+                  "ap": "Out",
+                  "vol": "",
+                  "price": 35.56,
+                  "code": "7662"
+                }
+              ]
+            },
+            {
+              "color": "ICORES LIMPA FACIL M 16 LT IQUINE",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "16 L",
+                  "price": 319.73,
+                  "code": "14079"
+                }
+              ]
+            },
+            {
+              "color": "ICORES PREMIUM BASE P 3,2L IQUINE",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,2 L",
+                  "price": 74.88,
+                  "code": "22593"
+                }
+              ]
+            },
+            {
+              "color": "MASSA P/MADEIRA 1,5KG IQUINE",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "5 kg",
+                  "price": 17.52,
+                  "code": "17052"
+                }
+              ]
+            },
+            {
+              "color": "MASSA P/MADEIRA 6KG IQUINE",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "6 kg",
+                  "price": 46.41,
+                  "code": "13178"
+                }
+              ]
+            },
+            {
+              "color": "MASSA RAPIDA BRANCA 900ML IQUINE",
+              "formats": [
+                {
+                  "ap": "LT",
+                  "vol": "900 ml",
+                  "price": 43.06,
+                  "code": "8833"
+                }
+              ]
+            },
+            {
+              "color": "PISTOLA PULV MULTIUSO 1620 110V IQUINE",
+              "formats": [
+                {
+                  "ap": "Out",
+                  "vol": "",
+                  "price": 457.64,
+                  "code": "9715"
+                }
+              ]
+            },
+            {
+              "color": "Platina",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,0 L",
+                  "price": 57.27,
+                  "code": "17418"
+                }
+              ]
+            },
+            {
+              "color": "Preto",
+              "formats": [
+                {
+                  "ap": "LT",
+                  "vol": "900 ml",
+                  "price": 105.4,
+                  "code": "14089"
+                },
+                {
+                  "ap": "Out",
+                  "vol": "",
+                  "price": 27.85,
+                  "code": "8832"
+                }
+              ]
+            },
+            {
+              "color": "RESINA ACRILICA CONCENTRADA 3,6L IQUINE",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 103.32,
+                  "code": "16175"
+                }
+              ]
+            },
+            {
+              "color": "SUPER PREMIUM BASE (P) 16L  IQUINE",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "16 L",
+                  "price": 473.77,
+                  "code": "22564"
+                }
+              ]
+            },
+            {
+              "color": "Verde nilo",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,0 L",
+                  "price": 57.27,
+                  "code": "17417"
+                }
+              ]
+            },
+            {
+              "color": "Vermelho",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,0 L",
+                  "price": 75.79,
+                  "code": "17413"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 22.6,
+                  "code": "21120"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Tinta (outras)",
+          "skus": 15,
+          "colors": 3,
+          "price_gl": null,
+          "price_lt": {
+            "min": 33.96,
+            "max": 36.72,
+            "count": 3
+          },
+          "price_bd": {
+            "min": 53.42,
+            "max": 53.42,
+            "count": 1
+          },
+          "colors_detail": [
+            {
+              "color": "Amarelo",
+              "formats": [
+                {
+                  "ap": "Fr",
+                  "vol": "400 ml",
+                  "price": 7.58,
+                  "code": "8144"
+                }
+              ]
+            },
+            {
+              "color": "Azul França",
+              "formats": [
+                {
+                  "ap": "Fr",
+                  "vol": "400 ml",
+                  "price": 8.04,
+                  "code": "8492"
+                }
+              ]
+            },
+            {
+              "color": "Azul celeste",
+              "formats": [
+                {
+                  "ap": "Fr",
+                  "vol": "400 ml",
+                  "price": 7.58,
+                  "code": "8491"
+                }
+              ]
+            },
+            {
+              "color": "Dourado",
+              "formats": [
+                {
+                  "ap": "Fr",
+                  "vol": "400 ml",
+                  "price": 12.57,
+                  "code": "8145"
+                }
+              ]
+            },
+            {
+              "color": "Laranja",
+              "formats": [
+                {
+                  "ap": "Fr",
+                  "vol": "400 ml",
+                  "price": 7.58,
+                  "code": "8043"
+                },
+                {
+                  "ap": "Fr",
+                  "vol": "400 ml",
+                  "price": 8.66,
+                  "code": "8044"
+                }
+              ]
+            },
+            {
+              "color": "Platina",
+              "formats": [
+                {
+                  "ap": "Fr",
+                  "vol": "400 ml",
+                  "price": 8.66,
+                  "code": "8039"
+                }
+              ]
+            },
+            {
+              "color": "Preto",
+              "formats": [
+                {
+                  "ap": "LT",
+                  "vol": "900 ml",
+                  "price": 33.97,
+                  "code": "13172"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "900 ml",
+                  "price": 36.72,
+                  "code": "13173"
+                }
+              ]
+            },
+            {
+              "color": "TINTA LACA NITRO BRANCA 900 ML IQUINE",
+              "formats": [
+                {
+                  "ap": "LT",
+                  "vol": "900 ml",
+                  "price": 33.96,
+                  "code": "13171"
+                }
+              ]
+            },
+            {
+              "color": "TINTA SPRAY DIALINE METALICO PRATA  400ML IQUINE",
+              "formats": [
+                {
+                  "ap": "Fr",
+                  "vol": "400 ml",
+                  "price": 12.57,
+                  "code": "8047"
+                }
+              ]
+            },
+            {
+              "color": "TINTA VINIL ACRIL.18LTS AZUL CEU PLURAL",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "18 L",
+                  "price": 53.42,
+                  "code": "4767"
+                }
+              ]
+            },
+            {
+              "color": "Verde folha",
+              "formats": [
+                {
+                  "ap": "Fr",
+                  "vol": "400 ml",
+                  "price": 8.67,
+                  "code": "8041"
+                }
+              ]
+            },
+            {
+              "color": "Verde limão",
+              "formats": [
+                {
+                  "ap": "Fr",
+                  "vol": "400 ml",
+                  "price": 9.12,
+                  "code": "8042"
+                }
+              ]
+            },
+            {
+              "color": "Vermelho",
+              "formats": [
+                {
+                  "ap": "Fr",
+                  "vol": "400 ml",
+                  "price": 9.12,
+                  "code": "8040"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Verniz",
+          "skus": 14,
+          "colors": 10,
+          "price_gl": {
+            "min": 82.58,
+            "max": 92.75,
+            "count": 7
+          },
+          "price_lt": {
+            "min": 23.56,
+            "max": 28.31,
+            "count": 7
+          },
+          "price_bd": null,
+          "colors_detail": [
+            {
+              "color": "Cerejeira",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 92.75,
+                  "code": "3463"
+                }
+              ]
+            },
+            {
+              "color": "Imbuia",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 86.67,
+                  "code": "3753"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 27.33,
+                  "code": "3902"
+                }
+              ]
+            },
+            {
+              "color": "Incolor",
+              "formats": [
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 23.56,
+                  "code": "3839"
+                }
+              ]
+            },
+            {
+              "color": "Mogno",
+              "formats": [
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 27.13,
+                  "code": "3750"
+                }
+              ]
+            },
+            {
+              "color": "Mogno colonial",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 88.58,
+                  "code": "3728"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 27.62,
+                  "code": "3729"
+                }
+              ]
+            },
+            {
+              "color": "Nogueira",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 84.22,
+                  "code": "3464"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 28.28,
+                  "code": "1130"
+                }
+              ]
+            },
+            {
+              "color": "VERNIZ COPAL BRILHANTE 0,9LTS IQUINE",
+              "formats": [
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 26.22,
+                  "code": "3748"
+                }
+              ]
+            },
+            {
+              "color": "VERNIZ COPAL BRILHANTE 3,6LTS IQUINE",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 84.86,
+                  "code": "3747"
+                }
+              ]
+            },
+            {
+              "color": "VERNIZ EXTRA RAP.CEDRO 03,6LTS IQUINE",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "03,6 L",
+                  "price": 82.58,
+                  "code": "16178"
+                }
+              ]
+            },
+            {
+              "color": "Vinho",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 90.39,
+                  "code": "3751"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 28.31,
+                  "code": "3752"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Tinta piso",
+          "skus": 13,
+          "colors": 7,
+          "price_gl": {
+            "min": 47.24,
+            "max": 62.6,
+            "count": 7
+          },
+          "price_lt": null,
+          "price_bd": {
+            "min": 220.22,
+            "max": 240.0,
+            "count": 6
+          },
+          "colors_detail": [
+            {
+              "color": "Amarelo",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 62.6,
+                  "code": "9040"
+                }
+              ]
+            },
+            {
+              "color": "Azul profundo",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 48.77,
+                  "code": "8818"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "18 L",
+                  "price": 238.73,
+                  "code": "8830"
+                }
+              ]
+            },
+            {
+              "color": "Cinza escuro",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 47.62,
+                  "code": "8822"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "18 L",
+                  "price": 220.22,
+                  "code": "8826"
+                }
+              ]
+            },
+            {
+              "color": "Cinza médio",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 53.98,
+                  "code": "8790"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "18 L",
+                  "price": 231.22,
+                  "code": "8996"
+                }
+              ]
+            },
+            {
+              "color": "Concreto",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 50.85,
+                  "code": "8820"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "18 L",
+                  "price": 231.22,
+                  "code": "8825"
+                }
+              ]
+            },
+            {
+              "color": "Verde folha",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 47.24,
+                  "code": "151"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "18 L",
+                  "price": 240.0,
+                  "code": "8824"
+                }
+              ]
+            },
+            {
+              "color": "Vermelho",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 53.98,
+                  "code": "8819"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "18 L",
+                  "price": 234.55,
+                  "code": "9042"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Selador",
+          "skus": 6,
+          "colors": 3,
+          "price_gl": {
+            "min": 27.06,
+            "max": 105.06,
+            "count": 3
+          },
+          "price_lt": {
+            "min": 27.15,
+            "max": 30.15,
+            "count": 2
+          },
+          "price_bd": {
+            "min": 88.38,
+            "max": 88.38,
+            "count": 1
+          },
+          "colors_detail": [
+            {
+              "color": "Branco",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 27.06,
+                  "code": "13499"
+                }
+              ]
+            },
+            {
+              "color": "Incolor",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 88.63,
+                  "code": "3730"
+                },
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 105.06,
+                  "code": "3840"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 27.15,
+                  "code": "3731"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 30.15,
+                  "code": "1"
+                }
+              ]
+            },
+            {
+              "color": "SELADOR ACRILICO 15L IQUINE",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 88.38,
+                  "code": "17752"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Zarcofer anticorrosivo",
+          "skus": 5,
+          "colors": 2,
+          "price_gl": {
+            "min": 91.44,
+            "max": 93.74,
+            "count": 3
+          },
+          "price_lt": {
+            "min": 24.21,
+            "max": 25.06,
+            "count": 2
+          },
+          "price_bd": null,
+          "colors_detail": [
+            {
+              "color": "Laranja",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 91.62,
+                  "code": "4231"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 24.21,
+                  "code": "4232"
+                }
+              ]
+            },
+            {
+              "color": "Preto",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 91.44,
+                  "code": "3736"
+                },
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 93.74,
+                  "code": "3734"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 25.06,
+                  "code": "3737"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Massa corrida",
+          "skus": 4,
+          "colors": 4,
+          "price_gl": null,
+          "price_lt": {
+            "min": 12.07,
+            "max": 12.07,
+            "count": 1
+          },
+          "price_bd": {
+            "min": 17.48,
+            "max": 74.47,
+            "count": 3
+          },
+          "colors_detail": [
+            {
+              "color": "Massa corrida (20 kg)",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "20 kg",
+                  "price": 57.62,
+                  "code": "22151"
+                }
+              ]
+            },
+            {
+              "color": "Massa corrida (25 kg)",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "25 kg",
+                  "price": 74.47,
+                  "code": "13174"
+                }
+              ]
+            },
+            {
+              "color": "Massa corrida (4 kg)",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "4 kg",
+                  "price": 17.48,
+                  "code": "14093"
+                }
+              ]
+            },
+            {
+              "color": "Massa corrida (900 ml)",
+              "formats": [
+                {
+                  "ap": "LT",
+                  "vol": "900 ml",
+                  "price": 12.07,
+                  "code": "6505"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Sela & Pinta",
+          "skus": 3,
+          "colors": 3,
+          "price_gl": {
+            "min": 43.46,
+            "max": 43.46,
+            "count": 1
+          },
+          "price_lt": null,
+          "price_bd": {
+            "min": 174.29,
+            "max": 239.84,
+            "count": 2
+          },
+          "colors_detail": [
+            {
+              "color": "Branco",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 43.46,
+                  "code": "21597"
+                }
+              ]
+            },
+            {
+              "color": "Branco neve",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 174.29,
+                  "code": "21598"
+                }
+              ]
+            },
+            {
+              "color": "ICORES SELA/PINTA BASE P\" 16L IQUINE",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "16 L",
+                  "price": 239.84,
+                  "code": "19742"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Massa acrílica",
+          "skus": 2,
+          "colors": 2,
+          "price_gl": null,
+          "price_lt": null,
+          "price_bd": {
+            "min": 26.09,
+            "max": 84.82,
+            "count": 2
+          },
+          "colors_detail": [
+            {
+              "color": "Massa acrílica (20 kg)",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "20 kg",
+                  "price": 84.82,
+                  "code": "22147"
+                }
+              ]
+            },
+            {
+              "color": "Massa acrílica (4 kg)",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "4 kg",
+                  "price": 26.09,
+                  "code": "3766"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Textura decorativa",
+          "skus": 2,
+          "colors": 2,
+          "price_gl": null,
+          "price_lt": null,
+          "price_bd": {
+            "min": 239.99,
+            "max": 367.85,
+            "count": 2
+          },
+          "colors_detail": [
+            {
+              "color": "Naturais",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "22 kg",
+                  "price": 239.99,
+                  "code": "22562"
+                }
+              ]
+            },
+            {
+              "color": "Patacho",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "22 kg",
+                  "price": 367.85,
+                  "code": "22565"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Tinta semibrilho",
+          "skus": 2,
+          "colors": 1,
+          "price_gl": {
+            "min": 62.61,
+            "max": 62.61,
+            "count": 1
+          },
+          "price_lt": null,
+          "price_bd": {
+            "min": 219.4,
+            "max": 219.4,
+            "count": 1
+          },
+          "colors_detail": [
+            {
+              "color": "Laranja",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 62.61,
+                  "code": "18168"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 219.4,
+                  "code": "18169"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Zarcão",
+          "skus": 2,
+          "colors": 1,
+          "price_gl": {
+            "min": 89.61,
+            "max": 89.61,
+            "count": 1
+          },
+          "price_lt": {
+            "min": 25.12,
+            "max": 25.12,
+            "count": 1
+          },
+          "price_bd": null,
+          "colors_detail": [
+            {
+              "color": "Preto",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 89.61,
+                  "code": "21110"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "900 ml",
+                  "price": 25.12,
+                  "code": "21109"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Fundo preparador",
+          "skus": 1,
+          "colors": 1,
+          "price_gl": {
+            "min": 92.78,
+            "max": 92.78,
+            "count": 1
+          },
+          "price_lt": null,
+          "price_bd": null,
+          "colors_detail": [
+            {
+              "color": "Fundo preparador",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 92.78,
+                  "code": "20537"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "Hidracor": {
+      "skus": 123,
+      "lines": 12,
+      "lines_data": [
+        {
+          "name": "Tinta semibrilho",
+          "skus": 39,
+          "colors": 30,
+          "price_gl": {
+            "min": 59.64,
+            "max": 62.61,
+            "count": 20
+          },
+          "price_lt": null,
+          "price_bd": {
+            "min": 219.4,
+            "max": 219.4,
+            "count": 19
+          },
+          "colors_detail": [
+            {
+              "color": "16966 TINTA SEMI BRILHO AZUL MEDITERRANEO 3,6L HID",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 62.61,
+                  "code": "152"
+                }
+              ]
+            },
+            {
+              "color": "Amarelo",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 62.61,
+                  "code": "16962"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 219.4,
+                  "code": "16961"
+                }
+              ]
+            },
+            {
+              "color": "Areia",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 62.61,
+                  "code": "16964"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 219.4,
+                  "code": "16963"
+                }
+              ]
+            },
+            {
+              "color": "Azul turquesa",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 59.64,
+                  "code": "16104"
+                }
+              ]
+            },
+            {
+              "color": "Branco gelo",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 62.61,
+                  "code": "16968"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 219.4,
+                  "code": "16967"
+                }
+              ]
+            },
+            {
+              "color": "Branco neve",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 62.61,
+                  "code": "15794"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 219.4,
+                  "code": "15793"
+                }
+              ]
+            },
+            {
+              "color": "Camurça",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 62.61,
+                  "code": "16970"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 219.4,
+                  "code": "16969"
+                }
+              ]
+            },
+            {
+              "color": "Laranja",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 62.61,
+                  "code": "18168"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 219.4,
+                  "code": "18169"
+                }
+              ]
+            },
+            {
+              "color": "Marfim",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 62.61,
+                  "code": "16098"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 219.4,
+                  "code": "16097"
+                }
+              ]
+            },
+            {
+              "color": "Ocre",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 62.61,
+                  "code": "17260"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 219.4,
+                  "code": "17261"
+                }
+              ]
+            },
+            {
+              "color": "TINTA SEMI BRILHO AZUL MEDITERRANEO 15L HIDRACOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 219.4,
+                  "code": "16965"
+                }
+              ]
+            },
+            {
+              "color": "TINTA SEMI BRILHO LILAS ATREVIDO 15L HIDRACOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 219.4,
+                  "code": "16971"
+                }
+              ]
+            },
+            {
+              "color": "TINTA SEMI BRILHO LILAS ATREVIDO 3,6L HIDRACOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 62.61,
+                  "code": "16972"
+                }
+              ]
+            },
+            {
+              "color": "TINTA SEMI BRILHO MELANCIA 15L HIDRACOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 219.4,
+                  "code": "17042"
+                }
+              ]
+            },
+            {
+              "color": "TINTA SEMI BRILHO MELANCIA 3,6L HIDRACOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 62.61,
+                  "code": "17043"
+                }
+              ]
+            },
+            {
+              "color": "TINTA SEMI BRILHO PALHA 3,6L HIDRACOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 62.61,
+                  "code": "17189"
+                }
+              ]
+            },
+            {
+              "color": "TINTA SEMI BRILHO PEROLA 15L HIDRACOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 219.4,
+                  "code": "16973"
+                }
+              ]
+            },
+            {
+              "color": "TINTA SEMI BRILHO PEROLA 3,6L HIDRACOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 59.64,
+                  "code": "16974"
+                }
+              ]
+            },
+            {
+              "color": "TINTA SEMI BRILHO PESSEGO 3,6L HIDRACOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 61.85,
+                  "code": "19269"
+                }
+              ]
+            },
+            {
+              "color": "TINTA SEMI BRILHO PITANGA 15L HIDRACOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 219.4,
+                  "code": "16975"
+                }
+              ]
+            },
+            {
+              "color": "TINTA SEMI BRILHO PITANGA 3,6L HIDRACOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 59.64,
+                  "code": "16976"
+                }
+              ]
+            },
+            {
+              "color": "TINTA SEMI BRILHO ROSA LOTUS 15L HIDRACOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 219.4,
+                  "code": "16977"
+                }
+              ]
+            },
+            {
+              "color": "TINTA SEMI BRILHO ROSA LOTUS 3,6L HIDRACOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 62.61,
+                  "code": "16978"
+                }
+              ]
+            },
+            {
+              "color": "TINTA SEMIBRILHO 15L CHOCOLATE  HIDRACOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 219.4,
+                  "code": "18607"
+                }
+              ]
+            },
+            {
+              "color": "TINTA SEMIBRILHO 3,6L  CHOCOLATE  HIDRACOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 62.61,
+                  "code": "18608"
+                }
+              ]
+            },
+            {
+              "color": "TINTA SEMIBRILHO CARIBE 15L HIDRACOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 219.4,
+                  "code": "16099"
+                }
+              ]
+            },
+            {
+              "color": "TINTA SEMIBRILHO PALHA 15L HIDRACOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 219.4,
+                  "code": "17188"
+                }
+              ]
+            },
+            {
+              "color": "TINTA SEMIBRILHO TURQUESA 15L HIDRACOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 219.4,
+                  "code": "16103"
+                }
+              ]
+            },
+            {
+              "color": "Verde limão",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 62.61,
+                  "code": "17019"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 219.4,
+                  "code": "16979"
+                }
+              ]
+            },
+            {
+              "color": "Vermelho",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 62.61,
+                  "code": "17975"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Acrílica econômica",
+          "skus": 24,
+          "colors": 17,
+          "price_gl": {
+            "min": 26.33,
+            "max": 27.27,
+            "count": 12
+          },
+          "price_lt": null,
+          "price_bd": {
+            "min": 80.97,
+            "max": 86.18,
+            "count": 12
+          },
+          "colors_detail": [
+            {
+              "color": "Amarelo",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 26.33,
+                  "code": "22195"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 80.97,
+                  "code": "22193"
+                }
+              ]
+            },
+            {
+              "color": "Areia",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 27.27,
+                  "code": "16108"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 86.17,
+                  "code": "16109"
+                }
+              ]
+            },
+            {
+              "color": "Branco gelo",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 27.27,
+                  "code": "16939"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 86.17,
+                  "code": "16938"
+                }
+              ]
+            },
+            {
+              "color": "Branco neve",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 27.27,
+                  "code": "15809"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 86.17,
+                  "code": "15808"
+                }
+              ]
+            },
+            {
+              "color": "Camurça",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 27.27,
+                  "code": "16117"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 86.17,
+                  "code": "16118"
+                }
+              ]
+            },
+            {
+              "color": "Cinza claro",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 26.84,
+                  "code": "22182"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 82.54,
+                  "code": "22141"
+                }
+              ]
+            },
+            {
+              "color": "Marfim",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 27.27,
+                  "code": "16095"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 86.18,
+                  "code": "16105"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ECONOMICA AZUL PAVAO 15L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 83.86,
+                  "code": "16110"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ECONOMICA AZUL PAVAO 3,6L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 27.27,
+                  "code": "16096"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ECONOMICA PALHA 15L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 86.17,
+                  "code": "16107"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ECONOMICA PALHA 3,6L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 27.27,
+                  "code": "16106"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ECONOMICA PEROLA 15L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 86.17,
+                  "code": "16936"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ECONOMICA PEROLA 3,6L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 27.27,
+                  "code": "16937"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ECONOMICA VD AMAZONAS 15L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 86.18,
+                  "code": "16112"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ECONOMICA VD AMAZONAS 3,6L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 27.27,
+                  "code": "16111"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ECONOMICA VD PRIMAVERA 15L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 86.17,
+                  "code": "16116"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ECONOMICA VD PRIMAVERA 3,6L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 27.27,
+                  "code": "16115"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Tinta piso",
+          "skus": 20,
+          "colors": 10,
+          "price_gl": {
+            "min": 46.45,
+            "max": 50.27,
+            "count": 10
+          },
+          "price_lt": null,
+          "price_bd": {
+            "min": 169.6,
+            "max": 174.84,
+            "count": 10
+          },
+          "colors_detail": [
+            {
+              "color": "Amarelo",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 47.88,
+                  "code": "15798"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 169.6,
+                  "code": "15806"
+                }
+              ]
+            },
+            {
+              "color": "Branco neve",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 50.27,
+                  "code": "16101"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 169.6,
+                  "code": "16941"
+                }
+              ]
+            },
+            {
+              "color": "Cinza",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 50.27,
+                  "code": "15796"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 169.6,
+                  "code": "15795"
+                }
+              ]
+            },
+            {
+              "color": "Cinza escuro",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 50.27,
+                  "code": "16940"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 169.6,
+                  "code": "16926"
+                }
+              ]
+            },
+            {
+              "color": "Concreto",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 50.27,
+                  "code": "15797"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 169.6,
+                  "code": "15805"
+                }
+              ]
+            },
+            {
+              "color": "Preto",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 47.89,
+                  "code": "16102"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 169.6,
+                  "code": "16357"
+                }
+              ]
+            },
+            {
+              "color": "TINTA PISO AZUL 15L HIDRACOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 169.6,
+                  "code": "15803"
+                }
+              ]
+            },
+            {
+              "color": "TINTA PISO AZUL 3,6L HIDRACOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 46.45,
+                  "code": "15804"
+                }
+              ]
+            },
+            {
+              "color": "Verde",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 50.27,
+                  "code": "15800"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 169.6,
+                  "code": "15799"
+                }
+              ]
+            },
+            {
+              "color": "Vermelho",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 47.89,
+                  "code": "15802"
+                },
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 50.27,
+                  "code": "15879"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 174.84,
+                  "code": "15878"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 174.84,
+                  "code": "15801"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Tinta (outras)",
+          "skus": 17,
+          "colors": 16,
+          "price_gl": {
+            "min": 27.48,
+            "max": 35.7,
+            "count": 11
+          },
+          "price_lt": null,
+          "price_bd": {
+            "min": 103.82,
+            "max": 119.13,
+            "count": 6
+          },
+          "colors_detail": [
+            {
+              "color": "Amarelo",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 28.85,
+                  "code": "16119"
+                }
+              ]
+            },
+            {
+              "color": "Azul turquesa",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 28.85,
+                  "code": "16127"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 108.66,
+                  "code": "16128"
+                }
+              ]
+            },
+            {
+              "color": "Branco gelo",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 29.7,
+                  "code": "16947"
+                }
+              ]
+            },
+            {
+              "color": "Branco neve",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 119.13,
+                  "code": "16948"
+                }
+              ]
+            },
+            {
+              "color": "Camurça",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 109.55,
+                  "code": "16959"
+                }
+              ]
+            },
+            {
+              "color": "Canário",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 108.01,
+                  "code": "17020"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ACRIL ECO AZUL CEU 15L HIDRACOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 110.39,
+                  "code": "16944"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ACRIL ECO CROMO SUAVE 3,6L HIDRACOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 28.45,
+                  "code": "16958"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ACRIL ECO FRAMBOESA 3,6L HIDRACOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 35.7,
+                  "code": "17039"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ACRIL ECO LJ PROPAGANDA 3,6L HIDRACOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 28.85,
+                  "code": "17031"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ACRIL ECO PALHA 3,6L HIDRACOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 28.85,
+                  "code": "17036"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ACRIL ECO PEROLA 3,6L HIDRACOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 28.45,
+                  "code": "16956"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ACRIL ECO VERAO INTENSO 3,6L HIDRACOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 28.85,
+                  "code": "17025"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ACRILICA STANDARD BARCELONA 3,6L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 27.56,
+                  "code": "16125"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ACRILICA STANDARD VD LIMAO 15L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 103.82,
+                  "code": "16124"
+                }
+              ]
+            },
+            {
+              "color": "Vermelho",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 27.48,
+                  "code": "16121"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Outros",
+          "skus": 13,
+          "colors": 8,
+          "price_gl": {
+            "min": 48.41,
+            "max": 75.79,
+            "count": 2
+          },
+          "price_lt": {
+            "min": 16.65,
+            "max": 22.6,
+            "count": 6
+          },
+          "price_bd": {
+            "min": 46.41,
+            "max": 46.41,
+            "count": 1
+          },
+          "colors_detail": [
+            {
+              "color": "Amarelo",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 48.41,
+                  "code": "16090"
+                }
+              ]
+            },
+            {
+              "color": "Azul França",
+              "formats": [
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 16.65,
+                  "code": "15953"
+                }
+              ]
+            },
+            {
+              "color": "Branco neve",
+              "formats": [
+                {
+                  "ap": "Out",
+                  "vol": "5 ml",
+                  "price": 4.83,
+                  "code": "21113"
+                }
+              ]
+            },
+            {
+              "color": "ESM SINT AZ DEL REY 0,9L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 16.65,
+                  "code": "15951"
+                }
+              ]
+            },
+            {
+              "color": "ESM.SINT.AZ FRANÇA 112,5ML HIDRACOR",
+              "formats": [
+                {
+                  "ap": "Out",
+                  "vol": "5 ml",
+                  "price": 4.83,
+                  "code": "21112"
+                }
+              ]
+            },
+            {
+              "color": "ESM.SINT.BRA NEVE 750ML HIDRACOR",
+              "formats": [
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 22.6,
+                  "code": "21117"
+                }
+              ]
+            },
+            {
+              "color": "ESM.SINT.VD FOLHA 112,5ML HIDRACOR",
+              "formats": [
+                {
+                  "ap": "Out",
+                  "vol": "5 ml",
+                  "price": 4.83,
+                  "code": "21115"
+                }
+              ]
+            },
+            {
+              "color": "ESM.SINT.VD FOLHA 750ML HIDRACOR",
+              "formats": [
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 22.6,
+                  "code": "21119"
+                }
+              ]
+            },
+            {
+              "color": "MASSA P/MADEIRA 6KG IQUINE",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "6 kg",
+                  "price": 46.41,
+                  "code": "13178"
+                }
+              ]
+            },
+            {
+              "color": "Marfim",
+              "formats": [
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 16.65,
+                  "code": "15962"
+                }
+              ]
+            },
+            {
+              "color": "SERRA TICOTICO GST 75 E 127V BOSCH",
+              "formats": [
+                {
+                  "ap": "Out",
+                  "vol": "",
+                  "price": 717.21,
+                  "code": "16129"
+                }
+              ]
+            },
+            {
+              "color": "Vermelho",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,0 L",
+                  "price": 75.79,
+                  "code": "17413"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 22.6,
+                  "code": "21120"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Massa acrílica",
+          "skus": 2,
+          "colors": 1,
+          "price_gl": null,
+          "price_lt": null,
+          "price_bd": {
+            "min": 95.94,
+            "max": 95.94,
+            "count": 1
+          },
+          "colors_detail": [
+            {
+              "color": "Massa acrílica",
+              "formats": [
+                {
+                  "ap": "Out",
+                  "vol": "",
+                  "price": 22.35,
+                  "code": "22181"
+                }
+              ]
+            },
+            {
+              "color": "Massa acrílica (20 kg)",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "20 kg",
+                  "price": 95.94,
+                  "code": "16092"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Massa corrida",
+          "skus": 2,
+          "colors": 1,
+          "price_gl": null,
+          "price_lt": null,
+          "price_bd": {
+            "min": 16.45,
+            "max": 18.2,
+            "count": 2
+          },
+          "colors_detail": [
+            {
+              "color": "Massa corrida (5 kg)",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "5 kg",
+                  "price": 16.45,
+                  "code": "22180"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "5 kg",
+                  "price": 18.2,
+                  "code": "15792"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Zarcão",
+          "skus": 2,
+          "colors": 1,
+          "price_gl": {
+            "min": 89.61,
+            "max": 89.61,
+            "count": 1
+          },
+          "price_lt": {
+            "min": 25.12,
+            "max": 25.12,
+            "count": 1
+          },
+          "price_bd": null,
+          "colors_detail": [
+            {
+              "color": "Preto",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 89.61,
+                  "code": "21110"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "900 ml",
+                  "price": 25.12,
+                  "code": "21109"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Esmalte",
+          "skus": 1,
+          "colors": 0,
+          "price_gl": null,
+          "price_lt": null,
+          "price_bd": null,
+          "colors_detail": [
+            {
+              "color": "Amarelo",
+              "formats": [
+                {
+                  "ap": "Out",
+                  "vol": "5 ml",
+                  "price": 4.83,
+                  "code": "21111"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Fundo preparador",
+          "skus": 1,
+          "colors": 1,
+          "price_gl": {
+            "min": 92.78,
+            "max": 92.78,
+            "count": 1
+          },
+          "price_lt": null,
+          "price_bd": null,
+          "colors_detail": [
+            {
+              "color": "Fundo preparador",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 92.78,
+                  "code": "20537"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Selador",
+          "skus": 1,
+          "colors": 1,
+          "price_gl": null,
+          "price_lt": null,
+          "price_bd": {
+            "min": 76.19,
+            "max": 76.19,
+            "count": 1
+          },
+          "colors_detail": [
+            {
+              "color": "SELADOR ACRILICO 15L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 76.19,
+                  "code": "15790"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Tinta em pó",
+          "skus": 1,
+          "colors": 1,
+          "price_gl": null,
+          "price_lt": null,
+          "price_bd": {
+            "min": 7.64,
+            "max": 7.64,
+            "count": 1
+          },
+          "colors_detail": [
+            {
+              "color": "Cinza",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "2 kg",
+                  "price": 7.64,
+                  "code": "22802"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "Hipercor": {
+      "skus": 55,
+      "lines": 7,
+      "lines_data": [
+        {
+          "name": "Acrílica econômica",
+          "skus": 25,
+          "colors": 18,
+          "price_gl": {
+            "min": 26.33,
+            "max": 27.27,
+            "count": 12
+          },
+          "price_lt": null,
+          "price_bd": {
+            "min": 80.97,
+            "max": 86.18,
+            "count": 13
+          },
+          "colors_detail": [
+            {
+              "color": "Amarelo",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 26.33,
+                  "code": "22195"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 80.97,
+                  "code": "22193"
+                }
+              ]
+            },
+            {
+              "color": "Areia",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 27.27,
+                  "code": "16108"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 86.17,
+                  "code": "16109"
+                }
+              ]
+            },
+            {
+              "color": "Branco gelo",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 27.27,
+                  "code": "16939"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 86.17,
+                  "code": "16938"
+                }
+              ]
+            },
+            {
+              "color": "Branco neve",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 27.27,
+                  "code": "15809"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 86.17,
+                  "code": "15808"
+                }
+              ]
+            },
+            {
+              "color": "Camurça",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 27.27,
+                  "code": "16117"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 86.17,
+                  "code": "16118"
+                }
+              ]
+            },
+            {
+              "color": "Cinza claro",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 26.84,
+                  "code": "22182"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 82.54,
+                  "code": "22141"
+                }
+              ]
+            },
+            {
+              "color": "Marfim",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 27.27,
+                  "code": "16095"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 86.18,
+                  "code": "16105"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ECONOMICA AZUL PAVAO 15L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 83.86,
+                  "code": "16110"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ECONOMICA AZUL PAVAO 3,6L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 27.27,
+                  "code": "16096"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ECONOMICA PALHA 15L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 86.17,
+                  "code": "16107"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ECONOMICA PALHA 3,6L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 27.27,
+                  "code": "16106"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ECONOMICA PEROLA 15L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 86.17,
+                  "code": "16936"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ECONOMICA PEROLA 3,6L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 27.27,
+                  "code": "16937"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ECONOMICA PESSEGO 15L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 83.86,
+                  "code": "17035"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ECONOMICA VD AMAZONAS 15L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 86.18,
+                  "code": "16112"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ECONOMICA VD AMAZONAS 3,6L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 27.27,
+                  "code": "16111"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ECONOMICA VD PRIMAVERA 15L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 86.17,
+                  "code": "16116"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ECONOMICA VD PRIMAVERA 3,6L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 27.27,
+                  "code": "16115"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Outros",
+          "skus": 12,
+          "colors": 9,
+          "price_gl": {
+            "min": 57.27,
+            "max": 57.27,
+            "count": 4
+          },
+          "price_lt": {
+            "min": 15.3,
+            "max": 22.6,
+            "count": 8
+          },
+          "price_bd": null,
+          "colors_detail": [
+            {
+              "color": "Amarelo",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,0 L",
+                  "price": 57.27,
+                  "code": "17412"
+                }
+              ]
+            },
+            {
+              "color": "Azul França",
+              "formats": [
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 15.3,
+                  "code": "17400"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 16.65,
+                  "code": "15953"
+                }
+              ]
+            },
+            {
+              "color": "Azul celeste",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,0 L",
+                  "price": 57.27,
+                  "code": "17415"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 15.3,
+                  "code": "17404"
+                }
+              ]
+            },
+            {
+              "color": "Azul del rey",
+              "formats": [
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 15.3,
+                  "code": "17403"
+                }
+              ]
+            },
+            {
+              "color": "ESM SINT AZ DEL REY 0,9L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 16.65,
+                  "code": "15951"
+                }
+              ]
+            },
+            {
+              "color": "Marfim",
+              "formats": [
+                {
+                  "ap": "LT",
+                  "vol": "0,9 L",
+                  "price": 16.65,
+                  "code": "15962"
+                }
+              ]
+            },
+            {
+              "color": "Platina",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,0 L",
+                  "price": 57.27,
+                  "code": "17418"
+                }
+              ]
+            },
+            {
+              "color": "Preto",
+              "formats": [
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 22.6,
+                  "code": "21118"
+                }
+              ]
+            },
+            {
+              "color": "Verde nilo",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,0 L",
+                  "price": 57.27,
+                  "code": "17417"
+                },
+                {
+                  "ap": "LT",
+                  "vol": "750 ml",
+                  "price": 15.3,
+                  "code": "17406"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Tinta (outras)",
+          "skus": 11,
+          "colors": 10,
+          "price_gl": {
+            "min": 27.27,
+            "max": 28.85,
+            "count": 7
+          },
+          "price_lt": null,
+          "price_bd": {
+            "min": 86.17,
+            "max": 108.66,
+            "count": 4
+          },
+          "colors_detail": [
+            {
+              "color": "Amarelo",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 28.85,
+                  "code": "16119"
+                }
+              ]
+            },
+            {
+              "color": "Azul turquesa",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 28.85,
+                  "code": "16127"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 108.66,
+                  "code": "16128"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ACRILICA FLAMINGO 15L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 86.17,
+                  "code": "17040"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ACRILICA FLAMINGO 3,6L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 27.27,
+                  "code": "17041"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ACRILICA PESSEGO 3,6L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 27.27,
+                  "code": "17037"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ACRILICA STANDARD BARCELONA 3,6L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 27.56,
+                  "code": "16125"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ACRILICA STANDARD VD LIMAO 15L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 103.82,
+                  "code": "16124"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ACRILICA VIOLETA CLARO 15L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 90.1,
+                  "code": "17045"
+                }
+              ]
+            },
+            {
+              "color": "TINTA ACRILICA VIOLETA CLARO 3,6L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 27.27,
+                  "code": "17701"
+                }
+              ]
+            },
+            {
+              "color": "Vermelho",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 27.48,
+                  "code": "16121"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Tinta piso",
+          "skus": 3,
+          "colors": 2,
+          "price_gl": {
+            "min": 50.27,
+            "max": 50.27,
+            "count": 1
+          },
+          "price_lt": null,
+          "price_bd": {
+            "min": 169.6,
+            "max": 174.84,
+            "count": 2
+          },
+          "colors_detail": [
+            {
+              "color": "Preto",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 169.6,
+                  "code": "16357"
+                }
+              ]
+            },
+            {
+              "color": "Vermelho",
+              "formats": [
+                {
+                  "ap": "GL",
+                  "vol": "3,6 L",
+                  "price": 50.27,
+                  "code": "15879"
+                },
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 174.84,
+                  "code": "15878"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Massa acrílica",
+          "skus": 2,
+          "colors": 2,
+          "price_gl": null,
+          "price_lt": null,
+          "price_bd": {
+            "min": 23.01,
+            "max": 95.94,
+            "count": 2
+          },
+          "colors_detail": [
+            {
+              "color": "Massa acrílica (20 kg)",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "20 kg",
+                  "price": 95.94,
+                  "code": "16092"
+                }
+              ]
+            },
+            {
+              "color": "Massa acrílica (5 kg)",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "5 kg",
+                  "price": 23.01,
+                  "code": "15832"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Massa corrida",
+          "skus": 1,
+          "colors": 1,
+          "price_gl": null,
+          "price_lt": null,
+          "price_bd": {
+            "min": 18.2,
+            "max": 18.2,
+            "count": 1
+          },
+          "colors_detail": [
+            {
+              "color": "Massa corrida (5 kg)",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "5 kg",
+                  "price": 18.2,
+                  "code": "15792"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Selador",
+          "skus": 1,
+          "colors": 1,
+          "price_gl": null,
+          "price_lt": null,
+          "price_bd": {
+            "min": 76.19,
+            "max": 76.19,
+            "count": 1
+          },
+          "colors_detail": [
+            {
+              "color": "SELADOR ACRILICO 15L HIPERCOR",
+              "formats": [
+                {
+                  "ap": "BD",
+                  "vol": "15 L",
+                  "price": 76.19,
+                  "code": "15790"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "overlap": {
+    "lines": [
+      {
+        "line": "Acrílica econômica",
+        "iquine": false,
+        "hidracor": true,
+        "hipercor": true,
+        "brands": [
+          "Hidracor",
+          "Hipercor"
+        ],
+        "colors_i": 0,
+        "colors_h": 17,
+        "colors_p": 18,
+        "shared_colors": [
+          "Amarelo",
+          "Areia",
+          "Branco gelo",
+          "Branco neve",
+          "Camurça",
+          "Cinza claro",
+          "Marfim",
+          "TINTA ECONOMICA AZUL PAVAO 15L HIPERCOR",
+          "TINTA ECONOMICA AZUL PAVAO 3,6L HIPERCOR",
+          "TINTA ECONOMICA PALHA 15L HIPERCOR",
+          "TINTA ECONOMICA PALHA 3,6L HIPERCOR",
+          "TINTA ECONOMICA PEROLA 15L HIPERCOR",
+          "TINTA ECONOMICA PEROLA 3,6L HIPERCOR",
+          "TINTA ECONOMICA VD AMAZONAS 15L HIPERCOR",
+          "TINTA ECONOMICA VD AMAZONAS 3,6L HIPERCOR",
+          "TINTA ECONOMICA VD PRIMAVERA 15L HIPERCOR",
+          "TINTA ECONOMICA VD PRIMAVERA 3,6L HIPERCOR"
+        ],
+        "shared_count": 17,
+        "shared_colors_clean": [
+          "Amarelo",
+          "Areia",
+          "Branco gelo",
+          "Branco neve",
+          "Camurça",
+          "Cinza claro",
+          "Marfim",
+          "TINTA ECONOMICA AZUL PAVAO 15L HIPERCOR",
+          "TINTA ECONOMICA AZUL PAVAO 3,6L HIPERCOR",
+          "TINTA ECONOMICA PALHA 15L HIPERCOR",
+          "TINTA ECONOMICA PALHA 3,6L HIPERCOR",
+          "TINTA ECONOMICA PEROLA 15L HIPERCOR",
+          "TINTA ECONOMICA PEROLA 3,6L HIPERCOR",
+          "TINTA ECONOMICA VD AMAZONAS 15L HIPERCOR"
+        ],
+        "shared_count_clean": 14
+      },
+      {
+        "line": "Esmalte",
+        "iquine": true,
+        "hidracor": true,
+        "hipercor": false,
+        "brands": [
+          "Iquine",
+          "Hidracor"
+        ],
+        "colors_i": 26,
+        "colors_h": 0,
+        "colors_p": 0,
+        "shared_colors": [],
+        "shared_count": 0,
+        "shared_colors_clean": [],
+        "shared_count_clean": 0
+      },
+      {
+        "line": "Fundo preparador",
+        "iquine": true,
+        "hidracor": true,
+        "hipercor": false,
+        "brands": [
+          "Iquine",
+          "Hidracor"
+        ],
+        "colors_i": 1,
+        "colors_h": 1,
+        "colors_p": 0,
+        "shared_colors": [
+          "Fundo preparador"
+        ],
+        "shared_count": 1,
+        "shared_colors_clean": [
+          "Fundo preparador"
+        ],
+        "shared_count_clean": 1
+      },
+      {
+        "line": "Massa acrílica",
+        "iquine": true,
+        "hidracor": true,
+        "hipercor": true,
+        "brands": [
+          "Iquine",
+          "Hidracor",
+          "Hipercor"
+        ],
+        "colors_i": 2,
+        "colors_h": 1,
+        "colors_p": 2,
+        "shared_colors": [
+          "Massa acrílica (20 kg)"
+        ],
+        "shared_count": 1,
+        "shared_colors_clean": [
+          "Massa acrílica (20 kg)"
+        ],
+        "shared_count_clean": 1
+      },
+      {
+        "line": "Massa corrida",
+        "iquine": true,
+        "hidracor": true,
+        "hipercor": true,
+        "brands": [
+          "Iquine",
+          "Hidracor",
+          "Hipercor"
+        ],
+        "colors_i": 4,
+        "colors_h": 1,
+        "colors_p": 1,
+        "shared_colors": [],
+        "shared_count": 0,
+        "shared_colors_clean": [],
+        "shared_count_clean": 0
+      },
+      {
+        "line": "Outros",
+        "iquine": true,
+        "hidracor": true,
+        "hipercor": true,
+        "brands": [
+          "Iquine",
+          "Hidracor",
+          "Hipercor"
+        ],
+        "colors_i": 20,
+        "colors_h": 8,
+        "colors_p": 9,
+        "shared_colors": [
+          "Amarelo"
+        ],
+        "shared_count": 1,
+        "shared_colors_clean": [
+          "Amarelo"
+        ],
+        "shared_count_clean": 1
+      },
+      {
+        "line": "Sela & Pinta",
+        "iquine": true,
+        "hidracor": false,
+        "hipercor": false,
+        "brands": [
+          "Iquine"
+        ],
+        "colors_i": 3,
+        "colors_h": 0,
+        "colors_p": 0,
+        "shared_colors": [],
+        "shared_count": 0,
+        "shared_colors_clean": [],
+        "shared_count_clean": 0
+      },
+      {
+        "line": "Selador",
+        "iquine": true,
+        "hidracor": true,
+        "hipercor": true,
+        "brands": [
+          "Iquine",
+          "Hidracor",
+          "Hipercor"
+        ],
+        "colors_i": 3,
+        "colors_h": 1,
+        "colors_p": 1,
+        "shared_colors": [],
+        "shared_count": 0,
+        "shared_colors_clean": [],
+        "shared_count_clean": 0
+      },
+      {
+        "line": "Textura decorativa",
+        "iquine": true,
+        "hidracor": false,
+        "hipercor": false,
+        "brands": [
+          "Iquine"
+        ],
+        "colors_i": 2,
+        "colors_h": 0,
+        "colors_p": 0,
+        "shared_colors": [],
+        "shared_count": 0,
+        "shared_colors_clean": [],
+        "shared_count_clean": 0
+      },
+      {
+        "line": "Tinta (outras)",
+        "iquine": true,
+        "hidracor": true,
+        "hipercor": true,
+        "brands": [
+          "Iquine",
+          "Hidracor",
+          "Hipercor"
+        ],
+        "colors_i": 3,
+        "colors_h": 16,
+        "colors_p": 10,
+        "shared_colors": [],
+        "shared_count": 0,
+        "shared_colors_clean": [],
+        "shared_count_clean": 0
+      },
+      {
+        "line": "Tinta em pó",
+        "iquine": false,
+        "hidracor": true,
+        "hipercor": false,
+        "brands": [
+          "Hidracor"
+        ],
+        "colors_i": 0,
+        "colors_h": 1,
+        "colors_p": 0,
+        "shared_colors": [],
+        "shared_count": 0,
+        "shared_colors_clean": [],
+        "shared_count_clean": 0
+      },
+      {
+        "line": "Tinta piso",
+        "iquine": true,
+        "hidracor": true,
+        "hipercor": true,
+        "brands": [
+          "Iquine",
+          "Hidracor",
+          "Hipercor"
+        ],
+        "colors_i": 7,
+        "colors_h": 10,
+        "colors_p": 2,
+        "shared_colors": [
+          "Vermelho"
+        ],
+        "shared_count": 1,
+        "shared_colors_clean": [
+          "Vermelho"
+        ],
+        "shared_count_clean": 1
+      },
+      {
+        "line": "Tinta semibrilho",
+        "iquine": true,
+        "hidracor": true,
+        "hipercor": false,
+        "brands": [
+          "Iquine",
+          "Hidracor"
+        ],
+        "colors_i": 1,
+        "colors_h": 30,
+        "colors_p": 0,
+        "shared_colors": [
+          "Laranja"
+        ],
+        "shared_count": 1,
+        "shared_colors_clean": [
+          "Laranja"
+        ],
+        "shared_count_clean": 1
+      },
+      {
+        "line": "Verniz",
+        "iquine": true,
+        "hidracor": false,
+        "hipercor": false,
+        "brands": [
+          "Iquine"
+        ],
+        "colors_i": 10,
+        "colors_h": 0,
+        "colors_p": 0,
+        "shared_colors": [],
+        "shared_count": 0,
+        "shared_colors_clean": [],
+        "shared_count_clean": 0
+      },
+      {
+        "line": "Zarcofer anticorrosivo",
+        "iquine": true,
+        "hidracor": false,
+        "hipercor": false,
+        "brands": [
+          "Iquine"
+        ],
+        "colors_i": 2,
+        "colors_h": 0,
+        "colors_p": 0,
+        "shared_colors": [],
+        "shared_count": 0,
+        "shared_colors_clean": [],
+        "shared_count_clean": 0
+      },
+      {
+        "line": "Zarcão",
+        "iquine": true,
+        "hidracor": true,
+        "hipercor": false,
+        "brands": [
+          "Iquine",
+          "Hidracor"
+        ],
+        "colors_i": 1,
+        "colors_h": 1,
+        "colors_p": 0,
+        "shared_colors": [
+          "Preto"
+        ],
+        "shared_count": 1,
+        "shared_colors_clean": [
+          "Preto"
+        ],
+        "shared_count_clean": 1
+      }
+    ],
+    "stats": {
+      "lines_all_three": 6,
+      "lines_two": 5,
+      "lines_exclusive": {
+        "Iquine": 4,
+        "Hidracor": 1,
+        "Hipercor": 0
+      }
+    }
+  }
+}
