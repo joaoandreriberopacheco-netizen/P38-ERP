@@ -41,6 +41,7 @@ import ImportadorPedidoCompra from './ImportadorPedidoCompra.jsx';
 import BannerStatusPedido from './BannerStatusPedido.jsx';
 import AnexosPedidoCompra from './AnexosPedidoCompra.jsx';
 import SolicitarEdicaoPDV from './SolicitarEdicaoPDV.jsx';
+import DiferencaPedidoCompraDialog from './DiferencaPedidoCompraDialog.jsx';
 import LancamentosCompraPanel from './LancamentosCompraPanel.jsx';
 import PainelCentralFinanceiroPedido from './PainelCentralFinanceiroPedido.jsx';
 import PedidoCompraLogisticaTab from './PedidoCompraLogisticaTab.jsx';
@@ -197,6 +198,9 @@ export default function PedidoCompraForm({
   const pendingAnexoImportRef = useRef(null);
   const anexoImportUploadedRef = useRef(false);
   const valorTotalBaseEdicaoRef = useRef(calcValorTotalPedidoCompra(pedido || {}));
+  const pendingAuthSaveRef = useRef(null);
+  const [diferencaDialogOpen, setDiferencaDialogOpen] = useState(false);
+  const [diferencaDialogCtx, setDiferencaDialogCtx] = useState(null);
   const [pedidoLogistica, setPedidoLogistica] = useState(pedido);
   const [abaPedidoDesktop, setAbaPedidoDesktop] = useState(abaInicial);
 
@@ -1051,6 +1055,9 @@ export default function PedidoCompraForm({
   );
 
   const solicitacaoEdicaoPendente = pedidoAtual?.status_aprovacao_financeira === 'Solicitação de Edição Pendente';
+  /** Com correção solicitada, compras pode editar itens sem reabrir cabeçalho/financeiro. */
+  const modoCorrecaoItens = solicitacaoEdicaoPendente;
+  const isItensLocked = Boolean(isLocked && !modoCorrecaoItens);
   const podeSolicitarCorrecao =
     !!pedido?.id &&
     isLocked &&
@@ -1116,7 +1123,43 @@ export default function PedidoCompraForm({
     }
   };
 
-  const handleAuthSuccess = async (authData, saveOptions = {}) => {
+  const handleDiferencaEscolha = async (resolucao) => {
+    const pending = pendingAuthSaveRef.current;
+    if (!pending) {
+      setDiferencaDialogOpen(false);
+      return;
+    }
+    pendingAuthSaveRef.current = null;
+    setDiferencaDialogOpen(false);
+    setDiferencaDialogCtx(null);
+    if (resolucao === 'cancelar') return;
+    const gerarAjusteFinanceiro = resolucao === 'ajuste_lancamento';
+    await handleAuthSuccess(pending.authData, pending.saveOptions, {
+      skipDiferencaPrompt: true,
+      gerarAjusteFinanceiro,
+    });
+  };
+
+  const handleCorrecaoSolicitadaSuccess = async () => {
+    setIsSolicitarEdicaoOpen(false);
+    setFormData((prev) => ({
+      ...prev,
+      status_aprovacao_financeira: 'Solicitação de Edição Pendente',
+    }));
+    setPedidoLogistica((prev) => ({
+      ...(prev || {}),
+      status_aprovacao_financeira: 'Solicitação de Edição Pendente',
+    }));
+    setAbaPedidoDesktop('itens');
+    await handlePedidoFinanceiroAtualizado();
+    toast({
+      title: 'Correção solicitada',
+      description: 'Ajuste quantidades e preços na aba Itens e salve. O financeiro só muda se o total for diferente.',
+      className: 'bg-amber-50 text-amber-900 dark:bg-amber-900/30 dark:text-amber-100',
+    });
+  };
+
+  const handleAuthSuccess = async (authData, saveOptions = {}, extra = {}) => {
     setIsSaving(true);
     
     try {
@@ -1128,25 +1171,26 @@ export default function PedidoCompraForm({
       const valorAnterior = roundToTwoDecimals(valorTotalBaseEdicaoRef.current || 0);
       const diferencaValor = roundToTwoDecimals(valorTotal - valorAnterior);
       const pedidoTemValorAlterado = Math.abs(diferencaValor) >= 0.01;
-      let gerarAjusteFinanceiro = false;
+      let gerarAjusteFinanceiro = extra.gerarAjusteFinanceiro === true;
 
-      if (pedido?.id && pedidoTemValorAlterado) {
+      if (!extra.skipDiferencaPrompt && pedido?.id && pedidoTemValorAlterado) {
         const lancsExistentes = await listarLancamentosPedidoCompra(base44, pedido.id);
-        if (temLancamentoPagoParaPedido(lancsExistentes)) {
-          const valorAbs = Math.abs(diferencaValor);
-          const direcao = diferencaValor > 0 ? 'a pagar' : 'a receber';
-          const confirmouAjuste = window.confirm(
-            `Este pedido já tem parcelas pagas.\n\n` +
-            `Valor anterior: R$ ${valorAnterior.toFixed(2)}\n` +
-            `Novo valor: R$ ${roundToTwoDecimals(valorTotal).toFixed(2)}\n` +
-            `Diferença ${direcao}: R$ ${valorAbs.toFixed(2)}\n\n` +
-            `Deseja salvar e gerar automaticamente a conta ${direcao}?`
-          );
-          if (!confirmouAjuste) {
-            setIsSaving(false);
-            return;
-          }
-          gerarAjusteFinanceiro = true;
+        const temVinculoFinanceiro =
+          (lancsExistentes?.length ?? 0) > 0 ||
+          temLancamentoPagoParaPedido(lancsExistentes) ||
+          evidenciaAprovacaoFinanceiraProcessada(pedidoAtual, lancamentosPedido);
+
+        if (temVinculoFinanceiro) {
+          pendingAuthSaveRef.current = { authData, saveOptions };
+          setDiferencaDialogCtx({
+            valorAnterior,
+            valorNovo: roundToTwoDecimals(valorTotal),
+            diferencaValor,
+            temParcelasPagas: temLancamentoPagoParaPedido(lancsExistentes),
+          });
+          setDiferencaDialogOpen(true);
+          setIsSaving(false);
+          return;
         }
       }
 
@@ -1758,7 +1802,8 @@ export default function PedidoCompraForm({
                 onRemoveItem={handleRemoveItem}
                 formatCurrency={formatCurrency}
                 onOpenAdjustPrices={() => setShowAtualizarPrecos(true)}
-                isLocked={isLocked}
+                isLocked={isItensLocked}
+                modoCorrecaoItens={modoCorrecaoItens}
                 onProductCreated={(novoProduto) => {
                   setProdutos(prev => [...prev, novoProduto]);
                 }}
@@ -2024,7 +2069,24 @@ export default function PedidoCompraForm({
          isAdmin={currentUser?.role === 'admin'}
          isOpen={isSolicitarEdicaoOpen}
          onClose={() => setIsSolicitarEdicaoOpen(false)}
-         onSuccess={() => onClose()}
+         onSuccess={handleCorrecaoSolicitadaSuccess}
+       />
+
+       <DiferencaPedidoCompraDialog
+         open={diferencaDialogOpen}
+         onOpenChange={(open) => {
+           if (!open) {
+             pendingAuthSaveRef.current = null;
+             setDiferencaDialogCtx(null);
+           }
+           setDiferencaDialogOpen(open);
+         }}
+         valorAnterior={diferencaDialogCtx?.valorAnterior ?? 0}
+         valorNovo={diferencaDialogCtx?.valorNovo ?? 0}
+         diferencaValor={diferencaDialogCtx?.diferencaValor ?? 0}
+         temParcelasPagas={diferencaDialogCtx?.temParcelasPagas ?? false}
+         loading={isSaving}
+         onEscolher={handleDiferencaEscolha}
        />
 
        {/* Dialog Novo Fornecedor */}

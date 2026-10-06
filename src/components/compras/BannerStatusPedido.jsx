@@ -44,8 +44,8 @@ export default function BannerStatusPedido({ pedido, lancamentos = [], isMobile 
           <div className="text-xs text-amber-900 dark:text-amber-200">
             <span className="font-medium">Correção solicitada.</span>{' '}
             {isMobile
-              ? 'Aguarde o financeiro liberar a edição.'
-              : 'Libere a edição na aba Financeiro deste pedido ou em Aprovações Financeiras.'}
+              ? 'Na aba Itens você já pode ajustar quantidades e preços; salve quando terminar.'
+              : 'Na aba Itens, ajuste quantidades e preços e salve. O financeiro valida a solicitação em Aprovações ou na aba Financeiro.'}
           </div>
         </div>
       </div>

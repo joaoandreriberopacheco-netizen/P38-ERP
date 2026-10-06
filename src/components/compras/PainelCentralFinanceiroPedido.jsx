@@ -251,7 +251,7 @@ export default function PainelCentralFinanceiroPedido({ pedido, onPedidoAtualiza
           <div className="space-y-3">
             <div className="flex items-start gap-2 text-xs text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/20 rounded-xl px-3 py-2.5">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>Compras pediu correção. Libere a edição para reabrir o pedido em rascunho.</span>
+              <span>Compras pediu correção e pode ajustar itens. Libere a edição para reabrir cabeçalho e pagamento em rascunho, se necessário.</span>
             </div>
             <Button className="w-full rounded-xl" variant="secondary" onClick={handleLiberarEdicao} disabled={processando}>
               <Unlock className="w-4 h-4 mr-2" />

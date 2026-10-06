@@ -96,6 +96,7 @@ export default function MobileProductSelector({
   formatCurrency,
   onOpenAdjustPrices,
   isLocked,
+  modoCorrecaoItens = false,
   onProductCreated,
   onOpenImporter,
   onAddItemsBatch,
@@ -643,7 +644,17 @@ export default function MobileProductSelector({
         </div>
         
         <div className="flex-1 overflow-y-auto p-3 space-y-5 desktop-layout:mx-auto desktop-layout:w-full desktop-layout:max-w-2xl">
-          {isLocked && (
+          {modoCorrecaoItens && (
+            <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-900 dark:text-amber-200">
+                  <span className="font-medium">Correção de itens.</span> Altere quantidades e preços aqui. Ao salvar, o financeiro só muda se o total for diferente.
+                </p>
+              </div>
+            </div>
+          )}
+          {isLocked && !modoCorrecaoItens && (
             <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
               <div className="flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
