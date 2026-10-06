@@ -43,6 +43,14 @@ import {
   resolveFatorLinhaEmbarque as resolveFatorLinhaDespacho,
   resolveUnidadeLinha,
 } from '@/lib/embarqueVitrineHelpers';
+import {
+  PedidoCompraItensListaShell,
+  PedidoCompraItemLinhaCorpo,
+  PedidoCompraItemMetaChip,
+  PEDIDO_COMPRA_INPUT_QTD_CLASS,
+} from '@/components/compras/PedidoCompraItensListaP38';
+import { P38_CHIP_INACTIVE } from '@/components/financeiro/fluxo/financeiroP38';
+import { cn } from '@/lib/utils';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -869,7 +877,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                   </span>
                 </div>
 
-                <div className="space-y-2">
+                <PedidoCompraItensListaShell>
                   {(itensPedido || []).map(item => {
                     const produto = produtosMap[item.produto_id];
                     const linha = resolveUnidadeLinha(item, produto, unidadeLinha, item.produto_id);
@@ -886,20 +894,25 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                     const exibVitrine = getItemCompraExibicaoVitrine(item, produto);
 
                     return (
-                      <div
+                      <PedidoCompraItemLinhaCorpo
                         key={item.produto_id}
-                        className={`flex flex-col gap-2.5 rounded-xl px-4 py-3 transition-colors border ${selecionado ? 'bg-muted/50 border-border/40' : 'bg-muted/40/40 dark:bg-background/40 border-border/40 opacity-60'}`}
+                        className={cn(!selecionado && 'opacity-55')}
                       >
                         <div className="flex items-start gap-3">
                           <button
                             type="button"
                             onClick={() => toggleItem(item.produto_id)}
-                            className={`flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center transition-colors mt-0.5 ${selecionado ? 'bg-primary' : 'bg-muted'}`}
+                            className={cn(
+                              'flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center transition-colors mt-0.5',
+                              selecionado ? 'bg-[#4a5240] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]' : P38_CHIP_INACTIVE,
+                            )}
                           >
-                            {selecionado && <Check className="w-3 h-3 text-primary-foreground" />}
+                            {selecionado && <Check className="w-3 h-3" />}
                           </button>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-foreground leading-tight">{item.produto_nome}</p>
+                            <p className="text-[15px] font-semibold text-foreground leading-tight uppercase tracking-wide line-clamp-2">
+                              {item.produto_nome}
+                            </p>
                             {exibVitrine.unidade_medida !== (item.unidade_medida || '') && (
                               <p className="text-[10px] text-muted-foreground mt-0.5">
                                 Pedido em {item.unidade_medida || 'UN'} · vitrine {exibVitrine.unidade_medida}
@@ -910,7 +923,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                             <button
                               type="button"
                               onClick={() => setUnitSelector({ open: true, produtoId: item.produto_id, product: produto })}
-                              className="shrink-0 inline-flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-[10px] font-semibold text-cyan-700 dark:text-cyan-300 hover:bg-muted/80"
+                              className={cn('shrink-0 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-semibold', P38_CHIP_INACTIVE)}
                             >
                               <Boxes className="w-3 h-3" aria-hidden />
                               {linha.unidade}
@@ -922,35 +935,49 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                           )}
                         </div>
 
-                        <div className="flex items-center justify-between gap-3 pl-8">
-                          <p className="text-xs text-muted-foreground flex-1">
-                            Ped: <span className="font-medium">{formatCommercialQuantity(pedidaExib, linha.unidade)}</span> {linha.unidade}
-                            {pendenteExib < pedidaExib && (
-                              <span className="ml-1.5">· pend: {formatCommercialQuantity(pendenteExib, linha.unidade)}</span>
-                            )}
-                            {anteriorExib > 0 && (
-                              <span className="ml-1.5">· já emb: {formatCommercialQuantity(anteriorExib, linha.unidade)}</span>
-                            )}
-                            {excede && selecionado && <span className="ml-1.5 text-red-400">· excede!</span>}
-                          </p>
-                          <div className="flex-shrink-0 flex flex-col items-end gap-0.5">
-                            <Input
-                              type="text"
-                              inputMode="decimal"
-                              disabled={!selecionado}
-                              value={qtdEmbarque[item.produto_id] ?? ''}
-                              onFocus={(e) => e.target.select()}
-                              onChange={e => setQtdEmbarque(prev => ({ ...prev, [item.produto_id]: e.target.value.replace(',', '.') }))}
-                              className={`w-14 h-8 text-xs text-right rounded-lg bg-card dark:bg-muted text-foreground dark:text-foreground disabled:opacity-40 placeholder:text-muted-foreground px-2 border-0 shadow-sm ${excede && selecionado ? 'ring-1 ring-red-400' : ''}`}
-                              placeholder="0"
-                            />
-                            <span className="text-[9px] text-muted-foreground uppercase">{linha.unidade}</span>
-                          </div>
+                        <div className="flex flex-wrap items-center gap-2 pl-8">
+                          <PedidoCompraItemMetaChip tone="muted">
+                            Ped {formatCommercialQuantity(pedidaExib, linha.unidade)} {linha.unidade}
+                          </PedidoCompraItemMetaChip>
+                          {pendenteExib < pedidaExib && (
+                            <PedidoCompraItemMetaChip tone="warning">
+                              Pend {formatCommercialQuantity(pendenteExib, linha.unidade)}
+                            </PedidoCompraItemMetaChip>
+                          )}
+                          {anteriorExib > 0 && (
+                            <PedidoCompraItemMetaChip tone="info">
+                              Já emb {formatCommercialQuantity(anteriorExib, linha.unidade)}
+                            </PedidoCompraItemMetaChip>
+                          )}
+                          {excede && selecionado && (
+                            <PedidoCompraItemMetaChip tone="danger">Excede</PedidoCompraItemMetaChip>
+                          )}
                         </div>
-                      </div>
+
+                        <div className="flex items-center justify-between gap-3 pl-8">
+                          <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+                            Qtd embarque
+                          </span>
+                          <Input
+                            type="text"
+                            inputMode="decimal"
+                            disabled={!selecionado}
+                            value={qtdEmbarque[item.produto_id] ?? ''}
+                            onFocus={(e) => e.target.select()}
+                            onChange={e => setQtdEmbarque(prev => ({ ...prev, [item.produto_id]: e.target.value.replace(',', '.') }))}
+                            className={cn(
+                              'w-24 h-11 text-base text-center tabular-nums',
+                              PEDIDO_COMPRA_INPUT_QTD_CLASS,
+                              'disabled:opacity-40',
+                              excede && selecionado && 'ring-1 ring-red-400',
+                            )}
+                            placeholder="0"
+                          />
+                        </div>
+                      </PedidoCompraItemLinhaCorpo>
                     );
                   })}
-                </div>
+                </PedidoCompraItensListaShell>
               </TabsContent>
             </Tabs>
           </div>

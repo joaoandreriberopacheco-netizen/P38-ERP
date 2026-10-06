@@ -20,6 +20,10 @@ import {
   P38_SEARCH_SURFACE,
 } from '@/components/financeiro/fluxo/financeiroP38';
 import {
+  PedidoCompraItensListaShell,
+  PedidoCompraItemLinhaResumo,
+} from '@/components/compras/PedidoCompraItensListaP38';
+import {
   buildPurchaseUnitOptions,
   pickDefaultPurchaseUnit,
   calculateBaseQuantity,
@@ -1308,58 +1312,39 @@ export default function MobileProductSelector({
             </Button>
           </div>
         ) : (
-          <div className="space-y-3">
+          <PedidoCompraItensListaShell>
             {sortedItems.map((item, index) => {
               const originalIndex = items.findIndex(i => (i.item_key || getItemUnitKey(i.produto_id, i.unidade_medida || 'UN')) === (item.item_key || getItemUnitKey(item.produto_id, item.unidade_medida || 'UN')));
               const produtoItem = products.find((p) => p.id === item.produto_id);
               const exibVitrine = getItemCompraExibicaoVitrine(item, produtoItem);
               return (
-              <div 
-                key={originalIndex} 
-                onClick={() => {
-                  if (!isLocked) handleEditItem(originalIndex);
-                }}
-                className={cn(
-                  'rounded-2xl p-5 cursor-pointer transition-all active:scale-[0.99]',
-                  P38_FIELD_SURFACE,
-                )}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-base font-medium text-foreground mb-2 line-clamp-2 leading-snug">
-                      {item.produto_nome || "Produto"}
-                    </div>
-                    <div className="text-sm text-muted-foreground mb-2">
-                      {exibVitrine.quantidade_formatada} {exibVitrine.unidade_medida} × {formatCurrency(exibVitrine.preco_unitario)}
-                    </div>
-                    {produtoItem && (
-                      <CatalogProductStockLine product={produtoItem} className="mb-2" />
-                    )}
-                    <div className="flex justify-between items-center pt-2 border-t border-border/15 dark:border-white/10">
-                      <span className="text-xs text-muted-foreground">Total</span>
-                      <span className={cn('font-bold text-base', P38_ACCENT)}>
-                        {formatCurrency(item.total || 0)}
-                      </span>
-                    </div>
-                  </div>
-                  {!isLocked && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-9 w-9 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onRemoveItem(originalIndex);
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-            );
+                <PedidoCompraItemLinhaResumo
+                  key={originalIndex}
+                  striped={index % 2 === 1}
+                  nome={item.produto_nome || 'Produto'}
+                  detalhe={`${exibVitrine.quantidade_formatada} ${exibVitrine.unidade_medida} × ${formatCurrency(exibVitrine.preco_unitario)}`}
+                  meta={produtoItem ? <CatalogProductStockLine product={produtoItem} className="mt-0.5" /> : null}
+                  totalFormatado={formatCurrency(item.total || 0)}
+                  onClick={!isLocked ? () => handleEditItem(originalIndex) : undefined}
+                  trailing={
+                    !isLocked ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRemoveItem(originalIndex);
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    ) : null
+                  }
+                />
+              );
             })}
-          </div>
+          </PedidoCompraItensListaShell>
         )}
       </div>
 

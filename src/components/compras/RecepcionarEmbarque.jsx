@@ -38,6 +38,14 @@ import {
 } from '@/lib/p38StockRecalc';
 import { buildMovimentacaoRecepcaoCompraPayload } from '@/lib/movimentacaoRecepcaoCompra';
 import { reverterRecepcaoEmbarque } from '@/lib/reverterRecepcaoEmbarque';
+import {
+  PedidoCompraItensListaShell,
+  PedidoCompraItemLinhaCorpo,
+  PedidoCompraItemMetaChip,
+  PEDIDO_COMPRA_INPUT_QTD_CLASS,
+} from '@/components/compras/PedidoCompraItensListaP38';
+import { P38_CHIP_INACTIVE, P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
+import { cn } from '@/lib/utils';
 import { buildItensCanonicosEmbarque } from '@/lib/buildEmbarqueItensCanonicos';
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
 import { hydrateEmbarquesFromSql, getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
@@ -597,7 +605,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
                     variant="outline"
                     size="sm"
                     onClick={copiarQuantidadesEmbarcado}
-                    className="h-9 rounded-xl border-0 bg-muted text-foreground hover:bg-muted dark:hover:bg-muted shrink-0"
+                    className={cn('h-9 rounded-xl border-0 shrink-0 font-din-1451', P38_CHIP_INACTIVE)}
                   >
                     <Copy className="w-3.5 h-3.5 mr-1.5" />
                     Igual ao embarcado
@@ -610,6 +618,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
                     Por defeito, a quantidade recebida iguala ao embarcado — ajuste só em caso de falta ou divergência.
                   </p>
                 )}
+              <PedidoCompraItensListaShell>
               {itens.map((item, idx) => {
                 const hasDivergencia = item.divergencia_tipo !== 'Nenhuma';
                 const produto = produtosMap[item.produto_id];
@@ -618,18 +627,19 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
                 const qEmbApres = quantidadeApresentacaoEmbarqueItem(item, linha);
                 const podeTrocarUnidade = produto && hasAlternativeUnits(produto) && buildPurchaseUnitOptions(produto).length > 1;
                 return (
-                  <div key={idx} className="bg-muted/50/50 rounded-2xl p-5 space-y-4 shadow-sm">
-                    {/* Produto */}
+                  <PedidoCompraItemLinhaCorpo key={item.produto_id || idx}>
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <p className="text-base font-semibold text-foreground leading-snug">
+                        <p className="text-[15px] font-semibold text-foreground leading-snug uppercase tracking-wide line-clamp-2">
                           {item.produto_nome}
                         </p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Embarcado:{' '}
-                          <span className="font-medium text-foreground">
-                            {formatCommercialQuantity(qEmbApres, linha.unidade)} {linha.unidade}
-                          </span>
+                        <p className="text-xs text-muted-foreground mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <PedidoCompraItemMetaChip tone="info">
+                            Embarcado {formatCommercialQuantity(qEmbApres, linha.unidade)} {linha.unidade}
+                          </PedidoCompraItemMetaChip>
+                          {hasDivergencia && (
+                            <PedidoCompraItemMetaChip tone="warning">Divergência</PedidoCompraItemMetaChip>
+                          )}
                         </p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
@@ -637,7 +647,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
                           <button
                             type="button"
                             onClick={() => setUnitSelector({ open: true, produtoId: item.produto_id, product: produto })}
-                            className="inline-flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-[10px] font-semibold text-cyan-700 dark:text-cyan-300 hover:bg-muted/80"
+                            className={cn('inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-semibold', P38_CHIP_INACTIVE)}
                           >
                             <Boxes className="w-3 h-3" aria-hidden />
                             {linha.unidade}
@@ -653,10 +663,9 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
                       </div>
                     </div>
 
-                    {/* Quantidade Recebida */}
                     <div>
-                      <Label className="text-xs text-muted-foreground font-semibold block mb-2">
-                        Quantidade Recebida ({linha.unidade})
+                      <Label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold block mb-2">
+                        Quantidade recebida ({linha.unidade})
                       </Label>
                       <Input
                         type="text"
@@ -665,41 +674,41 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
                         onFocus={(e) => e.target.select()}
                         onChange={e => handleQuantidadeChange(idx, e.target.value)}
                         disabled={isReadOnly}
-                        className="h-14 text-lg bg-card border-0 rounded-xl shadow-sm font-semibold text-foreground text-center placeholder:text-muted-foreground disabled:opacity-60 disabled:cursor-not-allowed"
+                        className={PEDIDO_COMPRA_INPUT_QTD_CLASS}
                         placeholder="0"
                       />
                     </div>
 
-                    {/* Botão Divergência */}
                     <Button
                       onClick={() => abrirDivergencia(idx)}
                       disabled={isReadOnly}
                       variant={hasDivergencia ? 'default' : 'outline'}
-                      className={`w-full h-12 text-sm font-semibold rounded-xl transition-colors ${
-                        isReadOnly ? 'opacity-60 cursor-not-allowed' :
+                      className={cn(
+                        'w-full h-11 text-sm font-semibold rounded-xl transition-colors border-0',
+                        isReadOnly && 'opacity-60 cursor-not-allowed',
                         hasDivergencia
-                          ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-0'
-                          : 'border-0 bg-muted text-foreground/90 hover:bg-muted dark:hover:bg-muted'
-                      }`}
+                          ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200'
+                          : P38_CHIP_INACTIVE,
+                      )}
                     >
                       <AlertTriangle className="w-4 h-4 mr-2" />
-                      {hasDivergencia ? 'Divergência Registrada' : 'Registrar Divergência'}
+                      {hasDivergencia ? 'Divergência registrada' : 'Registrar divergência'}
                     </Button>
 
-                    {/* Aviso de divergência */}
                     {hasDivergencia && (
-                      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl p-3">
-                        <p className="text-sm text-red-700 dark:text-red-300 font-medium">
-                          {item.divergencia_tipo === 'Quantidade A Menor' && '⚠ Quantidade menor que embarcada'}
-                          {item.divergencia_tipo === 'Produto Diferente - Aceite' && `✓ Aceito: ${item.produto_nome_recebido_diferente}`}
-                          {item.divergencia_tipo === 'Produto Diferente - Rejeitado' && '✗ Produto rejeitado'}
-                          {item.divergencia_tipo === 'Produto Novo Recebido' && '✓ Novo produto'}
+                      <div className={cn('rounded-xl px-3 py-2.5 text-sm', P38_FIELD_SURFACE)}>
+                        <p className="text-amber-900 dark:text-amber-100 font-medium text-xs leading-relaxed">
+                          {item.divergencia_tipo === 'Quantidade A Menor' && 'Quantidade menor que embarcada'}
+                          {item.divergencia_tipo === 'Produto Diferente - Aceite' && `Aceito: ${item.produto_nome_recebido_diferente}`}
+                          {item.divergencia_tipo === 'Produto Diferente - Rejeitado' && 'Produto rejeitado'}
+                          {item.divergencia_tipo === 'Produto Novo Recebido' && 'Novo produto registrado'}
                         </p>
                       </div>
                     )}
-                  </div>
+                  </PedidoCompraItemLinhaCorpo>
                 );
               })}
+              </PedidoCompraItensListaShell>
             </div>
           </div>
 

@@ -3,6 +3,10 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Receipt, Truck, FileText, User, CalendarDays, Package } from 'lucide-react';
 import { normalizeItemCompraParaExibicao } from '@/lib/productUnits';
+import {
+  PedidoCompraItensListaShell,
+  PedidoCompraItemLinhaResumo,
+} from '@/components/compras/PedidoCompraItensListaP38';
 
 const formatCurrency = (value) => `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const formatDate = (value) => {
@@ -93,27 +97,24 @@ export default function PedidoCompraResumoDialog({ open, onOpenChange, pedido })
                 <Package className="w-4 h-4 text-muted-foreground" />
                 <h3 className="text-sm font-semibold text-foreground">Itens</h3>
               </div>
-              <div className="space-y-2">
-                {itens.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Nenhum item informado</p>
-                ) : (
-                  itens.map((rawItem, index) => {
+              {itens.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum item informado</p>
+              ) : (
+                <PedidoCompraItensListaShell>
+                  {itens.map((rawItem, index) => {
                     const item = normalizarItemResumo(rawItem);
                     return (
-                    <div key={`${item.produto_id || item.produto_nome || 'item'}-${index}`} className="rounded-2xl bg-background/60 p-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-foreground dark:text-foreground">{item.produto_nome || 'Item'}</p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {formatNumber(item.quantidade)} {item.unidade_medida || 'UN'} × {formatCurrency(item.custo_unitario || 0)}
-                          </p>
-                        </div>
-                        <p className="text-sm font-semibold text-foreground dark:text-foreground whitespace-nowrap">{formatCurrency(item.total || 0)}</p>
-                      </div>
-                    </div>
-                  );})
-                )}
-              </div>
+                      <PedidoCompraItemLinhaResumo
+                        key={`${item.produto_id || item.produto_nome || 'item'}-${index}`}
+                        striped={index % 2 === 1}
+                        nome={item.produto_nome || 'Item'}
+                        detalhe={`${formatNumber(item.quantidade)} ${item.unidade_medida || 'UN'} × ${formatCurrency(item.custo_unitario || 0)}`}
+                        totalFormatado={formatCurrency(item.total || 0)}
+                      />
+                    );
+                  })}
+                </PedidoCompraItensListaShell>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
