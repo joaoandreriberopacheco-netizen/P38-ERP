@@ -8,6 +8,7 @@ const SKUS_COMPLETO = path.join(process.cwd(), 'docs', 'exports', 'P38-catalogo-
 
 const SHEET_CAMINHO_4 = 'Caminho_4';
 const SHEET_CATALOGO = 'Catalogo_atual';
+const SHEET_4X3 = 'Catalogo_4x3';
 
 const CAMINHO_4_COLS = [
   { key: 'codigo_interno', label: 'Cód. interno', width: 14 },
@@ -20,6 +21,24 @@ const CAMINHO_4_COLS = [
 
 const CATALOGO_COLS = [
   { key: 'codigo_interno', label: 'Cód. interno', width: 14 },
+  { key: 'comp1', label: 'comp1', width: 28 },
+  { key: 'comp2', label: 'comp2', width: 18 },
+  { key: 'comp3', label: 'comp3', width: 18 },
+  { key: 'camp_hier_1', label: 'Camp hier 1', width: 24 },
+  { key: 'camp_hier_2', label: 'Camp hier 2', width: 20 },
+  { key: 'camp_hier_3', label: 'Camp hier 3', width: 20 },
+  { key: 'camp_hier_4', label: 'Camp hier 4', width: 20 },
+  { key: 'camp_hier_5', label: 'Camp hier 5', width: 20 },
+];
+
+/** Caminho 4× + comp 3× + Camp hier — aba única. */
+const CATALOGO_4X3_COLS = [
+  { key: 'codigo_interno', label: 'Cód. interno', width: 14 },
+  { key: 'codigo_4x', label: 'Código caminho 4', width: 14 },
+  { key: 'etapa', label: 'Etapa', width: 18 },
+  { key: 'categoria', label: 'Categoria', width: 22 },
+  { key: 'subcategoria', label: 'Subcategoria', width: 20 },
+  { key: 'linha', label: 'Linha', width: 22 },
   { key: 'comp1', label: 'comp1', width: 28 },
   { key: 'comp2', label: 'comp2', width: 18 },
   { key: 'comp3', label: 'comp3', width: 18 },
@@ -129,7 +148,7 @@ function writeDataSheet(wb, name, cols, rows) {
 }
 
 /**
- * TurboCharger v2 — duas abas de trabalho (+ README).
+ * TurboCharger v2 — três abas de trabalho (+ README).
  * @param {object[]} factRows — normalizados (4×3)
  * @param {Map<string, object>} campHierByCod
  */
@@ -148,7 +167,11 @@ export function buildTurboChargerV2Workbook(factRows, campHierByCod = new Map())
       SHEET_CATALOGO,
       'Catálogo actual: comp1 · comp2 · comp3 + Camp hier 1–5 (cadastro Supabase; células podem ficar vazias)',
     ],
-    ['Regenerar', 'npm run turbocharger:generate:v2  (ou --v2 --with-supabase)'],
+    [
+      SHEET_4X3,
+      '4×3 completo: Caminho_4 + Catalogo_atual numa só aba (uma linha por SKU)',
+    ],
+    ['Regenerar', 'npm run turbocharger:generate:v2  (ou --with-supabase)'],
     ['Gerado em', new Date().toISOString()],
   ];
   lines.forEach(([a, b], i) => {
@@ -181,8 +204,29 @@ export function buildTurboChargerV2Workbook(factRows, campHierByCod = new Map())
     };
   });
 
+  const catalogo4x3Rows = factRows.map((r) => {
+    const h = campHierByCod.get(r.codigo_interno) || {};
+    return {
+      codigo_interno: r.codigo_interno,
+      codigo_4x: r.codigo_4x ?? '',
+      etapa: r.etapa ?? '',
+      categoria: r.categoria ?? '',
+      subcategoria: r.subcategoria ?? '',
+      linha: r.linha ?? '',
+      comp1: r.comp1 ?? '',
+      comp2: r.comp2 ?? '',
+      comp3: r.comp3 ?? '',
+      camp_hier_1: h.camp_hier_1 ?? '',
+      camp_hier_2: h.camp_hier_2 ?? '',
+      camp_hier_3: h.camp_hier_3 ?? '',
+      camp_hier_4: h.camp_hier_4 ?? '',
+      camp_hier_5: h.camp_hier_5 ?? '',
+    };
+  });
+
   writeDataSheet(wb, SHEET_CAMINHO_4, CAMINHO_4_COLS, caminhoRows);
   writeDataSheet(wb, SHEET_CATALOGO, CATALOGO_COLS, catalogoRows);
+  writeDataSheet(wb, SHEET_4X3, CATALOGO_4X3_COLS, catalogo4x3Rows);
 
   return wb;
 }

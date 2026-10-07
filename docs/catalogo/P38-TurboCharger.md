@@ -123,6 +123,7 @@ npm run turbocharger:generate:full     # + preenche SKU_Completo via DATABASE_UR
 |-----|----------|
 | `Caminho_4` | `Cód. interno` · `Código caminho 4` · Etapa · Categoria · Subcategoria · Linha |
 | `Catalogo_atual` | `Cód. interno` · comp1 · comp2 · comp3 · Camp hier 1–5 |
+| `Catalogo_4x3` | **Junção** das duas abas — caminho 4× + comp 3× + Camp hier (uma linha por SKU) |
 
 Camp hier vêm do Supabase (`--with-supabase`) ou do export `P38-catalogo-skus-completo.xlsx` quando existir. Células vazias são normais.
 
