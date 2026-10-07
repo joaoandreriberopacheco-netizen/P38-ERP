@@ -106,7 +106,7 @@ export function parseTintaoPdfs(pathsOrDir) {
     files = pathsOrDir;
   } else if (fs.statSync(pathsOrDir).isDirectory()) {
     files = fs.readdirSync(pathsOrDir)
-      .filter((f) => /^LISTA_DE_.*\.PDF$/i.test(f))
+      .filter((f) => /\.pdf$/i.test(f))
       .map((f) => path.join(pathsOrDir, f));
   } else {
     files = [pathsOrDir];

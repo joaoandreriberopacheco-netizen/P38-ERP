@@ -116,7 +116,8 @@ function splitGluedToken(t) {
   return m ? m[1] : t;
 }
 
-const STRIP_NOISE_RE = /\b(RT|HD|PEI\d*|LD|LC|JU|P|BOLD|BRILH\w*|MAT\w*|POL\w*|SEMI\w*|ANTI\w*|AD|RELEV\/?\/?OUTS?\w*|RELEVO|OUTSIDE|EXT|PE|ACETINADO|CX[\d,.]*M2?|EXTRA|F-\d+)\b/gi;
+// POL/MATE só como abreviatura — não remover POLAR, POLIDO (nome), MATTE (modelo), etc.
+const STRIP_NOISE_RE = /\b(RT|HD|PEI\d*|LD|LC|JU|P|BOLD|BRILH\w*|MATE|\bMAT\b|POLIDO|\bPOL\b|SEMI\w*|ANTI\w*|AD|RELEV\/?\/?OUTS?\w*|RELEVO|OUTSIDE|EXT|PE|ACETINADO|CX[\d,.]*M2?|EXTRA|F-\d+)\b/gi;
 const TOKEN_NOISE_RE = /^(PEI\d*|HD\d*|CX[\d,.]*M2?|\d{4}PE|\d+[,.]?\d*M2|\d+D?|F\d+|EXTRA|USUARIO|USUÁRIO|IMPRESSO|SIAH|SOFTWARE|JOSI)$/i;
 
 /** Códigos de cor na lista Tintão → palavras no título Formigres. */
@@ -139,6 +140,9 @@ const COR_MAP = {
   PRETO: ['PRETO', 'PR'],
   PR: ['PRETO', 'PR'],
   BP: ['BP', 'BRANCO', 'PRETO'],
+  BLACK: ['BLACK', 'NERO', 'NE'],
+  NERO: ['BLACK', 'NERO', 'NE'],
+  NE: ['BLACK', 'NERO', 'NE'],
   BRANCO: ['BRANCO', 'BR'],
   BR: ['BRANCO', 'BR'],
   CAFE: ['CAFE', 'CAFÉ', 'CF'],
@@ -167,6 +171,7 @@ function extractCorTokens(raw) {
     [/\bCL\b|\bCLARO\b/, 'CL'],
     [/\bGREY\b|\bGRAY\b/, 'GREY'],
     [/\bPRETO\b/, 'PR'],
+    [/\bBLACK\b|\bNERO\b|\bNE\b/, 'BLACK'],
     [/\bBRANCO\b/, 'BR'],
     [/\bBRILHANTE\b|\bBR\b(?![A-Z])/, 'BR'],
     [/\bCAFE\b|\bCAFÉ\b/, 'CAFE'],
