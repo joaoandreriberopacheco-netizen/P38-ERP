@@ -137,6 +137,8 @@
     "catalogo:4x3-client-manifest": "node scripts/build-catalogo-4x3-client-manifest.mjs",
     "turbocharger:generate": "node scripts/generate-p38-turbocharger.mjs",
     "turbocharger:generate:full": "node scripts/generate-p38-turbocharger.mjs --with-supabase",
+    "turbocharger:generate:v2": "node scripts/generate-p38-turbocharger-v2.mjs",
+    "turbocharger:generate:v2:full": "node scripts/generate-p38-turbocharger-v2.mjs --with-supabase",
     "modelo:seed-ceramica": "node scripts/seed-modelo-catalogo-ceramica.mjs",
     "formigres:enriquecer-pisos": "node scripts/enriquecer-pisos-formigres.mjs",
     "formigres:pdf-pisos": "node scripts/gerar-pdf-pisos-formigres.mjs",

@@ -115,6 +115,22 @@ npm run turbocharger:generate          # gera docs/exports/P38-TurboCharger.xlsx
 npm run turbocharger:generate:full     # + preenche SKU_Completo via DATABASE_URL
 ```
 
+## TurboCharger v2 (layout simplificado)
+
+**Ficheiro:** `docs/exports/P38-TurboCharger-v2.xlsx`
+
+| Aba | Conteúdo |
+|-----|----------|
+| `Caminho_4` | `Cód. interno` · `Código caminho 4` · Etapa · Categoria · Subcategoria · Linha |
+| `Catalogo_atual` | `Cód. interno` · comp1 · comp2 · comp3 · Camp hier 1–5 |
+
+Camp hier vêm do Supabase (`--with-supabase`) ou do export `P38-catalogo-skus-completo.xlsx` quando existir. Células vazias são normais.
+
+```bash
+npm run turbocharger:generate:v2
+npm run turbocharger:generate:v2:full
+```
+
 ## Estado
 
 - **Ficheiro:** `docs/exports/P38-TurboCharger.xlsx` (gerado pelo script)  
