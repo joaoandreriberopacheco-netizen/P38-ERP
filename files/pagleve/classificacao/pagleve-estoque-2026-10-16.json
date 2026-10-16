@@ -62,31 +62,35 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-001",
       "produto_url": "https://www.carmelofior.com.br/produto/gales-po-rt",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/78c20f4b45074e5d989140f9050a74ba.webp",
       "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/114cc27c48e9ff92db008742f321d570.webp",
-          "tipo": "principal"
-        },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/78c20f4b45074e5d989140f9050a74ba.webp",
           "tipo": "principal"
         },
         {
+          "url": "https://www.carmelofior.com.br/public/images/product/114cc27c48e9ff92db008742f321d570.webp",
+          "tipo": "ambiente"
+        },
+        {
           "url": "https://www.carmelofior.com.br/public/images/product/a234e3d58fa74cdcdf1a9ea48ec0eb38.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/b2e76baf66936d7631de8c5ae632f148.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/e5c6aa5d6ee97e9da1092973e15aa450.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/0c9de99063d27367fc02a289e40240b3.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/c30c6c26151472226d2b870106d4552f.webp",
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 54.9,
@@ -124,31 +128,27 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-002",
       "produto_url": "https://www.carmelofior.com.br/produto/sicilia-po-rt",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/8d01c5e4e9c0117a45476c9cd9828e22.webp",
       "imagens": [
         {
-          "url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
-          "tipo": "principal"
-        },
-        {
           "url": "https://www.carmelofior.com.br/public/images/product/8d01c5e4e9c0117a45476c9cd9828e22.webp",
-          "tipo": "principal"
+          "tipo": "ambiente"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/362d0a0dc2e94e0b941f76ea43734c28.webp",
-          "tipo": "principal"
+          "tipo": "ambiente"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/3a44c71745492339ee719b93922b7d4a.webp",
-          "tipo": "principal"
+          "tipo": "ambiente"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/bbd81670dca4759830f6db17f526fc68.webp",
-          "tipo": "principal"
+          "tipo": "ambiente"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/fb9dc6ab21dbe584ff38640761069587.webp",
-          "tipo": "principal"
+          "tipo": "ambiente"
         }
       ],
       "preco_m2": 54.9,
@@ -186,31 +186,35 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-003",
       "produto_url": "https://www.carmelofior.com.br/produto/breda-po-rt",
-      "imagem_url": "",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/1b07e7907613648f29c6d2877537b77f.webp",
       "imagens": [
         {
-          "url": "https://www.carmelofior.com.br/public/images/favicons/apple-icon-180x180.png",
+          "url": "https://www.carmelofior.com.br/public/images/product/1b07e7907613648f29c6d2877537b77f.webp",
           "tipo": "principal"
         },
         {
-          "url": "https://www.carmelofior.com.br/public/images/favicons/favicon-16x16.png",
-          "tipo": "principal"
+          "url": "https://www.carmelofior.com.br/public/images/product/dfc90eede9698bb502fbf585e91faf76.webp",
+          "tipo": "ambiente"
         },
         {
-          "url": "https://www.carmelofior.com.br/public/images/head/icon-br.jpg",
-          "tipo": "principal"
+          "url": "https://www.carmelofior.com.br/public/images/product/0472c4f46d2077f724d93114365543e4.webp",
+          "tipo": "detalhe"
         },
         {
-          "url": "https://www.carmelofior.com.br/public/images/head/icon-es.jpg",
-          "tipo": "principal"
+          "url": "https://www.carmelofior.com.br/public/images/product/f8e18dcb1b5b7acb4367ad1f6d8621cc.webp",
+          "tipo": "detalhe"
         },
         {
-          "url": "https://www.carmelofior.com.br/public/images/head/icon-en.jpg",
-          "tipo": "principal"
+          "url": "https://www.carmelofior.com.br/public/images/product/1cfbd215dc92d226d346e7a3aca7e4b5.webp",
+          "tipo": "detalhe"
         },
         {
-          "url": "https://www.carmelofior.com.br/public/images/icon-favorite.png",
-          "tipo": "principal"
+          "url": "https://www.carmelofior.com.br/public/images/product/37cfc4acb2a7d49b11e5e31d9868c00d.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/c012292c59e0be49b1f5d315c7a6c40e.webp",
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 54.9,
@@ -248,31 +252,35 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-004",
       "produto_url": "https://www.carmelofior.com.br/produto/bellavista-po-rt",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/83349ad6133adab0eb5f0807e95dfbda.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/4c9d472982e4970f0a07b4cbd65625d2.webp",
       "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/83349ad6133adab0eb5f0807e95dfbda.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/53cc1ca855ab1f8a79db6bd94bea5f35.webp",
-          "tipo": "principal"
-        },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/4c9d472982e4970f0a07b4cbd65625d2.webp",
           "tipo": "principal"
         },
         {
+          "url": "https://www.carmelofior.com.br/public/images/product/53cc1ca855ab1f8a79db6bd94bea5f35.webp",
+          "tipo": "ambiente"
+        },
+        {
           "url": "https://www.carmelofior.com.br/public/images/product/bb6704dc6a9c40af1f46a71aa94f61e3.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/d6f6875aca6fc051ac4552efdb23cf69.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/936237763baa1b66f59e28e5bf907fd3.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/43787608caeabf4fa4fa88b31808b964.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/62ec81916b0625bc60ac03d4bf50c20c.webp",
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 52,
@@ -310,31 +318,35 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-005",
       "produto_url": "https://www.carmelofior.com.br/produto/dacito-plus-mre-rt-90x90",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/7affd6031a67432bef9510f48f9c8785.webp",
       "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/da4a52a0ed2c9f875c631f2b3b03105c.webp",
-          "tipo": "principal"
-        },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/7affd6031a67432bef9510f48f9c8785.webp",
           "tipo": "principal"
         },
         {
+          "url": "https://www.carmelofior.com.br/public/images/product/da4a52a0ed2c9f875c631f2b3b03105c.webp",
+          "tipo": "ambiente"
+        },
+        {
           "url": "https://www.carmelofior.com.br/public/images/product/48577d6eaa8a959cf29c5b5a59df8ba9.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/aceb12edb2747c2cd0dd17cb0f97849c.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/70411272889347dcb0e197ff2aeb0691.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/5710b431e9b50fd525f9509cb26d5612.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/e19fc8c6d27ba0df4ee57dae0135f8df.webp",
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 45.9,
@@ -414,13 +426,8 @@
       "fabricante_grupo": "Grupo Rocha",
       "referencia": "INDF-007",
       "produto_url": "https://www.portalgruporocha.com.br/produtos/pr7020",
-      "imagem_url": "https://gruporocha.com.br/_og/d/c_Produto,title_PR7020,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9wcjcwMjAi,s_ww1kajqXrqDeGQAx.png",
-      "imagens": [
-        {
-          "url": "https://gruporocha.com.br/_og/d/c_Produto,title_PR7020,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9wcjcwMjAi,s_ww1kajqXrqDeGQAx.png",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 54.9,
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "33558",
@@ -456,13 +463,8 @@
       "fabricante_grupo": "Grupo Rocha",
       "referencia": "INDF-008",
       "produto_url": "https://www.portalgruporocha.com.br/produtos/r7007",
-      "imagem_url": "https://gruporocha.com.br/_og/d/c_Produto,title_R7007,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9yNzAwNyI,s_jTwtf0f3UjJCRwd1.png",
-      "imagens": [
-        {
-          "url": "https://gruporocha.com.br/_og/d/c_Produto,title_R7007,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9yNzAwNyI,s_jTwtf0f3UjJCRwd1.png",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 39.9,
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "33891",
@@ -540,19 +542,15 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-010",
       "produto_url": "https://www.carmelofior.com.br/produto/alaska-po-rt",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/1df7baac1138af1ed29dd0f010ac17fa.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/efc69e060c018ab783d01807080fb12a.webp",
       "imagens": [
         {
-          "url": "https://www.carmelofior.com.br/public/images/product/1df7baac1138af1ed29dd0f010ac17fa.webp",
+          "url": "https://www.carmelofior.com.br/public/images/product/efc69e060c018ab783d01807080fb12a.webp",
           "tipo": "principal"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/f1dc9592a55cab22a20e59d6323a3eea.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/efc69e060c018ab783d01807080fb12a.webp",
-          "tipo": "principal"
+          "tipo": "ambiente"
         }
       ],
       "preco_m2": 54.9,
@@ -590,31 +588,35 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-011",
       "produto_url": "https://www.carmelofior.com.br/produto/georgia-po-rt",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/cbee287444520c86ff59271e8e4278e3.webp",
       "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/02a5f5ba5adff3bb3be13c43f40882a1.webp",
-          "tipo": "principal"
-        },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/cbee287444520c86ff59271e8e4278e3.webp",
           "tipo": "principal"
         },
         {
+          "url": "https://www.carmelofior.com.br/public/images/product/02a5f5ba5adff3bb3be13c43f40882a1.webp",
+          "tipo": "ambiente"
+        },
+        {
           "url": "https://www.carmelofior.com.br/public/images/product/b992fb0ef76dc1e8ef14ff4133085661.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/01878e398c14f47dd964aab24ac5c61f.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/5cfe3b619d76e5e7628669e9c8f3db08.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/b7b28f19e62f945f5112b702ad3cf6ad.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/f7ad28956e3bb1c657b2a9a3aa47cc54.webp",
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 34.5,
@@ -828,31 +830,35 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-016",
       "produto_url": "https://www.carmelofior.com.br/produto/albury-plus-rt-90x90",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/e7c191d78ae78bfcd314935364db4889.webp",
       "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/ca199a714d09839b3c1589ca449a197c.webp",
-          "tipo": "principal"
-        },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/e7c191d78ae78bfcd314935364db4889.webp",
           "tipo": "principal"
         },
         {
+          "url": "https://www.carmelofior.com.br/public/images/product/ca199a714d09839b3c1589ca449a197c.webp",
+          "tipo": "ambiente"
+        },
+        {
           "url": "https://www.carmelofior.com.br/public/images/product/af807389d15bc861de2d8c4b3aab295a.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/cf65175da321fe9a7a4c5a96d07ac640.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/701bf38a5fd69fc6d0997640604132d0.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/58a9bf3be8c0f04e059ff83f73185645.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/9f33628135eb480a14446074a146c5b2.webp",
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 45.9,
@@ -890,31 +896,35 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-017",
       "produto_url": "https://www.carmelofior.com.br/produto/narbona-plus-rt-90x90",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/83349ad6133adab0eb5f0807e95dfbda.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/68ec9eee8e59db0ec57a74e5c9a17c66.webp",
       "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/83349ad6133adab0eb5f0807e95dfbda.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/88f3244e636907139c05d7395720a650.webp",
-          "tipo": "principal"
-        },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/68ec9eee8e59db0ec57a74e5c9a17c66.webp",
           "tipo": "principal"
         },
         {
+          "url": "https://www.carmelofior.com.br/public/images/product/88f3244e636907139c05d7395720a650.webp",
+          "tipo": "ambiente"
+        },
+        {
           "url": "https://www.carmelofior.com.br/public/images/product/ac73cdc88800eb652b01070f9d318a78.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/4520b4cbd3b32346a14da5315c3a34f2.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/17a452dc9f4785a44e6194ab80fa523c.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/b4e9a0110b635424845e7bbb19d6a1ee.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/faa010f7149c4b5a8179ab9cdb608d88.webp",
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 45.9,
@@ -952,31 +962,27 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-018",
       "produto_url": "https://www.carmelofior.com.br/produto/vinci-plus-mre-rt",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/83349ad6133adab0eb5f0807e95dfbda.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/4f3de85a813166331d3452ee385721c4.webp",
       "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/83349ad6133adab0eb5f0807e95dfbda.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/926822ad32850c8be28e9020490d5c35.webp",
-          "tipo": "principal"
-        },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/4f3de85a813166331d3452ee385721c4.webp",
           "tipo": "principal"
         },
         {
+          "url": "https://www.carmelofior.com.br/public/images/product/926822ad32850c8be28e9020490d5c35.webp",
+          "tipo": "ambiente"
+        },
+        {
           "url": "https://www.carmelofior.com.br/public/images/product/7d0d7a71fe9d2bc45fdb4d50392e4fd4.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/4db1fa6febf349f917a6bc4c020e27a4.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/424fd244c6991b3cbdae5eb94baf4e70.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 45.9,
@@ -1014,13 +1020,8 @@
       "fabricante_grupo": "Grupo Rocha",
       "referencia": "INDF-019",
       "produto_url": "https://www.portalgruporocha.com.br/produtos/r7004",
-      "imagem_url": "https://gruporocha.com.br/_og/d/c_Produto,title_R7004,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9yNzAwNCI,s_RUmYrt5TJHD4EKM4.png",
-      "imagens": [
-        {
-          "url": "https://gruporocha.com.br/_og/d/c_Produto,title_R7004,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9yNzAwNCI,s_RUmYrt5TJHD4EKM4.png",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 39.9,
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "34124",
@@ -1110,13 +1111,8 @@
       "fabricante_grupo": "Grupo Rocha",
       "referencia": "INDF-021",
       "produto_url": "https://www.portalgruporocha.com.br/produtos/pr7097",
-      "imagem_url": "https://gruporocha.com.br/_og/d/c_Produto,title_PR7097,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9wcjcwOTci,s_KhSPxE8Y1-uokMxV.png",
-      "imagens": [
-        {
-          "url": "https://gruporocha.com.br/_og/d/c_Produto,title_PR7097,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9wcjcwOTci,s_KhSPxE8Y1-uokMxV.png",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 54.9,
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "34137",
@@ -1152,13 +1148,8 @@
       "fabricante_grupo": "Grupo Rocha",
       "referencia": "INDF-022",
       "produto_url": "https://www.portalgruporocha.com.br/produtos/pr7099",
-      "imagem_url": "https://gruporocha.com.br/_og/d/c_Produto,title_PR7099,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9wcjcwOTki,s_AmNy6PEjZn7d4IB2.png",
-      "imagens": [
-        {
-          "url": "https://gruporocha.com.br/_og/d/c_Produto,title_PR7099,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9wcjcwOTki,s_AmNy6PEjZn7d4IB2.png",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 54.9,
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "34140",
@@ -1231,31 +1222,27 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "PEI LB",
       "produto_url": "https://www.carmelofior.com.br/produto/amon-plus-rt-90x90",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/8f3c6d7b5ca01ffffa573dd1b78afdff.webp",
       "imagens": [
         {
-          "url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
-          "tipo": "principal"
-        },
-        {
           "url": "https://www.carmelofior.com.br/public/images/product/8f3c6d7b5ca01ffffa573dd1b78afdff.webp",
-          "tipo": "principal"
+          "tipo": "ambiente"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/22ccb7ed50a390f9070b2e230d6b7bbf.webp",
-          "tipo": "principal"
+          "tipo": "ambiente"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/1f8bb396415acd8ef8036941bea4ac22.webp",
-          "tipo": "principal"
+          "tipo": "ambiente"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/f580f6c85f43c08c86a8c422b2b183ea.webp",
-          "tipo": "principal"
+          "tipo": "ambiente"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/6f057655b5461a62e2b66eb2d4ac9c79.webp",
-          "tipo": "principal"
+          "tipo": "ambiente"
         }
       ],
       "preco_m2": 45.9,
@@ -1489,13 +1476,8 @@
       "fabricante_grupo": "Lume Cerâmica",
       "referencia": "INDF-029",
       "produto_url": "https://lumeceramica.com.br/portfolio-item/pol-capadocia-62x119/",
-      "imagem_url": "https://lumeceramica.com.br/wp-content/uploads/2024/11/Pol-Alicante-Black-F1-1.jpg",
-      "imagens": [
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/11/Pol-Alicante-Black-F1-1.jpg",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 63.9,
       "preco_fonte": "siah_desc:75",
       "codigo_siah": "34431",
@@ -1531,41 +1513,8 @@
       "fabricante_grupo": "Lume Cerâmica",
       "referencia": "INDF-030",
       "produto_url": "https://lumeceramica.com.br/portfolio-item/pol-nero-portoro-45x89/",
-      "imagem_url": "https://lumeceramica.com.br/wp-content/uploads/2024/11/Padrao-Produtos-Site.jpg",
-      "imagens": [
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/11/Padrao-Produtos-Site.jpg",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/11/Pol-Nero-Portoro-F5.jpg",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/11/Prancheta-1.jpg",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/11/Prancheta-1-300x300.jpg",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/11/Prancheta-1-1024x1024.jpg",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/11/Prancheta-1-150x150.jpg",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/11/Prancheta-1-768x768.jpg",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/11/Prancheta-1-146x146.jpg",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 74.9,
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "34432",
@@ -1602,32 +1551,7 @@
       "referencia": "INDF-031",
       "produto_url": "https://lumeceramica.com.br/portfolio-item/monterrey-grigio-75x75/",
       "imagem_url": "",
-      "imagens": [
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2021/03/Lume-logo.png",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2021/03/Lume-logo@2x.png",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2021/06/Lume-logo-negativo-300x133.png",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2021/06/Lume-logo-negativo-260x115.png",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2021/06/Lume-logo-negativo-50x22.png",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2021/06/Lume-logo-negativo-150x66.png",
-          "tipo": "principal"
-        }
-      ],
+      "imagens": [],
       "preco_m2": 48.9,
       "preco_fonte": "siah_desc:65",
       "codigo_siah": "34435",
@@ -1663,41 +1587,8 @@
       "fabricante_grupo": "Lume Cerâmica",
       "referencia": "INDF-032",
       "produto_url": "https://lumeceramica.com.br/portfolio-item/pol-nero-portoro-75x75/",
-      "imagem_url": "https://lumeceramica.com.br/wp-content/uploads/2024/09/Pol-Nero-Portoro-F4.jpg",
-      "imagens": [
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/09/Pol-Nero-Portoro-F4.jpg",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/09/Site-1.jpg",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/09/Site.jpg",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/09/Site-300x300.jpg",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/09/Site-1024x1024.jpg",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/09/Site-150x150.jpg",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/09/Site-768x768.jpg",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/09/Site-146x146.jpg",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 72.9,
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "34436",
@@ -1733,31 +1624,35 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-033",
       "produto_url": "https://www.carmelofior.com.br/produto/venezia-po-rt",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/1df7baac1138af1ed29dd0f010ac17fa.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/241a65f7ef70a80b093a6975b427a6ae.webp",
       "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/1df7baac1138af1ed29dd0f010ac17fa.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/849ecf85a9caf25030e203ce331734d1.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/9d815631f72d6f771b03c4dab71d89fe.webp",
-          "tipo": "principal"
-        },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/241a65f7ef70a80b093a6975b427a6ae.webp",
           "tipo": "principal"
         },
         {
+          "url": "https://www.carmelofior.com.br/public/images/product/849ecf85a9caf25030e203ce331734d1.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/9d815631f72d6f771b03c4dab71d89fe.webp",
+          "tipo": "detalhe"
+        },
+        {
           "url": "https://www.carmelofior.com.br/public/images/product/ddea83f99377908621a20a7004f6896a.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/8962a8be8b78039cd9c3f32c2adc08ec.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/810dd1f1eeef3cd841990e7e397c0ceb.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/bd5bf227c3ea105b768c95f1364689bb.webp",
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 54.9,
@@ -1837,31 +1732,35 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-035",
       "produto_url": "https://www.carmelofior.com.br/produto/solaria-plus-rt-90x90",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/1df7baac1138af1ed29dd0f010ac17fa.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/5b8ea38868539b727ebc9d2b0c8f01db.webp",
       "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/1df7baac1138af1ed29dd0f010ac17fa.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/fb63bb17b9fca64b9128cc292a44ec65.webp",
-          "tipo": "principal"
-        },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/5b8ea38868539b727ebc9d2b0c8f01db.webp",
           "tipo": "principal"
         },
         {
+          "url": "https://www.carmelofior.com.br/public/images/product/fb63bb17b9fca64b9128cc292a44ec65.webp",
+          "tipo": "ambiente"
+        },
+        {
           "url": "https://www.carmelofior.com.br/public/images/product/104d7b2a1dae4c79611c692f4adadf23.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/ef4baa9eb5e25fbea2dae3492b55eb10.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/0b2796ee393053e846c7e9abc1ad1f16.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/ab146b0cc079b21c17c8fd24af19088a.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/12f269e32e13c912138a5d045ba81b7d.webp",
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 45.9,
@@ -1899,31 +1798,27 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-036",
       "produto_url": "https://www.carmelofior.com.br/produto/pissis-plus-mre-rt",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/1df7baac1138af1ed29dd0f010ac17fa.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/6950f89300bd0179f334c33c8388bce5.webp",
       "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/1df7baac1138af1ed29dd0f010ac17fa.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/cbc497d3f6e39a4b784225e5f34c6bf5.webp",
-          "tipo": "principal"
-        },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/6950f89300bd0179f334c33c8388bce5.webp",
           "tipo": "principal"
         },
         {
+          "url": "https://www.carmelofior.com.br/public/images/product/cbc497d3f6e39a4b784225e5f34c6bf5.webp",
+          "tipo": "ambiente"
+        },
+        {
           "url": "https://www.carmelofior.com.br/public/images/product/ad70dfa87f5438ae52856b5a7e558d55.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/e06cc3ed3ce1c1cf4974ee72a17fe018.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/910b88c8403d4f08a98b180ccbc84f61.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 45.9,
@@ -2011,31 +1906,35 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-038",
       "produto_url": "https://www.carmelofior.com.br/produto/sidney-plus-mre-rt-90x90",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/1df7baac1138af1ed29dd0f010ac17fa.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/c4a08cda0acaa45f07a22b81e4024057.webp",
       "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/1df7baac1138af1ed29dd0f010ac17fa.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/6a672a1cbd4738446e1fc026e99633a7.webp",
-          "tipo": "principal"
-        },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/c4a08cda0acaa45f07a22b81e4024057.webp",
           "tipo": "principal"
         },
         {
+          "url": "https://www.carmelofior.com.br/public/images/product/6a672a1cbd4738446e1fc026e99633a7.webp",
+          "tipo": "ambiente"
+        },
+        {
           "url": "https://www.carmelofior.com.br/public/images/product/4d97a4d8806ae0e8e70233f5a844601e.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/56048083d42caef0c0fad5138e35d6e6.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/9e74ca5806c66604c5ea14c7ed0366e2.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/107aa5630e937112c073179d63f141a5.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/f9530107d5eba564baf2ca4337e162ca.webp",
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 45.9,
@@ -2073,12 +1972,8 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-039",
       "produto_url": "https://www.carmelofior.com.br/produto/alaska-soft-rt-90x90",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/1df7baac1138af1ed29dd0f010ac17fa.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/77ef2138822455fc369cb0e649d969e4.webp",
       "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/1df7baac1138af1ed29dd0f010ac17fa.webp",
-          "tipo": "principal"
-        },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/77ef2138822455fc369cb0e649d969e4.webp",
           "tipo": "principal"
@@ -2156,13 +2051,8 @@
       "fabricante_grupo": "Lume Cerâmica",
       "referencia": "INDF-041",
       "produto_url": "https://lumeceramica.com.br/portfolio-item/legno-castanho-22x90/",
-      "imagem_url": "https://lumeceramica.com.br/wp-content/uploads/2024/06/LEGNO-CASTANHO-destaque-nv.jpg",
-      "imagens": [
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/06/LEGNO-CASTANHO-destaque-nv.jpg",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 51.9,
       "preco_fonte": "siah_desc:75",
       "codigo_siah": "34795",
@@ -2198,13 +2088,8 @@
       "fabricante_grupo": "Lume Cerâmica",
       "referencia": "INDF-042",
       "produto_url": "https://lumeceramica.com.br/portfolio-item/peroba/",
-      "imagem_url": "https://lumeceramica.com.br/wp-content/uploads/2026/07/Peroba-Perfil-Site.jpg",
-      "imagens": [
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2026/07/Peroba-Perfil-Site.jpg",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 49.9,
       "preco_fonte": "siah_desc:75",
       "codigo_siah": "34796",
@@ -2240,13 +2125,8 @@
       "fabricante_grupo": "Lume Cerâmica",
       "referencia": "INDF-043",
       "produto_url": "https://lumeceramica.com.br/portfolio-item/sugi-ban-carvalho-2/",
-      "imagem_url": "https://lumeceramica.com.br/wp-content/uploads/2026/07/Sugi-Ban-Perfil-Site.jpg",
-      "imagens": [
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2026/07/Sugi-Ban-Perfil-Site.jpg",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 51.9,
       "preco_fonte": "siah_desc:35",
       "codigo_siah": "34795",
@@ -2282,13 +2162,8 @@
       "fabricante_grupo": "Lume Cerâmica",
       "referencia": "INDF-044",
       "produto_url": "https://lumeceramica.com.br/portfolio-item/teca-natural-22x90/",
-      "imagem_url": "https://lumeceramica.com.br/wp-content/uploads/2024/06/TECA-NATURAL-destaque-nv.jpg",
-      "imagens": [
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/06/TECA-NATURAL-destaque-nv.jpg",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 49.9,
       "preco_fonte": "siah_desc:75",
       "codigo_siah": "34798",
@@ -3120,14 +2995,14 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "28897",
       "produto_url": "https://www.carmelofior.com.br/produto/riviera-branco-mate-37-59",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/83cef388c74b3d5861de546d20bfcffc.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/26ea2093013180ec813132ab556ec7fa.webp",
       "imagens": [
         {
-          "url": "https://www.carmelofior.com.br/public/images/product/83cef388c74b3d5861de546d20bfcffc.webp",
+          "url": "https://www.carmelofior.com.br/public/images/product/26ea2093013180ec813132ab556ec7fa.webp",
           "tipo": "principal"
         },
         {
-          "url": "https://www.carmelofior.com.br/public/images/product/0a78ad3f1486acce55098ade100c42f1.webp",
+          "url": "https://www.carmelofior.com.br/public/images/product/356337072985806ff99dd712ff42505d.webp",
           "tipo": "ambiente"
         }
       ],
@@ -3171,6 +3046,30 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/eff45154d7e4dba0d081dca54537b316.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/a5397ae82b502e1d836d8c69b3f65eb7.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/41ec701542b78ba6cf9c72da20722bc5.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/82eac5cdee88fbe44a5fa2dba6085ab9.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/9c0647c5ff778068f819fba0d4a66d39.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/79b8c4c2159d3220e9b602663bee1568.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/ad9f3a001863c7b647fd6f686e92b376.webp",
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 32.9,
@@ -3213,6 +3112,30 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/5d2cbba13c6bd962db2e2587aaef8436.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/62b9b3285d154811340ed7bd37f1bee6.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/c1376539c09f3f92b9ed0342e8955bf8.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/84413a4d99c6cb4b8247ce478b942506.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/0d1bda008836163d49238e740fe841cd.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/34b90e91f5346e117511031d046d4ec2.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/7a951a7fdd68ef0da58d15038fe5d862.webp",
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 33.9,
@@ -3255,6 +3178,10 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/c0efd048ae6a0dac436f396640c5ec1f.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/800fdc7b68adbaab644e31cad9e3f31a.webp",
+          "tipo": "ambiente"
         }
       ],
       "preco_m2": 33.9,
@@ -4414,31 +4341,75 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-049",
       "produto_url": "https://www.carmelofior.com.br/produto/selah-white-lux-plus",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/4e6aea60808fec4bfca3f4bd8dd11e4e.webp",
       "imagens": [
         {
-          "url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
+          "url": "https://www.carmelofior.com.br/public/images/product/4e6aea60808fec4bfca3f4bd8dd11e4e.webp",
           "tipo": "principal"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/a37efab8cec0bebd3ced1ccc81735d59.webp",
-          "tipo": "principal"
+          "tipo": "ambiente"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/fbc27120cfaa2e94c3243cd0609a99d2.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/394d5c6daa1a8a853da37142089afbc0.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/7ce58306f6996d01f8d5966fec5a2ee8.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
-          "url": "https://www.carmelofior.com.br/public/images/product/4e6aea60808fec4bfca3f4bd8dd11e4e.webp",
-          "tipo": "principal"
+          "url": "https://www.carmelofior.com.br/public/images/product/9a72227319ef5ddadda0a50613011ae5.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/36f7f5c344e35143447eb83025bfb198.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/862b758847d748af75d8c5fb03f09d62.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/fd31a25edaf85e78992d7cfea1c307d6.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/200dd85d08558f0c0b53f8d2e9f6da90.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/e4c069aa65a90ebf177072ed0a66539d.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/148d4d5ea9bc9104d324f86e6ce8f8f0.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/37de69d8eda9e93a1434a9da4f695c67.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/dc76ffde9cd79d0c25cc4ec7094e21c3.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/bc766edc78330fcef6ba6c4474b1821e.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/5fe8e1ba0ec6629213c4af97721419af.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/27843ea270b7c580e72ea9c65f27cb9d.webp",
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 14.45,
@@ -4476,19 +4447,15 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-050",
       "produto_url": "https://www.carmelofior.com.br/produto/branco-neve-plus-38-75",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/73393396fa48fcd6aaa2c1a0a2cddcc3.webp",
       "imagens": [
         {
-          "url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
+          "url": "https://www.carmelofior.com.br/public/images/product/73393396fa48fcd6aaa2c1a0a2cddcc3.webp",
           "tipo": "principal"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/4decc387489c174f714595532f0da1c1.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/73393396fa48fcd6aaa2c1a0a2cddcc3.webp",
-          "tipo": "principal"
+          "tipo": "ambiente"
         }
       ],
       "preco_m2": 14.45,
@@ -4526,19 +4493,15 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-051",
       "produto_url": "https://www.carmelofior.com.br/produto/clean-plus-38-75",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/83349ad6133adab0eb5f0807e95dfbda.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/d095842097ce3c47c2afca7b57211d3b.webp",
       "imagens": [
         {
-          "url": "https://www.carmelofior.com.br/public/images/product/83349ad6133adab0eb5f0807e95dfbda.webp",
+          "url": "https://www.carmelofior.com.br/public/images/product/d095842097ce3c47c2afca7b57211d3b.webp",
           "tipo": "principal"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/ad374e9650a53bd61a2c2997d6c8fdf0.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/d095842097ce3c47c2afca7b57211d3b.webp",
-          "tipo": "principal"
+          "tipo": "ambiente"
         }
       ],
       "preco_m2": 14.45,
@@ -4576,31 +4539,35 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-052",
       "produto_url": "https://www.carmelofior.com.br/produto/selena-bege",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/1df7baac1138af1ed29dd0f010ac17fa.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/984649fe8bf265f646405787b4558a95.webp",
       "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/1df7baac1138af1ed29dd0f010ac17fa.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/c3b0e10b92ec4681d93219688dc15da6.webp",
-          "tipo": "principal"
-        },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/984649fe8bf265f646405787b4558a95.webp",
           "tipo": "principal"
         },
         {
+          "url": "https://www.carmelofior.com.br/public/images/product/c3b0e10b92ec4681d93219688dc15da6.webp",
+          "tipo": "ambiente"
+        },
+        {
           "url": "https://www.carmelofior.com.br/public/images/product/3e6c5fb0750f658feb412d3be1806c57.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/0f9fd3c273076a4851f9d1432efd443a.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/9968706347a20f0ced0bc3ebe9f32eee.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/8706c0159d5f83f0d940f53ebbf11853.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/6f740e22ee723134c406053384c9a27f.webp",
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 32,
@@ -5433,6 +5400,30 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/796405265a3b2ea9cd5472cd03be472c.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/4f0e760f918a717d080d7eac1eaf1aed.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/c80095c696459f31837e300b859e2471.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/efe48bc9bbeb2d579687f58a99fe61a3.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/229ab72d09a8ef26a24aabc5561ed504.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/8e8debdd2eba9ea608e97aa9be8838e4.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/7e5ff6723208be9df65b0ffdf0fdc294.webp",
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 32.9,
@@ -5533,6 +5524,30 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/fbd98c6d86e27e71f700725c967ac684.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/4f55d04ab53c86c59857eff5d27d3f4d.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/5c43eb3389d55e3176ca7ce661861302.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/a9fe57b37bbf8a5bee40c9b88257e98c.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/ff390bceae1bcb3134d8f9df06878284.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/ef0e0e483106b975d9f2314441841c39.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/a43f8a5c6b724cfa62775d154793a55b.webp",
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 33.9,
@@ -6072,6 +6087,10 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/4eedca51082768095d04bce9ea4596c5.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/30a8b5706c43a9724336b296083f382e.webp",
+          "tipo": "ambiente"
         }
       ],
       "preco_m2": 32.9,
@@ -6202,6 +6221,10 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/25a809b58cffd01818654d989cba3b58.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/1e6f73aa2631e43c3ef9cbe615c5c821.webp",
+          "tipo": "ambiente"
         }
       ],
       "preco_m2": 33.9,
@@ -7206,6 +7229,10 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/ed7e7d39b5118e2708b422c561bc84e7.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/64c662deb15d34aaf88271a523f3ad65.webp",
+          "tipo": "ambiente"
         }
       ],
       "preco_m2": 33.9,
@@ -7248,6 +7275,10 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/2c07c02ebf46f1668065afdb3ddd126f.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/d1eda54ed443ff550235858d0c121fa8.webp",
+          "tipo": "ambiente"
         }
       ],
       "preco_m2": 32.9,
@@ -8023,31 +8054,27 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "PEI LE",
       "produto_url": "https://www.carmelofior.com.br/produto/bolt-mre",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/83349ad6133adab0eb5f0807e95dfbda.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/4cca06ebec838c87dba437748cef7f36.webp",
       "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/83349ad6133adab0eb5f0807e95dfbda.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/48cd6dd36b9f1bb6d65f4054938badbb.webp",
-          "tipo": "principal"
-        },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/4cca06ebec838c87dba437748cef7f36.webp",
           "tipo": "principal"
         },
         {
+          "url": "https://www.carmelofior.com.br/public/images/product/48cd6dd36b9f1bb6d65f4054938badbb.webp",
+          "tipo": "ambiente"
+        },
+        {
           "url": "https://www.carmelofior.com.br/public/images/product/8f9cc5576c0a4a590f1ac4c29f4dd2c9.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/d8b8a9f98d2108c868beb7e7c29f4082.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/2f8809dc375eb92492165bb6d494c712.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 32,
@@ -8085,31 +8112,27 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-086",
       "produto_url": "https://www.carmelofior.com.br/produto/dritto-cinza-mre",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/6bab5cad5b1a81fa2f4fc0ff86b79c9c.webp",
       "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/c504b3fd6d3d4fa52114ae3ec816fbc0.webp",
-          "tipo": "principal"
-        },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/6bab5cad5b1a81fa2f4fc0ff86b79c9c.webp",
           "tipo": "principal"
         },
         {
+          "url": "https://www.carmelofior.com.br/public/images/product/c504b3fd6d3d4fa52114ae3ec816fbc0.webp",
+          "tipo": "ambiente"
+        },
+        {
           "url": "https://www.carmelofior.com.br/public/images/product/3243f11000982800fe2c3fe3cd6c56d4.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/3b808d40ede95b8025da4dbb9f395967.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/560d42bc49803859baba274583770afb.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 32,
@@ -8147,31 +8170,35 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "PEI LB",
       "produto_url": "https://www.carmelofior.com.br/produto/vino",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/83349ad6133adab0eb5f0807e95dfbda.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/963858dfa7f141448f71f6b3aea6d779.webp",
       "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/83349ad6133adab0eb5f0807e95dfbda.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/6fdb2e401451f9a83bd39cffd5198fdb.webp",
-          "tipo": "principal"
-        },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/963858dfa7f141448f71f6b3aea6d779.webp",
           "tipo": "principal"
         },
         {
+          "url": "https://www.carmelofior.com.br/public/images/product/6fdb2e401451f9a83bd39cffd5198fdb.webp",
+          "tipo": "ambiente"
+        },
+        {
           "url": "https://www.carmelofior.com.br/public/images/product/a572fa7ffa801b3faa8ca719e0dd063a.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/ee50707580087934a7b25b66b8b0d311.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/2eecad832196a50277797e21d4b9100f.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/46ccbb32999fcdbb6234cd2dbbe7b0e6.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/450a7659db0f44153d89d90c9f6ab806.webp",
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 32,
@@ -8209,31 +8236,27 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-088",
       "produto_url": "https://www.carmelofior.com.br/produto/melinda",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/a1e86df843a507f57b22a5a48c6cb60e.webp",
       "imagens": [
         {
-          "url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
-          "tipo": "principal"
-        },
-        {
           "url": "https://www.carmelofior.com.br/public/images/product/a1e86df843a507f57b22a5a48c6cb60e.webp",
-          "tipo": "principal"
+          "tipo": "ambiente"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/85a2fed91e7f75c60c6f0051646fdc90.webp",
-          "tipo": "principal"
+          "tipo": "ambiente"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/9c408160fd4c5b15928b5373d45b2c65.webp",
-          "tipo": "principal"
+          "tipo": "ambiente"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/17866fd6b0a09fa4f2a72eff7b809540.webp",
-          "tipo": "principal"
+          "tipo": "ambiente"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/4da97d66d24ccba5d34a450d8897166a.webp",
-          "tipo": "principal"
+          "tipo": "ambiente"
         }
       ],
       "preco_m2": 32,
@@ -8936,31 +8959,27 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "PEI LB",
       "produto_url": "https://www.carmelofior.com.br/produto/noble-57x57",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/83349ad6133adab0eb5f0807e95dfbda.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/4101346e7c34fc3de0008687ba9d8db9.webp",
       "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/83349ad6133adab0eb5f0807e95dfbda.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/55198d1db4e395cb4441b0a98557e1ee.webp",
-          "tipo": "principal"
-        },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/4101346e7c34fc3de0008687ba9d8db9.webp",
           "tipo": "principal"
         },
         {
+          "url": "https://www.carmelofior.com.br/public/images/product/55198d1db4e395cb4441b0a98557e1ee.webp",
+          "tipo": "ambiente"
+        },
+        {
           "url": "https://www.carmelofior.com.br/public/images/product/142adcfc232c95dace046df2f492854c.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/81b4435d4d9d3f0e02fc95484d3c68fd.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/64c5495a7fc62cace83b37854e172c76.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 32,
@@ -8998,31 +9017,27 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "PEI LD",
       "produto_url": "https://www.carmelofior.com.br/produto/theo",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/0520543f3acb30b8c3e563372061cd33.webp",
       "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/366bb8da2342258e117746601d55bb9c.webp",
-          "tipo": "principal"
-        },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/0520543f3acb30b8c3e563372061cd33.webp",
           "tipo": "principal"
         },
         {
+          "url": "https://www.carmelofior.com.br/public/images/product/366bb8da2342258e117746601d55bb9c.webp",
+          "tipo": "ambiente"
+        },
+        {
           "url": "https://www.carmelofior.com.br/public/images/product/bc575ce9173a8440e0f22b7168c306c4.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/5cedbed5781e9397feb3d59f4b133369.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/6a7b2d06defdbc6d884ca4018ac42aa9.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 32,
@@ -9060,31 +9075,27 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-106",
       "produto_url": "https://www.carmelofior.com.br/produto/minerati-mre",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/83349ad6133adab0eb5f0807e95dfbda.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/ecde11b9f61c4fef41cf93aea979b87c.webp",
       "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/83349ad6133adab0eb5f0807e95dfbda.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/ec343661fe43efdba53bf94d55ed3459.webp",
-          "tipo": "principal"
-        },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/ecde11b9f61c4fef41cf93aea979b87c.webp",
           "tipo": "principal"
         },
         {
+          "url": "https://www.carmelofior.com.br/public/images/product/ec343661fe43efdba53bf94d55ed3459.webp",
+          "tipo": "ambiente"
+        },
+        {
           "url": "https://www.carmelofior.com.br/public/images/product/81cd891b2fa6698cf18fae9683a8542b.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/7cbccced39b2d6b85b4d5d54fe31b09b.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/e2355f6e0f7fa5a9ef046239138af095.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 32,
@@ -9122,19 +9133,15 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-107",
       "produto_url": "https://www.carmelofior.com.br/produto/branco-neve-57x57",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/b6b0522dd57e8938f4181cf150ecefef.webp",
       "imagens": [
         {
-          "url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
+          "url": "https://www.carmelofior.com.br/public/images/product/b6b0522dd57e8938f4181cf150ecefef.webp",
           "tipo": "principal"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/71be8d1753b394813693ec8bfa08e605.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/b6b0522dd57e8938f4181cf150ecefef.webp",
-          "tipo": "principal"
+          "tipo": "ambiente"
         }
       ],
       "preco_m2": 32,
@@ -9401,19 +9408,15 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-113",
       "produto_url": "https://www.carmelofior.com.br/produto/branco-neve-57x57",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/b6b0522dd57e8938f4181cf150ecefef.webp",
       "imagens": [
         {
-          "url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
+          "url": "https://www.carmelofior.com.br/public/images/product/b6b0522dd57e8938f4181cf150ecefef.webp",
           "tipo": "principal"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/71be8d1753b394813693ec8bfa08e605.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/b6b0522dd57e8938f4181cf150ecefef.webp",
-          "tipo": "principal"
+          "tipo": "ambiente"
         }
       ],
       "preco_m2": 32,
@@ -9451,31 +9454,27 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-114",
       "produto_url": "https://www.carmelofior.com.br/produto/dritto-bege-mre",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/833ebe6d3b9a31877683c1282db40f4a.webp",
       "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/f43ab2e48d9aeea87f2fc997cd033f49.webp",
-          "tipo": "principal"
-        },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/833ebe6d3b9a31877683c1282db40f4a.webp",
           "tipo": "principal"
         },
         {
+          "url": "https://www.carmelofior.com.br/public/images/product/f43ab2e48d9aeea87f2fc997cd033f49.webp",
+          "tipo": "ambiente"
+        },
+        {
           "url": "https://www.carmelofior.com.br/public/images/product/3253c80e1ac0caff7c7460aa315e68cd.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/2cf8ad487d5f8edf1edaac8d2f09f9dc.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/72daa6cc5758e7adad7d6e8d280a9132.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 32,
@@ -9513,19 +9512,15 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "PEI LB",
       "produto_url": "https://www.carmelofior.com.br/produto/clean-57x57",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/83349ad6133adab0eb5f0807e95dfbda.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/efc69e060c018ab783d01807080fb12a.webp",
       "imagens": [
         {
-          "url": "https://www.carmelofior.com.br/public/images/product/83349ad6133adab0eb5f0807e95dfbda.webp",
+          "url": "https://www.carmelofior.com.br/public/images/product/efc69e060c018ab783d01807080fb12a.webp",
           "tipo": "principal"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/2d00dd650a7bdd2c9b8a47c74c318eaa.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/efc69e060c018ab783d01807080fb12a.webp",
-          "tipo": "principal"
+          "tipo": "ambiente"
         }
       ],
       "preco_m2": 32,
@@ -9607,19 +9602,15 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "PEI LA",
       "produto_url": "https://www.carmelofior.com.br/produto/alaska-plus-32-75",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/1df7baac1138af1ed29dd0f010ac17fa.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/2e4df2ab0743edf921b2dbb91aa03dae.webp",
       "imagens": [
         {
-          "url": "https://www.carmelofior.com.br/public/images/product/1df7baac1138af1ed29dd0f010ac17fa.webp",
+          "url": "https://www.carmelofior.com.br/public/images/product/2e4df2ab0743edf921b2dbb91aa03dae.webp",
           "tipo": "principal"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/3b2855097a8f052b5709a4944ab07048.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/2e4df2ab0743edf921b2dbb91aa03dae.webp",
-          "tipo": "principal"
+          "tipo": "ambiente"
         }
       ],
       "preco_m2": 31.9,
@@ -9657,31 +9648,27 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-118",
       "produto_url": "https://www.carmelofior.com.br/produto/selena-cinza",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/1df7baac1138af1ed29dd0f010ac17fa.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/2329b7e43d422befdab781e10dab3d68.webp",
       "imagens": [
         {
-          "url": "https://www.carmelofior.com.br/public/images/product/1df7baac1138af1ed29dd0f010ac17fa.webp",
-          "tipo": "principal"
-        },
-        {
           "url": "https://www.carmelofior.com.br/public/images/product/2329b7e43d422befdab781e10dab3d68.webp",
-          "tipo": "principal"
+          "tipo": "ambiente"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/db9621fda57189cc0a03521887537214.webp",
-          "tipo": "principal"
+          "tipo": "ambiente"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/9d6b85b605178940c076766aba382ec5.webp",
-          "tipo": "principal"
+          "tipo": "ambiente"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/262006febaf0f18dd8efd62a00790884.webp",
-          "tipo": "principal"
+          "tipo": "ambiente"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/bd49c9acf9faf296d05a73f3798b043a.webp",
-          "tipo": "principal"
+          "tipo": "ambiente"
         }
       ],
       "preco_m2": 31.9,
@@ -9719,31 +9706,27 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-119",
       "produto_url": "https://www.carmelofior.com.br/produto/alvor",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/1df7baac1138af1ed29dd0f010ac17fa.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/bd5103bf5fbbb13c5a3c3dc6b0332735.webp",
       "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/1df7baac1138af1ed29dd0f010ac17fa.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/1b4cc36ea2c71ebec97ff26783d50d3b.webp",
-          "tipo": "principal"
-        },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/bd5103bf5fbbb13c5a3c3dc6b0332735.webp",
           "tipo": "principal"
         },
         {
+          "url": "https://www.carmelofior.com.br/public/images/product/1b4cc36ea2c71ebec97ff26783d50d3b.webp",
+          "tipo": "ambiente"
+        },
+        {
           "url": "https://www.carmelofior.com.br/public/images/product/ebc9f0d52065183457be1abf45fabc18.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/f5771d44db2d5e8ad5a0176f9fce8160.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/8388e47da8b40e77ab249c6c4b9b6071.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 32,
@@ -9781,31 +9764,35 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-120",
       "produto_url": "https://www.carmelofior.com.br/produto/selena-cinza",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/1df7baac1138af1ed29dd0f010ac17fa.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/db9621fda57189cc0a03521887537214.webp",
       "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/1df7baac1138af1ed29dd0f010ac17fa.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/2329b7e43d422befdab781e10dab3d68.webp",
-          "tipo": "principal"
-        },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/db9621fda57189cc0a03521887537214.webp",
           "tipo": "principal"
         },
         {
+          "url": "https://www.carmelofior.com.br/public/images/product/2329b7e43d422befdab781e10dab3d68.webp",
+          "tipo": "ambiente"
+        },
+        {
           "url": "https://www.carmelofior.com.br/public/images/product/9d6b85b605178940c076766aba382ec5.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/262006febaf0f18dd8efd62a00790884.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/bd49c9acf9faf296d05a73f3798b043a.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/99c94b69e5a1b7f2ca624b9a12b95792.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/2e49001060bc36872cc98608eda27f4b.webp",
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 32,
@@ -9927,13 +9914,8 @@
       "fabricante_grupo": "Lume Cerâmica",
       "referencia": "34800",
       "produto_url": "https://lumeceramica.com.br/portfolio-item/pol-arcadia-62x119/",
-      "imagem_url": "https://lumeceramica.com.br/wp-content/uploads/2026/03/Pol-Arcadia-F5.png",
-      "imagens": [
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2026/03/Pol-Arcadia-F5.png",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 67.9,
       "preco_fonte": "siah_codigo",
       "codigo_siah": "34800",
@@ -9969,13 +9951,8 @@
       "fabricante_grupo": "Lume Cerâmica",
       "referencia": "34801",
       "produto_url": "https://lumeceramica.com.br/portfolio-item/pol-taurus-black-62x119/",
-      "imagem_url": "https://lumeceramica.com.br/wp-content/uploads/2025/03/Pol-Taurus-Black-F3.jpg",
-      "imagens": [
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2025/03/Pol-Taurus-Black-F3.jpg",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 63.9,
       "preco_fonte": "siah_desc:35",
       "codigo_siah": "34431",
@@ -10011,31 +9988,15 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "34860",
       "produto_url": "https://www.carmelofior.com.br/produto/alaska-po-rt",
-      "imagem_url": "",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/efc69e060c018ab783d01807080fb12a.webp",
       "imagens": [
         {
-          "url": "https://www.carmelofior.com.br/public/images/favicons/apple-icon-180x180.png",
+          "url": "https://www.carmelofior.com.br/public/images/product/efc69e060c018ab783d01807080fb12a.webp",
           "tipo": "principal"
         },
         {
-          "url": "https://www.carmelofior.com.br/public/images/favicons/favicon-16x16.png",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/head/icon-br.jpg",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/head/icon-es.jpg",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/head/icon-en.jpg",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/icon-favorite.png",
-          "tipo": "principal"
+          "url": "https://www.carmelofior.com.br/public/images/product/f1dc9592a55cab22a20e59d6323a3eea.webp",
+          "tipo": "ambiente"
         }
       ],
       "preco_m2": 52,
@@ -10073,13 +10034,8 @@
       "fabricante_grupo": "Lume Cerâmica",
       "referencia": "34988",
       "produto_url": "https://lumeceramica.com.br/portfolio-item/ripado-limestone-lux-62x119/",
-      "imagem_url": "https://lumeceramica.com.br/wp-content/uploads/2025/05/Ripado-Limestone-Lux-rotated.jpg",
-      "imagens": [
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2025/05/Ripado-Limestone-Lux-rotated.jpg",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 82.9,
       "preco_fonte": "siah_codigo",
       "codigo_siah": "34988",
@@ -10157,13 +10113,8 @@
       "fabricante_grupo": "Lume Cerâmica",
       "referencia": "34990",
       "produto_url": "https://lumeceramica.com.br/portfolio-item/avorio-cinza-76x76/",
-      "imagem_url": "https://lumeceramica.com.br/wp-content/uploads/2025/03/Pol-Avorio-Cinza-75x75-1.png",
-      "imagens": [
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2025/03/Pol-Avorio-Cinza-75x75-1.png",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 44.9,
       "preco_fonte": "siah_codigo",
       "codigo_siah": "34990",
@@ -10450,13 +10401,8 @@
       "fabricante_grupo": "Grupo Rocha",
       "referencia": "35046",
       "produto_url": "https://www.portalgruporocha.com.br/produtos/r7041",
-      "imagem_url": "https://gruporocha.com.br/_og/d/c_Produto,title_R7041,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9yNzA0MSI,s_KwYDQRngnsgNPtN3.png",
-      "imagens": [
-        {
-          "url": "https://gruporocha.com.br/_og/d/c_Produto,title_R7041,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9yNzA0MSI,s_KwYDQRngnsgNPtN3.png",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 41.9,
       "preco_fonte": "siah_codigo",
       "codigo_siah": "35046",
@@ -10492,13 +10438,8 @@
       "fabricante_grupo": "Grupo Rocha",
       "referencia": "35049",
       "produto_url": "https://www.portalgruporocha.com.br/produtos/r7042",
-      "imagem_url": "https://gruporocha.com.br/_og/d/c_Produto,title_R7042,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9yNzA0MiI,s_ND0LQ0SajExP4bVZ.png",
-      "imagens": [
-        {
-          "url": "https://gruporocha.com.br/_og/d/c_Produto,title_R7042,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9yNzA0MiI,s_ND0LQ0SajExP4bVZ.png",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 54.9,
       "preco_fonte": "siah_desc:35",
       "codigo_siah": "33558",
@@ -10781,13 +10722,8 @@
       "fabricante_grupo": "Grupo Rocha",
       "referencia": "35451",
       "produto_url": "https://www.portalgruporocha.com.br/produtos/organic-black",
-      "imagem_url": "https://gruporocha.com.br/_og/d/c_Produto,title_Organic+Black,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9vcmdhbmljLWJsYWNrIg,s_544kkUH2mOWaz7r-.png",
-      "imagens": [
-        {
-          "url": "https://gruporocha.com.br/_og/d/c_Produto,title_Organic+Black,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9vcmdhbmljLWJsYWNrIg,s_544kkUH2mOWaz7r-.png",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 61.9,
       "preco_fonte": "siah_codigo",
       "codigo_siah": "35451",
@@ -10944,13 +10880,8 @@
       "fabricante_grupo": "Grupo Rocha",
       "referencia": "35487",
       "produto_url": "https://www.portalgruporocha.com.br/produtos/loft-cinza-ext",
-      "imagem_url": "https://gruporocha.com.br/_og/d/c_Produto,title_Loft+Cinza+EXT,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9sb2Z0LWNpbnphLWV4dCI,s_q_uXLvs_VRfIPzux.png",
-      "imagens": [
-        {
-          "url": "https://gruporocha.com.br/_og/d/c_Produto,title_Loft+Cinza+EXT,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9sb2Z0LWNpbnphLWV4dCI,s_q_uXLvs_VRfIPzux.png",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 44.9,
       "preco_fonte": "siah_codigo",
       "codigo_siah": "35487",
@@ -11049,32 +10980,7 @@
       "referencia": "35507",
       "produto_url": "https://lumeceramica.com.br/portfolio-item/monterrey-grigio-75x75/",
       "imagem_url": "",
-      "imagens": [
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2021/03/Lume-logo.png",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2021/03/Lume-logo@2x.png",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2021/06/Lume-logo-negativo-300x133.png",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2021/06/Lume-logo-negativo-260x115.png",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2021/06/Lume-logo-negativo-50x22.png",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2021/06/Lume-logo-negativo-150x66.png",
-          "tipo": "principal"
-        }
-      ],
+      "imagens": [],
       "preco_m2": 48.9,
       "preco_fonte": "siah_codigo",
       "codigo_siah": "35507",
@@ -11110,13 +11016,8 @@
       "fabricante_grupo": "Lume Cerâmica",
       "referencia": "35508",
       "produto_url": "https://lumeceramica.com.br/portfolio-item/pol-patagonia-light-62x119/",
-      "imagem_url": "https://lumeceramica.com.br/wp-content/uploads/2026/03/Pol-Patagonia-Light-F6-rotated.jpg",
-      "imagens": [
-        {
-          "url": "https://lumeceramica.com.br/wp-content/uploads/2026/03/Pol-Patagonia-Light-F6-rotated.jpg",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 67.9,
       "preco_fonte": "siah_codigo",
       "codigo_siah": "35508",
@@ -11235,13 +11136,8 @@
       "fabricante_grupo": "Grupo Rocha",
       "referencia": "INDF-122",
       "produto_url": "https://www.portalgruporocha.com.br/produtos/r7074",
-      "imagem_url": "https://gruporocha.com.br/_og/d/c_Produto,title_R7074,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9yNzA3NCI,s_0zr03V5R_4Fy4jD0.png",
-      "imagens": [
-        {
-          "url": "https://gruporocha.com.br/_og/d/c_Produto,title_R7074,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9yNzA3NCI,s_0zr03V5R_4Fy4jD0.png",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 39.9,
       "preco_fonte": "siah_desc:75",
       "codigo_siah": "31355",
@@ -11331,13 +11227,8 @@
       "fabricante_grupo": "Grupo Rocha",
       "referencia": "INDF-124",
       "produto_url": "https://www.portalgruporocha.com.br/produtos/pr7081",
-      "imagem_url": "https://gruporocha.com.br/_og/d/c_Produto,title_PR7081,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9wcjcwODEi,s_RyaGftjK71rC9wuo.png",
-      "imagens": [
-        {
-          "url": "https://gruporocha.com.br/_og/d/c_Produto,title_PR7081,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9wcjcwODEi,s_RyaGftjK71rC9wuo.png",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 54.9,
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "31721",
@@ -11515,13 +11406,8 @@
       "fabricante_grupo": "Grupo Rocha",
       "referencia": "INDF-128",
       "produto_url": "https://www.portalgruporocha.com.br/produtos/r7060",
-      "imagem_url": "https://gruporocha.com.br/_og/d/c_Produto,title_R7060,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9yNzA2MCI,s_hGHXHnA7tVkfFMvH.png",
-      "imagens": [
-        {
-          "url": "https://gruporocha.com.br/_og/d/c_Produto,title_R7060,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9yNzA2MCI,s_hGHXHnA7tVkfFMvH.png",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 42,
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "31778",
@@ -11840,31 +11726,31 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-135",
       "produto_url": "https://www.carmelofior.com.br/produto/albury-soft-rt-90x90",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/41f50591b2f4bc084ff5218c750ae811.webp",
       "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/4ab3255959b89150f7845c92899e64af.webp",
-          "tipo": "principal"
-        },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/41f50591b2f4bc084ff5218c750ae811.webp",
           "tipo": "principal"
         },
         {
+          "url": "https://www.carmelofior.com.br/public/images/product/4ab3255959b89150f7845c92899e64af.webp",
+          "tipo": "ambiente"
+        },
+        {
           "url": "https://www.carmelofior.com.br/public/images/product/e64dae6d8807729d36ba0fc083faeb2c.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/c75cd98c24a6621c34bc11e95ef76064.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/d7b8e117a5161afbf13439892c01edc0.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/1d889e39fb4f7f11bf66cbe2b09a3434.webp",
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 45.9,
@@ -11902,31 +11788,27 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-136",
       "produto_url": "https://www.carmelofior.com.br/produto/elemento-cinza-plus-rt-90x90",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/08aaa1cc156102dbf44a49757ed7a507.webp",
       "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/fdc699267b8d381e1a302ed9182f4ce6.webp",
-          "tipo": "principal"
-        },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/08aaa1cc156102dbf44a49757ed7a507.webp",
           "tipo": "principal"
         },
         {
+          "url": "https://www.carmelofior.com.br/public/images/product/fdc699267b8d381e1a302ed9182f4ce6.webp",
+          "tipo": "ambiente"
+        },
+        {
           "url": "https://www.carmelofior.com.br/public/images/product/655b5614093ccaa209cfdeed6edde83d.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/dd8dc9b8526b3f1393c4894b873033d9.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/5079d69df0c43c5bafa9eabb01cd552a.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 45.9,
@@ -11964,31 +11846,27 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-137",
       "produto_url": "https://www.carmelofior.com.br/produto/dream-plus-rt-90x90",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/6fd109c7e6766e888f06106fab1afb7a.webp",
       "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/592b896d00fa5f7876acfd9389eeb26c.webp",
-          "tipo": "principal"
-        },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/6fd109c7e6766e888f06106fab1afb7a.webp",
           "tipo": "principal"
         },
         {
+          "url": "https://www.carmelofior.com.br/public/images/product/592b896d00fa5f7876acfd9389eeb26c.webp",
+          "tipo": "ambiente"
+        },
+        {
           "url": "https://www.carmelofior.com.br/public/images/product/1df48fce9534c3a1451ec064d8d7a017.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/d8863dd2fceb3c6118aebb097994378d.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/53149404bf0331ba43df183b740b0123.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 45.9,
@@ -12026,31 +11904,27 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-138",
       "produto_url": "https://www.carmelofior.com.br/produto/fortunata-plus-mre-rt-90x90",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/83349ad6133adab0eb5f0807e95dfbda.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/9121d3dc6a375778f68642e06e39e3d7.webp",
       "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/83349ad6133adab0eb5f0807e95dfbda.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/346b56613eec408cd5708184afcf9b76.webp",
-          "tipo": "principal"
-        },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/9121d3dc6a375778f68642e06e39e3d7.webp",
           "tipo": "principal"
         },
         {
+          "url": "https://www.carmelofior.com.br/public/images/product/346b56613eec408cd5708184afcf9b76.webp",
+          "tipo": "ambiente"
+        },
+        {
           "url": "https://www.carmelofior.com.br/public/images/product/6dba6a1f512443fd86d033291db03f1d.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/51440f476b8d4c5313cb7285a8679aa0.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/279de15e9d7e28e6af6cb81e35dfd84c.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 45.9,
@@ -13023,31 +12897,27 @@
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-157",
       "produto_url": "https://www.carmelofior.com.br/produto/cronos-plus-mre-rt-90x90",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/b17eb5e41f91954372ce33a9b7fdeb76.webp",
       "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/7ba268bae35f8f52c428ad1b82e3593a.webp",
-          "tipo": "principal"
-        },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/b17eb5e41f91954372ce33a9b7fdeb76.webp",
           "tipo": "principal"
         },
         {
+          "url": "https://www.carmelofior.com.br/public/images/product/7ba268bae35f8f52c428ad1b82e3593a.webp",
+          "tipo": "ambiente"
+        },
+        {
           "url": "https://www.carmelofior.com.br/public/images/product/39f1e0cf51f62ec19c12048f6d86bb3d.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/e80cc75749b61eb89e8df6c5188c12ad.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         },
         {
           "url": "https://www.carmelofior.com.br/public/images/product/10fc8670d9221a95b0e56a8b4009c5ec.webp",
-          "tipo": "principal"
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 45.9,
@@ -13139,13 +13009,8 @@
       "fabricante_grupo": "Grupo Rocha",
       "referencia": "INDF-159",
       "produto_url": "https://www.portalgruporocha.com.br/produtos/r7063",
-      "imagem_url": "https://gruporocha.com.br/_og/d/c_Produto,title_R7063,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9yNzA2MyI,s_QgF9BLXPjdpY1lO7.png",
-      "imagens": [
-        {
-          "url": "https://gruporocha.com.br/_og/d/c_Produto,title_R7063,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9yNzA2MyI,s_QgF9BLXPjdpY1lO7.png",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 39.9,
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "33102",
@@ -13181,13 +13046,8 @@
       "fabricante_grupo": "Grupo Rocha",
       "referencia": "INDF-160",
       "produto_url": "https://www.portalgruporocha.com.br/produtos/pr7096",
-      "imagem_url": "https://gruporocha.com.br/_og/d/c_Produto,title_PR7096,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9wcjcwOTYi,s_i9W4yXabJNu2-zOm.png",
-      "imagens": [
-        {
-          "url": "https://gruporocha.com.br/_og/d/c_Produto,title_PR7096,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9wcjcwOTYi,s_i9W4yXabJNu2-zOm.png",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 54.9,
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "33205",
@@ -13265,13 +13125,8 @@
       "fabricante_grupo": "Grupo Rocha",
       "referencia": "INDF-162",
       "produto_url": "https://www.portalgruporocha.com.br/produtos/r7093",
-      "imagem_url": "https://gruporocha.com.br/_og/d/c_Produto,title_R7093,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9yNzA5MyI,s_JOSshN2T9hh0T1DB.png",
-      "imagens": [
-        {
-          "url": "https://gruporocha.com.br/_og/d/c_Produto,title_R7093,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9yNzA5MyI,s_JOSshN2T9hh0T1DB.png",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 39.9,
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "33346",
@@ -14261,13 +14116,8 @@
       "fabricante_grupo": "Grupo Rocha",
       "referencia": "29994",
       "produto_url": "https://www.portalgruporocha.com.br/produtos/pr7000",
-      "imagem_url": "https://gruporocha.com.br/_og/d/c_Produto,title_PR7000,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9wcjcwMDAi,s_g6WqVUYibkGNsoJG.png",
-      "imagens": [
-        {
-          "url": "https://gruporocha.com.br/_og/d/c_Produto,title_PR7000,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9wcjcwMDAi,s_g6WqVUYibkGNsoJG.png",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 54.9,
       "preco_fonte": "siah_codigo",
       "codigo_siah": "29994",
@@ -14303,13 +14153,8 @@
       "fabricante_grupo": "Grupo Rocha",
       "referencia": "29995",
       "produto_url": "https://www.portalgruporocha.com.br/produtos/pr7026",
-      "imagem_url": "https://gruporocha.com.br/_og/d/c_Produto,title_PR7026,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9wcjcwMjYi,s_qBbw3M7WHuMyuBSt.png",
-      "imagens": [
-        {
-          "url": "https://gruporocha.com.br/_og/d/c_Produto,title_PR7026,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9wcjcwMjYi,s_qBbw3M7WHuMyuBSt.png",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 54.9,
       "preco_fonte": "siah_codigo",
       "codigo_siah": "29995",
@@ -14345,13 +14190,8 @@
       "fabricante_grupo": "Grupo Rocha",
       "referencia": "30059",
       "produto_url": "https://www.portalgruporocha.com.br/produtos/pr7067",
-      "imagem_url": "https://gruporocha.com.br/_og/d/c_Produto,title_PR7067,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9wcjcwNjci,s_O0fmsKAvrtH8odFs.png",
-      "imagens": [
-        {
-          "url": "https://gruporocha.com.br/_og/d/c_Produto,title_PR7067,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9wcjcwNjci,s_O0fmsKAvrtH8odFs.png",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 54.9,
       "preco_fonte": "siah_codigo",
       "codigo_siah": "30059",
@@ -14825,13 +14665,8 @@
       "fabricante_grupo": "Grupo Rocha",
       "referencia": "30384",
       "produto_url": "https://www.portalgruporocha.com.br/produtos/pr7080",
-      "imagem_url": "https://gruporocha.com.br/_og/d/c_Produto,title_PR7080,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9wcjcwODAi,s_OTZc_u-OnnmPBezG.png",
-      "imagens": [
-        {
-          "url": "https://gruporocha.com.br/_og/d/c_Produto,title_PR7080,category_~Q2Vyw6JtaWNh,p_Ii9wcm9kdXRvcy9wcjcwODAi,s_OTZc_u-OnnmPBezG.png",
-          "tipo": "principal"
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 54.9,
       "preco_fonte": "siah_codigo",
       "codigo_siah": "30384",
@@ -15595,5 +15430,6 @@
       "peso_kg_palete": null
     }
   ],
-  "enriquecidoEm": "2026-10-16T20:56:23.198Z"
+  "enriquecidoEm": "2026-10-16T21:39:49.341Z",
+  "imagensSanitizadasEm": "2026-10-16T21:41:12.218Z"
 }

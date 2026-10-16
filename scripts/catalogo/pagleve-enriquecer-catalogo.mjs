@@ -19,7 +19,16 @@ import {
 } from '../lib/carmeloFiorSnapshot.mjs';
 import { extractImagensFromDetalhe, fetchProdutoDetalhe } from '../lib/formigresCatalog.mjs';
 import { extractImagensFromProduto } from '../lib/carmeloFiorCatalog.mjs';
-import { parseCarmeloImagensFromHtml } from '../lib/carmeloPaginaProduto.mjs';
+import {
+  parseCarmeloGaleriaCatalogoFromHtml,
+  parseCarmeloImagensFromHtml,
+} from '../lib/carmeloPaginaProduto.mjs';
+import {
+  filterReachableImageUrls,
+  isPlaceholderImageUrl,
+  mapUrlsToImagensCatalogo,
+  probeImageUrlOk,
+} from '../lib/catalogoImagemUrl.mjs';
 import { resolveEmbalagemFormigres } from '../lib/formigresEmbalagem.mjs';
 import { resolvePrecoPagLeve, produtoPrecoFromItem } from '../lib/pagleveTabelaPrecos.mjs';
 import { loadPrecosSiah, resolvePrecoSiah } from '../lib/paglevePrecosSiah.mjs';
@@ -104,7 +113,21 @@ async function ensureCarmeloSnapshot() {
 }
 
 function mapImagens(urls) {
-  return urls.map((url) => ({ url, tipo: 'principal' }));
+  return mapUrlsToImagensCatalogo(urls);
+}
+
+async function sanitizeImagensList(imagens = []) {
+  const urls = imagens.map((i) => i?.url).filter((u) => u && !isPlaceholderImageUrl(u));
+  const ok = await filterReachableImageUrls(urls, { probe: probeImageUrlOk });
+  if (!ok.length) return [];
+  const byUrl = new Map(imagens.map((i) => [i.url, i]));
+  return ok.map((url, idx) => {
+    const prev = byUrl.get(url);
+    return {
+      url,
+      tipo: prev?.tipo || (idx === 0 ? 'principal' : idx === 1 ? 'ambiente' : 'detalhe'),
+    };
+  });
 }
 
 async function enrichImagens(item, ctx) {
@@ -139,13 +162,19 @@ async function enrichImagens(item, ctx) {
     return { imagem_url, imagens, formigres_id: fgId };
   }
 
-  if (!imagem_url && (item.fabricante_grupo === 'Carmelo Fior' || url.includes('carmelofior.com.br'))) {
-    const html = pageHtml || curlGet(url);
-    pageHtml = html;
-    const gallery = parseCarmeloImagensFromHtml(html);
-    if (gallery.length) {
-      imagem_url = gallery[0];
-      imagens = mapImagens(gallery.slice(0, 6));
+  if (item.fabricante_grupo === 'Carmelo Fior' || url.includes('carmelofior.com.br')) {
+    const html = pageHtml || (url ? curlGet(url) : '');
+    if (html) pageHtml = html;
+    const galeria = parseCarmeloGaleriaCatalogoFromHtml(html);
+    if (galeria.length) {
+      imagens = galeria.slice(0, 6);
+      imagem_url = galeria[0]?.url || imagem_url;
+    } else {
+      const gallery = parseCarmeloImagensFromHtml(html);
+      if (gallery.length) {
+        imagem_url = gallery[0];
+        imagens = mapImagens(gallery.slice(0, 6));
+      }
     }
   }
 
@@ -191,6 +220,10 @@ async function enrichImagens(item, ctx) {
     const gallery = [...new Set([og, ...extra].filter(Boolean))].slice(0, 6);
     if (gallery.length > 1) imagens = mapImagens(gallery);
   }
+
+  imagens = await sanitizeImagensList(imagens);
+  imagem_url = imagens[0]?.url || (imagem_url && !isPlaceholderImageUrl(imagem_url) && probeImageUrlOk(imagem_url) ? imagem_url : '');
+  if (!imagem_url && imagens.length) imagem_url = imagens[0].url;
 
   return { imagem_url, imagens };
 }
@@ -243,6 +276,7 @@ function enrichPrecoEmbalagem(item, ctx) {
 
 async function main() {
   const onlyMissing = process.argv.includes('--only-missing');
+  const refreshImagens = process.argv.includes('--refresh-imagens');
   const jsonPath = findLatestClassif();
   if (!jsonPath) {
     console.error('Classificação PagLeve não encontrada. Rode catalogo:classificar-pagleve');
@@ -265,7 +299,7 @@ async function main() {
   let comPreco = 0;
   for (let i = 0; i < payload.itens.length; i++) {
     const item = { ...payload.itens[i] };
-    if (onlyMissing && item.imagem_url && item.preco_m2 != null && item.preco_m2 > 0) {
+    if (onlyMissing && !refreshImagens && item.imagem_url && item.preco_m2 != null && item.preco_m2 > 0) {
       itens.push(item);
       if (item.imagem_url) comFoto += 1;
       if (item.preco_m2 > 0) comPreco += 1;

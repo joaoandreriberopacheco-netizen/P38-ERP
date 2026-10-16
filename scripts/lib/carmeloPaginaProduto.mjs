@@ -2,7 +2,7 @@
  * Ficha pública Carmelo Fior (HTML da página /produto/{slug}).
  */
 import { stripAccents } from './formigresCatalog.mjs';
-import { imageUrl as carmeloImageUrl } from './carmeloFiorCatalog.mjs';
+import { extractImagensFromProduto, imageUrl as carmeloImageUrl } from './carmeloFiorCatalog.mjs';
 
 const SUPERFICIES = ['Brilhante', 'Mate', 'Acetinado', 'Polido', 'Granilhado', 'Natural', 'Soft'];
 const USO_PEI = ['LEI', 'LCI', 'LA', 'LB', 'LC', 'LD', 'LE'];
@@ -29,18 +29,55 @@ export function parseOgImageFromHtml(html = '') {
   return url && !/^https?:\/\/[^/]+\/?$/.test(url) ? url : '';
 }
 
-/** Imagens no JSON embebido (og:image vem vazio no site Carmelo). */
+/**
+ * Galeria oficial do produto no HTML (array images com face/main).
+ * Evita hashes órfãos de outros blocos JSON na página (404 no catálogo).
+ */
 export function parseCarmeloImagensFromHtml(html = '') {
-  const files = [...String(html).matchAll(/"image":"([^"]+\.(?:webp|jpg|jpeg|png))"/gi)].map((m) => m[1]);
+  const raw = String(html);
+  const jsonMatch = raw.match(/"images"\s*:\s*(\[[\s\S]*?\])\s*,\s*"(?:attributes|package|variations)"/);
+  if (jsonMatch) {
+    try {
+      const images = JSON.parse(jsonMatch[1]);
+      if (Array.isArray(images) && images.length) {
+        return extractImagensFromProduto({ images }).map((x) => x.url).filter(Boolean);
+      }
+    } catch {
+      /* fallback abaixo */
+    }
+  }
+
+  const files = [...raw.matchAll(/"image":"([^"]+\.(?:webp|jpg|jpeg|png))"/gi)].map((m) => m[1]);
   const urls = [];
   const seen = new Set();
   for (const file of files) {
+    if (/^sample\.webp$/i.test(file)) continue;
     const url = carmeloImageUrl(file);
     if (!url || seen.has(url)) continue;
     seen.add(url);
     urls.push(url);
   }
   return urls;
+}
+
+/** @returns {{ url: string, tipo: string }[]} */
+export function parseCarmeloGaleriaCatalogoFromHtml(html = '') {
+  const raw = String(html);
+  const jsonMatch = raw.match(/"images"\s*:\s*(\[[\s\S]*?\])\s*,\s*"(?:attributes|package|variations)"/);
+  if (jsonMatch) {
+    try {
+      const images = JSON.parse(jsonMatch[1]);
+      if (Array.isArray(images) && images.length) {
+        return extractImagensFromProduto({ images });
+      }
+    } catch {
+      /* fallback */
+    }
+  }
+  return parseCarmeloImagensFromHtml(raw).map((url, i) => ({
+    url,
+    tipo: i === 0 ? 'principal' : 'ambiente',
+  }));
 }
 
 export function parseCarmeloProdutoHtml(html) {

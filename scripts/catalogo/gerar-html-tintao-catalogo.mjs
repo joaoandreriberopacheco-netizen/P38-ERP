@@ -3956,10 +3956,44 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const un = String(item.unidade || '').trim();
       return un || '—';
     }
+    function isBadCatalogImageUrl(url) {
+      const u = String(url || '').toLowerCase();
+      if (!u) return true;
+      if (/\/sample\.webp$/i.test(u)) return true;
+      if (u.includes('placeholder') || u.includes('no-image')) return true;
+      return false;
+    }
     function getGaleria(item) {
-      const imgs = Array.isArray(item.imagens) ? item.imagens.filter((i) => i && i.url) : [];
-      if (imgs.length) return imgs;
-      return item.imagem_url ? [{ url: item.imagem_url, tipo: 'principal' }] : [];
+      const raw = Array.isArray(item.imagens) ? item.imagens.filter((i) => i && i.url && !isBadCatalogImageUrl(i.url)) : [];
+      if (raw.length) return raw;
+      if (item.imagem_url && !isBadCatalogImageUrl(item.imagem_url)) {
+        return [{ url: item.imagem_url, tipo: 'principal' }];
+      }
+      return [];
+    }
+    function catalogThumbImgError(img) {
+      const row = img.closest('.model-row');
+      const cod = row && row.dataset ? row.dataset.cod : '';
+      const item = cod ? itemsByCode.get(String(cod)) : null;
+      const gal = item ? getGaleria(item).map((g) => g.url) : [];
+      let idx = Number(img.dataset.tryIdx || '0') + 1;
+      while (idx < gal.length) {
+        const next = gal[idx];
+        if (next && next !== img.src) {
+          img.dataset.tryIdx = String(idx);
+          img.src = next;
+          return;
+        }
+        idx += 1;
+      }
+      img.onerror = null;
+      const empty = document.createElement('span');
+      empty.className = 'thumb-empty';
+      empty.textContent = '—';
+      img.replaceWith(empty);
+    }
+    function catalogThumbImgTag(url, cod) {
+      return '<img src="' + esc(url) + '" alt="" loading="lazy" onerror="catalogThumbImgError(this)" data-cod="' + esc(cod) + '" />';
     }
     function gemeasSearchText(item) {
       if (!item.gemeas || !item.gemeas.length) return '';
@@ -4074,7 +4108,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const qty = getQty(cod);
       const pack = fmtEmbalagemText(item);
       const foto = img
-        ? '<button type="button" class="thumb-btn' + (imgs.length > 1 ? ' has-gallery' : '') + '" tabindex="-1" data-cod="' + esc(cod) + '" data-title="' + esc(titulo) + '" title="Ver fotos"><img src="' + esc(img) + '" alt="" loading="lazy" />' + (imgs.length > 1 ? '<span class="thumb-more" aria-hidden="true">▦</span>' : '') + '</button>'
+        ? '<button type="button" class="thumb-btn' + (imgs.length > 1 ? ' has-gallery' : '') + '" tabindex="-1" data-cod="' + esc(cod) + '" data-title="' + esc(titulo) + '" title="Ver fotos">' + catalogThumbImgTag(img, cod) + (imgs.length > 1 ? '<span class="thumb-more" aria-hidden="true">▦</span>' : '') + '</button>'
         : '<span class="thumb-empty">—</span>';
       const warn = item.match_status !== 'encontrado' ? ' <span class="badge warn">sem match</span>' : '';
       if (IS_B2B_CATALOG) {
@@ -4161,7 +4195,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       if (!img) {
         return '<span class="pedido-card-thumb pedido-card-thumb-empty" aria-hidden="true">—</span>';
       }
-      return '<button type="button" class="thumb-btn catalog-card-thumb-btn' + (imgs.length > 1 ? ' has-gallery' : '') + '" tabindex="-1" data-cod="' + esc(cod) + '" data-title="' + esc(titulo) + '" title="Ver fotos"><img class="pedido-card-thumb" src="' + esc(img) + '" alt="" loading="lazy" />' + (imgs.length > 1 ? '<span class="thumb-more" aria-hidden="true">▦</span>' : '') + '</button>';
+      return '<button type="button" class="thumb-btn catalog-card-thumb-btn' + (imgs.length > 1 ? ' has-gallery' : '') + '" tabindex="-1" data-cod="' + esc(cod) + '" data-title="' + esc(titulo) + '" title="Ver fotos"><img class="pedido-card-thumb" src="' + esc(img) + '" alt="" loading="lazy" onerror="catalogThumbImgError(this)" data-cod="' + esc(cod) + '" />' + (imgs.length > 1 ? '<span class="thumb-more" aria-hidden="true">▦</span>' : '') + '</button>';
     }
     function renderCatalogCardQtyEdit(cod, qty, m2tot) {
       return '<div class="pedido-card-qty catalog-card-qty-edit">' +
