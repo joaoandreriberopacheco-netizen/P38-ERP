@@ -258,15 +258,12 @@ const ARIELLE_ACAB_ORDER = [
 ];
 
 const PAGLEVE_ACAB_ORDER = [
+  'Brilhante · Esmaltado',
+  'Mate · Acetinado',
+  'Semiderrapante · Protetiva · MRE',
+  'Antiderrapante',
   'Polido',
-  'Polida',
-  'Brilhante',
-  'Mate',
-  'Acetinado',
-  'Granilhado',
-  'Gotejado',
-  'Protetiva aderente',
-  'Sem acabamento',
+  'Outros',
 ];
 
 function getCatalogConfig(cfg = CFG) {
@@ -1045,6 +1042,7 @@ const PAGLEVE_SKIN_CSS = `
     html[data-skin="pagleve"] .acc-title.linha-bold,
     html[data-skin="pagleve"] .acc-title.linha-retificada,
     html[data-skin="pagleve"] .acc-title.linha-polida { color: var(--pl-purple); }
+    html[data-skin="pagleve"] .acc-reguas > summary .acc-title { color: var(--pl-green-deep); }
     html[data-skin="pagleve"] .load-overlay { background: rgba(112, 45, 145, 0.06); }
     html[data-skin="pagleve"] .load-logo-pagleve {
       width: min(220px, 62vw);
@@ -3633,6 +3631,58 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       if (fa !== fb) return fa - fb;
       return String(a || '').localeCompare(String(b || ''), 'pt-BR');
     }
+    function parseFormatoTreeKey(key) {
+      const s = String(key || '');
+      if (s.startsWith('regua:')) return { isRegua: true, fmt: s.slice(6) };
+      return { isRegua: false, fmt: s };
+    }
+    function compareFormatoTreeKey(a, b) {
+      const pa = parseFormatoTreeKey(a);
+      const pb = parseFormatoTreeKey(b);
+      if (pa.isRegua !== pb.isRegua) return pa.isRegua ? 1 : -1;
+      return compareFormato(pa.fmt, pb.fmt);
+    }
+    function isReguaFormato(fmt) {
+      const m = String(fmt || '').match(/(\\d+)\\s*[x×]\\s*(\\d+)/i);
+      if (!m) return false;
+      const a = Number(m[1]);
+      const b = Number(m[2]);
+      if (!a || !b) return false;
+      const min = Math.min(a, b);
+      const max = Math.max(a, b);
+      return min / max <= 1 / 3;
+    }
+    function formatoTreeKey(fmt) {
+      const raw = String(fmt || '—').trim();
+      if (!raw || raw === '—') return '—';
+      const norm = raw.replace(/×/gi, 'x').toLowerCase();
+      return isReguaFormato(norm) ? 'regua:' + norm : norm;
+    }
+    function normPagLeveBlob(s) {
+      return String(s || '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase();
+    }
+    function catalogAcabGrupo(item) {
+      if (CATALOG_SKIN !== 'pagleve') return catalogAcabKey(item);
+      const label = normPagLeveBlob(item.acabamento_label || item.formigres_acabamento || '');
+      const blob = normPagLeveBlob(
+        (item.descricao || '') + ' ' + (item.formigres_titulo || '') + ' ' + (item.rotulo || '') + ' ' + (item.subtipo || ''),
+      );
+      if (label.includes('antiderrap') || item.subtipo === 'antiderrapante') return 'Antiderrapante';
+      if (
+        label.includes('semiderrap') || item.subtipo === 'semiderrapante'
+        || label.includes('protetiva') || label.includes('aderente')
+        || label.includes('granilh') || label.includes('gotej')
+        || /\\bmre\\b/.test(blob)
+      ) return 'Semiderrapante · Protetiva · MRE';
+      if (label.includes('mate') || label.includes('acetinad')) return 'Mate · Acetinado';
+      if (label.includes('brilh') || label.includes('esmalt')) return 'Brilhante · Esmaltado';
+      if (label.includes('polid') || item.linha === 'polida' || item.subtipo === 'polida') return 'Polido';
+      const raw = String(item.acabamento_label || item.formigres_acabamento || '').trim();
+      return raw || 'Outros';
+    }
+    function countItensFormatoMap(fmtMap) {
+      return Object.keys(fmtMap).reduce((s, ac) => s + fmtMap[ac].length, 0);
+    }
     function isPlaceholderTitulo(text) {
       const t = String(text || '').trim().toLowerCase();
       return t.startsWith('(ver descri');
@@ -3729,21 +3779,39 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return acabKey(item);
     }
     function grupoLabelFormato(key) {
-      return 'Formato ' + key;
+      const s = String(key || '');
+      if (s.startsWith('regua:')) return s.slice(6).replace(/x/g, '×');
+      return 'Formato ' + s.replace(/x/g, '×');
     }
     function sortGruposNivel1(keys) {
       if (groupBy === 'formato-acabamento') {
-        return [...keys].sort(compareFormato);
+        return CATALOG_SKIN === 'pagleve'
+          ? [...keys].sort(compareFormatoTreeKey)
+          : [...keys].sort(compareFormato);
       }
       return sortAcabKeys(keys);
+    }
+    function renderFormatoAcabamentoBlocks(gruposMap, linha) {
+      const keys = sortGruposNivel1(Object.keys(gruposMap));
+      const normal = keys.filter((k) => !String(k).startsWith('regua:'));
+      const reguas = keys.filter((k) => String(k).startsWith('regua:'));
+      let html = normal.map((k) => renderFormatoComAcab(k, gruposMap[k], linha)).join('');
+      if (reguas.length && CATALOG_SKIN === 'pagleve') {
+        const n = reguas.reduce((s, k) => s + countItensFormatoMap(gruposMap[k]), 0);
+        html += '<details class="acc acc-reguas acc-grupo-formato" open><summary><span class="acc-title">Réguas</span><span class="acc-count" data-total="' + n + '" data-suffix="itens">' + n + ' itens</span></summary><div class="acc-inner">' +
+          reguas.map((k) => renderFormatoComAcab(k, gruposMap[k], linha)).join('') + '</div></details>';
+      } else {
+        html += reguas.map((k) => renderFormatoComAcab(k, gruposMap[k], linha)).join('');
+      }
+      return html;
     }
     function buildTree(itens) {
       const tree = {};
       if (groupBy === 'formato-acabamento') {
         for (const item of itens) {
           const linha = catalogLinhaKey(item);
-          const fmt = item.formato || '—';
-          const acab = catalogAcabKey(item);
+          const fmt = CATALOG_SKIN === 'pagleve' ? formatoTreeKey(item.formato || '—') : (item.formato || '—');
+          const acab = CATALOG_SKIN === 'pagleve' ? catalogAcabGrupo(item) : catalogAcabKey(item);
           tree[linha] ??= {};
           tree[linha][fmt] ??= {};
           tree[linha][fmt][acab] ??= [];
@@ -3760,8 +3828,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       }
       for (const item of itens) {
         const linha = catalogLinhaKey(item);
-        const acab = catalogAcabKey(item);
-        const formato = item.formato || '—';
+        const acab = CATALOG_SKIN === 'pagleve' ? catalogAcabGrupo(item) : catalogAcabKey(item);
+        const formato = CATALOG_SKIN === 'pagleve' ? formatoTreeKey(item.formato || '—') : (item.formato || '—');
         tree[linha] ??= {};
         tree[linha][acab] ??= {};
         tree[linha][acab][formato] ??= [];
@@ -4134,7 +4202,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         renderItemsTable(items) + '</details>';
     }
     function renderGrupoAcab(acab, formatosMap) {
-      const formatos = Object.keys(formatosMap).sort(compareFormato);
+      const formatos = CATALOG_SKIN === 'pagleve'
+        ? Object.keys(formatosMap).sort(compareFormatoTreeKey)
+        : Object.keys(formatosMap).sort(compareFormato);
       const n = formatos.reduce((s, f) => s + formatosMap[f].length, 0);
       return '<details class="acc acc-grupo" open><summary><span class="acc-title">' + esc(acab) + '</span><span class="acc-count" data-total="' + n + '" data-suffix="itens">' + n + ' itens</span></summary>' +
         '<div class="acc-inner">' + formatos.map((f) => renderFormato(f, formatosMap[f])).join('') + '</div></details>';
@@ -4153,7 +4223,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const label = CFG.linhaLabel[linha] || linha;
       let inner;
       if (groupBy === 'formato-acabamento') {
-        inner = keys.map((k) => renderFormatoComAcab(k, gruposMap[k], linha)).join('');
+        inner = renderFormatoAcabamentoBlocks(gruposMap, linha);
       } else if (linha === 'polida') {
         inner = keys.flatMap((acab) => {
           const formatos = Object.keys(gruposMap[acab]).sort(compareFormato);
