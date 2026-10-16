@@ -190,11 +190,23 @@ function rochaSlugCandidates(row) {
   return [...new Set(out)];
 }
 
+/** PR70001 no ERP → pr7000 no portal (regra João André; não é busca por código interno aleatório). */
+function rochaSlugFromSiahDesc(desc) {
+  const m = String(desc || '').match(/\b(PR|R)(\d{4,})\b/i);
+  if (!m) return '';
+  let digits = m[2];
+  if (digits.length >= 5 && digits.endsWith('1')) digits = digits.slice(0, -1);
+  const core = digits.length > 4 ? digits.slice(0, 4) : digits;
+  return `${m[1].toLowerCase()}${core}`;
+}
+
 function tryRocha(row, rochaSlugs) {
   const candidates = rochaSlugCandidates(row);
+  const codeSlug = rochaSlugFromSiahDesc(row.descricao_erp || row.descricao_original);
+  if (codeSlug) candidates.unshift(codeSlug);
   const tried = [];
   for (let c of candidates) {
-    if (/^(pr|r)\d+$/i.test(c)) {
+    if (/^(pr|r)\d+$/i.test(c) && c !== codeSlug) {
       tried.push(c);
       continue;
     }
