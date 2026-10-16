@@ -449,6 +449,7 @@ function slimItem(item) {
     variante_lisa: item.variante_lisa,
     formigres_id: item.formigres_id || '',
     formigres_titulo: item.formigres_titulo || '',
+    catalogo_nome_modelo: item.catalogo_nome_modelo || '',
     formigres_acabamento: item.formigres_acabamento || '',
     acabamento_label: item.acabamento_label || '',
     marca_nome: item.marca_nome || '',
@@ -1081,6 +1082,26 @@ const PAGLEVE_SKIN_CSS = `
       text-overflow: ellipsis;
     }
     html[data-skin="pagleve"] .col-grupo { max-width: 140px; }
+    html[data-skin="pagleve"] .model-subtitulo {
+      display: block;
+      margin-top: .2rem;
+      font-size: .82rem;
+      font-weight: 600;
+      line-height: 1.35;
+      color: var(--text);
+      letter-spacing: .01em;
+    }
+    html[data-skin="pagleve"] .col-modelo strong.model-nome-principal {
+      font-size: .95rem;
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+    html[data-skin="pagleve"] .col-modelo small.model-codigo {
+      display: block;
+      margin-top: .25rem;
+      font-size: .72rem;
+      color: var(--muted);
+    }
     html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th {
       text-align: center;
       vertical-align: middle;
@@ -3585,10 +3606,39 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const t = String(text || '').trim().toLowerCase();
       return t.startsWith('(ver descri');
     }
+    function itemNomeModelo(item) {
+      const n = String(item.catalogo_nome_modelo || item.modelo || '').trim();
+      if (n && !isPlaceholderTitulo(n)) return n;
+      const sub = String(item.formigres_titulo || '').trim();
+      if (sub && !isPlaceholderTitulo(sub)) return sub.split('·')[0].trim();
+      return item.descricao || '';
+    }
+    function itemSubtitulo(item) {
+      const sub = String(item.formigres_titulo || '').trim();
+      if (sub && !isPlaceholderTitulo(sub)) return sub;
+      return '';
+    }
     function itemTitulo(item) {
+      if (CATALOG_SKIN === 'pagleve') {
+        const nome = itemNomeModelo(item);
+        const sub = itemSubtitulo(item);
+        if (nome && sub) return nome + ' ' + sub;
+        if (sub) return sub;
+        return nome || item.descricao || '';
+      }
       const ft = String(item.formigres_titulo || '').trim();
       if (ft && !isPlaceholderTitulo(ft)) return ft;
       return item.descricao || ft || '';
+    }
+    function renderPagLeveModeloCell(item, cod, warn) {
+      const nome = itemNomeModelo(item);
+      const sub = itemSubtitulo(item);
+      const codStr = cod != null ? cod : item.codigo_tintao;
+      const nomeHtml = '<strong class="model-nome-principal">' + esc(nome || sub || '—') + '</strong>';
+      const subHtml = sub && nome && sub !== nome
+        ? '<span class="model-subtitulo">' + esc(sub) + '</span>'
+        : (sub && !nome ? '<span class="model-subtitulo">' + esc(sub) + '</span>' : '');
+      return nomeHtml + subHtml + (warn || '') + '<small class="model-codigo">#' + esc(codStr) + '</small>';
     }
     function compareItensFormatoNome(a, b) {
       const byFmt = compareFormato(a.formato, b.formato);
@@ -3763,6 +3813,15 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     function renderItemMetaHtml(item, cod) {
       const codStr = cod != null ? cod : item.codigo_tintao;
+      if (CATALOG_SKIN === 'pagleve') {
+        const parts = [];
+        const resist = modelResistencia(item);
+        if (resist) parts.push(esc(resist));
+        if (!item.gemeas || item.gemeas.length < 2) {
+          if (item.marca_nome) parts.push(esc(item.marca_nome));
+        }
+        return parts.length ? parts.join(' · ') : '—';
+      }
       const parts = ['#' + esc(codStr)];
       if (!item.gemeas || item.gemeas.length < 2) {
         if (item.marca_nome) parts.push(esc(item.marca_nome));
@@ -3891,10 +3950,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         ? esc(item.marca_nome || '—') + ' · ' + esc(item.fabricante_grupo || '—') + ' · '
         : '';
       const metaMobile = '<div class="model-meta-mobile">' + marcaGrupoMobile + esc(pack) + ' · ' + fmtPrecoHtml(item.preco_m2) + '</div>';
+      const modeloCell = CATALOG_SKIN === 'pagleve'
+        ? renderPagLeveModeloCell(item, cod, warn) + metaMobile
+        : '<strong>' + esc(titulo) + '</strong>' + warn + '<br><small style="color:var(--muted)">#' + esc(cod) + '</small>' + metaMobile;
       const searchBlob = (titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack + ' ' + (item.marca_nome || '') + ' ' + (item.fabricante_grupo || '')).toLowerCase();
       return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(searchBlob) + '" data-qty="' + qty + '">' +
         '<td class="col-foto">' + foto + '</td>' +
-        '<td class="col-modelo"><strong>' + esc(titulo) + '</strong>' + warn + '<br><small style="color:var(--muted)">#' + esc(cod) + '</small>' + metaMobile + '</td>' +
+        '<td class="col-modelo">' + modeloCell + '</td>' +
         marcaGrupoCols +
         '<td class="col-pack">' + esc(pack) + '</td>' +
         '<td class="col-preco' + (hasDescontoAtivo() ? ' has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +

@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { classificarFormigres, resumirClassificacoes } from '../lib/formigresClassificar.mjs';
 import { referenciaResistenciaCatalogo } from '../lib/paglevePeiResistencia.mjs';
+import { raioXProdutoDescricao } from '../lib/raioXProdutoDescricao.mjs';
 
 const ROOT = process.cwd();
 const IN_CSV =
@@ -81,9 +82,19 @@ function parseTipoAcabFromSite(descricaoNoSite) {
 
 function inferAcabamentoLabel(descErp, descSite, classif, row = {}) {
   const siteAcabExtra = String(row.site_acabamento_label || '').trim();
-  if (siteAcabExtra) return siteAcabExtra;
+  if (siteAcabExtra && !/^(bold|ret|retificado)$/i.test(siteAcabExtra)) return siteAcabExtra;
+
+  const u = String(descErp || '').toUpperCase();
+  if (/RT\s*POLIDO|\bPOLIDO\b/.test(u) && classif.linha === 'polida') return 'Polido';
+  if (/GRANILHAD/.test(u)) return 'Granilhado';
+  if (/GOTEJAD/.test(u)) return 'Gotejado';
+  if (/ACETINAD/.test(u)) return 'Acetinado';
+  if (/\bMATE\b/.test(u)) return 'Mate';
+  if (/BRILH/.test(u)) return 'Brilhante';
+  if (/ESMALT/.test(u)) return 'Esmaltado';
+
   const { acabamento: siteAcab } = parseTipoAcabFromSite(descSite);
-  if (siteAcab && !/CONHEÇA|MODELOS/i.test(siteAcab)) {
+  if (siteAcab && !/CONHEÇA|MODELOS/i.test(siteAcab) && !/^(BOLD|RETIFICADO|RET)$/i.test(siteAcab)) {
     if (/ACETINAD/i.test(siteAcab)) return 'Acetinado';
     if (/^MATE$/i.test(siteAcab)) return 'Mate';
     if (/BRILHANTE/i.test(siteAcab)) return 'Brilhante';
@@ -92,16 +103,9 @@ function inferAcabamentoLabel(descErp, descSite, classif, row = {}) {
     if (/GOTEJAD/i.test(siteAcab)) return 'Gotejado';
     return siteAcab.charAt(0) + siteAcab.slice(1).toLowerCase();
   }
-  const u = String(descErp || '').toUpperCase();
-  if (/RT\s*POLIDO|\bPOLIDO\b/.test(u) && classif.linha === 'polida') return 'Polido';
-  if (/GRANILHAD/.test(u)) return 'Granilhado';
-  if (/GOTEJAD/.test(u)) return 'Gotejado';
-  if (/ACETINAD/.test(u)) return 'Acetinado';
-  if (/\bMATE\b/.test(u)) return 'Mate';
-  if (/BRILH/.test(u)) return 'Brilhante';
   if (/brilhante/i.test(descSite)) return 'Brilhante';
-  if (classif.subtipo === 'antiderrapante') return 'Protetiva aderente';
-  if (classif.subtipo === 'semiderrapante') return 'Granilhado';
+  if (classif.subtipo === 'antiderrapante') return 'Antiderrapante';
+  if (classif.subtipo === 'semiderrapante') return 'Semiderrapante';
   if (classif.variante_lisa === 'mate') return 'Mate';
   if (classif.variante_lisa === 'brilhante') return 'Brilhante';
   return '';
@@ -129,12 +133,51 @@ function mapStatus(status) {
   return 'sem_ficha';
 }
 
-function tituloCatalogo(row, descricao) {
-  const site = String(row.descricao_no_site || '').trim();
-  if (site) return site;
-  const modelo = String(row.modelo || '').trim();
-  if (modelo && !/^\(ver descri/i.test(modelo)) return modelo;
-  return descricao;
+function titleCaseModelo(str = '') {
+  return String(str || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+}
+
+function nomeModeloPrincipal(row, descricao) {
+  let modelo = String(row.modelo || '').trim();
+  if (!modelo || /^\(ver descri/i.test(modelo)) {
+    modelo = raioXProdutoDescricao(row.codigo, descricao).modelo || '';
+  }
+  modelo = modelo
+    .replace(/^9\s*x\s*75\s*/i, ' ')
+    .replace(/\b(MRU|VRU|MAC|MRE|HD|PEI\s*\w*|JUN|JU|ESM|ACET|BOLD|RT|RET|A|B)\b/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return titleCaseModelo(modelo);
+}
+
+function linhaCatalogoLabel(classif, siteHints, descErp) {
+  if (classif.linha === 'bold') return 'BOLD';
+  if (classif.linha === 'retificada' || classif.linha === 'polida') return 'RET';
+  const u = String(descErp || '').toUpperCase();
+  if (/\bBOLD\b/.test(u)) return 'BOLD';
+  if (/\bRT\b|\bRET\b|\bRETIFIC/.test(u)) return 'RET';
+  if (siteHints.tipo === 'BOLD') return 'BOLD';
+  if (siteHints.tipo === 'RETIFICADO') return 'RET';
+  return '';
+}
+
+/** Subtítulo: modelo · formato · BOLD|RET · textura (Brilhante, Mate, …). */
+function subtituloCatalogoPagLeve(row, descricao, classif, acabLabel, siteHints) {
+  const parts = [];
+  const nome = nomeModeloPrincipal(row, descricao);
+  if (nome) parts.push(nome);
+  const fmt = String(row.formato || '').replace(/×/g, 'x').toLowerCase();
+  if (fmt) parts.push(fmt);
+  const linha = linhaCatalogoLabel(classif, siteHints, descricao);
+  if (linha) parts.push(linha);
+  const tex = String(acabLabel || '').trim();
+  if (tex && tex.toUpperCase() !== linha) parts.push(tex);
+  return parts.join(' · ');
 }
 
 /** PagLeve: polida é textura (acabamento), não linha comercial à parte de Bold/Retificada. */
@@ -172,9 +215,12 @@ function main() {
       acabLabel = 'Polido';
     }
     const imagens = parseImagensJson(row.imagens_json, row.imagem_url);
+    const catalogoNomeModelo = nomeModeloPrincipal(row, descricao);
+    const catalogoSubtitulo = subtituloCatalogoPagLeve(row, descricao, classifPl, acabLabel, siteHints);
     return {
       codigo_tintao: row.codigo,
-      modelo: row.modelo || '',
+      modelo: catalogoNomeModelo || row.modelo || '',
+      catalogo_nome_modelo: catalogoNomeModelo,
       descricao,
       formato: (row.formato || '').replace(/×/g, 'x'),
       linha: classifPl.linha,
@@ -186,7 +232,7 @@ function main() {
       match_status: mapStatus(row.status),
       match_score: row.status === 'confirmado_site' ? 100 : 0,
       formigres_id: (String(row.evidencia_url || '').match(/formigres\.com\.br\/produto\/(\d+)/i) || [])[1] || '',
-      formigres_titulo: tituloCatalogo(row, descricao),
+      formigres_titulo: catalogoSubtitulo,
       formigres_tipo: siteHints.tipo,
       formigres_acabamento: siteHints.acabamento || acabLabel.toUpperCase(),
       acabamento_label: acabLabel,
