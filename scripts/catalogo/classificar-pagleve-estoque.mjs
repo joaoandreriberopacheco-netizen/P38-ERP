@@ -9,6 +9,7 @@ import { classificarFormigres, resumirClassificacoes } from '../lib/formigresCla
 import { referenciaResistenciaCatalogo } from '../lib/paglevePeiResistencia.mjs';
 import { modeloComercialCatalogo, raioXProdutoDescricao } from '../lib/raioXProdutoDescricao.mjs';
 import { resolveFormatoPagLeve } from '../lib/pagleveFormatoOcr.mjs';
+import { loadPrecosSiah, resolvePrecoSiah } from '../lib/paglevePrecosSiah.mjs';
 
 const ROOT = process.cwd();
 const IN_CSV =
@@ -192,6 +193,7 @@ function main() {
     process.exit(1);
   }
   const rows = loadCsv(IN_CSV);
+  const precosSiah = loadPrecosSiah();
   const items = rows.map((row) => {
     const descricao = row.descricao_erp || row.modelo || row.codigo;
     row.formato = resolveFormatoPagLeve(descricao, row.formato) || row.formato;
@@ -210,6 +212,17 @@ function main() {
     const imagens = parseImagensJson(row.imagens_json, row.imagem_url);
     const catalogoNomeModelo = nomeModeloPrincipal(row, descricao);
     const catalogoSubtitulo = subtituloCatalogoPagLeve(row, descricao, classifPl, acabLabel, siteHints);
+    const precoHit = precosSiah
+      ? resolvePrecoSiah(
+          {
+            codigo_tintao: row.codigo,
+            modelo: catalogoNomeModelo || row.modelo,
+            formato: (row.formato || '').replace(/×/g, 'x'),
+            descricao,
+          },
+          precosSiah,
+        )
+      : { preco_m2: null };
     return {
       codigo_tintao: row.codigo,
       modelo: catalogoNomeModelo || row.modelo || '',
@@ -235,7 +248,9 @@ function main() {
       produto_url: row.evidencia_url || '',
       imagem_url: row.imagem_url || imagens[0]?.url || '',
       imagens,
-      preco_m2: null,
+      preco_m2: precoHit.preco_m2 ?? null,
+      preco_fonte: precoHit.fonte || '',
+      codigo_siah: precoHit.codigo_siah || '',
       m2_por_caixa: parseM2Caixa(descricao),
       unidade: '',
       status_site: row.status,

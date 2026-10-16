@@ -223,11 +223,15 @@ function tryCarmeloSlug(slug) {
   if (!ficha) return null;
   const acab = acabamentoLabelFromSuperficie(ficha.superficie);
   const marca = ficha.marca_site || 'Carmelo Fior';
+  const gallery = ficha.imagens_urls?.length ? ficha.imagens_urls : (ficha.imagem_url ? [ficha.imagem_url] : []);
+  const imagem_url = gallery[0] || '';
   return {
     fabricante_grupo: 'Carmelo Fior',
     marca_no_site: marca,
     evidencia_url: url,
     descricao_no_site: ficha.descricao_no_site,
+    imagem_url,
+    imagens_json: gallery.length ? JSON.stringify(gallery) : '',
     site_superficie: ficha.superficie || '',
     site_linha: ficha.linha_site || '',
     site_classificacao_pei: ficha.classificacao_uso || '',

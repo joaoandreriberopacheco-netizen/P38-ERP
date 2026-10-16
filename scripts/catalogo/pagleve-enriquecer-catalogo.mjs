@@ -19,6 +19,7 @@ import {
 } from '../lib/carmeloFiorSnapshot.mjs';
 import { extractImagensFromDetalhe, fetchProdutoDetalhe } from '../lib/formigresCatalog.mjs';
 import { extractImagensFromProduto } from '../lib/carmeloFiorCatalog.mjs';
+import { parseCarmeloImagensFromHtml } from '../lib/carmeloPaginaProduto.mjs';
 import { resolveEmbalagemFormigres } from '../lib/formigresEmbalagem.mjs';
 import { resolvePrecoPagLeve, produtoPrecoFromItem } from '../lib/pagleveTabelaPrecos.mjs';
 import { loadPrecosSiah, resolvePrecoSiah } from '../lib/paglevePrecosSiah.mjs';
@@ -110,6 +111,16 @@ async function enrichImagens(item, ctx) {
   let imagem_url = item.imagem_url || '';
   let imagens = item.imagens?.length ? [...item.imagens] : [];
   const url = item.produto_url || '';
+  let pageHtml = '';
+
+  if (!imagem_url && url) {
+    pageHtml = curlGet(url);
+    const og = metaOg(pageHtml, 'og:image');
+    if (og) {
+      imagem_url = og;
+      imagens = mapImagens([og]);
+    }
+  }
 
   const fgId = item.formigres_id || formigresIdFromUrl(url);
   if (fgId) {
@@ -128,7 +139,17 @@ async function enrichImagens(item, ctx) {
     return { imagem_url, imagens, formigres_id: fgId };
   }
 
-  if (item.fabricante_grupo === 'Carmelo Fior' || url.includes('carmelofior.com.br')) {
+  if (!imagem_url && (item.fabricante_grupo === 'Carmelo Fior' || url.includes('carmelofior.com.br'))) {
+    const html = pageHtml || curlGet(url);
+    pageHtml = html;
+    const gallery = parseCarmeloImagensFromHtml(html);
+    if (gallery.length) {
+      imagem_url = gallery[0];
+      imagens = mapImagens(gallery.slice(0, 6));
+    }
+  }
+
+  if (!imagem_url && (item.fabricante_grupo === 'Carmelo Fior' || url.includes('carmelofior.com.br'))) {
     const desc = `${item.formato} ${item.descricao}`;
     const { match } = findInFormigresSnapshot(ctx.carmeloSnap, desc, {
       minScore: 30,
@@ -151,7 +172,7 @@ async function enrichImagens(item, ctx) {
 
   if (!imagem_url && url.includes('portalgruporocha.com.br')) {
     const slug = rochaSlugFromUrl(url);
-    const html = curlGet(url);
+    const html = pageHtml || curlGet(url);
     const img = pickRochaImage(html, slug);
     if (img) {
       imagem_url = img;
@@ -160,7 +181,7 @@ async function enrichImagens(item, ctx) {
   }
 
   if (!imagem_url && url) {
-    const html = curlGet(url);
+    const html = pageHtml || curlGet(url);
     const og = metaOg(html, 'og:image');
     if (og) {
       imagem_url = og;
@@ -221,6 +242,7 @@ function enrichPrecoEmbalagem(item, ctx) {
 }
 
 async function main() {
+  const onlyMissing = process.argv.includes('--only-missing');
   const jsonPath = findLatestClassif();
   if (!jsonPath) {
     console.error('Classificação PagLeve não encontrada. Rode catalogo:classificar-pagleve');
@@ -243,6 +265,12 @@ async function main() {
   let comPreco = 0;
   for (let i = 0; i < payload.itens.length; i++) {
     const item = { ...payload.itens[i] };
+    if (onlyMissing && item.imagem_url && item.preco_m2 != null && item.preco_m2 > 0) {
+      itens.push(item);
+      if (item.imagem_url) comFoto += 1;
+      if (item.preco_m2 > 0) comPreco += 1;
+      continue;
+    }
     const precoEmb = enrichPrecoEmbalagem(item, ctx);
     Object.assign(item, precoEmb);
     const imgs = await enrichImagens(item, ctx);

@@ -21,6 +21,7 @@ import {
   buildCatalogTourFabHtml,
   buildCatalogTourHtml,
 } from '../lib/catalogoTour.mjs';
+import { loadPrecosSiah, resolvePrecoSiah } from '../lib/paglevePrecosSiah.mjs';
 
 const ROOT = process.cwd();
 const args = process.argv.slice(2);
@@ -381,6 +382,22 @@ async function buildPdfThumbMap(itens) {
   }
   await Promise.all(Array.from({ length: workers }, worker));
   return map;
+}
+
+function applyPrecosPagLeveItens(itens) {
+  const precos = loadPrecosSiah();
+  if (!precos) return itens;
+  return itens.map((item) => {
+    if (item.preco_m2 != null && Number(item.preco_m2) > 0) return item;
+    const hit = resolvePrecoSiah(item, precos);
+    if (hit.preco_m2 == null) return item;
+    return {
+      ...item,
+      preco_m2: hit.preco_m2,
+      preco_fonte: item.preco_fonte || hit.fonte || '',
+      codigo_siah: item.codigo_siah || hit.codigo_siah || '',
+    };
+  });
 }
 
 function enrichItens(itens, snapshot, cfg = CFG) {
@@ -5235,7 +5252,7 @@ async function mainAsync() {
   const classif = readJson(jsonPath);
 
   if (CFG.skipSnapshot) {
-    const itens = (classif.itens || []).map((item) => {
+    let itens = (classif.itens || []).map((item) => {
       const imagem_url = fixImageUrl(item.imagem_url || '');
       const imagens = (item.imagens || []).length
         ? item.imagens.map((img) => ({ url: fixImageUrl(img.url), tipo: img.tipo || 'principal' }))
@@ -5247,6 +5264,9 @@ async function mainAsync() {
         produto_url: item.produto_url || '',
       };
     });
+    if (CFG.skin === 'pagleve') {
+      itens = applyPrecosPagLeveItens(itens);
+    }
     const antLogoDataUri = loadAntLogoDataUri();
     const brandLogoDataUri = loadBrandLogoDataUri(CFG);
     const pdfFontCss = loadPdfFontFaceCss();

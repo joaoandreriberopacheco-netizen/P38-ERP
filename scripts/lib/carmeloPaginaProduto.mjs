@@ -2,6 +2,7 @@
  * Ficha pública Carmelo Fior (HTML da página /produto/{slug}).
  */
 import { stripAccents } from './formigresCatalog.mjs';
+import { imageUrl as carmeloImageUrl } from './carmeloFiorCatalog.mjs';
 
 const SUPERFICIES = ['Brilhante', 'Mate', 'Acetinado', 'Polido', 'Granilhado', 'Natural', 'Soft'];
 const USO_PEI = ['LEI', 'LCI', 'LA', 'LB', 'LC', 'LD', 'LE'];
@@ -22,6 +23,26 @@ export function parseMarcaFromCarmeloHtml(raw = '') {
   return normalizeMarcaCarmeloSite(m?.[1] || '');
 }
 
+export function parseOgImageFromHtml(html = '') {
+  const m = String(html).match(/<meta property="og:image" content="([^"]+)"/i);
+  const url = m?.[1]?.trim() || '';
+  return url && !/^https?:\/\/[^/]+\/?$/.test(url) ? url : '';
+}
+
+/** Imagens no JSON embebido (og:image vem vazio no site Carmelo). */
+export function parseCarmeloImagensFromHtml(html = '') {
+  const files = [...String(html).matchAll(/"image":"([^"]+\.(?:webp|jpg|jpeg|png))"/gi)].map((m) => m[1]);
+  const urls = [];
+  const seen = new Set();
+  for (const file of files) {
+    const url = carmeloImageUrl(file);
+    if (!url || seen.has(url)) continue;
+    seen.add(url);
+    urls.push(url);
+  }
+  return urls;
+}
+
 export function parseCarmeloProdutoHtml(html) {
   const raw = String(html || '');
   const title = raw.match(/<title>([^<|]+)/i)?.[1]?.trim() || '';
@@ -40,6 +61,8 @@ export function parseCarmeloProdutoHtml(html) {
   if (superficie) parts.push(superficie);
 
   const marca_site = parseMarcaFromCarmeloHtml(raw);
+  const gallery = parseCarmeloImagensFromHtml(raw);
+  const imagem_url = parseOgImageFromHtml(raw) || gallery[0] || '';
 
   return {
     titulo: title,
@@ -47,6 +70,8 @@ export function parseCarmeloProdutoHtml(html) {
     superficie,
     linha_site: linha,
     marca_site,
+    imagem_url,
+    imagens_urls: gallery,
     fabricante_grupo: 'Carmelo Fior',
     classificacao_uso: '',
     classificacao_pei: '',
