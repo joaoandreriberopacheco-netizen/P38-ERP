@@ -125,6 +125,14 @@ function mapStatus(status) {
   return 'sem_ficha';
 }
 
+function tituloCatalogo(row, descricao) {
+  const site = String(row.descricao_no_site || '').trim();
+  if (site) return site;
+  const modelo = String(row.modelo || '').trim();
+  if (modelo && !/^\(ver descri/i.test(modelo)) return modelo;
+  return descricao;
+}
+
 /** PagLeve: polida é textura (acabamento), não linha comercial à parte de Bold/Retificada. */
 function normalizarLinhaPagLeve(classif, acabLabel) {
   if (classif.linha !== 'polida') return classif;
@@ -174,7 +182,7 @@ function main() {
       match_status: mapStatus(row.status),
       match_score: row.status === 'confirmado_site' ? 100 : 0,
       formigres_id: (String(row.evidencia_url || '').match(/formigres\.com\.br\/produto\/(\d+)/i) || [])[1] || '',
-      formigres_titulo: row.descricao_no_site || row.modelo || '',
+      formigres_titulo: tituloCatalogo(row, descricao),
       formigres_tipo: siteHints.tipo,
       formigres_acabamento: siteHints.acabamento || acabLabel.toUpperCase(),
       acabamento_label: acabLabel,

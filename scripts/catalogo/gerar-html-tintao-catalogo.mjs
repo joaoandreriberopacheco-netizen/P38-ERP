@@ -3582,7 +3582,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return String(a || '').localeCompare(String(b || ''), 'pt-BR');
     }
     function itemTitulo(item) {
-      return item.formigres_titulo || item.descricao || '';
+      const ft = String(item.formigres_titulo || '').trim();
+      if (ft && !/^\(ver descri/i.test(ft)) return ft;
+      return item.descricao || ft || '';
     }
     function compareItensFormatoNome(a, b) {
       const byFmt = compareFormato(a.formato, b.formato);
@@ -3842,7 +3844,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function renderTableRow(item) {
       const imgs = getGaleria(item);
       const img = imgs[0]?.url || item.imagem_url || '';
-      const titulo = item.formigres_titulo || item.descricao;
+      const titulo = itemTitulo(item);
       const cod = item.codigo_tintao;
       const qty = getQty(cod);
       const pack = fmtEmbalagemText(item);
@@ -3943,7 +3945,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function renderCatalogCardFormigres(item) {
       const imgs = getGaleria(item);
       const img = imgs[0]?.url || item.imagem_url || '';
-      const titulo = item.formigres_titulo || item.descricao;
+      const titulo = itemTitulo(item);
       const cod = item.codigo_tintao;
       const qty = getQty(cod);
       const pack = fmtEmbalagemText(item);
@@ -4273,7 +4275,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         if (sub) totalValor += sub;
         const imgs = getGaleria(item);
         const img = imgs[0]?.url || '';
-        const titulo = item.formigres_titulo || item.descricao;
+        const titulo = itemTitulo(item);
         const rowData = { item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl: emb.cxpl, sub };
         bodyRows.push(renderPedidoTableRow(rowData, null, null));
         cardRows.push(renderPedidoCard(rowData));
@@ -4425,7 +4427,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         if (sub) totalValor += sub;
         const imgs = getGaleria(item);
         const img = imgs[0]?.url || '';
-        const titulo = item.formigres_titulo || item.descricao;
+        const titulo = itemTitulo(item);
         const rowData = { item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl: emb.cxpl, sub };
         cards.push(renderPedidoCard(rowData, { pdf: true, thumbs }));
       }
