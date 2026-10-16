@@ -24,7 +24,7 @@ export function inferirDaDescricao(descricao = '') {
     bold: /\bHD\b|\bBOLD\b/.test(raw) && !/\bRT\b/.test(raw),
     antiderrapante: /\bAD\b|ADERENTE|ABS\b|MATE\s*ABS|GRANILHADO\s*ABS/.test(raw),
     semiderrapante: /GRANILHAD|GOTEJAD|SEMIDERRAP/.test(raw) && !/ABS/.test(raw),
-    mate: /\bMATE\b|\bMAT\b/.test(raw),
+    mate: /\bMATE\b|\bMAT\b|ACETINAD/.test(raw),
     brilhante: /BRILH/.test(raw),
     polido: /RT\s*POLIDO|\bPOLIDO\b/.test(raw),
   };

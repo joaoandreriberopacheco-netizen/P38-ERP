@@ -19,4 +19,6 @@ Depois de atualizar o CSV:
 npm run catalogo:publicar-pagleve
 ```
 
+Usa o **mesmo layout do Tintão** (Libre Franklin, carrinho de caixas, árvore Bold / Retificada / Polida e acabamentos). Classificação: `files/pagleve/classificacao/`.
+
 Publicação: projecto Vercel isolado em `deploy/catalogo-pagleve/` — ver README dessa pasta.

@@ -127,6 +127,37 @@ const CONFIGS = {
     fabricanteUf: 'SE',
     fabricanteNome: 'Arielle · Polo SE (Carmelo Fior)',
   },
+  pagleve: {
+    classifDir: path.join(ROOT, 'files', 'pagleve', 'classificacao'),
+    classifPattern: /^pagleve-estoque-\d{4}-\d{2}-\d{2}\.json$/,
+    outHtml: path.join(ROOT, 'docs', 'imports-local', 'pagleve', 'Catálogo Pague Leve — Estoque.html'),
+    outDeploy: path.join(ROOT, 'deploy', 'catalogo-pagleve', 'index.html'),
+    outPdfThumbs: path.join(ROOT, 'docs', 'imports-local', 'pagleve', 'catalogo-pagleve-pdf-thumbs.json'),
+    publicUrl: (process.env.CATALOGO_PAGLEVE_PUBLIC_URL || 'https://catalogo-pague-leve.vercel.app/').replace(/\/?$/, '/'),
+    skipSnapshot: true,
+    skipApiEnrich: true,
+    skipPdfThumbs: true,
+    skipGemeasDedup: true,
+    title: 'Pague Leve — Catálogo de estoque',
+    h1: 'Pisos e porcelanatos',
+    hint: 'Marque caixas na tabela · revise no carrinho',
+    qtyUnit: 'caixa',
+    qtyLabel: 'Caixas',
+    qtyLabelPl: 'caixas',
+    demoBanner: '',
+    themeKey: 'pagleve-catalog-theme-v1',
+    qtyKey: 'pagleve-catalog-qty-v1',
+    descontoKey: 'pagleve-catalog-desconto-v1',
+    groupKey: 'pagleve-catalog-group-v1',
+    classifError: 'JSON de classificação não encontrado. Rode: npm run catalogo:classificar-pagleve',
+    skin: 'pagleve',
+    siteSub: 'Estoque Novo Aleixo · Catálogo B2B',
+    hideThemeToggle: false,
+    fontsUrl: 'https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&display=swap',
+    logoPath: path.join(ROOT, 'scripts', 'catalogo', 'assets', 'pagleve-logo.png'),
+    brandSiteUrl: 'https://www.instagram.com/paguelevepisoseporcelanatos/',
+    brandSiteLabel: 'Pague Leve — Instagram',
+  },
 };
 
 const CFG = CONFIGS[MODO] || CONFIGS.tintao;
@@ -226,7 +257,28 @@ const ARIELLE_ACAB_ORDER = [
   'Sem acabamento',
 ];
 
+const PAGLEVE_ACAB_ORDER = [
+  'Polido',
+  'Polida',
+  'Brilhante',
+  'Mate',
+  'Acetinado',
+  'Granilhado',
+  'Gotejado',
+  'Protetiva aderente',
+  'Sem acabamento',
+];
+
 function getCatalogConfig(cfg = CFG) {
+  if (cfg.skin === 'pagleve') {
+    return {
+      linhaOrder: LINHA_ORDER,
+      linhaLabel: LINHA_LABEL,
+      tipoOrder: TIPO_ORDER,
+      tipoLabel: TIPO_LABEL,
+      acabOrder: PAGLEVE_ACAB_ORDER,
+    };
+  }
   if (cfg.skin === 'arielle') {
     return {
       linhaOrder: ARIELLE_LINHA_ORDER,
@@ -945,6 +997,69 @@ const BRAND_SKIN_TOKENS = {
   arielle: { accent: '#23674c', accentBright: '#1a5239', accentRgb: '35,103,76', demoBg: '#e8f3ee' },
 };
 
+const PAGLEVE_SKIN_CSS = `
+    html[data-skin="pagleve"] {
+      --pl-purple: #702d91;
+      --pl-purple-deep: #5a2474;
+      --pl-green: #8cc63f;
+      --pl-green-deep: #6fa82f;
+      --accent: var(--pl-purple);
+      --accent-bright: var(--pl-purple-deep);
+      --accent-dim: #9a6bb8;
+      --accent-deep: var(--pl-purple-deep);
+      --accent-hover: var(--pl-green);
+      --accent-on: #ffffff;
+      --accent-muted: rgba(112, 45, 145, 0.08);
+      --accent-soft: rgba(112, 45, 145, 0.14);
+      --accent-glow: rgba(140, 198, 63, 0.2);
+      --accent-ring: rgba(112, 45, 145, 0.18);
+      --accent-border: rgba(112, 45, 145, 0.35);
+    }
+    html[data-skin="pagleve"][data-theme="light"] .site-bar {
+      background: linear-gradient(90deg, var(--pl-purple) 0%, var(--pl-purple-deep) 55%, #3d1a52 100%);
+      color: #fff;
+      border-bottom: 3px solid var(--pl-green);
+    }
+    html[data-skin="pagleve"] .site-brand { color: #fff; font-weight: 700; letter-spacing: .02em; }
+    html[data-skin="pagleve"] .site-sub { color: rgba(255,255,255,.88); }
+    html[data-skin="pagleve"] .site-stat strong { color: var(--pl-green); }
+    html[data-skin="pagleve"] .btn-primary {
+      background: var(--pl-green);
+      border-color: var(--pl-green-deep);
+      color: #1a2a0a;
+      font-weight: 600;
+    }
+    html[data-skin="pagleve"] .btn-primary:hover { background: var(--pl-green-deep); color: #fff; }
+    html[data-skin="pagleve"] .cart-fab, html[data-skin="pagleve"] .fab {
+      background: var(--pl-green);
+      color: #1a2a0a;
+      border-color: var(--pl-green-deep);
+    }
+    html[data-skin="pagleve"] .cart-fab:hover, html[data-skin="pagleve"] .fab:hover {
+      background: var(--pl-green-deep);
+      color: #fff;
+    }
+    html[data-skin="pagleve"] .acc-title.linha-bold,
+    html[data-skin="pagleve"] .acc-title.linha-retificada,
+    html[data-skin="pagleve"] .acc-title.linha-polida { color: var(--pl-purple); }
+    html[data-skin="pagleve"] .load-overlay { background: rgba(112, 45, 145, 0.06); }
+    html[data-skin="pagleve"] .load-logo-pagleve {
+      width: min(220px, 62vw);
+      margin: 0 auto;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 12px 40px rgba(112, 45, 145, 0.25);
+    }
+    html[data-skin="pagleve"] .load-logo-pagleve img { display: block; width: 100%; height: auto; }
+    html[data-skin="pagleve"] .load-square.filled {
+      background: var(--pl-purple);
+      border-color: var(--pl-purple-deep);
+    }
+    html[data-skin="pagleve"] .page-head h1::before {
+      background: linear-gradient(180deg, var(--pl-green), var(--pl-purple));
+    }
+`;
+
 function buildBrandSkinCss(skin) {
   const tokens = BRAND_SKIN_TOKENS[skin];
   if (!tokens) return '';
@@ -969,6 +1084,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
   const comFoto = itens.filter((i) => i.imagem_url).length;
   const loadSquaresHtml = Array.from({ length: 20 }, () => '<span class="load-square"></span>').join('');
   const isB2bSkin = isB2bCatalogSkin(cfg.skin);
+  const isPagleveSkin = cfg.skin === 'pagleve';
   const qtyLabel = cfg.qtyLabel || (isB2bSkin ? 'Paletes' : 'Caixas');
   const qtyLabelPl = cfg.qtyLabelPl || (isB2bSkin ? 'paletes' : 'caixas');
   const qtyUnit = cfg.qtyUnit || (isB2bSkin ? 'palete' : 'caixa');
@@ -996,7 +1112,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
   const pdfFontCssSafe = String(pdfFontCss).replace(/<\/style/gi, '<\\/style');
 
   const headerLogo = brandLogoDataUri || antLogoDataUri;
-  const loaderHtml = isB2bSkin
+  const loaderHtml = isPagleveSkin
+    ? `<div class="load-logo-pagleve" aria-hidden="true"><img src="${headerLogo}" alt="" width="220" height="220" /></div>`
+    : isB2bSkin
     ? `<div class="load-logo-${escTpl(cfg.skin)}" aria-hidden="true"><img src="${headerLogo}" alt="" width="240" height="41" /></div>`
     : `<div class="load-logo-ant" aria-hidden="true">
         <img class="load-ant-ghost" src="${antLogoDataUri || ''}" alt="" width="200" height="120" />
@@ -1007,10 +1125,12 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       </div>`;
   const siteBrandHtml = isB2bSkin
     ? ''
-    : `<span class="site-brand">Formigres</span>`;
-  const pageHeadBrandHtml = isB2bSkin && headerLogo
-    ? `<a class="page-head-brand-lockup" href="${escTpl(cfg.brandSiteUrl || (cfg.skin === 'arielle' ? 'https://www.carmelofior.com.br/produtos?category=4' : 'https://www.formigres.com.br/'))}" target="_blank" rel="noopener noreferrer" aria-label="${escTpl(cfg.brandSiteLabel || (cfg.skin === 'arielle' ? 'Arielle' : 'Formigres'))}">
-        <img class="page-head-logo" src="${headerLogo}" alt="${escTpl(cfg.skin === 'arielle' ? 'Arielle' : 'Formigres')}" width="180" height="31" />
+    : isPagleveSkin
+      ? `<span class="site-brand">Pague Leve</span>`
+      : `<span class="site-brand">Formigres</span>`;
+  const pageHeadBrandHtml = (isB2bSkin || isPagleveSkin) && headerLogo
+    ? `<a class="page-head-brand-lockup" href="${escTpl(cfg.brandSiteUrl || (cfg.skin === 'arielle' ? 'https://www.carmelofior.com.br/produtos?category=4' : cfg.skin === 'pagleve' ? 'https://www.instagram.com/paguelevepisoseporcelanatos/' : 'https://www.formigres.com.br/'))}" target="_blank" rel="noopener noreferrer" aria-label="${escTpl(cfg.brandSiteLabel || (cfg.skin === 'arielle' ? 'Arielle' : cfg.skin === 'pagleve' ? 'Pague Leve' : 'Formigres'))}">
+        <img class="page-head-logo" src="${headerLogo}" alt="${escTpl(cfg.skin === 'arielle' ? 'Arielle' : cfg.skin === 'pagleve' ? 'Pague Leve' : 'Formigres')}" width="${cfg.skin === 'pagleve' ? '120' : '180'}" height="${cfg.skin === 'pagleve' ? '120' : '31'}" />
       </a>`
     : '';
   const siteBarLeadHtml = isB2bSkin
@@ -1178,6 +1298,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     html[data-theme="light"] .load-overlay { background: rgba(242,242,240,.97); }
     ${isB2bSkin ? buildBrandSkinCss(cfg.skin) : ''}
+    ${isPagleveSkin ? PAGLEVE_SKIN_CSS : ''}
     ${isB2bSkin ? buildCatalogTourCss(cfg.skin) : ''}
     .load-logo-ant {
       position: relative;
@@ -4833,6 +4954,51 @@ async function mainAsync() {
   }
 
   const classif = readJson(jsonPath);
+
+  if (CFG.skipSnapshot) {
+    const itens = (classif.itens || []).map((item) => {
+      const imagem_url = fixImageUrl(item.imagem_url || '');
+      const imagens = (item.imagens || []).length
+        ? item.imagens.map((img) => ({ url: fixImageUrl(img.url), tipo: img.tipo || 'principal' }))
+        : (imagem_url ? [{ url: imagem_url, tipo: 'principal' }] : []);
+      return {
+        ...item,
+        imagem_url,
+        imagens,
+        produto_url: item.produto_url || '',
+      };
+    });
+    const antLogoDataUri = loadAntLogoDataUri();
+    const brandLogoDataUri = loadBrandLogoDataUri(CFG);
+    const pdfFontCss = loadPdfFontFaceCss();
+    const html = buildHtml({
+      classif,
+      itens,
+      antLogoDataUri,
+      brandLogoDataUri,
+      pdfThumbs: {},
+      pdfFontCss,
+      cfg: CFG,
+    });
+    fs.mkdirSync(path.dirname(OUT_HTML), { recursive: true });
+    fs.mkdirSync(path.dirname(OUT_DEPLOY_HTML), { recursive: true });
+    fs.writeFileSync(OUT_HTML, html);
+    fs.writeFileSync(OUT_DEPLOY_HTML, html);
+    const htmlKb = Math.round(fs.statSync(OUT_DEPLOY_HTML).size / 1024);
+    console.log(JSON.stringify({
+      ok: true,
+      modo: MODO,
+      itens: itens.length,
+      comFoto: itens.filter((i) => i.imagem_url).length,
+      htmlKb,
+      fonte: jsonPath,
+      html: OUT_HTML,
+      deployHtml: OUT_DEPLOY_HTML,
+      publicUrl: PUBLIC_URL,
+    }, null, 2));
+    return;
+  }
+
   const snapshotSlug = CFG.snapshotSlug || 'formigres';
   const snapshot = loadSnapshotFromFile(readJson(snapshotPath(snapshotSlug)));
   if (!snapshot) {
