@@ -1263,7 +1263,26 @@ const PAGLEVE_SKIN_CSS = `
         margin-top: 3px;
       }
     }
-    html[data-skin="pagleve"] .pagleve-pei-filter { max-width: 148px; }
+    html[data-skin="pagleve"] .pagleve-catalog-filter {
+      flex: 1 1 108px;
+      min-width: 0;
+      max-width: 156px;
+      font-size: .74rem;
+    }
+    @media (max-width: 720px) {
+      html[data-skin="pagleve"] .toolbar-main {
+        flex-wrap: wrap;
+        align-items: stretch;
+      }
+      html[data-skin="pagleve"] .toolbar-main .search {
+        flex: 1 1 100%;
+        min-width: 0;
+      }
+      html[data-skin="pagleve"] .toolbar-main .pagleve-catalog-filter {
+        flex: 1 1 calc(50% - 6px);
+        max-width: none;
+      }
+    }
 `;
 
 function buildBrandSkinCss(skin) {
@@ -1291,8 +1310,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
   const loadSquaresHtml = Array.from({ length: 20 }, () => '<span class="load-square"></span>').join('');
   const isB2bSkin = isB2bCatalogSkin(cfg.skin);
   const isPagleveSkin = cfg.skin === 'pagleve';
-  const paglevePeiFilterHtml = isPagleveSkin
-    ? '<select id="filter-pei" class="select-group pagleve-pei-filter" title="Filtrar por classificação de uso PEI"><option value="">Uso PEI: todos</option></select>'
+  const pagleveCatalogFiltersHtml = isPagleveSkin
+    ? '<select id="filter-textura" class="select-group pagleve-catalog-filter" title="Filtrar por textura"><option value="">Textura: todas</option></select>'
+      + '<select id="filter-pei" class="select-group pagleve-catalog-filter" title="Filtrar por classificação de uso PEI"><option value="">Uso PEI: todos</option></select>'
     : '';
   const qtyLabel = cfg.qtyLabel || (isB2bSkin ? 'Paletes' : 'Caixas');
   const qtyLabelPl = cfg.qtyLabelPl || (isB2bSkin ? 'paletes' : 'caixas');
@@ -2982,7 +3002,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     <div class="toolbar">
       <div class="toolbar-main">
         <input id="search" class="search" type="search" placeholder="${isPagleveSkin ? 'Código, modelo, formato ou PEI (ex.: LA)…' : 'Código, modelo ou formato (ex.: 45x45)…'}" />
-        ${paglevePeiFilterHtml}
+        ${pagleveCatalogFiltersHtml}
         <button type="button" class="btn btn-icon btn-clear-qty" id="clear-qty-main" aria-label="Limpar seleção" title="Limpar seleção">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/>
@@ -3379,6 +3399,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     let filterQtyOnly = false;
     let filterPeiUso = '';
+    let filterTexturaGrupo = '';
     let pedidoOpen = false;
     let pedidoPdfSheetOpen = false;
     let dom = {};
@@ -4269,7 +4290,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const searchBlob = (titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack + ' ' + (item.marca_nome || '') + ' ' + (item.fabricante_grupo || '')).toLowerCase();
       const packCell = CATALOG_SKIN === 'pagleve' ? pagLevePackCellHtml(item, pack) : esc(pack);
       const peiAttr = CATALOG_SKIN === 'pagleve' ? peiClasseFromItem(item) : '';
-      return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-pei="' + esc(peiAttr) + '" data-search="' + esc(searchBlob) + '" data-qty="' + qty + '">' +
+      const texAttr = CATALOG_SKIN === 'pagleve' ? catalogAcabGrupo(item) : '';
+      return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-pei="' + esc(peiAttr) + '" data-textura="' + esc(texAttr) + '" data-search="' + esc(searchBlob) + '" data-qty="' + qty + '">' +
         '<td class="col-foto">' + foto + '</td>' +
         '<td class="col-modelo">' + modeloCell + '</td>' +
         '<td class="col-pack">' + packCell + '</td>' +
@@ -4327,7 +4349,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' '
         + formatSearchBlob(item.formato) + ' ' + cod + ' ' + pack + ' '
         + (item.marca_nome || '') + ' ' + (item.fabricante_grupo || '') + ' '
-        + peiClasseFromItem(item) + ' PEI ' + (item.referencia || ''),
+        + peiClasseFromItem(item) + ' PEI ' + (item.referencia || '') + ' '
+        + catalogAcabGrupo(item),
       );
     }
     function renderCatalogCardPagLeve(item) {
@@ -4356,7 +4379,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       '</div>';
       const spec = renderPedidoSpecTable(pagLeveCatalogSpecCells(item, pack, m2unit, m2tot));
       const peiAttr = peiClasseFromItem(item);
-      return '<article class="catalog-card catalog-card-pagleve pedido-card model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-pei="' + esc(peiAttr) + '" data-search="' + esc(pagLeveItemSearchKey(item, cod, pack, titulo)) + '" data-qty="' + qty + '">' +
+      const texAttr = catalogAcabGrupo(item);
+      return '<article class="catalog-card catalog-card-pagleve pedido-card model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-pei="' + esc(peiAttr) + '" data-textura="' + esc(texAttr) + '" data-search="' + esc(pagLeveItemSearchKey(item, cod, pack, titulo)) + '" data-qty="' + qty + '">' +
         '<div class="pedido-card-layout">' + row1 + spec + '</div></article>';
     }
     function renderCatalogCardFormigres(item) {
@@ -4534,7 +4558,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const showQty = !filterQtyOnly || qty > 0;
         const showTerm = rowMatchesSearch(row, terms);
         const showPei = !filterPeiUso || (row.dataset.pei || '') === filterPeiUso;
-        const show = showQty && showTerm && showPei;
+        const showTextura = !filterTexturaGrupo || (row.dataset.textura || '') === filterTexturaGrupo;
+        const show = showQty && showTerm && showPei && showTextura;
         row.classList.toggle('hidden', !show);
         const cod = row.dataset.cod;
         if (cod && !show) {
@@ -5277,6 +5302,29 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       try { localStorage.setItem(GROUP_KEY, groupBy); } catch { /* ignore */ }
       renderCatalogo();
     }
+    function initTexturaFilter() {
+      if (CATALOG_SKIN !== 'pagleve') return;
+      const sel = document.getElementById('filter-textura');
+      if (!sel) return;
+      const set = new Set();
+      for (const item of CATALOGO.itens) {
+        const g = catalogAcabGrupo(item);
+        if (g) set.add(g);
+      }
+      const order = CFG.acabOrder || [];
+      const extras = [...set].filter((g) => order.indexOf(g) < 0).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+      const groups = order.filter((g) => set.has(g)).concat(extras);
+      for (const g of groups) {
+        const opt = document.createElement('option');
+        opt.value = g;
+        opt.textContent = g;
+        sel.appendChild(opt);
+      }
+      sel.addEventListener('change', () => {
+        filterTexturaGrupo = sel.value || '';
+        applySearch(q?.value || '');
+      });
+    }
     function initPeiFilter() {
       if (CATALOG_SKIN !== 'pagleve') return;
       const sel = document.getElementById('filter-pei');
@@ -5309,6 +5357,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function initCatalogControls() {
       if (groupSel) groupSel.value = groupBy;
       if (groupSelD) groupSelD.value = groupBy;
+      initTexturaFilter();
       initPeiFilter();
     }
     function toggleFilterQty(btn) {
