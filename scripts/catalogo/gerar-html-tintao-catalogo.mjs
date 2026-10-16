@@ -151,6 +151,7 @@ const CONFIGS = {
     qtyKey: 'pagleve-catalog-qty-v1',
     descontoKey: 'pagleve-catalog-desconto-v1',
     groupKey: 'pagleve-catalog-group-v1',
+    tourKey: 'pagleve-catalog-tour-v1',
     classifError: 'JSON de classificação não encontrado. Rode: npm run catalogo:classificar-pagleve',
     skin: 'pagleve',
     siteSub: 'Estoque Novo Aleixo · Catálogo B2B',
@@ -1383,7 +1384,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       fabricanteNome: cfg.fabricanteNome || 'Formigres',
     })
     : '';
-  const catalogTourJs = isB2bSkin
+  const catalogTourEnabled = isB2bSkin || isPagleveSkin;
+  const catalogTourJs = catalogTourEnabled
     ? buildCatalogTourClientJs({ tourKey: cfg.tourKey, skin: cfg.skin, qtyLabelPl })
     : '';
   const regimePanelHtml = isB2bSkin
@@ -1532,7 +1534,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     html[data-theme="light"] .load-overlay { background: rgba(242,242,240,.97); }
     ${isB2bSkin ? buildBrandSkinCss(cfg.skin) : ''}
     ${isPagleveSkin ? PAGLEVE_SKIN_CSS : ''}
-    ${isB2bSkin ? buildCatalogTourCss(cfg.skin) : ''}
+    ${catalogTourEnabled ? buildCatalogTourCss(cfg.skin) : ''}
     .load-logo-ant {
       position: relative;
       width: min(200px, 58vw);
@@ -3044,7 +3046,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
 
   ${themeToggleHtml}
 
-  ${isB2bSkin ? buildCatalogTourFabHtml() : ''}
+  ${catalogTourEnabled ? buildCatalogTourFabHtml() : ''}
 
   <div class="fab-stack" id="fab-stack">
     <button type="button" class="fab cart-fab" id="cart-fab" aria-label="Minha seleção">
@@ -3094,7 +3096,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
   </div>
 
   ${regimeDialogHtml}
-  ${isB2bSkin ? buildCatalogTourHtml() : ''}
+  ${catalogTourEnabled ? buildCatalogTourHtml() : ''}
 
   <div id="pedido-print"></div>
 

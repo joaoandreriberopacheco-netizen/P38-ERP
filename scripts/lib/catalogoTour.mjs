@@ -4,6 +4,13 @@
  */
 
 const HELP_FAB_TOKENS = {
+  pagleve: {
+    bg: '#f3e8f8',
+    bgHover: '#e8d4f0',
+    border: '#9b6bb8',
+    fg: '#5c2878',
+    glow: 'rgba(92, 40, 120, 0.2)',
+  },
   formigres: {
     bg: '#d6f2f4',
     bgHover: '#c4ebef',
@@ -20,7 +27,94 @@ const HELP_FAB_TOKENS = {
   },
 };
 
+function buildCatalogTourStepsPagLeve({ qtyLabelPl = 'caixas' } = {}) {
+  return [
+    {
+      id: 'welcome',
+      title: 'Bem-vindo ao catálogo Pague Leve',
+      text: `Tour rápido (~1 min) do estoque Novo Aleixo: busca, filtros, ${qtyLabelPl} e carrinho. Pode pular a qualquer momento.`,
+      center: true,
+      prepare: 'closePanels',
+    },
+    {
+      id: 'desconto',
+      selector: '#desconto-pct',
+      title: 'Desconto comercial',
+      text: 'Opcional: percentual negociado com o cliente. Os preços por m² recalculam na hora.',
+      placement: 'bottom',
+      prepare: 'closePanels',
+    },
+    {
+      id: 'search',
+      selector: '#search',
+      title: 'Busca',
+      text: 'Código, nome do modelo, formato (ex.: 90x90) ou classificação PEI (ex.: LA, LB).',
+      placement: 'bottom',
+      prepare: 'closePanels',
+    },
+    {
+      id: 'filters',
+      selector: '#filter-textura',
+      title: 'Textura e uso PEI',
+      text: 'Filtre por textura (Mate, Brilhante, Polido…) ou por uso PEI (LA, LB, LC…). Os dois filtros combinam com a busca.',
+      placement: 'bottom',
+      prepare: 'closePanels',
+    },
+    {
+      id: 'group',
+      selectorDesktop: '#group-by-desktop',
+      selectorMobile: '#group-by',
+      title: 'Agrupar catálogo',
+      text: 'Organize por formato › textura ou textura › formato. No celular, abra ⋯ se não ver esta opção.',
+      placement: 'bottom',
+      prepare: 'toolbarExtra',
+    },
+    {
+      id: 'catalogo',
+      selector: '#catalogo',
+      title: 'Montar a seleção',
+      text: `Abra Bold ou Retificada, escolha formato e textura. No celular use os cards; informe ${qtyLabelPl} em cada modelo.`,
+      placement: 'top',
+      prepare: 'closePanels',
+    },
+    {
+      id: 'cart',
+      selector: '#cart-fab',
+      title: 'Carrinho — Minha seleção',
+      text: 'Revise modelos, m² totais e subtotais antes de gerar o PDF ou fechar o pedido.',
+      placement: 'left',
+      prepare: 'closePanels',
+    },
+    {
+      id: 'pedido',
+      selector: '#pedido-actions',
+      selectorMobile: '#pedido-panel',
+      title: 'Revisar o pedido',
+      text: 'Confira cada linha. Pode limpar a seleção ou voltar ao catálogo para ajustar quantidades.',
+      placement: 'top',
+      prepare: 'pedidoOpen',
+    },
+    {
+      id: 'pdf',
+      selector: '#pdf-pedido-panel',
+      title: 'PDF do pedido',
+      text: 'Com itens na seleção, gere o PDF para arquivar ou enviar (WhatsApp, e-mail).',
+      placement: 'top',
+      prepare: 'pedidoOpen',
+    },
+    {
+      id: 'help',
+      selector: '#help-tour-fab',
+      title: 'Ajuda sempre à mão',
+      text: 'Toque em ? no canto inferior para rever este tour quando quiser.',
+      placement: 'right',
+      prepare: 'closePanels',
+    },
+  ];
+}
+
 export function buildCatalogTourSteps({ skin = 'formigres', qtyLabelPl = 'paletes' } = {}) {
+  if (skin === 'pagleve') return buildCatalogTourStepsPagLeve({ qtyLabelPl });
   const isArielle = skin === 'arielle';
   const marca = isArielle ? 'Arielle · Carmelo Fior' : 'Formigres';
   const linhas = isArielle ? 'Bold e Retificada' : 'Bold, Retificada e Polida';
@@ -240,10 +334,13 @@ export function buildCatalogTourCss(skin = 'formigres') {
       .catalog-tour-card { width: min(320px, calc(100vw - 20px)); }
       .help-fab-anchor { left: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); }
     }
+    html[data-skin="pagleve"] .help-fab-anchor {
+      bottom: calc(62px + env(safe-area-inset-bottom));
+    }
   `.trim();
 }
 
-/** HTML overlay + help FAB snippet (B2B only). */
+/** HTML overlay + help FAB snippet (catálogos com tour). */
 export function buildCatalogTourHtml() {
   return `
   <div class="catalog-tour-overlay" id="catalog-tour-overlay" hidden aria-hidden="true">
@@ -270,6 +367,7 @@ export function buildCatalogTourClientJs({ tourKey, skin = 'formigres', qtyLabel
   const stepsJson = JSON.stringify(buildCatalogTourSteps({ skin, qtyLabelPl }));
   const key = JSON.stringify(tourKey || 'catalog-tour-v1');
   return `
+    const TOUR_ENABLED = true;
     const TOUR_KEY = ${key};
     const TOUR_STEPS = ${stepsJson};
     let tourIndex = 0;
@@ -300,6 +398,11 @@ export function buildCatalogTourClientJs({ tourKey, skin = 'formigres', qtyLabel
       }
       if (step.prepare === 'pedidoOpen') {
         if (typeof openPedidoPanel === 'function') openPedidoPanel();
+        return;
+      }
+      if (step.prepare === 'toolbarExtra') {
+        const extra = document.getElementById('toolbar-extra');
+        if (extra) extra.hidden = false;
         return;
       }
     }
@@ -386,7 +489,7 @@ export function buildCatalogTourClientJs({ tourKey, skin = 'formigres', qtyLabel
     }
 
     function startTour(fromStart) {
-      if (!IS_B2B_CATALOG || !TOUR_STEPS.length) return;
+      if (!TOUR_ENABLED || !TOUR_STEPS.length) return;
       tourIndex = fromStart ? 0 : tourIndex;
       tourOpen = true;
       document.body.classList.add('catalog-tour-active');
@@ -407,7 +510,7 @@ export function buildCatalogTourClientJs({ tourKey, skin = 'formigres', qtyLabel
     }
 
     function initCatalogTour() {
-      if (!IS_B2B_CATALOG) return;
+      if (!TOUR_ENABLED) return;
       bindClick('catalog-tour-next', tourNext);
       bindClick('catalog-tour-prev', tourPrev);
       bindClick('catalog-tour-skip', function () { endTour(true); });

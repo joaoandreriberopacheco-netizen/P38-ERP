@@ -343,7 +343,124 @@
       }
     }
 
-    
+    .help-fab-anchor {
+      position: fixed;
+      left: 14px;
+      bottom: calc(14px + env(safe-area-inset-bottom));
+      z-index: 40;
+    }
+    .help-fab {
+      width: 48px;
+      height: 48px;
+      border-radius: 999px;
+      background: #f3e8f8;
+      border: 1px solid #9b6bb8;
+      color: #5c2878;
+      box-shadow: 0 4px 16px rgba(92, 40, 120, 0.2);
+      font-size: 1.12rem;
+      font-weight: 700;
+      font-family: inherit;
+    }
+    .help-fab:hover {
+      transform: scale(1.04);
+      background: #e8d4f0;
+      border-color: #9b6bb8;
+      color: #5c2878;
+      box-shadow: 0 8px 22px rgba(92, 40, 120, 0.2);
+    }
+    .catalog-tour-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 120;
+      pointer-events: auto;
+    }
+    .catalog-tour-overlay[hidden] { display: none !important; }
+    .catalog-tour-dim {
+      position: fixed;
+      inset: 0;
+      z-index: 120;
+      background: rgba(8, 7, 10, 0.48);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .22s ease;
+    }
+    .catalog-tour-overlay:not([hidden]) .catalog-tour-dim {
+      opacity: 1;
+    }
+    .catalog-tour-spotlight {
+      position: fixed;
+      border-radius: var(--radius, 8px);
+      box-shadow: 0 0 0 9999px rgba(8, 7, 10, 0.38);
+      outline: 2px solid rgba(255, 255, 255, 0.22);
+      outline-offset: 1px;
+      z-index: 121;
+      pointer-events: none;
+      transition: top .2s ease, left .2s ease, width .2s ease, height .2s ease, opacity .2s ease;
+    }
+    .catalog-tour-spotlight.is-center {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      box-shadow: none;
+      outline: none;
+    }
+    .catalog-tour-card {
+      position: fixed;
+      z-index: 122;
+      width: min(340px, calc(100vw - 24px));
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 14px 14px 12px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+    }
+    .catalog-tour-step {
+      margin: 0 0 6px;
+      font-size: .68rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .catalog-tour-title {
+      margin: 0 0 8px;
+      font-size: .95rem;
+      font-weight: 700;
+      color: var(--text-strong);
+      line-height: 1.25;
+    }
+    .catalog-tour-text {
+      margin: 0 0 12px;
+      font-size: .82rem;
+      line-height: 1.45;
+      color: var(--text);
+    }
+    .catalog-tour-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .catalog-tour-actions .btn { flex: 1 1 auto; min-width: 0; padding: 9px 10px; font-size: .78rem; }
+    .catalog-tour-skip {
+      background: transparent;
+      border: 0;
+      color: var(--muted);
+      font-size: .74rem;
+      cursor: pointer;
+      padding: 4px 2px;
+      margin-right: auto;
+    }
+    .catalog-tour-skip:hover { color: var(--accent); }
+    body.catalog-tour-active { overflow: hidden; }
+    @media (max-width: 720px) {
+      .catalog-tour-card { width: min(320px, calc(100vw - 20px)); }
+      .help-fab-anchor { left: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); }
+    }
+    html[data-skin="pagleve"] .help-fab-anchor {
+      bottom: calc(62px + env(safe-area-inset-bottom));
+    }
     .load-logo-ant {
       position: relative;
       width: min(200px, 58vw);
@@ -1864,7 +1981,7 @@
     </svg>
   </button>
 
-  
+  <div class="help-fab-anchor"><button type="button" class="fab help-fab" id="help-tour-fab" aria-label="Ajuda — tour do catálogo" title="Ajuda — tour do catálogo">?</button></div>
 
   <div class="fab-stack" id="fab-stack">
     <button type="button" class="fab cart-fab" id="cart-fab" aria-label="Minha seleção">
@@ -1915,6 +2032,20 @@
 
   
   
+  <div class="catalog-tour-overlay" id="catalog-tour-overlay" hidden aria-hidden="true">
+    <div class="catalog-tour-dim" id="catalog-tour-dim" aria-hidden="true"></div>
+    <div class="catalog-tour-spotlight is-center" id="catalog-tour-spotlight" aria-hidden="true"></div>
+    <div class="catalog-tour-card" id="catalog-tour-card" role="dialog" aria-modal="true" aria-labelledby="catalog-tour-title">
+      <p class="catalog-tour-step" id="catalog-tour-step"></p>
+      <h2 class="catalog-tour-title" id="catalog-tour-title"></h2>
+      <p class="catalog-tour-text" id="catalog-tour-text"></p>
+      <div class="catalog-tour-actions">
+        <button type="button" class="catalog-tour-skip" id="catalog-tour-skip">Pular tour</button>
+        <button type="button" class="btn" id="catalog-tour-prev" hidden>Anterior</button>
+        <button type="button" class="btn btn-primary" id="catalog-tour-next">Próximo</button>
+      </div>
+    </div>
+  </div>
 
   <div id="pedido-print"></div>
 
@@ -4191,6 +4322,172 @@
     }
     initTopControls();
     initCatalogControls();
+    const TOUR_ENABLED = true;
+    const TOUR_KEY = "pagleve-catalog-tour-v1";
+    const TOUR_STEPS = [{"id":"welcome","title":"Bem-vindo ao catálogo Pague Leve","text":"Tour rápido (~1 min) do estoque Novo Aleixo: busca, filtros, caixas e carrinho. Pode pular a qualquer momento.","center":true,"prepare":"closePanels"},{"id":"desconto","selector":"#desconto-pct","title":"Desconto comercial","text":"Opcional: percentual negociado com o cliente. Os preços por m² recalculam na hora.","placement":"bottom","prepare":"closePanels"},{"id":"search","selector":"#search","title":"Busca","text":"Código, nome do modelo, formato (ex.: 90x90) ou classificação PEI (ex.: LA, LB).","placement":"bottom","prepare":"closePanels"},{"id":"filters","selector":"#filter-textura","title":"Textura e uso PEI","text":"Filtre por textura (Mate, Brilhante, Polido…) ou por uso PEI (LA, LB, LC…). Os dois filtros combinam com a busca.","placement":"bottom","prepare":"closePanels"},{"id":"group","selectorDesktop":"#group-by-desktop","selectorMobile":"#group-by","title":"Agrupar catálogo","text":"Organize por formato › textura ou textura › formato. No celular, abra ⋯ se não ver esta opção.","placement":"bottom","prepare":"toolbarExtra"},{"id":"catalogo","selector":"#catalogo","title":"Montar a seleção","text":"Abra Bold ou Retificada, escolha formato e textura. No celular use os cards; informe caixas em cada modelo.","placement":"top","prepare":"closePanels"},{"id":"cart","selector":"#cart-fab","title":"Carrinho — Minha seleção","text":"Revise modelos, m² totais e subtotais antes de gerar o PDF ou fechar o pedido.","placement":"left","prepare":"closePanels"},{"id":"pedido","selector":"#pedido-actions","selectorMobile":"#pedido-panel","title":"Revisar o pedido","text":"Confira cada linha. Pode limpar a seleção ou voltar ao catálogo para ajustar quantidades.","placement":"top","prepare":"pedidoOpen"},{"id":"pdf","selector":"#pdf-pedido-panel","title":"PDF do pedido","text":"Com itens na seleção, gere o PDF para arquivar ou enviar (WhatsApp, e-mail).","placement":"top","prepare":"pedidoOpen"},{"id":"help","selector":"#help-tour-fab","title":"Ajuda sempre à mão","text":"Toque em ? no canto inferior para rever este tour quando quiser.","placement":"right","prepare":"closePanels"}];
+    let tourIndex = 0;
+    let tourOpen = false;
+
+    function tourResolveSelector(step) {
+      if (step.center) return null;
+      const mobile = window.matchMedia('(max-width: 720px)').matches;
+      const sel = mobile ? (step.selectorMobile || step.selector) : (step.selectorDesktop || step.selector);
+      if (!sel) return null;
+      const el = document.querySelector(sel);
+      return el && el.offsetParent !== null ? el : document.querySelector(step.selector || sel);
+    }
+
+    function tourResetPrepare() {
+      if (typeof closeRegimeDialog === 'function') closeRegimeDialog();
+      if (typeof closePedidoPdfSheet === 'function') closePedidoPdfSheet();
+      if (typeof closePedidoPanel === 'function') closePedidoPanel();
+    }
+
+    function tourApplyPrepare(step) {
+      tourResetPrepare();
+      if (!step || !step.prepare) return;
+      if (step.prepare === 'regimeDialog') {
+        if (typeof populateRegimeDialogForm === 'function') populateRegimeDialogForm();
+        if (typeof openRegimeDialog === 'function') openRegimeDialog('edit');
+        return;
+      }
+      if (step.prepare === 'pedidoOpen') {
+        if (typeof openPedidoPanel === 'function') openPedidoPanel();
+        return;
+      }
+      if (step.prepare === 'toolbarExtra') {
+        const extra = document.getElementById('toolbar-extra');
+        if (extra) extra.hidden = false;
+        return;
+      }
+    }
+
+    function tourPlaceCard(target, placement, center) {
+      const card = document.getElementById('catalog-tour-card');
+      const spot = document.getElementById('catalog-tour-spotlight');
+      if (!card || !spot) return;
+      const pad = 8;
+      const gap = 12;
+      if (center || !target) {
+        spot.classList.add('is-center');
+        card.style.top = '50%';
+        card.style.left = '50%';
+        card.style.transform = 'translate(-50%, -50%)';
+        return;
+      }
+      spot.classList.remove('is-center');
+      const r = target.getBoundingClientRect();
+      spot.style.top = Math.max(4, r.top - pad) + 'px';
+      spot.style.left = Math.max(4, r.left - pad) + 'px';
+      spot.style.width = Math.max(24, r.width + pad * 2) + 'px';
+      spot.style.height = Math.max(24, r.height + pad * 2) + 'px';
+      const cardRect = card.getBoundingClientRect();
+      let top = r.bottom + gap;
+      let left = r.left;
+      const place = placement || 'bottom';
+      if (place === 'top') top = r.top - cardRect.height - gap;
+      if (place === 'left') {
+        top = r.top + (r.height - cardRect.height) / 2;
+        left = r.left - cardRect.width - gap;
+      }
+      if (place === 'right') {
+        top = r.top + (r.height - cardRect.height) / 2;
+        left = r.right + gap;
+      }
+      if (top + cardRect.height > window.innerHeight - 8) top = window.innerHeight - cardRect.height - 8;
+      if (top < 8) top = 8;
+      if (left + cardRect.width > window.innerWidth - 8) left = window.innerWidth - cardRect.width - 8;
+      if (left < 8) left = 8;
+      card.style.top = top + 'px';
+      card.style.left = left + 'px';
+      card.style.transform = 'none';
+    }
+
+    function tourRenderStep() {
+      const step = TOUR_STEPS[tourIndex];
+      if (!step) return endTour(true);
+      tourApplyPrepare(step);
+      const titleEl = document.getElementById('catalog-tour-title');
+      const textEl = document.getElementById('catalog-tour-text');
+      const stepEl = document.getElementById('catalog-tour-step');
+      const prevBtn = document.getElementById('catalog-tour-prev');
+      const nextBtn = document.getElementById('catalog-tour-next');
+      if (titleEl) titleEl.textContent = step.title || '';
+      if (textEl) textEl.textContent = step.text || '';
+      if (stepEl) stepEl.textContent = 'Passo ' + (tourIndex + 1) + ' de ' + TOUR_STEPS.length;
+      if (prevBtn) prevBtn.hidden = tourIndex <= 0;
+      if (nextBtn) nextBtn.textContent = tourIndex >= TOUR_STEPS.length - 1 ? 'Concluir' : 'Próximo';
+      const target = tourResolveSelector(step);
+      if (target && !step.center) {
+        try { target.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch { /* ignore */ }
+      }
+      requestAnimationFrame(function () {
+        tourPlaceCard(target, step.placement, step.center);
+        requestAnimationFrame(function () {
+          tourPlaceCard(target, step.placement, step.center);
+        });
+      });
+    }
+
+    function endTour(markDone) {
+      tourOpen = false;
+      document.body.classList.remove('catalog-tour-active');
+      tourResetPrepare();
+      const overlay = document.getElementById('catalog-tour-overlay');
+      if (overlay) {
+        overlay.hidden = true;
+        overlay.setAttribute('aria-hidden', 'true');
+      }
+      if (markDone) {
+        try { localStorage.setItem(TOUR_KEY, 'done'); } catch { /* ignore */ }
+      }
+    }
+
+    function startTour(fromStart) {
+      if (!TOUR_ENABLED || !TOUR_STEPS.length) return;
+      tourIndex = fromStart ? 0 : tourIndex;
+      tourOpen = true;
+      document.body.classList.add('catalog-tour-active');
+      const overlay = document.getElementById('catalog-tour-overlay');
+      if (overlay) {
+        overlay.hidden = false;
+        overlay.setAttribute('aria-hidden', 'false');
+      }
+      tourRenderStep();
+    }
+
+    function tourNext() {
+      if (tourIndex >= TOUR_STEPS.length - 1) endTour(true);
+      else { tourIndex += 1; tourRenderStep(); }
+    }
+    function tourPrev() {
+      if (tourIndex > 0) { tourIndex -= 1; tourRenderStep(); }
+    }
+
+    function initCatalogTour() {
+      if (!TOUR_ENABLED) return;
+      bindClick('catalog-tour-next', tourNext);
+      bindClick('catalog-tour-prev', tourPrev);
+      bindClick('catalog-tour-skip', function () { endTour(true); });
+      bindClick('help-tour-fab', function () { tourIndex = 0; startTour(true); });
+      document.getElementById('catalog-tour-overlay')?.addEventListener('click', function (e) {
+        if (e.target.id === 'catalog-tour-overlay' || e.target.id === 'catalog-tour-dim') endTour(true);
+      });
+      window.addEventListener('resize', function () {
+        if (tourOpen) tourRenderStep();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (tourOpen && e.key === 'Escape') endTour(true);
+      });
+      let seen = false;
+      try { seen = localStorage.getItem(TOUR_KEY) === 'done'; } catch { /* ignore */ }
+      if (!seen) {
+        window.__tintaoAfterReveal = (window.__tintaoAfterReveal || []).concat([function () {
+          setTimeout(function () { startTour(true); }, 500);
+        }]);
+      }
+    }
+    initCatalogTour();
     window.matchMedia('(max-width: 720px)').addEventListener('change', () => {
       refreshDom();
       applySearch(q?.value || '');
