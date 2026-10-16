@@ -20,6 +20,11 @@ import {
   parseCarmeloProdutoHtml,
 } from '../lib/carmeloPaginaProduto.mjs';
 import { extrairClassificacaoPei } from '../lib/paglevePeiResistencia.mjs';
+import {
+  incopisosProdutoUrl,
+  incopisosSlugCandidates,
+  parseIncopisosProdutoHtml,
+} from '../lib/incopisosPaginaProduto.mjs';
 
 const ROOT = process.cwd();
 const CSV = process.env.PAGLEVE_OUT || path.join(ROOT, 'files', 'pagleve', 'raio-x-pagleve-site-verificado.csv');
@@ -143,6 +148,13 @@ const CF_SLUG_BY_CODE = {
   'INDF-119': 'alvor',
 };
 
+const INCOPISOS_SLUG_BY_CODE = {
+  31929: 'ladrillo-red',
+  31930: 'minerale-beige',
+  'INDF-078': 'square-mont-blanc',
+  'INDF-102': 'studio-cotto',
+};
+
 function acabamentoLabelFromSuperficie(s) {
   const t = String(s || '').trim();
   if (!t) return '';
@@ -217,6 +229,41 @@ function tryCarmeloCecafiRow(row) {
     const hit = tryCarmeloSlug(slug);
     if (!hit) continue;
     return applyCarmeloGrupoHit(row, hit, slug);
+  }
+  return null;
+}
+
+function tryIncopisosSlug(slug) {
+  const url = incopisosProdutoUrl(slug);
+  const html = curl(url);
+  const ficha = parseIncopisosProdutoHtml(html);
+  if (!ficha) return null;
+  return {
+    fabricante_grupo: 'Grupo Incopisos',
+    marca_no_site: ficha.marca_site,
+    evidencia_url: url,
+    descricao_no_site: ficha.descricao_no_site,
+    imagem_url: ficha.imagem_url || '',
+    status: 'confirmado_site',
+    match_metodo: `incopisos_slug:${slug}`,
+  };
+}
+
+function isIncopisosErpRow(row) {
+  const blob = `${row.fabricante_grupo || ''} ${row.marca_no_site || ''}`;
+  return /incopisos/i.test(blob) || String(row.match_metodo || '').startsWith('incopisos_slug:');
+}
+
+function tryIncopisosForRow(row) {
+  const fixed = INCOPISOS_SLUG_BY_CODE[row.codigo];
+  if (fixed) {
+    const hit = tryIncopisosSlug(fixed);
+    if (hit) return hit;
+  }
+  const modelo = modeloNome(row) || row.modelo || '';
+  for (const slug of incopisosSlugCandidates(row, modelo)) {
+    const hit = tryIncopisosSlug(slug);
+    if (hit) return hit;
   }
   return null;
 }
@@ -411,6 +458,15 @@ async function main() {
       applyHit(r, hit, 'Grupo Carmelo Fior — marca na ficha do site');
     } else if (r.status !== 'confirmado_site') {
       indicacao(r, 'Carmelo Fior', 'Cecafi', r.formato, 'buscar slug em carmelofior.com.br/produto/…');
+    }
+  }
+
+  // 39×75 — Grupo Incopisos (ex. /produto/ladrillo-red/)
+  for (const r of rows.filter((x) => isIncopisosErpRow(x) && x.formato === '39x75')) {
+    const hit = tryIncopisosForRow(r);
+    if (hit) applyHit(r, hit, 'Grupo Incopisos — ficha grupoincopisos.com.br');
+    else if (r.status !== 'confirmado_site') {
+      indicacao(r, 'Grupo Incopisos', 'Incopisos', '39x75', 'buscar slug em grupoincopisos.com.br/produto/…');
     }
   }
 

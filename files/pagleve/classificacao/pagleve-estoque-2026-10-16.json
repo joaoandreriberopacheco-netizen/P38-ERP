@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-10-16T14:07:52.412Z",
+  "geradoEm": "2026-10-16T14:17:08.023Z",
   "fonte": "/workspace/files/pagleve/raio-x-pagleve-site-verificado.csv",
   "resumo": {
     "porRotulo": {
@@ -62,7 +62,32 @@
       "referencia": "INDF-001",
       "produto_url": "https://www.carmelofior.com.br/produto/gales-po-rt",
       "imagem_url": "",
-      "imagens": [],
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/apple-icon-180x180.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/favicon-16x16.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-br.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-es.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-en.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/icon-favorite.png",
+          "tipo": "principal"
+        }
+      ],
       "preco_m2": 54.9,
       "m2_por_caixa": 2.2,
       "unidade": "",
@@ -1120,7 +1145,32 @@
       "referencia": "PEI LB",
       "produto_url": "https://www.carmelofior.com.br/produto/amon-plus-rt-90x90",
       "imagem_url": "",
-      "imagens": [],
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/apple-icon-180x180.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/favicon-16x16.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-br.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-es.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-en.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/icon-favorite.png",
+          "tipo": "principal"
+        }
+      ],
       "preco_m2": 45.9,
       "m2_por_caixa": 2.41,
       "unidade": "",
@@ -1740,32 +1790,7 @@
       "referencia": "INDF-038",
       "produto_url": "https://www.carmelofior.com.br/produto/sidney-plus-rt-90x90",
       "imagem_url": "",
-      "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/favicons/apple-icon-180x180.png",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/favicons/favicon-16x16.png",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/head/icon-br.jpg",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/head/icon-es.jpg",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/head/icon-en.jpg",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/foot/1f562b0a155547920a2e383ed028868a.webp",
-          "tipo": "principal"
-        }
-      ],
+      "imagens": [],
       "preco_m2": 45.9,
       "m2_por_caixa": 2.41,
       "unidade": "",
@@ -3911,24 +3936,29 @@
       "rotulo": "Bold — ?",
       "confianca": "media",
       "motivo": "linha inferida; superfície não identificada",
-      "match_status": "indicacao",
-      "match_score": 0,
+      "match_status": "encontrado",
+      "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "LADRILLO RED MRU R",
+      "formigres_titulo": "LADRILLO RED · Marmocerâmica",
       "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
-      "marca_nome": "Incopisos",
+      "formigres_acabamento": "MARMOCERÂMICA",
+      "acabamento_label": "Marmocerâmica",
+      "marca_nome": "Marmocerâmica",
       "fabricante_grupo": "Grupo Incopisos",
       "referencia": "31929",
-      "produto_url": "",
-      "imagem_url": "",
-      "imagens": [],
+      "produto_url": "https://grupoincopisos.com.br/produto/ladrillo-red/",
+      "imagem_url": "https://grupoincopisos.com.br/wp-content/uploads/2024/06/ladrilho-red-fc-01-ef13d0.jpg",
+      "imagens": [
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/06/ladrilho-red-fc-01-ef13d0.jpg",
+          "tipo": "principal"
+        }
+      ],
       "preco_m2": 41,
       "m2_por_caixa": 2.06,
       "unidade": "",
-      "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (incopisos→formigres→carmelo→lume→rocha→cerbras) sem ficha",
+      "status_site": "confirmado_site",
+      "observacao": "Grupo Incopisos — ficha grupoincopisos.com.br",
       "preco_fonte": "siah_codigo",
       "codigo_siah": "31929",
       "caixas_por_palete": null,
@@ -3947,24 +3977,29 @@
       "rotulo": "Bold — ?",
       "confianca": "media",
       "motivo": "linha inferida; superfície não identificada",
-      "match_status": "indicacao",
-      "match_score": 0,
+      "match_status": "encontrado",
+      "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "MINERALE BEIGE MRU",
+      "formigres_titulo": "MINERALE BEIGE · Marmocerâmica",
       "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
-      "marca_nome": "Incopisos",
+      "formigres_acabamento": "MARMOCERÂMICA",
+      "acabamento_label": "Marmocerâmica",
+      "marca_nome": "Marmocerâmica",
       "fabricante_grupo": "Grupo Incopisos",
       "referencia": "31930",
-      "produto_url": "",
-      "imagem_url": "",
-      "imagens": [],
+      "produto_url": "https://grupoincopisos.com.br/produto/minerale-beige/",
+      "imagem_url": "https://grupoincopisos.com.br/wp-content/uploads/2024/06/minerale-beige-fc-01-ab6110.jpg",
+      "imagens": [
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/06/minerale-beige-fc-01-ab6110.jpg",
+          "tipo": "principal"
+        }
+      ],
       "preco_m2": 39.9,
       "m2_por_caixa": 2.06,
       "unidade": "",
-      "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (incopisos→formigres→carmelo→lume→rocha→cerbras) sem ficha",
+      "status_site": "confirmado_site",
+      "observacao": "Grupo Incopisos — ficha grupoincopisos.com.br",
       "preco_fonte": "siah_codigo",
       "codigo_siah": "31930",
       "caixas_por_palete": null,
@@ -7493,24 +7528,29 @@
       "rotulo": "Bold — ?",
       "confianca": "media",
       "motivo": "linha inferida; superfície não identificada",
-      "match_status": "indicacao",
-      "match_score": 0,
+      "match_status": "encontrado",
+      "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "9X75 SQUARE MONT BLANC MAC",
+      "formigres_titulo": "SQUARE MONT BLANC · Marmocerâmica",
       "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
-      "marca_nome": "Incopisos",
+      "formigres_acabamento": "MARMOCERÂMICA",
+      "acabamento_label": "Marmocerâmica",
+      "marca_nome": "Marmocerâmica",
       "fabricante_grupo": "Grupo Incopisos",
       "referencia": "INDF-078",
-      "produto_url": "",
-      "imagem_url": "",
-      "imagens": [],
+      "produto_url": "https://grupoincopisos.com.br/produto/square-mont-blanc/",
+      "imagem_url": "https://grupoincopisos.com.br/wp-content/uploads/2024/06/ac-539008-mont-blanc-1-1-bd629b.jpg",
+      "imagens": [
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/06/ac-539008-mont-blanc-1-1-bd629b.jpg",
+          "tipo": "principal"
+        }
+      ],
       "preco_m2": 39.9,
       "m2_por_caixa": null,
       "unidade": "",
-      "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (incopisos→formigres→carmelo→lume→rocha→cerbras) sem ficha",
+      "status_site": "confirmado_site",
+      "observacao": "Grupo Incopisos — ficha grupoincopisos.com.br",
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "31932",
       "caixas_por_palete": null,
@@ -8567,24 +8607,29 @@
       "rotulo": "Bold — ?",
       "confianca": "media",
       "motivo": "linha inferida; superfície não identificada",
-      "match_status": "indicacao",
-      "match_score": 0,
+      "match_status": "encontrado",
+      "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "9X75 STUDIO COTTO VRU R",
+      "formigres_titulo": "STUDIO COTTO · Vivence",
       "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
-      "marca_nome": "Incopisos",
+      "formigres_acabamento": "VIVENCE",
+      "acabamento_label": "Vivence",
+      "marca_nome": "Vivence",
       "fabricante_grupo": "Grupo Incopisos",
       "referencia": "INDF-102",
-      "produto_url": "",
-      "imagem_url": "",
-      "imagens": [],
+      "produto_url": "https://grupoincopisos.com.br/produto/studio-cotto/",
+      "imagem_url": "https://grupoincopisos.com.br/wp-content/uploads/2024/11/Studio-Cotto-F1.jpg",
+      "imagens": [
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/11/Studio-Cotto-F1.jpg",
+          "tipo": "principal"
+        }
+      ],
       "preco_m2": 39.9,
       "m2_por_caixa": 2.06,
       "unidade": "",
-      "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (incopisos→formigres→carmelo→lume→rocha→cerbras) sem ficha",
+      "status_site": "confirmado_site",
+      "observacao": "Grupo Incopisos — ficha grupoincopisos.com.br",
       "preco_fonte": "siah_desc:75",
       "codigo_siah": "32885",
       "caixas_por_palete": null,
@@ -9105,7 +9150,32 @@
       "referencia": "INDF-114",
       "produto_url": "https://www.carmelofior.com.br/produto/dritto-bege-mre",
       "imagem_url": "",
-      "imagens": [],
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/apple-icon-180x180.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/favicon-16x16.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-br.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-es.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-en.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/icon-favorite.png",
+          "tipo": "principal"
+        }
+      ],
       "preco_m2": 32,
       "m2_por_caixa": 2.59,
       "unidade": "",
@@ -15066,5 +15136,5 @@
       "peso_kg_palete": null
     }
   ],
-  "enriquecidoEm": "2026-10-16T14:09:23.903Z"
+  "enriquecidoEm": "2026-10-16T14:18:33.836Z"
 }

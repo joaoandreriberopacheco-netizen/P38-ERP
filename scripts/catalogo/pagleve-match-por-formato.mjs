@@ -24,6 +24,11 @@ import {
   findInSnapshot as findInCerbrasSnapshot,
 } from '../lib/cerbrasSnapshot.mjs';
 import {
+  incopisosProdutoUrl,
+  incopisosSlugCandidates,
+  parseIncopisosProdutoHtml,
+} from '../lib/incopisosPaginaProduto.mjs';
+import {
   extractImagensFromDetalhe,
   fetchProdutoDetalhe,
 } from '../lib/formigresCatalog.mjs';
@@ -394,7 +399,31 @@ function tryCarmelo(row, snap) {
   };
 }
 
+function tryIncopisosSlugDirect(row) {
+  const nome = modeloParaBusca(row);
+  for (const slug of incopisosSlugCandidates(row, nome)) {
+    const url = incopisosProdutoUrl(slug);
+    const page = curlGet(url);
+    const ficha = parseIncopisosProdutoHtml(page);
+    if (!ficha) continue;
+    return {
+      fabricante_grupo: 'Grupo Incopisos',
+      marca_no_site: ficha.marca_site,
+      descricao_no_site: ficha.descricao_no_site,
+      evidencia_url: url,
+      imagem_url: ficha.imagem_url || '',
+      status: 'confirmado_site',
+      sites_consultados: 'grupoincopisos.com.br',
+      match_metodo: `incopisos_slug:${slug}`,
+    };
+  }
+  return null;
+}
+
 function tryIncopisos(row) {
+  const direct = tryIncopisosSlugDirect(row);
+  if (direct) return direct;
+
   if (!temNomeComercial(row)) {
     return { sites_consultados: 'grupoincopisos.com.br', reason: 'sem_nome' };
   }
