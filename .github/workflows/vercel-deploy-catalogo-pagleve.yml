@@ -1,0 +1,75 @@
+# Deploy estático — catálogo PagLeve (projecto Vercel separado do P38 ERP).
+#
+# Secrets (GitHub → Settings → Secrets → Actions):
+#   VERCEL_TOKEN                        — mesmo token do deploy P38
+#   VERCEL_ORG_ID                       — mesmo org/team ID
+#   VERCEL_CATALOGO_PAGLEVE_PROJECT_ID  — Project ID do projecto isolado (deploy/catalogo-pagleve)
+
+name: Vercel Deploy — Catálogo PagLeve
+
+concurrency:
+  group: vercel-deploy-catalogo-pagleve
+  cancel-in-progress: false
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'deploy/catalogo-pagleve/**'
+      - '.github/workflows/vercel-deploy-catalogo-pagleve.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sanitizar secrets Vercel
+        id: vercel_secrets
+        shell: bash
+        env:
+          RAW_VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          RAW_VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          RAW_VERCEL_PROJECT_ID: ${{ secrets.VERCEL_CATALOGO_PAGLEVE_PROJECT_ID }}
+        run: |
+          set -e
+          trim() { printf '%s' "$1" | tr -d '\n\r'; }
+          token=$(trim "$RAW_VERCEL_TOKEN")
+          org=$(trim "$RAW_VERCEL_ORG_ID")
+          project=$(trim "$RAW_VERCEL_PROJECT_ID")
+          if [ -z "$token" ] || [ -z "$org" ] || [ -z "$project" ]; then
+            echo "::warning::Secrets Vercel do catálogo PagLeve em falta — deploy ignorado."
+            echo "Configure VERCEL_TOKEN, VERCEL_ORG_ID e VERCEL_CATALOGO_PAGLEVE_PROJECT_ID."
+            echo "Ver deploy/catalogo-pagleve/README.md"
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          {
+            echo "VERCEL_TOKEN=$token"
+            echo "VERCEL_ORG_ID=$org"
+            echo "VERCEL_PROJECT_ID=$project"
+          } >> "$GITHUB_ENV"
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Validar index.html
+        run: |
+          set -e
+          if [ ! -f deploy/catalogo-pagleve/index.html ]; then
+            echo "::error::deploy/catalogo-pagleve/index.html em falta. Rode npm run catalogo:publicar-pagleve"
+            exit 1
+          fi
+          bytes=$(wc -c < deploy/catalogo-pagleve/index.html)
+          if [ "$bytes" -lt 50000 ]; then
+            echo "::error::index.html demasiado pequeno ($bytes bytes)."
+            exit 1
+          fi
+          echo "OK: index.html ($bytes bytes)"
+
+      - name: Vercel deploy (catálogo estático)
+        if: steps.vercel_secrets.outputs.ready == 'true'
+        working-directory: deploy/catalogo-pagleve
+        run: |
+          url=$(npx --yes vercel@latest deploy --prod --yes --token "$VERCEL_TOKEN")
+          echo "Deploy URL: $url"

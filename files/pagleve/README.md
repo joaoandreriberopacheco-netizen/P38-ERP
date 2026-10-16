@@ -10,3 +10,13 @@ Arquivos gerados na análise **formato a formato**, com fabricante só quando h�
 | `pagleve-orfaos-descricao-por-formato.md` | Órfãos com descrição ERP para pesquisa |
 
 Atualizar: correr `node scripts/catalogo/pagleve-match-por-formato.mjs` e `node scripts/catalogo/pagleve-aplicar-regras-joao.mjs`, depois copiar de `/opt/cursor/artifacts/` para esta pasta.
+
+## Catálogo web (estilo premium, como Tintão)
+
+Depois de atualizar o CSV:
+
+```bash
+npm run catalogo:publicar-pagleve
+```
+
+Publicação: projecto Vercel isolado em `deploy/catalogo-pagleve/` — ver README dessa pasta.

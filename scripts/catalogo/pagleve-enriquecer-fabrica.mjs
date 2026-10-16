@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * PagLeve — enriquece raio-x com fabricante (regra + consenso por formato)
- * e descrição oficial no site da fábrica (sem imagem/preço).
+ * @deprecated NÃO USAR para atribuição de fabricante — usava inferência/consenso ERP.
+ * PagLeve exige evidência em site oficial: ver pagleve-fabricantes-sites-oficiais.md
+ * e raio-x-pagleve-site-verificado.csv (status pendente até URL).
  *
  * node scripts/catalogo/pagleve-enriquecer-fabrica.mjs
  */
