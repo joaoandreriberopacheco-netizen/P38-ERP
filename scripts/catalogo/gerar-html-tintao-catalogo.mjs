@@ -1082,6 +1082,33 @@ const PAGLEVE_SKIN_CSS = `
       text-overflow: ellipsis;
     }
     html[data-skin="pagleve"] .col-grupo { max-width: 140px; }
+    /* Colunas alinhadas entre acordeões (Mate / Acetinado / …) — mesma grelha em cada tabela */
+    html[data-skin="pagleve"] table.model-table-pagleve-retail {
+      table-layout: fixed;
+      width: 100%;
+      min-width: 920px;
+    }
+    html[data-skin="pagleve"] table.model-table-pagleve-retail col.col-foto { width: 58px; }
+    html[data-skin="pagleve"] table.model-table-pagleve-retail col.col-modelo { width: 32%; }
+    html[data-skin="pagleve"] table.model-table-pagleve-retail col.col-marca { width: 11%; }
+    html[data-skin="pagleve"] table.model-table-pagleve-retail col.col-grupo { width: 15%; }
+    html[data-skin="pagleve"] table.model-table-pagleve-retail col.col-pack { width: 16%; }
+    html[data-skin="pagleve"] table.model-table-pagleve-retail col.col-preco { width: 10%; }
+    html[data-skin="pagleve"] table.model-table-pagleve-retail col.col-qty { width: 72px; }
+    html[data-skin="pagleve"] table.model-table-pagleve-retail .col-marca,
+    html[data-skin="pagleve"] table.model-table-pagleve-retail .col-grupo {
+      text-align: left;
+      max-width: none;
+    }
+    html[data-skin="pagleve"] table.model-table-pagleve-retail .col-pack {
+      text-align: left;
+      white-space: normal;
+      line-height: 1.3;
+      font-size: .72rem;
+    }
+    html[data-skin="pagleve"] table.model-table-pagleve-retail .col-preco {
+      text-align: right;
+    }
     html[data-skin="pagleve"] .model-subtitulo {
       display: block;
       margin-top: .2rem;
@@ -1184,6 +1211,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
   const pedidoTableColgroup = isB2bSkin
     ? '<colgroup><col class="col-foto"><col class="col-modelo"><col class="col-qty"><col class="col-m2"><col class="col-cx"><col class="col-peso"><col class="col-emb"><col class="col-preco"><col class="col-sub"></colgroup>'
     : '<colgroup><col class="col-foto"><col class="col-modelo"><col class="col-qty"><col class="col-m2u"><col class="col-m2"><col class="col-preco"><col class="col-sub"></colgroup>';
+  const pagleveRetailColgroup = isPagleveSkin
+    ? '<colgroup><col class="col-foto"><col class="col-modelo"><col class="col-marca"><col class="col-grupo"><col class="col-pack"><col class="col-preco"><col class="col-qty"></colgroup>'
+    : '';
   const pedidoTableHead = isB2bSkin
     ? '<th class="pedido-col-foto">Foto</th><th class="pedido-col-modelo">Modelo</th><th class="pedido-col-qty">Paletes</th><th class="pedido-col-num">m² total</th><th class="pedido-col-num">Caixas</th><th class="pedido-col-num">Peso</th><th class="pedido-col-emb">Por palete</th><th class="pedido-col-num">Preço/m²</th><th class="pedido-col-num col-subtotal">Subtotal</th>'
     : '<th class="pedido-col-foto">Foto</th><th class="pedido-col-modelo">Modelo</th><th class="pedido-col-qty">Caixas</th><th class="pedido-col-num">m²/cx</th><th class="pedido-col-num">m² total</th><th class="pedido-col-num">Preço/m²</th><th class="pedido-col-num col-subtotal">Subtotal</th>';
@@ -3008,6 +3038,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     const IS_B2B_CATALOG = ${isB2bSkin};
     ${suframaClientJs ? `${suframaClientJs}\n    ` : ''}const GROUP_KEY = '${cfg.groupKey}';
     const PEDIDO_TABLE_COLGROUP_HTML = ${JSON.stringify(pedidoTableColgroup)};
+    const PAGLEVE_RETAIL_COLGROUP_HTML = ${JSON.stringify(pagleveRetailColgroup)};
     const PEDIDO_TABLE_HEAD_HTML = ${JSON.stringify(pedidoTableHead)};
     const CATALOG_TABLE_COLGROUP_HTML = PEDIDO_TABLE_COLGROUP_HTML;
     const CATALOG_TABLE_HEAD_HTML = PEDIDO_TABLE_HEAD_HTML;
@@ -4076,7 +4107,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const retailHead = CATALOG_SKIN === 'pagleve'
         ? '<th class="col-foto">Foto</th><th class="col-modelo">Modelo</th>' + retailExtraHead + '<th class="col-pack">Embalagem</th><th class="col-preco">Preço/m²</th><th class="col-qty">' + esc(QTY_LABEL) + '</th>'
         : '<th>Foto</th><th>Modelo</th>' + retailExtraHead + '<th>Embalagem</th><th>Preço/m²</th><th>' + esc(QTY_LABEL) + '</th>';
-      return '<div class="table-wrap"><table class="model-table"><thead><tr>' + retailHead + '</tr></thead><tbody>' +
+      const retailTableClass = CATALOG_SKIN === 'pagleve' ? 'model-table model-table-pagleve-retail' : 'model-table';
+      const retailColgroup = CATALOG_SKIN === 'pagleve' ? PAGLEVE_RETAIL_COLGROUP_HTML : '';
+      return '<div class="table-wrap"><table class="' + retailTableClass + '">' + retailColgroup + '<thead><tr>' + retailHead + '</tr></thead><tbody>' +
         items.map(renderTableRow).join('') + '</tbody></table></div>';
     }
     function renderAcabamentoLeaf(acab, items) {
