@@ -151,6 +151,11 @@ const CF_SLUG_BY_CODE = {
   'INDF-137': 'dream-plus-rt-90x90',
   'INDF-157': 'cronos-plus-mre-rt-90x90',
   'INDF-118': 'selena-cinza',
+  'INDF-004': 'bellavista-po-rt',
+  'INDF-011': 'georgia-po-rt',
+  'INDF-033': 'venezia-po-rt',
+  'INDF-036': 'pissis-plus-mre-rt',
+  'INDF-136': 'elemento-cinza-plus-rt-90x90',
 };
 
 const INCOPISOS_SLUG_BY_CODE = {
@@ -159,6 +164,7 @@ const INCOPISOS_SLUG_BY_CODE = {
   'INDF-078': 'square-mont-blanc',
   'INDF-102': 'studio-cotto',
   'INDF-079': 'hd-160101',
+  'INDF-047': 'puglia-grigio-2',
 };
 
 function acabamentoLabelFromSuperficie(s) {
@@ -412,6 +418,9 @@ async function main() {
     'INDF-001': 'gales-po-rt',
     'INDF-010': 'alaska-po-rt',
     34860: 'alaska-po-rt',
+    'INDF-004': 'bellavista-po-rt',
+    'INDF-011': 'georgia-po-rt',
+    'INDF-033': 'venezia-po-rt',
   };
   for (const r of rows.filter((x) => x.formato === '74x74' && x.status !== 'confirmado_site')) {
     const n = stripAccents(r.descricao_erp).toLowerCase();
@@ -420,6 +429,9 @@ async function main() {
     if (!slug && n.includes('gales')) slug = 'gales-po-rt';
     if (!slug && n.includes('sicilia')) slug = 'sicilia-po-rt';
     if (!slug && n.includes('breda')) slug = 'breda-po-rt';
+    if (!slug && n.includes('bellavista')) slug = 'bellavista-po-rt';
+    if (!slug && n.includes('georgia')) slug = 'georgia-po-rt';
+    if (!slug && n.includes('venezia')) slug = 'venezia-po-rt';
     const hit = slug ? tryCarmeloSlug(slug) : null;
     if (hit) applyHit(r, hit);
     else indicacao(r, 'Carmelo Fior', 'Carmelo Fior', '74x74');
@@ -444,9 +456,17 @@ async function main() {
     else if (n.includes('sidney')) slug = 'sidney-plus-rt-90x90';
     else if (n.includes('vinci')) slug = 'vinci-plus-rt-90x90';
     else if (n.includes('amon')) slug = 'amon-plus-rt-90x90';
+    else if (n.includes('pissis')) slug = 'pissis-plus-mre-rt';
+    else if (n.includes('elemento') && n.includes('cinza')) slug = 'elemento-cinza-plus-rt-90x90';
     const hit = slug ? tryCarmeloSlug(slug) : null;
     if (hit) applyHit(r, hit);
     else indicacao(r, 'Carmelo Fior', 'Carmelo Fior', '90x90');
+  }
+
+  // Slugs Incopisos por código (ex. Puglia 90×90 no grupoincopisos, não Carmelo)
+  for (const r of rows.filter((x) => INCOPISOS_SLUG_BY_CODE[x.codigo] && x.status !== 'confirmado_site')) {
+    const hit = tryIncopisosForRow(r);
+    if (hit) applyHit(r, hit, 'Grupo Incopisos — slug indicado');
   }
 
   // 75x75 — Lume

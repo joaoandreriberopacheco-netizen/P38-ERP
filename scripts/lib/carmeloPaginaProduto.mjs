@@ -166,9 +166,11 @@ export function carmeloSlugCandidates(row, modelo) {
   }
   if (fmt === '74x74') out.push(`${base}-po-rt`, `${base}-plus-po-rt`);
   if (fmt === '90x90') {
-    if (/PLUS\s+MRE|MRE\s+PLUS|CRONOS/i.test(u) || /\bMRE\b/.test(u)) out.push(`${base}-plus-mre-rt-90x90`);
+    if (/PLUS\s+MRE|MRE\s+PLUS|CRONOS/i.test(u) || /\bMRE\b/.test(u)) {
+      out.push(`${base}-plus-mre-rt`, `${base}-plus-mre-rt-90x90`);
+    }
     if (/\bSOFT\b/.test(u)) out.push(`${base}-soft-rt-90x90`);
-    if (/\bPLUS\b/.test(u)) out.push(`${base}-plus-rt-90x90`);
+    if (/\bPLUS\b/.test(u)) out.push(`${base}-plus-rt-90x90`, `${base}-plus-rt-90x90`);
     out.push(`${base}-plus-rt-90x90`, `${base}-soft-rt-90x90`, `${base}-plus-mre-rt-90x90`);
   }
   if (fmt === '57x57') out.push(`${base}-plus-hd`, `${base}-hd`);
