@@ -150,6 +150,7 @@ const CF_SLUG_BY_CODE = {
   'INDF-035': 'solaria-plus-rt-90x90',
   'INDF-137': 'dream-plus-rt-90x90',
   'INDF-157': 'cronos-plus-mre-rt-90x90',
+  'INDF-118': 'selena-cinza',
 };
 
 const INCOPISOS_SLUG_BY_CODE = {
@@ -215,6 +216,34 @@ function isCecafiRow(row) {
   const blob = `${row.fabricante_grupo || ''} ${row.marca_no_site || ''} ${row.descricao_erp || ''}`;
   if (/cecafi|etna/i.test(blob)) return true;
   return String(row.match_metodo || '').startsWith('carmelo_grupo:');
+}
+
+/** Fichas no portal Carmelo (slug fixo) mesmo quando o ERP só diz “Carmelo Fior” (ex. Selena → selena-cinza). */
+function isCarmeloGrupoCatalogRow(row) {
+  if (isCecafiRow(row)) return true;
+  if (!/carmelo/i.test(String(row.fabricante_grupo || row.marca_no_site || ''))) return false;
+  const blob = stripAccents(`${row.descricao_erp || ''} ${row.modelo || ''} ${modeloNome(row)}`).toLowerCase();
+  return /selena|noble|branco neve|clean|alvor|selah|vino|melinda|theo|bolt|dritto|minerati/.test(blob);
+}
+
+function applyCarmeloGrupoLoop(rows) {
+  for (const r of rows.filter(
+    (x) =>
+      isCarmeloGrupoCatalogRow(x) &&
+      (x.formato === '57x57' || x.formato === '38x75' || x.formato === '32x57') &&
+      x.status !== 'confirmado_site',
+  )) {
+    let hit = tryCarmeloCecafiRow(r) || tryCarmeloForRow(r);
+    if (hit) {
+      const slug = (hit.match_metodo || '').split(':').pop() || '';
+      if (hit.evidencia_url?.includes('carmelofior.com.br') && !String(hit.match_metodo).startsWith('carmelo_grupo:')) {
+        hit = applyCarmeloGrupoHit(r, hit, slug);
+      }
+      applyHit(r, hit, 'Grupo Carmelo Fior — marca na ficha do site');
+    } else {
+      indicacao(r, 'Carmelo Fior', 'Cecafi', r.formato, 'buscar slug em carmelofior.com.br/produto/…');
+    }
+  }
 }
 
 function applyCarmeloGrupoHit(row, hit, slug) {
@@ -396,6 +425,9 @@ async function main() {
     else indicacao(r, 'Carmelo Fior', 'Carmelo Fior', '74x74');
   }
 
+  // 32×57 / 38×75 / 57×57 — slugs grupo (noble-57x57, selena-cinza…) antes do genérico 32×57
+  applyCarmeloGrupoLoop(rows);
+
   // 32x57 — Carmelo Fior (ex. Alaska Plus → alaska-plus-32-75)
   for (const r of rows.filter((x) => x.formato === '32x57' && x.status !== 'confirmado_site')) {
     const hit = tryCarmeloForRow(r);
@@ -455,20 +487,6 @@ async function main() {
     const hit = lumePortfolioSearch('nero portorio 45x89') || lumePortfolioSearch('portorio');
     if (hit) applyHit(r, hit);
     else indicacao(r, 'Lume Cerâmica', 'Lume', '45x89');
-  }
-
-  // 38×75 e 57×57 — grupo Carmelo Fior (Cecafi/Fiorano/Idealle no site, ex. /produto/alvor)
-  for (const r of rows.filter((x) => isCecafiRow(x) && (x.formato === '57x57' || x.formato === '38x75'))) {
-    let hit = tryCarmeloCecafiRow(r) || tryCarmeloForRow(r);
-    if (hit) {
-      const slug = (hit.match_metodo || '').split(':').pop() || '';
-      if (hit.evidencia_url?.includes('carmelofior.com.br') && !String(hit.match_metodo).startsWith('carmelo_grupo:')) {
-        hit = applyCarmeloGrupoHit(r, hit, slug);
-      }
-      applyHit(r, hit, 'Grupo Carmelo Fior — marca na ficha do site');
-    } else if (r.status !== 'confirmado_site') {
-      indicacao(r, 'Carmelo Fior', 'Cecafi', r.formato, 'buscar slug em carmelofior.com.br/produto/…');
-    }
   }
 
   // 90×90 — Carmelo Fior (ex. /produto/solaria-plus-rt-90x90)

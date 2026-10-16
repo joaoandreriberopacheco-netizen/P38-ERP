@@ -109,11 +109,27 @@ export function cecafiCarmeloSlugCandidates(row, modeloRaw = '') {
     if (/clean/.test(blob)) add('clean-plus-38-75');
     if (/branco neve/.test(blob)) add('branco-neve-plus-38-75');
   }
-  if (fmt === '57x57') {
+  if (fmt === '57x57' || fmt === '32x57') {
+    if (/noble/.test(blob)) add('noble-57x57');
+    if (/branco neve/.test(blob)) {
+      add('branco-neve-57x57');
+      if (/mate/.test(blob)) add('branco-neve-mate-57x57');
+    }
+    if (/clean/.test(blob) && fmt === '57x57') add('clean-57x57');
     if (/bolt/.test(blob)) add('bolt-mre');
     if (/dritto cinza/.test(blob)) add('dritto-cinza-mre');
     if (/dritto bege/.test(blob)) add('dritto-bege-mre');
     if (/minerati/.test(blob)) add('minerati-mre');
+
+    const nome57 = stripAccents(modelo)
+      .toLowerCase()
+      .replace(/^0?\s*x\s*\d+\s*/g, ' ')
+      .replace(/\b(mru|vru|mac|mre|hd|acet|bold|esm|pei|jun|ju|lb|le|ld|lc|la|a|b)\b/gi, ' ')
+      .trim()
+      .split(/\s+/)
+      .filter((w) => w.length > 2);
+    if (nome57.length >= 2 && fmt === '57x57') add(`${nome57.slice(0, 2).join('-')}-57x57`);
+    if (nome57[0] && fmt === '57x57') add(`${nome57[0]}-57x57`);
   }
 
   const words = modelo

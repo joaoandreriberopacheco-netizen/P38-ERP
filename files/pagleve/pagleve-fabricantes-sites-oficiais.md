@@ -10,7 +10,7 @@
 |-----------------|-------------------------|---------------------------|---------------------------|
 | **Grupo Formigres** | https://www.formigres.com.br | Formigres, Premium, Prime, Marcela, Stargolden, JG | API `busca.php` + `produto.php` — catálogo Tintão |
 | **Lume Cerâmica** | https://lumeceramica.com.br/produtos/ | Lume, Megalume, Megalume Premium, Linha Tesoro Polidos | A fazer (site + PDF; sem API igual Formigres) |
-| **Carmelo Fior** | https://www.carmelofior.com.br/produtos | **Arielle**, **Cecafi**, **Fiorano**, **Idealle** (cada uma = categoria no site) | API Arielle + fichas `/produto/{slug}`; 90×90 ex. `solaria-plus-rt-90x90`, `dream-plus-rt-90x90` |
+| **Carmelo Fior** | https://www.carmelofior.com.br/produtos | **Arielle**, **Cecafi**, **Fiorano**, **Idealle** (categoria no site) | Slugs: 90×90 `…-rt-90x90`; 57×57 Cecafi `noble-57x57`, `branco-neve-57x57`; modelos `selena-cinza` |
 | **Grupo Rocha** (pisos) | https://www.portalgruporocha.com.br | Rocha Cerâmica, Rocha Porcelanato, Ecoforte, **Rochaforte** (marca do grupo) | A fazer (estrutura do portal) |
 
 **Não confundir:**
