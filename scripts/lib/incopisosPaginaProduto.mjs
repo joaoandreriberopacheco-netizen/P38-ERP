@@ -10,12 +10,31 @@ export function incopisosProdutoUrl(slug) {
   return `${INCOPISOS_BASE}/produto/${s}/`;
 }
 
-/** Código HD no ERP: (HD 160.101) → slug 160101 em /produto/160101/ */
+/** Código HD no ERP: (HD 160.101) → slug 160101 em /produto/160101/ (só tirar o ponto). */
 export function hdCodigoSlugFromErp(descricao = '') {
   const m = String(descricao || '').match(/\(\s*HD\s+([0-9][0-9.]+)\s*\)/i)
     || String(descricao || '').match(/\bHD\s+([0-9][0-9.]+)/i);
   if (!m) return '';
   return m[1].replace(/\./g, '');
+}
+
+export function parseIncopisosOembedJson(jsonText, url) {
+  try {
+    const j = JSON.parse(String(jsonText || ''));
+    if (j.code || !j.title) return null;
+    const titulo = String(j.title).trim();
+    if (!titulo) return null;
+    const marca_site = titulo.includes(' - ') ? titulo.split(' - ').pop().trim() : 'Incopisos';
+    const nome = titulo.includes(' - ') ? titulo.split(' - ')[0].trim() : titulo;
+    return {
+      titulo: nome,
+      marca_site,
+      descricao_no_site: `${nome} · ${marca_site}`,
+      imagem_url: String(j.thumbnail_url || '').trim(),
+    };
+  } catch {
+    return null;
+  }
 }
 
 export function incopisosSlugFromText(text = '') {
@@ -29,6 +48,7 @@ export function incopisosSlugFromText(text = '') {
 /** Slugs conhecidos 39×75 (revestimento Marmocerâmica / Vivence no portal do grupo). */
 export function incopisosSlugCandidates(row, modeloRaw = '') {
   const desc = String(row.descricao_erp || row.descricao || '');
+  const fmt = String(row.formato || '').toLowerCase();
   let modelo = String(modeloRaw || '');
   modelo = modelo.replace(/^9\s*x\s*75\s*/i, ' ');
   const blob = `${desc} ${modelo}`.toLowerCase();
@@ -39,6 +59,7 @@ export function incopisosSlugCandidates(row, modeloRaw = '') {
 
   const hd = hdCodigoSlugFromErp(desc);
   if (hd) add(hd);
+  if (fmt === '32x58' && hd) return [hd];
 
   if (/ladrillo\s*red/.test(blob)) add('ladrillo-red');
   if (/minerale\s*beige/.test(blob)) add('minerale-beige');

@@ -23,6 +23,7 @@ import { extrairClassificacaoPei } from '../lib/paglevePeiResistencia.mjs';
 import {
   incopisosProdutoUrl,
   incopisosSlugCandidates,
+  parseIncopisosOembedJson,
   parseIncopisosProdutoHtml,
 } from '../lib/incopisosPaginaProduto.mjs';
 
@@ -240,7 +241,12 @@ function tryCarmeloCecafiRow(row) {
 function tryIncopisosSlug(slug) {
   const url = incopisosProdutoUrl(slug);
   const html = curl(url);
-  const ficha = parseIncopisosProdutoHtml(html);
+  let ficha = parseIncopisosProdutoHtml(html);
+  if (!ficha && /^\d+$/.test(String(slug))) {
+    const oembedUrl = `https://grupoincopisos.com.br/wp-json/oembed/1.0/embed?url=${encodeURIComponent(url)}`;
+    const oembed = curl(oembedUrl);
+    ficha = parseIncopisosOembedJson(oembed, url);
+  }
   if (!ficha) return null;
   return {
     fabricante_grupo: 'Grupo Incopisos',

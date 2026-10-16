@@ -26,6 +26,7 @@ import {
 import {
   incopisosProdutoUrl,
   incopisosSlugCandidates,
+  parseIncopisosOembedJson,
   parseIncopisosProdutoHtml,
 } from '../lib/incopisosPaginaProduto.mjs';
 import {
@@ -404,7 +405,11 @@ function tryIncopisosSlugDirect(row) {
   for (const slug of incopisosSlugCandidates(row, nome)) {
     const url = incopisosProdutoUrl(slug);
     const page = curlGet(url);
-    const ficha = parseIncopisosProdutoHtml(page);
+    let ficha = parseIncopisosProdutoHtml(page);
+    if (!ficha && /^\d+$/.test(String(slug))) {
+      const oembedUrl = `https://grupoincopisos.com.br/wp-json/oembed/1.0/embed?url=${encodeURIComponent(url)}`;
+      ficha = parseIncopisosOembedJson(curlGet(oembedUrl), url);
+    }
     if (!ficha) continue;
     return {
       fabricante_grupo: 'Grupo Incopisos',
