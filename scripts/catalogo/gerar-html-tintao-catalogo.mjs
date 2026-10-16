@@ -3959,7 +3959,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function isBadCatalogImageUrl(url) {
       const u = String(url || '').toLowerCase();
       if (!u) return true;
-      if (/\/sample\.webp$/i.test(u)) return true;
+      if (u.includes('sample.webp')) return true;
       if (u.includes('placeholder') || u.includes('no-image')) return true;
       return false;
     }
