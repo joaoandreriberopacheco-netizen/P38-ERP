@@ -7,7 +7,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { classificarFormigres, resumirClassificacoes } from '../lib/formigresClassificar.mjs';
 import { referenciaResistenciaCatalogo } from '../lib/paglevePeiResistencia.mjs';
-import { raioXProdutoDescricao } from '../lib/raioXProdutoDescricao.mjs';
+import { modeloComercialCatalogo, raioXProdutoDescricao } from '../lib/raioXProdutoDescricao.mjs';
+import { resolveFormatoPagLeve } from '../lib/pagleveFormatoOcr.mjs';
 
 const ROOT = process.cwd();
 const IN_CSV =
@@ -143,16 +144,7 @@ function titleCaseModelo(str = '') {
 }
 
 function nomeModeloPrincipal(row, descricao) {
-  let modelo = String(row.modelo || '').trim();
-  if (!modelo || /^\(ver descri/i.test(modelo)) {
-    modelo = raioXProdutoDescricao(row.codigo, descricao).modelo || '';
-  }
-  modelo = modelo
-    .replace(/^9\s*x\s*75\s*/i, ' ')
-    .replace(/\b(MRU|VRU|MAC|MRE|HD|PEI\s*\w*|JUN|JU|ESM|ACET|BOLD|RT|RET|A|B)\b/gi, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-  return titleCaseModelo(modelo);
+  return modeloComercialCatalogo(row.codigo, descricao, row.modelo);
 }
 
 function linhaCatalogoLabel(classif, siteHints, descErp) {
@@ -202,6 +194,7 @@ function main() {
   const rows = loadCsv(IN_CSV);
   const items = rows.map((row) => {
     const descricao = row.descricao_erp || row.modelo || row.codigo;
+    row.formato = resolveFormatoPagLeve(descricao, row.formato) || row.formato;
     const siteHints = parseTipoAcabFromSite(row.descricao_no_site);
     const classif = classificarFormigres({
       tipo: siteHints.tipo,

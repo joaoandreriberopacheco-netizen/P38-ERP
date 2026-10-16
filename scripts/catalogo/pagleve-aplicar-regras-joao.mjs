@@ -21,6 +21,13 @@ import {
 } from '../lib/carmeloPaginaProduto.mjs';
 import { extrairClassificacaoPei } from '../lib/paglevePeiResistencia.mjs';
 import {
+  imagensJsonFromLumeFicha,
+  lumePortfolioSlugFromRow,
+  lumePortfolioUrl,
+  parseLumePortfolioHtml,
+} from '../lib/lumePaginaProduto.mjs';
+import { resolveFormatoPagLeve } from '../lib/pagleveFormatoOcr.mjs';
+import {
   incopisosProdutoUrl,
   incopisosSlugCandidates,
   parseIncopisosOembedJson,
@@ -121,16 +128,47 @@ function tryRochaSlug(slug) {
   };
 }
 
+function tryLumePortfolioForRow(row) {
+  const slug = lumePortfolioSlugFromRow(row);
+  if (!slug) return null;
+  const url = lumePortfolioUrl(slug);
+  const html = curl(url);
+  const ficha = parseLumePortfolioHtml(html, url);
+  if (!ficha) return null;
+  return {
+    fabricante_grupo: 'Lume Cerâmica',
+    marca_no_site: 'Lume',
+    evidencia_url: url,
+    descricao_no_site: ficha.descricao_no_site,
+    imagem_url: ficha.imagem_url || '',
+    imagens_json: imagensJsonFromLumeFicha(ficha),
+    status: 'confirmado_site',
+    match_metodo: `lume_portfolio:${slug}`,
+  };
+}
+
 function lumePortfolioSearch(q) {
   const html = curl(`${LUME}/?s=${encodeURIComponent(q)}`);
   const m = html.match(/href="(https:\/\/lumeceramica\.com\.br\/portfolio-item\/[^"]+)"/i);
   if (!m) return null;
-  const title = html.match(new RegExp(`>${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^<]{0,40}<`, 'i'));
+  const ficha = parseLumePortfolioHtml(curl(m[1]), m[1]);
+  if (ficha) {
+    return {
+      fabricante_grupo: 'Lume Cerâmica',
+      marca_no_site: 'Lume',
+      evidencia_url: m[1],
+      descricao_no_site: ficha.descricao_no_site,
+      imagem_url: ficha.imagem_url || '',
+      imagens_json: imagensJsonFromLumeFicha(ficha),
+      status: 'confirmado_site',
+      match_metodo: `lume_busca:${q}`,
+    };
+  }
   return {
     fabricante_grupo: 'Lume Cerâmica',
     marca_no_site: 'Lume',
     evidencia_url: m[1],
-    descricao_no_site: title ? title[0].replace(/[<>]/g, '').trim() : q,
+    descricao_no_site: q,
     status: 'confirmado_site',
     match_metodo: `lume_busca:${q}`,
   };
@@ -351,21 +389,9 @@ async function main() {
   const byCode = new Map(rows.map((r) => [r.codigo, r]));
   const fg = buildFormigresSnapshot(await fetchFormigresProdutos());
 
-  const fmtFix = {
-    '0x50': '50x50',
-    '7x57': '57x57',
-    '8x58': '58x58',
-    '2x57': '32x57',
-    '0x90': '90x90',
-    '2x82': '82x82',
-    '5x75': '75x75',
-    '6x75': '75x75',
-    '9x75': '39x75',
-    '0x70': '70x70',
-  };
-
   for (const r of rows) {
-    if (fmtFix[r.formato]) r.formato = fmtFix[r.formato];
+    const resolved = resolveFormatoPagLeve(r.descricao_erp || r.modelo || '', r.formato);
+    if (resolved) r.formato = resolved;
   }
 
   // 70x70 — Rocha por código portal
@@ -476,19 +502,37 @@ async function main() {
   };
   for (const r of rows.filter((x) => x.formato === '75x75' && x.status !== 'confirmado_site')) {
     const n = stripAccents(r.descricao_erp).toLowerCase();
-    let q = lume75[r.codigo] ? 'monterrey grigio' : n.includes('monterrey') ? 'monterrey grigio' : n.includes('asphalt') ? 'asphalt' : n.includes('petra') ? 'petra nat' : n.includes('portorio') ? 'nero portorio' : n.includes('avorio') ? 'avorio cinza' : '';
-    let hit = null;
-    if (lume75[r.codigo]) {
-      hit = {
-        fabricante_grupo: 'Lume Cerâmica',
-        marca_no_site: 'Lume',
-        evidencia_url: `${LUME}/portfolio-item/${lume75[r.codigo]}/`,
-        descricao_no_site: 'Monterrey Grigio 75×75',
-        status: 'confirmado_site',
-        match_metodo: 'lume_url_fixa',
-      };
-    } else if (q) hit = lumePortfolioSearch(q);
-    if (hit) applyHit(r, hit);
+    let hit = tryLumePortfolioForRow(r);
+    if (!hit && lume75[r.codigo]) {
+      const slug = lume75[r.codigo];
+      const url = lumePortfolioUrl(slug);
+      const ficha = parseLumePortfolioHtml(curl(url), url);
+      if (ficha) {
+        hit = {
+          fabricante_grupo: 'Lume Cerâmica',
+          marca_no_site: 'Lume',
+          evidencia_url: url,
+          descricao_no_site: ficha.descricao_no_site,
+          imagem_url: ficha.imagem_url || '',
+          imagens_json: imagensJsonFromLumeFicha(ficha),
+          status: 'confirmado_site',
+          match_metodo: `lume_portfolio:${slug}`,
+        };
+      }
+    }
+    const q = n.includes('monterrey')
+      ? 'monterrey grigio'
+      : n.includes('asphalt')
+        ? 'asphalt'
+        : n.includes('petra')
+          ? 'petra nat'
+          : n.includes('portor')
+            ? 'nero portorio'
+            : n.includes('avorio')
+              ? 'avorio cinza'
+              : '';
+    if (!hit && q) hit = lumePortfolioSearch(q);
+    if (hit) applyHit(r, hit, 'Lume — ficha lumeceramica.com.br');
     else indicacao(r, 'Lume Cerâmica', 'Lume', '75x75');
   }
 
@@ -503,9 +547,10 @@ async function main() {
   }
 
   // 45x89 — Lume
-  for (const r of rows.filter((x) => x.formato === '45x89')) {
-    const hit = lumePortfolioSearch('nero portorio 45x89') || lumePortfolioSearch('portorio');
-    if (hit) applyHit(r, hit);
+  for (const r of rows.filter((x) => x.formato === '45x89' && x.status !== 'confirmado_site')) {
+    const hit =
+      tryLumePortfolioForRow(r) || lumePortfolioSearch('nero portorio 45x89') || lumePortfolioSearch('portorio');
+    if (hit) applyHit(r, hit, 'Lume — ficha lumeceramica.com.br');
     else indicacao(r, 'Lume Cerâmica', 'Lume', '45x89');
   }
 

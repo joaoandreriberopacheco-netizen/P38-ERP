@@ -34,7 +34,13 @@ import {
   fetchProdutoDetalhe,
 } from '../lib/formigresCatalog.mjs';
 import { stripAccents } from '../lib/formigresCatalog.mjs';
-import { raioXProdutoDescricao } from '../lib/raioXProdutoDescricao.mjs';
+import { modeloComercialCatalogo, raioXProdutoDescricao } from '../lib/raioXProdutoDescricao.mjs';
+import {
+  imagensJsonFromLumeFicha,
+  lumePortfolioSlugFromRow,
+  lumePortfolioUrl,
+  parseLumePortfolioHtml,
+} from '../lib/lumePaginaProduto.mjs';
 
 const ROOT = process.cwd();
 const IN_CSV = process.env.PAGLEVE_RAIO_X || path.join(ROOT, 'files', 'pagleve', 'raio-x-produtos.csv');
@@ -197,28 +203,7 @@ function nameSlug(text) {
 /** Nome comercial para busca no site — só texto da descrição, sem códigos internos do fornecedor (PR…, R…). */
 function modeloParaBusca(row) {
   const desc = row.descricao_erp || row.descricao_original || '';
-  const rx = raioXProdutoDescricao(row.codigo, desc);
-  let modelo = rx.modelo || '';
-  modelo = modelo
-    .replace(/\([^)]*$/g, ' ')
-    .replace(/\(\d+[,.]?\d*\)?/g, ' ')
-    .replace(/\b0X\d+\b/gi, ' ')
-    .replace(/\b(PR\d{3,}|R\d{3,})\b/gi, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-  if (!modelo || /^[a-z]?\d+$/i.test(modelo.replace(/\s/g, ''))) {
-    modelo = stripAccents(desc)
-      .replace(/\b\d{2,5}\b/g, ' ')
-      .replace(/\b(PR\d+|R\d+)\b/gi, ' ')
-      .replace(/[^a-zA-Z ]+/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim()
-      .split(/\s+/)
-      .filter((w) => w.length > 3 && !/^(PISO|ROCHAPRIME|ROCHAMAXX|HD|MRE)$/i.test(w))
-      .slice(0, 4)
-      .join(' ');
-  }
-  return modelo;
+  return modeloComercialCatalogo(row.codigo, desc, row.modelo);
 }
 
 function temNomeComercial(row) {
@@ -336,6 +321,25 @@ function tryLume(row) {
   if (!temNomeComercial(row)) {
     return { sites_consultados: 'lumeceramica.com.br', reason: 'sem_nome' };
   }
+  const slug = lumePortfolioSlugFromRow(row);
+  if (slug) {
+    const url = lumePortfolioUrl(slug);
+    const html = curlGet(url);
+    const ficha = parseLumePortfolioHtml(html, url);
+    if (ficha) {
+      return {
+        fabricante_grupo: 'Lume Cerâmica',
+        marca_no_site: 'Lume',
+        descricao_no_site: ficha.descricao_no_site,
+        evidencia_url: url,
+        imagem_url: ficha.imagem_url || '',
+        imagens_json: imagensJsonFromLumeFicha(ficha),
+        status: 'confirmado_site',
+        sites_consultados: 'lumeceramica.com.br',
+        match_metodo: `lume_portfolio:${slug}`,
+      };
+    }
+  }
   const q = stripAccents(modeloParaBusca(row) || '')
     .replace(/[^a-zA-Z0-9 ]/g, ' ')
     .trim()
@@ -349,27 +353,27 @@ function tryLume(row) {
     return { sites_consultados: 'lumeceramica.com.br', tried: q, reason: 'zero_resultados' };
   }
   const fmt = (row.formato || '').replace('x', '[x×]');
-  const linkRe = new RegExp(
-    `href=\"(https://lumeceramica\\.com\\.br/produto/[^\"]+)\"[^>]*>([^<]{4,120})<`,
-    'gi',
-  );
+  const linkRe = /href="(https:\/\/lumeceramica\.com\.br\/portfolio-item\/[^"]+)"/gi;
   let best = null;
   let m;
   while ((m = linkRe.exec(html)) !== null) {
-    const title = m[2].replace(/\s+/g, ' ').trim();
-    if (!new RegExp(fmt, 'i').test(title) && !new RegExp(fmt, 'i').test(m[1])) continue;
-    if (!stripAccents(title).toLowerCase().includes(stripAccents(q.split(' ')[0]).toLowerCase())) continue;
-    best = { url: m[1], title };
+    const url = m[1];
+    if (!new RegExp(fmt, 'i').test(url)) continue;
+    if (!stripAccents(url).toLowerCase().includes(stripAccents(q.split(' ')[0]).toLowerCase())) continue;
+    best = url;
     break;
   }
   if (!best) return { sites_consultados: 'lumeceramica.com.br', tried: q };
-  const imgM = html.match(/https:\/\/[^"'\s]+lume[^"'\s]+\.(webp|jpg|png)/i);
+  const page = curlGet(best);
+  const ficha = parseLumePortfolioHtml(page, best);
+  if (!ficha) return { sites_consultados: 'lumeceramica.com.br', tried: q };
   return {
     fabricante_grupo: 'Lume Cerâmica',
     marca_no_site: 'Lume',
-    descricao_no_site: best.title,
-    evidencia_url: best.url,
-    imagem_url: imgM ? imgM[0] : '',
+    descricao_no_site: ficha.descricao_no_site,
+    evidencia_url: best,
+    imagem_url: ficha.imagem_url || '',
+    imagens_json: imagensJsonFromLumeFicha(ficha),
     status: 'confirmado_site',
     sites_consultados: 'lumeceramica.com.br',
     match_metodo: `lume_busca:${q}`,
