@@ -61,6 +61,26 @@ export function carmeloSlugFromModelo(modelo) {
     .replace(/-+/g, '-');
 }
 
+/** Remove “0X90”, “9X75” etc. do início do modelo (OCR SIAH). */
+export function carmeloModeloBaseFromRow(row) {
+  const desc = String(row.descricao_erp || row.descricao || '');
+  let modelo = String(row.modelo || '').trim();
+  modelo = modelo.replace(/^0?\s*x\s*\d+\s*/gi, '').trim();
+  modelo = modelo.replace(/^9\s*x\s*\d+\s*/gi, '').trim();
+  if (!modelo || /^0?\s*x\s*\d/i.test(modelo)) {
+    let d = desc.replace(/^\s*\d+\s*x\s*\d+\s*/i, '').replace(/^\s*0\s*x\s*\d+\s*/i, '');
+    d = d.replace(/\(HD[^)]*\)/gi, ' ').split('(')[0];
+    modelo = d.trim();
+  }
+  const words = stripAccents(modelo)
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length > 2 && !/^(plus|soft|mre|rt|esm|hd|mru|a|b)$/.test(w));
+  const first = words[0] || '';
+  return first ? carmeloSlugFromModelo(first) : '';
+}
+
 /** Slugs comuns no site Carmelo (ex. Alaska Plus 32×57 → alaska-plus-32-75). */
 /** Linhas Etna/Cecafi/Fiorano no ERP — fichas no portal do grupo Carmelo Fior. */
 export function cecafiCarmeloSlugCandidates(row, modeloRaw = '') {
@@ -118,7 +138,10 @@ export function acabamentoFromErpDesc(descricao = '') {
 
 export function carmeloSlugCandidates(row, modelo) {
   const fmt = String(row.formato || '').toLowerCase();
-  const base = carmeloSlugFromModelo(modelo);
+  const desc = String(row.descricao_erp || row.descricao || '');
+  const u = desc.toUpperCase();
+  let base = carmeloModeloBaseFromRow(row) || carmeloSlugFromModelo(modelo);
+  if (base.startsWith('0x') || /^\d+x/.test(base)) base = carmeloModeloBaseFromRow(row) || base;
   const out = [];
   if (!base) return out;
 
@@ -126,7 +149,12 @@ export function carmeloSlugCandidates(row, modelo) {
     out.push(`${base}-plus-32-75`, `${base}-plus-32-57`);
   }
   if (fmt === '74x74') out.push(`${base}-po-rt`, `${base}-plus-po-rt`);
-  if (fmt === '90x90') out.push(`${base}-plus-rt-90x90`, `${base}-plus-mre-rt-90x90`);
+  if (fmt === '90x90') {
+    if (/PLUS\s+MRE|MRE\s+PLUS|CRONOS/i.test(u) || /\bMRE\b/.test(u)) out.push(`${base}-plus-mre-rt-90x90`);
+    if (/\bSOFT\b/.test(u)) out.push(`${base}-soft-rt-90x90`);
+    if (/\bPLUS\b/.test(u)) out.push(`${base}-plus-rt-90x90`);
+    out.push(`${base}-plus-rt-90x90`, `${base}-soft-rt-90x90`, `${base}-plus-mre-rt-90x90`);
+  }
   if (fmt === '57x57') out.push(`${base}-plus-hd`, `${base}-hd`);
   out.push(base);
   return [...new Set(out.filter(Boolean))];

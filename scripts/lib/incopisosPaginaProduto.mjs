@@ -10,6 +10,14 @@ export function incopisosProdutoUrl(slug) {
   return `${INCOPISOS_BASE}/produto/${s}/`;
 }
 
+/** Código HD no ERP: (HD 160.101) → slug 160101 em /produto/160101/ */
+export function hdCodigoSlugFromErp(descricao = '') {
+  const m = String(descricao || '').match(/\(\s*HD\s+([0-9][0-9.]+)\s*\)/i)
+    || String(descricao || '').match(/\bHD\s+([0-9][0-9.]+)/i);
+  if (!m) return '';
+  return m[1].replace(/\./g, '');
+}
+
 export function incopisosSlugFromText(text = '') {
   return stripAccents(text || '')
     .toLowerCase()
@@ -28,6 +36,9 @@ export function incopisosSlugCandidates(row, modeloRaw = '') {
   const add = (s) => {
     if (s) slugs.add(s);
   };
+
+  const hd = hdCodigoSlugFromErp(desc);
+  if (hd) add(hd);
 
   if (/ladrillo\s*red/.test(blob)) add('ladrillo-red');
   if (/minerale\s*beige/.test(blob)) add('minerale-beige');
@@ -60,7 +71,8 @@ export function parseIncopisosProdutoHtml(html) {
   const dash = ogDesc.indexOf(' - ');
   const titulo = (dash > 0 ? ogDesc.slice(0, dash) : ogDesc).trim();
   const marca_site = (dash > 0 ? ogDesc.slice(dash + 3) : 'Incopisos').trim();
-  if (!titulo || titulo.length < 3) return null;
+  if (!titulo || titulo.length < 1) return null;
+  if (/^home$/i.test(titulo)) return null;
 
   const imagem_url = raw.match(/property="og:image"\s+content="([^"]+)"/i)?.[1]?.trim() || '';
 

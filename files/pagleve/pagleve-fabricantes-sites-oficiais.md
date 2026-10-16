@@ -10,7 +10,7 @@
 |-----------------|-------------------------|---------------------------|---------------------------|
 | **Grupo Formigres** | https://www.formigres.com.br | Formigres, Premium, Prime, Marcela, Stargolden, JG | API `busca.php` + `produto.php` — catálogo Tintão |
 | **Lume Cerâmica** | https://lumeceramica.com.br/produtos/ | Lume, Megalume, Megalume Premium, Linha Tesoro Polidos | A fazer (site + PDF; sem API igual Formigres) |
-| **Carmelo Fior** | https://www.carmelofior.com.br/produtos | **Arielle**, **Cecafi**, **Fiorano**, **Idealle** (cada uma = categoria no site) | API Arielle + fichas `/produto/{slug}` (marca na página) |
+| **Carmelo Fior** | https://www.carmelofior.com.br/produtos | **Arielle**, **Cecafi**, **Fiorano**, **Idealle** (cada uma = categoria no site) | API Arielle + fichas `/produto/{slug}`; 90×90 ex. `solaria-plus-rt-90x90`, `dream-plus-rt-90x90` |
 | **Grupo Rocha** (pisos) | https://www.portalgruporocha.com.br | Rocha Cerâmica, Rocha Porcelanato, Ecoforte, **Rochaforte** (marca do grupo) | A fazer (estrutura do portal) |
 
 **Não confundir:**
@@ -25,7 +25,7 @@ Outros fornecedores comuns (fora da sua lista, mas no ecossistema P38):
 |-------|------|
 | Grupo Ceral | https://www.ceralpisos.com.br/produtos (Ceral, Luna, Rosa, Unique, Belle) |
 | Cerbras | https://novo.cerbras.com/todos-produtos/ |
-| **Grupo Incopisos** | https://grupoincopisos.com.br/produto/… (Incopisos, Marmocerâmica, Vivence, Bellacer no mesmo portal) |
+| **Grupo Incopisos** | https://grupoincopisos.com.br/produto/… — nome (`ladrillo-red`) ou **código HD** sem ponto (`160101` para HD 160.101) |
 | **Cedasa** | https://www.cedasa.com.br |
 | **Cecafi / Etna (ERP)** | No SIAH costuma vir como **Cecafi**; no site do **grupo Carmelo Fior** a ficha traz a marca real (Cecafi, Fiorano, Idealle…) | Priorizar `carmelofior.com.br/produto/…` antes de Formigres |
 

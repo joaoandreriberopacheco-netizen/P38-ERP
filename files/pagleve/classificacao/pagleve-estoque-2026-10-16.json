@@ -1,11 +1,12 @@
 {
-  "geradoEm": "2026-10-16T14:20:59.449Z",
+  "geradoEm": "2026-10-16T16:42:32.761Z",
   "fonte": "/workspace/files/pagleve/raio-x-pagleve-site-verificado.csv",
   "resumo": {
     "porRotulo": {
       "Retificada — polido": 41,
-      "Retificada — ?": 19,
+      "Retificada — lisa brilhante": 9,
       "Bold — ?": 111,
+      "Retificada — ?": 11,
       "Retificada — semiderrapante": 15,
       "Retificada — lisa mate": 19,
       "Bold — antiderrapante": 9,
@@ -13,7 +14,6 @@
       "Bold — semiderrapante": 20,
       "Retificada — mate": 6,
       "Retificada — antiderrapante": 2,
-      "Retificada — lisa brilhante": 1,
       "Retificada — granilhado": 1
     },
     "porLinha": {
@@ -30,7 +30,7 @@
         "antiderrapante": 2,
         "semiderrapante": 15,
         "lisa_mate": 19,
-        "lisa_brilhante": 1,
+        "lisa_brilhante": 9,
         "lisa": 0
       },
       "polida": 0,
@@ -161,7 +161,7 @@
       "m2_por_caixa": 2.2,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (carmelo→formigres→lume→rocha→cerbras) sem ficha"
+      "observacao": "regra João André; pendente URL"
     },
     {
       "codigo_tintao": "INDF-005",
@@ -170,29 +170,29 @@
       "descricao": "90X90 DACITO PLUS MRE RT \"A\"(2,41)",
       "formato": "90x90",
       "linha": "retificada",
-      "subtipo": null,
-      "variante_lisa": null,
-      "rotulo": "Retificada — ?",
-      "confianca": "media",
-      "motivo": "linha inferida; superfície não identificada",
-      "match_status": "indicacao",
-      "match_score": 0,
+      "subtipo": "lisa",
+      "variante_lisa": "brilhante",
+      "rotulo": "Retificada — lisa brilhante",
+      "confianca": "alta",
+      "motivo": "acabamento BRILHANTE",
+      "match_status": "encontrado",
+      "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Dacito · 90x90 · RET",
-      "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
-      "marca_nome": "Carmelo Fior",
+      "formigres_titulo": "Dacito · 90x90 · RET · Brilhante",
+      "formigres_tipo": "BOLD",
+      "formigres_acabamento": "BRILHANTE",
+      "acabamento_label": "Brilhante",
+      "marca_nome": "Cecafi",
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-005",
-      "produto_url": "",
+      "produto_url": "https://www.carmelofior.com.br/produto/dacito-plus-mre-rt-90x90",
       "imagem_url": "",
       "imagens": [],
       "preco_m2": null,
       "m2_por_caixa": 2.41,
       "unidade": "",
-      "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (carmelo→formigres→lume→rocha→cerbras) sem ficha"
+      "status_site": "confirmado_site",
+      "observacao": "Carmelo Fior — slug 90×90 no site"
     },
     {
       "codigo_tintao": "INDF-006",
@@ -388,7 +388,7 @@
       "m2_por_caixa": 2.2,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (carmelo→formigres→lume→rocha→cerbras) sem ficha"
+      "observacao": "regra João André; pendente URL"
     },
     {
       "codigo_tintao": "INDF-012",
@@ -549,19 +549,19 @@
       "descricao": "90X90 ALBURY LUX PLUS RT \"A\"(2,41)",
       "formato": "90x90",
       "linha": "retificada",
-      "subtipo": null,
-      "variante_lisa": null,
-      "rotulo": "Retificada — ?",
-      "confianca": "media",
-      "motivo": "linha inferida; superfície não identificada",
+      "subtipo": "lisa",
+      "variante_lisa": "brilhante",
+      "rotulo": "Retificada — lisa brilhante",
+      "confianca": "alta",
+      "motivo": "acabamento BRILHANTE",
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Albury Lux · 90x90 · RET",
-      "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
-      "marca_nome": "Carmelo Fior",
+      "formigres_titulo": "Albury Lux · 90x90 · RET · Brilhante",
+      "formigres_tipo": "BOLD",
+      "formigres_acabamento": "BRILHANTE",
+      "acabamento_label": "Brilhante",
+      "marca_nome": "Cecafi",
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-016",
       "produto_url": "https://www.carmelofior.com.br/produto/albury-plus-rt-90x90",
@@ -571,7 +571,7 @@
       "m2_por_caixa": 2.41,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "regra João André + URL site"
+      "observacao": "Carmelo Fior — slug 90×90 no site"
     },
     {
       "codigo_tintao": "INDF-017",
@@ -580,19 +580,19 @@
       "descricao": "0X90 NARBONA PLUS RT \"A\"(2,41) PEI",
       "formato": "90x90",
       "linha": "retificada",
-      "subtipo": null,
-      "variante_lisa": null,
-      "rotulo": "Retificada — ?",
-      "confianca": "media",
-      "motivo": "linha inferida; superfície não identificada",
+      "subtipo": "lisa",
+      "variante_lisa": "brilhante",
+      "rotulo": "Retificada — lisa brilhante",
+      "confianca": "alta",
+      "motivo": "acabamento BRILHANTE",
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "0x90 Narbona · 90x90 · RET",
-      "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
-      "marca_nome": "Carmelo Fior",
+      "formigres_titulo": "0x90 Narbona · 90x90 · RET · Brilhante",
+      "formigres_tipo": "BOLD",
+      "formigres_acabamento": "BRILHANTE",
+      "acabamento_label": "Brilhante",
+      "marca_nome": "Idealle",
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-017",
       "produto_url": "https://www.carmelofior.com.br/produto/narbona-plus-rt-90x90",
@@ -602,7 +602,7 @@
       "m2_por_caixa": 2.41,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "regra João André + URL site"
+      "observacao": "Carmelo Fior — slug 90×90 no site"
     },
     {
       "codigo_tintao": "INDF-018",
@@ -805,7 +805,7 @@
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (rocha→formigres→lume→carmelo→cerbras) sem ficha"
+      "observacao": "regra João André; slug tentado: pr7010"
     },
     {
       "codigo_tintao": "INDF-024",
@@ -822,11 +822,11 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "0x90 Amon · 90x90 · RET",
-      "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
-      "marca_nome": "Carmelo Fior",
+      "formigres_titulo": "0x90 Amon · 90x90 · RET · Lb",
+      "formigres_tipo": "BOLD",
+      "formigres_acabamento": "LB",
+      "acabamento_label": "Lb",
+      "marca_nome": "Cecafi",
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "PEI LB",
       "produto_url": "https://www.carmelofior.com.br/produto/amon-plus-rt-90x90",
@@ -836,7 +836,7 @@
       "m2_por_caixa": 2.41,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "regra João André + URL site"
+      "observacao": "Carmelo Fior — slug 90×90 no site"
     },
     {
       "codigo_tintao": "INDF-025",
@@ -1070,7 +1070,7 @@
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (lume→formigres→carmelo→rocha→cerbras) sem ficha"
+      "observacao": "regra João André; pendente URL"
     },
     {
       "codigo_tintao": "INDF-031",
@@ -1132,7 +1132,7 @@
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (lume→formigres→carmelo→rocha→cerbras) sem ficha"
+      "observacao": "regra João André; pendente URL"
     },
     {
       "codigo_tintao": "INDF-033",
@@ -1163,7 +1163,7 @@
       "m2_por_caixa": 2.2,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (carmelo→formigres→lume→rocha→cerbras) sem ficha"
+      "observacao": "regra João André; pendente URL"
     },
     {
       "codigo_tintao": "INDF-034",
@@ -1213,24 +1213,24 @@
       "rotulo": "Retificada — ?",
       "confianca": "media",
       "motivo": "linha inferida; superfície não identificada",
-      "match_status": "indicacao",
-      "match_score": 0,
+      "match_status": "encontrado",
+      "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "0x90 Solaria · 90x90 · RET",
-      "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
-      "marca_nome": "Carmelo Fior",
+      "formigres_titulo": "0x90 Solaria · 90x90 · RET · Esmaltado",
+      "formigres_tipo": "BOLD",
+      "formigres_acabamento": "ESMALTADO",
+      "acabamento_label": "Esmaltado",
+      "marca_nome": "Fiorano",
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-035",
-      "produto_url": "",
+      "produto_url": "https://www.carmelofior.com.br/produto/solaria-plus-rt-90x90",
       "imagem_url": "",
       "imagens": [],
       "preco_m2": null,
       "m2_por_caixa": 2.41,
       "unidade": "",
-      "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (carmelo→formigres→lume→rocha→cerbras) sem ficha"
+      "status_site": "confirmado_site",
+      "observacao": "Carmelo — URL João André / ficha oficial"
     },
     {
       "codigo_tintao": "INDF-036",
@@ -1261,7 +1261,7 @@
       "m2_por_caixa": 2.41,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (carmelo→formigres→lume→rocha→cerbras) sem ficha"
+      "observacao": "regra João André; buscar slug …-rt-90x90 em carmelofior.com.br"
     },
     {
       "codigo_tintao": "INDF-037",
@@ -1314,29 +1314,29 @@
       "descricao": "0X90 SIDNEY PLUS MRE RT \"A\"(2,41)",
       "formato": "90x90",
       "linha": "retificada",
-      "subtipo": null,
-      "variante_lisa": null,
-      "rotulo": "Retificada — ?",
-      "confianca": "media",
-      "motivo": "linha inferida; superfície não identificada",
+      "subtipo": "lisa",
+      "variante_lisa": "brilhante",
+      "rotulo": "Retificada — lisa brilhante",
+      "confianca": "alta",
+      "motivo": "acabamento BRILHANTE",
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "0x90 Sidney · 90x90 · RET",
-      "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
-      "marca_nome": "Carmelo Fior",
+      "formigres_titulo": "0x90 Sidney · 90x90 · RET · Brilhante",
+      "formigres_tipo": "BOLD",
+      "formigres_acabamento": "BRILHANTE",
+      "acabamento_label": "Brilhante",
+      "marca_nome": "Fiorano",
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-038",
-      "produto_url": "https://www.carmelofior.com.br/produto/sidney-plus-rt-90x90",
+      "produto_url": "https://www.carmelofior.com.br/produto/sidney-plus-mre-rt-90x90",
       "imagem_url": "",
       "imagens": [],
       "preco_m2": null,
       "m2_por_caixa": 2.41,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "regra João André + URL site"
+      "observacao": "Carmelo Fior — slug 90×90 no site"
     },
     {
       "codigo_tintao": "INDF-039",
@@ -1349,25 +1349,25 @@
       "variante_lisa": "mate",
       "rotulo": "Retificada — lisa mate",
       "confianca": "alta",
-      "motivo": "hint descrição (mate/brilhante)",
-      "match_status": "indicacao",
-      "match_score": 0,
+      "motivo": "acabamento MATE",
+      "match_status": "encontrado",
+      "match_score": 100,
       "formigres_id": "",
       "formigres_titulo": "0x90 Alaska · 90x90 · RET · Mate",
-      "formigres_tipo": "",
+      "formigres_tipo": "BOLD",
       "formigres_acabamento": "MATE",
       "acabamento_label": "Mate",
-      "marca_nome": "Carmelo Fior",
+      "marca_nome": "Fiorano",
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-039",
-      "produto_url": "",
+      "produto_url": "https://www.carmelofior.com.br/produto/alaska-soft-rt-90x90",
       "imagem_url": "",
       "imagens": [],
       "preco_m2": null,
       "m2_por_caixa": 2.41,
       "unidade": "",
-      "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (carmelo→formigres→lume→rocha→cerbras) sem ficha"
+      "status_site": "confirmado_site",
+      "observacao": "Carmelo Fior — slug 90×90 no site"
     },
     {
       "codigo_tintao": "INDF-040",
@@ -1398,7 +1398,7 @@
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (rocha→formigres→lume→carmelo→cerbras) sem ficha"
+      "observacao": "regra João André; pendente URL"
     },
     {
       "codigo_tintao": "INDF-041",
@@ -3213,7 +3213,7 @@
       "m2_por_caixa": 2.02,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (incopisos→formigres→carmelo→lume→rocha→cerbras) sem ficha"
+      "observacao": "regra João André; buscar /produto/{HD sem ponto} em grupoincopisos.com.br"
     },
     {
       "codigo_tintao": "INDF-046",
@@ -3244,7 +3244,7 @@
       "m2_por_caixa": 2.32,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (incopisos→formigres→carmelo→lume→rocha→cerbras) sem ficha"
+      "observacao": "regra João André; pendente URL"
     },
     {
       "codigo_tintao": "INDF-047",
@@ -3275,7 +3275,7 @@
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (carmelo→formigres→lume→rocha→cerbras) sem ficha"
+      "observacao": "regra João André; buscar slug …-rt-90x90 em carmelofior.com.br"
     },
     {
       "codigo_tintao": "INDF-048",
@@ -3306,7 +3306,7 @@
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (incopisos→formigres→carmelo→lume→rocha→cerbras) sem ficha"
+      "observacao": "regra João André; pendente URL"
     },
     {
       "codigo_tintao": "INDF-049",
@@ -3461,7 +3461,7 @@
       "m2_por_caixa": 2.25,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (lume→formigres→carmelo→rocha→cerbras) sem ficha"
+      "observacao": "regra João André; pendente URL"
     },
     {
       "codigo_tintao": "INDF-054",
@@ -6100,24 +6100,29 @@
       "rotulo": "Bold — ?",
       "confianca": "media",
       "motivo": "linha inferida; superfície não identificada",
-      "match_status": "indicacao",
-      "match_score": 0,
+      "match_status": "encontrado",
+      "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "32x58 · BOLD",
+      "formigres_titulo": "32x58 · BOLD · Vivence",
       "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
-      "marca_nome": "Incopisos",
+      "formigres_acabamento": "VIVENCE",
+      "acabamento_label": "Vivence",
+      "marca_nome": "Vivence",
       "fabricante_grupo": "Grupo Incopisos",
       "referencia": "INDF-079",
-      "produto_url": "",
-      "imagem_url": "",
-      "imagens": [],
+      "produto_url": "https://grupoincopisos.com.br/produto/160101/",
+      "imagem_url": "https://grupoincopisos.com.br/wp-content/uploads/2024/06/160101-alta-5d0b95.jpg",
+      "imagens": [
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/06/160101-alta-5d0b95.jpg",
+          "tipo": "principal"
+        }
+      ],
       "preco_m2": null,
       "m2_por_caixa": 2.02,
       "unidade": "",
-      "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (incopisos→formigres→carmelo→lume→rocha→cerbras) sem ficha"
+      "status_site": "confirmado_site",
+      "observacao": "Grupo Incopisos — ficha por código HD"
     },
     {
       "codigo_tintao": "INDF-080",
@@ -6148,7 +6153,7 @@
       "m2_por_caixa": 2.02,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (incopisos→formigres→carmelo→lume→rocha→cerbras) sem ficha"
+      "observacao": "regra João André; buscar /produto/{HD sem ponto} em grupoincopisos.com.br"
     },
     {
       "codigo_tintao": "INDF-081",
@@ -6179,7 +6184,7 @@
       "m2_por_caixa": 2.02,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (incopisos→formigres→carmelo→lume→rocha→cerbras) sem ficha"
+      "observacao": "regra João André; buscar /produto/{HD sem ponto} em grupoincopisos.com.br"
     },
     {
       "codigo_tintao": "INDF-082",
@@ -6210,7 +6215,7 @@
       "m2_por_caixa": 2.02,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (incopisos→formigres→carmelo→lume→rocha→cerbras) sem ficha"
+      "observacao": "regra João André; buscar /produto/{HD sem ponto} em grupoincopisos.com.br"
     },
     {
       "codigo_tintao": "INDF-083",
@@ -6241,7 +6246,7 @@
       "m2_por_caixa": 2.02,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (incopisos→formigres→carmelo→lume→rocha→cerbras) sem ficha"
+      "observacao": "regra João André; buscar /produto/{HD sem ponto} em grupoincopisos.com.br"
     },
     {
       "codigo_tintao": "INDF-084",
@@ -6976,7 +6981,7 @@
       "m2_por_caixa": 170.098,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (incopisos→formigres→carmelo→lume→rocha→cerbras) sem ficha"
+      "observacao": "regra João André; pendente URL"
     },
     {
       "codigo_tintao": "INDF-104",
@@ -7007,7 +7012,7 @@
       "m2_por_caixa": 2.59,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (carmelo→formigres→lume→rocha→cerbras) sem ficha"
+      "observacao": "regra João André; buscar slug em carmelofior.com.br/produto/…"
     },
     {
       "codigo_tintao": "INDF-105",
@@ -7100,7 +7105,7 @@
       "m2_por_caixa": 2.59,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (carmelo→formigres→lume→rocha→cerbras) sem ficha"
+      "observacao": "regra João André; buscar slug em carmelofior.com.br/produto/…"
     },
     {
       "codigo_tintao": "INDF-108",
@@ -7198,7 +7203,7 @@
       "m2_por_caixa": 2.32,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (incopisos→formigres→carmelo→lume→rocha→cerbras) sem ficha"
+      "observacao": "regra João André; pendente URL"
     },
     {
       "codigo_tintao": "INDF-111",
@@ -7291,7 +7296,7 @@
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (carmelo→formigres→lume→rocha→cerbras) sem ficha"
+      "observacao": "regra João André; buscar slug em carmelofior.com.br/produto/…"
     },
     {
       "codigo_tintao": "INDF-114",
@@ -7353,7 +7358,7 @@
       "m2_por_caixa": 2.59,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (carmelo→formigres→lume→rocha→cerbras) sem ficha"
+      "observacao": "regra João André; buscar slug em carmelofior.com.br/produto/…"
     },
     {
       "codigo_tintao": "INDF-116",
@@ -7446,7 +7451,7 @@
       "m2_por_caixa": 2.03,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (carmelo→formigres→lume→rocha→cerbras) sem ficha"
+      "observacao": "regra João André; pendente URL"
     },
     {
       "codigo_tintao": "INDF-119",
@@ -7539,7 +7544,7 @@
       "m2_por_caixa": 2.02,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (incopisos→formigres→carmelo→lume→rocha→cerbras) sem ficha"
+      "observacao": "regra João André; buscar /produto/{HD sem ponto} em grupoincopisos.com.br"
     },
     {
       "codigo_tintao": "34799",
@@ -7797,7 +7802,7 @@
       "m2_por_caixa": 2.83,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (rocha→formigres→lume→carmelo→cerbras) sem ficha"
+      "observacao": "regra João André; pendente URL"
     },
     {
       "codigo_tintao": "35040",
@@ -8182,7 +8187,7 @@
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (rocha→formigres→lume→carmelo→cerbras) sem ficha"
+      "observacao": "regra João André; pendente URL"
     },
     {
       "codigo_tintao": "35448",
@@ -8393,7 +8398,7 @@
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (rocha→formigres→lume→carmelo→cerbras) sem ficha"
+      "observacao": "regra João André; pendente URL"
     },
     {
       "codigo_tintao": "35487",
@@ -8909,7 +8914,7 @@
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (rocha→formigres→lume→carmelo→cerbras) sem ficha"
+      "observacao": "regra João André; pendente URL"
     },
     {
       "codigo_tintao": "INDF-130",
@@ -9134,19 +9139,19 @@
       "descricao": "0X90 ALBURY PLUS RT \"A\"(2,41) PEI",
       "formato": "90x90",
       "linha": "retificada",
-      "subtipo": null,
-      "variante_lisa": null,
-      "rotulo": "Retificada — ?",
-      "confianca": "media",
-      "motivo": "linha inferida; superfície não identificada",
+      "subtipo": "lisa",
+      "variante_lisa": "brilhante",
+      "rotulo": "Retificada — lisa brilhante",
+      "confianca": "alta",
+      "motivo": "acabamento BRILHANTE",
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "0x90 Albury · 90x90 · RET",
-      "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
-      "marca_nome": "Carmelo Fior",
+      "formigres_titulo": "0x90 Albury · 90x90 · RET · Brilhante",
+      "formigres_tipo": "BOLD",
+      "formigres_acabamento": "BRILHANTE",
+      "acabamento_label": "Brilhante",
+      "marca_nome": "Cecafi",
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-135",
       "produto_url": "https://www.carmelofior.com.br/produto/albury-plus-rt-90x90",
@@ -9156,7 +9161,7 @@
       "m2_por_caixa": 2.41,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "regra João André + URL site"
+      "observacao": "Carmelo Fior — slug 90×90 no site"
     },
     {
       "codigo_tintao": "INDF-136",
@@ -9187,7 +9192,7 @@
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (carmelo→formigres→lume→rocha→cerbras) sem ficha"
+      "observacao": "regra João André; buscar slug …-rt-90x90 em carmelofior.com.br"
     },
     {
       "codigo_tintao": "INDF-137",
@@ -9196,29 +9201,29 @@
       "descricao": "0X90 DREAM PLUS RT \"A\"(2,41) PEI L",
       "formato": "90x90",
       "linha": "retificada",
-      "subtipo": null,
-      "variante_lisa": null,
-      "rotulo": "Retificada — ?",
-      "confianca": "media",
-      "motivo": "linha inferida; superfície não identificada",
-      "match_status": "indicacao",
-      "match_score": 0,
+      "subtipo": "lisa",
+      "variante_lisa": "brilhante",
+      "rotulo": "Retificada — lisa brilhante",
+      "confianca": "alta",
+      "motivo": "acabamento BRILHANTE",
+      "match_status": "encontrado",
+      "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "0x90 Dream · 90x90 · RET",
-      "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
-      "marca_nome": "Carmelo Fior",
+      "formigres_titulo": "0x90 Dream · 90x90 · RET · Brilhante",
+      "formigres_tipo": "BOLD",
+      "formigres_acabamento": "BRILHANTE",
+      "acabamento_label": "Brilhante",
+      "marca_nome": "Cecafi",
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-137",
-      "produto_url": "",
+      "produto_url": "https://www.carmelofior.com.br/produto/dream-plus-rt-90x90",
       "imagem_url": "",
       "imagens": [],
       "preco_m2": null,
       "m2_por_caixa": 2.41,
       "unidade": "",
-      "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (carmelo→formigres→lume→rocha→cerbras) sem ficha"
+      "status_site": "confirmado_site",
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site"
     },
     {
       "codigo_tintao": "INDF-138",
@@ -9227,29 +9232,29 @@
       "descricao": "0X90 FORTUNATA PLUS MRE RT \"A\"(2,",
       "formato": "90x90",
       "linha": "retificada",
-      "subtipo": null,
-      "variante_lisa": null,
-      "rotulo": "Retificada — ?",
-      "confianca": "media",
-      "motivo": "linha inferida; superfície não identificada",
-      "match_status": "indicacao",
-      "match_score": 0,
+      "subtipo": "lisa",
+      "variante_lisa": "brilhante",
+      "rotulo": "Retificada — lisa brilhante",
+      "confianca": "alta",
+      "motivo": "acabamento BRILHANTE",
+      "match_status": "encontrado",
+      "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "0x90 Fortunata · 90x90 · RET",
-      "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
-      "marca_nome": "Carmelo Fior",
+      "formigres_titulo": "0x90 Fortunata · 90x90 · RET · Brilhante",
+      "formigres_tipo": "BOLD",
+      "formigres_acabamento": "BRILHANTE",
+      "acabamento_label": "Brilhante",
+      "marca_nome": "Idealle",
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-138",
-      "produto_url": "",
+      "produto_url": "https://www.carmelofior.com.br/produto/fortunata-plus-mre-rt-90x90",
       "imagem_url": "",
       "imagens": [],
       "preco_m2": null,
       "m2_por_caixa": null,
       "unidade": "",
-      "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (carmelo→formigres→lume→rocha→cerbras) sem ficha"
+      "status_site": "confirmado_site",
+      "observacao": "Carmelo Fior — slug 90×90 no site"
     },
     {
       "codigo_tintao": "INDF-139",
@@ -9768,7 +9773,7 @@
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (rocha→formigres→lume→carmelo→cerbras) sem ficha"
+      "observacao": "regra João André; pendente URL"
     },
     {
       "codigo_tintao": "INDF-150",
@@ -10085,29 +10090,29 @@
       "descricao": "0X90 CRONOS PLUS MRE RT \"A\"(2,41)",
       "formato": "90x90",
       "linha": "retificada",
-      "subtipo": null,
-      "variante_lisa": null,
-      "rotulo": "Retificada — ?",
-      "confianca": "media",
-      "motivo": "linha inferida; superfície não identificada",
-      "match_status": "indicacao",
-      "match_score": 0,
+      "subtipo": "lisa",
+      "variante_lisa": "brilhante",
+      "rotulo": "Retificada — lisa brilhante",
+      "confianca": "alta",
+      "motivo": "acabamento BRILHANTE",
+      "match_status": "encontrado",
+      "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "0x90 Cronos · 90x90 · RET",
-      "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
-      "marca_nome": "Carmelo Fior",
+      "formigres_titulo": "0x90 Cronos · 90x90 · RET · Brilhante",
+      "formigres_tipo": "BOLD",
+      "formigres_acabamento": "BRILHANTE",
+      "acabamento_label": "Brilhante",
+      "marca_nome": "Cecafi",
       "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-157",
-      "produto_url": "",
+      "produto_url": "https://www.carmelofior.com.br/produto/cronos-plus-mre-rt-90x90",
       "imagem_url": "",
       "imagens": [],
       "preco_m2": null,
       "m2_por_caixa": 2.41,
       "unidade": "",
-      "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (carmelo→formigres→lume→rocha→cerbras) sem ficha"
+      "status_site": "confirmado_site",
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site"
     },
     {
       "codigo_tintao": "INDF-158",

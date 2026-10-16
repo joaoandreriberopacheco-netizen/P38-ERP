@@ -146,6 +146,9 @@ function carmeloSlugFromName(name) {
 const CF_SLUG_BY_CODE = {
   'INDF-117': 'alaska-plus-32-75',
   'INDF-119': 'alvor',
+  'INDF-035': 'solaria-plus-rt-90x90',
+  'INDF-137': 'dream-plus-rt-90x90',
+  'INDF-157': 'cronos-plus-mre-rt-90x90',
 };
 
 const INCOPISOS_SLUG_BY_CODE = {
@@ -153,6 +156,7 @@ const INCOPISOS_SLUG_BY_CODE = {
   31930: 'minerale-beige',
   'INDF-078': 'square-mont-blanc',
   'INDF-102': 'studio-cotto',
+  'INDF-079': '160101',
 };
 
 function acabamentoLabelFromSuperficie(s) {
@@ -458,6 +462,24 @@ async function main() {
       applyHit(r, hit, 'Grupo Carmelo Fior — marca na ficha do site');
     } else if (r.status !== 'confirmado_site') {
       indicacao(r, 'Carmelo Fior', 'Cecafi', r.formato, 'buscar slug em carmelofior.com.br/produto/…');
+    }
+  }
+
+  // 90×90 — Carmelo Fior (ex. /produto/solaria-plus-rt-90x90)
+  for (const r of rows.filter((x) => x.formato === '90x90' && /carmelo/i.test(String(x.fabricante_grupo || x.marca_no_site || '')))) {
+    const hit = tryCarmeloForRow(r);
+    if (hit) applyHit(r, hit, 'Carmelo Fior — slug 90×90 no site');
+    else if (r.status !== 'confirmado_site') {
+      indicacao(r, 'Carmelo Fior', 'Carmelo Fior', '90x90', 'buscar slug …-rt-90x90 em carmelofior.com.br');
+    }
+  }
+
+  // 32×58 — Incopisos por código HD (ex. /produto/160101/)
+  for (const r of rows.filter((x) => isIncopisosErpRow(x) && x.formato === '32x58')) {
+    const hit = tryIncopisosForRow(r);
+    if (hit) applyHit(r, hit, 'Grupo Incopisos — ficha por código HD');
+    else if (r.status !== 'confirmado_site') {
+      indicacao(r, 'Grupo Incopisos', 'Incopisos', '32x58', 'buscar /produto/{HD sem ponto} em grupoincopisos.com.br');
     }
   }
 
