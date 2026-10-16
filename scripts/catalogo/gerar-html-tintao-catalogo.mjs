@@ -3581,9 +3581,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       if (fa !== fb) return fa - fb;
       return String(a || '').localeCompare(String(b || ''), 'pt-BR');
     }
+    function isPlaceholderTitulo(text) {
+      const t = String(text || '').trim().toLowerCase();
+      return t.startsWith('(ver descri');
+    }
     function itemTitulo(item) {
       const ft = String(item.formigres_titulo || '').trim();
-      if (ft && !/^\(ver descri/i.test(ft)) return ft;
+      if (ft && !isPlaceholderTitulo(ft)) return ft;
       return item.descricao || ft || '';
     }
     function compareItensFormatoNome(a, b) {
