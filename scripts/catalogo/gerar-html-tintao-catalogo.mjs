@@ -1230,6 +1230,129 @@ const PAGLEVE_SKIN_CSS = `
       line-height: 1.25;
       color: var(--muted);
     }
+    @media (max-width: 720px) {
+      html[data-skin="pagleve"] .catalog-cards-wrap {
+        padding: 0 12px 12px;
+      }
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve {
+        padding: 14px 0 16px;
+      }
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-head {
+        column-gap: 12px;
+      }
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-thumb,
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .catalog-card-thumb-btn .pedido-card-thumb {
+        width: 76px;
+        height: 76px;
+        border-radius: 10px;
+      }
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-head-main {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 10px 12px;
+        width: 100%;
+        min-width: 0;
+      }
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-desc {
+        flex: 1 1 100%;
+        min-width: 0;
+      }
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .model-nome-principal {
+        font-size: 1.02rem;
+        line-height: 1.25;
+      }
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .model-subtitulo {
+        font-size: .8rem;
+        margin-top: 4px;
+      }
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .catalog-pagleve-meta {
+        font-size: .76rem;
+        margin-top: 6px;
+      }
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .catalog-card-qty-edit {
+        min-width: 72px;
+      }
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .catalog-card-qty-label {
+        font-size: .68rem;
+      }
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .catalog-card-qty-edit .qty-input {
+        width: 64px;
+        min-height: 44px;
+        font-size: 1.05rem;
+      }
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-qty-sub {
+        font-size: .72rem;
+      }
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-total {
+        flex: 1 1 auto;
+        min-width: 88px;
+        margin-left: auto;
+        text-align: right;
+      }
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-total .pedido-card-hero {
+        font-size: 1.05rem;
+      }
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-total-label {
+        font-size: .65rem;
+      }
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .catalog-pagleve-preco-destaque {
+        flex: 1 1 100%;
+        margin-top: 2px;
+        padding: 8px 10px;
+        border-radius: 8px;
+        background: var(--accent-muted);
+        font-size: .95rem;
+        font-weight: 700;
+        color: var(--pl-purple-deep);
+        line-height: 1.3;
+      }
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .catalog-pagleve-preco-destaque .preco-desc,
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .catalog-pagleve-preco-destaque .preco-orig {
+        font-size: inherit;
+      }
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-spec {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border-subtle);
+      }
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-spec tr {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px 14px;
+      }
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-spec td {
+        display: block;
+        padding: 0;
+        border: 0 !important;
+        min-width: 0;
+        overflow: hidden;
+      }
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-spec-l {
+        font-size: .72rem;
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: var(--muted);
+      }
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-spec-v {
+        font-size: .9rem;
+        font-weight: 600;
+        line-height: 1.35;
+        color: var(--text-strong);
+        word-break: break-word;
+      }
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-spec-v.pedido-card-spec-preco {
+        font-size: .92rem;
+      }
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-spec-v.pedido-card-spec-preco .preco-desc {
+        font-size: 1rem;
+        font-weight: 700;
+      }
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-spec-v.pedido-card-spec-preco:not(.has-desc) {
+        font-size: 1rem;
+        font-weight: 700;
+      }
+    }
 `;
 
 function buildBrandSkinCss(skin) {
@@ -2790,6 +2913,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       .pedido-card-spec-v,
       .pedido-card-spec-v.pedido-card-spec-preco:not(.has-desc),
       .pedido-card-spec-v.pedido-card-spec-palete { font-size: .58rem; line-height: 1.25; }
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-spec-l,
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-spec-v,
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-spec-v.pedido-card-spec-preco:not(.has-desc),
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-spec-v.pedido-card-spec-palete {
+        font-size: inherit;
+        line-height: inherit;
+      }
       .pedido-card-thumb { width: 48px; height: 48px; }
       .pedido-total {
         margin-top: 10px;
@@ -4225,6 +4355,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const thumb = renderCatalogCardThumb(item, cod, titulo, imgs, img);
       const metaLine = '<div class="pedido-card-meta catalog-pagleve-meta">' +
         esc(item.marca_nome || '—') + ' · ' + esc(item.fabricante_grupo || '—') + '</div>';
+      const precoDestaque = '<div class="catalog-pagleve-preco-destaque" aria-label="Preço por metro quadrado">' +
+        fmtPrecoHtml(item.preco_m2) + '</div>';
       const row1 = '<div class="pedido-card-head">' + thumb +
         '<div class="pedido-card-head-main">' +
           '<div class="pedido-card-desc">' +
@@ -4232,6 +4364,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
               renderPagLeveModeloCell(item, cod, warn) + metaLine +
             '</div>' +
           '</div>' +
+          precoDestaque +
           renderCatalogCardQtyEdit(cod, qty, m2tot) +
           '<div class="pedido-card-total">' +
             '<strong class="pedido-card-hero model-col-sub">' + esc(sub != null ? fmtMoney(sub) : '—') + '</strong>' +
@@ -4245,7 +4378,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       ];
       if (m2unit) specCells.push({ label: 'm²/cx', text: fmtDecimal(m2unit) });
       const spec = renderPedidoSpecTable(specCells);
-      return '<article class="catalog-card pedido-card model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(pagLeveItemSearchKey(item, cod, pack, titulo)) + '" data-qty="' + qty + '">' +
+      return '<article class="catalog-card catalog-card-pagleve pedido-card model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(pagLeveItemSearchKey(item, cod, pack, titulo)) + '" data-qty="' + qty + '">' +
         '<div class="pedido-card-layout">' + row1 + spec + '</div></article>';
     }
     function renderCatalogCardFormigres(item) {
