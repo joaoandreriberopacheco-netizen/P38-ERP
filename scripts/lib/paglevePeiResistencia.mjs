@@ -3,6 +3,14 @@
  */
 const ORDEM = ['LEI', 'LCI', 'LA', 'LB', 'LC', 'LD', 'LE'];
 
+/** Códigos de uso (resistência) — não são textura/acabamento de catálogo. */
+export const PEI_USO_CLASSES = ['LA', 'LB', 'LC', 'LD', 'LE', 'LCI', 'LEI'];
+
+export function isClasseUsoPei(token = '') {
+  const t = String(token || '').trim().toUpperCase().replace(/^PEI\s+/, '');
+  return PEI_USO_CLASSES.includes(t);
+}
+
 export function extrairClassificacaoPei(descricao = '') {
   const u = String(descricao || '').toUpperCase();
   const m = u.match(/\bPEI\s+(LEI|LCI|LA|LB|LC|LD|LE)\b/);

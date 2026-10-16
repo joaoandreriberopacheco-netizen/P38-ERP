@@ -6,7 +6,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { classificarFormigres, resumirClassificacoes } from '../lib/formigresClassificar.mjs';
-import { referenciaResistenciaCatalogo } from '../lib/paglevePeiResistencia.mjs';
+import {
+  extrairClassificacaoPei,
+  isClasseUsoPei,
+  referenciaResistenciaCatalogo,
+} from '../lib/paglevePeiResistencia.mjs';
 import { modeloComercialCatalogo, raioXProdutoDescricao } from '../lib/raioXProdutoDescricao.mjs';
 import { resolveFormatoPagLeve } from '../lib/pagleveFormatoOcr.mjs';
 import { loadPrecosSiah, resolvePrecoSiah } from '../lib/paglevePrecosSiah.mjs';
@@ -79,12 +83,32 @@ function parseTipoAcabFromSite(descricaoNoSite) {
   if (/bold/i.test(tipoPart)) tipo = 'BOLD';
   else if (/retificad/i.test(tipoPart)) tipo = 'RETIFICADO';
   const acab = acabPart.toUpperCase().replace(/\s+/g, ' ').trim();
+  if (isClasseUsoPei(acab)) return { tipo, acabamento: '' };
   return { tipo, acabamento: acab };
 }
 
+function inferAcabamentoFromDescricaoErp(descErp, classif) {
+  const u = String(descErp || '').toUpperCase();
+  if (/RT\s*POLIDO|\bPOLIDO\b/.test(u) && classif.linha === 'polida') return 'Polido';
+  if (/GRANILHAD/.test(u)) return 'Granilhado';
+  if (/GOTEJAD/.test(u)) return 'Gotejado';
+  if (/ACETINAD/.test(u)) return 'Acetinado';
+  if (/\bMATE\b/.test(u)) return 'Mate';
+  if (/BRILH/.test(u)) return 'Brilhante';
+  if (/ESMALT/.test(u)) return 'Esmaltado';
+  if (classif.subtipo === 'antiderrapante') return 'Antiderrapante';
+  if (classif.subtipo === 'semiderrapante') return 'Semiderrapante';
+  if (classif.variante_lisa === 'mate') return 'Mate';
+  if (classif.variante_lisa === 'brilhante') return 'Brilhante';
+  return '';
+}
+
 function inferAcabamentoLabel(descErp, descSite, classif, row = {}) {
+  const hasPeiUso = Boolean(extrairClassificacaoPei(descErp) || extrairClassificacaoPei(row.site_classificacao_pei || ''));
   const siteAcabExtra = String(row.site_acabamento_label || '').trim();
-  if (siteAcabExtra && !/^(bold|ret|retificado)$/i.test(siteAcabExtra)) return siteAcabExtra;
+  if (siteAcabExtra && !/^(bold|ret|retificado)$/i.test(siteAcabExtra) && !isClasseUsoPei(siteAcabExtra)) {
+    return siteAcabExtra;
+  }
 
   const u = String(descErp || '').toUpperCase();
   if (/RT\s*POLIDO|\bPOLIDO\b/.test(u) && classif.linha === 'polida') return 'Polido';
@@ -96,6 +120,7 @@ function inferAcabamentoLabel(descErp, descSite, classif, row = {}) {
   if (/ESMALT/.test(u)) return 'Esmaltado';
 
   const { acabamento: siteAcab } = parseTipoAcabFromSite(descSite);
+  if (hasPeiUso) return inferAcabamentoFromDescricaoErp(descErp, classif);
   if (siteAcab && !/CONHEÇA|MODELOS/i.test(siteAcab) && !/^(BOLD|RETIFICADO|RET)$/i.test(siteAcab)) {
     if (/ACETINAD/i.test(siteAcab)) return 'Acetinado';
     if (/^MATE$/i.test(siteAcab)) return 'Mate';
@@ -103,6 +128,7 @@ function inferAcabamentoLabel(descErp, descSite, classif, row = {}) {
     if (/GRANILHAD/i.test(siteAcab)) return 'Granilhado';
     if (/POLIDO/i.test(siteAcab)) return 'Polido';
     if (/GOTEJAD/i.test(siteAcab)) return 'Gotejado';
+    if (isClasseUsoPei(siteAcab)) return inferAcabamentoFromDescricaoErp(descErp, classif);
     return siteAcab.charAt(0) + siteAcab.slice(1).toLowerCase();
   }
   if (/brilhante/i.test(descSite)) return 'Brilhante';
@@ -110,7 +136,7 @@ function inferAcabamentoLabel(descErp, descSite, classif, row = {}) {
   if (classif.subtipo === 'semiderrapante') return 'Semiderrapante';
   if (classif.variante_lisa === 'mate') return 'Mate';
   if (classif.variante_lisa === 'brilhante') return 'Brilhante';
-  return '';
+  return inferAcabamentoFromDescricaoErp(descErp, classif);
 }
 
 function parseImagensJson(raw, imagemUrl) {
@@ -169,7 +195,7 @@ function subtituloCatalogoPagLeve(row, descricao, classif, acabLabel, siteHints)
   const linha = linhaCatalogoLabel(classif, siteHints, descricao);
   if (linha) parts.push(linha);
   const tex = String(acabLabel || '').trim();
-  if (tex && tex.toUpperCase() !== linha) parts.push(tex);
+  if (tex && !isClasseUsoPei(tex) && tex.toUpperCase() !== linha) parts.push(tex);
   return parts.join(' · ');
 }
 
@@ -209,9 +235,13 @@ function main() {
     if (classifPl.linha === 'retificada' && classif.linha === 'polida' && !acabLabel) {
       acabLabel = 'Polido';
     }
+    if (isClasseUsoPei(acabLabel)) {
+      acabLabel = inferAcabamentoFromDescricaoErp(descricao, classifPl);
+    }
     const imagens = parseImagensJson(row.imagens_json, row.imagem_url);
     const catalogoNomeModelo = nomeModeloPrincipal(row, descricao);
     const catalogoSubtitulo = subtituloCatalogoPagLeve(row, descricao, classifPl, acabLabel, siteHints);
+    const peiUso = extrairClassificacaoPei(descricao) || extrairClassificacaoPei(row.site_classificacao_pei || '');
     const precoHit = precosSiah
       ? resolvePrecoSiah(
           {
@@ -240,10 +270,12 @@ function main() {
       formigres_id: (String(row.evidencia_url || '').match(/formigres\.com\.br\/produto\/(\d+)/i) || [])[1] || '',
       formigres_titulo: catalogoSubtitulo,
       formigres_tipo: siteHints.tipo,
-      formigres_acabamento: siteHints.acabamento || acabLabel.toUpperCase(),
+      formigres_acabamento:
+        (siteHints.acabamento && !isClasseUsoPei(siteHints.acabamento) ? siteHints.acabamento : acabLabel.toUpperCase()),
       acabamento_label: acabLabel,
       marca_nome: row.marca_no_site || row.fabricante_grupo || '',
       fabricante_grupo: row.fabricante_grupo || '',
+      pei_uso: peiUso,
       referencia: referenciaResistenciaCatalogo(descricao, row.site_classificacao_pei) || row.codigo,
       produto_url: row.evidencia_url || '',
       imagem_url: row.imagem_url || imagens[0]?.url || '',

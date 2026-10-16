@@ -2,6 +2,8 @@
  * Agrupamento PagLeve: texturas (balde) e formatos régua (razão menor/maior < 1/3).
  */
 
+import { isClasseUsoPei } from './paglevePeiResistencia.mjs';
+
 export const PAGLEVE_ACAB_GRUPO_ORDER = [
   'Brilhante · Esmaltado',
   'Mate · Acetinado',
@@ -47,11 +49,24 @@ export function formatoTreeKeyPagLeve(fmt = '') {
 /**
  * @param {{ acabamento_label?: string, formigres_acabamento?: string, descricao?: string, formigres_titulo?: string, rotulo?: string, subtipo?: string, linha?: string }} item
  */
+function inferTexturaFromBlob(blob = '') {
+  if (/\bantiderrap/.test(blob)) return 'antiderrapante';
+  if (/\bsemiderrap/.test(blob) || /\bprotetiva\b/.test(blob) || /\baderente\b/.test(blob) || /\bgranilh/.test(blob) || /\bgotej/.test(blob) || /\bmre\b/.test(blob)) {
+    return 'semiderrapante';
+  }
+  if (/\bmate\b/.test(blob) || /\bacetinad/.test(blob)) return 'mate';
+  if (/\bbrilh/.test(blob) || /\besmalt/.test(blob)) return 'brilhante';
+  if (/\bpolid/.test(blob) || /\brt\s*polid/.test(blob)) return 'polido';
+  return '';
+}
+
 export function acabamentoGrupoPagLeve(item = {}) {
-  const label = normPagLeveText(item.acabamento_label || item.formigres_acabamento || '');
+  const rawLabel = String(item.acabamento_label || item.formigres_acabamento || '').trim();
+  const label = isClasseUsoPei(rawLabel) ? '' : normPagLeveText(rawLabel);
   const blob = normPagLeveText(
     [item.descricao, item.formigres_titulo, item.rotulo, item.subtipo].filter(Boolean).join(' '),
   );
+  const inferred = !label ? inferTexturaFromBlob(blob) : '';
 
   if (label.includes('antiderrap') || item.subtipo === 'antiderrapante') {
     return 'Antiderrapante';
@@ -67,18 +82,20 @@ export function acabamentoGrupoPagLeve(item = {}) {
   ) {
     return 'Semiderrapante · Protetiva · MRE';
   }
-  if (label.includes('mate') || label.includes('acetinad')) {
+  if (label.includes('mate') || label.includes('acetinad') || inferred === 'mate') {
     return 'Mate · Acetinado';
   }
-  if (label.includes('brilh') || label.includes('esmalt')) {
+  if (label.includes('brilh') || label.includes('esmalt') || inferred === 'brilhante') {
     return 'Brilhante · Esmaltado';
   }
-  if (label.includes('polid') || item.linha === 'polida' || item.subtipo === 'polida') {
+  if (label.includes('polid') || item.linha === 'polida' || item.subtipo === 'polida' || inferred === 'polido') {
     return 'Polido';
   }
+  if (inferred === 'antiderrapante') return 'Antiderrapante';
+  if (inferred === 'semiderrapante') return 'Semiderrapante · Protetiva · MRE';
 
-  const raw = String(item.acabamento_label || item.formigres_acabamento || '').trim();
-  return raw || 'Outros';
+  if (rawLabel && !isClasseUsoPei(rawLabel)) return rawLabel;
+  return 'Outros';
 }
 
 export function parseFormatoTreeKey(key = '') {
