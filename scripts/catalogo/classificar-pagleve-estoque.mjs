@@ -6,6 +6,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { classificarFormigres, resumirClassificacoes } from '../lib/formigresClassificar.mjs';
+import { referenciaResistenciaCatalogo } from '../lib/paglevePeiResistencia.mjs';
 
 const ROOT = process.cwd();
 const IN_CSV =
@@ -78,7 +79,9 @@ function parseTipoAcabFromSite(descricaoNoSite) {
   return { tipo, acabamento: acab };
 }
 
-function inferAcabamentoLabel(descErp, descSite, classif) {
+function inferAcabamentoLabel(descErp, descSite, classif, row = {}) {
+  const siteAcabExtra = String(row.site_acabamento_label || '').trim();
+  if (siteAcabExtra) return siteAcabExtra;
   const { acabamento: siteAcab } = parseTipoAcabFromSite(descSite);
   if (siteAcab && !/CONHEÇA|MODELOS/i.test(siteAcab)) {
     if (/ACETINAD/i.test(siteAcab)) return 'Acetinado';
@@ -96,6 +99,7 @@ function inferAcabamentoLabel(descErp, descSite, classif) {
   if (/ACETINAD/.test(u)) return 'Acetinado';
   if (/\bMATE\b/.test(u)) return 'Mate';
   if (/BRILH/.test(u)) return 'Brilhante';
+  if (/brilhante/i.test(descSite)) return 'Brilhante';
   if (classif.subtipo === 'antiderrapante') return 'Protetiva aderente';
   if (classif.subtipo === 'semiderrapante') return 'Granilhado';
   if (classif.variante_lisa === 'mate') return 'Mate';
@@ -162,7 +166,7 @@ function main() {
       titulo: row.descricao_no_site || descricao,
       descricao,
     });
-    let acabLabel = inferAcabamentoLabel(descricao, row.descricao_no_site, classif);
+    let acabLabel = inferAcabamentoLabel(descricao, row.descricao_no_site, classif, row);
     const classifPl = normalizarLinhaPagLeve(classif, acabLabel);
     if (classifPl.linha === 'retificada' && classif.linha === 'polida' && !acabLabel) {
       acabLabel = 'Polido';
@@ -188,7 +192,7 @@ function main() {
       acabamento_label: acabLabel,
       marca_nome: row.marca_no_site || row.fabricante_grupo || '',
       fabricante_grupo: row.fabricante_grupo || '',
-      referencia: row.codigo,
+      referencia: referenciaResistenciaCatalogo(descricao, row.site_classificacao_pei) || row.codigo,
       produto_url: row.evidencia_url || '',
       imagem_url: row.imagem_url || imagens[0]?.url || '',
       imagens,

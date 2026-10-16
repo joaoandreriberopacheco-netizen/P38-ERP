@@ -13,6 +13,13 @@ import {
 } from '../lib/formigresSnapshot.mjs';
 import { stripAccents } from '../lib/formigresCatalog.mjs';
 import { raioXProdutoDescricao } from '../lib/raioXProdutoDescricao.mjs';
+import {
+  acabamentoFromErpDesc,
+  carmeloSlugCandidates,
+  cecafiCarmeloSlugCandidates,
+  parseCarmeloProdutoHtml,
+} from '../lib/carmeloPaginaProduto.mjs';
+import { extrairClassificacaoPei } from '../lib/paglevePeiResistencia.mjs';
 
 const ROOT = process.cwd();
 const CSV = process.env.PAGLEVE_OUT || path.join(ROOT, 'files', 'pagleve', 'raio-x-pagleve-site-verificado.csv');
@@ -131,20 +138,101 @@ function carmeloSlugFromName(name) {
     .replace(/-+/g, '-');
 }
 
+const CF_SLUG_BY_CODE = {
+  'INDF-117': 'alaska-plus-32-75',
+  'INDF-119': 'alvor',
+};
+
+function acabamentoLabelFromSuperficie(s) {
+  const t = String(s || '').trim();
+  if (!t) return '';
+  if (/^brilhante$/i.test(t)) return 'Brilhante';
+  if (/^mate$/i.test(t)) return 'Mate';
+  if (/^acetinado$/i.test(t)) return 'Acetinado';
+  if (/^polido$/i.test(t)) return 'Polido';
+  return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
+}
+
 function tryCarmeloSlug(slug) {
   const url = `${CF}/produto/${slug}`;
   const html = curl(url);
   if (!html || html.length < 800) return null;
-  const title = html.match(/<title>([^<]+)<\/title>/i)?.[1] || '';
-  if (!/carmelo|fior|arielle/i.test(title) && !/produto/i.test(html)) return null;
+  const ficha = parseCarmeloProdutoHtml(html);
+  if (!ficha) return null;
+  const acab = acabamentoLabelFromSuperficie(ficha.superficie);
+  const marca = ficha.marca_site || 'Carmelo Fior';
   return {
     fabricante_grupo: 'Carmelo Fior',
-    marca_no_site: 'Carmelo Fior',
+    marca_no_site: marca,
     evidencia_url: url,
-    descricao_no_site: title.split('|')[0].trim(),
+    descricao_no_site: ficha.descricao_no_site,
+    site_superficie: ficha.superficie || '',
+    site_linha: ficha.linha_site || '',
+    site_classificacao_pei: ficha.classificacao_uso || '',
+    site_acabamento_label: acab,
     status: 'confirmado_site',
     match_metodo: `carmelo_slug:${slug}`,
   };
+}
+
+function enrichCarmeloHitFromErp(row, hit) {
+  const pei = extrairClassificacaoPei(row.descricao_erp);
+  const erpAcab = acabamentoFromErpDesc(row.descricao_erp);
+  if (erpAcab) hit.site_acabamento_label = erpAcab;
+  const titulo = String(hit.descricao_no_site || '').split(' · ')[0] || hit.descricao_no_site;
+  const fmt = String(row.formato || '').replace(/x/i, '×');
+  const parts = [titulo];
+  if (fmt) parts.push(`${fmt} cm`);
+  if (hit.site_linha) parts.push(hit.site_linha);
+  if (hit.site_acabamento_label) parts.push(hit.site_acabamento_label);
+  if (pei) {
+    hit.site_classificacao_pei = pei;
+    parts.push(pei);
+  }
+  hit.descricao_no_site = parts.join(' · ');
+  return hit;
+}
+
+/** No ERP muitas linhas Etna/Cecafi; no site a marca vem da ficha Carmelo (Cecafi, Fiorano, Idealle…). */
+function isCecafiRow(row) {
+  const blob = `${row.fabricante_grupo || ''} ${row.marca_no_site || ''} ${row.descricao_erp || ''}`;
+  if (/cecafi|etna/i.test(blob)) return true;
+  return String(row.match_metodo || '').startsWith('carmelo_grupo:');
+}
+
+function applyCarmeloGrupoHit(row, hit, slug) {
+  const out = enrichCarmeloHitFromErp(row, hit);
+  out.fabricante_grupo = 'Carmelo Fior';
+  if (!out.marca_no_site || out.marca_no_site === 'Carmelo Fior') {
+    out.marca_no_site = hit.marca_no_site || 'Cecafi';
+  }
+  out.match_metodo = `carmelo_grupo:${slug}`;
+  return out;
+}
+
+function tryCarmeloCecafiRow(row) {
+  const modelo = modeloNome(row) || row.modelo || '';
+  const slugs = cecafiCarmeloSlugCandidates(row, modelo);
+  for (const slug of slugs) {
+    const hit = tryCarmeloSlug(slug);
+    if (!hit) continue;
+    return applyCarmeloGrupoHit(row, hit, slug);
+  }
+  return null;
+}
+
+function tryCarmeloForRow(row) {
+  const fixed = CF_SLUG_BY_CODE[row.codigo];
+  if (fixed) {
+    const hit = tryCarmeloSlug(fixed);
+    if (hit) return enrichCarmeloHitFromErp(row, hit);
+  }
+  const modelo = modeloNome(row);
+  for (const slug of carmeloSlugCandidates(row, modelo)) {
+    const hit = tryCarmeloSlug(slug);
+    if (hit) return enrichCarmeloHitFromErp(row, hit);
+  }
+  return null;
 }
 
 function modeloNome(row) {
@@ -251,6 +339,13 @@ async function main() {
     else indicacao(r, 'Carmelo Fior', 'Carmelo Fior', '74x74');
   }
 
+  // 32x57 — Carmelo Fior (ex. Alaska Plus → alaska-plus-32-75)
+  for (const r of rows.filter((x) => x.formato === '32x57' && x.status !== 'confirmado_site')) {
+    const hit = tryCarmeloForRow(r);
+    if (hit) applyHit(r, hit, 'Carmelo 32×57 — ficha oficial');
+    else indicacao(r, 'Carmelo Fior', 'Carmelo Fior', '32x57');
+  }
+
   // 90x90 — Carmelo
   for (const r of rows.filter((x) => x.formato === '90x90' && x.status !== 'confirmado_site')) {
     const n = stripAccents(r.descricao_erp).toLowerCase();
@@ -305,10 +400,18 @@ async function main() {
     else indicacao(r, 'Lume Cerâmica', 'Lume', '45x89');
   }
 
-  // 57x57 — Cecafi (todos)
-  for (const r of rows.filter((x) => x.formato === '57x57')) {
-    if (r.status === 'confirmado_site' && r.fabricante_grupo === 'Cecafi') continue;
-    indicacao(r, 'Cecafi', 'Cecafi', '57x57', 'buscar ficha Etna/Cecafi ou Formigres');
+  // 38×75 e 57×57 — grupo Carmelo Fior (Cecafi/Fiorano/Idealle no site, ex. /produto/alvor)
+  for (const r of rows.filter((x) => isCecafiRow(x) && (x.formato === '57x57' || x.formato === '38x75'))) {
+    let hit = tryCarmeloCecafiRow(r) || tryCarmeloForRow(r);
+    if (hit) {
+      const slug = (hit.match_metodo || '').split(':').pop() || '';
+      if (hit.evidencia_url?.includes('carmelofior.com.br') && !String(hit.match_metodo).startsWith('carmelo_grupo:')) {
+        hit = applyCarmeloGrupoHit(r, hit, slug);
+      }
+      applyHit(r, hit, 'Grupo Carmelo Fior — marca na ficha do site');
+    } else if (r.status !== 'confirmado_site') {
+      indicacao(r, 'Carmelo Fior', 'Cecafi', r.formato, 'buscar slug em carmelofior.com.br/produto/…');
+    }
   }
 
   // 58x58 — Incopisos
@@ -338,6 +441,20 @@ async function main() {
       },
       '56×113 religioso — Incopisos',
     );
+  }
+
+  for (const codigo of Object.keys(CF_SLUG_BY_CODE)) {
+    const r = byCode.get(codigo);
+    if (!r) continue;
+    let hit = tryCarmeloForRow(r);
+    if (!hit) continue;
+    const slugFixo = CF_SLUG_BY_CODE[codigo];
+    const slug = slugFixo || hit.match_metodo?.split(':').pop() || '';
+    if (isCecafiRow(r) || codigo === 'INDF-119') {
+      applyHit(r, applyCarmeloGrupoHit(r, hit, slug), 'Grupo Carmelo Fior — marca na ficha do site');
+    } else {
+      applyHit(r, enrichCarmeloHitFromErp(r, hit), 'Carmelo — URL João André / ficha oficial');
+    }
   }
 
   writeCsv(CSV, rows);

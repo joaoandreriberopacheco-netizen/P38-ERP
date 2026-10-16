@@ -1,16 +1,16 @@
 {
-  "geradoEm": "2026-10-16T05:33:32.051Z",
+  "geradoEm": "2026-10-16T14:07:52.412Z",
   "fonte": "/workspace/files/pagleve/raio-x-pagleve-site-verificado.csv",
   "resumo": {
     "porRotulo": {
       "Retificada — polido": 42,
       "Retificada — ?": 19,
-      "Bold — ?": 116,
+      "Bold — ?": 111,
       "Retificada — mate": 5,
       "Retificada — semiderrapante": 15,
       "Retificada — lisa mate": 19,
       "Bold — antiderrapante": 9,
-      "Bold — lisa": 79,
+      "Bold — lisa": 84,
       "Bold — semiderrapante": 20,
       "Retificada — granilhado": 1,
       "Retificada — antiderrapante": 2,
@@ -24,7 +24,7 @@
       "bold": {
         "antiderrapante": 9,
         "semiderrapante": 20,
-        "lisa": 79
+        "lisa": 84
       },
       "retificada": {
         "antiderrapante": 2,
@@ -62,32 +62,7 @@
       "referencia": "INDF-001",
       "produto_url": "https://www.carmelofior.com.br/produto/gales-po-rt",
       "imagem_url": "",
-      "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/favicons/apple-icon-180x180.png",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/favicons/favicon-16x16.png",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/head/icon-br.jpg",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/head/icon-es.jpg",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/head/icon-en.jpg",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/icon-favorite.png",
-          "tipo": "principal"
-        }
-      ],
+      "imagens": [],
       "preco_m2": 54.9,
       "m2_por_caixa": 2.2,
       "unidade": "",
@@ -657,7 +632,7 @@
       "acabamento_label": "Mate",
       "marca_nome": "Premium",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "INDF-014",
+      "referencia": "PEI LB",
       "produto_url": "https://www.formigres.com.br/produto/1010",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/premium/rubirt87-mate.jpg",
       "imagens": [
@@ -1142,35 +1117,10 @@
       "acabamento_label": "",
       "marca_nome": "Carmelo Fior",
       "fabricante_grupo": "Carmelo Fior",
-      "referencia": "INDF-024",
+      "referencia": "PEI LB",
       "produto_url": "https://www.carmelofior.com.br/produto/amon-plus-rt-90x90",
       "imagem_url": "",
-      "imagens": [
-        {
-          "url": "https://www.carmelofior.com.br/public/images/favicons/apple-icon-180x180.png",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/favicons/favicon-16x16.png",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/head/icon-br.jpg",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/head/icon-es.jpg",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/head/icon-en.jpg",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/icon-favorite.png",
-          "tipo": "principal"
-        }
-      ],
+      "imagens": [],
       "preco_m2": 45.9,
       "m2_por_caixa": 2.41,
       "unidade": "",
@@ -1264,7 +1214,7 @@
       "acabamento_label": "Mate",
       "marca_nome": "Premium",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "INDF-026",
+      "referencia": "PEI LB",
       "produto_url": "https://www.formigres.com.br/produto/1039",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/premium/articomate87.jpg",
       "imagens": [
@@ -2164,7 +2114,7 @@
       "acabamento_label": "Brilhante",
       "marca_nome": "Formigres",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "27908",
+      "referencia": "PEI LC",
       "produto_url": "https://www.formigres.com.br/produto/77",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/avilabrhd.jpg",
       "imagens": [
@@ -2205,7 +2155,7 @@
       "acabamento_label": "Brilhante",
       "marca_nome": "Marcela",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "27913",
+      "referencia": "PEI LC",
       "produto_url": "https://www.formigres.com.br/produto/689",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/marcela/ducalehd34x60.jpg",
       "imagens": [
@@ -2254,7 +2204,7 @@
       "acabamento_label": "Brilhante",
       "marca_nome": "Formigres",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "27947",
+      "referencia": "PEI LD",
       "produto_url": "https://www.formigres.com.br/produto/339",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/bege50.jpg",
       "imagens": [
@@ -2299,7 +2249,7 @@
       "acabamento_label": "Brilhante",
       "marca_nome": "Formigres",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "27950",
+      "referencia": "PEI LD",
       "produto_url": "https://www.formigres.com.br/produto/340",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/bege50.jpg",
       "imagens": [
@@ -2344,7 +2294,7 @@
       "acabamento_label": "Mate",
       "marca_nome": "Formigres",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "27974",
+      "referencia": "PEI LD",
       "produto_url": "https://www.formigres.com.br/produto/25",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/branco50.jpg",
       "imagens": [
@@ -2385,7 +2335,7 @@
       "acabamento_label": "Brilhante",
       "marca_nome": "Formigres",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "28049",
+      "referencia": "PEI LD",
       "produto_url": "https://www.formigres.com.br/produto/20",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/bege45-brilhante.webp",
       "imagens": [
@@ -2426,7 +2376,7 @@
       "acabamento_label": "Brilhante",
       "marca_nome": "Formigres",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "28055",
+      "referencia": "PEI LC",
       "produto_url": "https://www.formigres.com.br/produto/76",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/avilaczhd.jpg",
       "imagens": [
@@ -2508,7 +2458,7 @@
       "acabamento_label": "Mate",
       "marca_nome": "Marcela",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "28071",
+      "referencia": "PEI LC",
       "produto_url": "https://www.formigres.com.br/produto/683",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/marcela/oreonhd.jpg",
       "imagens": [
@@ -2598,7 +2548,7 @@
       "acabamento_label": "Brilhante",
       "marca_nome": "Marcela",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "28473",
+      "referencia": "PEI LC",
       "produto_url": "https://www.formigres.com.br/produto/662",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/marcela/carrarabege34x60.jpg",
       "imagens": [
@@ -2639,7 +2589,7 @@
       "acabamento_label": "Brilhante",
       "marca_nome": "Formigres",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "28477",
+      "referencia": "PEI LC",
       "produto_url": "https://www.formigres.com.br/produto/96",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/luccahd.jpg",
       "imagens": [
@@ -2684,7 +2634,7 @@
       "acabamento_label": "Brilhante",
       "marca_nome": "Formigres",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "28531",
+      "referencia": "PEI LC",
       "produto_url": "https://www.formigres.com.br/produto/75",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/avilabghd.jpg",
       "imagens": [
@@ -2729,7 +2679,7 @@
       "acabamento_label": "Granilhado",
       "marca_nome": "JG",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "28533",
+      "referencia": "PEI LE",
       "produto_url": "https://www.formigres.com.br/produto/585",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/jg/glacialbr45.jpg",
       "imagens": [
@@ -2815,7 +2765,7 @@
       "acabamento_label": "Mate",
       "marca_nome": "Formigres",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "28690",
+      "referencia": "PEI LC",
       "produto_url": "https://www.formigres.com.br/produto/27",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/branco57.jpg",
       "imagens": [
@@ -2856,7 +2806,7 @@
       "acabamento_label": "",
       "marca_nome": "Rochaforte / Rocha Cerâmica",
       "fabricante_grupo": "Grupo Rocha",
-      "referencia": "28693",
+      "referencia": "PEI LC",
       "produto_url": "https://www.portalgruporocha.com.br/produtos/imbuia",
       "imagem_url": "https://api.portalgruporocha.com.br/storage/images/imbuia-f1-1788180559.webp",
       "imagens": [
@@ -2897,7 +2847,7 @@
       "acabamento_label": "Granilhado",
       "marca_nome": "Marcela",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "28809",
+      "referencia": "PEI LE",
       "produto_url": "https://www.formigres.com.br/produto/752",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/marcela/trafegobg45.jpg",
       "imagens": [
@@ -2987,7 +2937,7 @@
       "acabamento_label": "Bold",
       "marca_nome": "Arielle",
       "fabricante_grupo": "Carmelo Fior",
-      "referencia": "28929",
+      "referencia": "PEI LB",
       "produto_url": "https://www.carmelofior.com.br/produto/cordova",
       "imagem_url": "https://www.carmelofior.com.br/public/images/product/eff45154d7e4dba0d081dca54537b316.webp",
       "imagens": [
@@ -3028,7 +2978,7 @@
       "acabamento_label": "Bold",
       "marca_nome": "Arielle",
       "fabricante_grupo": "Carmelo Fior",
-      "referencia": "28931",
+      "referencia": "PEI LB",
       "produto_url": "https://www.carmelofior.com.br/produto/florence",
       "imagem_url": "https://www.carmelofior.com.br/public/images/product/5d2cbba13c6bd962db2e2587aaef8436.webp",
       "imagens": [
@@ -3069,7 +3019,7 @@
       "acabamento_label": "Bold",
       "marca_nome": "Arielle",
       "fabricante_grupo": "Carmelo Fior",
-      "referencia": "28939",
+      "referencia": "PEI LA",
       "produto_url": "https://www.carmelofior.com.br/produto/dover",
       "imagem_url": "https://www.carmelofior.com.br/public/images/product/c0efd048ae6a0dac436f396640c5ec1f.webp",
       "imagens": [
@@ -3196,7 +3146,7 @@
       "acabamento_label": "Protetiva aderente",
       "marca_nome": "Rochaforte / Rocha Cerâmica",
       "fabricante_grupo": "Grupo Rocha",
-      "referencia": "29215",
+      "referencia": "PEI LE",
       "produto_url": "https://www.portalgruporocha.com.br/produtos/olimpo",
       "imagem_url": "https://api.portalgruporocha.com.br/storage/images/olimpo-f1-1788202469.webp",
       "imagens": [
@@ -3282,7 +3232,7 @@
       "acabamento_label": "Brilhante",
       "marca_nome": "Marcela",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "30179",
+      "referencia": "PEI LD",
       "produto_url": "https://www.formigres.com.br/produto/623",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/marcela/bianco50-brilhante.webp",
       "imagens": [
@@ -3409,7 +3359,7 @@
       "acabamento_label": "Brilhante",
       "marca_nome": "JG",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "30591",
+      "referencia": "PEI LC",
       "produto_url": "https://www.formigres.com.br/produto/571",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/jg/blasenbghd57.jpg",
       "imagens": [
@@ -3454,7 +3404,7 @@
       "acabamento_label": "Protetiva aderente",
       "marca_nome": "Marcela",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "30940",
+      "referencia": "PEI LD",
       "produto_url": "https://www.formigres.com.br/produto/736",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/marcela/woodhd50.jpg",
       "imagens": [
@@ -3499,7 +3449,7 @@
       "acabamento_label": "Granilhado",
       "marca_nome": "Marcela",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "30941",
+      "referencia": "PEI LE",
       "produto_url": "https://www.formigres.com.br/produto/680",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/marcela/dakotabghd50.jpg",
       "imagens": [
@@ -3540,7 +3490,7 @@
       "acabamento_label": "Granilhado",
       "marca_nome": "Marcela",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "30942",
+      "referencia": "PEI LE",
       "produto_url": "https://www.formigres.com.br/produto/681",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/marcela/dakotaczhd50.jpg",
       "imagens": [
@@ -3626,7 +3576,7 @@
       "acabamento_label": "Brilhante",
       "marca_nome": "Formigres",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "31086",
+      "referencia": "PEI LB",
       "produto_url": "https://www.formigres.com.br/produto/399",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/oregon45.jpg",
       "imagens": [
@@ -3667,7 +3617,7 @@
       "acabamento_label": "Brilhante",
       "marca_nome": "Marcela",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "31179",
+      "referencia": "PEI LC",
       "produto_url": "https://www.formigres.com.br/produto/767",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/marcela/cairohd50.jpg",
       "imagens": [
@@ -3757,7 +3707,7 @@
       "acabamento_label": "Brilhante",
       "marca_nome": "Marcela",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "31364",
+      "referencia": "PEI LD",
       "produto_url": "https://www.formigres.com.br/produto/717",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/marcela/corumbabghd50.jpg",
       "imagens": [
@@ -4042,7 +3992,7 @@
       "acabamento_label": "",
       "marca_nome": "Incopisos",
       "fabricante_grupo": "Grupo Incopisos",
-      "referencia": "INDF-045",
+      "referencia": "PEI LA",
       "produto_url": "",
       "imagem_url": "",
       "imagens": [],
@@ -4078,7 +4028,7 @@
       "acabamento_label": "",
       "marca_nome": "Incopisos",
       "fabricante_grupo": "Grupo Incopisos",
-      "referencia": "INDF-046",
+      "referencia": "PEI LB",
       "produto_url": "",
       "imagem_url": "",
       "imagens": [],
@@ -4172,29 +4122,54 @@
       "descricao": "38X75 SELAH WHITE LUX PLUS HD \"A\"(2",
       "formato": "38x75",
       "linha": "bold",
-      "subtipo": null,
-      "variante_lisa": null,
-      "rotulo": "Bold — ?",
-      "confianca": "media",
-      "motivo": "linha inferida; superfície não identificada",
-      "match_status": "indicacao",
-      "match_score": 0,
+      "subtipo": "lisa",
+      "variante_lisa": "brilhante",
+      "rotulo": "Bold — lisa",
+      "confianca": "alta",
+      "motivo": "acabamento BRILHANTE",
+      "match_status": "encontrado",
+      "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "SELAH WHITE LUX",
-      "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
+      "formigres_titulo": "Selah White Lux Plus · 38×75 cm · Bold · Brilhante",
+      "formigres_tipo": "BOLD",
+      "formigres_acabamento": "BRILHANTE",
+      "acabamento_label": "Brilhante",
       "marca_nome": "Cecafi",
-      "fabricante_grupo": "Cecafi",
+      "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-049",
-      "produto_url": "",
+      "produto_url": "https://www.carmelofior.com.br/produto/selah-white-lux-plus",
       "imagem_url": "",
-      "imagens": [],
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/apple-icon-180x180.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/favicon-16x16.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-br.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-es.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-en.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/icon-favorite.png",
+          "tipo": "principal"
+        }
+      ],
       "preco_m2": 14.45,
       "m2_por_caixa": null,
       "unidade": "",
-      "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (formigres→cerbras→carmelo→lume→rocha) sem ficha",
+      "status_site": "confirmado_site",
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
       "preco_fonte": "tabela_formigres",
       "codigo_siah": "",
       "caixas_por_palete": null,
@@ -4213,24 +4188,49 @@
       "rotulo": "Bold — ?",
       "confianca": "media",
       "motivo": "linha inferida; superfície não identificada",
-      "match_status": "indicacao",
-      "match_score": 0,
+      "match_status": "encontrado",
+      "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "BRANCO NEVE",
-      "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
+      "formigres_titulo": "Branco Neve Plus · 38×75 cm · Bold · Esmaltado",
+      "formigres_tipo": "BOLD",
+      "formigres_acabamento": "ESMALTADO",
+      "acabamento_label": "Esmaltado",
       "marca_nome": "Cecafi",
-      "fabricante_grupo": "Cecafi",
+      "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-050",
-      "produto_url": "",
+      "produto_url": "https://www.carmelofior.com.br/produto/branco-neve-plus-38-75",
       "imagem_url": "",
-      "imagens": [],
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/apple-icon-180x180.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/favicon-16x16.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-br.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-es.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-en.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/icon-favorite.png",
+          "tipo": "principal"
+        }
+      ],
       "preco_m2": 14.45,
       "m2_por_caixa": 2,
       "unidade": "",
-      "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (formigres→cerbras→carmelo→lume→rocha) sem ficha",
+      "status_site": "confirmado_site",
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
       "preco_fonte": "tabela_formigres",
       "codigo_siah": "",
       "caixas_por_palete": null,
@@ -4249,24 +4249,49 @@
       "rotulo": "Bold — ?",
       "confianca": "media",
       "motivo": "linha inferida; superfície não identificada",
-      "match_status": "indicacao",
-      "match_score": 0,
+      "match_status": "encontrado",
+      "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "CLEAN",
-      "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
-      "marca_nome": "Cecafi",
-      "fabricante_grupo": "Cecafi",
+      "formigres_titulo": "Clean Plus · 38×75 cm · Bold · Esmaltado",
+      "formigres_tipo": "BOLD",
+      "formigres_acabamento": "ESMALTADO",
+      "acabamento_label": "Esmaltado",
+      "marca_nome": "Idealle",
+      "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-051",
-      "produto_url": "",
+      "produto_url": "https://www.carmelofior.com.br/produto/clean-plus-38-75",
       "imagem_url": "",
-      "imagens": [],
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/apple-icon-180x180.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/favicon-16x16.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-br.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-es.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-en.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/icon-favorite.png",
+          "tipo": "principal"
+        }
+      ],
       "preco_m2": 14.45,
       "m2_por_caixa": 2,
       "unidade": "",
-      "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (formigres→cerbras→carmelo→lume→rocha) sem ficha",
+      "status_site": "confirmado_site",
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
       "preco_fonte": "tabela_formigres",
       "codigo_siah": "",
       "caixas_por_palete": null,
@@ -4285,24 +4310,49 @@
       "rotulo": "Bold — ?",
       "confianca": "media",
       "motivo": "linha inferida; superfície não identificada",
-      "match_status": "indicacao",
-      "match_score": 0,
+      "match_status": "encontrado",
+      "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "SELENA BEGE B",
-      "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
-      "marca_nome": "Cecafi",
-      "fabricante_grupo": "Cecafi",
+      "formigres_titulo": "Selena Bege · 57×57 cm · Bold · Esmaltado",
+      "formigres_tipo": "BOLD",
+      "formigres_acabamento": "ESMALTADO",
+      "acabamento_label": "Esmaltado",
+      "marca_nome": "Fiorano",
+      "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-052",
-      "produto_url": "",
+      "produto_url": "https://www.carmelofior.com.br/produto/selena-bege",
       "imagem_url": "",
-      "imagens": [],
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/apple-icon-180x180.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/favicon-16x16.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-br.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-es.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-en.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/icon-favorite.png",
+          "tipo": "principal"
+        }
+      ],
       "preco_m2": 32,
       "m2_por_caixa": 2.59,
       "unidade": "",
-      "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (formigres→cerbras→carmelo→lume→rocha) sem ficha",
+      "status_site": "confirmado_site",
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
       "preco_fonte": "siah_desc:35",
       "codigo_siah": "32099",
       "caixas_por_palete": null,
@@ -4646,7 +4696,7 @@
       "acabamento_label": "",
       "marca_nome": "Incopisos",
       "fabricante_grupo": "Grupo Incopisos",
-      "referencia": "INDF-059",
+      "referencia": "PEI LE",
       "produto_url": "https://grupoincopisos.com.br/produto/leao-de-juda-2/",
       "imagem_url": "https://grupoincopisos.com.br/wp-content/uploads/2025/11/LEAO-DE-JUDA-e1767984803690.jpg",
       "imagens": [
@@ -5692,7 +5742,7 @@
       "acabamento_label": "Mate",
       "marca_nome": "Stargolden",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "26102",
+      "referencia": "PEI LC",
       "produto_url": "https://www.formigres.com.br/produto/1350",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/stargolden/priscohd.jpg",
       "imagens": [
@@ -5737,7 +5787,7 @@
       "acabamento_label": "Brilhante",
       "marca_nome": "Stargolden",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "26105",
+      "referencia": "PEI LC",
       "produto_url": "https://www.formigres.com.br/produto/1377",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/stargolden/springhd57.jpg",
       "imagens": [
@@ -5868,7 +5918,7 @@
       "acabamento_label": "Brilhante",
       "marca_nome": "JG",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "26558",
+      "referencia": "PEI LC",
       "produto_url": "https://www.formigres.com.br/produto/572",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/jg/blasenbrhd57.jpg",
       "imagens": [
@@ -6036,7 +6086,7 @@
       "acabamento_label": "Mate",
       "marca_nome": "Marcela",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "26626",
+      "referencia": "PEI LC",
       "produto_url": "https://www.formigres.com.br/produto/714",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/marcela/friggahd57.jpg",
       "imagens": [
@@ -6171,7 +6221,7 @@
       "acabamento_label": "Brilhante",
       "marca_nome": "Marcela",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "26643",
+      "referencia": "PEI LD",
       "produto_url": "https://www.formigres.com.br/produto/688",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/marcela/ducalehd50.jpg",
       "imagens": [
@@ -6216,7 +6266,7 @@
       "acabamento_label": "Granilhado",
       "marca_nome": "Marcela",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "26646",
+      "referencia": "PEI LD",
       "produto_url": "https://www.formigres.com.br/produto/731",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/marcela/muranohd50.jpg",
       "imagens": [
@@ -6306,7 +6356,7 @@
       "acabamento_label": "Brilhante",
       "marca_nome": "Formigres",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "26769",
+      "referencia": "PEI LC",
       "produto_url": "https://www.formigres.com.br/produto/254",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/valemrhd45.jpg",
       "imagens": [
@@ -6437,7 +6487,7 @@
       "acabamento_label": "Brilhante",
       "marca_nome": "Formigres",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "26796",
+      "referencia": "PEI LD",
       "produto_url": "https://www.formigres.com.br/produto/128",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/plenohd61.jpg",
       "imagens": [
@@ -6523,7 +6573,7 @@
       "acabamento_label": "Brilhante",
       "marca_nome": "Formigres",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "26817",
+      "referencia": "PEI LC",
       "produto_url": "https://www.formigres.com.br/produto/347",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/branco57.jpg",
       "imagens": [
@@ -6568,7 +6618,7 @@
       "acabamento_label": "Brilhante",
       "marca_nome": "Formigres",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "26823",
+      "referencia": "PEI LC",
       "produto_url": "https://www.formigres.com.br/produto/185",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/sensehd57.jpg",
       "imagens": [
@@ -6613,7 +6663,7 @@
       "acabamento_label": "Granilhado",
       "marca_nome": "Marcela",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "26981",
+      "referencia": "PEI LD",
       "produto_url": "https://www.formigres.com.br/produto/821",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/marcela/javabege45.jpg",
       "imagens": [
@@ -6699,7 +6749,7 @@
       "acabamento_label": "Brilhante",
       "marca_nome": "Formigres",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "26999",
+      "referencia": "PEI LC",
       "produto_url": "https://www.formigres.com.br/produto/196",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/jardinshd57.jpg",
       "imagens": [
@@ -6744,7 +6794,7 @@
       "acabamento_label": "Mate",
       "marca_nome": "Marcela",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "27010",
+      "referencia": "PEI LD",
       "produto_url": "https://www.formigres.com.br/produto/820",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/marcela/stone45.jpg",
       "imagens": [
@@ -6846,7 +6896,7 @@
       "acabamento_label": "Granilhado",
       "marca_nome": "Marcela",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "27088",
+      "referencia": "PEI LD",
       "produto_url": "https://www.formigres.com.br/produto/823",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/marcela/javaverde45.jpg",
       "imagens": [
@@ -6891,7 +6941,7 @@
       "acabamento_label": "Granilhado",
       "marca_nome": "Marcela",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "27091",
+      "referencia": "PEI LE",
       "produto_url": "https://www.formigres.com.br/produto/728",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/marcela/articohd50.jpg",
       "imagens": [
@@ -6936,7 +6986,7 @@
       "acabamento_label": "Bold",
       "marca_nome": "Arielle",
       "fabricante_grupo": "Carmelo Fior",
-      "referencia": "27258",
+      "referencia": "PEI LA",
       "produto_url": "https://www.carmelofior.com.br/produto/ascot",
       "imagem_url": "https://www.carmelofior.com.br/public/images/product/ed7e7d39b5118e2708b422c561bc84e7.webp",
       "imagens": [
@@ -6977,7 +7027,7 @@
       "acabamento_label": "Bold",
       "marca_nome": "Arielle",
       "fabricante_grupo": "Carmelo Fior",
-      "referencia": "27261",
+      "referencia": "PEI LD",
       "produto_url": "https://www.carmelofior.com.br/produto/gretna",
       "imagem_url": "https://www.carmelofior.com.br/public/images/product/2c07c02ebf46f1668065afdb3ddd126f.webp",
       "imagens": [
@@ -7104,7 +7154,7 @@
       "acabamento_label": "Brilhante",
       "marca_nome": "Formigres",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "27530",
+      "referencia": "PEI LD",
       "produto_url": "https://www.formigres.com.br/produto/142",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/lakabrhd50.jpg",
       "imagens": [
@@ -7194,7 +7244,7 @@
       "acabamento_label": "Protetiva aderente",
       "marca_nome": "Formigres",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "27532",
+      "referencia": "PEI LD",
       "produto_url": "https://www.formigres.com.br/produto/163",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/rochedohd45.jpg",
       "imagens": [
@@ -7239,7 +7289,7 @@
       "acabamento_label": "Granilhado",
       "marca_nome": "Marcela",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "27551",
+      "referencia": "PEI LE",
       "produto_url": "https://www.formigres.com.br/produto/752",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/marcela/trafegobg45.jpg",
       "imagens": [
@@ -7325,7 +7375,7 @@
       "acabamento_label": "Brilhante",
       "marca_nome": "Formigres",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "27683",
+      "referencia": "PEI LE",
       "produto_url": "https://www.formigres.com.br/produto/398",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/troia45.jpg",
       "imagens": [
@@ -7370,7 +7420,7 @@
       "acabamento_label": "Brilhante",
       "marca_nome": "Formigres",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "27693",
+      "referencia": "PEI LC",
       "produto_url": "https://www.formigres.com.br/produto/424",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/freijom45.jpg",
       "imagens": [
@@ -7411,7 +7461,7 @@
       "acabamento_label": "Granilhado",
       "marca_nome": "Formigres",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "27737",
+      "referencia": "PEI LD",
       "produto_url": "https://www.formigres.com.br/produto/418",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/treviso45.jpg",
       "imagens": [
@@ -7700,24 +7750,49 @@
       "rotulo": "Bold — ?",
       "confianca": "media",
       "motivo": "linha inferida; superfície não identificada",
-      "match_status": "indicacao",
-      "match_score": 0,
+      "match_status": "encontrado",
+      "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "BOLT A",
-      "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
-      "marca_nome": "Cecafi",
-      "fabricante_grupo": "Cecafi",
-      "referencia": "INDF-085",
-      "produto_url": "",
+      "formigres_titulo": "Bolt MRE · 57×57 cm · Bold · Brilhante · LE",
+      "formigres_tipo": "BOLD",
+      "formigres_acabamento": "LE",
+      "acabamento_label": "Le",
+      "marca_nome": "Idealle",
+      "fabricante_grupo": "Carmelo Fior",
+      "referencia": "PEI LE",
+      "produto_url": "https://www.carmelofior.com.br/produto/bolt-mre",
       "imagem_url": "",
-      "imagens": [],
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/apple-icon-180x180.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/favicon-16x16.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-br.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-es.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-en.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/icon-favorite.png",
+          "tipo": "principal"
+        }
+      ],
       "preco_m2": 32,
       "m2_por_caixa": 2.59,
       "unidade": "",
-      "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (formigres→cerbras→carmelo→lume→rocha) sem ficha",
+      "status_site": "confirmado_site",
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
       "preco_fonte": "siah_desc:75",
       "codigo_siah": "32099",
       "caixas_por_palete": null,
@@ -7731,29 +7806,54 @@
       "descricao": "57X57 DRITTO CINZA MRE HD \"A\" (2,59",
       "formato": "57x57",
       "linha": "bold",
-      "subtipo": null,
-      "variante_lisa": null,
-      "rotulo": "Bold — ?",
-      "confianca": "media",
-      "motivo": "linha inferida; superfície não identificada",
-      "match_status": "indicacao",
-      "match_score": 0,
+      "subtipo": "lisa",
+      "variante_lisa": "brilhante",
+      "rotulo": "Bold — lisa",
+      "confianca": "alta",
+      "motivo": "acabamento BRILHANTE",
+      "match_status": "encontrado",
+      "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "DRITTO CINZA",
-      "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
+      "formigres_titulo": "Dritto Cinza MRE · 57×57 cm · Bold · Brilhante",
+      "formigres_tipo": "BOLD",
+      "formigres_acabamento": "BRILHANTE",
+      "acabamento_label": "Brilhante",
       "marca_nome": "Cecafi",
-      "fabricante_grupo": "Cecafi",
+      "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-086",
-      "produto_url": "",
+      "produto_url": "https://www.carmelofior.com.br/produto/dritto-cinza-mre",
       "imagem_url": "",
-      "imagens": [],
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/apple-icon-180x180.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/favicon-16x16.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-br.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-es.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-en.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/icon-favorite.png",
+          "tipo": "principal"
+        }
+      ],
       "preco_m2": 32,
       "m2_por_caixa": null,
       "unidade": "",
-      "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (formigres→cerbras→carmelo→lume→rocha) sem ficha",
+      "status_site": "confirmado_site",
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "32100",
       "caixas_por_palete": null,
@@ -7772,24 +7872,49 @@
       "rotulo": "Bold — ?",
       "confianca": "media",
       "motivo": "linha inferida; superfície não identificada",
-      "match_status": "indicacao",
-      "match_score": 0,
+      "match_status": "encontrado",
+      "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "VINO JUN",
-      "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
-      "marca_nome": "Cecafi",
-      "fabricante_grupo": "Cecafi",
-      "referencia": "INDF-087",
-      "produto_url": "",
+      "formigres_titulo": "Vino · 57×57 cm · Bold · Brilhante · LB",
+      "formigres_tipo": "BOLD",
+      "formigres_acabamento": "LB",
+      "acabamento_label": "Lb",
+      "marca_nome": "Idealle",
+      "fabricante_grupo": "Carmelo Fior",
+      "referencia": "PEI LB",
+      "produto_url": "https://www.carmelofior.com.br/produto/vino",
       "imagem_url": "",
-      "imagens": [],
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/apple-icon-180x180.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/favicon-16x16.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-br.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-es.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-en.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/icon-favorite.png",
+          "tipo": "principal"
+        }
+      ],
       "preco_m2": 32,
       "m2_por_caixa": 2.59,
       "unidade": "",
-      "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (formigres→cerbras→carmelo→lume→rocha) sem ficha",
+      "status_site": "confirmado_site",
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
       "preco_fonte": "siah_desc:75",
       "codigo_siah": "32104",
       "caixas_por_palete": null,
@@ -7803,29 +7928,54 @@
       "descricao": "57X57 MELINDA HD \"A\" (2,59) BOLD PE",
       "formato": "57x57",
       "linha": "bold",
-      "subtipo": null,
-      "variante_lisa": null,
-      "rotulo": "Bold — ?",
-      "confianca": "media",
-      "motivo": "linha inferida; superfície não identificada",
-      "match_status": "indicacao",
-      "match_score": 0,
+      "subtipo": "lisa",
+      "variante_lisa": "brilhante",
+      "rotulo": "Bold — lisa",
+      "confianca": "alta",
+      "motivo": "acabamento BRILHANTE",
+      "match_status": "encontrado",
+      "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "MELINDA",
-      "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
+      "formigres_titulo": "Melinda · 57×57 cm · Bold · Brilhante",
+      "formigres_tipo": "BOLD",
+      "formigres_acabamento": "BRILHANTE",
+      "acabamento_label": "Brilhante",
       "marca_nome": "Cecafi",
-      "fabricante_grupo": "Cecafi",
+      "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-088",
-      "produto_url": "",
+      "produto_url": "https://www.carmelofior.com.br/produto/melinda",
       "imagem_url": "",
-      "imagens": [],
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/apple-icon-180x180.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/favicon-16x16.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-br.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-es.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-en.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/icon-favorite.png",
+          "tipo": "principal"
+        }
+      ],
       "preco_m2": 32,
       "m2_por_caixa": 2.59,
       "unidade": "",
-      "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (formigres→cerbras→carmelo→lume→rocha) sem ficha",
+      "status_site": "confirmado_site",
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "32147",
       "caixas_por_palete": null,
@@ -8156,7 +8306,7 @@
       "acabamento_label": "Granilhado",
       "marca_nome": "Formigres",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "INDF-096",
+      "referencia": "PEI LD",
       "produto_url": "https://www.formigres.com.br/produto/303",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/streethd50.jpg",
       "imagens": [
@@ -8205,7 +8355,7 @@
       "acabamento_label": "Brilhante",
       "marca_nome": "Formigres",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "INDF-097",
+      "referencia": "PEI LC",
       "produto_url": "https://www.formigres.com.br/produto/67",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/texashd50.jpg",
       "imagens": [
@@ -8250,7 +8400,7 @@
       "acabamento_label": "Brilhante",
       "marca_nome": "Formigres",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "INDF-098",
+      "referencia": "PEI LC",
       "produto_url": "https://www.formigres.com.br/produto/159",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/bilbaobghd57.jpg",
       "imagens": [
@@ -8295,7 +8445,7 @@
       "acabamento_label": "Brilhante",
       "marca_nome": "Formigres",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "INDF-099",
+      "referencia": "PEI LC",
       "produto_url": "https://www.formigres.com.br/produto/143",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/lakabrhd57.jpg",
       "imagens": [
@@ -8497,8 +8647,8 @@
       "formigres_acabamento": "",
       "acabamento_label": "",
       "marca_nome": "Cecafi",
-      "fabricante_grupo": "Cecafi",
-      "referencia": "INDF-104",
+      "fabricante_grupo": "Carmelo Fior",
+      "referencia": "PEI LB",
       "produto_url": "",
       "imagem_url": "",
       "imagens": [],
@@ -8506,7 +8656,7 @@
       "m2_por_caixa": 2.59,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (formigres→cerbras→carmelo→lume→rocha) sem ficha",
+      "observacao": "indicacao João; buscou (carmelo→formigres→lume→rocha→cerbras) sem ficha",
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "33090",
       "caixas_por_palete": null,
@@ -8525,24 +8675,49 @@
       "rotulo": "Bold — ?",
       "confianca": "media",
       "motivo": "linha inferida; superfície não identificada",
-      "match_status": "indicacao",
-      "match_score": 0,
+      "match_status": "encontrado",
+      "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "THEO JUN",
-      "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
+      "formigres_titulo": "Theo · 57×57 cm · Bold · Brilhante · LD",
+      "formigres_tipo": "BOLD",
+      "formigres_acabamento": "LD",
+      "acabamento_label": "Ld",
       "marca_nome": "Cecafi",
-      "fabricante_grupo": "Cecafi",
-      "referencia": "INDF-105",
-      "produto_url": "",
+      "fabricante_grupo": "Carmelo Fior",
+      "referencia": "PEI LD",
+      "produto_url": "https://www.carmelofior.com.br/produto/theo",
       "imagem_url": "",
-      "imagens": [],
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/apple-icon-180x180.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/favicon-16x16.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-br.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-es.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-en.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/icon-favorite.png",
+          "tipo": "principal"
+        }
+      ],
       "preco_m2": 32,
       "m2_por_caixa": 2.59,
       "unidade": "",
-      "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (formigres→cerbras→carmelo→lume→rocha) sem ficha",
+      "status_site": "confirmado_site",
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
       "preco_fonte": "siah_desc:35",
       "codigo_siah": "32099",
       "caixas_por_palete": null,
@@ -8556,29 +8731,54 @@
       "descricao": "7X57 MINERATI MRE A HD\"A\"(2,59)PEI",
       "formato": "57x57",
       "linha": "bold",
-      "subtipo": null,
-      "variante_lisa": null,
-      "rotulo": "Bold — ?",
-      "confianca": "media",
-      "motivo": "linha inferida; superfície não identificada",
-      "match_status": "indicacao",
-      "match_score": 0,
+      "subtipo": "lisa",
+      "variante_lisa": "brilhante",
+      "rotulo": "Bold — lisa",
+      "confianca": "alta",
+      "motivo": "acabamento BRILHANTE",
+      "match_status": "encontrado",
+      "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "MINERATI A",
-      "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
-      "marca_nome": "Cecafi",
-      "fabricante_grupo": "Cecafi",
+      "formigres_titulo": "Minerati MRE · 57×57 cm · Bold · Brilhante",
+      "formigres_tipo": "BOLD",
+      "formigres_acabamento": "BRILHANTE",
+      "acabamento_label": "Brilhante",
+      "marca_nome": "Idealle",
+      "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-106",
-      "produto_url": "",
+      "produto_url": "https://www.carmelofior.com.br/produto/minerati-mre",
       "imagem_url": "",
-      "imagens": [],
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/apple-icon-180x180.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/favicon-16x16.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-br.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-es.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-en.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/icon-favorite.png",
+          "tipo": "principal"
+        }
+      ],
       "preco_m2": 32,
       "m2_por_caixa": 2.59,
       "unidade": "",
-      "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (formigres→cerbras→carmelo→lume→rocha) sem ficha",
+      "status_site": "confirmado_site",
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
       "preco_fonte": "siah_desc:75",
       "codigo_siah": "33120",
       "caixas_por_palete": null,
@@ -8605,7 +8805,7 @@
       "formigres_acabamento": "",
       "acabamento_label": "",
       "marca_nome": "Cecafi",
-      "fabricante_grupo": "Cecafi",
+      "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-107",
       "produto_url": "",
       "imagem_url": "",
@@ -8614,7 +8814,7 @@
       "m2_por_caixa": 2.59,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (formigres→cerbras→carmelo→lume→rocha) sem ficha",
+      "observacao": "indicacao João; buscou (carmelo→formigres→lume→rocha→cerbras) sem ficha",
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "33200",
       "caixas_por_palete": null,
@@ -8642,7 +8842,7 @@
       "acabamento_label": "Granilhado",
       "marca_nome": "Formigres",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "INDF-108",
+      "referencia": "PEI LD",
       "produto_url": "https://www.formigres.com.br/produto/416",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/rochosa45.jpg",
       "imagens": [
@@ -8768,7 +8968,7 @@
       "acabamento_label": "",
       "marca_nome": "Formigres",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "INDF-111",
+      "referencia": "PEI LD",
       "produto_url": "https://www.formigres.com.br/produto/305",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/sienahd50.jpg",
       "imagens": [
@@ -8817,7 +9017,7 @@
       "acabamento_label": "",
       "marca_nome": "Formigres",
       "fabricante_grupo": "Grupo Formigres",
-      "referencia": "INDF-112",
+      "referencia": "PEI LD",
       "produto_url": "https://www.formigres.com.br/produto/251",
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/centauromrhd45.jpg",
       "imagens": [
@@ -8865,7 +9065,7 @@
       "formigres_acabamento": "MATE",
       "acabamento_label": "Mate",
       "marca_nome": "Cecafi",
-      "fabricante_grupo": "Cecafi",
+      "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-113",
       "produto_url": "",
       "imagem_url": "",
@@ -8874,7 +9074,7 @@
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (formigres→cerbras→carmelo→lume→rocha) sem ficha",
+      "observacao": "indicacao João; buscou (carmelo→formigres→lume→rocha→cerbras) sem ficha",
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "33531",
       "caixas_por_palete": null,
@@ -8888,29 +9088,29 @@
       "descricao": "7X57 DRITTO BEGE MRE HD \"A\" (2,59)",
       "formato": "57x57",
       "linha": "bold",
-      "subtipo": null,
-      "variante_lisa": null,
-      "rotulo": "Bold — ?",
-      "confianca": "media",
-      "motivo": "linha inferida; superfície não identificada",
-      "match_status": "indicacao",
-      "match_score": 0,
+      "subtipo": "lisa",
+      "variante_lisa": "brilhante",
+      "rotulo": "Bold — lisa",
+      "confianca": "alta",
+      "motivo": "acabamento BRILHANTE",
+      "match_status": "encontrado",
+      "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "DRITTO BEGE",
-      "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
+      "formigres_titulo": "Dritto Bege MRE · 57×57 cm · Bold · Brilhante",
+      "formigres_tipo": "BOLD",
+      "formigres_acabamento": "BRILHANTE",
+      "acabamento_label": "Brilhante",
       "marca_nome": "Cecafi",
-      "fabricante_grupo": "Cecafi",
+      "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-114",
-      "produto_url": "",
+      "produto_url": "https://www.carmelofior.com.br/produto/dritto-bege-mre",
       "imagem_url": "",
       "imagens": [],
       "preco_m2": 32,
       "m2_por_caixa": 2.59,
       "unidade": "",
-      "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (formigres→cerbras→carmelo→lume→rocha) sem ficha",
+      "status_site": "confirmado_site",
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
       "preco_fonte": "siah_desc:35",
       "codigo_siah": "32099",
       "caixas_por_palete": null,
@@ -8937,8 +9137,8 @@
       "formigres_acabamento": "",
       "acabamento_label": "",
       "marca_nome": "Cecafi",
-      "fabricante_grupo": "Cecafi",
-      "referencia": "INDF-115",
+      "fabricante_grupo": "Carmelo Fior",
+      "referencia": "PEI LB",
       "produto_url": "",
       "imagem_url": "",
       "imagens": [],
@@ -8946,7 +9146,7 @@
       "m2_por_caixa": 2.59,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (formigres→cerbras→carmelo→lume→rocha) sem ficha",
+      "observacao": "indicacao João; buscou (carmelo→formigres→lume→rocha→cerbras) sem ficha",
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "34158",
       "caixas_por_palete": null,
@@ -9008,24 +9208,49 @@
       "rotulo": "Bold — ?",
       "confianca": "media",
       "motivo": "linha inferida; superfície não identificada",
-      "match_status": "indicacao",
-      "match_score": 0,
+      "match_status": "encontrado",
+      "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "ALASKA",
-      "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
-      "marca_nome": "Carmelo Fior",
+      "formigres_titulo": "Alaska Plus · 32×57 cm · Bold · Brilhante · LA",
+      "formigres_tipo": "BOLD",
+      "formigres_acabamento": "LA",
+      "acabamento_label": "La",
+      "marca_nome": "Fiorano",
       "fabricante_grupo": "Carmelo Fior",
-      "referencia": "INDF-117",
-      "produto_url": "",
+      "referencia": "PEI LA",
+      "produto_url": "https://www.carmelofior.com.br/produto/alaska-plus-32-75",
       "imagem_url": "",
-      "imagens": [],
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/apple-icon-180x180.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/favicon-16x16.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-br.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-es.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-en.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/icon-favorite.png",
+          "tipo": "principal"
+        }
+      ],
       "preco_m2": 31.9,
       "m2_por_caixa": 2.03,
       "unidade": "",
-      "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (carmelo→formigres→lume→rocha→cerbras) sem ficha",
+      "status_site": "confirmado_site",
+      "observacao": "Carmelo — URL João André / ficha oficial",
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "34490",
       "caixas_por_palete": null,
@@ -9080,24 +9305,49 @@
       "rotulo": "Bold — ?",
       "confianca": "media",
       "motivo": "linha inferida; superfície não identificada",
-      "match_status": "indicacao",
-      "match_score": 0,
+      "match_status": "encontrado",
+      "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "ALVOR ACET",
-      "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
-      "marca_nome": "Cecafi",
-      "fabricante_grupo": "Cecafi",
+      "formigres_titulo": "Alvor · 57×57 cm · Bold · Acetinado",
+      "formigres_tipo": "BOLD",
+      "formigres_acabamento": "ACETINADO",
+      "acabamento_label": "Acetinado",
+      "marca_nome": "Fiorano",
+      "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-119",
-      "produto_url": "",
+      "produto_url": "https://www.carmelofior.com.br/produto/alvor",
       "imagem_url": "",
-      "imagens": [],
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/apple-icon-180x180.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/favicon-16x16.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-br.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-es.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-en.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/icon-favorite.png",
+          "tipo": "principal"
+        }
+      ],
       "preco_m2": 32,
       "m2_por_caixa": 2.59,
       "unidade": "",
-      "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (formigres→cerbras→carmelo→lume→rocha) sem ficha",
+      "status_site": "confirmado_site",
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
       "preco_fonte": "siah_desc:75",
       "codigo_siah": "34545",
       "caixas_por_palete": null,
@@ -9116,24 +9366,49 @@
       "rotulo": "Bold — ?",
       "confianca": "media",
       "motivo": "linha inferida; superfície não identificada",
-      "match_status": "indicacao",
-      "match_score": 0,
+      "match_status": "encontrado",
+      "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "SELENA CINZA",
-      "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
-      "marca_nome": "Cecafi",
-      "fabricante_grupo": "Cecafi",
+      "formigres_titulo": "Selena Cinza · 57×57 cm · Bold · Esmaltado",
+      "formigres_tipo": "BOLD",
+      "formigres_acabamento": "ESMALTADO",
+      "acabamento_label": "Esmaltado",
+      "marca_nome": "Fiorano",
+      "fabricante_grupo": "Carmelo Fior",
       "referencia": "INDF-120",
-      "produto_url": "",
+      "produto_url": "https://www.carmelofior.com.br/produto/selena-cinza",
       "imagem_url": "",
-      "imagens": [],
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/apple-icon-180x180.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/favicons/favicon-16x16.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-br.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-es.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/head/icon-en.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/icon-favorite.png",
+          "tipo": "principal"
+        }
+      ],
       "preco_m2": 32,
       "m2_por_caixa": 2.59,
       "unidade": "",
-      "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (formigres→cerbras→carmelo→lume→rocha) sem ficha",
+      "status_site": "confirmado_site",
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "34554",
       "caixas_por_palete": null,
@@ -9161,7 +9436,7 @@
       "acabamento_label": "",
       "marca_nome": "Incopisos",
       "fabricante_grupo": "Grupo Incopisos",
-      "referencia": "INDF-121",
+      "referencia": "PEI LA",
       "produto_url": "",
       "imagem_url": "",
       "imagens": [],
@@ -14791,5 +15066,5 @@
       "peso_kg_palete": null
     }
   ],
-  "enriquecidoEm": "2026-10-16T05:34:43.502Z"
+  "enriquecidoEm": "2026-10-16T14:09:23.903Z"
 }

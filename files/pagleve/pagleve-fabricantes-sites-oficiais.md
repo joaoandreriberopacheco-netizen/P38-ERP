@@ -10,7 +10,7 @@
 |-----------------|-------------------------|---------------------------|---------------------------|
 | **Grupo Formigres** | https://www.formigres.com.br | Formigres, Premium, Prime, Marcela, Stargolden, JG | API `busca.php` + `produto.php` — catálogo Tintão |
 | **Lume Cerâmica** | https://lumeceramica.com.br/produtos/ | Lume, Megalume, Megalume Premium, Linha Tesoro Polidos | A fazer (site + PDF; sem API igual Formigres) |
-| **Carmelo Fior** | https://www.carmelofior.com.br/produtos | **Arielle** (categoria 4), outras categorias = outras marcas | API `transaction/Product/list` — catálogo Arielle |
+| **Carmelo Fior** | https://www.carmelofior.com.br/produtos | **Arielle**, **Cecafi**, **Fiorano**, **Idealle** (cada uma = categoria no site) | API Arielle + fichas `/produto/{slug}` (marca na página) |
 | **Grupo Rocha** (pisos) | https://www.portalgruporocha.com.br | Rocha Cerâmica, Rocha Porcelanato, Ecoforte, **Rochaforte** (marca do grupo) | A fazer (estrutura do portal) |
 
 **Não confundir:**
@@ -27,9 +27,9 @@ Outros fornecedores comuns (fora da sua lista, mas no ecossistema P38):
 | Cerbras | https://novo.cerbras.com/todos-produtos/ |
 | **Grupo Incopisos** | https://grupoincopisos.com.br/produto/… (ex. 56×113 Leão de Judá) |
 | **Cedasa** | https://www.cedasa.com.br |
-| **Cecafi** | Formigres distribui linha **Etna/Cecafi** — validar ficha em formigres.com.br ou site Cecafi |
+| **Cecafi / Etna (ERP)** | No SIAH costuma vir como **Cecafi**; no site do **grupo Carmelo Fior** a ficha traz a marca real (Cecafi, Fiorano, Idealle…) | Priorizar `carmelofior.com.br/produto/…` antes de Formigres |
 
-**Indicações João André (out/2026):** Marcelagres/Novara e Siena = Formigres 50×50; 57×57 “7×57” no OCR = Carmelo Fior; 58×58 “8×58” = Cedasa; 22×90 = Lume; 32×58 / 39×75 = Incopisos; 38×75 = Cecafi.
+**Indicações João André (out/2026):** Marcelagres/Novara e Siena = Formigres 50×50; 57×57 “7×57” no OCR = **grupo Carmelo Fior** (marcas Cecafi/Fiorano/Idealle no site); 58×58 “8×58” = Cedasa; 22×90 = Lume; 32×58 / 39×75 = Incopisos; 38×75 = linhas do grupo Carmelo Fior.
 
 ---
 

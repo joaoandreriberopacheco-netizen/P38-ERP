@@ -76,8 +76,8 @@ function siteTryOrderForRow(row) {
   if (g.includes('rocha') || g.includes('rochamaxx') || g.includes('rochaforte')) {
     return ['rocha', 'formigres', 'lume', 'carmelo', 'cerbras'];
   }
-  if (g.includes('cecafi') || fmt === '38x75' || fmt === '57x57') {
-    return ['formigres', 'cerbras', 'carmelo', 'lume', 'rocha'];
+  if (g.includes('cecafi') || g.includes('etna') || fmt === '38x75' || fmt === '57x57') {
+    return ['carmelo', 'formigres', 'cerbras', 'lume', 'rocha'];
   }
   if (g.includes('cedasa') || fmt === '58x58') {
     return ['cerbras', 'formigres', 'carmelo', 'lume', 'rocha'];
