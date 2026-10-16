@@ -148,39 +148,29 @@
       background: linear-gradient(90deg, #3d1a52 0%, #2a1038 100%);
       border-bottom-color: var(--pl-green);
     }
-    html[data-skin="pagleve"] .col-marca,
-    html[data-skin="pagleve"] .col-grupo {
-      font-size: .74rem;
-      color: var(--muted);
-      white-space: nowrap;
-      max-width: 120px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    html[data-skin="pagleve"] .col-grupo { max-width: 140px; }
     /* Colunas alinhadas entre acordeões (Mate / Acetinado / …) — mesma grelha em cada tabela */
     html[data-skin="pagleve"] table.model-table-pagleve-retail {
       table-layout: fixed;
       width: 100%;
-      min-width: 920px;
+      min-width: 720px;
     }
     html[data-skin="pagleve"] table.model-table-pagleve-retail col.col-foto { width: 58px; }
-    html[data-skin="pagleve"] table.model-table-pagleve-retail col.col-modelo { width: 32%; }
-    html[data-skin="pagleve"] table.model-table-pagleve-retail col.col-marca { width: 11%; }
-    html[data-skin="pagleve"] table.model-table-pagleve-retail col.col-grupo { width: 15%; }
-    html[data-skin="pagleve"] table.model-table-pagleve-retail col.col-pack { width: 16%; }
+    html[data-skin="pagleve"] table.model-table-pagleve-retail col.col-modelo { width: 38%; }
+    html[data-skin="pagleve"] table.model-table-pagleve-retail col.col-pack { width: 22%; }
     html[data-skin="pagleve"] table.model-table-pagleve-retail col.col-preco { width: 10%; }
     html[data-skin="pagleve"] table.model-table-pagleve-retail col.col-qty { width: 72px; }
-    html[data-skin="pagleve"] table.model-table-pagleve-retail .col-marca,
-    html[data-skin="pagleve"] table.model-table-pagleve-retail .col-grupo {
-      text-align: left;
-      max-width: none;
-    }
     html[data-skin="pagleve"] table.model-table-pagleve-retail .col-pack {
       text-align: left;
       white-space: normal;
       line-height: 1.3;
       font-size: .72rem;
+    }
+    html[data-skin="pagleve"] table.model-table-pagleve-retail .col-pack-marca {
+      display: block;
+      margin-top: .2rem;
+      font-size: .66rem;
+      color: var(--muted);
+      font-weight: 500;
     }
     html[data-skin="pagleve"] table.model-table-pagleve-retail .col-preco {
       text-align: right;
@@ -272,13 +262,6 @@
       color: var(--muted);
       font-weight: 500;
     }
-    html[data-skin="pagleve"] .catalog-pagleve-meta {
-      margin-top: 4px;
-      font-size: .62rem;
-      line-height: 1.35;
-      color: var(--muted);
-      font-weight: 500;
-    }
     html[data-skin="pagleve"] .catalog-card .model-nome-principal {
       font-size: .82rem;
       line-height: 1.2;
@@ -326,10 +309,6 @@
       html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .model-subtitulo {
         font-size: .8rem;
         margin-top: 4px;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .catalog-pagleve-meta {
-        font-size: .76rem;
-        margin-top: 6px;
       }
       html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .catalog-card-qty-edit {
         min-width: 72px;
@@ -2055,7 +2034,7 @@
     const USE_MOBILE_CATALOG_CARDS = IS_B2B_CATALOG || CATALOG_SKIN === 'pagleve';
     const GROUP_KEY = 'pagleve-catalog-group-v1';
     const PEDIDO_TABLE_COLGROUP_HTML = "<colgroup><col class=\"col-foto\"><col class=\"col-modelo\"><col class=\"col-qty\"><col class=\"col-m2u\"><col class=\"col-m2\"><col class=\"col-preco\"><col class=\"col-sub\"></colgroup>";
-    const PAGLEVE_RETAIL_COLGROUP_HTML = "<colgroup><col class=\"col-foto\"><col class=\"col-modelo\"><col class=\"col-marca\"><col class=\"col-grupo\"><col class=\"col-pack\"><col class=\"col-preco\"><col class=\"col-qty\"></colgroup>";
+    const PAGLEVE_RETAIL_COLGROUP_HTML = "<colgroup><col class=\"col-foto\"><col class=\"col-modelo\"><col class=\"col-pack\"><col class=\"col-preco\"><col class=\"col-qty\"></colgroup>";
     const PEDIDO_TABLE_HEAD_HTML = "<th class=\"pedido-col-foto\">Foto</th><th class=\"pedido-col-modelo\">Modelo</th><th class=\"pedido-col-qty\">Caixas</th><th class=\"pedido-col-num\">m²/cx</th><th class=\"pedido-col-num\">m² total</th><th class=\"pedido-col-num\">Preço/m²</th><th class=\"pedido-col-num col-subtotal\">Subtotal</th>";
     const CATALOG_TABLE_COLGROUP_HTML = PEDIDO_TABLE_COLGROUP_HTML;
     const CATALOG_TABLE_HEAD_HTML = PEDIDO_TABLE_HEAD_HTML;
@@ -2740,6 +2719,15 @@
         : (sub && !nome ? '<span class="model-subtitulo">' + esc(sub) + '</span>' : '');
       return nomeHtml + subHtml + (warn || '') + '<small class="model-codigo">#' + esc(codStr) + '</small>';
     }
+    function pagLeveMarcaNome(item) {
+      const m = String(item.marca_nome || '').trim();
+      return m || '';
+    }
+    function pagLevePackCellHtml(item, pack) {
+      const marca = pagLeveMarcaNome(item);
+      if (!marca) return esc(pack);
+      return esc(pack) + '<span class="col-pack-marca">' + esc(marca) + '</span>';
+    }
     function compareItensFormatoNome(a, b) {
       const byFmt = compareFormato(a.formato, b.formato);
       if (byFmt !== 0) return byFmt;
@@ -2966,13 +2954,8 @@
     function renderItemMetaHtml(item, cod) {
       const codStr = cod != null ? cod : item.codigo_tintao;
       if (CATALOG_SKIN === 'pagleve') {
-        const parts = [];
         const resist = modelResistencia(item);
-        if (resist) parts.push(esc(resist));
-        if (!item.gemeas || item.gemeas.length < 2) {
-          if (item.marca_nome) parts.push(esc(item.marca_nome));
-        }
-        return parts.length ? parts.join(' · ') : '—';
+        return resist ? esc(resist) : '—';
       }
       const parts = ['#' + esc(codStr)];
       if (!item.gemeas || item.gemeas.length < 2) {
@@ -3094,23 +3077,16 @@
           '<td class="pedido-col-num pedido-col-preco col-preco' + (hasDescontoAtivo() ? ' has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
           '<td class="pedido-col-num col-subtotal model-col-sub">' + (sub ? esc(fmtMoney(sub)) : '') + '</td></tr>';
       }
-      const marcaGrupoCols = CATALOG_SKIN === 'pagleve'
-        ? '<td class="col-marca" title="' + esc(item.marca_nome || '') + '">' + esc(item.marca_nome || '—') + '</td>' +
-          '<td class="col-grupo" title="' + esc(item.fabricante_grupo || '') + '">' + esc(item.fabricante_grupo || '—') + '</td>'
-        : '';
-      const marcaGrupoMobile = CATALOG_SKIN === 'pagleve'
-        ? esc(item.marca_nome || '—') + ' · ' + esc(item.fabricante_grupo || '—') + ' · '
-        : '';
-      const metaMobile = '<div class="model-meta-mobile">' + marcaGrupoMobile + esc(pack) + ' · ' + fmtPrecoHtml(item.preco_m2) + '</div>';
+      const metaMobile = '<div class="model-meta-mobile">' + esc(pack) + ' · ' + fmtPrecoHtml(item.preco_m2) + '</div>';
       const modeloCell = CATALOG_SKIN === 'pagleve'
         ? renderPagLeveModeloCell(item, cod, warn) + metaMobile
         : '<strong>' + esc(titulo) + '</strong>' + warn + '<br><small style="color:var(--muted)">#' + esc(cod) + '</small>' + metaMobile;
       const searchBlob = (titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack + ' ' + (item.marca_nome || '') + ' ' + (item.fabricante_grupo || '')).toLowerCase();
+      const packCell = CATALOG_SKIN === 'pagleve' ? pagLevePackCellHtml(item, pack) : esc(pack);
       return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(searchBlob) + '" data-qty="' + qty + '">' +
         '<td class="col-foto">' + foto + '</td>' +
         '<td class="col-modelo">' + modeloCell + '</td>' +
-        marcaGrupoCols +
-        '<td class="col-pack">' + esc(pack) + '</td>' +
+        '<td class="col-pack">' + packCell + '</td>' +
         '<td class="col-preco' + (hasDescontoAtivo() ? ' has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
         '<td class="col-qty">' +
         '<input type="number" class="qty-input" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" tabindex="0" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="' + esc(QTY_LABEL) + '" placeholder="0" />' +
@@ -3179,15 +3155,13 @@
       const sub = qty ? itemSubtotal(item, qty) : null;
       const warn = item.match_status !== 'encontrado' ? ' <span class="badge warn">sem match</span>' : '';
       const thumb = renderCatalogCardThumb(item, cod, titulo, imgs, img);
-      const metaLine = '<div class="pedido-card-meta catalog-pagleve-meta">' +
-        esc(item.marca_nome || '—') + ' · ' + esc(item.fabricante_grupo || '—') + '</div>';
       const precoDestaque = '<div class="catalog-pagleve-preco-destaque" aria-label="Preço por metro quadrado">' +
         fmtPrecoHtml(item.preco_m2) + '</div>';
       const row1 = '<div class="pedido-card-head">' + thumb +
         '<div class="pedido-card-head-main">' +
           '<div class="pedido-card-desc">' +
             '<div class="pedido-card-title pedido-card-hero">' +
-              renderPagLeveModeloCell(item, cod, warn) + metaLine +
+              renderPagLeveModeloCell(item, cod, warn) +
             '</div>' +
           '</div>' +
           precoDestaque +
@@ -3203,6 +3177,8 @@
         { label: 'Embalagem', text: pack },
       ];
       if (m2unit) specCells.push({ label: 'm²/cx', text: fmtDecimal(m2unit) });
+      const marca = pagLeveMarcaNome(item);
+      if (marca) specCells.push({ label: 'Marca', text: marca });
       const spec = renderPedidoSpecTable(specCells);
       return '<article class="catalog-card catalog-card-pagleve pedido-card model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(pagLeveItemSearchKey(item, cod, pack, titulo)) + '" data-qty="' + qty + '">' +
         '<div class="pedido-card-layout">' + row1 + spec + '</div></article>';
@@ -3271,9 +3247,9 @@
           '<div class="catalog-cards-wrap"><div class="catalog-cards">' + cards + '</div></div>' +
           '</div>';
       }
-      const retailExtraHead = CATALOG_SKIN === 'pagleve' ? '<th class="col-marca">Marca</th><th class="col-grupo">Grupo</th>' : '';
+      const retailExtraHead = '';
       const retailHead = CATALOG_SKIN === 'pagleve'
-        ? '<th class="col-foto">Foto</th><th class="col-modelo">Modelo</th>' + retailExtraHead + '<th class="col-pack">Embalagem</th><th class="col-preco">Preço/m²</th><th class="col-qty">' + esc(QTY_LABEL) + '</th>'
+        ? '<th class="col-foto">Foto</th><th class="col-modelo">Modelo</th><th class="col-pack">Embalagem</th><th class="col-preco">Preço/m²</th><th class="col-qty">' + esc(QTY_LABEL) + '</th>'
         : '<th>Foto</th><th>Modelo</th>' + retailExtraHead + '<th>Embalagem</th><th>Preço/m²</th><th>' + esc(QTY_LABEL) + '</th>';
       const retailTableClass = CATALOG_SKIN === 'pagleve' ? 'model-table model-table-pagleve-retail' : 'model-table';
       const retailColgroup = CATALOG_SKIN === 'pagleve' ? PAGLEVE_RETAIL_COLGROUP_HTML : '';
@@ -3521,12 +3497,17 @@
         return '<article class="' + cardClass + '"><div class="pedido-card-layout">' + row1 + spec + '</div></article>';
       }
 
-      const spec = renderPedidoSpecTable([
+      const pedidoSpecCells = [
         { label: 'Preço/m²', preco: true, html: fmtPrecoHtml(item.preco_m2, precoOpts) },
         { label: 'm²/cx', text: m2unit ? fmtDecimal(m2unit) : '—' },
         { label: 'm² total', text: m2tot ? fmtDecimal(m2tot) : '—' },
         { label: 'Embalagem', text: fmtEmbalagemText(item) },
-      ]);
+      ];
+      if (CATALOG_SKIN === 'pagleve') {
+        const marcaPedido = pagLeveMarcaNome(item);
+        if (marcaPedido) pedidoSpecCells.push({ label: 'Marca', text: marcaPedido });
+      }
+      const spec = renderPedidoSpecTable(pedidoSpecCells);
       return '<article class="' + cardClass + '"><div class="pedido-card-layout">' + row1 + spec + '</div></article>';
     }
     function renderPedido() {
