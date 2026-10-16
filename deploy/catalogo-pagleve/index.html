@@ -225,34 +225,71 @@
       margin-left: auto;
       margin-right: auto;
     }
-    @media (max-width: 720px) {
-      html[data-skin="pagleve"] .col-marca,
-      html[data-skin="pagleve"] .col-grupo,
-      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(3),
-      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(4) { display: none; }
-      html[data-skin="pagleve"] .col-qty,
-      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(7) {
-        position: sticky;
-        right: 0;
-        background: var(--surface);
-        z-index: 1;
-        width: 58px;
-        min-width: 58px;
-        padding-left: 4px;
-        padding-right: 4px;
-        box-shadow: -4px 0 6px rgba(0,0,0,.05);
-      }
-      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(7) {
-        background: var(--surface-2);
-        z-index: 2;
-      }
+    html[data-skin="pagleve"] .catalog-card.pedido-card {
+      border-bottom: 1px solid var(--border-subtle);
+      max-width: 100%;
+      overflow: hidden;
+      box-sizing: border-box;
     }
-    @media (max-width: 480px) {
-      html[data-skin="pagleve"] .col-qty,
-      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(7) {
-        width: 54px;
-        min-width: 54px;
-      }
+    html[data-skin="pagleve"] .catalog-card.pedido-card:last-child { border-bottom: 0; }
+    html[data-skin="pagleve"] .catalog-card-thumb-btn {
+      flex-shrink: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      line-height: 0;
+      display: block;
+    }
+    html[data-skin="pagleve"] .catalog-card-thumb-btn .pedido-card-thumb { display: block; }
+    html[data-skin="pagleve"] .catalog-card-qty-edit {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      min-width: 52px;
+    }
+    html[data-skin="pagleve"] .catalog-card-qty-label {
+      font-size: .58rem;
+      font-weight: 600;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      line-height: 1;
+    }
+    html[data-skin="pagleve"] .catalog-card-qty-edit .qty-input {
+      width: 52px;
+      min-width: 0;
+      min-height: 36px;
+      text-align: center;
+      font-size: .92rem;
+      font-weight: 700;
+      padding: 4px 2px;
+    }
+    html[data-skin="pagleve"] .catalog-card .pedido-card-qty-sub {
+      font-size: .58rem;
+      line-height: 1.25;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    html[data-skin="pagleve"] .catalog-pagleve-meta {
+      margin-top: 4px;
+      font-size: .62rem;
+      line-height: 1.35;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    html[data-skin="pagleve"] .catalog-card .model-nome-principal {
+      font-size: .82rem;
+      line-height: 1.2;
+      display: block;
+    }
+    html[data-skin="pagleve"] .catalog-card .model-subtitulo {
+      display: block;
+      margin-top: 2px;
+      font-size: .68rem;
+      line-height: 1.25;
+      color: var(--muted);
     }
 
     
@@ -1522,14 +1559,17 @@
       .pedido-cards-wrap { display: block; overflow-x: hidden; max-width: 100%; }
       .pedido-cards { overflow-x: hidden; max-width: 100%; }
       .pedido-card { max-width: 100%; overflow: hidden; box-sizing: border-box; }
-      html[data-skin="formigres"] .catalog-table-wrap { display: none !important; }
-      html[data-skin="formigres"] .catalog-cards-wrap {
+      html[data-skin="formigres"] .catalog-table-wrap,
+      html[data-skin="pagleve"] .catalog-table-wrap { display: none !important; }
+      html[data-skin="formigres"] .catalog-cards-wrap,
+      html[data-skin="pagleve"] .catalog-cards-wrap {
         display: block;
         padding: 0 0 10px;
         overflow-x: hidden;
         max-width: 100%;
       }
-      html[data-skin="formigres"] .acc-inner {
+      html[data-skin="formigres"] .acc-inner,
+      html[data-skin="pagleve"] .acc-inner {
         padding-left: 0;
         padding-right: 0;
       }
@@ -1537,21 +1577,26 @@
         --depth: 2;
       }
       html[data-skin="formigres"] details.acc > .catalog-items,
-      html[data-skin="formigres"] .catalog-items {
+      html[data-skin="formigres"] .catalog-items,
+      html[data-skin="pagleve"] details.acc > .catalog-items,
+      html[data-skin="pagleve"] .catalog-items {
         padding-left: 0;
         padding-right: 0;
       }
       html[data-skin="formigres"] .model-gemeas-detail-card {
         padding: 0 0 10px;
       }
-      html[data-skin="formigres"] .catalog-cards {
+      html[data-skin="formigres"] .catalog-cards,
+      html[data-skin="pagleve"] .catalog-cards {
         display: flex;
         flex-direction: column;
         overflow-x: hidden;
         max-width: 100%;
       }
       html[data-skin="formigres"] .wrap,
-      html[data-skin="formigres"] .catalogo { overflow-x: hidden; max-width: 100%; }
+      html[data-skin="formigres"] .catalogo,
+      html[data-skin="pagleve"] .wrap,
+      html[data-skin="pagleve"] .catalogo { overflow-x: hidden; max-width: 100%; }
       .pedido-card-head { column-gap: 8px; }
       .pedido-card-head-main { column-gap: 8px; }
       .pedido-card-hero { font-size: .82rem; font-weight: 700; line-height: 1.15; }
@@ -1877,6 +1922,7 @@
     const DESCONTO_KEY = 'pagleve-catalog-desconto-v1';
     const REGIME_KEY = '';
     const IS_B2B_CATALOG = false;
+    const USE_MOBILE_CATALOG_CARDS = IS_B2B_CATALOG || CATALOG_SKIN === 'pagleve';
     const GROUP_KEY = 'pagleve-catalog-group-v1';
     const PEDIDO_TABLE_COLGROUP_HTML = "<colgroup><col class=\"col-foto\"><col class=\"col-modelo\"><col class=\"col-qty\"><col class=\"col-m2u\"><col class=\"col-m2\"><col class=\"col-preco\"><col class=\"col-sub\"></colgroup>";
     const PAGLEVE_RETAIL_COLGROUP_HTML = "<colgroup><col class=\"col-foto\"><col class=\"col-modelo\"><col class=\"col-marca\"><col class=\"col-grupo\"><col class=\"col-pack\"><col class=\"col-preco\"><col class=\"col-qty\"></colgroup>";
@@ -2950,6 +2996,50 @@
         '<span class="pedido-card-qty-sub catalog-card-qty-m2">' + esc(m2tot ? fmtDecimal(m2tot) + ' m²' : '—') + '</span>' +
       '</div>';
     }
+    function pagLeveItemSearchKey(item, cod, pack, titulo) {
+      return normalize(
+        titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' '
+        + formatSearchBlob(item.formato) + ' ' + cod + ' ' + pack + ' '
+        + (item.marca_nome || '') + ' ' + (item.fabricante_grupo || ''),
+      );
+    }
+    function renderCatalogCardPagLeve(item) {
+      const imgs = getGaleria(item);
+      const img = imgs[0]?.url || item.imagem_url || '';
+      const cod = item.codigo_tintao;
+      const qty = getQty(cod);
+      const titulo = itemTitulo(item);
+      const pack = fmtEmbalagemText(item);
+      const m2unit = itemM2Unit(item);
+      const m2tot = qty ? itemM2Total(item, qty) : null;
+      const sub = qty ? itemSubtotal(item, qty) : null;
+      const warn = item.match_status !== 'encontrado' ? ' <span class="badge warn">sem match</span>' : '';
+      const thumb = renderCatalogCardThumb(item, cod, titulo, imgs, img);
+      const metaLine = '<div class="pedido-card-meta catalog-pagleve-meta">' +
+        esc(item.marca_nome || '—') + ' · ' + esc(item.fabricante_grupo || '—') + '</div>';
+      const row1 = '<div class="pedido-card-head">' + thumb +
+        '<div class="pedido-card-head-main">' +
+          '<div class="pedido-card-desc">' +
+            '<div class="pedido-card-title pedido-card-hero">' +
+              renderPagLeveModeloCell(item, cod, warn) + metaLine +
+            '</div>' +
+          '</div>' +
+          renderCatalogCardQtyEdit(cod, qty, m2tot) +
+          '<div class="pedido-card-total">' +
+            '<strong class="pedido-card-hero model-col-sub">' + esc(sub != null ? fmtMoney(sub) : '—') + '</strong>' +
+            '<span class="pedido-card-total-label">Subtotal</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+      const specCells = [
+        { label: 'Preço/m²', preco: true, html: fmtPrecoHtml(item.preco_m2) },
+        { label: 'Embalagem', text: pack },
+      ];
+      if (m2unit) specCells.push({ label: 'm²/cx', text: fmtDecimal(m2unit) });
+      const spec = renderPedidoSpecTable(specCells);
+      return '<article class="catalog-card pedido-card model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(pagLeveItemSearchKey(item, cod, pack, titulo)) + '" data-qty="' + qty + '">' +
+        '<div class="pedido-card-layout">' + row1 + spec + '</div></article>';
+    }
     function renderCatalogCardFormigres(item) {
       const imgs = getGaleria(item);
       const img = imgs[0]?.url || item.imagem_url || '';
@@ -3020,8 +3110,17 @@
         : '<th>Foto</th><th>Modelo</th>' + retailExtraHead + '<th>Embalagem</th><th>Preço/m²</th><th>' + esc(QTY_LABEL) + '</th>';
       const retailTableClass = CATALOG_SKIN === 'pagleve' ? 'model-table model-table-pagleve-retail' : 'model-table';
       const retailColgroup = CATALOG_SKIN === 'pagleve' ? PAGLEVE_RETAIL_COLGROUP_HTML : '';
+      const body = items.map(renderTableRow).join('');
+      if (CATALOG_SKIN === 'pagleve') {
+        const cards = items.map(renderCatalogCardPagLeve).join('');
+        return '<div class="catalog-items">' +
+          '<div class="catalog-table-wrap table-wrap"><table class="' + retailTableClass + '">' + retailColgroup + '<thead><tr>' + retailHead + '</tr></thead><tbody>' +
+          body + '</tbody></table></div>' +
+          '<div class="catalog-cards-wrap"><div class="catalog-cards">' + cards + '</div></div>' +
+          '</div>';
+      }
       return '<div class="table-wrap"><table class="' + retailTableClass + '">' + retailColgroup + '<thead><tr>' + retailHead + '</tr></thead><tbody>' +
-        items.map(renderTableRow).join('') + '</tbody></table></div>';
+        body + '</tbody></table></div>';
     }
     function renderAcabamentoLeaf(acab, items) {
       const n = items.length;
@@ -3086,7 +3185,7 @@
       applySearch(document.getElementById('search').value);
     }
     function catalogRowSelector() {
-      if (IS_B2B_CATALOG) {
+      if (USE_MOBILE_CATALOG_CARDS) {
         return window.matchMedia('(max-width: 720px)').matches
           ? '.catalog-cards-wrap .model-row'
           : '.catalog-table-wrap .model-row';
