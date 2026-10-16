@@ -445,6 +445,12 @@ async function main() {
 
   const byFmt = new Map();
   for (const r of rows) {
+    if (!r.formato) {
+      const desc = r.descricao_erp || r.descricao_original || '';
+      const rx = raioXProdutoDescricao(r.codigo, desc);
+      if (rx.formato) r.formato = rx.formato.toLowerCase();
+      else if (/\bX81\b/i.test(desc)) r.formato = '81x81';
+    }
     if (!r.formato) continue;
     if (onlyFmt && r.formato !== onlyFmt) continue;
     if (!byFmt.has(r.formato)) byFmt.set(r.formato, []);
