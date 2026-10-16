@@ -27,7 +27,10 @@ export function parseFormatoDim(fmt = '') {
   return { a, b, min: Math.min(a, b), max: Math.max(a, b) };
 }
 
-/** Ex.: 45×45 → não; 22×90 (0,24) → régua. */
+/**
+ * Ex.: 45×45 (1) → não; 22×90 (~0,24) e 30×90 (1/3) → régua;
+ * 62×119 (~0,52) e 39×75 → não (razão acima de 1/3).
+ */
 export function isReguaFormato(fmt = '') {
   const d = parseFormatoDim(fmt);
   if (!d) return false;
