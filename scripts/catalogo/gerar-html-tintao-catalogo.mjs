@@ -1201,135 +1201,22 @@ const PAGLEVE_SKIN_CSS = `
       color: var(--muted);
       font-weight: 500;
     }
-    html[data-skin="pagleve"] .catalog-card .model-nome-principal {
-      font-size: .82rem;
-      line-height: 1.2;
-      display: block;
-    }
-    html[data-skin="pagleve"] .catalog-card .model-subtitulo {
-      display: block;
-      margin-top: 2px;
-      font-size: .68rem;
-      line-height: 1.25;
-      color: var(--muted);
+    html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .catalog-card-qty-edit {
+      justify-self: center;
+      align-self: start;
     }
     @media (max-width: 720px) {
-      html[data-skin="pagleve"] .catalog-cards-wrap {
-        padding: 0 12px 12px;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve {
-        padding: 14px 0 16px;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-head {
-        column-gap: 12px;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-thumb,
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .catalog-card-thumb-btn .pedido-card-thumb {
-        width: 76px;
-        height: 76px;
-        border-radius: 10px;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-head-main {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: flex-start;
-        gap: 10px 12px;
-        width: 100%;
-        min-width: 0;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-desc {
-        flex: 1 1 100%;
-        min-width: 0;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .model-nome-principal {
-        font-size: 1.02rem;
-        line-height: 1.25;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .model-subtitulo {
-        font-size: .8rem;
-        margin-top: 4px;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .catalog-card-qty-edit {
-        min-width: 72px;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .catalog-card-qty-label {
-        font-size: .68rem;
-      }
       html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .catalog-card-qty-edit .qty-input {
-        width: 64px;
-        min-height: 44px;
-        font-size: 1.05rem;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-qty-sub {
-        font-size: .72rem;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-total {
-        flex: 1 1 auto;
-        min-width: 88px;
-        margin-left: auto;
-        text-align: right;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-total .pedido-card-hero {
-        font-size: 1.05rem;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-total-label {
-        font-size: .65rem;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .catalog-pagleve-preco-destaque {
-        flex: 1 1 100%;
-        margin-top: 2px;
-        padding: 8px 10px;
-        border-radius: 8px;
-        background: var(--accent-muted);
+        width: 56px;
+        min-height: 40px;
         font-size: .95rem;
         font-weight: 700;
-        color: var(--pl-purple-deep);
-        line-height: 1.3;
       }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .catalog-pagleve-preco-destaque .preco-desc,
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .catalog-pagleve-preco-destaque .preco-orig {
-        font-size: inherit;
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .catalog-card-qty-label {
+        font-size: .58rem;
       }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-spec {
-        margin-top: 12px;
-        padding-top: 12px;
-        border-top: 1px solid var(--border-subtle);
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-spec tr {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px 14px;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-spec td {
-        display: block;
-        padding: 0;
-        border: 0 !important;
-        min-width: 0;
-        overflow: hidden;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-spec-l {
-        font-size: .72rem;
-        font-weight: 600;
-        margin-bottom: 4px;
-        color: var(--muted);
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-spec-v {
-        font-size: .9rem;
-        font-weight: 600;
-        line-height: 1.35;
-        color: var(--text-strong);
-        word-break: break-word;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-spec-v.pedido-card-spec-preco {
-        font-size: .92rem;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-spec-v.pedido-card-spec-preco .preco-desc {
-        font-size: 1rem;
-        font-weight: 700;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-spec-v.pedido-card-spec-preco:not(.has-desc) {
-        font-size: 1rem;
-        font-weight: 700;
+      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-qty-sub {
+        font-size: .78rem;
       }
     }
 `;
@@ -2846,10 +2733,15 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       .pedido-card { max-width: 100%; overflow: hidden; box-sizing: border-box; }
       html[data-skin="formigres"] .catalog-table-wrap,
       html[data-skin="pagleve"] .catalog-table-wrap { display: none !important; }
-      html[data-skin="formigres"] .catalog-cards-wrap,
-      html[data-skin="pagleve"] .catalog-cards-wrap {
+      html[data-skin="formigres"] .catalog-cards-wrap {
         display: block;
         padding: 0 0 10px;
+        overflow-x: hidden;
+        max-width: 100%;
+      }
+      html[data-skin="pagleve"] .catalog-cards-wrap {
+        display: block;
+        padding: 0 14px 10px;
         overflow-x: hidden;
         max-width: 100%;
       }
@@ -2892,13 +2784,6 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       .pedido-card-spec-v,
       .pedido-card-spec-v.pedido-card-spec-preco:not(.has-desc),
       .pedido-card-spec-v.pedido-card-spec-palete { font-size: .58rem; line-height: 1.25; }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-spec-l,
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-spec-v,
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-spec-v.pedido-card-spec-preco:not(.has-desc),
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-spec-v.pedido-card-spec-palete {
-        font-size: inherit;
-        line-height: inherit;
-      }
       .pedido-card-thumb { width: 48px; height: 48px; }
       .pedido-total {
         margin-top: 10px;
@@ -3902,6 +3787,36 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       if (!marca) return esc(pack);
       return esc(pack) + '<span class="col-pack-marca">' + esc(marca) + '</span>';
     }
+    function renderPagLeveCatalogTitleBlock(item, cod, warn) {
+      const nome = itemNomeModelo(item);
+      const sub = itemSubtitulo(item);
+      const titleText = nome || sub || '—';
+      const titleHtml = '<div class="pedido-card-title pedido-card-hero">' + esc(titleText) + (warn || '') + '</div>';
+      const metaParts = [];
+      const codStr = cod != null ? cod : item.codigo_tintao;
+      if (codStr) metaParts.push('#' + esc(codStr));
+      const fmt = String(item.formato || '').trim();
+      if (fmt) metaParts.push(esc(fmt));
+      const acab = String(item.acabamento_label || item.formigres_acabamento || '').trim();
+      if (acab) metaParts.push(esc(acab));
+      const resist = modelResistencia(item);
+      if (resist) metaParts.push(esc(resist));
+      const metaHtml = metaParts.length
+        ? '<div class="pedido-card-meta">' + metaParts.join(' · ') + '</div>'
+        : '';
+      return titleHtml + metaHtml;
+    }
+    function pagLeveCatalogSpecCells(item, pack, m2unit, m2tot, precoOpts) {
+      const cells = [
+        { label: 'Preço/m²', preco: true, html: fmtPrecoHtml(item.preco_m2, precoOpts || null) },
+        { label: 'm²/cx', text: m2unit ? fmtDecimal(m2unit) : '—' },
+        { label: 'm² total', text: m2tot ? fmtDecimal(m2tot) : '—' },
+        { label: 'Embalagem', text: pack },
+      ];
+      const marca = pagLeveMarcaNome(item);
+      if (marca) cells.push({ label: 'Marca', text: marca });
+      return cells;
+    }
     function compareItensFormatoNome(a, b) {
       const byFmt = compareFormato(a.formato, b.formato);
       if (byFmt !== 0) return byFmt;
@@ -4329,16 +4244,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const sub = qty ? itemSubtotal(item, qty) : null;
       const warn = item.match_status !== 'encontrado' ? ' <span class="badge warn">sem match</span>' : '';
       const thumb = renderCatalogCardThumb(item, cod, titulo, imgs, img);
-      const precoDestaque = '<div class="catalog-pagleve-preco-destaque" aria-label="Preço por metro quadrado">' +
-        fmtPrecoHtml(item.preco_m2) + '</div>';
       const row1 = '<div class="pedido-card-head">' + thumb +
         '<div class="pedido-card-head-main">' +
           '<div class="pedido-card-desc">' +
-            '<div class="pedido-card-title pedido-card-hero">' +
-              renderPagLeveModeloCell(item, cod, warn) +
-            '</div>' +
+            renderPagLeveCatalogTitleBlock(item, cod, warn) +
           '</div>' +
-          precoDestaque +
           renderCatalogCardQtyEdit(cod, qty, m2tot) +
           '<div class="pedido-card-total">' +
             '<strong class="pedido-card-hero model-col-sub">' + esc(sub != null ? fmtMoney(sub) : '—') + '</strong>' +
@@ -4346,14 +4256,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           '</div>' +
         '</div>' +
       '</div>';
-      const specCells = [
-        { label: 'Preço/m²', preco: true, html: fmtPrecoHtml(item.preco_m2) },
-        { label: 'Embalagem', text: pack },
-      ];
-      if (m2unit) specCells.push({ label: 'm²/cx', text: fmtDecimal(m2unit) });
-      const marca = pagLeveMarcaNome(item);
-      if (marca) specCells.push({ label: 'Marca', text: marca });
-      const spec = renderPedidoSpecTable(specCells);
+      const spec = renderPedidoSpecTable(pagLeveCatalogSpecCells(item, pack, m2unit, m2tot));
       return '<article class="catalog-card catalog-card-pagleve pedido-card model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(pagLeveItemSearchKey(item, cod, pack, titulo)) + '" data-qty="' + qty + '">' +
         '<div class="pedido-card-layout">' + row1 + spec + '</div></article>';
     }
@@ -4671,17 +4574,15 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         return '<article class="' + cardClass + '"><div class="pedido-card-layout">' + row1 + spec + '</div></article>';
       }
 
-      const pedidoSpecCells = [
-        { label: 'Preço/m²', preco: true, html: fmtPrecoHtml(item.preco_m2, precoOpts) },
-        { label: 'm²/cx', text: m2unit ? fmtDecimal(m2unit) : '—' },
-        { label: 'm² total', text: m2tot ? fmtDecimal(m2tot) : '—' },
-        { label: 'Embalagem', text: fmtEmbalagemText(item) },
-      ];
-      if (CATALOG_SKIN === 'pagleve') {
-        const marcaPedido = pagLeveMarcaNome(item);
-        if (marcaPedido) pedidoSpecCells.push({ label: 'Marca', text: marcaPedido });
-      }
-      const spec = renderPedidoSpecTable(pedidoSpecCells);
+      const packPedido = fmtEmbalagemText(item);
+      const spec = CATALOG_SKIN === 'pagleve'
+        ? renderPedidoSpecTable(pagLeveCatalogSpecCells(item, packPedido, m2unit, m2tot, precoOpts))
+        : renderPedidoSpecTable([
+          { label: 'Preço/m²', preco: true, html: fmtPrecoHtml(item.preco_m2, precoOpts) },
+          { label: 'm²/cx', text: m2unit ? fmtDecimal(m2unit) : '—' },
+          { label: 'm² total', text: m2tot ? fmtDecimal(m2tot) : '—' },
+          { label: 'Embalagem', text: packPedido },
+        ]);
       return '<article class="' + cardClass + '"><div class="pedido-card-layout">' + row1 + spec + '</div></article>';
     }
     function renderPedido() {
