@@ -406,7 +406,7 @@ function tryIncopisosSlugDirect(row) {
     const url = incopisosProdutoUrl(slug);
     const page = curlGet(url);
     let ficha = parseIncopisosProdutoHtml(page);
-    if (!ficha && /^\d+$/.test(String(slug))) {
+    if (!ficha && (/^\d+$/.test(String(slug)) || /^hd-\d+$/i.test(String(slug)))) {
       const oembedUrl = `https://grupoincopisos.com.br/wp-json/oembed/1.0/embed?url=${encodeURIComponent(url)}`;
       ficha = parseIncopisosOembedJson(curlGet(oembedUrl), url);
     }

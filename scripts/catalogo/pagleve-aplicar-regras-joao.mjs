@@ -157,7 +157,7 @@ const INCOPISOS_SLUG_BY_CODE = {
   31930: 'minerale-beige',
   'INDF-078': 'square-mont-blanc',
   'INDF-102': 'studio-cotto',
-  'INDF-079': '160101',
+  'INDF-079': 'hd-160101',
 };
 
 function acabamentoLabelFromSuperficie(s) {
@@ -242,7 +242,7 @@ function tryIncopisosSlug(slug) {
   const url = incopisosProdutoUrl(slug);
   const html = curl(url);
   let ficha = parseIncopisosProdutoHtml(html);
-  if (!ficha && /^\d+$/.test(String(slug))) {
+  if (!ficha && (/^\d+$/.test(String(slug)) || /^hd-\d+$/i.test(String(slug)))) {
     const oembedUrl = `https://grupoincopisos.com.br/wp-json/oembed/1.0/embed?url=${encodeURIComponent(url)}`;
     const oembed = curl(oembedUrl);
     ficha = parseIncopisosOembedJson(oembed, url);
@@ -485,7 +485,7 @@ async function main() {
     const hit = tryIncopisosForRow(r);
     if (hit) applyHit(r, hit, 'Grupo Incopisos — ficha por código HD');
     else if (r.status !== 'confirmado_site') {
-      indicacao(r, 'Grupo Incopisos', 'Incopisos', '32x58', 'buscar /produto/{HD sem ponto} em grupoincopisos.com.br');
+      indicacao(r, 'Grupo Incopisos', 'Incopisos', '32x58', 'buscar /produto/hd-{código sem ponto} em grupoincopisos.com.br');
     }
   }
 

@@ -25,7 +25,7 @@ Outros fornecedores comuns (fora da sua lista, mas no ecossistema P38):
 |-------|------|
 | Grupo Ceral | https://www.ceralpisos.com.br/produtos (Ceral, Luna, Rosa, Unique, Belle) |
 | Cerbras | https://novo.cerbras.com/todos-produtos/ |
-| **Grupo Incopisos** | https://grupoincopisos.com.br/produto/… — nome (`ladrillo-red`) ou **código HD** sem ponto (`160101` para HD 160.101) |
+| **Grupo Incopisos** | https://grupoincopisos.com.br/produto/… — nome (`ladrillo-red`) ou **HD** `hd-160104` (HD 160.104 sem ponto, prefixo `hd-`) |
 | **Cedasa** | https://www.cedasa.com.br |
 | **Cecafi / Etna (ERP)** | No SIAH costuma vir como **Cecafi**; no site do **grupo Carmelo Fior** a ficha traz a marca real (Cecafi, Fiorano, Idealle…) | Priorizar `carmelofior.com.br/produto/…` antes de Formigres |
 

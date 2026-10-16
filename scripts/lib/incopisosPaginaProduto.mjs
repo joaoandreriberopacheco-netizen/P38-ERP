@@ -10,12 +10,26 @@ export function incopisosProdutoUrl(slug) {
   return `${INCOPISOS_BASE}/produto/${s}/`;
 }
 
-/** Código HD no ERP: (HD 160.101) → slug 160101 em /produto/160101/ (só tirar o ponto). */
-export function hdCodigoSlugFromErp(descricao = '') {
+/** Dígitos do HD no ERP: (HD 160.104) → 160104 (sem ponto). */
+export function hdCodigoDigitsFromErp(descricao = '') {
   const m = String(descricao || '').match(/\(\s*HD\s+([0-9][0-9.]+)\s*\)/i)
     || String(descricao || '').match(/\bHD\s+([0-9][0-9.]+)/i);
   if (!m) return '';
   return m[1].replace(/\./g, '');
+}
+
+/** Slugs no site: /produto/hd-160104/ (padrão atual) e legado /produto/160101/. */
+export function hdCodigoSlugFromErp(descricao = '') {
+  const digits = hdCodigoDigitsFromErp(descricao);
+  return digits ? `hd-${digits}` : '';
+}
+
+export function hdCodigoSlugCandidatesFromErp(descricao = '') {
+  const digits = hdCodigoDigitsFromErp(descricao);
+  if (!digits) return [];
+  const out = [`hd-${digits}`];
+  if (digits.length >= 5) out.push(digits);
+  return out;
 }
 
 export function parseIncopisosOembedJson(jsonText, url) {
@@ -57,9 +71,11 @@ export function incopisosSlugCandidates(row, modeloRaw = '') {
     if (s) slugs.add(s);
   };
 
-  const hd = hdCodigoSlugFromErp(desc);
-  if (hd) add(hd);
-  if (fmt === '32x58' && hd) return [hd];
+  for (const hdSlug of hdCodigoSlugCandidatesFromErp(desc)) add(hdSlug);
+  if (fmt === '32x58') {
+    const hdOnly = hdCodigoSlugCandidatesFromErp(desc);
+    if (hdOnly.length) return hdOnly;
+  }
 
   if (/ladrillo\s*red/.test(blob)) add('ladrillo-red');
   if (/minerale\s*beige/.test(blob)) add('minerale-beige');
