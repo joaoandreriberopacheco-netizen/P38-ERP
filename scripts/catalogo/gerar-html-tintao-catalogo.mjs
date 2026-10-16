@@ -272,11 +272,12 @@ const PAGLEVE_ACAB_ORDER = [
 function getCatalogConfig(cfg = CFG) {
   if (cfg.skin === 'pagleve') {
     return {
-      linhaOrder: LINHA_ORDER,
+      linhaOrder: ['bold', 'retificada', 'desconhecida'],
       linhaLabel: LINHA_LABEL,
       tipoOrder: TIPO_ORDER,
       tipoLabel: TIPO_LABEL,
       acabOrder: PAGLEVE_ACAB_ORDER,
+      polidaDentroRetificada: true,
     };
   }
   if (cfg.skin === 'arielle') {
@@ -451,6 +452,7 @@ function slimItem(item) {
     formigres_acabamento: item.formigres_acabamento || '',
     acabamento_label: item.acabamento_label || '',
     marca_nome: item.marca_nome || '',
+    fabricante_grupo: item.fabricante_grupo || '',
     referencia: item.referencia || '',
     gemeas: (item.gemeas || []).map((g) => ({
       codigo: String(g.codigo),
@@ -1069,6 +1071,65 @@ const PAGLEVE_SKIN_CSS = `
       background: linear-gradient(90deg, #3d1a52 0%, #2a1038 100%);
       border-bottom-color: var(--pl-green);
     }
+    html[data-skin="pagleve"] .col-marca,
+    html[data-skin="pagleve"] .col-grupo {
+      font-size: .74rem;
+      color: var(--muted);
+      white-space: nowrap;
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    html[data-skin="pagleve"] .col-grupo { max-width: 140px; }
+    html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th {
+      text-align: center;
+      vertical-align: middle;
+    }
+    html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) tbody td {
+      text-align: center;
+      vertical-align: middle;
+    }
+    html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) .col-modelo {
+      text-align: left;
+    }
+    html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) .col-foto .thumb-btn,
+    html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) .col-foto .thumb-empty {
+      margin-left: auto;
+      margin-right: auto;
+    }
+    html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) .col-qty .qty-input {
+      margin-left: auto;
+      margin-right: auto;
+    }
+    @media (max-width: 720px) {
+      html[data-skin="pagleve"] .col-marca,
+      html[data-skin="pagleve"] .col-grupo,
+      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(3),
+      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(4) { display: none; }
+      html[data-skin="pagleve"] .col-qty,
+      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(7) {
+        position: sticky;
+        right: 0;
+        background: var(--surface);
+        z-index: 1;
+        width: 58px;
+        min-width: 58px;
+        padding-left: 4px;
+        padding-right: 4px;
+        box-shadow: -4px 0 6px rgba(0,0,0,.05);
+      }
+      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(7) {
+        background: var(--surface-2);
+        z-index: 2;
+      }
+    }
+    @media (max-width: 480px) {
+      html[data-skin="pagleve"] .col-qty,
+      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(7) {
+        width: 54px;
+        min-width: 54px;
+      }
+    }
 `;
 
 function buildBrandSkinCss(skin) {
@@ -1106,7 +1167,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     ? '<th class="pedido-col-foto">Foto</th><th class="pedido-col-modelo">Modelo</th><th class="pedido-col-qty">Paletes</th><th class="pedido-col-num">m² total</th><th class="pedido-col-num">Caixas</th><th class="pedido-col-num">Peso</th><th class="pedido-col-emb">Por palete</th><th class="pedido-col-num">Preço/m²</th><th class="pedido-col-num col-subtotal">Subtotal</th>'
     : '<th class="pedido-col-foto">Foto</th><th class="pedido-col-modelo">Modelo</th><th class="pedido-col-qty">Caixas</th><th class="pedido-col-num">m²/cx</th><th class="pedido-col-num">m² total</th><th class="pedido-col-num">Preço/m²</th><th class="pedido-col-num col-subtotal">Subtotal</th>';
   const catalogCfg = getCatalogConfig(cfg);
-  const catalogoJson = JSON.stringify({
+    const catalogoJson = JSON.stringify({
     itens: itens.map(slimItem),
     config: {
       linhaOrder: catalogCfg.linhaOrder,
@@ -1114,6 +1175,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       tipoOrder: catalogCfg.tipoOrder,
       tipoLabel: catalogCfg.tipoLabel,
       acabOrder: catalogCfg.acabOrder,
+      polidaDentroRetificada: catalogCfg.polidaDentroRetificada || false,
       qtyUnit,
       qtyLabel,
       qtyLabelPl,
@@ -1772,6 +1834,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     .col-foto { width: 58px; }
     .col-modelo { min-width: 140px; }
     .col-pack { min-width: 120px; max-width: 180px; color: var(--muted); font-size: .72rem; line-height: 1.35; white-space: nowrap; }
+    .col-marca, .col-grupo { min-width: 72px; max-width: 140px; font-size: .74rem; color: var(--muted); }
     .col-acab { white-space: nowrap; font-size: .78rem; }
     .col-preco { white-space: nowrap; text-align: right; }
     .col-cod { white-space: nowrap; color: var(--muted); font-size: .78rem; text-align: right; }
@@ -3557,6 +3620,27 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const a = String(item.formigres_acabamento || '').trim();
       return a || 'Sem acabamento';
     }
+    function pagLeveNestPolidaInRetificada() {
+      return CATALOG_SKIN === 'pagleve' && !!CFG.polidaDentroRetificada;
+    }
+    function catalogLinhaKey(item) {
+      const linha = item.linha || 'desconhecida';
+      if (!pagLeveNestPolidaInRetificada()) return linha;
+      if (linha === 'polida') return 'retificada';
+      const acabNorm = String(acabKey(item)).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      if (acabNorm === 'polido' || acabNorm === 'polida') return 'retificada';
+      const blob = (item.descricao + ' ' + item.formigres_titulo + ' ' + item.formigres_acabamento).toUpperCase();
+      if (linha !== 'bold' && (/\bRT\s*POLIDO\b|\bPOLIDO\b/.test(blob))) return 'retificada';
+      return linha;
+    }
+    function catalogAcabKey(item) {
+      if (pagLeveNestPolidaInRetificada() && (item.linha === 'polida' || /^polid/i.test(String(acabKey(item)).normalize('NFD').replace(/[\u0300-\u036f]/g, '')))) {
+        const cur = acabKey(item);
+        if (/^polid/i.test(String(cur).normalize('NFD').replace(/[\u0300-\u036f]/g, ''))) return cur;
+        return 'Polido';
+      }
+      return acabKey(item);
+    }
     function grupoLabelFormato(key) {
       return 'Formato ' + key;
     }
@@ -3570,9 +3654,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const tree = {};
       if (groupBy === 'formato-acabamento') {
         for (const item of itens) {
-          const linha = item.linha || 'desconhecida';
+          const linha = catalogLinhaKey(item);
           const fmt = item.formato || '—';
-          const acab = acabKey(item);
+          const acab = catalogAcabKey(item);
           tree[linha] ??= {};
           tree[linha][fmt] ??= {};
           tree[linha][fmt][acab] ??= [];
@@ -3588,8 +3672,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         return tree;
       }
       for (const item of itens) {
-        const linha = item.linha || 'desconhecida';
-        const acab = acabKey(item);
+        const linha = catalogLinhaKey(item);
+        const acab = catalogAcabKey(item);
         const formato = item.formato || '—';
         tree[linha] ??= {};
         tree[linha][acab] ??= {};
@@ -3793,10 +3877,19 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           '<td class="pedido-col-num pedido-col-preco col-preco' + (hasDescontoAtivo() ? ' has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
           '<td class="pedido-col-num col-subtotal model-col-sub">' + (sub ? esc(fmtMoney(sub)) : '') + '</td></tr>';
       }
-      const metaMobile = '<div class="model-meta-mobile">' + esc(pack) + ' · ' + fmtPrecoHtml(item.preco_m2) + '</div>';
-      return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack).toLowerCase()) + '" data-qty="' + qty + '">' +
+      const marcaGrupoCols = CATALOG_SKIN === 'pagleve'
+        ? '<td class="col-marca" title="' + esc(item.marca_nome || '') + '">' + esc(item.marca_nome || '—') + '</td>' +
+          '<td class="col-grupo" title="' + esc(item.fabricante_grupo || '') + '">' + esc(item.fabricante_grupo || '—') + '</td>'
+        : '';
+      const marcaGrupoMobile = CATALOG_SKIN === 'pagleve'
+        ? esc(item.marca_nome || '—') + ' · ' + esc(item.fabricante_grupo || '—') + ' · '
+        : '';
+      const metaMobile = '<div class="model-meta-mobile">' + marcaGrupoMobile + esc(pack) + ' · ' + fmtPrecoHtml(item.preco_m2) + '</div>';
+      const searchBlob = (titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack + ' ' + (item.marca_nome || '') + ' ' + (item.fabricante_grupo || '')).toLowerCase();
+      return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(searchBlob) + '" data-qty="' + qty + '">' +
         '<td class="col-foto">' + foto + '</td>' +
         '<td class="col-modelo"><strong>' + esc(titulo) + '</strong>' + warn + '<br><small style="color:var(--muted)">#' + esc(cod) + '</small>' + metaMobile + '</td>' +
+        marcaGrupoCols +
         '<td class="col-pack">' + esc(pack) + '</td>' +
         '<td class="col-preco' + (hasDescontoAtivo() ? ' has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
         '<td class="col-qty">' +
@@ -3911,7 +4004,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           '<div class="catalog-cards-wrap"><div class="catalog-cards">' + cards + '</div></div>' +
           '</div>';
       }
-      return '<div class="table-wrap"><table class="model-table"><thead><tr><th>Foto</th><th>Modelo</th><th>Embalagem</th><th>Preço/m²</th><th>' + esc(QTY_LABEL) + '</th></tr></thead><tbody>' +
+      const retailExtraHead = CATALOG_SKIN === 'pagleve' ? '<th class="col-marca">Marca</th><th class="col-grupo">Grupo</th>' : '';
+      const retailHead = CATALOG_SKIN === 'pagleve'
+        ? '<th class="col-foto">Foto</th><th class="col-modelo">Modelo</th>' + retailExtraHead + '<th class="col-pack">Embalagem</th><th class="col-preco">Preço/m²</th><th class="col-qty">' + esc(QTY_LABEL) + '</th>'
+        : '<th>Foto</th><th>Modelo</th>' + retailExtraHead + '<th>Embalagem</th><th>Preço/m²</th><th>' + esc(QTY_LABEL) + '</th>';
+      return '<div class="table-wrap"><table class="model-table"><thead><tr>' + retailHead + '</tr></thead><tbody>' +
         items.map(renderTableRow).join('') + '</tbody></table></div>';
     }
     function renderAcabamentoLeaf(acab, items) {

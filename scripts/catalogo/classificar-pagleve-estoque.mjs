@@ -58,9 +58,18 @@ function parseM2Caixa(descricao) {
 
 function parseTipoAcabFromSite(descricaoNoSite) {
   const raw = String(descricaoNoSite || '');
+  const upper = raw.toUpperCase();
+  if (/RT\s*POLIDO|\bPOLIDO\b|\bPOLIDA\b/.test(upper)) {
+    return { tipo: '', acabamento: 'POLIDO' };
+  }
   const parts = raw.split('·').map((p) => p.trim()).filter(Boolean);
   if (parts.length < 2) return { tipo: '', acabamento: '' };
-  const tipoPart = parts.find((p) => /bold|retificad|polid/i.test(p)) || '';
+  for (const p of parts) {
+    if (/RT\s*POLIDO|\bPOLIDO\b|\bPOLIDA\b/i.test(p)) {
+      return { tipo: '', acabamento: 'POLIDO' };
+    }
+  }
+  const tipoPart = parts.find((p) => /bold|retificad/i.test(p)) || '';
   const acabPart = parts[parts.length - 1] || '';
   let tipo = '';
   if (/bold/i.test(tipoPart)) tipo = 'BOLD';
