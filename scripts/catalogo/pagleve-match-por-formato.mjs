@@ -30,14 +30,64 @@ import {
 import { stripAccents } from '../lib/formigresCatalog.mjs';
 import { raioXProdutoDescricao } from '../lib/raioXProdutoDescricao.mjs';
 
-const IN_CSV = process.env.PAGLEVE_RAIO_X || '/opt/cursor/artifacts/raio-x-produtos.csv';
-const OUT_CSV = process.env.PAGLEVE_OUT || '/opt/cursor/artifacts/raio-x-pagleve-site-verificado.csv';
+const ROOT = process.cwd();
+const IN_CSV = process.env.PAGLEVE_RAIO_X || path.join(ROOT, 'files', 'pagleve', 'raio-x-produtos.csv');
+const OUT_CSV = process.env.PAGLEVE_OUT || path.join(ROOT, 'files', 'pagleve', 'raio-x-pagleve-site-verificado.csv');
 const ROCHA_BASE = 'https://www.portalgruporocha.com.br';
 const LUME_BASE = 'https://lumeceramica.com.br';
 const UA = 'P38-PagLeve-match/1.0';
 
 const args = process.argv.slice(2);
 const onlyFmt = args.includes('--formato') ? args[args.indexOf('--formato') + 1]?.toLowerCase() : null;
+const onlyIndicacao = args.includes('--only-indicacao');
+
+const CSV_FIELDS = [
+  'codigo',
+  'formato',
+  'modelo',
+  'descricao_erp',
+  'fabricante_grupo',
+  'marca_no_site',
+  'descricao_no_site',
+  'evidencia_url',
+  'imagem_url',
+  'imagens_json',
+  'status',
+  'sites_consultados',
+  'match_metodo',
+  'match_score',
+  'observacao',
+];
+
+/** Ordem de busca conforme fabricante sugerido (João André / pagleve-fabricantes-sites-oficiais.md). */
+function siteTryOrderForRow(row) {
+  const g = stripAccents(row.fabricante_grupo || '').toLowerCase();
+  const desc = stripAccents(row.descricao_erp || row.descricao_original || '').toLowerCase();
+  const fmt = (row.formato || '').toLowerCase();
+  if (g.includes('incopisos') || fmt === '32x58' || fmt === '39x75') {
+    return ['incopisos', 'formigres', 'carmelo', 'lume', 'rocha', 'cerbras'];
+  }
+  if (g.includes('lume') || fmt === '45x89' || fmt === '62x119' || fmt === '22x90') {
+    return ['lume', 'formigres', 'carmelo', 'rocha', 'cerbras'];
+  }
+  if (g.includes('carmelo') || g.includes('arielle')) {
+    return ['carmelo', 'formigres', 'lume', 'rocha', 'cerbras'];
+  }
+  if (g.includes('rocha') || g.includes('rochamaxx') || g.includes('rochaforte')) {
+    return ['rocha', 'formigres', 'lume', 'carmelo', 'cerbras'];
+  }
+  if (g.includes('cecafi') || fmt === '38x75' || fmt === '57x57') {
+    return ['formigres', 'cerbras', 'carmelo', 'lume', 'rocha'];
+  }
+  if (g.includes('cedasa') || fmt === '58x58') {
+    return ['cerbras', 'formigres', 'carmelo', 'lume', 'rocha'];
+  }
+  if (g.includes('cerbras')) return ['cerbras', 'formigres', 'carmelo', 'lume', 'rocha'];
+  if (desc.includes('rochaprime') || desc.includes('rochamaxx') || g.includes('formigres')) {
+    return ['formigres', 'rocha', 'carmelo', 'lume', 'cerbras'];
+  }
+  return ['formigres', 'rocha', 'lume', 'carmelo', 'cerbras'];
+}
 
 function parseCsvLine(line) {
   const out = [];
@@ -344,6 +394,40 @@ function tryCarmelo(row, snap) {
   };
 }
 
+function tryIncopisos(row) {
+  if (!temNomeComercial(row)) {
+    return { sites_consultados: 'grupoincopisos.com.br', reason: 'sem_nome' };
+  }
+  const nome = modeloParaBusca(row);
+  const q = [row.formato, nome].filter(Boolean).join(' ').trim();
+  const html = curlGet(`https://grupoincopisos.com.br/?s=${encodeURIComponent(q.split(/\s+/).slice(0, 4).join(' '))}`);
+  if (!html) return { sites_consultados: 'grupoincopisos.com.br', tried: q };
+  const linkRe = /href="(https:\/\/grupoincopisos\.com\.br\/produto\/[^"?#]+)/gi;
+  let best = null;
+  let m;
+  const want = stripAccents(nome).toLowerCase().split(/\s+/).filter((w) => w.length > 3)[0];
+  while ((m = linkRe.exec(html)) !== null) {
+    const url = m[1].replace(/\/$/, '') + '/';
+    if (want && !stripAccents(url).toLowerCase().includes(want.slice(0, 5))) continue;
+    best = url;
+    break;
+  }
+  if (!best) return { sites_consultados: 'grupoincopisos.com.br', tried: q };
+  const page = curlGet(best);
+  const title = (metaOg(page, 'og:title') || '').replace(/\s*\|.*$/i, '').trim();
+  const img = metaOg(page, 'og:image') || '';
+  return {
+    fabricante_grupo: 'Grupo Incopisos',
+    marca_no_site: 'Incopisos',
+    descricao_no_site: title || nome,
+    evidencia_url: best,
+    imagem_url: img,
+    status: 'confirmado_site',
+    sites_consultados: 'grupoincopisos.com.br',
+    match_metodo: 'incopisos_busca',
+  };
+}
+
 function tryCerbras(row, snap) {
   if (!temNomeComercial(row)) {
     return { sites_consultados: 'novo.cerbras.com', reason: 'sem_nome' };
@@ -383,28 +467,95 @@ function applyHit(row, hit) {
   row.sites_consultados = hit.sites_consultados;
   row.match_metodo = hit.match_metodo || '';
   row.match_score = hit.match_score || '';
-  row.observacao = '';
+  row.observacao = hit.observacao || '';
+}
+
+async function tryMatchersForRow(row, ctx, order) {
+  const sites = [];
+  for (const key of order) {
+    let hit = null;
+    if (key === 'rocha') {
+      hit = tryRocha(row, ctx.rochaSlugs);
+      sites.push('portalgruporocha.com.br');
+    } else if (key === 'formigres') {
+      hit = await tryFormigres(row, ctx.snapFg);
+      sites.push('formigres.com.br');
+    } else if (key === 'lume') {
+      hit = tryLume(row);
+      sites.push('lumeceramica.com.br');
+    } else if (key === 'carmelo' && ctx.snapCf) {
+      hit = tryCarmelo(row, ctx.snapCf);
+      sites.push('carmelofior.com.br');
+    } else if (key === 'cerbras') {
+      hit = tryCerbras(row, ctx.snapCb);
+      sites.push('novo.cerbras.com');
+    } else if (key === 'incopisos') {
+      hit = tryIncopisos(row);
+      sites.push('grupoincopisos.com.br');
+    }
+    if (hit?.status === 'confirmado_site') {
+      hit.sites_consultados = [...new Set([...sites, hit.sites_consultados].filter(Boolean))].join(';');
+      return hit;
+    }
+  }
+  return { sites_consultados: sites.join(';') };
+}
+
+async function loadMatchContext() {
+  console.log('Carregando Formigres...');
+  const snapFg = buildFormigresSnapshot(await fetchFormigresProdutos());
+  let snapCf = null;
+  try {
+    console.log('Carregando Carmelo Fior (Arielle)...');
+    snapCf = buildCarmeloSnapshot(await fetchCarmeloProdutos());
+  } catch (e) {
+    console.warn('Carmelo Fior indisponível:', e.message);
+  }
+  console.log('Carregando Cerbras (sitemap)...');
+  const cbUrls = await fetchSitemapUrls();
+  const snapCb = buildCerbrasSnapshot(cbUrls.map((u) => normalizeFromUrl(u)).filter(Boolean));
+  console.log('Carregando índice Grupo Rocha...');
+  const { slugs: rochaSlugs } = await loadRochaSlugIndex();
+  console.log('Slugs Rocha:', rochaSlugs.size);
+  return { snapFg, snapCf, snapCb, rochaSlugs };
+}
+
+async function resolveIndicacoesJoao() {
+  if (!fs.existsSync(OUT_CSV)) {
+    console.error('CSV não encontrado:', OUT_CSV);
+    process.exit(1);
+  }
+  const rows = loadCsv(OUT_CSV);
+  const targets = rows.filter((r) => r.status === 'indicacao_joao');
+  console.log(`Reprocessar indicações João: ${targets.length} itens (ordem por fabricante sugerido)`);
+  const ctx = await loadMatchContext();
+  let ok = 0;
+  for (const row of targets) {
+    const order = siteTryOrderForRow(row);
+    const hit = await tryMatchersForRow(row, ctx, order);
+    if (hit.status === 'confirmado_site') {
+      applyHit(row, hit);
+      ok++;
+      console.log(' OK', row.codigo, row.fabricante_grupo, (row.descricao_no_site || '').slice(0, 48));
+    } else {
+      row.sites_consultados = hit.sites_consultados || order.join(';');
+      row.observacao = `indicacao João; buscou (${order.join('→')}) sem ficha`;
+      console.log(' --', row.codigo, row.fabricante_grupo, order.join('→'));
+    }
+  }
+  writeCsv(OUT_CSV, rows, CSV_FIELDS);
+  console.log('\nNovos confirmado_site:', ok, 'ainda indicacao_joao:', targets.length - ok);
+  console.log('Arquivo:', OUT_CSV);
 }
 
 async function main() {
+  if (onlyIndicacao) {
+    await resolveIndicacoesJoao();
+    return;
+  }
+
   const inputRows = loadCsv(IN_CSV);
-  const fieldnames = [
-    'codigo',
-    'formato',
-    'modelo',
-    'descricao_erp',
-    'fabricante_grupo',
-    'marca_no_site',
-    'descricao_no_site',
-    'evidencia_url',
-    'imagem_url',
-    'imagens_json',
-    'status',
-    'sites_consultados',
-    'match_metodo',
-    'match_score',
-    'observacao',
-  ];
+  const fieldnames = CSV_FIELDS;
 
   const prior = fs.existsSync(OUT_CSV) ? loadCsv(OUT_CSV) : [];
   const priorByCode = new Map(prior.map((p) => [p.codigo, p]));
@@ -470,21 +621,7 @@ async function main() {
   }
 
   console.log('Formatos a processar:', byFmt.size, onlyFmt ? `(só ${onlyFmt})` : '');
-  console.log('Carregando Formigres...');
-  const snapFg = buildFormigresSnapshot(await fetchFormigresProdutos());
-  let snapCf = null;
-  try {
-    console.log('Carregando Carmelo Fior (Arielle)...');
-    snapCf = buildCarmeloSnapshot(await fetchCarmeloProdutos());
-  } catch (e) {
-    console.warn('Carmelo Fior indisponível:', e.message);
-  }
-  console.log('Carregando Cerbras (sitemap)...');
-  const cbUrls = await fetchSitemapUrls();
-  const snapCb = buildCerbrasSnapshot(cbUrls.map((u) => normalizeFromUrl(u)).filter(Boolean));
-  console.log('Carregando índice Grupo Rocha...');
-  const { slugs: rochaSlugs } = await loadRochaSlugIndex();
-  console.log('Slugs Rocha:', rochaSlugs.size);
+  const ctx = await loadMatchContext();
 
   const patternCache = new Map();
   let ok = 0;
@@ -501,40 +638,11 @@ async function main() {
         continue;
       }
 
-      let hit = null;
-      const sites = new Set();
+      const order = siteTryOrderForRow(row);
+      const hit = await tryMatchersForRow(row, ctx, order);
+      row.sites_consultados = hit.sites_consultados || order.join(';');
 
-      const rocha = tryRocha(row, rochaSlugs);
-      sites.add('portalgruporocha.com.br');
-      if (rocha.status === 'confirmado_site') hit = rocha;
-
-      if (!hit) {
-        const fg = await tryFormigres(row, snapFg);
-        sites.add('formigres.com.br');
-        if (fg.status === 'confirmado_site') hit = fg;
-      }
-
-      if (!hit) {
-        const lm = tryLume(row);
-        sites.add('lumeceramica.com.br');
-        if (lm.status === 'confirmado_site') hit = lm;
-      }
-
-      if (!hit && snapCf) {
-        const cf = tryCarmelo(row, snapCf);
-        sites.add('carmelofior.com.br');
-        if (cf.status === 'confirmado_site') hit = cf;
-      }
-
-      if (!hit) {
-        const cb = tryCerbras(row, snapCb);
-        sites.add('novo.cerbras.com');
-        if (cb.status === 'confirmado_site') hit = cb;
-      }
-
-      row.sites_consultados = [...sites].join(';');
-
-      if (hit) {
+      if (hit.status === 'confirmado_site') {
         applyHit(row, hit);
         patternCache.set(ck, hit);
         ok++;
@@ -542,10 +650,8 @@ async function main() {
       } else {
         row.status = 'nao_encontrado';
         row.observacao = temNomeComercial(row)
-          ? rocha.tried?.length
-            ? `sem_ficha;rocha_tentou:${rocha.tried.slice(0, 3).join(',')}`
-            : 'sem_ficha_oficial_com_nome'
-          : 'sem_nome_comercial_soh_codigo_interno;consultado:rocha,formigres,lume,carmelo,cerbras';
+          ? `sem_ficha;ordem:${order.join('→')}`
+          : 'sem_nome_comercial_soh_codigo_interno;consultado:' + order.join(',');
         pend++;
         console.log(' --', row.codigo, row.modelo);
       }

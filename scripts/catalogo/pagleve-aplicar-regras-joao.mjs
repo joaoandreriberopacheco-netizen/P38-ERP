@@ -4,6 +4,7 @@
  * node scripts/catalogo/pagleve-aplicar-regras-joao.mjs
  */
 import fs from 'node:fs';
+import path from 'node:path';
 import { execSync } from 'node:child_process';
 import {
   buildSnapshot as buildFormigresSnapshot,
@@ -13,7 +14,8 @@ import {
 import { stripAccents } from '../lib/formigresCatalog.mjs';
 import { raioXProdutoDescricao } from '../lib/raioXProdutoDescricao.mjs';
 
-const CSV = process.env.PAGLEVE_OUT || '/opt/cursor/artifacts/raio-x-pagleve-site-verificado.csv';
+const ROOT = process.cwd();
+const CSV = process.env.PAGLEVE_OUT || path.join(ROOT, 'files', 'pagleve', 'raio-x-pagleve-site-verificado.csv');
 const ROCHA = 'https://www.portalgruporocha.com.br';
 const LUME = 'https://lumeceramica.com.br';
 const CF = 'https://www.carmelofior.com.br';

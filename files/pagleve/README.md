@@ -9,7 +9,13 @@ Arquivos gerados na análise **formato a formato**, com fabricante só quando h�
 | `pagleve-fabricantes-sites-oficiais.md` | Sites oficiais e regras de busca |
 | `pagleve-orfaos-descricao-por-formato.md` | Órfãos com descrição ERP para pesquisa |
 
-Atualizar: correr `node scripts/catalogo/pagleve-match-por-formato.mjs` e `node scripts/catalogo/pagleve-aplicar-regras-joao.mjs`, depois copiar de `/opt/cursor/artifacts/` para esta pasta.
+Atualizar match no site (ordem por fabricante que o João indicou):
+
+```bash
+npm run catalogo:match-pagleve-indicacoes   # regras + busca só nos 56 “indicação João”
+# ou match completo por formato:
+npm run catalogo:match-pagleve
+```
 
 ## Catálogo web (estilo premium, como Tintão)
 
@@ -25,7 +31,7 @@ Usa o **mesmo layout do Tintão** (Libre Franklin, carrinho de caixas, **campo D
 
 ```bash
 npm run catalogo:extrair-precos-pagleve   # OCR dos scans (tesseract)
-npm run catalogo:publicar-pagleve         # classificar + preços + imagens + HTML
+npm run catalogo:publicar-pagleve         # regras + match indicações + classificar + preços + HTML
 ```
 
 Publicação: projecto Vercel isolado em `deploy/catalogo-pagleve/` — ver README dessa pasta.
