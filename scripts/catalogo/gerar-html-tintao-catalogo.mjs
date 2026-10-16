@@ -1058,6 +1058,17 @@ const PAGLEVE_SKIN_CSS = `
     html[data-skin="pagleve"] .page-head h1::before {
       background: linear-gradient(180deg, var(--pl-green), var(--pl-purple));
     }
+    html[data-skin="pagleve"] .site-desconto label { color: rgba(255,255,255,.92); }
+    html[data-skin="pagleve"] #desconto-pct {
+      background: rgba(255,255,255,.96);
+      border-color: rgba(255,255,255,.35);
+      color: var(--pl-purple-deep);
+      font-weight: 600;
+    }
+    html[data-skin="pagleve"][data-theme="dark"] .site-bar {
+      background: linear-gradient(90deg, #3d1a52 0%, #2a1038 100%);
+      border-bottom-color: var(--pl-green);
+    }
 `;
 
 function buildBrandSkinCss(skin) {

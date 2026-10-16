@@ -19,6 +19,13 @@ Depois de atualizar o CSV:
 npm run catalogo:publicar-pagleve
 ```
 
-Usa o **mesmo layout do Tintão** (Libre Franklin, carrinho de caixas, árvore Bold / Retificada / Polida e acabamentos). Classificação: `files/pagleve/classificacao/`.
+Usa o **mesmo layout do Tintão** (Libre Franklin, carrinho de caixas, **campo Desconto** no topo, árvore Bold / Retificada / Polida e acabamentos).
+
+**Preços:** coluna **Preço Varejo** do relatório SIAH que o fornecedor mandou (scans em `fornecedor-siah-scans/` → `precos-siah-fornecedor.csv`).
+
+```bash
+npm run catalogo:extrair-precos-pagleve   # OCR dos scans (tesseract)
+npm run catalogo:publicar-pagleve         # classificar + preços + imagens + HTML
+```
 
 Publicação: projecto Vercel isolado em `deploy/catalogo-pagleve/` — ver README dessa pasta.

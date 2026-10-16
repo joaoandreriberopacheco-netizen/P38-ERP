@@ -16,7 +16,7 @@ Lê `files/pagleve/raio-x-pagleve-site-verificado.csv` e grava `deploy/catalogo-
 
 ## Criar projecto Vercel (uma vez)
 
-1. [vercel.com/new](https://vercel.com/new) → importar repo **P38-ERP** (opcional; o deploy **oficial** é pelo GitHub Actions, como no Tintão — **não** é obrigatório ligar Git na Vercel)
+1. [vercel.com/new](https://vercel.com/new) → importar repo **P38-ERP** (só para criar o projecto isolado; deploy contínuo = GitHub Actions, igual ao Tintão)
 2. **Root Directory:** `deploy/catalogo-pagleve`
 3. **Framework Preset:** Other (site estático, sem build)
 4. **Build Command:** deixar vazio

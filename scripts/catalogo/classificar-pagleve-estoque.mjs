@@ -135,6 +135,7 @@ function main() {
     const imagens = parseImagensJson(row.imagens_json, row.imagem_url);
     return {
       codigo_tintao: row.codigo,
+      modelo: row.modelo || '',
       descricao,
       formato: (row.formato || '').replace(/×/g, 'x'),
       linha: classif.linha,
@@ -145,7 +146,7 @@ function main() {
       motivo: classif.motivo,
       match_status: mapStatus(row.status),
       match_score: row.status === 'confirmado_site' ? 100 : 0,
-      formigres_id: '',
+      formigres_id: (String(row.evidencia_url || '').match(/formigres\.com\.br\/produto\/(\d+)/i) || [])[1] || '',
       formigres_titulo: row.descricao_no_site || row.modelo || '',
       formigres_tipo: siteHints.tipo,
       formigres_acabamento: siteHints.acabamento || acabLabel.toUpperCase(),
