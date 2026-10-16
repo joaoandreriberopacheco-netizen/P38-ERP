@@ -125,6 +125,20 @@ function mapStatus(status) {
   return 'sem_ficha';
 }
 
+/** PagLeve: polida é textura (acabamento), não linha comercial à parte de Bold/Retificada. */
+function normalizarLinhaPagLeve(classif, acabLabel) {
+  if (classif.linha !== 'polida') return classif;
+  const acab = String(acabLabel || '').trim();
+  return {
+    ...classif,
+    linha: 'retificada',
+    subtipo: 'polida',
+    variante_lisa: null,
+    rotulo: acab ? `Retificada — ${acab.toLowerCase()}` : 'Retificada — polido',
+    motivo: classif.motivo ? `${classif.motivo}; polida→acabamento em retificada` : 'polida→acabamento em retificada',
+  };
+}
+
 function main() {
   if (!fs.existsSync(IN_CSV)) {
     console.error('CSV não encontrado:', IN_CSV);
@@ -140,19 +154,23 @@ function main() {
       titulo: row.descricao_no_site || descricao,
       descricao,
     });
-    const acabLabel = inferAcabamentoLabel(descricao, row.descricao_no_site, classif);
+    let acabLabel = inferAcabamentoLabel(descricao, row.descricao_no_site, classif);
+    const classifPl = normalizarLinhaPagLeve(classif, acabLabel);
+    if (classifPl.linha === 'retificada' && classif.linha === 'polida' && !acabLabel) {
+      acabLabel = 'Polido';
+    }
     const imagens = parseImagensJson(row.imagens_json, row.imagem_url);
     return {
       codigo_tintao: row.codigo,
       modelo: row.modelo || '',
       descricao,
       formato: (row.formato || '').replace(/×/g, 'x'),
-      linha: classif.linha,
-      subtipo: classif.subtipo,
-      variante_lisa: classif.variante_lisa,
-      rotulo: classif.rotulo,
-      confianca: classif.confianca,
-      motivo: classif.motivo,
+      linha: classifPl.linha,
+      subtipo: classifPl.subtipo,
+      variante_lisa: classifPl.variante_lisa,
+      rotulo: classifPl.rotulo,
+      confianca: classifPl.confianca,
+      motivo: classifPl.motivo,
       match_status: mapStatus(row.status),
       match_score: row.status === 'confirmado_site' ? 100 : 0,
       formigres_id: (String(row.evidencia_url || '').match(/formigres\.com\.br\/produto\/(\d+)/i) || [])[1] || '',

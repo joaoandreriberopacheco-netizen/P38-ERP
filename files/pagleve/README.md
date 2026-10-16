@@ -19,7 +19,7 @@ Depois de atualizar o CSV:
 npm run catalogo:publicar-pagleve
 ```
 
-Usa o **mesmo layout do Tintão** (Libre Franklin, carrinho de caixas, **campo Desconto** no topo, árvore Bold / Retificada / Polida e acabamentos).
+Usa o **mesmo layout do Tintão** (Libre Franklin, carrinho de caixas, **campo Desconto** no topo, árvore **Bold** e **Retificada** com acabamentos — **polida/polido é textura dentro de Retificada**, não terceira linha).
 
 **Preços:** coluna **Preço Varejo** do relatório SIAH que o fornecedor mandou (scans em `fornecedor-siah-scans/` → `precos-siah-fornecedor.csv`).
 
