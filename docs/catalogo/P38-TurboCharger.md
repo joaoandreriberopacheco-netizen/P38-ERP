@@ -19,31 +19,45 @@
 
 ## Abas previstas (interligadas)
 
-### Caminho «4» — classificação (listas suspensas)
+### Categorias canónicas por etapa
 
-| Aba | Conteúdo |
-|-----|----------|
-| `Dim_Etapa` | Etapas ordenadas |
-| `Dim_Categoria` | FK etapa |
-| `Dim_Sub` | FK categoria |
-| `Dim_Linha` | FK sub; tipo LINHA (solo / mix / portfolio) quando aplicável |
+| Etapa | Categorias (dropdown) |
+|--------|------------------------|
+| **a. Edificações** | Alvenaria · Drywall · Madeira · Telhado |
+| **b. Instalações** | Hidráulica · Elétrica |
+| **c. Acabamentos** | Pintura · Elétrica · Hidráulica · Revestimentos · Esquadrias |
 
-Validação de dados: cada nível filho referencia a aba pai.
+No Excel: `01. Alvenaria`, `02. Drywall`, … — ver `scripts/lib/turboChargerCategorias.mjs`.  
+Legado (`Portas`, `Forro`, numeração antiga em acabamentos) normaliza ao regenerar / `node scripts/patch-catalogo-4x3-categorias.mjs`.
 
-### «3» — elementos da descrição / grade
+### Listas (dropdowns — uma aba horizontal)
 
-| Aba | Conteúdo |
-|-----|----------|
-| `Dim_ProdutoCompra` | comp1 por LINHA |
-| `Dim_EixoA` / `Dim_EixoB` (ou `Dim_Componentes`) | comp2 / comp3 dependentes de comp1 |
+| Coluna na aba `Listas` | Conteúdo |
+|------------------------|----------|
+| A — ETAPA | Etapas ordenadas |
+| B — CATEGORIA | Categorias (lista plana v0) |
+| C — SUBCATEGORIA | Subcategorias |
+| D — LINHA | Linhas (solo / mix / portfolio no futuro) |
+| E — PRODUTO COMPRA | comp1 |
+| F — EIXO A | comp2 |
+| G — EIXO B | comp3 |
 
-Na fact sheet: três dropdowns (comp1 → comp2 → comp3).
+Validação na `Fact_Catalogo_4x3`:
+
+- **ETAPA** → lista fixa (`Listas!$A$2:$A$n`).
+- **CATEGORIA → EIXO B** → dropdowns **dependentes** (OFFSET + MATCH + COUNTIF) sobre blocos **Cascata** na mesma aba (colunas I em diante): só aparecem valores válidos para ETAPA / caminho já escolhido.
+
+Chave composta entre níveis: `etapa · categoria · sub · …` ( separador **` · `** — ponto médio, igual à legenda do catálogo ).
+
+Para **novos** pares pai→filho: acrescente linhas no bloco cascata correspondente (mesma chave pai repetida, novo valor na coluna «Valor permitido») ou regenere com `npm run turbocharger:generate`.
+
+Na fact sheet: sete dropdowns encadeados (4 + 3) mais nome vitrine e colunas calculadas.
 
 ### Fact — o que a UI monta
 
 | Aba | Conteúdo |
 |-----|----------|
-| `Fact_Catalogo_4x3` | Uma linha por SKU: `codigo_interno`, FKs/códigos 4+3, `novo_sku`, flags catálogo |
+| `Fact_Catalogo_4x3` | Uma linha por SKU: `codigo_interno`, FKs/códigos 4+3, `novo_sku`, `sku_atual` (SKU antigo do cadastro), códigos/legenda |
 
 ### Snapshot operacional (Supabase → Excel)
 
@@ -58,6 +72,13 @@ Na fact sheet: três dropdowns (comp1 → comp2 → comp3).
 | `README` | Versão, data, comandos de publicar / export completo, regras de dropdown |
 
 ---
+
+## Fluxo de revisão (editar → anexar → aplicar)
+
+1. **Editar** no Excel: classificação 4×3, `novo_sku`, etc.  
+2. **Observações (revisão)** — coluna no fim da `Fact_Catalogo_4x3` (fundo âmbar claro): suas notas («mover para linha X», «confirmar com fornecedor», …). **Não publica** no catálogo; serve para quando **anexar** o ficheiro e pedir para **aplicar** as mudanças.  
+3. **Regenerar** com `npm run turbocharger:generate` **mantém** o texto das observações já gravado no TurboCharger anterior (por `codigo_interno`).  
+4. **Publicar / aplicar** (próximo passo no repo): importar a Fact e materializar alterações — observações entram só como guia, salvo combinarmos regras explícitas.
 
 ## Fluxos (futuros)
 
