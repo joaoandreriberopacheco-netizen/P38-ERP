@@ -36,6 +36,21 @@ export const PULSE_CORRIDOR = {
           "id": "compras.tab-sugestoes",
           "label": "Aba sugestões",
           "type": "presence"
+        },
+        {
+          "id": "compras.tab-cotacoes",
+          "label": "Aba cotações",
+          "type": "click"
+        },
+        {
+          "id": "cotacoes.hub-scroll",
+          "label": "Lista cotações (scroll)",
+          "type": "presence"
+        },
+        {
+          "id": "cotacoes.busca",
+          "label": "Busca cotações",
+          "type": "presence"
         }
       ]
     },
