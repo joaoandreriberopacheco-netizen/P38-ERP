@@ -8,6 +8,7 @@ export const FILL_CALCULADO = 'FFE0F2FE';
 export const FONT_CALCULADO = { italic: true, color: { argb: 'FF0369A1' } };
 
 export const FILL_DIM = 'FFF0FDF4'; // verde suave — abas de dimensão
+export const FILL_REVISAO = 'FFFFFBEB'; // âmbar suave — coluna de observações (só revisão)
 
 export function styleHeaderRow(row, { height = 24 } = {}) {
   row.height = height;
@@ -18,10 +19,12 @@ export function styleHeaderRow(row, { height = 24 } = {}) {
   });
 }
 
-export function styleDataCell(cell, { editavel = true, calculado = false, numero = false } = {}) {
+export function styleDataCell(cell, { editavel = true, calculado = false, numero = false, revisao = false } = {}) {
   if (calculado) {
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: FILL_CALCULADO } };
     cell.font = FONT_CALCULADO;
+  } else if (revisao) {
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: FILL_REVISAO } };
   } else if (editavel) {
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: FILL_EDITAVEL } };
   }
@@ -48,5 +51,18 @@ export function addListValidation(ws, range, listFormula) {
     errorTitle: 'Valor inválido',
     error: 'Escolha um valor da lista.',
     formulae: [listFormula],
+  });
+}
+
+/** Lista dependente (OFFSET + MATCH + COUNTIF). `excelFormula` sem prefixo «=». */
+export function addDependentListValidation(ws, range, excelFormula) {
+  ws.dataValidations.add(range, {
+    type: 'list',
+    allowBlank: true,
+    showDropDown: true,
+    showErrorMessage: true,
+    errorTitle: 'Combinação inválida',
+    error: 'Escolha um valor permitido para o nível anterior.',
+    formulae: [excelFormula],
   });
 }
