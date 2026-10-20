@@ -4877,8 +4877,8 @@
           "tipo": "principal"
         }
       ],
-      "preco_m2": 15.9,
-      "preco_fonte": "tabela_formigres",
+      "preco_m2": 37.5,
+      "preco_fonte": "varejo_manual",
       "codigo_siah": "",
       "m2_por_caixa": 2.15,
       "unidade": "",

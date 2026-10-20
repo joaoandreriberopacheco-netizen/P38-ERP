@@ -6,6 +6,25 @@ import path from 'node:path';
 import { stripAccents } from './formigresCatalog.mjs';
 
 const DEFAULT_JSON = path.join(process.cwd(), 'files', 'pagleve', 'precos-siah-fornecedor.json');
+const MANUAL_PRECO_JSON = path.join(process.cwd(), 'files', 'pagleve', 'precos-varejo-por-codigo.json');
+
+let manualPrecoCache = null;
+
+export function loadPrecosVarejoPorCodigo(jsonPath = MANUAL_PRECO_JSON) {
+  if (manualPrecoCache && jsonPath === MANUAL_PRECO_JSON) return manualPrecoCache;
+  if (!fs.existsSync(jsonPath)) return null;
+  const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+  const map = data.por_codigo_tintao || data;
+  const out = new Map();
+  for (const [cod, row] of Object.entries(map)) {
+    if (cod === 'meta' || !row || typeof row !== 'object') continue;
+    const preco = Number(row.preco_varejo_m2);
+    if (!Number.isFinite(preco) || preco <= 0) continue;
+    out.set(String(cod).trim(), { ...row, preco_varejo_m2: preco });
+  }
+  if (jsonPath === MANUAL_PRECO_JSON) manualPrecoCache = out;
+  return out;
+}
 
 export function normDescKey(s) {
   return stripAccents(String(s || ''))
@@ -35,8 +54,19 @@ export function loadPrecosSiah(jsonPath = DEFAULT_JSON) {
  * @returns {{ preco_m2: number|null, codigo_siah?: string, fonte?: string }}
  */
 export function resolvePrecoSiah(item, precos) {
+  const ref = String(item.codigo_tintao || item.referencia || item.codigo || '').trim();
+  const manual = loadPrecosVarejoPorCodigo();
+  if (ref && manual?.has(ref)) {
+    const row = manual.get(ref);
+    return {
+      preco_m2: row.preco_varejo_m2,
+      codigo_siah: row.codigo_siah || '',
+      fonte: 'varejo_manual',
+    };
+  }
+
   if (!precos?.byCode) return { preco_m2: null };
-  const cod = String(item.codigo_tintao || item.referencia || item.codigo || '').trim();
+  const cod = ref;
   if (/^\d{4,6}$/.test(cod) && precos.byCode.has(cod)) {
     const r = precos.byCode.get(cod);
     return { preco_m2: r.preco_varejo_m2, codigo_siah: cod, fonte: 'siah_codigo' };
