@@ -1,25 +1,25 @@
 /**
- * Snapshot Carmel Fior — marca Arielle (id_category 4).
+ * Snapshot Carmelo Fior — grupo completo (Cecafi, Fiorano, Idealle, Arielle…).
  */
 import {
-  ARIELLE_CATEGORY_ID,
   CARMELO_FIOR_BASE,
-  fetchAllProdutosArielle,
+  CARMELO_TODAS_MARCAS_CATEGORY_ID,
+  fetchAllProdutosGrupoCarmelo,
   normalizeProduto,
 } from './carmeloFiorCatalog.mjs';
 
 export const FABRICANTE = {
   slug: 'arielle',
-  nome: 'Arielle',
-  marca: 'Arielle',
+  nome: 'Carmelo Fior',
+  marca: 'Grupo Carmelo Fior',
   grupo: 'Carmelo Fior',
   site: CARMELO_FIOR_BASE,
   categoria: 'revestimentos',
-  categoryId: ARIELLE_CATEGORY_ID,
+  categoryId: CARMELO_TODAS_MARCAS_CATEGORY_ID,
 };
 
 export async function fetchAllProdutos(opts = {}) {
-  return fetchAllProdutosArielle(opts);
+  return fetchAllProdutosGrupoCarmelo(opts);
 }
 
 export function buildSnapshot(produtosRaw) {
@@ -34,14 +34,14 @@ export function buildSnapshot(produtosRaw) {
   return {
     fabricante: FABRICANTE.slug,
     exportedAt: new Date().toISOString(),
-    source: `${CARMELO_FIOR_BASE}/transaction/Product/list?id_category=${ARIELLE_CATEGORY_ID}`,
+    source: `${CARMELO_FIOR_BASE}/transaction/Product/list?id_category=${CARMELO_TODAS_MARCAS_CATEGORY_ID}`,
     count: produtos.length,
     produtos,
     por_formato,
     meta: {
       grupo: FABRICANTE.grupo,
       marca: FABRICANTE.marca,
-      categoryId: ARIELLE_CATEGORY_ID,
+      categoryId: CARMELO_TODAS_MARCAS_CATEGORY_ID,
     },
   };
 }

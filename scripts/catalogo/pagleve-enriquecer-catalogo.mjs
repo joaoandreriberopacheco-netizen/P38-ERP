@@ -90,26 +90,51 @@ function classifOf(item) {
   };
 }
 
+const EMPTY_SNAP = { produtos: [] };
+
 async function ensureFormigresSnapshot() {
   const file = snapshotPath('formigres');
   let snap = loadSnapshotFromFile(readJson(file));
   if (snap) return snap;
-  console.error('Snapshot Formigres em falta — a buscar API…');
-  const raw = await fetchFormigresProdutos();
-  snap = buildFormigresSnapshot(raw);
-  writeJson(file, snap);
-  return snap;
+  try {
+    console.error('Snapshot Formigres em falta — a buscar API…');
+    const raw = await fetchFormigresProdutos();
+    snap = buildFormigresSnapshot(raw);
+    writeJson(file, snap);
+    return snap;
+  } catch (err) {
+    console.error('Formigres snapshot indisponível:', err.message);
+    return EMPTY_SNAP;
+  }
 }
 
 async function ensureCarmeloSnapshot() {
   const file = snapshotPath('arielle');
   const existing = loadSnapshotFromFile(readJson(file));
-  if (existing) return existing;
-  console.error('Snapshot Carmelo/Arielle em falta — a buscar API…');
-  const raw = await fetchCarmeloProdutos();
-  const snap = buildCarmeloSnapshot(raw);
-  writeJson(file, snap);
-  return snap;
+  if (existing?.produtos?.length) return existing;
+  try {
+    console.error('Snapshot Carmelo Fior (grupo) em falta — a buscar API…');
+    const raw = await fetchCarmeloProdutos();
+    const snap = buildCarmeloSnapshot(raw);
+    writeJson(file, snap);
+    return snap;
+  } catch (err) {
+    console.error('Carmelo snapshot indisponível:', err.message);
+    return existing || EMPTY_SNAP;
+  }
+}
+
+function carmeloSlugFromUrl(url = '') {
+  const m = String(url).match(/carmelofior\.com\.br\/produto\/([a-z0-9-]+)/i);
+  return m?.[1] || '';
+}
+
+function isCarmeloFiorItem(item) {
+  if (item.fabricante_grupo === 'Carmelo Fior') return true;
+  const url = String(item.produto_url || '');
+  if (url.includes('carmelofior.com.br')) return true;
+  const marca = String(item.marca_nome || '').toLowerCase();
+  return /^(cecafi|idealle|arielle|fiorano|fioranno|pisoforte)\b/.test(marca);
 }
 
 function mapImagens(urls) {
@@ -162,7 +187,17 @@ async function enrichImagens(item, ctx) {
     return { imagem_url, imagens, formigres_id: fgId };
   }
 
-  if (item.fabricante_grupo === 'Carmelo Fior' || url.includes('carmelofior.com.br')) {
+  if (isCarmeloFiorItem(item)) {
+    const slug = carmeloSlugFromUrl(url);
+    const snapRaw = slug && ctx.carmeloBySlug?.get(slug);
+    if (snapRaw && !imagem_url) {
+      const imgs = extractImagensFromProduto(snapRaw);
+      if (imgs.length) {
+        imagens = imgs;
+        imagem_url = imgs[0]?.url || imagem_url;
+      }
+    }
+
     const html = pageHtml || (url ? curlGet(url) : '');
     if (html) pageHtml = html;
     const galeria = parseCarmeloGaleriaCatalogoFromHtml(html);
@@ -178,7 +213,7 @@ async function enrichImagens(item, ctx) {
     }
   }
 
-  if (!imagem_url && (item.fabricante_grupo === 'Carmelo Fior' || url.includes('carmelofior.com.br'))) {
+  if (!imagem_url && isCarmeloFiorItem(item)) {
     const desc = `${item.formato} ${item.descricao}`;
     const { match } = findInFormigresSnapshot(ctx.carmeloSnap, desc, {
       minScore: 30,
@@ -277,6 +312,7 @@ function enrichPrecoEmbalagem(item, ctx) {
 async function main() {
   const onlyMissing = process.argv.includes('--only-missing');
   const refreshImagens = process.argv.includes('--refresh-imagens');
+  const onlyCarmelo = process.argv.includes('--only-carmelo');
   const jsonPath = findLatestClassif();
   if (!jsonPath) {
     console.error('Classificação PagLeve não encontrada. Rode catalogo:classificar-pagleve');
@@ -286,19 +322,30 @@ async function main() {
   const formigresSnap = await ensureFormigresSnapshot();
   const carmeloSnap = await ensureCarmeloSnapshot();
   const carmeloRawById = new Map((carmeloSnap.produtos || []).map((p) => [String(p.id), p]));
+  const carmeloBySlug = new Map();
+  for (const p of carmeloSnap.produtos || []) {
+    const slug = p.slug || carmeloSlugFromUrl(p.produto_url);
+    if (slug) carmeloBySlug.set(slug, p);
+  }
 
   const formigresById = new Map((formigresSnap.produtos || []).map((p) => [String(p.id), p]));
   const precosSiah = loadPrecosSiah();
   if (!precosSiah) {
     console.error('Aviso: precos-siah-fornecedor.json em falta. Rode: npm run catalogo:extrair-precos-pagleve');
   }
-  const ctx = { formigresSnap, carmeloSnap, formigresById, carmeloRawById, precosSiah };
+  const ctx = { formigresSnap, carmeloSnap, formigresById, carmeloRawById, carmeloBySlug, precosSiah };
 
   const itens = [];
   let comFoto = 0;
   let comPreco = 0;
   for (let i = 0; i < payload.itens.length; i++) {
     const item = { ...payload.itens[i] };
+    if (onlyCarmelo && !isCarmeloFiorItem(item)) {
+      itens.push(item);
+      if (item.imagem_url) comFoto += 1;
+      if (item.preco_m2 != null && item.preco_m2 > 0) comPreco += 1;
+      continue;
+    }
     if (onlyMissing && !refreshImagens && item.imagem_url && item.preco_m2 != null && item.preco_m2 > 0) {
       itens.push(item);
       if (item.imagem_url) comFoto += 1;

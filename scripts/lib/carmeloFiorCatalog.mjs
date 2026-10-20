@@ -66,13 +66,16 @@ export async function listProdutos(session, { idCategory = ARIELLE_CATEGORY_ID, 
   });
 }
 
-export async function fetchAllProdutosArielle({ onProgress } = {}) {
+/** Todas as marcas do portal (Cecafi, Fiorano, Idealle, Arielle, Pisoforte…). */
+export const CARMELO_TODAS_MARCAS_CATEGORY_ID = 0;
+
+export async function fetchAllProdutosArielle({ onProgress, idCategory = ARIELLE_CATEGORY_ID } = {}) {
   const session = await bootstrapSession();
   const all = [];
   let pag = 1;
   let size = Infinity;
   while (all.length < size) {
-    const data = await listProdutos(session, { pag, prp: 50 });
+    const data = await listProdutos(session, { idCategory, pag, prp: 50 });
     size = data.size ?? data.results?.length ?? 0;
     const batch = data.results || [];
     all.push(...batch);
@@ -81,6 +84,11 @@ export async function fetchAllProdutosArielle({ onProgress } = {}) {
     pag += 1;
   }
   return all;
+}
+
+/** Catálogo completo do grupo (id_category 0 na API Carmelo Fior). */
+export async function fetchAllProdutosGrupoCarmelo(opts = {}) {
+  return fetchAllProdutosArielle({ ...opts, idCategory: CARMELO_TODAS_MARCAS_CATEGORY_ID });
 }
 
 function attrById(attributes, idAttribute) {
@@ -195,6 +203,10 @@ export function normalizeProduto(raw) {
   const tipo = mapAcabamentoTipo(acabamento?.option_title || acabamento?.text || '', retificada);
   const thumbImg = pickThumbImage(raw.images || []);
   const imagem_url = imageUrl(thumbImg?.image || thumbImg?.thumb || '');
+  const catTitle = raw.category?.[0]?.title || '';
+  const marcaSite = catTitle
+    ? (String(catTitle).toLowerCase() === 'fioranno' ? 'Fiorano' : catTitle)
+    : 'Arielle';
 
   return {
     id: String(raw.id),
@@ -206,8 +218,8 @@ export function normalizeProduto(raw) {
     acabamento_info: superficieResolved || superficieRaw,
     tipo,
     referencia: raw.code || '',
-    marca_nome: 'Arielle',
-    categoria: 'Arielle',
+    marca_nome: marcaSite,
+    categoria: marcaSite,
     imagem_url,
     imagem_amb_url: '',
     produto_url: `${CARMELO_FIOR_BASE}/produto/${raw.slug || raw.id}`,
@@ -216,6 +228,7 @@ export function normalizeProduto(raw) {
       .replace(/[^A-Z0-9]+/g, ' ')
       .split(' ')
       .filter((t) => t.length >= 2),
+    /** Preservado no snapshot para galeria no catálogo PagLeve. */
     images: raw.images || [],
     attributes: raw.attributes || [],
   };
