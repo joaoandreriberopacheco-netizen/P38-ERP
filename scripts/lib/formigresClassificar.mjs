@@ -22,8 +22,8 @@ export function inferirDaDescricao(descricao = '') {
     lista_polidos: /RT\s*POLIDO|\bPOLIDO\b/.test(raw),
     retificada: /\bRT\b|RETIFICAD/.test(raw),
     bold: /\bHD\b|\bBOLD\b/.test(raw) && !/\bRT\b/.test(raw),
-    antiderrapante: /\bAD\b|ADERENTE|ABS\b|MATE\s*ABS|GRANILHADO\s*ABS/.test(raw),
-    semiderrapante: /GRANILHAD|GOTEJAD|SEMIDERRAP/.test(raw) && !/ABS/.test(raw),
+    antiderrapante: /\bAD\b|ADERENTE|ABS\b|MATE\s*ABS|GRANILHADO\s*ABS|GRANILHAD/.test(raw),
+    semiderrapante: /GOTEJAD|SEMIDERRAP/.test(raw) && !/GRANILHAD/.test(raw),
     mate: /\bMATE\b|\bMAT\b|ACETINAD/.test(raw),
     brilhante: /BRILH/.test(raw),
     polido: /RT\s*POLIDO|\bPOLIDO\b/.test(raw),
@@ -79,14 +79,16 @@ export function classificarFormigres(input = {}) {
   if (/PROTETIVA\s*ADERENTE|GRANILHADO\s*ABS|MATE\s*ABS/.test(textoAcab)
     || (/\bABS\b/.test(textoAcab) && /GRANILHAD|MATE|EXT/.test(textoAcab))
     || /ADERENTE/.test(textoAcab)
+    || acab === 'GRANILHADO'
+    || /GRANILHAD/.test(textoAcab)
     || hints.antiderrapante) {
     subtipo = 'antiderrapante';
-    motivo = acab ? `acabamento ${acab}` : 'hint descrição (aderente/ABS)';
-  } else if (acab === 'GRANILHADO' || acab === 'GOTEJADO'
-    || (/GRANILHAD|GOTEJAD/.test(titulo) && !/\bABS\b/.test(textoAcab))
+    motivo = acab ? `acabamento ${acab}` : 'hint descrição (aderente/ABS/granilhado)';
+  } else if (acab === 'GOTEJADO'
+    || (/GOTEJAD/.test(titulo) && !/\bABS\b/.test(textoAcab))
     || hints.semiderrapante) {
     subtipo = 'semiderrapante';
-    motivo = acab ? `acabamento ${acab}` : 'hint descrição (granilhado/gotejado)';
+    motivo = acab ? `acabamento ${acab}` : 'hint descrição (gotejado)';
   } else if (acab === 'BRILHANTE' || acab === 'MATE' || hints.mate || hints.brilhante) {
     subtipo = 'lisa';
     if (acab === 'MATE' || hints.mate) varianteLisa = 'mate';

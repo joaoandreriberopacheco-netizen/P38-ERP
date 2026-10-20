@@ -50,8 +50,8 @@ export function classificarArielle(input = {}) {
     subtipo = 'antiderrapante';
     motivo = acab ? `superfície ${acab}` : 'granilhado ABS';
   } else if (acab === 'GRANILHADO' || acab.includes('GRANILH')) {
-    subtipo = 'semiderrapante';
-    motivo = acab ? `superfície ${acab}` : 'granilhado';
+    subtipo = 'antiderrapante';
+    motivo = acab ? `superfície ${acab}` : 'granilhado (antiderrapante)';
   } else if (acab === 'BRILHANTE' || acab === 'MATE') {
     subtipo = 'lisa';
     varianteLisa = acab === 'MATE' ? 'mate' : 'brilhante';

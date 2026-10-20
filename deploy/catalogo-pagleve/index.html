@@ -2601,8 +2601,8 @@
       return PEI_USO_CLASSES.indexOf(t) >= 0;
     }
     function inferTexturaBlobPagLeve(blob) {
-      if (/\bantiderrap/.test(blob)) return 'antiderrapante';
-      if (/\bsemiderrap/.test(blob) || /\bprotetiva\b/.test(blob) || /\baderente\b/.test(blob) || /\bgranilh/.test(blob) || /\bgotej/.test(blob) || /\bmre\b/.test(blob)) {
+      if (/\bantiderrap/.test(blob) || /\bgranilh/.test(blob)) return 'antiderrapante';
+      if (/\bsemiderrap/.test(blob) || /\bprotetiva\b/.test(blob) || /\baderente\b/.test(blob) || /\bgotej/.test(blob) || /\bmre\b/.test(blob)) {
         return 'semiderrapante';
       }
       if (/\bmate\b/.test(blob) || /\bacetinad/.test(blob)) return 'mate';
@@ -2618,11 +2618,14 @@
         (item.descricao || '') + ' ' + (item.formigres_titulo || '') + ' ' + (item.rotulo || '') + ' ' + (item.subtipo || ''),
       );
       const inferred = !label ? inferTexturaBlobPagLeve(blob) : '';
-      if (label.includes('antiderrap') || item.subtipo === 'antiderrapante' || inferred === 'antiderrapante') return 'Antiderrapante';
+      if (
+        label.includes('antiderrap') || label.includes('granilh')
+        || item.subtipo === 'antiderrapante' || inferred === 'antiderrapante'
+      ) return 'Antiderrapante';
       if (
         label.includes('semiderrap') || item.subtipo === 'semiderrapante'
         || label.includes('protetiva') || label.includes('aderente')
-        || label.includes('granilh') || label.includes('gotej')
+        || label.includes('gotej')
         || /\bmre\b/.test(blob) || inferred === 'semiderrapante'
       ) return 'Semiderrapante · Protetiva · MRE';
       if (label.includes('mate') || label.includes('acetinad') || inferred === 'mate') return 'Mate · Acetinado';

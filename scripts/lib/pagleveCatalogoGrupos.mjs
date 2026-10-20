@@ -50,8 +50,8 @@ export function formatoTreeKeyPagLeve(fmt = '') {
  * @param {{ acabamento_label?: string, formigres_acabamento?: string, descricao?: string, formigres_titulo?: string, rotulo?: string, subtipo?: string, linha?: string }} item
  */
 function inferTexturaFromBlob(blob = '') {
-  if (/\bantiderrap/.test(blob)) return 'antiderrapante';
-  if (/\bsemiderrap/.test(blob) || /\bprotetiva\b/.test(blob) || /\baderente\b/.test(blob) || /\bgranilh/.test(blob) || /\bgotej/.test(blob) || /\bmre\b/.test(blob)) {
+  if (/\bantiderrap/.test(blob) || /\bgranilh/.test(blob)) return 'antiderrapante';
+  if (/\bsemiderrap/.test(blob) || /\bprotetiva\b/.test(blob) || /\baderente\b/.test(blob) || /\bgotej/.test(blob) || /\bmre\b/.test(blob)) {
     return 'semiderrapante';
   }
   if (/\bmate\b/.test(blob) || /\bacetinad/.test(blob)) return 'mate';
@@ -68,7 +68,12 @@ export function acabamentoGrupoPagLeve(item = {}) {
   );
   const inferred = !label ? inferTexturaFromBlob(blob) : '';
 
-  if (label.includes('antiderrap') || item.subtipo === 'antiderrapante') {
+  if (
+    label.includes('antiderrap') ||
+    label.includes('granilh') ||
+    item.subtipo === 'antiderrapante' ||
+    inferred === 'antiderrapante'
+  ) {
     return 'Antiderrapante';
   }
   if (
@@ -76,9 +81,9 @@ export function acabamentoGrupoPagLeve(item = {}) {
     item.subtipo === 'semiderrapante' ||
     label.includes('protetiva') ||
     label.includes('aderente') ||
-    label.includes('granilh') ||
     label.includes('gotej') ||
-    /\bmre\b/.test(blob)
+    /\bmre\b/.test(blob) ||
+    inferred === 'semiderrapante'
   ) {
     return 'Semiderrapante · Protetiva · MRE';
   }
@@ -91,9 +96,6 @@ export function acabamentoGrupoPagLeve(item = {}) {
   if (label.includes('polid') || item.linha === 'polida' || item.subtipo === 'polida' || inferred === 'polido') {
     return 'Polido';
   }
-  if (inferred === 'antiderrapante') return 'Antiderrapante';
-  if (inferred === 'semiderrapante') return 'Semiderrapante · Protetiva · MRE';
-
   if (rawLabel && !isClasseUsoPei(rawLabel)) return rawLabel;
   return 'Outros';
 }
