@@ -21,8 +21,6 @@ import {
   buildCatalogTourFabHtml,
   buildCatalogTourHtml,
 } from '../lib/catalogoTour.mjs';
-import { loadPrecosSiah, resolvePrecoSiah } from '../lib/paglevePrecosSiah.mjs';
-import { PEI_USO_CLASSES, extrairClassificacaoPei, isClasseUsoPei } from '../lib/paglevePeiResistencia.mjs';
 
 const ROOT = process.cwd();
 const args = process.argv.slice(2);
@@ -151,7 +149,6 @@ const CONFIGS = {
     qtyKey: 'pagleve-catalog-qty-v1',
     descontoKey: 'pagleve-catalog-desconto-v1',
     groupKey: 'pagleve-catalog-group-v1',
-    tourKey: 'pagleve-catalog-tour-v1',
     classifError: 'JSON de classificação não encontrado. Rode: npm run catalogo:classificar-pagleve',
     skin: 'pagleve',
     siteSub: 'Estoque Novo Aleixo · Catálogo B2B',
@@ -261,6 +258,19 @@ const ARIELLE_ACAB_ORDER = [
 ];
 
 const PAGLEVE_ACAB_ORDER = [
+  'Polido',
+  'Polida',
+  'Brilhante',
+  'Mate',
+  'Acetinado',
+  'Granilhado',
+  'Gotejado',
+  'Protetiva aderente',
+  'Sem acabamento',
+];
+
+/** Balde de textura para filtro PagLeve (separado de marca). */
+const PAGLEVE_TEXTURA_GRUPO_ORDER = [
   'Brilhante · Esmaltado',
   'Mate · Acetinado',
   'Semiderrapante · Protetiva · MRE',
@@ -386,22 +396,6 @@ async function buildPdfThumbMap(itens) {
   return map;
 }
 
-function applyPrecosPagLeveItens(itens) {
-  const precos = loadPrecosSiah();
-  if (!precos) return itens;
-  return itens.map((item) => {
-    if (item.preco_m2 != null && Number(item.preco_m2) > 0) return item;
-    const hit = resolvePrecoSiah(item, precos);
-    if (hit.preco_m2 == null) return item;
-    return {
-      ...item,
-      preco_m2: hit.preco_m2,
-      preco_fonte: item.preco_fonte || hit.fonte || '',
-      codigo_siah: item.codigo_siah || hit.codigo_siah || '',
-    };
-  });
-}
-
 function enrichItens(itens, snapshot, cfg = CFG) {
   const byId = new Map((snapshot?.produtos || []).map((p) => [String(p.id), p]));
   const useCarmelo = cfg.skin === 'arielle';
@@ -465,13 +459,11 @@ function slimItem(item) {
     variante_lisa: item.variante_lisa,
     formigres_id: item.formigres_id || '',
     formigres_titulo: item.formigres_titulo || '',
-    catalogo_nome_modelo: item.catalogo_nome_modelo || '',
     formigres_acabamento: item.formigres_acabamento || '',
     acabamento_label: item.acabamento_label || '',
     marca_nome: item.marca_nome || '',
     fabricante_grupo: item.fabricante_grupo || '',
     referencia: item.referencia || '',
-    pei_uso: item.pei_uso || extrairClassificacaoPei(item.descricao) || extrairClassificacaoPei(item.referencia) || '',
     gemeas: (item.gemeas || []).map((g) => ({
       codigo: String(g.codigo),
       marca: g.marca || '—',
@@ -1062,7 +1054,6 @@ const PAGLEVE_SKIN_CSS = `
     html[data-skin="pagleve"] .acc-title.linha-bold,
     html[data-skin="pagleve"] .acc-title.linha-retificada,
     html[data-skin="pagleve"] .acc-title.linha-polida { color: var(--pl-purple); }
-    html[data-skin="pagleve"] .acc-reguas > summary .acc-title { color: var(--pl-green-deep); }
     html[data-skin="pagleve"] .load-overlay { background: rgba(112, 45, 145, 0.06); }
     html[data-skin="pagleve"] .load-logo-pagleve {
       width: min(220px, 62vw);
@@ -1090,53 +1081,16 @@ const PAGLEVE_SKIN_CSS = `
       background: linear-gradient(90deg, #3d1a52 0%, #2a1038 100%);
       border-bottom-color: var(--pl-green);
     }
-    /* Colunas alinhadas entre acordeões (Mate / Acetinado / …) — mesma grelha em cada tabela */
-    html[data-skin="pagleve"] table.model-table-pagleve-retail {
-      table-layout: fixed;
-      width: 100%;
-      min-width: 720px;
-    }
-    html[data-skin="pagleve"] table.model-table-pagleve-retail col.col-foto { width: 58px; }
-    html[data-skin="pagleve"] table.model-table-pagleve-retail col.col-modelo { width: 38%; }
-    html[data-skin="pagleve"] table.model-table-pagleve-retail col.col-pack { width: 22%; }
-    html[data-skin="pagleve"] table.model-table-pagleve-retail col.col-preco { width: 10%; }
-    html[data-skin="pagleve"] table.model-table-pagleve-retail col.col-qty { width: 72px; }
-    html[data-skin="pagleve"] table.model-table-pagleve-retail .col-pack {
-      text-align: left;
-      white-space: normal;
-      line-height: 1.3;
-      font-size: .72rem;
-    }
-    html[data-skin="pagleve"] table.model-table-pagleve-retail .col-pack-marca {
-      display: block;
-      margin-top: .2rem;
-      font-size: .66rem;
+    html[data-skin="pagleve"] .col-marca,
+    html[data-skin="pagleve"] .col-grupo {
+      font-size: .74rem;
       color: var(--muted);
-      font-weight: 500;
+      white-space: nowrap;
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-    html[data-skin="pagleve"] table.model-table-pagleve-retail .col-preco {
-      text-align: right;
-    }
-    html[data-skin="pagleve"] .model-subtitulo {
-      display: block;
-      margin-top: .2rem;
-      font-size: .82rem;
-      font-weight: 600;
-      line-height: 1.35;
-      color: var(--text);
-      letter-spacing: .01em;
-    }
-    html[data-skin="pagleve"] .col-modelo strong.model-nome-principal {
-      font-size: .95rem;
-      font-weight: 700;
-      letter-spacing: .02em;
-    }
-    html[data-skin="pagleve"] .col-modelo small.model-codigo {
-      display: block;
-      margin-top: .25rem;
-      font-size: .72rem;
-      color: var(--muted);
-    }
+    html[data-skin="pagleve"] .col-grupo { max-width: 140px; }
     html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th {
       text-align: center;
       vertical-align: middle;
@@ -1157,111 +1111,26 @@ const PAGLEVE_SKIN_CSS = `
       margin-left: auto;
       margin-right: auto;
     }
-    html[data-skin="pagleve"] .catalog-card.pedido-card {
-      border-bottom: 1px solid var(--border-subtle);
-      max-width: 100%;
-      overflow: hidden;
-      box-sizing: border-box;
-    }
-    html[data-skin="pagleve"] .catalog-card.pedido-card:last-child { border-bottom: 0; }
-    html[data-skin="pagleve"] .catalog-card-thumb-btn {
-      flex-shrink: 0;
-      padding: 0;
-      border: 0;
-      background: transparent;
-      cursor: pointer;
-      line-height: 0;
-      display: block;
-    }
-    html[data-skin="pagleve"] .catalog-card-thumb-btn .pedido-card-thumb { display: block; }
-    html[data-skin="pagleve"] .catalog-card-qty-edit {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-      min-width: 52px;
-    }
-    html[data-skin="pagleve"] .catalog-card-qty-label {
-      font-size: .58rem;
-      font-weight: 600;
-      letter-spacing: .06em;
-      text-transform: uppercase;
-      color: var(--muted);
-      line-height: 1;
-    }
-    html[data-skin="pagleve"] .catalog-card-qty-edit .qty-input {
-      width: 52px;
-      min-width: 0;
-      min-height: 36px;
-      text-align: center;
-      font-size: .92rem;
-      font-weight: 700;
-      padding: 4px 2px;
-    }
-    html[data-skin="pagleve"] .catalog-card .pedido-card-qty-sub {
-      font-size: .58rem;
-      line-height: 1.25;
-      color: var(--muted);
-      font-weight: 500;
-    }
-    html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .catalog-card-qty-edit {
-      justify-self: center;
-      align-self: start;
-    }
     @media (max-width: 720px) {
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-head {
-        align-items: stretch;
-        column-gap: 12px;
+      html[data-skin="pagleve"] .col-marca,
+      html[data-skin="pagleve"] .col-grupo,
+      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(3),
+      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(4) { display: none; }
+      html[data-skin="pagleve"] .col-qty,
+      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(7) {
+        position: sticky;
+        right: 0;
+        background: var(--surface);
+        z-index: 1;
+        width: 58px;
+        min-width: 58px;
+        padding-left: 4px;
+        padding-right: 4px;
+        box-shadow: -4px 0 6px rgba(0,0,0,.05);
       }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .catalog-card-thumb-btn,
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-thumb,
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-thumb-empty {
-        width: 80px;
-        height: 80px;
-        border-radius: 10px;
-        object-fit: cover;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-head-main {
-        grid-template-columns: minmax(0, 1fr) auto minmax(76px, auto);
-        grid-template-rows: auto auto;
-        row-gap: 8px;
-        column-gap: 10px;
-        align-content: space-between;
-        min-height: 80px;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-desc {
-        grid-column: 1 / -1;
-        align-self: start;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .catalog-card-qty-edit {
-        grid-column: 2;
-        grid-row: 2;
-        align-self: end;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-total {
-        grid-column: 3;
-        grid-row: 2;
-        align-self: end;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .catalog-card-qty-edit .qty-input {
-        width: 56px;
-        min-height: 40px;
-        font-size: .95rem;
-        font-weight: 700;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .catalog-card-qty-label {
-        font-size: .58rem;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-qty-sub {
-        font-size: .78rem;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-title.pedido-card-hero {
-        font-size: .88rem;
-        line-height: 1.2;
-      }
-      html[data-skin="pagleve"] .catalog-card.catalog-card-pagleve .pedido-card-meta {
-        font-size: .72rem;
-        margin-top: 3px;
+      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(7) {
+        background: var(--surface-2);
+        z-index: 2;
       }
     }
     html[data-skin="pagleve"] .pagleve-catalog-filter {
@@ -1269,6 +1138,87 @@ const PAGLEVE_SKIN_CSS = `
       min-width: 0;
       max-width: 156px;
       font-size: .74rem;
+    }
+    html[data-skin="pagleve"] .pagleve-marca-filter {
+      position: relative;
+      flex: 1 1 120px;
+      min-width: 0;
+    }
+    html[data-skin="pagleve"] .pagleve-marca-filter-btn {
+      width: 100%;
+      justify-content: center;
+      gap: 6px;
+      font-size: .74rem;
+      padding: 8px 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    html[data-skin="pagleve"] .pagleve-marca-filter-btn.active {
+      border-color: var(--pl-purple);
+      color: var(--pl-purple-deep);
+      background: var(--accent-muted);
+    }
+    html[data-skin="pagleve"] .pagleve-filter-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: 999px;
+      font-size: .65rem;
+      font-weight: 700;
+      background: var(--pl-purple);
+      color: #fff;
+      line-height: 1;
+    }
+    html[data-skin="pagleve"] .pagleve-marca-panel {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      z-index: 50;
+      min-width: min(280px, calc(100vw - 28px));
+      max-height: min(52vh, 320px);
+      overflow: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 8px 0 6px;
+    }
+    html[data-skin="pagleve"] .pagleve-marca-panel[hidden] { display: none !important; }
+    html[data-skin="pagleve"] .pagleve-marca-panel-head {
+      display: flex;
+      gap: 6px;
+      padding: 0 10px 8px;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 4px;
+    }
+    html[data-skin="pagleve"] .pagleve-marca-panel-head .btn {
+      flex: 1;
+      padding: 6px 8px;
+      font-size: .7rem;
+    }
+    html[data-skin="pagleve"] .pagleve-marca-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: .78rem;
+      line-height: 1.3;
+    }
+    html[data-skin="pagleve"] .pagleve-marca-option:hover { background: var(--accent-muted); }
+    html[data-skin="pagleve"] .pagleve-marca-option input {
+      margin-top: 2px;
+      flex-shrink: 0;
+      accent-color: var(--pl-purple);
+    }
+    html[data-skin="pagleve"] .pagleve-marca-option span {
+      min-width: 0;
+      word-break: break-word;
     }
     @media (max-width: 720px) {
       html[data-skin="pagleve"] .toolbar-main {
@@ -1279,9 +1229,17 @@ const PAGLEVE_SKIN_CSS = `
         flex: 1 1 100%;
         min-width: 0;
       }
-      html[data-skin="pagleve"] .toolbar-main .pagleve-catalog-filter {
+      html[data-skin="pagleve"] .toolbar-main .pagleve-catalog-filter,
+      html[data-skin="pagleve"] .toolbar-main .pagleve-marca-filter {
         flex: 1 1 calc(50% - 6px);
         max-width: none;
+      }
+    }
+    @media (max-width: 480px) {
+      html[data-skin="pagleve"] .col-qty,
+      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(7) {
+        width: 54px;
+        min-width: 54px;
       }
     }
 `;
@@ -1313,7 +1271,14 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
   const isPagleveSkin = cfg.skin === 'pagleve';
   const pagleveCatalogFiltersHtml = isPagleveSkin
     ? '<select id="filter-textura" class="select-group pagleve-catalog-filter" title="Filtrar por textura"><option value="">Textura: todas</option></select>'
-      + '<select id="filter-pei" class="select-group pagleve-catalog-filter" title="Filtrar por classificação de uso PEI"><option value="">Uso PEI: todos</option></select>'
+      + '<div class="pagleve-marca-filter" id="filter-marca-wrap">'
+      + '<button type="button" class="btn pagleve-marca-filter-btn" id="filter-marca-btn" aria-expanded="false" aria-haspopup="listbox">'
+      + 'Marcas <span class="pagleve-filter-badge" id="filter-marca-badge" hidden></span></button>'
+      + '<div class="pagleve-marca-panel" id="filter-marca-panel" hidden role="listbox" aria-multiselectable="true" aria-label="Filtrar por marca">'
+      + '<div class="pagleve-marca-panel-head">'
+      + '<button type="button" class="btn" id="filter-marca-clear">Limpar</button>'
+      + '<button type="button" class="btn" id="filter-marca-all">Todas</button>'
+      + '</div><div class="pagleve-marca-options" id="filter-marca-options"></div></div></div>'
     : '';
   const qtyLabel = cfg.qtyLabel || (isB2bSkin ? 'Paletes' : 'Caixas');
   const qtyLabelPl = cfg.qtyLabelPl || (isB2bSkin ? 'paletes' : 'caixas');
@@ -1321,9 +1286,6 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
   const pedidoTableColgroup = isB2bSkin
     ? '<colgroup><col class="col-foto"><col class="col-modelo"><col class="col-qty"><col class="col-m2"><col class="col-cx"><col class="col-peso"><col class="col-emb"><col class="col-preco"><col class="col-sub"></colgroup>'
     : '<colgroup><col class="col-foto"><col class="col-modelo"><col class="col-qty"><col class="col-m2u"><col class="col-m2"><col class="col-preco"><col class="col-sub"></colgroup>';
-  const pagleveRetailColgroup = isPagleveSkin
-    ? '<colgroup><col class="col-foto"><col class="col-modelo"><col class="col-pack"><col class="col-preco"><col class="col-qty"></colgroup>'
-    : '';
   const pedidoTableHead = isB2bSkin
     ? '<th class="pedido-col-foto">Foto</th><th class="pedido-col-modelo">Modelo</th><th class="pedido-col-qty">Paletes</th><th class="pedido-col-num">m² total</th><th class="pedido-col-num">Caixas</th><th class="pedido-col-num">Peso</th><th class="pedido-col-emb">Por palete</th><th class="pedido-col-num">Preço/m²</th><th class="pedido-col-num col-subtotal">Subtotal</th>'
     : '<th class="pedido-col-foto">Foto</th><th class="pedido-col-modelo">Modelo</th><th class="pedido-col-qty">Caixas</th><th class="pedido-col-num">m²/cx</th><th class="pedido-col-num">m² total</th><th class="pedido-col-num">Preço/m²</th><th class="pedido-col-num col-subtotal">Subtotal</th>';
@@ -1384,8 +1346,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       fabricanteNome: cfg.fabricanteNome || 'Formigres',
     })
     : '';
-  const catalogTourEnabled = isB2bSkin || isPagleveSkin;
-  const catalogTourJs = catalogTourEnabled
+  const catalogTourJs = isB2bSkin
     ? buildCatalogTourClientJs({ tourKey: cfg.tourKey, skin: cfg.skin, qtyLabelPl })
     : '';
   const regimePanelHtml = isB2bSkin
@@ -1534,7 +1495,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     html[data-theme="light"] .load-overlay { background: rgba(242,242,240,.97); }
     ${isB2bSkin ? buildBrandSkinCss(cfg.skin) : ''}
     ${isPagleveSkin ? PAGLEVE_SKIN_CSS : ''}
-    ${catalogTourEnabled ? buildCatalogTourCss(cfg.skin) : ''}
+    ${isB2bSkin ? buildCatalogTourCss(cfg.skin) : ''}
     .load-logo-ant {
       position: relative;
       width: min(200px, 58vw);
@@ -2801,22 +2762,14 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       .pedido-cards-wrap { display: block; overflow-x: hidden; max-width: 100%; }
       .pedido-cards { overflow-x: hidden; max-width: 100%; }
       .pedido-card { max-width: 100%; overflow: hidden; box-sizing: border-box; }
-      html[data-skin="formigres"] .catalog-table-wrap,
-      html[data-skin="pagleve"] .catalog-table-wrap { display: none !important; }
+      html[data-skin="formigres"] .catalog-table-wrap { display: none !important; }
       html[data-skin="formigres"] .catalog-cards-wrap {
         display: block;
         padding: 0 0 10px;
         overflow-x: hidden;
         max-width: 100%;
       }
-      html[data-skin="pagleve"] .catalog-cards-wrap {
-        display: block;
-        padding: 0 14px 10px;
-        overflow-x: hidden;
-        max-width: 100%;
-      }
-      html[data-skin="formigres"] .acc-inner,
-      html[data-skin="pagleve"] .acc-inner {
+      html[data-skin="formigres"] .acc-inner {
         padding-left: 0;
         padding-right: 0;
       }
@@ -2824,26 +2777,21 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         --depth: 2;
       }
       html[data-skin="formigres"] details.acc > .catalog-items,
-      html[data-skin="formigres"] .catalog-items,
-      html[data-skin="pagleve"] details.acc > .catalog-items,
-      html[data-skin="pagleve"] .catalog-items {
+      html[data-skin="formigres"] .catalog-items {
         padding-left: 0;
         padding-right: 0;
       }
       html[data-skin="formigres"] .model-gemeas-detail-card {
         padding: 0 0 10px;
       }
-      html[data-skin="formigres"] .catalog-cards,
-      html[data-skin="pagleve"] .catalog-cards {
+      html[data-skin="formigres"] .catalog-cards {
         display: flex;
         flex-direction: column;
         overflow-x: hidden;
         max-width: 100%;
       }
       html[data-skin="formigres"] .wrap,
-      html[data-skin="formigres"] .catalogo,
-      html[data-skin="pagleve"] .wrap,
-      html[data-skin="pagleve"] .catalogo { overflow-x: hidden; max-width: 100%; }
+      html[data-skin="formigres"] .catalogo { overflow-x: hidden; max-width: 100%; }
       .pedido-card-head { column-gap: 8px; }
       .pedido-card-head-main { column-gap: 8px; }
       .pedido-card-hero { font-size: .82rem; font-weight: 700; line-height: 1.15; }
@@ -3003,7 +2951,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
 
     <div class="toolbar">
       <div class="toolbar-main">
-        <input id="search" class="search" type="search" placeholder="${isPagleveSkin ? 'Código, modelo, formato ou PEI (ex.: LA)…' : 'Código, modelo ou formato (ex.: 45x45)…'}" />
+        <input id="search" class="search" type="search" placeholder="${isPagleveSkin ? 'Código, modelo, formato ou marca…' : 'Código, modelo ou formato (ex.: 45x45)…'}" />
         ${pagleveCatalogFiltersHtml}
         <button type="button" class="btn btn-icon btn-clear-qty" id="clear-qty-main" aria-label="Limpar seleção" title="Limpar seleção">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -3046,7 +2994,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
 
   ${themeToggleHtml}
 
-  ${catalogTourEnabled ? buildCatalogTourFabHtml() : ''}
+  ${isB2bSkin ? buildCatalogTourFabHtml() : ''}
 
   <div class="fab-stack" id="fab-stack">
     <button type="button" class="fab cart-fab" id="cart-fab" aria-label="Minha seleção">
@@ -3096,7 +3044,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
   </div>
 
   ${regimeDialogHtml}
-  ${catalogTourEnabled ? buildCatalogTourHtml() : ''}
+  ${isB2bSkin ? buildCatalogTourHtml() : ''}
 
   <div id="pedido-print"></div>
 
@@ -3152,6 +3100,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     const PDF_TITLE = '${escTpl(cfg.h1)}';
     const CATALOG_SKIN = '${escTpl(cfg.skin || 'default')}';
+    const PAGLEVE_TEXTURA_GRUPO_ORDER = ${JSON.stringify(PAGLEVE_TEXTURA_GRUPO_ORDER)};
     const QTY_UNIT = CFG.qtyUnit || 'caixa';
     const QTY_LABEL = CFG.qtyLabel || 'Caixas';
     const QTY_LABEL_PL = CFG.qtyLabelPl || 'caixas';
@@ -3161,11 +3110,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     const DESCONTO_KEY = '${cfg.descontoKey}';
     const REGIME_KEY = '${cfg.regimeKey || ''}';
     const IS_B2B_CATALOG = ${isB2bSkin};
-    const USE_MOBILE_CATALOG_CARDS = IS_B2B_CATALOG || CATALOG_SKIN === 'pagleve';
     ${suframaClientJs ? `${suframaClientJs}\n    ` : ''}const GROUP_KEY = '${cfg.groupKey}';
     const PEDIDO_TABLE_COLGROUP_HTML = ${JSON.stringify(pedidoTableColgroup)};
-    const PAGLEVE_RETAIL_COLGROUP_HTML = ${JSON.stringify(pagleveRetailColgroup)};
-    const PEI_USO_CLASSES = ${JSON.stringify(PEI_USO_CLASSES)};
     const PEDIDO_TABLE_HEAD_HTML = ${JSON.stringify(pedidoTableHead)};
     const CATALOG_TABLE_COLGROUP_HTML = PEDIDO_TABLE_COLGROUP_HTML;
     const CATALOG_TABLE_HEAD_HTML = PEDIDO_TABLE_HEAD_HTML;
@@ -3400,8 +3346,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return 'formato-acabamento';
     }
     let filterQtyOnly = false;
-    let filterPeiUso = '';
     let filterTexturaGrupo = '';
+    let filterMarcasSelected = new Set();
+    let pagLeveMarcaCatalog = [];
     let pedidoOpen = false;
     let pedidoPdfSheetOpen = false;
     let dom = {};
@@ -3762,175 +3709,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       if (fa !== fb) return fa - fb;
       return String(a || '').localeCompare(String(b || ''), 'pt-BR');
     }
-    function parseFormatoTreeKey(key) {
-      const s = String(key || '');
-      if (s.startsWith('regua:')) return { isRegua: true, fmt: s.slice(6) };
-      return { isRegua: false, fmt: s };
-    }
-    function compareFormatoTreeKey(a, b) {
-      const pa = parseFormatoTreeKey(a);
-      const pb = parseFormatoTreeKey(b);
-      if (pa.isRegua !== pb.isRegua) return pa.isRegua ? 1 : -1;
-      return compareFormato(pa.fmt, pb.fmt);
-    }
-    function isReguaFormato(fmt) {
-      const m = String(fmt || '').match(/(\\d+)\\s*[x×]\\s*(\\d+)/i);
-      if (!m) return false;
-      const a = Number(m[1]);
-      const b = Number(m[2]);
-      if (!a || !b) return false;
-      const min = Math.min(a, b);
-      const max = Math.max(a, b);
-      return min / max <= 1 / 3;
-    }
-    function formatoTreeKey(fmt) {
-      const raw = String(fmt || '—').trim();
-      if (!raw || raw === '—') return '—';
-      const norm = raw.replace(/×/gi, 'x').toLowerCase();
-      return isReguaFormato(norm) ? 'regua:' + norm : norm;
-    }
-    function normPagLeveBlob(s) {
-      return String(s || '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase();
-    }
-    function isPeiUsoClasse(token) {
-      const t = String(token || '').trim().toUpperCase().replace(/^PEI\\s+/, '');
-      return PEI_USO_CLASSES.indexOf(t) >= 0;
-    }
-    function peiClasseFromItem(item) {
-      const direct = String(item.pei_uso || '').trim().toUpperCase();
-      if (direct && isPeiUsoClasse(direct)) return direct;
-      const ref = String(item.referencia || '');
-      const mRef = ref.match(/PEI\\s+(LEI|LCI|LA|LB|LC|LD|LE)/i);
-      if (mRef) return mRef[1].toUpperCase();
-      const d = String(item.descricao || '').toUpperCase();
-      const mDesc = d.match(/\\bPEI\\s+(LEI|LCI|LA|LB|LC|LD|LE)\\b/);
-      if (mDesc) return mDesc[1];
-      return '';
-    }
-    function inferTexturaBlobPagLeve(blob) {
-      if (/\\bantiderrap/.test(blob)) return 'antiderrapante';
-      if (/\\bsemiderrap/.test(blob) || /\\bprotetiva\\b/.test(blob) || /\\baderente\\b/.test(blob) || /\\bgranilh/.test(blob) || /\\bgotej/.test(blob) || /\\bmre\\b/.test(blob)) {
-        return 'semiderrapante';
-      }
-      if (/\\bmate\\b/.test(blob) || /\\bacetinad/.test(blob)) return 'mate';
-      if (/\\bbrilh/.test(blob) || /\\besmalt/.test(blob)) return 'brilhante';
-      if (/\\bpolid/.test(blob) || /\\brt\\s*polid/.test(blob)) return 'polido';
-      return '';
-    }
-    function texturaAcabamentoDisplay(item) {
-      const raw = String(item.acabamento_label || item.formigres_acabamento || '').trim();
-      if (raw && !isPeiUsoClasse(raw)) return raw;
-      const blob = normPagLeveBlob((item.descricao || '') + ' ' + (item.rotulo || '') + ' ' + (item.subtipo || ''));
-      const inferred = inferTexturaBlobPagLeve(blob);
-      if (inferred === 'mate') return 'Mate';
-      if (inferred === 'brilhante') return 'Brilhante';
-      if (inferred === 'polido') return 'Polido';
-      if (inferred === 'antiderrapante') return 'Antiderrapante';
-      if (inferred === 'semiderrapante') return 'Semiderrapante';
-      return '';
-    }
-    function catalogAcabGrupo(item) {
-      if (CATALOG_SKIN !== 'pagleve') return catalogAcabKey(item);
-      const rawLabel = String(item.acabamento_label || item.formigres_acabamento || '').trim();
-      const label = isPeiUsoClasse(rawLabel) ? '' : normPagLeveBlob(rawLabel);
-      const blob = normPagLeveBlob(
-        (item.descricao || '') + ' ' + (item.formigres_titulo || '') + ' ' + (item.rotulo || '') + ' ' + (item.subtipo || ''),
-      );
-      const inferred = !label ? inferTexturaBlobPagLeve(blob) : '';
-      if (label.includes('antiderrap') || item.subtipo === 'antiderrapante' || inferred === 'antiderrapante') return 'Antiderrapante';
-      if (
-        label.includes('semiderrap') || item.subtipo === 'semiderrapante'
-        || label.includes('protetiva') || label.includes('aderente')
-        || label.includes('granilh') || label.includes('gotej')
-        || /\\bmre\\b/.test(blob) || inferred === 'semiderrapante'
-      ) return 'Semiderrapante · Protetiva · MRE';
-      if (label.includes('mate') || label.includes('acetinad') || inferred === 'mate') return 'Mate · Acetinado';
-      if (label.includes('brilh') || label.includes('esmalt') || inferred === 'brilhante') return 'Brilhante · Esmaltado';
-      if (label.includes('polid') || item.linha === 'polida' || item.subtipo === 'polida' || inferred === 'polido') return 'Polido';
-      if (rawLabel && !isPeiUsoClasse(rawLabel)) return rawLabel;
-      return 'Outros';
-    }
-    function countItensFormatoMap(fmtMap) {
-      return Object.keys(fmtMap).reduce((s, ac) => s + fmtMap[ac].length, 0);
-    }
-    function isPlaceholderTitulo(text) {
-      const t = String(text || '').trim().toLowerCase();
-      return t.startsWith('(ver descri');
-    }
-    function itemNomeModelo(item) {
-      const n = String(item.catalogo_nome_modelo || item.modelo || '').trim();
-      if (n && !isPlaceholderTitulo(n)) return n;
-      const sub = String(item.formigres_titulo || '').trim();
-      if (sub && !isPlaceholderTitulo(sub)) return sub.split('·')[0].trim();
-      return item.descricao || '';
-    }
-    function itemSubtitulo(item) {
-      const sub = String(item.formigres_titulo || '').trim();
-      if (sub && !isPlaceholderTitulo(sub)) return sub;
-      return '';
-    }
     function itemTitulo(item) {
-      if (CATALOG_SKIN === 'pagleve') {
-        const nome = itemNomeModelo(item);
-        const sub = itemSubtitulo(item);
-        if (nome && sub) return nome + ' ' + sub;
-        if (sub) return sub;
-        return nome || item.descricao || '';
-      }
-      const ft = String(item.formigres_titulo || '').trim();
-      if (ft && !isPlaceholderTitulo(ft)) return ft;
-      return item.descricao || ft || '';
-    }
-    function renderPagLeveModeloCell(item, cod, warn) {
-      const nome = itemNomeModelo(item);
-      const sub = itemSubtitulo(item);
-      const codStr = cod != null ? cod : item.codigo_tintao;
-      const nomeHtml = '<strong class="model-nome-principal">' + esc(nome || sub || '—') + '</strong>';
-      const subHtml = sub && nome && sub !== nome
-        ? '<span class="model-subtitulo">' + esc(sub) + '</span>'
-        : (sub && !nome ? '<span class="model-subtitulo">' + esc(sub) + '</span>' : '');
-      return nomeHtml + subHtml + (warn || '') + '<small class="model-codigo">#' + esc(codStr) + '</small>';
-    }
-    function pagLeveMarcaNome(item) {
-      const m = String(item.marca_nome || '').trim();
-      return m || '';
-    }
-    function pagLevePackCellHtml(item, pack) {
-      const marca = pagLeveMarcaNome(item);
-      if (!marca) return esc(pack);
-      return esc(pack) + '<span class="col-pack-marca">' + esc(marca) + '</span>';
-    }
-    function renderPagLeveCatalogTitleBlock(item, cod, warn) {
-      const nome = itemNomeModelo(item);
-      const sub = itemSubtitulo(item);
-      const titleText = nome || sub || '—';
-      const titleHtml = '<div class="pedido-card-title pedido-card-hero">' + esc(titleText) + (warn || '') + '</div>';
-      const metaParts = [];
-      const codStr = cod != null ? cod : item.codigo_tintao;
-      if (codStr) metaParts.push('#' + esc(codStr));
-      const fmt = String(item.formato || '').trim();
-      if (fmt) metaParts.push(esc(fmt));
-      const acab = texturaAcabamentoDisplay(item);
-      if (acab) metaParts.push(esc(acab));
-      const pei = peiClasseFromItem(item);
-      if (pei) metaParts.push('PEI ' + esc(pei));
-      const metaHtml = metaParts.length
-        ? '<div class="pedido-card-meta">' + metaParts.join(' · ') + '</div>'
-        : '';
-      return titleHtml + metaHtml;
-    }
-    function pagLeveCatalogSpecCells(item, pack, m2unit, m2tot, precoOpts) {
-      const cells = [
-        { label: 'Preço/m²', preco: true, html: fmtPrecoHtml(item.preco_m2, precoOpts || null) },
-        { label: 'm²/cx', text: m2unit ? fmtDecimal(m2unit) : '—' },
-        { label: 'm² total', text: m2tot ? fmtDecimal(m2tot) : '—' },
-        { label: 'Embalagem', text: pack },
-      ];
-      const marca = pagLeveMarcaNome(item);
-      if (marca) cells.push({ label: 'Marca', text: marca });
-      const pei = peiClasseFromItem(item);
-      if (pei) cells.push({ label: 'Uso PEI', text: pei });
-      return cells;
+      return item.formigres_titulo || item.descricao || '';
     }
     function compareItensFormatoNome(a, b) {
       const byFmt = compareFormato(a.formato, b.formato);
@@ -3989,40 +3769,68 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       }
       return acabKey(item);
     }
+    const PEI_USO_CLASSES = ['LA', 'LB', 'LC', 'LD', 'LE', 'LCI', 'LEI'];
+    function normPagLeveBlob(s) {
+      return String(s || '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase();
+    }
+    function isPeiUsoClasse(token) {
+      const t = String(token || '').trim().toUpperCase().replace(/^PEI\\s+/, '');
+      return PEI_USO_CLASSES.indexOf(t) >= 0;
+    }
+    function inferTexturaBlobPagLeve(blob) {
+      if (/\\bantiderrap/.test(blob)) return 'antiderrapante';
+      if (/\\bsemiderrap/.test(blob) || /\\bprotetiva\\b/.test(blob) || /\\baderente\\b/.test(blob) || /\\bgranilh/.test(blob) || /\\bgotej/.test(blob) || /\\bmre\\b/.test(blob)) {
+        return 'semiderrapante';
+      }
+      if (/\\bmate\\b/.test(blob) || /\\bacetinad/.test(blob)) return 'mate';
+      if (/\\bbrilh/.test(blob) || /\\besmalt/.test(blob)) return 'brilhante';
+      if (/\\bpolid/.test(blob) || /\\brt\\s*polid/.test(blob)) return 'polido';
+      return '';
+    }
+    function catalogTexturaGrupo(item) {
+      if (CATALOG_SKIN !== 'pagleve') return catalogAcabKey(item);
+      const rawLabel = String(item.acabamento_label || item.formigres_acabamento || '').trim();
+      const label = isPeiUsoClasse(rawLabel) ? '' : normPagLeveBlob(rawLabel);
+      const blob = normPagLeveBlob(
+        (item.descricao || '') + ' ' + (item.formigres_titulo || '') + ' ' + (item.rotulo || '') + ' ' + (item.subtipo || ''),
+      );
+      const inferred = !label ? inferTexturaBlobPagLeve(blob) : '';
+      if (label.includes('antiderrap') || item.subtipo === 'antiderrapante' || inferred === 'antiderrapante') return 'Antiderrapante';
+      if (
+        label.includes('semiderrap') || item.subtipo === 'semiderrapante'
+        || label.includes('protetiva') || label.includes('aderente')
+        || label.includes('granilh') || label.includes('gotej')
+        || /\\bmre\\b/.test(blob) || inferred === 'semiderrapante'
+      ) return 'Semiderrapante · Protetiva · MRE';
+      if (label.includes('mate') || label.includes('acetinad') || inferred === 'mate') return 'Mate · Acetinado';
+      if (label.includes('brilh') || label.includes('esmalt') || inferred === 'brilhante') return 'Brilhante · Esmaltado';
+      if (label.includes('polid') || item.linha === 'polida' || item.subtipo === 'polida' || inferred === 'polido') return 'Polido';
+      if (rawLabel && !isPeiUsoClasse(rawLabel)) return 'Outros';
+      return 'Outros';
+    }
+    function pagLeveMarcaKey(item) {
+      const m = String(item.marca_nome || '').trim();
+      return m || '__sem_marca__';
+    }
+    function pagLeveMarcaLabel(key) {
+      return key === '__sem_marca__' ? 'Sem marca' : key;
+    }
     function grupoLabelFormato(key) {
-      const s = String(key || '');
-      if (s.startsWith('regua:')) return s.slice(6).replace(/x/g, '×');
-      return 'Formato ' + s.replace(/x/g, '×');
+      return 'Formato ' + key;
     }
     function sortGruposNivel1(keys) {
       if (groupBy === 'formato-acabamento') {
-        return CATALOG_SKIN === 'pagleve'
-          ? [...keys].sort(compareFormatoTreeKey)
-          : [...keys].sort(compareFormato);
+        return [...keys].sort(compareFormato);
       }
       return sortAcabKeys(keys);
-    }
-    function renderFormatoAcabamentoBlocks(gruposMap, linha) {
-      const keys = sortGruposNivel1(Object.keys(gruposMap));
-      const normal = keys.filter((k) => !String(k).startsWith('regua:'));
-      const reguas = keys.filter((k) => String(k).startsWith('regua:'));
-      let html = normal.map((k) => renderFormatoComAcab(k, gruposMap[k], linha)).join('');
-      if (reguas.length && CATALOG_SKIN === 'pagleve') {
-        const n = reguas.reduce((s, k) => s + countItensFormatoMap(gruposMap[k]), 0);
-        html += '<details class="acc acc-reguas acc-grupo-formato" open><summary><span class="acc-title">Réguas</span><span class="acc-count" data-total="' + n + '" data-suffix="itens">' + n + ' itens</span></summary><div class="acc-inner">' +
-          reguas.map((k) => renderFormatoComAcab(k, gruposMap[k], linha)).join('') + '</div></details>';
-      } else {
-        html += reguas.map((k) => renderFormatoComAcab(k, gruposMap[k], linha)).join('');
-      }
-      return html;
     }
     function buildTree(itens) {
       const tree = {};
       if (groupBy === 'formato-acabamento') {
         for (const item of itens) {
           const linha = catalogLinhaKey(item);
-          const fmt = CATALOG_SKIN === 'pagleve' ? formatoTreeKey(item.formato || '—') : (item.formato || '—');
-          const acab = CATALOG_SKIN === 'pagleve' ? catalogAcabGrupo(item) : catalogAcabKey(item);
+          const fmt = item.formato || '—';
+          const acab = catalogAcabKey(item);
           tree[linha] ??= {};
           tree[linha][fmt] ??= {};
           tree[linha][fmt][acab] ??= [];
@@ -4039,8 +3847,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       }
       for (const item of itens) {
         const linha = catalogLinhaKey(item);
-        const acab = CATALOG_SKIN === 'pagleve' ? catalogAcabGrupo(item) : catalogAcabKey(item);
-        const formato = CATALOG_SKIN === 'pagleve' ? formatoTreeKey(item.formato || '—') : (item.formato || '—');
+        const acab = catalogAcabKey(item);
+        const formato = item.formato || '—';
         tree[linha] ??= {};
         tree[linha][acab] ??= {};
         tree[linha][acab][formato] ??= [];
@@ -4104,54 +3912,16 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const un = String(item.unidade || '').trim();
       return un || '—';
     }
-    function isBadCatalogImageUrl(url) {
-      const u = String(url || '').toLowerCase();
-      if (!u) return true;
-      if (u.includes('sample.webp')) return true;
-      if (u.includes('placeholder') || u.includes('no-image')) return true;
-      return false;
-    }
     function getGaleria(item) {
-      const raw = Array.isArray(item.imagens) ? item.imagens.filter((i) => i && i.url && !isBadCatalogImageUrl(i.url)) : [];
-      if (raw.length) return raw;
-      if (item.imagem_url && !isBadCatalogImageUrl(item.imagem_url)) {
-        return [{ url: item.imagem_url, tipo: 'principal' }];
-      }
-      return [];
-    }
-    function catalogThumbImgError(img) {
-      const row = img.closest('.model-row');
-      const cod = row && row.dataset ? row.dataset.cod : '';
-      const item = cod ? itemsByCode.get(String(cod)) : null;
-      const gal = item ? getGaleria(item).map((g) => g.url) : [];
-      let idx = Number(img.dataset.tryIdx || '0') + 1;
-      while (idx < gal.length) {
-        const next = gal[idx];
-        if (next && next !== img.src) {
-          img.dataset.tryIdx = String(idx);
-          img.src = next;
-          return;
-        }
-        idx += 1;
-      }
-      img.onerror = null;
-      const empty = document.createElement('span');
-      empty.className = 'thumb-empty';
-      empty.textContent = '—';
-      img.replaceWith(empty);
-    }
-    function catalogThumbImgTag(url, cod) {
-      return '<img src="' + esc(url) + '" alt="" loading="lazy" onerror="catalogThumbImgError(this)" data-cod="' + esc(cod) + '" />';
+      const imgs = Array.isArray(item.imagens) ? item.imagens.filter((i) => i && i.url) : [];
+      if (imgs.length) return imgs;
+      return item.imagem_url ? [{ url: item.imagem_url, tipo: 'principal' }] : [];
     }
     function gemeasSearchText(item) {
       if (!item.gemeas || !item.gemeas.length) return '';
       return item.gemeas.map((g) => [g.marca, g.referencia, g.codigo].join(' ')).join(' ');
     }
     function modelResistencia(item) {
-      if (CATALOG_SKIN === 'pagleve') {
-        const pei = peiClasseFromItem(item);
-        return pei ? 'PEI ' + pei : '';
-      }
       const r = String(item.referencia || '').trim();
       return r && r !== '—' ? r : '';
     }
@@ -4161,10 +3931,6 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     function renderItemMetaHtml(item, cod) {
       const codStr = cod != null ? cod : item.codigo_tintao;
-      if (CATALOG_SKIN === 'pagleve') {
-        const resist = modelResistencia(item);
-        return resist ? esc(resist) : '—';
-      }
       const parts = ['#' + esc(codStr)];
       if (!item.gemeas || item.gemeas.length < 2) {
         if (item.marca_nome) parts.push(esc(item.marca_nome));
@@ -4250,12 +4016,12 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function renderTableRow(item) {
       const imgs = getGaleria(item);
       const img = imgs[0]?.url || item.imagem_url || '';
-      const titulo = itemTitulo(item);
+      const titulo = item.formigres_titulo || item.descricao;
       const cod = item.codigo_tintao;
       const qty = getQty(cod);
       const pack = fmtEmbalagemText(item);
       const foto = img
-        ? '<button type="button" class="thumb-btn' + (imgs.length > 1 ? ' has-gallery' : '') + '" tabindex="-1" data-cod="' + esc(cod) + '" data-title="' + esc(titulo) + '" title="Ver fotos">' + catalogThumbImgTag(img, cod) + (imgs.length > 1 ? '<span class="thumb-more" aria-hidden="true">▦</span>' : '') + '</button>'
+        ? '<button type="button" class="thumb-btn' + (imgs.length > 1 ? ' has-gallery' : '') + '" tabindex="-1" data-cod="' + esc(cod) + '" data-title="' + esc(titulo) + '" title="Ver fotos"><img src="' + esc(img) + '" alt="" loading="lazy" />' + (imgs.length > 1 ? '<span class="thumb-more" aria-hidden="true">▦</span>' : '') + '</button>'
         : '<span class="thumb-empty">—</span>';
       const warn = item.match_status !== 'encontrado' ? ' <span class="badge warn">sem match</span>' : '';
       if (IS_B2B_CATALOG) {
@@ -4285,18 +4051,23 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           '<td class="pedido-col-num pedido-col-preco col-preco' + (hasDescontoAtivo() ? ' has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
           '<td class="pedido-col-num col-subtotal model-col-sub">' + (sub ? esc(fmtMoney(sub)) : '') + '</td></tr>';
       }
-      const metaMobile = '<div class="model-meta-mobile">' + esc(pack) + ' · ' + fmtPrecoHtml(item.preco_m2) + '</div>';
-      const modeloCell = CATALOG_SKIN === 'pagleve'
-        ? renderPagLeveModeloCell(item, cod, warn) + metaMobile
-        : '<strong>' + esc(titulo) + '</strong>' + warn + '<br><small style="color:var(--muted)">#' + esc(cod) + '</small>' + metaMobile;
+      const marcaGrupoCols = CATALOG_SKIN === 'pagleve'
+        ? '<td class="col-marca" title="' + esc(item.marca_nome || '') + '">' + esc(item.marca_nome || '—') + '</td>' +
+          '<td class="col-grupo" title="' + esc(item.fabricante_grupo || '') + '">' + esc(item.fabricante_grupo || '—') + '</td>'
+        : '';
+      const marcaGrupoMobile = CATALOG_SKIN === 'pagleve'
+        ? esc(item.marca_nome || '—') + ' · ' + esc(item.fabricante_grupo || '—') + ' · '
+        : '';
+      const metaMobile = '<div class="model-meta-mobile">' + marcaGrupoMobile + esc(pack) + ' · ' + fmtPrecoHtml(item.preco_m2) + '</div>';
       const searchBlob = (titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack + ' ' + (item.marca_nome || '') + ' ' + (item.fabricante_grupo || '')).toLowerCase();
-      const packCell = CATALOG_SKIN === 'pagleve' ? pagLevePackCellHtml(item, pack) : esc(pack);
-      const peiAttr = CATALOG_SKIN === 'pagleve' ? peiClasseFromItem(item) : '';
-      const texAttr = CATALOG_SKIN === 'pagleve' ? catalogAcabGrupo(item) : '';
-      return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-pei="' + esc(peiAttr) + '" data-textura="' + esc(texAttr) + '" data-search="' + esc(searchBlob) + '" data-qty="' + qty + '">' +
+      const pagLeveAttrs = CATALOG_SKIN === 'pagleve'
+        ? ' data-textura="' + esc(catalogTexturaGrupo(item)) + '" data-marca="' + esc(pagLeveMarcaKey(item)) + '"'
+        : '';
+      return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(searchBlob) + '" data-qty="' + qty + '"' + pagLeveAttrs + '>' +
         '<td class="col-foto">' + foto + '</td>' +
-        '<td class="col-modelo">' + modeloCell + '</td>' +
-        '<td class="col-pack">' + packCell + '</td>' +
+        '<td class="col-modelo"><strong>' + esc(titulo) + '</strong>' + warn + '<br><small style="color:var(--muted)">#' + esc(cod) + '</small>' + metaMobile + '</td>' +
+        marcaGrupoCols +
+        '<td class="col-pack">' + esc(pack) + '</td>' +
         '<td class="col-preco' + (hasDescontoAtivo() ? ' has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
         '<td class="col-qty">' +
         '<input type="number" class="qty-input" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" tabindex="0" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="' + esc(QTY_LABEL) + '" placeholder="0" />' +
@@ -4337,7 +4108,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       if (!img) {
         return '<span class="pedido-card-thumb pedido-card-thumb-empty" aria-hidden="true">—</span>';
       }
-      return '<button type="button" class="thumb-btn catalog-card-thumb-btn' + (imgs.length > 1 ? ' has-gallery' : '') + '" tabindex="-1" data-cod="' + esc(cod) + '" data-title="' + esc(titulo) + '" title="Ver fotos"><img class="pedido-card-thumb" src="' + esc(img) + '" alt="" loading="lazy" onerror="catalogThumbImgError(this)" data-cod="' + esc(cod) + '" />' + (imgs.length > 1 ? '<span class="thumb-more" aria-hidden="true">▦</span>' : '') + '</button>';
+      return '<button type="button" class="thumb-btn catalog-card-thumb-btn' + (imgs.length > 1 ? ' has-gallery' : '') + '" tabindex="-1" data-cod="' + esc(cod) + '" data-title="' + esc(titulo) + '" title="Ver fotos"><img class="pedido-card-thumb" src="' + esc(img) + '" alt="" loading="lazy" />' + (imgs.length > 1 ? '<span class="thumb-more" aria-hidden="true">▦</span>' : '') + '</button>';
     }
     function renderCatalogCardQtyEdit(cod, qty, m2tot) {
       return '<div class="pedido-card-qty catalog-card-qty-edit">' +
@@ -4346,49 +4117,10 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '<span class="pedido-card-qty-sub catalog-card-qty-m2">' + esc(m2tot ? fmtDecimal(m2tot) + ' m²' : '—') + '</span>' +
       '</div>';
     }
-    function pagLeveItemSearchKey(item, cod, pack, titulo) {
-      return normalize(
-        titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' '
-        + formatSearchBlob(item.formato) + ' ' + cod + ' ' + pack + ' '
-        + (item.marca_nome || '') + ' ' + (item.fabricante_grupo || '') + ' '
-        + peiClasseFromItem(item) + ' PEI ' + (item.referencia || '') + ' '
-        + catalogAcabGrupo(item),
-      );
-    }
-    function renderCatalogCardPagLeve(item) {
-      const imgs = getGaleria(item);
-      const img = imgs[0]?.url || item.imagem_url || '';
-      const cod = item.codigo_tintao;
-      const qty = getQty(cod);
-      const titulo = itemTitulo(item);
-      const pack = fmtEmbalagemText(item);
-      const m2unit = itemM2Unit(item);
-      const m2tot = qty ? itemM2Total(item, qty) : null;
-      const sub = qty ? itemSubtotal(item, qty) : null;
-      const warn = item.match_status !== 'encontrado' ? ' <span class="badge warn">sem match</span>' : '';
-      const thumb = renderCatalogCardThumb(item, cod, titulo, imgs, img);
-      const row1 = '<div class="pedido-card-head">' + thumb +
-        '<div class="pedido-card-head-main">' +
-          '<div class="pedido-card-desc">' +
-            renderPagLeveCatalogTitleBlock(item, cod, warn) +
-          '</div>' +
-          renderCatalogCardQtyEdit(cod, qty, m2tot) +
-          '<div class="pedido-card-total">' +
-            '<strong class="pedido-card-hero model-col-sub">' + esc(sub != null ? fmtMoney(sub) : '—') + '</strong>' +
-            '<span class="pedido-card-total-label">Subtotal</span>' +
-          '</div>' +
-        '</div>' +
-      '</div>';
-      const spec = renderPedidoSpecTable(pagLeveCatalogSpecCells(item, pack, m2unit, m2tot));
-      const peiAttr = peiClasseFromItem(item);
-      const texAttr = catalogAcabGrupo(item);
-      return '<article class="catalog-card catalog-card-pagleve pedido-card model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-pei="' + esc(peiAttr) + '" data-textura="' + esc(texAttr) + '" data-search="' + esc(pagLeveItemSearchKey(item, cod, pack, titulo)) + '" data-qty="' + qty + '">' +
-        '<div class="pedido-card-layout">' + row1 + spec + '</div></article>';
-    }
     function renderCatalogCardFormigres(item) {
       const imgs = getGaleria(item);
       const img = imgs[0]?.url || item.imagem_url || '';
-      const titulo = itemTitulo(item);
+      const titulo = item.formigres_titulo || item.descricao;
       const cod = item.codigo_tintao;
       const qty = getQty(cod);
       const pack = fmtEmbalagemText(item);
@@ -4449,23 +4181,12 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           '<div class="catalog-cards-wrap"><div class="catalog-cards">' + cards + '</div></div>' +
           '</div>';
       }
-      const retailExtraHead = '';
+      const retailExtraHead = CATALOG_SKIN === 'pagleve' ? '<th class="col-marca">Marca</th><th class="col-grupo">Grupo</th>' : '';
       const retailHead = CATALOG_SKIN === 'pagleve'
-        ? '<th class="col-foto">Foto</th><th class="col-modelo">Modelo</th><th class="col-pack">Embalagem</th><th class="col-preco">Preço/m²</th><th class="col-qty">' + esc(QTY_LABEL) + '</th>'
+        ? '<th class="col-foto">Foto</th><th class="col-modelo">Modelo</th>' + retailExtraHead + '<th class="col-pack">Embalagem</th><th class="col-preco">Preço/m²</th><th class="col-qty">' + esc(QTY_LABEL) + '</th>'
         : '<th>Foto</th><th>Modelo</th>' + retailExtraHead + '<th>Embalagem</th><th>Preço/m²</th><th>' + esc(QTY_LABEL) + '</th>';
-      const retailTableClass = CATALOG_SKIN === 'pagleve' ? 'model-table model-table-pagleve-retail' : 'model-table';
-      const retailColgroup = CATALOG_SKIN === 'pagleve' ? PAGLEVE_RETAIL_COLGROUP_HTML : '';
-      const body = items.map(renderTableRow).join('');
-      if (CATALOG_SKIN === 'pagleve') {
-        const cards = items.map(renderCatalogCardPagLeve).join('');
-        return '<div class="catalog-items">' +
-          '<div class="catalog-table-wrap table-wrap"><table class="' + retailTableClass + '">' + retailColgroup + '<thead><tr>' + retailHead + '</tr></thead><tbody>' +
-          body + '</tbody></table></div>' +
-          '<div class="catalog-cards-wrap"><div class="catalog-cards">' + cards + '</div></div>' +
-          '</div>';
-      }
-      return '<div class="table-wrap"><table class="' + retailTableClass + '">' + retailColgroup + '<thead><tr>' + retailHead + '</tr></thead><tbody>' +
-        body + '</tbody></table></div>';
+      return '<div class="table-wrap"><table class="model-table"><thead><tr>' + retailHead + '</tr></thead><tbody>' +
+        items.map(renderTableRow).join('') + '</tbody></table></div>';
     }
     function renderAcabamentoLeaf(acab, items) {
       const n = items.length;
@@ -4489,9 +4210,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         renderItemsTable(items) + '</details>';
     }
     function renderGrupoAcab(acab, formatosMap) {
-      const formatos = CATALOG_SKIN === 'pagleve'
-        ? Object.keys(formatosMap).sort(compareFormatoTreeKey)
-        : Object.keys(formatosMap).sort(compareFormato);
+      const formatos = Object.keys(formatosMap).sort(compareFormato);
       const n = formatos.reduce((s, f) => s + formatosMap[f].length, 0);
       return '<details class="acc acc-grupo" open><summary><span class="acc-title">' + esc(acab) + '</span><span class="acc-count" data-total="' + n + '" data-suffix="itens">' + n + ' itens</span></summary>' +
         '<div class="acc-inner">' + formatos.map((f) => renderFormato(f, formatosMap[f])).join('') + '</div></details>';
@@ -4510,7 +4229,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const label = CFG.linhaLabel[linha] || linha;
       let inner;
       if (groupBy === 'formato-acabamento') {
-        inner = renderFormatoAcabamentoBlocks(gruposMap, linha);
+        inner = keys.map((k) => renderFormatoComAcab(k, gruposMap[k], linha)).join('');
       } else if (linha === 'polida') {
         inner = keys.flatMap((acab) => {
           const formatos = Object.keys(gruposMap[acab]).sort(compareFormato);
@@ -4530,7 +4249,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       applySearch(document.getElementById('search').value);
     }
     function catalogRowSelector() {
-      if (USE_MOBILE_CATALOG_CARDS) {
+      if (IS_B2B_CATALOG) {
         return window.matchMedia('(max-width: 720px)').matches
           ? '.catalog-cards-wrap .model-row'
           : '.catalog-table-wrap .model-row';
@@ -4559,9 +4278,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const qty = Number(row.dataset.qty || 0);
         const showQty = !filterQtyOnly || qty > 0;
         const showTerm = rowMatchesSearch(row, terms);
-        const showPei = !filterPeiUso || (row.dataset.pei || '') === filterPeiUso;
         const showTextura = !filterTexturaGrupo || (row.dataset.textura || '') === filterTexturaGrupo;
-        const show = showQty && showTerm && showPei && showTextura;
+        const showMarca = !filterMarcasSelected.size || filterMarcasSelected.has(row.dataset.marca || '');
+        const show = showQty && showTerm && showTextura && showMarca;
         row.classList.toggle('hidden', !show);
         const cod = row.dataset.cod;
         if (cod && !show) {
@@ -4701,15 +4420,12 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         return '<article class="' + cardClass + '"><div class="pedido-card-layout">' + row1 + spec + '</div></article>';
       }
 
-      const packPedido = fmtEmbalagemText(item);
-      const spec = CATALOG_SKIN === 'pagleve'
-        ? renderPedidoSpecTable(pagLeveCatalogSpecCells(item, packPedido, m2unit, m2tot, precoOpts))
-        : renderPedidoSpecTable([
-          { label: 'Preço/m²', preco: true, html: fmtPrecoHtml(item.preco_m2, precoOpts) },
-          { label: 'm²/cx', text: m2unit ? fmtDecimal(m2unit) : '—' },
-          { label: 'm² total', text: m2tot ? fmtDecimal(m2tot) : '—' },
-          { label: 'Embalagem', text: packPedido },
-        ]);
+      const spec = renderPedidoSpecTable([
+        { label: 'Preço/m²', preco: true, html: fmtPrecoHtml(item.preco_m2, precoOpts) },
+        { label: 'm²/cx', text: m2unit ? fmtDecimal(m2unit) : '—' },
+        { label: 'm² total', text: m2tot ? fmtDecimal(m2tot) : '—' },
+        { label: 'Embalagem', text: fmtEmbalagemText(item) },
+      ]);
       return '<article class="' + cardClass + '"><div class="pedido-card-layout">' + row1 + spec + '</div></article>';
     }
     function renderPedido() {
@@ -4736,7 +4452,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         if (sub) totalValor += sub;
         const imgs = getGaleria(item);
         const img = imgs[0]?.url || '';
-        const titulo = itemTitulo(item);
+        const titulo = item.formigres_titulo || item.descricao;
         const rowData = { item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl: emb.cxpl, sub };
         bodyRows.push(renderPedidoTableRow(rowData, null, null));
         cardRows.push(renderPedidoCard(rowData));
@@ -4888,7 +4604,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         if (sub) totalValor += sub;
         const imgs = getGaleria(item);
         const img = imgs[0]?.url || '';
-        const titulo = itemTitulo(item);
+        const titulo = item.formigres_titulo || item.descricao;
         const rowData = { item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl: emb.cxpl, sub };
         cards.push(renderPedidoCard(rowData, { pdf: true, thumbs }));
       }
@@ -5304,16 +5020,41 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       try { localStorage.setItem(GROUP_KEY, groupBy); } catch { /* ignore */ }
       renderCatalogo();
     }
+    function syncMarcaFilterUi() {
+      const btn = document.getElementById('filter-marca-btn');
+      const badge = document.getElementById('filter-marca-badge');
+      const n = filterMarcasSelected.size;
+      const active = n > 0;
+      if (btn) btn.classList.toggle('active', active);
+      if (badge) {
+        badge.hidden = !active;
+        badge.textContent = String(n);
+      }
+    }
+    function closeMarcaFilterPanel() {
+      const panel = document.getElementById('filter-marca-panel');
+      const btn = document.getElementById('filter-marca-btn');
+      if (panel) panel.hidden = true;
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+    }
+    function toggleMarcaFilterPanel() {
+      const panel = document.getElementById('filter-marca-panel');
+      const btn = document.getElementById('filter-marca-btn');
+      if (!panel || !btn) return;
+      const open = panel.hidden;
+      panel.hidden = !open;
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
     function initTexturaFilter() {
       if (CATALOG_SKIN !== 'pagleve') return;
       const sel = document.getElementById('filter-textura');
       if (!sel) return;
       const set = new Set();
       for (const item of CATALOGO.itens) {
-        const g = catalogAcabGrupo(item);
+        const g = catalogTexturaGrupo(item);
         if (g) set.add(g);
       }
-      const order = CFG.acabOrder || [];
+      const order = PAGLEVE_TEXTURA_GRUPO_ORDER.slice();
       const extras = [...set].filter((g) => order.indexOf(g) < 0).sort((a, b) => a.localeCompare(b, 'pt-BR'));
       const groups = order.filter((g) => set.has(g)).concat(extras);
       for (const g of groups) {
@@ -5327,40 +5068,54 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         applySearch(q?.value || '');
       });
     }
-    function initPeiFilter() {
+    function initMarcaFilter() {
       if (CATALOG_SKIN !== 'pagleve') return;
-      const sel = document.getElementById('filter-pei');
-      if (!sel) return;
-      const set = new Set();
-      for (const item of CATALOGO.itens) {
-        const p = peiClasseFromItem(item);
-        if (p) set.add(p);
-      }
-      const order = PEI_USO_CLASSES.slice();
-      const codes = [...set].sort((a, b) => {
-        const ia = order.indexOf(a);
-        const ib = order.indexOf(b);
-        if (ia >= 0 && ib >= 0) return ia - ib;
-        if (ia >= 0) return -1;
-        if (ib >= 0) return 1;
-        return a.localeCompare(b, 'pt-BR');
-      });
-      for (const c of codes) {
-        const opt = document.createElement('option');
-        opt.value = c;
-        opt.textContent = 'PEI ' + c;
-        sel.appendChild(opt);
-      }
-      sel.addEventListener('change', () => {
-        filterPeiUso = sel.value || '';
+      const wrap = document.getElementById('filter-marca-options');
+      if (!wrap) return;
+      const keys = new Set();
+      for (const item of CATALOGO.itens) keys.add(pagLeveMarcaKey(item));
+      pagLeveMarcaCatalog = [...keys].sort((a, b) => pagLeveMarcaLabel(a).localeCompare(pagLeveMarcaLabel(b), 'pt-BR'));
+      wrap.innerHTML = pagLeveMarcaCatalog.map((key) =>
+        '<label class="pagleve-marca-option"><input type="checkbox" value="' + esc(key) + '" />'
+        + '<span>' + esc(pagLeveMarcaLabel(key)) + '</span></label>',
+      ).join('');
+      wrap.addEventListener('change', (e) => {
+        const input = e.target.closest('input[type="checkbox"]');
+        if (!input) return;
+        if (input.checked) filterMarcasSelected.add(input.value);
+        else filterMarcasSelected.delete(input.value);
+        syncMarcaFilterUi();
         applySearch(q?.value || '');
+      });
+      bindClick('filter-marca-btn', (e) => {
+        e.stopPropagation();
+        toggleMarcaFilterPanel();
+      });
+      bindClick('filter-marca-clear', () => {
+        filterMarcasSelected.clear();
+        wrap.querySelectorAll('input[type="checkbox"]').forEach((el) => { el.checked = false; });
+        syncMarcaFilterUi();
+        applySearch(q?.value || '');
+      });
+      bindClick('filter-marca-all', () => {
+        filterMarcasSelected = new Set(pagLeveMarcaCatalog);
+        wrap.querySelectorAll('input[type="checkbox"]').forEach((el) => { el.checked = true; });
+        syncMarcaFilterUi();
+        applySearch(q?.value || '');
+      });
+      document.addEventListener('click', (e) => {
+        const panel = document.getElementById('filter-marca-panel');
+        const btn = document.getElementById('filter-marca-btn');
+        if (!panel || panel.hidden) return;
+        if (panel.contains(e.target) || btn?.contains(e.target)) return;
+        closeMarcaFilterPanel();
       });
     }
     function initCatalogControls() {
       if (groupSel) groupSel.value = groupBy;
       if (groupSelD) groupSelD.value = groupBy;
       initTexturaFilter();
-      initPeiFilter();
+      initMarcaFilter();
     }
     function toggleFilterQty(btn) {
       filterQtyOnly = !filterQtyOnly;
@@ -5581,7 +5336,7 @@ async function mainAsync() {
   const classif = readJson(jsonPath);
 
   if (CFG.skipSnapshot) {
-    let itens = (classif.itens || []).map((item) => {
+    const itens = (classif.itens || []).map((item) => {
       const imagem_url = fixImageUrl(item.imagem_url || '');
       const imagens = (item.imagens || []).length
         ? item.imagens.map((img) => ({ url: fixImageUrl(img.url), tipo: img.tipo || 'principal' }))
@@ -5593,9 +5348,6 @@ async function mainAsync() {
         produto_url: item.produto_url || '',
       };
     });
-    if (CFG.skin === 'pagleve') {
-      itens = applyPrecosPagLeveItens(itens);
-    }
     const antLogoDataUri = loadAntLogoDataUri();
     const brandLogoDataUri = loadBrandLogoDataUri(CFG);
     const pdfFontCss = loadPdfFontFaceCss();
