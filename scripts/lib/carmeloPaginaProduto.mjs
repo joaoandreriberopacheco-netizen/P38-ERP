@@ -5,6 +5,32 @@ import { stripAccents } from './formigresCatalog.mjs';
 import { extractImagensFromProduto, imageUrl as carmeloImageUrl } from './carmeloFiorCatalog.mjs';
 
 const SUPERFICIES = ['Brilhante', 'Mate', 'Acetinado', 'Polido', 'Granilhado', 'Natural', 'Soft'];
+
+/** option_title do atributo Superfície na ficha Carmelo (evita falso "Brilhante" no JSON da página). */
+export function parseSuperficieOptionCarmeloHtml(html = '') {
+  const raw = String(html);
+  const m = raw.match(
+    /"attribute_title":"Superf(?:\\u00edcie|ície)"[\s\S]*?"option_title":"([^"]+)"/i,
+  );
+  return m?.[1]?.replace(/\\u00ed/g, 'í') || '';
+}
+
+/** Etiqueta curta para catálogo (MRE, Mate, Brilhante…). */
+export function mapCarmeloSuperficieCatalogo(optionTitle = '') {
+  const t = String(optionTitle || '').trim();
+  if (!t) return '';
+  if (/^mre$/i.test(t) || /escorregamento/i.test(t) || /maior resist/i.test(t)) return 'MRE';
+  if (/semiderrap/i.test(t) || /protetiva/i.test(t)) return 'Semiderrapante';
+  if (/antiderrap/i.test(t)) return 'Antiderrapante';
+  if (/^brilhante$/i.test(t)) return 'Brilhante';
+  if (/^mate$/i.test(t)) return 'Mate';
+  if (/^acetinado$/i.test(t)) return 'Acetinado';
+  if (/^polido$/i.test(t)) return 'Polido';
+  if (/granilh/i.test(t)) return 'Granilhado';
+  if (/^natural$/i.test(t)) return 'Natural';
+  if (/^soft$/i.test(t)) return 'Soft';
+  return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
+}
 const USO_PEI = ['LEI', 'LCI', 'LA', 'LB', 'LC', 'LD', 'LE'];
 
 /** Marca na ficha (category.title) — site usa "Fioranno" para Fiorano. */
@@ -86,7 +112,10 @@ export function parseCarmeloProdutoHtml(html) {
   if (!title || /conheça nossos modelos|^error$/i.test(title)) return null;
 
   const formato = raw.match(/"title":"(\d{2}x\d{2}\s*cm[^"]*)"/i)?.[1]?.replace(/\s+/g, ' ') || '';
-  const superficie = SUPERFICIES.find((s) => raw.includes(`"title":"${s}"`)) || '';
+  const superficieOpt = parseSuperficieOptionCarmeloHtml(raw);
+  const superficie = mapCarmeloSuperficieCatalogo(superficieOpt)
+    || SUPERFICIES.find((s) => raw.includes(`"title":"${s}"`))
+    || '';
   const linha = raw.includes('"title":"Retificado"') && !raw.includes('"title":"Bold","description":null}')
     ? 'Retificada'
     : raw.includes('"title":"Bold"')
@@ -207,6 +236,7 @@ export function cecafiCarmeloSlugCandidates(row, modeloRaw = '') {
 
 export function acabamentoFromErpDesc(descricao = '') {
   const u = String(descricao || '').toUpperCase();
+  if (/\bMRE\b/.test(u)) return 'MRE';
   if (/\bACET/.test(u)) return 'Acetinado';
   if (/\bMATE\b/.test(u)) return 'Mate';
   if (/BRILH/.test(u)) return 'Brilhante';

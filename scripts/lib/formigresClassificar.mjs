@@ -23,7 +23,7 @@ export function inferirDaDescricao(descricao = '') {
     retificada: /\bRT\b|RETIFICAD/.test(raw),
     bold: /\bHD\b|\bBOLD\b/.test(raw) && !/\bRT\b/.test(raw),
     antiderrapante: /\bAD\b|ADERENTE|ABS\b|MATE\s*ABS|GRANILHADO\s*ABS|GRANILHAD/.test(raw),
-    semiderrapante: /GOTEJAD|SEMIDERRAP/.test(raw) && !/GRANILHAD/.test(raw),
+    semiderrapante: /\bMRE\b|GOTEJAD|SEMIDERRAP/.test(raw) && !/GRANILHAD/.test(raw),
     mate: /\bMATE\b|\bMAT\b|ACETINAD/.test(raw),
     brilhante: /BRILH/.test(raw),
     polido: /RT\s*POLIDO|\bPOLIDO\b/.test(raw),
@@ -84,11 +84,12 @@ export function classificarFormigres(input = {}) {
     || hints.antiderrapante) {
     subtipo = 'antiderrapante';
     motivo = acab ? `acabamento ${acab}` : 'hint descrição (aderente/ABS/granilhado)';
-  } else if (acab === 'GOTEJADO'
+  } else if (acab === 'MRE' || /\bMRE\b/.test(textoAcab) || /MAIOR\s+RESIST/.test(textoAcab)
+    || acab === 'GOTEJADO'
     || (/GOTEJAD/.test(titulo) && !/\bABS\b/.test(textoAcab))
     || hints.semiderrapante) {
     subtipo = 'semiderrapante';
-    motivo = acab ? `acabamento ${acab}` : 'hint descrição (gotejado)';
+    motivo = /\bMRE\b/.test(textoAcab) ? 'MRE (maior resistência ao escorregamento)' : (acab ? `acabamento ${acab}` : 'hint descrição (gotejado/MRE)');
   } else if (acab === 'BRILHANTE' || acab === 'MATE' || hints.mate || hints.brilhante) {
     subtipo = 'lisa';
     if (acab === 'MATE' || hints.mate) varianteLisa = 'mate';

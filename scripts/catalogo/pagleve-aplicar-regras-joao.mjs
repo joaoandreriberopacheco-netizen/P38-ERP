@@ -208,6 +208,7 @@ const INCOPISOS_SLUG_BY_CODE = {
 function acabamentoLabelFromSuperficie(s) {
   const t = String(s || '').trim();
   if (!t) return '';
+  if (/^mre$/i.test(t) || /escorregamento/i.test(t)) return 'MRE';
   if (/^brilhante$/i.test(t)) return 'Brilhante';
   if (/^mate$/i.test(t)) return 'Mate';
   if (/^acetinado$/i.test(t)) return 'Acetinado';

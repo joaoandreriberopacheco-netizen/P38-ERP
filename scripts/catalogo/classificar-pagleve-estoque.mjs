@@ -67,6 +67,14 @@ function parseM2Caixa(descricao) {
 function parseTipoAcabFromSite(descricaoNoSite) {
   const raw = String(descricaoNoSite || '');
   const upper = raw.toUpperCase();
+  if (/\bMRE\b/.test(upper) || /MAIOR\s+RESIST/.test(upper) || /ESCORREGAMENTO/.test(upper)) {
+    const partsEarly = raw.split('·').map((p) => p.trim()).filter(Boolean);
+    const tipoPart = partsEarly.find((p) => /bold|retificad/i.test(p)) || '';
+    let tipo = '';
+    if (/bold/i.test(tipoPart)) tipo = 'BOLD';
+    else if (/retificad/i.test(tipoPart)) tipo = 'RETIFICADO';
+    return { tipo, acabamento: 'MRE' };
+  }
   if (/RT\s*POLIDO|\bPOLIDO\b|\bPOLIDA\b/.test(upper)) {
     return { tipo: '', acabamento: 'POLIDO' };
   }
@@ -90,6 +98,7 @@ function parseTipoAcabFromSite(descricaoNoSite) {
 function inferAcabamentoFromDescricaoErp(descErp, classif) {
   const u = String(descErp || '').toUpperCase();
   if (/RT\s*POLIDO|\bPOLIDO\b/.test(u) && classif.linha === 'polida') return 'Polido';
+  if (/\bMRE\b/.test(u)) return 'MRE';
   if (/GRANILHAD/.test(u)) return 'Granilhado';
   if (/GOTEJAD/.test(u)) return 'Gotejado';
   if (/ACETINAD/.test(u)) return 'Acetinado';
@@ -111,7 +120,11 @@ function inferAcabamentoLabel(descErp, descSite, classif, row = {}) {
   }
 
   const u = String(descErp || '').toUpperCase();
+  const siteUpper = String(descSite || '').toUpperCase();
   if (/RT\s*POLIDO|\bPOLIDO\b/.test(u) && classif.linha === 'polida') return 'Polido';
+  if (/\bMRE\b/.test(u) || (/\bMRE\b/.test(siteUpper) && !/BRILHANTE\s*$/i.test(String(descSite || '').trim()))) {
+    return 'MRE';
+  }
   if (/GRANILHAD/.test(u)) return 'Granilhado';
   if (/GOTEJAD/.test(u)) return 'Gotejado';
   if (/ACETINAD/.test(u)) return 'Acetinado';
@@ -124,7 +137,8 @@ function inferAcabamentoLabel(descErp, descSite, classif, row = {}) {
   if (siteAcab && !/CONHEÇA|MODELOS/i.test(siteAcab) && !/^(BOLD|RETIFICADO|RET)$/i.test(siteAcab)) {
     if (/ACETINAD/i.test(siteAcab)) return 'Acetinado';
     if (/^MATE$/i.test(siteAcab)) return 'Mate';
-    if (/BRILHANTE/i.test(siteAcab)) return 'Brilhante';
+    if (/^MRE$/i.test(siteAcab)) return 'MRE';
+    if (/BRILHANTE/i.test(siteAcab) && !/\bMRE\b/i.test(descSite)) return 'Brilhante';
     if (/GRANILHAD/i.test(siteAcab)) return 'Granilhado';
     if (/POLIDO/i.test(siteAcab)) return 'Polido';
     if (/GOTEJAD/i.test(siteAcab)) return 'Gotejado';
