@@ -41,6 +41,13 @@ import {
   lumePortfolioUrl,
   parseLumePortfolioHtml,
 } from '../lib/lumePaginaProduto.mjs';
+import {
+  isRochaProductHtmlValid,
+  parseRochaCMapFromProdutosHtml,
+  rochaProductUrl,
+  rochaSlugFromSiahDesc,
+  rochaTitleFromHtml,
+} from '../lib/rochaPortalPagina.mjs';
 
 const ROOT = process.cwd();
 const IN_CSV = process.env.PAGLEVE_RAIO_X || path.join(ROOT, 'files', 'pagleve', 'raio-x-produtos.csv');
@@ -189,7 +196,8 @@ async function loadRochaSlugIndex() {
   while ((m = re.exec(html)) !== null) {
     if (m[1].length >= 3) slugs.add(m[1].toLowerCase());
   }
-  return { slugs, html };
+  const cMap = parseRochaCMapFromProdutosHtml(html);
+  return { slugs, html, cMap };
 }
 
 function nameSlug(text) {
@@ -231,17 +239,8 @@ function rochaSlugCandidates(row) {
   return [...new Set(out)];
 }
 
-/** PR70001 no ERP → pr7000 no portal (regra João André; não é busca por código interno aleatório). */
-function rochaSlugFromSiahDesc(desc) {
-  const m = String(desc || '').match(/\b(PR|R)(\d{4,})\b/i);
-  if (!m) return '';
-  let digits = m[2];
-  if (digits.length >= 5 && digits.endsWith('1')) digits = digits.slice(0, -1);
-  const core = digits.length > 4 ? digits.slice(0, 4) : digits;
-  return `${m[1].toLowerCase()}${core}`;
-}
-
-function tryRocha(row, rochaSlugs) {
+function tryRocha(row, rochaCtx) {
+  const { slugs: rochaSlugs, cMap } = rochaCtx;
   const candidates = rochaSlugCandidates(row);
   const codeSlug = rochaSlugFromSiahDesc(row.descricao_erp || row.descricao_original);
   if (codeSlug) candidates.unshift(codeSlug);
@@ -255,14 +254,14 @@ function tryRocha(row, rochaSlugs) {
       tried.push(c);
       continue;
     }
-    const url = `${ROCHA_BASE}/produtos/${c}`;
+    const url = rochaProductUrl(c, cMap);
     const html = curlGet(url);
-    if (!html || html.includes('Page not found') || html.length < 500) {
+    if (!html || !isRochaProductHtmlValid(html)) {
       tried.push(c);
       continue;
     }
-    const title = metaOg(html, 'og:title') || '';
-    if (!title || /not found/i.test(title)) {
+    const title = rochaTitleFromHtml(html) || metaOg(html, 'og:title') || '';
+    if (!title) {
       tried.push(c);
       continue;
     }
@@ -513,7 +512,7 @@ async function tryMatchersForRow(row, ctx, order) {
   for (const key of order) {
     let hit = null;
     if (key === 'rocha') {
-      hit = tryRocha(row, ctx.rochaSlugs);
+      hit = tryRocha(row, ctx.rochaIndex);
       sites.push('portalgruporocha.com.br');
     } else if (key === 'formigres') {
       hit = await tryFormigres(row, ctx.snapFg);
@@ -553,9 +552,9 @@ async function loadMatchContext() {
   const cbUrls = await fetchSitemapUrls();
   const snapCb = buildCerbrasSnapshot(cbUrls.map((u) => normalizeFromUrl(u)).filter(Boolean));
   console.log('Carregando índice Grupo Rocha...');
-  const { slugs: rochaSlugs } = await loadRochaSlugIndex();
-  console.log('Slugs Rocha:', rochaSlugs.size);
-  return { snapFg, snapCf, snapCb, rochaSlugs };
+  const rochaIndex = await loadRochaSlugIndex();
+  console.log('Slugs Rocha:', rochaIndex.slugs.size, '| com ?c=:', rochaIndex.cMap.size);
+  return { snapFg, snapCf, snapCb, rochaIndex };
 }
 
 async function resolveIndicacoesJoao() {

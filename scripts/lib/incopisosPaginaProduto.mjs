@@ -12,10 +12,14 @@ export function incopisosProdutoUrl(slug) {
 
 /** Dígitos do HD no ERP: (HD 160.104) → 160104 (sem ponto). */
 export function hdCodigoDigitsFromErp(descricao = '') {
-  const m = String(descricao || '').match(/\(\s*HD\s+([0-9][0-9.]+)\s*\)/i)
-    || String(descricao || '').match(/\bHD\s+([0-9][0-9.]+)/i);
-  if (!m) return '';
-  return m[1].replace(/\./g, '');
+  const raw = String(descricao || '');
+  const m = raw.match(/\(\s*HD\s+([0-9][0-9.]+)\s*\)/i) || raw.match(/\bHD\s+([0-9][0-9.]+)/i);
+  if (m) return m[1].replace(/\./g, '');
+  const g = raw.match(/\(\s*G\s*([0-9]+)\s*\)/i);
+  if (g) return g[1];
+  const paren = raw.match(/\(\s*([0-9][0-9.]+)\s*\)/);
+  if (paren) return paren[1].replace(/\./g, '');
+  return '';
 }
 
 /** Slugs no site: /produto/hd-160104/ (padrão atual) e legado /produto/160101/. */
