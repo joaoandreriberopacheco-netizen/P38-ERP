@@ -65,6 +65,10 @@ export function imagensJsonFromLumeFicha(ficha) {
 export const LUME_PORTFOLIO_BY_CODE = {
   'INDF-030': 'pol-nero-portoro-45x89',
   'INDF-032': 'pol-nero-portoro-75x75',
+  'INDF-041': 'legno-castanho-22x90',
+  'INDF-042': 'peroba',
+  'INDF-043': 'sugi-ban-carvalho-2',
+  'INDF-044': 'teca-natural-22x90',
 };
 
 export function lumePortfolioSlugFromRow(row) {

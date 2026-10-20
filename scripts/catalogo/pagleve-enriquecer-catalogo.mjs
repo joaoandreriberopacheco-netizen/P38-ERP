@@ -32,6 +32,7 @@ import {
 import { resolveEmbalagemFormigres } from '../lib/formigresEmbalagem.mjs';
 import { resolvePrecoPagLeve, produtoPrecoFromItem } from '../lib/pagleveTabelaPrecos.mjs';
 import { loadPrecosSiah, resolvePrecoSiah } from '../lib/paglevePrecosSiah.mjs';
+import { parseLumePortfolioHtml } from '../lib/lumePaginaProduto.mjs';
 const UA = 'P38-PagLeve-catalogo/1.0';
 const CLASSIF_DIR = path.join(process.cwd(), 'files', 'pagleve', 'classificacao');
 const PATTERN = /^pagleve-estoque-\d{4}-\d{2}-\d{2}\.json$/;
@@ -135,6 +136,12 @@ function isCarmeloFiorItem(item) {
   if (url.includes('carmelofior.com.br')) return true;
   const marca = String(item.marca_nome || '').toLowerCase();
   return /^(cecafi|idealle|arielle|fiorano|fioranno|pisoforte)\b/.test(marca);
+}
+
+function isLumeItem(item) {
+  if (item.fabricante_grupo === 'Lume Cerâmica') return true;
+  const url = String(item.produto_url || '');
+  return url.includes('lumeceramica.com.br');
 }
 
 function mapImagens(urls) {
@@ -241,6 +248,25 @@ async function enrichImagens(item, ctx) {
     if (img) {
       imagem_url = img;
       imagens = mapImagens([img]);
+    }
+  }
+
+  if (isLumeItem(item) && url.includes('lumeceramica.com.br/portfolio-item')) {
+    const html = pageHtml || curlGet(url);
+    const ficha = parseLumePortfolioHtml(html, url);
+    if (ficha?.imagens?.length) {
+      const score = (u) => {
+        if (/-F\d+\.(jpe?g|png|webp)/i.test(u)) return 30;
+        if (/Perfil-Site/i.test(u)) return 20;
+        if (/destaque/i.test(u)) return 5;
+        return 10;
+      };
+      const picks = [...ficha.imagens].sort((a, b) => score(b) - score(a)).slice(0, 6);
+      imagens = mapImagens(picks);
+      imagem_url = picks[0] || ficha.imagem_url || imagem_url;
+    } else if (ficha?.imagem_url) {
+      imagem_url = ficha.imagem_url;
+      imagens = mapImagens([ficha.imagem_url]);
     }
   }
 

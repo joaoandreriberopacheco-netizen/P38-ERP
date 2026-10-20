@@ -63,15 +63,44 @@
       "pei_uso": "",
       "referencia": "INDF-001",
       "produto_url": "https://www.carmelofior.com.br/produto/gales-po-rt",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/78c20f4b45074e5d989140f9050a74ba.webp",
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/78c20f4b45074e5d989140f9050a74ba.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/114cc27c48e9ff92db008742f321d570.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/a234e3d58fa74cdcdf1a9ea48ec0eb38.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/b2e76baf66936d7631de8c5ae632f148.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/e5c6aa5d6ee97e9da1092973e15aa450.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/0c9de99063d27367fc02a289e40240b3.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 54.9,
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "33471",
       "m2_por_caixa": 2.2,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "regra João André + URL site"
+      "observacao": "regra João André + URL site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-002",
@@ -97,15 +126,44 @@
       "pei_uso": "",
       "referencia": "INDF-002",
       "produto_url": "https://www.carmelofior.com.br/produto/sicilia-po-rt",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/81893e526aefef3555936a0c8f021b68.webp",
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/81893e526aefef3555936a0c8f021b68.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/8d01c5e4e9c0117a45476c9cd9828e22.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/362d0a0dc2e94e0b941f76ea43734c28.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/3a44c71745492339ee719b93922b7d4a.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/bbd81670dca4759830f6db17f526fc68.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/fb9dc6ab21dbe584ff38640761069587.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 54.9,
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "33472",
       "m2_por_caixa": 2.2,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "regra João André + URL site"
+      "observacao": "regra João André + URL site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-003",
@@ -131,15 +189,44 @@
       "pei_uso": "",
       "referencia": "INDF-003",
       "produto_url": "https://www.carmelofior.com.br/produto/breda-po-rt",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/1b07e7907613648f29c6d2877537b77f.webp",
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/1b07e7907613648f29c6d2877537b77f.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/dfc90eede9698bb502fbf585e91faf76.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/0472c4f46d2077f724d93114365543e4.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/f8e18dcb1b5b7acb4367ad1f6d8621cc.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/1cfbd215dc92d226d346e7a3aca7e4b5.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/37cfc4acb2a7d49b11e5e31d9868c00d.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 54.9,
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "33526",
       "m2_por_caixa": 2.2,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "regra João André + URL site"
+      "observacao": "regra João André + URL site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-004",
@@ -338,7 +425,11 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug pr7020 (SIAH→site)"
+      "observacao": "portal slug pr7020 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-008",
@@ -372,7 +463,11 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug r7007 (SIAH→site)"
+      "observacao": "portal slug r7007 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-009",
@@ -437,15 +532,28 @@
       "pei_uso": "",
       "referencia": "INDF-010",
       "produto_url": "https://www.carmelofior.com.br/produto/alaska-po-rt",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/efc69e060c018ab783d01807080fb12a.webp",
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/efc69e060c018ab783d01807080fb12a.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/f1dc9592a55cab22a20e59d6323a3eea.webp",
+          "tipo": "ambiente"
+        }
+      ],
       "preco_m2": 54.9,
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "33940",
       "m2_por_caixa": 2.2,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "regra João André + URL site"
+      "observacao": "regra João André + URL site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-011",
@@ -887,7 +995,11 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug r7004 (SIAH→site)"
+      "observacao": "portal slug r7004 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-020",
@@ -972,7 +1084,11 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug pr7097 (SIAH→site)"
+      "observacao": "portal slug pr7097 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-022",
@@ -1006,7 +1122,11 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug pr7099 (SIAH→site)"
+      "observacao": "portal slug pr7099 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-023",
@@ -1040,7 +1160,11 @@
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal Rocha slug pr70100"
+      "observacao": "portal Rocha slug pr70100",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-024",
@@ -1305,15 +1429,44 @@
       "pei_uso": "",
       "referencia": "INDF-029",
       "produto_url": "https://lumeceramica.com.br/portfolio-item/pol-capadocia-62x119/",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://lumeceramica.com.br/wp-content/uploads/2024/11/Pol-Alicante-Black-F1-1.jpg",
+      "imagens": [
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/11/Pol-Alicante-Black-F1-1.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2025/03/Pol-Capadocia-F3.jpg",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2025/03/Pol-Capadocia-62x119-1.png",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2025/03/Pol-Carrara-Vechio-62x119-2.png",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2025/03/Pol-Capadocia-F2.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2025/03/Pol-Capadocia-F1.jpg",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 63.9,
       "preco_fonte": "siah_desc:75",
       "codigo_siah": "34431",
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "regra João André + URL site"
+      "observacao": "regra João André + URL site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-030",
@@ -1406,15 +1559,44 @@
       "pei_uso": "",
       "referencia": "INDF-031",
       "produto_url": "https://lumeceramica.com.br/portfolio-item/monterrey-grigio-75x75/",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://lumeceramica.com.br/wp-content/uploads/2021/03/Lume-logo.png",
+      "imagens": [
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2021/03/Lume-logo.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2021/03/Lume-logo@2x.png",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2021/06/Lume-logo-negativo-300x133.png",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2021/06/Lume-logo-negativo-260x115.png",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2021/06/Lume-logo-negativo-50x22.png",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2021/06/Lume-logo-negativo-150x66.png",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 48.9,
       "preco_fonte": "siah_desc:65",
       "codigo_siah": "34435",
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "regra João André + URL site"
+      "observacao": "regra João André + URL site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-032",
@@ -1884,7 +2066,11 @@
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal Rocha slug marmo-douro"
+      "observacao": "portal Rocha slug marmo-douro",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-041",
@@ -1910,15 +2096,44 @@
       "pei_uso": "",
       "referencia": "INDF-041",
       "produto_url": "https://lumeceramica.com.br/portfolio-item/legno-castanho-22x90/",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://lumeceramica.com.br/wp-content/uploads/2024/06/LEGNO-CASTANHO-F1.jpg",
+      "imagens": [
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/06/LEGNO-CASTANHO-F1.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/06/LEGNO-CASTANHO-F2.jpg",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/06/LEGNO-CASTANHO-F3.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/06/LEGNO-CASTANHO-F4.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/06/LEGNO-CASTANHO-F5.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/06/LEGNO-CASTANHO-F6.jpg",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 51.9,
       "preco_fonte": "siah_desc:75",
       "codigo_siah": "34795",
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "indicacao João André; formato OCR corrigido"
+      "observacao": "indicacao João André; formato OCR corrigido",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-042",
@@ -1944,15 +2159,44 @@
       "pei_uso": "",
       "referencia": "INDF-042",
       "produto_url": "https://lumeceramica.com.br/portfolio-item/peroba/",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://lumeceramica.com.br/wp-content/uploads/2026/07/Peroba-Perfil-Site.jpg",
+      "imagens": [
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2026/07/Peroba-Perfil-Site.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2026/07/Sugi-Ban-Perfil-Site.jpg",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2026/07/Sugi-Ban-Perfil-Site-150x150.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2026/07/Sugi-Ban-Perfil-Site-300x300.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2026/07/Sugi-Ban-Perfil-Site-1024x1024.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2026/07/Sugi-Ban-Perfil-Site-768x768.jpg",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 49.9,
       "preco_fonte": "siah_desc:75",
       "codigo_siah": "34796",
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "indicacao João André; formato OCR corrigido"
+      "observacao": "indicacao João André; formato OCR corrigido",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-043",
@@ -1978,15 +2222,44 @@
       "pei_uso": "",
       "referencia": "INDF-043",
       "produto_url": "https://lumeceramica.com.br/portfolio-item/sugi-ban-carvalho-2/",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://lumeceramica.com.br/wp-content/uploads/2026/07/Sugi-Ban-Perfil-Site.jpg",
+      "imagens": [
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2026/07/Sugi-Ban-Perfil-Site.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2026/07/Sugi-Ban-Carvalho-Perfil-Site-1.jpg",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2026/07/Peroba-Perfil-Site.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2026/07/Sugi-Ban-Carvalho-Perfil-Site-1-150x150.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2026/07/Sugi-Ban-Carvalho-Perfil-Site-1-300x300.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2026/07/Sugi-Ban-Carvalho-Perfil-Site-1-1024x1024.jpg",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 51.9,
       "preco_fonte": "siah_desc:35",
       "codigo_siah": "34795",
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "indicacao João André; URL Lume"
+      "observacao": "indicacao João André; URL Lume",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-044",
@@ -2012,15 +2285,44 @@
       "pei_uso": "",
       "referencia": "INDF-044",
       "produto_url": "https://lumeceramica.com.br/portfolio-item/teca-natural-22x90/",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://lumeceramica.com.br/wp-content/uploads/2024/06/TECA-NATURAL-F1.jpg",
+      "imagens": [
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/06/TECA-NATURAL-F1.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/06/TECA-NATURAL-F2.jpg",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/06/TECA-NATURAL-F3.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/06/TECA-NATURAL-F4.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/06/TECA-NATURAL-F5.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2024/06/TECA-NATURAL-F6.jpg",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 49.9,
       "preco_fonte": "siah_desc:75",
       "codigo_siah": "34798",
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "indicacao João André; URL Lume"
+      "observacao": "indicacao João André; URL Lume",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "27908",
@@ -2951,13 +3253,17 @@
           "tipo": "principal"
         }
       ],
-      "preco_m2": null,
-      "preco_fonte": "",
+      "preco_m2": 13.9,
+      "preco_fonte": "tabela_formigres",
       "codigo_siah": "",
-      "m2_por_caixa": null,
+      "m2_por_caixa": 2,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": ""
+      "observacao": "",
+      "caixas_por_palete": 50,
+      "m2_por_palete": 100,
+      "peso_kg_caixa": 26,
+      "peso_kg_palete": 1300
     },
     {
       "codigo_tintao": "29062",
@@ -3885,7 +4191,11 @@
       "m2_por_caixa": 2.32,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (incopisos→formigres→carmelo→lume→rocha→cerbras) sem ficha"
+      "observacao": "indicacao João; buscou (incopisos→formigres→carmelo→lume→rocha→cerbras) sem ficha",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-047",
@@ -3989,15 +4299,44 @@
       "pei_uso": "",
       "referencia": "INDF-049",
       "produto_url": "https://www.carmelofior.com.br/produto/selah-white-lux-plus",
-      "imagem_url": "",
-      "imagens": [],
-      "preco_m2": null,
-      "preco_fonte": "",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/4e6aea60808fec4bfca3f4bd8dd11e4e.webp",
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/4e6aea60808fec4bfca3f4bd8dd11e4e.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/a37efab8cec0bebd3ced1ccc81735d59.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/fbc27120cfaa2e94c3243cd0609a99d2.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/394d5c6daa1a8a853da37142089afbc0.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/7ce58306f6996d01f8d5966fec5a2ee8.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/9a72227319ef5ddadda0a50613011ae5.webp",
+          "tipo": "detalhe"
+        }
+      ],
+      "preco_m2": 14.45,
+      "preco_fonte": "tabela_formigres",
       "codigo_siah": "",
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Grupo Carmelo Fior — marca na ficha do site"
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-050",
@@ -4023,15 +4362,28 @@
       "pei_uso": "",
       "referencia": "INDF-050",
       "produto_url": "https://www.carmelofior.com.br/produto/branco-neve-plus-38-75",
-      "imagem_url": "",
-      "imagens": [],
-      "preco_m2": null,
-      "preco_fonte": "",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/73393396fa48fcd6aaa2c1a0a2cddcc3.webp",
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/73393396fa48fcd6aaa2c1a0a2cddcc3.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/4decc387489c174f714595532f0da1c1.webp",
+          "tipo": "ambiente"
+        }
+      ],
+      "preco_m2": 14.45,
+      "preco_fonte": "tabela_formigres",
       "codigo_siah": "",
       "m2_por_caixa": 2,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Grupo Carmelo Fior — marca na ficha do site"
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-051",
@@ -4057,15 +4409,28 @@
       "pei_uso": "",
       "referencia": "INDF-051",
       "produto_url": "https://www.carmelofior.com.br/produto/clean-plus-38-75",
-      "imagem_url": "",
-      "imagens": [],
-      "preco_m2": null,
-      "preco_fonte": "",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/d095842097ce3c47c2afca7b57211d3b.webp",
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/d095842097ce3c47c2afca7b57211d3b.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/ad374e9650a53bd61a2c2997d6c8fdf0.webp",
+          "tipo": "ambiente"
+        }
+      ],
+      "preco_m2": 14.45,
+      "preco_fonte": "tabela_formigres",
       "codigo_siah": "",
       "m2_por_caixa": 2,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Grupo Carmelo Fior — marca na ficha do site"
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-052",
@@ -4091,15 +4456,44 @@
       "pei_uso": "",
       "referencia": "INDF-052",
       "produto_url": "https://www.carmelofior.com.br/produto/selena-bege",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/984649fe8bf265f646405787b4558a95.webp",
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/984649fe8bf265f646405787b4558a95.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/c3b0e10b92ec4681d93219688dc15da6.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/3e6c5fb0750f658feb412d3be1806c57.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/0f9fd3c273076a4851f9d1432efd443a.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/9968706347a20f0ced0bc3ebe9f32eee.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/8706c0159d5f83f0d940f53ebbf11853.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 32,
       "preco_fonte": "siah_desc:35",
       "codigo_siah": "32099",
       "m2_por_caixa": 2.59,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Grupo Carmelo Fior — marca na ficha do site"
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-053",
@@ -4166,13 +4560,17 @@
       "produto_url": "https://www.formigres.com.br/marca.php?marca=formigres&produto=50",
       "imagem_url": "",
       "imagens": [],
-      "preco_m2": null,
-      "preco_fonte": "",
+      "preco_m2": 14.9,
+      "preco_fonte": "tabela_formigres",
       "codigo_siah": "",
       "m2_por_caixa": 2.15,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Graffiato 60x60 — URL João André"
+      "observacao": "Graffiato 60x60 — URL João André",
+      "caixas_por_palete": 40,
+      "m2_por_palete": 86,
+      "peso_kg_caixa": 35,
+      "peso_kg_palete": 1400
     },
     {
       "codigo_tintao": "INDF-055",
@@ -4198,15 +4596,24 @@
       "pei_uso": "",
       "referencia": "INDF-055",
       "produto_url": "https://grupoincopisos.com.br/produto/divina-luz/",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://grupoincopisos.com.br/wp-content/uploads/2026/03/DIVINA-LUZ_813.024_913.023_513.021_313.023-e1785793993620.jpg",
+      "imagens": [
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2026/03/DIVINA-LUZ_813.024_913.023_513.021_313.023-e1785793993620.jpg",
+          "tipo": "principal"
+        }
+      ],
       "preco_m2": null,
-      "preco_fonte": "",
+      "preco_fonte": null,
       "codigo_siah": "",
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "56×113 religioso — Incopisos"
+      "observacao": "56×113 religioso — Incopisos",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-056",
@@ -4232,15 +4639,24 @@
       "pei_uso": "",
       "referencia": "INDF-056",
       "produto_url": "https://grupoincopisos.com.br/produto/iluminado/",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://grupoincopisos.com.br/wp-content/uploads/2026/02/ILUMINADO_813023.913022.513020.313022.jpg",
+      "imagens": [
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2026/02/ILUMINADO_813023.913022.513020.313022.jpg",
+          "tipo": "principal"
+        }
+      ],
       "preco_m2": null,
-      "preco_fonte": "",
+      "preco_fonte": null,
       "codigo_siah": "",
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "56×113 religioso — Incopisos"
+      "observacao": "56×113 religioso — Incopisos",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-057",
@@ -4266,15 +4682,24 @@
       "pei_uso": "",
       "referencia": "INDF-057",
       "produto_url": "https://grupoincopisos.com.br/produto/nossa-senhora/",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://grupoincopisos.com.br/wp-content/uploads/2025/11/NOSSA-SENHORA-e1767984739962.jpg",
+      "imagens": [
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2025/11/NOSSA-SENHORA-e1767984739962.jpg",
+          "tipo": "principal"
+        }
+      ],
       "preco_m2": null,
-      "preco_fonte": "",
+      "preco_fonte": null,
       "codigo_siah": "",
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "56×113 religioso — Incopisos"
+      "observacao": "56×113 religioso — Incopisos",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-058",
@@ -4300,15 +4725,24 @@
       "pei_uso": "",
       "referencia": "INDF-058",
       "produto_url": "https://grupoincopisos.com.br/produto/maranata/",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://grupoincopisos.com.br/wp-content/uploads/2025/11/MARANATA.jpg",
+      "imagens": [
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2025/11/MARANATA.jpg",
+          "tipo": "principal"
+        }
+      ],
       "preco_m2": null,
-      "preco_fonte": "",
+      "preco_fonte": null,
       "codigo_siah": "",
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "56×113 religioso — Incopisos"
+      "observacao": "56×113 religioso — Incopisos",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-059",
@@ -4334,15 +4768,24 @@
       "pei_uso": "LE",
       "referencia": "PEI LE",
       "produto_url": "https://grupoincopisos.com.br/produto/leao-de-juda-2/",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://grupoincopisos.com.br/wp-content/uploads/2025/11/LEAO-DE-JUDA-e1767984803690.jpg",
+      "imagens": [
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2025/11/LEAO-DE-JUDA-e1767984803690.jpg",
+          "tipo": "principal"
+        }
+      ],
       "preco_m2": null,
-      "preco_fonte": "",
+      "preco_fonte": null,
       "codigo_siah": "",
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "56×113 religioso — Incopisos"
+      "observacao": "56×113 religioso — Incopisos",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-060",
@@ -4383,13 +4826,17 @@
           "tipo": "principal"
         }
       ],
-      "preco_m2": null,
-      "preco_fonte": "",
+      "preco_m2": 15.9,
+      "preco_fonte": "tabela_formigres",
       "codigo_siah": "",
       "m2_por_caixa": 2.15,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": ""
+      "observacao": "",
+      "caixas_por_palete": 40,
+      "m2_por_palete": 86,
+      "peso_kg_caixa": 35,
+      "peso_kg_palete": 1400
     },
     {
       "codigo_tintao": "INDF-061",
@@ -4430,13 +4877,17 @@
           "tipo": "principal"
         }
       ],
-      "preco_m2": null,
-      "preco_fonte": "",
+      "preco_m2": 15.9,
+      "preco_fonte": "tabela_formigres",
       "codigo_siah": "",
       "m2_por_caixa": 2.15,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": ""
+      "observacao": "",
+      "caixas_por_palete": 40,
+      "m2_por_palete": 86,
+      "peso_kg_caixa": 35,
+      "peso_kg_palete": 1400
     },
     {
       "codigo_tintao": "INDF-062",
@@ -4473,13 +4924,17 @@
           "tipo": "principal"
         }
       ],
-      "preco_m2": null,
-      "preco_fonte": "",
+      "preco_m2": 15.9,
+      "preco_fonte": "tabela_formigres",
       "codigo_siah": "",
       "m2_por_caixa": 2.15,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": ""
+      "observacao": "",
+      "caixas_por_palete": 40,
+      "m2_por_palete": 86,
+      "peso_kg_caixa": 35,
+      "peso_kg_palete": 1400
     },
     {
       "codigo_tintao": "INDF-063",
@@ -4516,13 +4971,17 @@
           "tipo": "principal"
         }
       ],
-      "preco_m2": null,
-      "preco_fonte": "",
+      "preco_m2": 15.9,
+      "preco_fonte": "tabela_formigres",
       "codigo_siah": "",
       "m2_por_caixa": 2.15,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": ""
+      "observacao": "",
+      "caixas_por_palete": 40,
+      "m2_por_palete": 86,
+      "peso_kg_caixa": 35,
+      "peso_kg_palete": 1400
     },
     {
       "codigo_tintao": "INDF-064",
@@ -5078,12 +5537,16 @@
       "imagem_url": "",
       "imagens": [],
       "preco_m2": null,
-      "preco_fonte": "",
+      "preco_fonte": null,
       "codigo_siah": "",
       "m2_por_caixa": 2.8,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "busca agressiva — ficha oficial validada"
+      "observacao": "busca agressiva — ficha oficial validada",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "19919",
@@ -6081,13 +6544,17 @@
           "tipo": "principal"
         }
       ],
-      "preco_m2": null,
-      "preco_fonte": "",
+      "preco_m2": 13.9,
+      "preco_fonte": "tabela_formigres",
       "codigo_siah": "",
-      "m2_por_caixa": null,
+      "m2_por_caixa": 2,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": ""
+      "observacao": "",
+      "caixas_por_palete": 50,
+      "m2_por_palete": 100,
+      "peso_kg_caixa": 26,
+      "peso_kg_palete": 1300
     },
     {
       "codigo_tintao": "26823",
@@ -7230,15 +7697,40 @@
       "pei_uso": "LE",
       "referencia": "PEI LE",
       "produto_url": "https://www.carmelofior.com.br/produto/bolt-mre",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/4cca06ebec838c87dba437748cef7f36.webp",
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/4cca06ebec838c87dba437748cef7f36.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/48cd6dd36b9f1bb6d65f4054938badbb.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/8f9cc5576c0a4a590f1ac4c29f4dd2c9.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/d8b8a9f98d2108c868beb7e7c29f4082.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/2f8809dc375eb92492165bb6d494c712.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 32,
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "32099",
       "m2_por_caixa": 2.59,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Grupo Carmelo Fior — marca na ficha do site"
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-086",
@@ -7264,15 +7756,40 @@
       "pei_uso": "",
       "referencia": "INDF-086",
       "produto_url": "https://www.carmelofior.com.br/produto/dritto-cinza-mre",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/6bab5cad5b1a81fa2f4fc0ff86b79c9c.webp",
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/6bab5cad5b1a81fa2f4fc0ff86b79c9c.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/c504b3fd6d3d4fa52114ae3ec816fbc0.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/3243f11000982800fe2c3fe3cd6c56d4.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/3b808d40ede95b8025da4dbb9f395967.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/560d42bc49803859baba274583770afb.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 32,
       "preco_fonte": "siah_desc:75",
       "codigo_siah": "32100",
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Grupo Carmelo Fior — marca na ficha do site"
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-087",
@@ -7298,15 +7815,44 @@
       "pei_uso": "LB",
       "referencia": "PEI LB",
       "produto_url": "https://www.carmelofior.com.br/produto/vino",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/963858dfa7f141448f71f6b3aea6d779.webp",
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/963858dfa7f141448f71f6b3aea6d779.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/6fdb2e401451f9a83bd39cffd5198fdb.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/a572fa7ffa801b3faa8ca719e0dd063a.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/ee50707580087934a7b25b66b8b0d311.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/2eecad832196a50277797e21d4b9100f.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/46ccbb32999fcdbb6234cd2dbbe7b0e6.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 32,
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "32104",
       "m2_por_caixa": 2.59,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Grupo Carmelo Fior — marca na ficha do site"
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-088",
@@ -7332,15 +7878,40 @@
       "pei_uso": "",
       "referencia": "INDF-088",
       "produto_url": "https://www.carmelofior.com.br/produto/melinda",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/85a2fed91e7f75c60c6f0051646fdc90.webp",
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/85a2fed91e7f75c60c6f0051646fdc90.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/a1e86df843a507f57b22a5a48c6cb60e.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/9c408160fd4c5b15928b5373d45b2c65.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/17866fd6b0a09fa4f2a72eff7b809540.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/4da97d66d24ccba5d34a450d8897166a.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 32,
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "32147",
       "m2_por_caixa": 2.59,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Grupo Carmelo Fior — marca na ficha do site"
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-089",
@@ -7960,7 +8531,11 @@
       "m2_por_caixa": 170.098,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (incopisos→formigres→carmelo→lume→rocha→cerbras) sem ficha"
+      "observacao": "indicacao João; buscou (incopisos→formigres→carmelo→lume→rocha→cerbras) sem ficha",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-104",
@@ -7986,15 +8561,40 @@
       "pei_uso": "LB",
       "referencia": "PEI LB",
       "produto_url": "https://www.carmelofior.com.br/produto/noble-57x57",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/4101346e7c34fc3de0008687ba9d8db9.webp",
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/4101346e7c34fc3de0008687ba9d8db9.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/55198d1db4e395cb4441b0a98557e1ee.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/142adcfc232c95dace046df2f492854c.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/81b4435d4d9d3f0e02fc95484d3c68fd.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/64c5495a7fc62cace83b37854e172c76.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 32,
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "33090",
       "m2_por_caixa": 2.59,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Grupo Carmelo Fior — marca na ficha do site"
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-105",
@@ -8020,15 +8620,40 @@
       "pei_uso": "LD",
       "referencia": "PEI LD",
       "produto_url": "https://www.carmelofior.com.br/produto/theo",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/0520543f3acb30b8c3e563372061cd33.webp",
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/0520543f3acb30b8c3e563372061cd33.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/366bb8da2342258e117746601d55bb9c.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/bc575ce9173a8440e0f22b7168c306c4.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/5cedbed5781e9397feb3d59f4b133369.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/6a7b2d06defdbc6d884ca4018ac42aa9.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 32,
       "preco_fonte": "siah_desc:65",
       "codigo_siah": "33115",
       "m2_por_caixa": 2.59,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Grupo Carmelo Fior — marca na ficha do site"
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-106",
@@ -8054,15 +8679,40 @@
       "pei_uso": "",
       "referencia": "INDF-106",
       "produto_url": "https://www.carmelofior.com.br/produto/minerati-mre",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/ecde11b9f61c4fef41cf93aea979b87c.webp",
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/ecde11b9f61c4fef41cf93aea979b87c.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/ec343661fe43efdba53bf94d55ed3459.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/81cd891b2fa6698cf18fae9683a8542b.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/7cbccced39b2d6b85b4d5d54fe31b09b.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/e2355f6e0f7fa5a9ef046239138af095.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 32,
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "33120",
       "m2_por_caixa": 2.59,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Grupo Carmelo Fior — marca na ficha do site"
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-107",
@@ -8088,15 +8738,28 @@
       "pei_uso": "",
       "referencia": "INDF-107",
       "produto_url": "https://www.carmelofior.com.br/produto/branco-neve-57x57",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/b6b0522dd57e8938f4181cf150ecefef.webp",
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/b6b0522dd57e8938f4181cf150ecefef.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/71be8d1753b394813693ec8bfa08e605.webp",
+          "tipo": "ambiente"
+        }
+      ],
       "preco_m2": 32,
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "33200",
       "m2_por_caixa": 2.59,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Grupo Carmelo Fior — marca na ficha do site"
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-108",
@@ -8161,15 +8824,32 @@
       "pei_uso": "",
       "referencia": "INDF-109",
       "produto_url": "https://www.formigres.com.br/produto/744",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://www.formigres.com.br/uploads/produtos/marcela/novarahd50.jpg",
+      "imagens": [
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/marcela/novarahd50.jpg",
+          "tipo": "principal",
+          "ordem": 0,
+          "principal": true
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/marcela/amb-novarahd50.jpg",
+          "tipo": "ambiente",
+          "ordem": 10,
+          "principal": false
+        }
+      ],
       "preco_m2": 32.9,
       "preco_fonte": "siah_desc:35",
       "codigo_siah": "27950",
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "indicacao João André; formato OCR corrigido"
+      "observacao": "indicacao João André; formato OCR corrigido",
+      "caixas_por_palete": 40,
+      "m2_por_palete": 100,
+      "peso_kg_caixa": 32,
+      "peso_kg_palete": 1280
     },
     {
       "codigo_tintao": "INDF-110",
@@ -8203,7 +8883,11 @@
       "m2_por_caixa": 2.32,
       "unidade": "",
       "status_site": "indicacao_joao",
-      "observacao": "indicacao João; buscou (incopisos→formigres→carmelo→lume→rocha→cerbras) sem ficha"
+      "observacao": "indicacao João; buscou (incopisos→formigres→carmelo→lume→rocha→cerbras) sem ficha",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-111",
@@ -8229,15 +8913,32 @@
       "pei_uso": "LD",
       "referencia": "PEI LD",
       "produto_url": "https://www.formigres.com.br/produto/305",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/sienahd50.jpg",
+      "imagens": [
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/sienahd50.jpg",
+          "tipo": "principal",
+          "ordem": 0,
+          "principal": true
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/amb-sienahd50.jpg",
+          "tipo": "ambiente",
+          "ordem": 10,
+          "principal": false
+        }
+      ],
       "preco_m2": 32.9,
       "preco_fonte": "siah_desc:35",
       "codigo_siah": "27950",
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "indicacao João André; formato OCR corrigido"
+      "observacao": "indicacao João André; formato OCR corrigido",
+      "caixas_por_palete": 40,
+      "m2_por_palete": 100,
+      "peso_kg_caixa": 32,
+      "peso_kg_palete": 1280
     },
     {
       "codigo_tintao": "INDF-112",
@@ -8263,15 +8964,32 @@
       "pei_uso": "LD",
       "referencia": "PEI LD",
       "produto_url": "https://www.formigres.com.br/produto/251",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/centauromrhd45.jpg",
+      "imagens": [
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/centauromrhd45.jpg",
+          "tipo": "principal",
+          "ordem": 0,
+          "principal": true
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/amb-centauromrhd45.jpg",
+          "tipo": "ambiente",
+          "ordem": 10,
+          "principal": false
+        }
+      ],
       "preco_m2": 32.9,
       "preco_fonte": "siah_desc:65",
       "codigo_siah": "33474",
-      "m2_por_caixa": null,
+      "m2_por_caixa": 2,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "indicacao João André; formato OCR corrigido"
+      "observacao": "indicacao João André; formato OCR corrigido",
+      "caixas_por_palete": 50,
+      "m2_por_palete": 100,
+      "peso_kg_caixa": 28,
+      "peso_kg_palete": 1400
     },
     {
       "codigo_tintao": "INDF-113",
@@ -8297,15 +9015,28 @@
       "pei_uso": "",
       "referencia": "INDF-113",
       "produto_url": "https://www.carmelofior.com.br/produto/branco-neve-57x57",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/b6b0522dd57e8938f4181cf150ecefef.webp",
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/b6b0522dd57e8938f4181cf150ecefef.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/71be8d1753b394813693ec8bfa08e605.webp",
+          "tipo": "ambiente"
+        }
+      ],
       "preco_m2": 32,
       "preco_fonte": "siah_desc:75",
       "codigo_siah": "33531",
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Grupo Carmelo Fior — marca na ficha do site"
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-114",
@@ -8331,15 +9062,40 @@
       "pei_uso": "",
       "referencia": "INDF-114",
       "produto_url": "https://www.carmelofior.com.br/produto/dritto-bege-mre",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/833ebe6d3b9a31877683c1282db40f4a.webp",
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/833ebe6d3b9a31877683c1282db40f4a.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/f43ab2e48d9aeea87f2fc997cd033f49.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/3253c80e1ac0caff7c7460aa315e68cd.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/2cf8ad487d5f8edf1edaac8d2f09f9dc.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/72daa6cc5758e7adad7d6e8d280a9132.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 32,
       "preco_fonte": "siah_desc:35",
       "codigo_siah": "32099",
       "m2_por_caixa": 2.59,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Grupo Carmelo Fior — marca na ficha do site"
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-115",
@@ -8365,15 +9121,28 @@
       "pei_uso": "LB",
       "referencia": "PEI LB",
       "produto_url": "https://www.carmelofior.com.br/produto/clean-57x57",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/efc69e060c018ab783d01807080fb12a.webp",
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/efc69e060c018ab783d01807080fb12a.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/2d00dd650a7bdd2c9b8a47c74c318eaa.webp",
+          "tipo": "ambiente"
+        }
+      ],
       "preco_m2": 32,
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "34158",
       "m2_por_caixa": 2.59,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Grupo Carmelo Fior — marca na ficha do site"
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-116",
@@ -8399,15 +9168,26 @@
       "pei_uso": "",
       "referencia": "INDF-116",
       "produto_url": "https://www.formigres.com.br/produto/13",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/jacarandacl45-brilholustre.webp",
+      "imagens": [
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/jacarandacl45-brilholustre.webp",
+          "tipo": "principal",
+          "ordem": 0,
+          "principal": true
+        }
+      ],
       "preco_m2": 32.9,
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "34288",
-      "m2_por_caixa": null,
+      "m2_por_caixa": 2,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "indicacao João André; formato OCR corrigido"
+      "observacao": "indicacao João André; formato OCR corrigido",
+      "caixas_por_palete": 50,
+      "m2_por_palete": 100,
+      "peso_kg_caixa": 28,
+      "peso_kg_palete": 1400
     },
     {
       "codigo_tintao": "INDF-117",
@@ -8594,15 +9374,44 @@
       "pei_uso": "",
       "referencia": "INDF-120",
       "produto_url": "https://www.carmelofior.com.br/produto/selena-cinza",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/db9621fda57189cc0a03521887537214.webp",
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/db9621fda57189cc0a03521887537214.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/2329b7e43d422befdab781e10dab3d68.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/9d6b85b605178940c076766aba382ec5.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/262006febaf0f18dd8efd62a00790884.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/bd49c9acf9faf296d05a73f3798b043a.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/99c94b69e5a1b7f2ca624b9a12b95792.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 32,
       "preco_fonte": "siah_desc:105",
       "codigo_siah": "34554",
       "m2_por_caixa": 2.59,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Grupo Carmelo Fior — marca na ficha do site"
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-121",
@@ -8706,15 +9515,28 @@
       "pei_uso": "",
       "referencia": "34800",
       "produto_url": "https://lumeceramica.com.br/portfolio-item/pol-arcadia-62x119/",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://lumeceramica.com.br/wp-content/uploads/2026/04/Araucaria-Perfil-Site-1-960x720.jpg",
+      "imagens": [
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2026/04/Araucaria-Perfil-Site-1-960x720.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2026/04/Araucaria-Perfil-Site-1-1024x1024.jpg",
+          "tipo": "ambiente"
+        }
+      ],
       "preco_m2": 67.9,
       "preco_fonte": "siah_codigo",
       "codigo_siah": "34800",
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "regra João André + URL site"
+      "observacao": "regra João André + URL site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "34801",
@@ -8740,15 +9562,44 @@
       "pei_uso": "",
       "referencia": "34801",
       "produto_url": "https://lumeceramica.com.br/portfolio-item/pol-taurus-black-62x119/",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://lumeceramica.com.br/wp-content/uploads/2025/03/Pol-Taurus-Black-F3.jpg",
+      "imagens": [
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2025/03/Pol-Taurus-Black-F3.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2025/03/Pol-Taurus-Black-62x119-1.png",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2025/03/Pol-Paladio-Bronze-62x119-1.png",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2025/03/Pol-Modena-Bege-45x89-1.png",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2025/03/Pol-Taurus-Black-F2.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2025/03/Pol-Taurus-Black-F4.jpg",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 63.9,
       "preco_fonte": "siah_desc:35",
       "codigo_siah": "34431",
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "regra João André + URL site"
+      "observacao": "regra João André + URL site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "34860",
@@ -8774,15 +9625,28 @@
       "pei_uso": "",
       "referencia": "34860",
       "produto_url": "https://www.carmelofior.com.br/produto/alaska-po-rt",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/efc69e060c018ab783d01807080fb12a.webp",
+      "imagens": [
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/efc69e060c018ab783d01807080fb12a.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/f1dc9592a55cab22a20e59d6323a3eea.webp",
+          "tipo": "ambiente"
+        }
+      ],
       "preco_m2": 52,
       "preco_fonte": "siah_codigo",
       "codigo_siah": "34860",
       "m2_por_caixa": 2.2,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "regra João André + URL site"
+      "observacao": "regra João André + URL site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "34988",
@@ -8808,15 +9672,44 @@
       "pei_uso": "",
       "referencia": "34988",
       "produto_url": "https://lumeceramica.com.br/portfolio-item/ripado-limestone-lux-62x119/",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://lumeceramica.com.br/wp-content/uploads/2025/05/Ripado-Limestone-Lux-rotated.jpg",
+      "imagens": [
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2025/05/Ripado-Limestone-Lux-rotated.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2025/05/Ripado-Limestone-Lux-1.jpg",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2025/05/Ripado-Marmo-Lux.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2025/05/Prancheta-1.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2023/10/V-Variacao-de-Tonalidade.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2023/10/Tabela-indicacao-de-uso.jpg",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 82.9,
       "preco_fonte": "siah_codigo",
       "codigo_siah": "34988",
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "regra João André + URL site"
+      "observacao": "regra João André + URL site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "34989",
@@ -8881,15 +9774,44 @@
       "pei_uso": "",
       "referencia": "34990",
       "produto_url": "https://lumeceramica.com.br/portfolio-item/avorio-cinza-76x76/",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://lumeceramica.com.br/wp-content/uploads/2023/03/ALPES-WHITE-destaque-nv-960x720.jpg",
+      "imagens": [
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2023/03/ALPES-WHITE-destaque-nv-960x720.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2023/03/ALPES-WHITE-destaque-nv-1024x1024.jpg",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2023/10/ALVORADA-GRIS-destaque-nv-960x720.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2023/10/ALVORADA-GRIS-destaque-nv-1024x1024.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2023/10/ARENITO-GRIGIO-destaque-nv-960x720.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2023/10/ARENITO-GRIGIO-destaque-nv-1024x1024.jpg",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 44.9,
       "preco_fonte": "siah_codigo",
       "codigo_siah": "34990",
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "regra João André + URL site"
+      "observacao": "regra João André + URL site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "35039",
@@ -8923,7 +9845,11 @@
       "m2_por_caixa": 2.83,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal Rocha slug fenix"
+      "observacao": "portal Rocha slug fenix",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "35040",
@@ -9156,7 +10082,11 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug r7041 (SIAH→site)"
+      "observacao": "portal slug r7041 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "35049",
@@ -9190,7 +10120,11 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug r7042 (SIAH→site)"
+      "observacao": "portal slug r7042 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "35050",
@@ -9341,7 +10275,11 @@
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal Rocha slug breccia-lux"
+      "observacao": "portal Rocha slug breccia-lux",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "35448",
@@ -9570,7 +10508,11 @@
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal Rocha slug loft-bege-ext"
+      "observacao": "portal Rocha slug loft-bege-ext",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "35487",
@@ -9604,7 +10546,11 @@
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "regra João André + URL site"
+      "observacao": "regra João André + URL site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "35506",
@@ -9689,15 +10635,44 @@
       "pei_uso": "",
       "referencia": "35507",
       "produto_url": "https://lumeceramica.com.br/portfolio-item/monterrey-grigio-75x75/",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://lumeceramica.com.br/wp-content/uploads/2021/03/Lume-logo.png",
+      "imagens": [
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2021/03/Lume-logo.png",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2021/03/Lume-logo@2x.png",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2021/06/Lume-logo-negativo-300x133.png",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2021/06/Lume-logo-negativo-260x115.png",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2021/06/Lume-logo-negativo-50x22.png",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2021/06/Lume-logo-negativo-150x66.png",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 48.9,
       "preco_fonte": "siah_codigo",
       "codigo_siah": "35507",
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "regra João André + URL site"
+      "observacao": "regra João André + URL site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "35508",
@@ -9723,15 +10698,44 @@
       "pei_uso": "",
       "referencia": "35508",
       "produto_url": "https://lumeceramica.com.br/portfolio-item/pol-patagonia-light-62x119/",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://lumeceramica.com.br/wp-content/uploads/2026/03/Pol-Patagonia-Light-F6-rotated.jpg",
+      "imagens": [
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2026/03/Pol-Patagonia-Light-F6-rotated.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2026/03/Pol-Patagonia-Light-F5-rotated.jpg",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2026/03/Pol-Patagonia-Light-F4-rotated.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2026/03/Pol-Patagonia-Light-F3-rotated.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2026/03/Pol-Patagonia-Light-F2-rotated.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://lumeceramica.com.br/wp-content/uploads/2026/03/Pol-Patagonia-Light-F1-rotated.jpg",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 67.9,
       "preco_fonte": "siah_codigo",
       "codigo_siah": "35508",
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "regra João André + URL site"
+      "observacao": "regra João André + URL site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "35509",
@@ -9765,7 +10769,11 @@
       "m2_por_caixa": 2.88,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal Rocha slug r4076"
+      "observacao": "portal Rocha slug r4076",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "35559",
@@ -9842,7 +10850,11 @@
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug r7074 (SIAH→site)"
+      "observacao": "portal slug r7074 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-123",
@@ -9927,7 +10939,11 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug pr7081 (SIAH→site)"
+      "observacao": "portal slug pr7081 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-125",
@@ -10094,7 +11110,11 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug r7060 (SIAH→site)"
+      "observacao": "portal slug r7060 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-129",
@@ -10128,7 +11148,11 @@
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal Rocha slug bianco-supreme"
+      "observacao": "portal Rocha slug bianco-supreme",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-130",
@@ -11139,7 +12163,11 @@
       "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal Rocha slug oro-realle"
+      "observacao": "portal Rocha slug oro-realle",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-150",
@@ -11608,7 +12636,11 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug r7063 (SIAH→site)"
+      "observacao": "portal slug r7063 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-160",
@@ -11642,7 +12674,11 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug pr7096 (SIAH→site)"
+      "observacao": "portal slug pr7096 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-161",
@@ -11715,7 +12751,11 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug r7093 (SIAH→site)"
+      "observacao": "portal slug r7093 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "INDF-163",
@@ -12646,7 +13686,11 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug pr7000 (SIAH→site)"
+      "observacao": "portal slug pr7000 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "29995",
@@ -12680,7 +13724,11 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug pr7026 (SIAH→site)"
+      "observacao": "portal slug pr7026 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "30059",
@@ -12714,7 +13762,11 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug pr7067 (SIAH→site)"
+      "observacao": "portal slug pr7067 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "30063",
@@ -13159,7 +14211,11 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug pr7080 (SIAH→site)"
+      "observacao": "portal slug pr7080 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "30623",
@@ -13866,5 +14922,6 @@
       "status_site": "confirmado_site",
       "observacao": ""
     }
-  ]
+  ],
+  "enriquecidoEm": "2026-10-20T21:20:46.452Z"
 }

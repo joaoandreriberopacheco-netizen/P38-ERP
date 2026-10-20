@@ -16,8 +16,9 @@ export function isPlaceholderImageUrl(url = '') {
 export function probeImageUrlOk(url, timeoutSec = 12) {
   if (!url || isPlaceholderImageUrl(url)) return false;
   try {
+    const tls = String(url).includes('lumeceramica.com.br') ? '-k ' : '';
     const out = execSync(
-      `curl -sL -o /dev/null -w "%{http_code}" --max-time ${timeoutSec} -A ${JSON.stringify(UA)} ${JSON.stringify(url)}`,
+      `curl ${tls}-sL -o /dev/null -w "%{http_code}" --max-time ${timeoutSec} -A ${JSON.stringify(UA)} ${JSON.stringify(url)}`,
       { encoding: 'utf8', maxBuffer: 1024 * 1024 },
     ).trim();
     const code = Number(out);
