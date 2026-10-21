@@ -9,6 +9,7 @@ import {
   normalizeItemToCanonicalFactorOne,
   repararLinhaCompraApresentacaoComProduto,
 } from '../src/lib/productUnits.js';
+import { calcValorItensPedidoCompraComCatalogo } from '../src/lib/pedidoCompraFinanceiro.js';
 
 const produto = {
   id: 'estribo',
@@ -41,6 +42,11 @@ const canon = normalizeItemToCanonicalFactorOne(reparado, 'custo');
 const exib = getItemCompraExibicaoVitrine(linhaBug, produto);
 const total = calcTotalItemCompraPedido(reparado);
 
+const somaPedidoLegado = calcValorItensPedidoCompraComCatalogo(
+  { itens: [{ ...linhaBug, total: 11 }] },
+  { estribo: produto },
+);
+
 const checks = [
   ['custo apres', getCustoApresentacaoItem(reparado), 110],
   ['total linha', total, 2200],
@@ -48,6 +54,7 @@ const checks = [
   ['exib total', exib.total, 2200],
   ['custo f1 canon', canon.custo_unitario, 0.55],
   ['apres canon', canon.custo_unitario_apresentacao, 110],
+  ['soma pedido (total legado 11)', somaPedidoLegado, 2200],
 ];
 
 let ok = true;
