@@ -30,18 +30,19 @@ const fmtPct = (n) =>
   (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const safe = (text) => normalizePdfText(text);
 
-/**
- * Tabela enxuta (linhas horizontais; sem moldura externa) — pisos com estoque abaixo do limite em m².
- */
-export async function generateRelatorioPisosEstoqueBaixoPdf(payload = {}) {
-  const {
-    rows = [],
-    limiteM2 = 20,
-    generatedAt = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }),
-  } = payload;
+function drawFooter(doc, pdfFontFamily, right, pageH) {
+  const totalPages = doc.internal.getNumberOfPages();
+  for (let p = 1; p <= totalPages; p += 1) {
+    doc.setPage(p);
+    doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+    doc.setFontSize(FONT.footer);
+    doc.setTextColor(...ENXUTO.muted);
+    doc.text(`Pagina ${p} / ${totalPages}`, right, pageH - 6, { align: 'right' });
+  }
+}
 
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const pdfFontFamily = await registerJsPdfDin1451Fonts(doc);
+async function generatePortrait(doc, pdfFontFamily, payload) {
+  const { rows = [], limiteM2 = 20, generatedAt } = payload;
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const M = 6;
@@ -117,7 +118,6 @@ export async function generateRelatorioPisosEstoqueBaixoPdf(payload = {}) {
   y += 6;
 
   beginTablePage();
-
   const descMaxW = X.m2 - X.desc - 3;
 
   for (const row of rows) {
@@ -161,13 +161,190 @@ export async function generateRelatorioPisosEstoqueBaixoPdf(payload = {}) {
     y = drawY + rowStep;
   }
 
-  const totalPages = doc.internal.getNumberOfPages();
-  for (let p = 1; p <= totalPages; p += 1) {
-    doc.setPage(p);
+  drawFooter(doc, pdfFontFamily, right, pageH);
+}
+
+async function generateSimulacaoPaisagem(doc, pdfFontFamily, payload) {
+  const {
+    rows = [],
+    limiteM2 = 20,
+    generatedAt,
+    markupSimulacaoPct = 40,
+    parcelasCartao = 10,
+    taxaJurosClienteMensal = 1.81,
+    maquininhaNome = '',
+  } = payload;
+
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const M = 8;
+  const right = pageW - M;
+
+  const X = {
+    codigo: M + 1,
+    desc: M + 16,
+    m2: M + 148,
+    cx: M + 160,
+    custo: M + 176,
+    venda: M + 196,
+    mk: M + 212,
+    sim40: M + 234,
+    cart10: right,
+  };
+
+  let y = 14;
+
+  const drawRowSeparator = (yLine) => {
+    doc.setDrawColor(...ENXUTO.rowRule);
+    doc.setLineWidth(ROW_RULE_W);
+    doc.line(M + 1, yLine, right, yLine);
+  };
+
+  const drawColumnHeaders = (topY) => {
+    const line1 = topY + 4;
+    const line2 = topY + 7.2;
     doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-    doc.setFontSize(FONT.footer);
+    doc.setFontSize(FONT.colHdr - 0.3);
     doc.setTextColor(...ENXUTO.muted);
-    doc.text(`Pagina ${p} / ${totalPages}`, right, pageH - 6, { align: 'right' });
+    doc.text('COD', X.codigo, line1);
+    doc.text('DESCRICAO', X.desc, line1);
+    doc.text('M2', X.m2, line1, { align: 'right' });
+    doc.text('CX', X.cx, line1, { align: 'right' });
+    doc.text('CUSTO', X.custo, line1, { align: 'right' });
+    doc.text('TABELA', X.venda, line1, { align: 'right' });
+    doc.text('MK', X.mk, line1, { align: 'right' });
+    doc.text(`CX ${markupSimulacaoPct}%`, X.sim40, line1, { align: 'right' });
+    doc.text('10x CARTAO', X.cart10, line1, { align: 'right' });
+    doc.setFontSize(FONT.colHdr - 0.7);
+    doc.text('/CX', X.custo, line2, { align: 'right' });
+    doc.text('/CX', X.venda, line2, { align: 'right' });
+    doc.text('%', X.mk, line2, { align: 'right' });
+    doc.text('MK sim', X.sim40, line2, { align: 'right' });
+    doc.text('tabela', X.cart10, line2, { align: 'right' });
+  };
+
+  const beginTablePage = () => {
+    drawColumnHeaders(y);
+    y += COL_HDR_BLOCK;
+  };
+
+  const ensureTableSpace = (needed = ROW_STEP + 1) => {
+    if (y + needed > pageH - 10) {
+      doc.addPage();
+      y = TABLE_TOP_CONTINUATION;
+      beginTablePage();
+    }
+  };
+
+  doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+  doc.setFontSize(FONT.title);
+  doc.setTextColor(...ENXUTO.black);
+  doc.text('Pisos em estoque — simulacao de precos (paisagem)', M, y);
+  y += 5;
+  doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+  doc.setFontSize(8);
+  doc.setTextColor(...ENXUTO.muted);
+  doc.text(
+    safe(
+      `PISO · < ${fmtN(limiteM2)} m2 · A-Z · ${rows.length} itens · MK simulado ${markupSimulacaoPct}% sobre custo/CX`,
+    ),
+    M,
+    y,
+  );
+  y += 3.8;
+  const jurosTxt = `${fmtPct(taxaJurosClienteMensal)}% a.m.`;
+  const maqTxt = maquininhaNome ? ` · ${safe(maquininhaNome)}` : '';
+  doc.text(
+    safe(
+      `10x cartao = parcela Price sobre preco de tabela/CX · juros cliente ${jurosTxt}${maqTxt} · ${generatedAt}`,
+    ),
+    M,
+    y,
+  );
+  y += 6;
+
+  beginTablePage();
+  const descMaxW = X.m2 - X.desc - 3;
+
+  for (const row of rows) {
+    const descLines = doc.splitTextToSize(safe(row.nome || ''), descMaxW);
+    const lineCount = Math.max(1, descLines.length);
+    const extraH = (lineCount - 1) * DESC_LINE_LEAD;
+    const rowStep = ROW_STEP + extraH;
+    ensureTableSpace(rowStep + 1);
+    const drawY = y;
+    const baseline =
+      lineCount <= 1
+        ? drawY + ROW_H * BASELINE_RATIO
+        : drawY + (ROW_H + extraH) / 2 + FONT.row * 0.16;
+
+    doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+    doc.setFontSize(FONT.code - 0.2);
+    doc.setTextColor(...ENXUTO.black);
+    doc.text(safe(row.codigo || '—'), X.codigo, baseline);
+
+    doc.setFontSize(FONT.row - 0.2);
+    const descFirst = baseline - ((lineCount - 1) * DESC_LINE_LEAD) / 2;
+    for (let i = 0; i < lineCount; i += 1) {
+      doc.text(descLines[i], X.desc, descFirst + i * DESC_LINE_LEAD);
+    }
+
+    doc.text(fmtN(row.m2), X.m2, baseline, { align: 'right' });
+    doc.text(fmtN(row.cx), X.cx, baseline, { align: 'right' });
+    doc.text(Number(row.custo_calc_x_cx) > 0 ? fmtN(row.custo_calc_x_cx) : '—', X.custo, baseline, {
+      align: 'right',
+    });
+    doc.text(Number(row.preco_venda_cx) > 0 ? fmtN(row.preco_venda_cx) : '—', X.venda, baseline, {
+      align: 'right',
+    });
+    doc.text(
+      Number(row.markup_pct) > 0 && Number(row.preco_venda_cx) > 0
+        ? `${fmtPct(row.markup_pct)}%`
+        : '—',
+      X.mk,
+      baseline,
+      { align: 'right' },
+    );
+    doc.text(
+      Number(row.preco_sim_40_cx) > 0 ? fmtN(row.preco_sim_40_cx) : '—',
+      X.sim40,
+      baseline,
+      { align: 'right' },
+    );
+    const parcelaTxt =
+      Number(row.parcela_10x_cartao) > 0 && Number(row.preco_venda_cx) > 0
+        ? `10x ${fmtN(row.parcela_10x_cartao)}`
+        : '—';
+    doc.text(parcelaTxt, X.cart10, baseline, { align: 'right' });
+
+    drawRowSeparator(drawY + rowStep - ROW_GAP * 0.35);
+    y = drawY + rowStep;
+  }
+
+  drawFooter(doc, pdfFontFamily, right, pageH);
+}
+
+/**
+ * Tabela enxuta (linhas horizontais; sem moldura externa).
+ * @param {object} payload
+ * @param {'portrait'|'simulacao_paisagem'} [payload.variant]
+ */
+export async function generateRelatorioPisosEstoqueBaixoPdf(payload = {}) {
+  const {
+    variant = 'portrait',
+    generatedAt = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }),
+  } = payload;
+
+  const orientation = variant === 'simulacao_paisagem' ? 'landscape' : 'portrait';
+  const doc = new jsPDF({ orientation, unit: 'mm', format: 'a4' });
+  const pdfFontFamily = await registerJsPdfDin1451Fonts(doc);
+
+  const body = { ...payload, generatedAt };
+
+  if (variant === 'simulacao_paisagem') {
+    await generateSimulacaoPaisagem(doc, pdfFontFamily, body);
+  } else {
+    await generatePortrait(doc, pdfFontFamily, body);
   }
 
   const arrayBuffer = doc.output('arraybuffer');
