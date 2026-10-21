@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import { registerJsPdfDin1451Fonts, normalizePdfText } from '@/lib/jspdfNotoFont';
+import { buildResumoPorFormatoPisos } from './buildResumoPorFormato.js';
 
 const PDF_FONT_NORMAL = 'normal';
 const PDF_FONT_BOLD = 'bold';
@@ -164,6 +165,118 @@ async function generatePortrait(doc, pdfFontFamily, payload) {
   drawFooter(doc, pdfFontFamily, right, pageH);
 }
 
+function drawResumoPorFormato(doc, pdfFontFamily, payload, ctx) {
+  const { pageH, M, right, markupSimulacaoPct } = ctx;
+  const resumo = payload.resumoPorFormato || buildResumoPorFormatoPisos(payload.rows || []);
+  const { linhas, totais } = resumo;
+  if (!linhas.length) return ctx.y;
+
+  let y = ctx.y;
+  const sectionGap = 10;
+  const resumoRowH = 6;
+  const resumoHdr = 8;
+  const needed = sectionGap + 6 + resumoHdr + (linhas.length + 1) * (resumoRowH + ROW_GAP) + 4;
+  if (y + needed > pageH - 12) {
+    doc.addPage();
+    y = 18;
+  } else {
+    y += sectionGap;
+  }
+
+  const RX = {
+    quant: M + 32,
+    formato: M + 48,
+    custo: M + 88,
+    promo: M + 128,
+    cartao: M + 168,
+    total: right,
+  };
+
+  doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+  doc.setFontSize(10);
+  doc.setTextColor(...ENXUTO.black);
+  doc.text('Resumo por formato', M, y);
+  y += 4.2;
+  doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+  doc.setFontSize(7.2);
+  doc.setTextColor(...ENXUTO.muted);
+  doc.text(
+    safe(
+      `Quant = CX em estoque · promocao = media ponderada CX ${markupSimulacaoPct}% MK · total = quant x promocao/CX`,
+    ),
+    M,
+    y,
+  );
+  y += 5;
+
+  const hdrY = y;
+  const hdrBase = hdrY + 5;
+  doc.setFontSize(FONT.colHdr - 0.2);
+  doc.setTextColor(...ENXUTO.muted);
+  doc.text('QUANT', RX.quant, hdrBase, { align: 'right' });
+  doc.text('FORMATO', RX.formato, hdrBase);
+  doc.text('CUSTO MED', RX.custo, hdrBase, { align: 'right' });
+  doc.text('PROMO/CX', RX.promo, hdrBase, { align: 'right' });
+  doc.text('CARTAO/CX', RX.cartao, hdrBase, { align: 'right' });
+  doc.text('TOTAL', RX.total, hdrBase, { align: 'right' });
+  doc.setFontSize(FONT.colHdr - 0.8);
+  doc.text('(CX)', RX.quant, hdrBase + 3.2, { align: 'right' });
+  doc.text(`${markupSimulacaoPct}% MK`, RX.promo, hdrBase + 3.2, { align: 'right' });
+  doc.text('tabela', RX.cartao, hdrBase + 3.2, { align: 'right' });
+  doc.text('q x promo', RX.total, hdrBase + 3.2, { align: 'right' });
+  y = hdrY + resumoHdr + 2;
+
+  const drawResumoSep = (yLine) => {
+    doc.setDrawColor(...ENXUTO.rowRule);
+    doc.setLineWidth(ROW_RULE_W);
+    doc.line(M + 1, yLine, right, yLine);
+  };
+
+  const drawResumoRow = (cells, { bold = false } = {}) => {
+    if (y + resumoRowH > pageH - 12) {
+      doc.addPage();
+      y = 18;
+    }
+    const baseline = y + resumoRowH * BASELINE_RATIO;
+    doc.setFont(pdfFontFamily, bold ? PDF_FONT_BOLD : PDF_FONT_NORMAL);
+    doc.setFontSize(FONT.row - 0.4);
+    doc.setTextColor(...ENXUTO.black);
+    doc.text(cells.quant, RX.quant, baseline, { align: 'right' });
+    doc.text(safe(cells.formato), RX.formato, baseline);
+    doc.text(cells.custo, RX.custo, baseline, { align: 'right' });
+    doc.text(cells.promo, RX.promo, baseline, { align: 'right' });
+    doc.text(cells.cartao, RX.cartao, baseline, { align: 'right' });
+    doc.text(cells.total, RX.total, baseline, { align: 'right' });
+    drawResumoSep(y + resumoRowH);
+    y += resumoRowH + ROW_GAP;
+  };
+
+  for (const linha of linhas) {
+    drawResumoRow({
+      quant: fmtN(linha.quant),
+      formato: String(linha.formato || '—').toUpperCase(),
+      custo: linha.custo_medio > 0 ? fmtN(linha.custo_medio) : '—',
+      promo: linha.valor_promocao > 0 ? fmtN(linha.valor_promocao) : '—',
+      cartao: linha.valor_cartao > 0 ? fmtN(linha.valor_cartao) : '—',
+      total: linha.total > 0 ? fmtN(linha.total) : '—',
+    });
+  }
+
+  drawResumoRow(
+    {
+      quant: fmtN(totais.quant),
+      formato: 'TOTAL GERAL',
+      custo: '—',
+      promo: '—',
+      cartao: '—',
+      total: totais.total > 0 ? fmtN(totais.total) : '—',
+    },
+    { bold: true },
+  );
+
+  return y;
+}
+
 async function generateSimulacaoPaisagem(doc, pdfFontFamily, payload) {
   const {
     rows = [],
@@ -323,6 +436,14 @@ async function generateSimulacaoPaisagem(doc, pdfFontFamily, payload) {
     drawRowSeparator(drawY + rowStep - ROW_GAP * 0.35);
     y = drawY + rowStep;
   }
+
+  drawResumoPorFormato(doc, pdfFontFamily, payload, {
+    y,
+    pageH,
+    M,
+    right,
+    markupSimulacaoPct,
+  });
 
   drawFooter(doc, pdfFontFamily, right, pageH);
 }
