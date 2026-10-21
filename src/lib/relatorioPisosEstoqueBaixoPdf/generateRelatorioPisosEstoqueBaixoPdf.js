@@ -11,21 +11,23 @@ const ENXUTO = {
 };
 const FONT = {
   title: 13,
-  colHdr: 7.6,
-  row: 8.6,
-  code: 8.2,
+  colHdr: 6.8,
+  row: 7.8,
+  code: 7.4,
   footer: 8.5,
 };
-const DESC_LINE_LEAD = 4.2;
-const COL_HDR_BLOCK = 8.5;
+const DESC_LINE_LEAD = 4;
+const COL_HDR_BLOCK = 9;
 const TABLE_TOP_CONTINUATION = 14;
-const ROW_H = 5.8;
-const ROW_GAP = 1.1;
+const ROW_H = 5.6;
+const ROW_GAP = 1.05;
 const ROW_STEP = ROW_H + ROW_GAP;
 const BASELINE_RATIO = 0.72;
 
 const fmtN = (n) =>
   (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtPct = (n) =>
+  (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const safe = (text) => normalizePdfText(text);
 
 /**
@@ -47,11 +49,13 @@ export async function generateRelatorioPisosEstoqueBaixoPdf(payload = {}) {
   const right = M + CW;
 
   const X = {
-    codigo: M + 2,
-    desc: M + 22,
-    m2: M + 118,
-    cx: M + 138,
-    custo: right,
+    codigo: M + 1.5,
+    desc: M + 17,
+    m2: M + 102,
+    cx: M + 114,
+    custo: M + 132,
+    preco: M + 156,
+    mk: right,
   };
 
   let y = 16;
@@ -59,19 +63,25 @@ export async function generateRelatorioPisosEstoqueBaixoPdf(payload = {}) {
   const drawRowSeparator = (yLine) => {
     doc.setDrawColor(...ENXUTO.rowRule);
     doc.setLineWidth(ROW_RULE_W);
-    doc.line(M + 2, yLine, right, yLine);
+    doc.line(M + 1.5, yLine, right, yLine);
   };
 
   const drawColumnHeaders = (topY) => {
-    const baseline = topY + 5.5;
+    const line1 = topY + 4.2;
+    const line2 = topY + 7.4;
     doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
     doc.setFontSize(FONT.colHdr);
     doc.setTextColor(...ENXUTO.muted);
-    doc.text('CODIGO', X.codigo, baseline);
-    doc.text('DESCRICAO', X.desc, baseline);
-    doc.text('M2', X.m2, baseline, { align: 'right' });
-    doc.text('CX', X.cx, baseline, { align: 'right' });
-    doc.text('CUSTO CALC/CX', X.custo, baseline, { align: 'right' });
+    doc.text('COD', X.codigo, line1);
+    doc.text('DESCRICAO', X.desc, line1);
+    doc.text('M2', X.m2, line1, { align: 'right' });
+    doc.text('CX', X.cx, line1, { align: 'right' });
+    doc.text('CUSTO', X.custo, line1, { align: 'right' });
+    doc.text('VENDA', X.preco, line1, { align: 'right' });
+    doc.text('MK%', X.mk, line1, { align: 'right' });
+    doc.setFontSize(FONT.colHdr - 0.5);
+    doc.text('calc/CX', X.custo, line2, { align: 'right' });
+    doc.text('/CX', X.preco, line2, { align: 'right' });
   };
 
   const beginTablePage = () => {
@@ -96,7 +106,9 @@ export async function generateRelatorioPisosEstoqueBaixoPdf(payload = {}) {
   doc.setFontSize(8.2);
   doc.setTextColor(...ENXUTO.muted);
   doc.text(
-    safe(`Hierarquia PISO · ativos · estoque > 0 · menos de ${fmtN(limiteM2)} m2 · ${rows.length} item(ns)`),
+    safe(
+      `Hierarquia PISO · ativos · estoque > 0 · menos de ${fmtN(limiteM2)} m2 · ordem alfabetica · ${rows.length} item(ns)`,
+    ),
     M,
     y,
   );
@@ -106,7 +118,7 @@ export async function generateRelatorioPisosEstoqueBaixoPdf(payload = {}) {
 
   beginTablePage();
 
-  const descMaxW = X.m2 - X.desc - 4;
+  const descMaxW = X.m2 - X.desc - 3;
 
   for (const row of rows) {
     const descLines = doc.splitTextToSize(safe(row.nome || ''), descMaxW);
@@ -118,7 +130,7 @@ export async function generateRelatorioPisosEstoqueBaixoPdf(payload = {}) {
     const baseline =
       lineCount <= 1
         ? drawY + ROW_H * BASELINE_RATIO
-        : drawY + (ROW_H + extraH) / 2 + FONT.row * 0.2;
+        : drawY + (ROW_H + extraH) / 2 + FONT.row * 0.18;
 
     doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
     doc.setFontSize(FONT.code);
@@ -133,9 +145,17 @@ export async function generateRelatorioPisosEstoqueBaixoPdf(payload = {}) {
 
     doc.text(fmtN(row.m2), X.m2, baseline, { align: 'right' });
     doc.text(fmtN(row.cx), X.cx, baseline, { align: 'right' });
-    const custoTxt =
-      Number(row.custo_calc_x_cx) > 0 ? fmtN(row.custo_calc_x_cx) : '—';
-    doc.text(custoTxt, X.custo, baseline, { align: 'right' });
+    doc.text(Number(row.custo_calc_x_cx) > 0 ? fmtN(row.custo_calc_x_cx) : '—', X.custo, baseline, {
+      align: 'right',
+    });
+    doc.text(Number(row.preco_venda_cx) > 0 ? fmtN(row.preco_venda_cx) : '—', X.preco, baseline, {
+      align: 'right',
+    });
+    const mk =
+      Number(row.markup_pct) > 0 && Number(row.preco_venda_cx) > 0
+        ? `${fmtPct(row.markup_pct)}%`
+        : '—';
+    doc.text(mk, X.mk, baseline, { align: 'right' });
 
     drawRowSeparator(drawY + rowStep - ROW_GAP * 0.35);
     y = drawY + rowStep;

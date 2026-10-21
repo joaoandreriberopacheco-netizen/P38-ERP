@@ -78,11 +78,26 @@ function custoPorCx(produto, libs) {
   return custoBase;
 }
 
+function precoEMarkupCx(produto, libs) {
+  const { buildSaleUnitOptions, normalizeUnitCode } = libs;
+  const custoCx = custoPorCx(produto, libs);
+  const cxSale = buildSaleUnitOptions(produto, 1).find((o) => normalizeUnitCode(o.unidade) === 'CX');
+  const precoCx = Number(cxSale?.valor_unitario) || 0;
+  let markupPct = 0;
+  if (custoCx > 0 && precoCx > 0) {
+    markupPct = ((precoCx - custoCx) / custoCx) * 100;
+  }
+  return {
+    preco_venda_cx: Math.round(precoCx * 100) / 100,
+    markup_pct: Math.round(markupPct * 10) / 10,
+  };
+}
+
 async function fetchPisos(supabase) {
   const { data, error } = await supabase
     .from('produto')
     .select(
-      'codigo_interno,nome,estoque_atual,preco_custo_calculado,unidade_principal,unidade_vitrine,unidades_alternativas,campo_hierarquico_1,ativo',
+      'codigo_interno,nome,estoque_atual,preco_custo_calculado,preco_venda_padrao,unidade_principal,unidade_vitrine,unidades_alternativas,campo_hierarquico_1,ativo',
     )
     .eq('campo_hierarquico_1', 'PISO')
     .eq('ativo', true);
@@ -110,15 +125,20 @@ async function main() {
       if (m2 == null || m2 >= LIMITE_M2) continue;
       const cx = estoqueCx(p, unitsLib);
       if (cx == null) continue;
+      const { preco_venda_cx, markup_pct } = precoEMarkupCx(p, unitsLib);
       rows.push({
         codigo: p.codigo_interno,
         nome: p.nome,
         m2: Math.round(m2 * 100) / 100,
         cx: Math.round(cx * 100) / 100,
         custo_calc_x_cx: Math.round(custoPorCx(p, unitsLib) * 100) / 100,
+        preco_venda_cx,
+        markup_pct,
       });
     }
-    rows.sort((a, b) => a.m2 - b.m2);
+    rows.sort((a, b) =>
+      String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR', { sensitivity: 'base' }),
+    );
 
     const { data } = await pdfLib.generateRelatorioPisosEstoqueBaixoPdf({
       rows,
