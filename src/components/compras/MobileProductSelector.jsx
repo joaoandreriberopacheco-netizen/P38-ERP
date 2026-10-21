@@ -10,6 +10,8 @@ import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelector
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
 import CatalogLotePicker, { CatalogLoteModeToggle } from '@/components/compras/CatalogLotePicker';
 import CatalogProductStockLine from '@/components/compras/CatalogProductStockLine';
+import CatalogProdutoSearchRow from '@/components/compras/CatalogProdutoSearchRow';
+import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 import { buildLoteIncomingFromDraft } from '@/lib/catalogLoteUtils';
 import { cn } from '@/lib/utils';
 import {
@@ -45,6 +47,7 @@ import {
   syncItemDescontoApresentacao,
   normalizeItemToCanonicalFactorOne,
   getItemCompraExibicaoVitrine,
+  repararLinhaCompraApresentacaoComProduto,
 } from '@/lib/productUnits';
 
 /** Mobile: overlay fullscreen. Desktop: painel dentro da montagem da cotação. */
@@ -63,16 +66,6 @@ const CATALOG_SEARCH_FIELD = cn(
   'h-12 border-0 shadow-sm bg-card',
   'focus-within:ring-2 focus-within:ring-[#e8b824]/22',
   'dark:focus-within:ring-[#a4ce33]/20',
-);
-
-/** Item destacado na navegação ↑↓ (lista desktop). */
-const CATALOG_LIST_ITEM_SELECTED =
-  'border-l-[#4a5240] bg-[#4a5240]/10 dark:border-l-[#a4ce33] dark:bg-[#a4ce33]/12';
-
-/** Card destacado na navegação ↑↓ (mobile). */
-const CATALOG_CARD_SELECTED = cn(
-  'ring-2 ring-[#4a5240]/55 dark:ring-[#a4ce33]/70',
-  'bg-[#4a5240]/10 dark:bg-[#a4ce33]/12 shadow-sm',
 );
 
 /** Scroll dentro do painel certo — scrollIntoView no desktop ia para o ancestor errado. */
@@ -173,7 +166,9 @@ export default function MobileProductSelector({
   };
 
   const hydrateEditInputs = (item) => {
-    const synced = syncItemQuantidadeBaseComercial(syncItemDescontoApresentacao(item));
+    const produto = products.find((p) => p.id === item.produto_id);
+    const reparado = produto ? repararLinhaCompraApresentacaoComProduto(item, produto) : item;
+    const synced = syncItemQuantidadeBaseComercial(syncItemDescontoApresentacao(reparado));
     setQuantidadeInput((parseFloat(synced.quantidade) || 1).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
     applyDescontoInputsFromItem(synced);
     return synced;
@@ -1082,59 +1077,22 @@ export default function MobileProductSelector({
                         </span>
                         <span className="text-[11px] text-muted-foreground">↑↓ navegar · Enter selecionar</span>
                       </div>
-                      {filteredProducts.map((product, idx) => {
-                        const inCart = items.find(i => i.produto_id === product.id);
-                        const isSelected = idx === selectedIndex;
-                        const purchaseOpts = buildPurchaseUnitOptions(product);
-                        const variasUnidades = purchaseOpts.length > 1;
-                        const custoApresentacao = pickDefaultPurchaseUnit(product)?.valor_unitario ?? product.valor_compra;
-                        return (
-                          <button
+                      <P38MobileLineList allViewports className="rounded-none overflow-hidden">
+                        {filteredProducts.map((product, idx) => (
+                          <CatalogProdutoSearchRow
                             key={product.id}
-                            type="button"
-                            ref={(el) => { catalogItemRefs.current[idx] = el; }}
-                            onClick={() => { if (!isLocked) handleSelectProduct(product); }}
-                            className={cn(
-                              'flex w-full items-start gap-3 border-l px-4 py-3 text-left transition-colors',
-                              isSelected
-                                ? CATALOG_LIST_ITEM_SELECTED
-                                : 'border-l-transparent hover:bg-muted/40 dark:hover:bg-muted/30',
-                              inCart && !isSelected && 'bg-[#a4ce33]/8',
-                              isLocked && 'pointer-events-none opacity-50',
-                            )}
-                          >
-                            <div className="min-w-0 flex-1">
-                              <div className="truncate text-sm font-medium text-foreground">{product.nome}</div>
-                              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-foreground/75">
-                                <span className="font-mono text-foreground/60">#{product.codigo_interno || '—'}</span>
-                                <span className="text-foreground/40">·</span>
-                                <span className="font-medium tabular-nums">{formatCurrency(custoApresentacao)}</span>
-                                <CatalogProductStockLine product={product} className="inline-flex" />
-                                {variasUnidades && (
-                                  <button
-                                    type="button"
-                                    className={cn('font-medium hover:underline', P38_ACCENT)}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setUnitSelector({ open: true, product });
-                                    }}
-                                  >
-                                    Outra unidade
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                            {inCart && (() => {
-                              const exibCart = getItemCompraExibicaoVitrine(inCart, product);
-                              return (
-                                <Badge className="shrink-0 border-0 bg-[#a4ce33]/20 text-[#3d4535] dark:text-[#a4ce33]">
-                                  {exibCart.quantidade_formatada} {exibCart.unidade_medida}
-                                </Badge>
-                              );
-                            })()}
-                          </button>
-                        );
-                      })}
+                            product={product}
+                            items={items}
+                            idx={idx}
+                            isSelected={idx === selectedIndex}
+                            isLocked={isLocked}
+                            formatCurrency={formatCurrency}
+                            catalogItemRef={(el) => { catalogItemRefs.current[idx] = el; }}
+                            onSelect={handleSelectProduct}
+                            onOpenUnitSelector={(p) => setUnitSelector({ open: true, product: p })}
+                          />
+                        ))}
+                      </P38MobileLineList>
                     </>
                   ) : (
                     <div className="px-4 py-4 text-sm text-foreground/70">
@@ -1153,84 +1111,32 @@ export default function MobileProductSelector({
               </div>
             )}
 
-            <div className="space-y-3 p-4 desktop-layout:hidden">
+            <div className="flex-1 min-h-0 overflow-y-auto desktop-layout:hidden -mx-4">
               {search.trim() === '' ? (
-                <div className="text-center py-16 text-muted-foreground">
+                <div className="text-center py-16 text-muted-foreground px-4">
                   <Search className="w-16 h-16 mx-auto mb-4 opacity-20" />
                   <p className="font-medium">Digite para buscar</p>
                   <p className="text-sm mt-1">Ex: areia, tinta, tubo...</p>
                 </div>
               ) : filteredProducts.length > 0 ? (
-                filteredProducts.map((product, idx) => {
-                  const inCart = items.find(i => i.produto_id === product.id);
-                  const isSelected = idx === selectedIndex;
-                  const purchaseOpts = buildPurchaseUnitOptions(product);
-                  const variasUnidades = purchaseOpts.length > 1;
-                  const custoApresentacao = pickDefaultPurchaseUnit(product)?.valor_unitario ?? product.valor_compra;
-                  return (
-                    <div
+                <P38MobileLineList allViewports className="rounded-none overflow-hidden">
+                  {filteredProducts.map((product, idx) => (
+                    <CatalogProdutoSearchRow
                       key={product.id}
-                      ref={(el) => { catalogItemRefs.current[idx] = el; }}
-                      onClick={() => { if (!isLocked) handleSelectProduct(product); }}
-                      className={cn(
-                        'rounded-2xl p-5 cursor-pointer transition-all active:scale-[0.99]',
-                        P38_FIELD_SURFACE,
-                        isSelected && CATALOG_CARD_SELECTED,
-                        inCart && !isSelected && 'ring-2 ring-[#a4ce33]/40 dark:ring-[#a4ce33]/30',
-                        isLocked && 'opacity-50 pointer-events-none',
-                      )}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="text-base font-medium leading-snug text-foreground truncate">
-                            {product.nome}
-                          </div>
-                          <div className="text-sm text-muted-foreground mt-2">
-                            <span className="truncate block">
-                              <span className="font-mono text-xs">
-                                #{product.codigo_interno || '—'}
-                              </span>
-                              <span className="mx-2">·</span>
-                              <span>{formatCurrency(custoApresentacao)}</span>
-                            </span>
-                            <CatalogProductStockLine product={product} className="mt-2" />
-                            {variasUnidades && (
-                              <span className="mt-2 flex items-center gap-2 flex-wrap">
-                                <Boxes className="w-3.5 h-3.5 text-muted-foreground shrink-0" aria-hidden />
-                                <button
-                                  type="button"
-                                  className={cn('text-xs font-medium hover:underline', P38_ACCENT)}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setUnitSelector({ open: true, product });
-                                  }}
-                                >
-                                  Outra unidade
-                                </button>
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        {inCart && (() => {
-                          const exibCart = getItemCompraExibicaoVitrine(inCart, product);
-                          return (
-                          <Badge className="bg-[#a4ce33]/20 text-[#4a5240] dark:text-[#a4ce33] border-0 shrink-0">
-                            {exibCart.quantidade_formatada} {exibCart.unidade_medida}
-                          </Badge>
-                          );
-                        })()}
-                      </div>
-                      {inCart && (
-                        <div className="mt-3 pt-3 border-t border-border/15 dark:border-white/10 flex justify-between items-center">
-                          <span className="text-xs text-muted-foreground">Total do item</span>
-                          <span className={cn('text-sm font-bold', P38_ACCENT)}>{formatCurrency(inCart.total || 0)}</span>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })
+                      product={product}
+                      items={items}
+                      idx={idx}
+                      isSelected={idx === selectedIndex}
+                      isLocked={isLocked}
+                      formatCurrency={formatCurrency}
+                      catalogItemRef={(el) => { catalogItemRefs.current[idx] = el; }}
+                      onSelect={handleSelectProduct}
+                      onOpenUnitSelector={(p) => setUnitSelector({ open: true, product: p })}
+                    />
+                  ))}
+                </P38MobileLineList>
               ) : (
-                <div className="text-center py-12 text-muted-foreground">
+                <div className="text-center py-12 text-muted-foreground px-4">
                   <Search className="w-16 h-16 mx-auto mb-4 opacity-20" />
                   <p className="font-medium">Nenhum produto encontrado</p>
                   <p className="text-sm mt-1">para "{search}"</p>
@@ -1324,7 +1230,7 @@ export default function MobileProductSelector({
                   nome={item.produto_nome || 'Produto'}
                   detalhe={`${exibVitrine.quantidade_formatada} ${exibVitrine.unidade_medida} × ${formatCurrency(exibVitrine.preco_unitario)}`}
                   meta={produtoItem ? <CatalogProductStockLine product={produtoItem} className="mt-0.5" /> : null}
-                  totalFormatado={formatCurrency(item.total || 0)}
+                  totalFormatado={formatCurrency(exibVitrine.total || item.total || 0)}
                   onClick={!isLocked ? () => handleEditItem(originalIndex) : undefined}
                   trailing={
                     !isLocked ? (

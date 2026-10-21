@@ -50,6 +50,8 @@ import { filterEmbarquesVisiveisParaPedido } from './embarqueFilters';
 import { refreshPedidoCompraComLogistica } from '@/lib/fetchPedidoCompraItens';
 import {
   calcValorTotalPedidoCompra,
+  calcValorItensPedidoCompraComCatalogo,
+  prepareLinhaPedidoCompraParaTotais,
   cancelarLancamentosNaoPagosPedidoCompra,
   criarLancamentoAjustePedidoCompra,
   getPedidoCompraDisplayStatusFinanceiro,
@@ -77,6 +79,7 @@ import {
   normalizePedidoCompraItemCustoLiquidoParaPersist,
 } from '@/lib/productUnits';
 import { savePedidoCompraItem } from '@/functions/savePedidoCompraItem';
+import { isSupabaseBrowserConfigured } from '@/lib/supabaseBrowserClient';
 import { uploadAnexoParaPedidoCompra } from '@/lib/uploadAnexoReferencia';
 import { mergeLoteIntoItems, parseLoteQuantidade } from '@/lib/catalogLoteUtils';
 import {
@@ -460,19 +463,30 @@ export default function PedidoCompraForm({
     loadDependencies();
   }, [pedido]);
 
-  // Cálculos automáticos
+  const produtosById = useMemo(() => {
+    const map = {};
+    for (const p of produtos) {
+      if (p?.id) map[p.id] = p;
+    }
+    return map;
+  }, [produtos]);
+
+  // Cálculos automáticos — totais de linha recalculados (CX/PAC), não só `item.total` gravado.
   const { valorItens, valorTotal, percentualDesconto } = useMemo(() => {
-    const itens = roundToTwoDecimals((formData.itens || []).reduce((acc, item) => acc + (item.total || 0), 0));
+    const itens = calcValorItensPedidoCompraComCatalogo(
+      { itens: formData.itens || [] },
+      produtosById,
+    );
     const frete = roundToTwoDecimals(parseFloat(formData.valor_frete) || 0);
     const desconto = roundToTwoDecimals(parseFloat(formData.valor_desconto) || 0);
     const total = roundToTwoDecimals(itens + frete - desconto);
     const percentDesc = itens > 0 ? roundToTwoDecimals((desconto / itens) * 100) : 0;
-    return { 
-      valorItens: itens, 
+    return {
+      valorItens: itens,
       valorTotal: total,
-      percentualDesconto: percentDesc
+      percentualDesconto: percentDesc,
     };
-  }, [formData.itens, formData.valor_frete, formData.valor_desconto]);
+  }, [formData.itens, formData.valor_frete, formData.valor_desconto, produtosById]);
 
   const handleChange = (field, value) => {
     setFormData(prev => {
@@ -1194,8 +1208,13 @@ export default function PedidoCompraForm({
         }
       }
 
-      const dataToSave = { 
+      const itensComTotaisAtualizados = (formData.itens || []).map((it) =>
+        prepareLinhaPedidoCompraParaTotais(it, produtosById[it?.produto_id]),
+      );
+
+      const dataToSave = {
         ...formData,
+        itens: itensComTotaisAtualizados,
         ...(saveOptions.status ? { status: saveOptions.status } : {}),
         valor_itens: valorItens,
         valor_total: valorTotal,
@@ -1241,10 +1260,13 @@ export default function PedidoCompraForm({
 
       // ── Sincroniza linhas canónicas em PedidoCompraItem (SQL) ──
       // replaceAll persiste cada linha; recomporPedido actualiza só totais (sem espelho JSON).
-      if (pedidoId && Array.isArray(dataToSave?.itens)) {
+      if (pedidoId && Array.isArray(dataToSave?.itens) && isSupabaseBrowserConfigured()) {
         try {
           const itensCanonicos = dataToSave.itens.map((it, idx) => {
-            const synced = syncItemDescontoApresentacao(it);
+            const produtoLinha = produtosById[it?.produto_id];
+            const synced = syncItemDescontoApresentacao(
+              produtoLinha ? prepareLinhaPedidoCompraParaTotais(it, produtoLinha) : it,
+            );
             const totalLinha = calcTotalItemCompraPedido(synced);
             const normalizado = normalizePedidoCompraItemCustoLiquidoParaPersist({
               ...synced,
@@ -1290,11 +1312,21 @@ export default function PedidoCompraForm({
             });
           }
         } catch (canonicalErr) {
-          console.warn('Sincronia canonica de PedidoCompraItem falhou:', canonicalErr?.message || canonicalErr);
-          toast({
-            title: 'Aviso de sincronia canonica',
-            description: 'O pedido foi salvo, mas a entidade canonica PedidoCompraItem nao pode ser sincronizada. Detalhe: ' + (canonicalErr?.message || ''),
-          });
+          const msg = canonicalErr?.message || String(canonicalErr);
+          const supabaseIndisponivel =
+            canonicalErr?.code === 'P38_SUPABASE_NOT_CONFIGURED' ||
+            /não configurado no servidor|SUPABASE_URL|nao configurado/i.test(msg);
+          if (supabaseIndisponivel) {
+            console.debug('Sincronia PedidoCompraItem ignorada (Supabase/proxy indisponível).', msg);
+          } else {
+            console.warn('Sincronia canonica de PedidoCompraItem falhou:', msg);
+            toast({
+              title: 'Aviso de sincronia canonica',
+              description:
+                'O pedido foi salvo, mas a entidade canonica PedidoCompraItem nao pode ser sincronizada. Detalhe: ' +
+                msg,
+            });
+          }
         }
       }
 
@@ -1420,6 +1452,12 @@ export default function PedidoCompraForm({
         }
       }
 
+      setFormData((prev) => ({
+        ...prev,
+        itens: itensComTotaisAtualizados,
+        valor_itens: valorItens,
+        valor_total: valorTotal,
+      }));
       clearDraft();
       valorTotalBaseEdicaoRef.current = roundToTwoDecimals(valorTotal);
       if (mudouParaAguardando && reenvioFinanceiroBloqueado) {

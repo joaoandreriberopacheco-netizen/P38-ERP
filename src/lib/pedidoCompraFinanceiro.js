@@ -7,7 +7,11 @@ export {
   loadPedidosCompraComItensCanonico,
 } from '@/lib/fetchPedidoCompraItens';
 
-import { calcTotalItemCompraPedido } from '@/lib/productUnits';
+import {
+  calcTotalItemCompraPedido,
+  repararLinhaCompraApresentacaoComProduto,
+  syncItemDescontoApresentacao,
+} from '@/lib/productUnits';
 import { isLancamentoCancelado, isLancamentoPago } from '@/lib/lancamentoFinanceiroStatus';
 import { dataHoje, formatarLogTime } from '@/components/utils/dateUtils';
 
@@ -55,6 +59,41 @@ export function getTotalLinhaPedidoCompra(item = {}) {
   const totalDireto = Number(item?.total ?? item?.valor_total_item ?? item?.subtotal);
   if (Number.isFinite(totalDireto) && totalDireto > 0) return totalDireto;
   return calcTotalItemCompraPedido(item);
+}
+
+/**
+ * Recalcula total da linha com regras de CX/unidade (ignora `item.total` desatualizado).
+ * Use no formulário de pedido quando o catálogo do produto está disponível.
+ */
+export function totalLinhaPedidoCompraAtualizado(item = {}, produto = null) {
+  const base = produto ? repararLinhaCompraApresentacaoComProduto(item, produto) : item;
+  const synced = syncItemDescontoApresentacao(base);
+  return calcTotalItemCompraPedido(synced);
+}
+
+/** Linha com `total` / `subtotal` alinhados ao cálculo comercial atual. */
+export function prepareLinhaPedidoCompraParaTotais(item = {}, produto = null) {
+  const base = produto ? repararLinhaCompraApresentacaoComProduto(item, produto) : item;
+  const synced = syncItemDescontoApresentacao(base);
+  const total = calcTotalItemCompraPedido(synced);
+  return {
+    ...synced,
+    total,
+    valor_total_item: total,
+    subtotal: total,
+  };
+}
+
+/** Soma itens do pedido usando totais recalculados (evita `item.total` legado errado em CX). */
+export function calcValorItensPedidoCompraComCatalogo(pedido = {}, produtosById = {}) {
+  const itens = pedido.itens || [];
+  if (!itens.length) return calcValorItensPedidoCompra(pedido);
+  return roundToTwoDecimals(
+    itens.reduce(
+      (acc, item) => acc + totalLinhaPedidoCompraAtualizado(item, produtosById[item?.produto_id]),
+      0,
+    ),
+  );
 }
 
 /** Soma dos totais de linha; `valor_itens` só entra se não houver itens no espelho. */

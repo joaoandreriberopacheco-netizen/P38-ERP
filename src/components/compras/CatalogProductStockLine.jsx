@@ -1,6 +1,5 @@
 import { cn } from '@/lib/utils';
 import {
-  ESTOQUE_BADGE_CLASS,
   ESTOQUE_STATUS_CLASS,
   formatEstoqueQty,
   getEstoqueAtual,
@@ -52,26 +51,15 @@ export default function CatalogProductStockLine({
       : formatEstoqueQty(minimoBase);
 
   return (
-    <div className={cn('flex flex-wrap items-center gap-2', textSize, className)}>
+    <div className={cn('flex flex-wrap items-center gap-x-1.5 gap-y-0.5', textSize, className)}>
       <span className="text-muted-foreground">Estoque</span>
-      <span
-        className={cn(
-          'inline-flex items-center rounded-md px-2 py-0.5 font-semibold tabular-nums',
-          ESTOQUE_BADGE_CLASS[status],
-        )}
-      >
+      <span className={cn('font-semibold tabular-nums', ESTOQUE_STATUS_CLASS[status])}>
         {atualLabel}
       </span>
       {showMinimo && minimoBase > 0 && (
-        <span className={cn('tabular-nums', ESTOQUE_STATUS_CLASS[status])}>
+        <span className="text-muted-foreground tabular-nums">
           Mín. {minimoLabel}
         </span>
-      )}
-      {status === 'critical' && (
-        <span className="font-medium text-red-600 dark:text-red-400">Zerado</span>
-      )}
-      {status === 'low' && (
-        <span className="font-medium text-amber-600 dark:text-amber-400">Baixo</span>
       )}
     </div>
   );
