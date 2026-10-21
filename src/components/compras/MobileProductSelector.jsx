@@ -45,6 +45,7 @@ import {
   syncItemDescontoApresentacao,
   normalizeItemToCanonicalFactorOne,
   getItemCompraExibicaoVitrine,
+  repararLinhaCompraApresentacaoComProduto,
 } from '@/lib/productUnits';
 
 /** Mobile: overlay fullscreen. Desktop: painel dentro da montagem da cotação. */
@@ -173,7 +174,9 @@ export default function MobileProductSelector({
   };
 
   const hydrateEditInputs = (item) => {
-    const synced = syncItemQuantidadeBaseComercial(syncItemDescontoApresentacao(item));
+    const produto = products.find((p) => p.id === item.produto_id);
+    const reparado = produto ? repararLinhaCompraApresentacaoComProduto(item, produto) : item;
+    const synced = syncItemQuantidadeBaseComercial(syncItemDescontoApresentacao(reparado));
     setQuantidadeInput((parseFloat(synced.quantidade) || 1).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
     applyDescontoInputsFromItem(synced);
     return synced;
@@ -1324,7 +1327,7 @@ export default function MobileProductSelector({
                   nome={item.produto_nome || 'Produto'}
                   detalhe={`${exibVitrine.quantidade_formatada} ${exibVitrine.unidade_medida} × ${formatCurrency(exibVitrine.preco_unitario)}`}
                   meta={produtoItem ? <CatalogProductStockLine product={produtoItem} className="mt-0.5" /> : null}
-                  totalFormatado={formatCurrency(item.total || 0)}
+                  totalFormatado={formatCurrency(exibVitrine.total || item.total || 0)}
                   onClick={!isLocked ? () => handleEditItem(originalIndex) : undefined}
                   trailing={
                     !isLocked ? (
