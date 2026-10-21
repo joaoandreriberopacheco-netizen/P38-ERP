@@ -821,10 +821,8 @@ function VendasGestaoPage() {
     <>
     <div
       className={cn(
-        'w-full min-w-0 max-w-full',
-        isPhone
-          ? 'flex flex-col h-full min-h-0 overflow-hidden'
-          : 'max-w-7xl mx-auto space-y-4 overflow-x-hidden',
+        'w-full min-w-0 max-w-full flex flex-col h-full min-h-0 overflow-hidden',
+        !isPhone && 'max-w-7xl mx-auto',
       )}
     >
       {isPhone ? (
@@ -884,7 +882,7 @@ function VendasGestaoPage() {
           </div>
         </>
       ) : (
-      <div className="space-y-4">
+      <div className="shrink-0 space-y-4 px-4 md:px-6 pt-4 md:pt-6">
       {/* Header limpo */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <P38PageHeader
@@ -1067,9 +1065,8 @@ function VendasGestaoPage() {
       <div
         ref={scrollRef}
         className={cn(
-          isPhone
-            ? 'flex-1 min-h-0 min-w-0 p38-stage-panel-scroll overflow-x-hidden touch-pan-y px-4 p38-scroll-pad-fab'
-            : undefined,
+          'flex-1 min-h-0 min-w-0 p38-stage-panel-scroll overflow-x-hidden touch-pan-y p38-scroll-pad-fab',
+          isPhone ? 'px-4' : 'px-4 md:px-6 pb-4 md:pb-6',
         )}
       >
 
