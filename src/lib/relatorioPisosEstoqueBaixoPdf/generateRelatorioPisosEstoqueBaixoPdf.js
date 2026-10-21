@@ -170,9 +170,7 @@ async function generateSimulacaoPaisagem(doc, pdfFontFamily, payload) {
     limiteM2 = 20,
     generatedAt,
     markupSimulacaoPct = 40,
-    parcelasCartao = 10,
-    taxaJurosClienteMensal = 1.81,
-    maquininhaNome = '',
+    divisorEtiqueta10x = 10,
   } = payload;
 
   const pageW = doc.internal.pageSize.getWidth();
@@ -188,8 +186,9 @@ async function generateSimulacaoPaisagem(doc, pdfFontFamily, payload) {
     custo: M + 176,
     venda: M + 196,
     mk: M + 212,
-    sim40: M + 234,
-    cart10: right,
+    sim40: M + 228,
+    totalCart: M + 252,
+    dezX: right,
   };
 
   let y = 14;
@@ -214,13 +213,15 @@ async function generateSimulacaoPaisagem(doc, pdfFontFamily, payload) {
     doc.text('TABELA', X.venda, line1, { align: 'right' });
     doc.text('MK', X.mk, line1, { align: 'right' });
     doc.text(`CX ${markupSimulacaoPct}%`, X.sim40, line1, { align: 'right' });
-    doc.text('10x CARTAO', X.cart10, line1, { align: 'right' });
+    doc.text('TOTAL', X.totalCart, line1, { align: 'right' });
+    doc.text(`10x`, X.dezX, line1, { align: 'right' });
     doc.setFontSize(FONT.colHdr - 0.7);
     doc.text('/CX', X.custo, line2, { align: 'right' });
     doc.text('/CX', X.venda, line2, { align: 'right' });
     doc.text('%', X.mk, line2, { align: 'right' });
     doc.text('MK sim', X.sim40, line2, { align: 'right' });
-    doc.text('tabela', X.cart10, line2, { align: 'right' });
+    doc.text('tabela/CX', X.totalCart, line2, { align: 'right' });
+    doc.text(`÷${divisorEtiqueta10x}`, X.dezX, line2, { align: 'right' });
   };
 
   const beginTablePage = () => {
@@ -252,11 +253,9 @@ async function generateSimulacaoPaisagem(doc, pdfFontFamily, payload) {
     y,
   );
   y += 3.8;
-  const jurosTxt = `${fmtPct(taxaJurosClienteMensal)}% a.m.`;
-  const maqTxt = maquininhaNome ? ` · ${safe(maquininhaNome)}` : '';
   doc.text(
     safe(
-      `10x cartao = parcela Price sobre preco de tabela/CX · juros cliente ${jurosTxt}${maqTxt} · ${generatedAt}`,
+      `Cartao: valor total da tabela/CX e referencia 10x sem juros (total ÷ ${divisorEtiqueta10x}) · ${generatedAt}`,
     ),
     M,
     y,
@@ -311,11 +310,15 @@ async function generateSimulacaoPaisagem(doc, pdfFontFamily, payload) {
       baseline,
       { align: 'right' },
     );
-    const parcelaTxt =
-      Number(row.parcela_10x_cartao) > 0 && Number(row.preco_venda_cx) > 0
-        ? `10x ${fmtN(row.parcela_10x_cartao)}`
-        : '—';
-    doc.text(parcelaTxt, X.cart10, baseline, { align: 'right' });
+    const totalCx = Number(row.total_tabela_cx ?? row.preco_venda_cx) || 0;
+    doc.text(totalCx > 0 ? fmtN(totalCx) : '—', X.totalCart, baseline, { align: 'right' });
+    const dez =
+      Number(row.preco_10x_cartao_sem_juros) > 0
+        ? fmtN(row.preco_10x_cartao_sem_juros)
+        : totalCx > 0
+          ? fmtN(totalCx / divisorEtiqueta10x)
+          : '—';
+    doc.text(dez, X.dezX, baseline, { align: 'right' });
 
     drawRowSeparator(drawY + rowStep - ROW_GAP * 0.35);
     y = drawY + rowStep;

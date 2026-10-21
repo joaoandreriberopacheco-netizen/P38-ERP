@@ -15,7 +15,7 @@ import { requireP38SupabaseScriptClient } from './p38-supabase-script-client.mjs
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const LIMITE_M2 = 20;
 const MARKUP_SIM_CERAMICA_PCT = 40;
-const PARCELAS_CARTAO_TABELA = 10;
+const DIVISOR_ETIQUETA_10X = 10;
 
 function parseArgs(argv) {
   const paisagem = argv.includes('--paisagem');
@@ -118,23 +118,6 @@ async function fetchPisos(supabase) {
   return data || [];
 }
 
-async function fetchTaxaJurosCliente(supabase) {
-  const { data, error } = await supabase
-    .from('maquininha')
-    .select('nome,taxa_juros_cliente_mensal')
-    .eq('ativo', true)
-    .order('nome', { ascending: true })
-    .limit(1);
-  if (error || !data?.length) {
-    return { taxa: 1.81, nome: '' };
-  }
-  const row = data[0];
-  return {
-    taxa: Number(row.taxa_juros_cliente_mensal) > 0 ? Number(row.taxa_juros_cliente_mensal) : 1.81,
-    nome: String(row.nome || '').trim(),
-  };
-}
-
 async function main() {
   const { paisagem, outPath } = parseArgs(process.argv.slice(2));
   const { supabase } = requireP38SupabaseScriptClient();
@@ -142,12 +125,11 @@ async function main() {
 
   try {
     const unitsLib = await server.ssrLoadModule('/src/lib/productUnits.js');
-    const parcelaLib = await server.ssrLoadModule('/src/lib/cartaoParcelaCliente.js');
     const pdfLib = await server.ssrLoadModule(
       '/src/lib/relatorioPisosEstoqueBaixoPdf/generateRelatorioPisosEstoqueBaixoPdf.js',
     );
 
-    const [produtos, maq] = await Promise.all([fetchPisos(supabase), fetchTaxaJurosCliente(supabase)]);
+    const produtos = await fetchPisos(supabase);
 
     const rows = [];
     for (const p of produtos) {
@@ -161,15 +143,10 @@ async function main() {
       const { preco_venda_cx, markup_pct } = precoEMarkupCx(p, unitsLib);
       const preco_sim_40_cx =
         custoCx > 0 ? Math.round(custoCx * (1 + MARKUP_SIM_CERAMICA_PCT / 100) * 100) / 100 : 0;
-      const parcela_10x_cartao =
-        preco_venda_cx > 0
-          ? Math.round(
-              parcelaLib.calcularParcelaComJurosCliente(
-                preco_venda_cx,
-                maq.taxa,
-                PARCELAS_CARTAO_TABELA,
-              ) * 100,
-            ) / 100
+      const total_tabela_cx = preco_venda_cx;
+      const preco_10x_cartao_sem_juros =
+        total_tabela_cx > 0
+          ? Math.round((total_tabela_cx / DIVISOR_ETIQUETA_10X) * 100) / 100
           : 0;
 
       rows.push({
@@ -181,7 +158,8 @@ async function main() {
         preco_venda_cx,
         markup_pct,
         preco_sim_40_cx,
-        parcela_10x_cartao,
+        total_tabela_cx,
+        preco_10x_cartao_sem_juros,
       });
     }
     rows.sort((a, b) =>
@@ -193,9 +171,7 @@ async function main() {
       limiteM2: LIMITE_M2,
       variant: paisagem ? 'simulacao_paisagem' : 'portrait',
       markupSimulacaoPct: MARKUP_SIM_CERAMICA_PCT,
-      parcelasCartao: PARCELAS_CARTAO_TABELA,
-      taxaJurosClienteMensal: maq.taxa,
-      maquininhaNome: maq.nome,
+      divisorEtiqueta10x: DIVISOR_ETIQUETA_10X,
     });
 
     fs.mkdirSync(path.dirname(outPath), { recursive: true });
@@ -207,8 +183,6 @@ async function main() {
           out: outPath,
           count: rows.length,
           variant: paisagem ? 'simulacao_paisagem' : 'portrait',
-          taxa_juros_cliente_mensal: maq.taxa,
-          maquininha: maq.nome || null,
         },
         null,
         2,
