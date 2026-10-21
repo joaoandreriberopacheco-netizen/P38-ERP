@@ -13,7 +13,7 @@ import {
   getItemCompraExibicaoVitrine,
 } from '@/lib/productUnits';
 import {
-  ESTOQUE_BADGE_CLASS,
+  ESTOQUE_STATUS_CLASS,
   formatEstoqueQty,
   getEstoqueAtual,
   getEstoqueMinimo,
@@ -57,23 +57,13 @@ export default function CatalogProdutoSearchRow({
       <span className="font-mono text-[11px] text-muted-foreground">
         #{product.codigo_interno || '—'}
       </span>
-      <span
-        className={cn(
-          'inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-semibold tabular-nums',
-          ESTOQUE_BADGE_CLASS[status],
-        )}
-      >
+      <span className={cn('text-[11px] font-semibold tabular-nums', ESTOQUE_STATUS_CLASS[status])}>
         Est. {formatEstoqueQty(estoqueApres.quantidade)} {estoqueApres.sigla}
       </span>
       {minimoApres && minimoBase > 0 ? (
         <span className="text-[11px] text-muted-foreground tabular-nums">
           Mín. {formatEstoqueQty(minimoApres.quantidade)} {minimoApres.sigla}
         </span>
-      ) : null}
-      {status === 'critical' ? (
-        <P38StatusLabel tone="danger">Zerado</P38StatusLabel>
-      ) : status === 'low' ? (
-        <P38StatusLabel tone="warning">Baixo</P38StatusLabel>
       ) : null}
       {variasUnidades ? (
         <button
