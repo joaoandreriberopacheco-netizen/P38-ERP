@@ -4,7 +4,7 @@ Site estático **separado** do ERP. Linha completa Formigres (~1 500 modelos) 
 
 ## Link de acesso (caminho secreto)
 
-O catálogo **não** abre na raiz do domínio. Só funciona com o link completo que inclui um código no caminho (ex.: `https://catalogo-formigres-p38.vercel.app/fg-…/`).
+O catálogo **não** abre na raiz do domínio. Só funciona com o link completo que inclui um código no caminho (ex.: `https://p38-fg-catalogo-2be33ba9.vercel.app/fg-…/`).
 
 - O código actual está em `access-slug.json` (e nos `rewrites` de `vercel.json`).
 - **Partilhe só o link completo** com quem deve ver preços e pedido B2B.
@@ -36,6 +36,6 @@ Isto corre classificação do snapshot e gera `deploy/catalogo-formigres/catalog
 
 ## Deploy Vercel
 
-Projecto isolado `catalogo-formigres-p38` (ID: `prj_FIL3vda5AshbjOZJOX39d9sQWs3b`). Secret GitHub: `VERCEL_CATALOGO_FORMIGRES_PROJECT_ID`.
+Projecto Vercel `p38-fg-catalogo-2be33ba9` (antes `catalogo-formigres-p38`; ID: `prj_FIL3vda5AshbjOZJOX39d9sQWs3b`). Secret GitHub: `VERCEL_CATALOGO_FORMIGRES_PROJECT_ID`. Opcional: `CATALOGO_FORMIGRES_PUBLIC_URL` ao regenerar HTML.
 
 Rodapé: **Powered by P38 sistemas**.

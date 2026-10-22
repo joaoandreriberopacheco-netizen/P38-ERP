@@ -12,11 +12,11 @@ const SLUG_FILE = path.join(FORMIGRES_DEPLOY_DIR, 'access-slug.json');
 const VERCEL_JSON = path.join(FORMIGRES_DEPLOY_DIR, 'vercel.json');
 /** @returns {string} */
 function formigresSiteOrigin() {
-  const raw = process.env.CATALOGO_FORMIGRES_PUBLIC_URL || 'https://catalogo-formigres-p38.vercel.app/';
+  const raw = process.env.CATALOGO_FORMIGRES_PUBLIC_URL || 'https://p38-fg-catalogo-2be33ba9.vercel.app/';
   try {
     return new URL(raw).origin;
   } catch {
-    return 'https://catalogo-formigres-p38.vercel.app';
+    return 'https://p38-fg-catalogo-2be33ba9.vercel.app';
   }
 }
 

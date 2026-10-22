@@ -66,7 +66,7 @@ const CONFIGS = {
     outHtml: path.join(ROOT, 'docs', 'imports-local', 'formigres', 'Catálogo Formigres — Demonstração.html'),
     outDeploy: path.join(ROOT, 'deploy', 'catalogo-formigres', 'catalogo.html'),
     outPdfThumbs: path.join(ROOT, 'docs', 'imports-local', 'formigres', 'catalogo-formigres-pdf-thumbs.json'),
-    publicUrl: (process.env.CATALOGO_FORMIGRES_PUBLIC_URL || 'https://catalogo-formigres-p38.vercel.app/').replace(/\/?$/, '/'),
+    publicUrl: (process.env.CATALOGO_FORMIGRES_PUBLIC_URL || 'https://p38-fg-catalogo-2be33ba9.vercel.app/').replace(/\/?$/, '/'),
     skipApiEnrich: true,
     skipPdfThumbs: false,
     title: 'Catálogo Formigres — Pisos e Porcelanatos',
