@@ -1,26 +1,16 @@
 import { base44 } from '@/api/base44Client';
-import { generateRelatorioPedidosCompraPdf } from '@/lib/relatorioPedidosCompraPdf/generateRelatorioPedidosCompraPdf';
 import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
 import { getEmbarqueItensLinhas, hydrateEmbarquesFromSql } from '@/lib/fetchEmbarqueItens';
 import { carregarProdutosMap } from '@/lib/embarqueVitrineHelpers';
-import { normalizarPedidoParaRelatorio } from '@/lib/comprasRelatorioPedidos';
-import { isEmbarqueSaldoPendente } from '@/lib/embarqueTipoSaldoPendente';
+import { materializePedidosCompraView } from '@/lib/comprasEmbarqueCards';
+import { enrichEmbarqueParaConsulta } from '@/lib/consultaComprasEmbarques';
+import { renderConsultaPedidosToJsPdf } from '@/lib/consultaComprasHtmlExport';
+import { appendAnexosToPdfDoc } from '@/lib/appendAnexosToPdfDoc';
 
-function buildEmbarqueFallback(pedidoId, pedidoNumero) {
-  return {
-    id: `original-${pedidoId}`,
-    pedido_compra_id: pedidoId,
-    numero: pedidoNumero || '',
-    tipo: 'Original',
-    status: 'Pendente',
-    status_recebimento: 'Pendente',
-  };
-}
-
-async function carregarPedidoParaMinutaAnexos(pedidoId) {
+async function carregarPedidoParaConsultaAnexos(pedidoId) {
   const pedido = await base44.entities.PedidoCompra.get(pedidoId);
   if (!pedido?.id) {
-    throw new Error('Pedido não encontrado para gerar a minuta.');
+    throw new Error('Pedido não encontrado para gerar a capa do PDF.');
   }
 
   const [pedidoHidratado] = await hydratePedidosCompraItensFromSql(base44, [pedido]);
@@ -34,13 +24,6 @@ async function carregarPedidoParaMinutaAnexos(pedidoId) {
     embarquesDb = [];
   }
 
-  const embarque =
-    embarquesDb
-      .filter((item) => !isEmbarqueSaldoPendente(item))
-      .sort((a, b) => new Date(a.created_date || 0) - new Date(b.created_date || 0))[0]
-    || embarquesDb[0]
-    || buildEmbarqueFallback(pedidoId, pedido.numero);
-
   const produtoIds = [
     ...new Set([
       ...(pedido.itens || []).map((item) => item.produto_id).filter(Boolean),
@@ -49,22 +32,14 @@ async function carregarPedidoParaMinutaAnexos(pedidoId) {
   ];
   const produtosMap = await carregarProdutosMap(produtoIds.map((id) => ({ produto_id: id })));
 
-  const pedidoNormalizado = normalizarPedidoParaRelatorio(
-    {
-      ...pedido,
-      _embarque: embarque,
-      _display_code: pedido.numero,
-      _display_fornecedor: pedido.fornecedor_nome || '—',
-      _display_status: pedido.status,
-    },
-    produtosMap,
-  );
+  const { cardsDeEmbarque } = materializePedidosCompraView([pedido], embarquesDb, produtosMap);
+  const pedidosConsulta = (cardsDeEmbarque || []).map((card) => enrichEmbarqueParaConsulta(card, produtosMap));
 
-  return { pedido: pedidoNormalizado, produtosMap };
+  return { pedido, pedidosConsulta, produtosMap };
 }
 
 /**
- * Exporta anexos do pedido com minuta A4 na 1ª página (enxuto + consulta mobile).
+ * Exporta anexos do pedido com a 1ª página = visual da consulta (HTML) + comprovantes.
  */
 export async function exportPedidoAnexosComMinutaPdf({
   pedidoId,
@@ -73,22 +48,44 @@ export async function exportPedidoAnexosComMinutaPdf({
   fileName = 'anexos.pdf',
 }) {
   if (!pedidoId) {
-    throw new Error('Pedido não informado para exportar anexos com minuta.');
+    throw new Error('Pedido não informado para exportar anexos com consulta.');
   }
 
-  const { pedido, produtosMap } = await carregarPedidoParaMinutaAnexos(pedidoId);
+  const { pedido, pedidosConsulta, produtosMap } = await carregarPedidoParaConsultaAnexos(pedidoId);
   const anexosValidos = (anexos || []).filter((item) => item?.url_drive);
+  const numero = pedidoNumero || pedido.numero || pedidoId;
 
-  const resultado = await generateRelatorioPedidosCompraPdf({
-    pedidos: [pedido],
-    version: 'expandida_com_anexos_a4',
-    filtros_desc: `Anexos do pedido ${pedidoNumero || pedido.numero || pedidoId}`,
-    kpis: { totalPedidos: 1, totalGeral: pedido.valor_total || 0 },
-    produtos_map: produtosMap,
-    anexos_por_pedido: { [pedidoId]: anexosValidos },
+  const doc = await renderConsultaPedidosToJsPdf({
+    pedidosFiltrados: pedidosConsulta,
+    produtosMap,
+    showDetalheCustos: true,
+    theme: 'light',
+    filtrosDesc: `Pedido ${numero}`,
+    contextLabel: 'Consulta do pedido',
+    groupBy: 'eta_transportadora',
+    sortOrder: 'asc',
   });
 
-  const blob = new Blob([resultado.data], { type: 'application/pdf' });
+  if (anexosValidos.length > 0) {
+    const pageH = doc.internal.pageSize.getHeight();
+    const margin = 8;
+    await appendAnexosToPdfDoc(doc, anexosValidos, {
+      sectionPrefix: `Anexos ${numero}`,
+      mode: 'one_per_page',
+      layout: {
+        margin,
+        titleY: 12,
+        contentTop: 18,
+        contentBottom: pageH - 10,
+      },
+      flow: {
+        newPageY: 10,
+        bottomPad: 10,
+      },
+    });
+  }
+
+  const blob = doc.output('blob');
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
@@ -96,5 +93,5 @@ export async function exportPedidoAnexosComMinutaPdf({
   anchor.click();
   URL.revokeObjectURL(url);
 
-  return { pages: resultado.version, anexos: anexosValidos.length };
+  return { pages: 'consulta_com_anexos', anexos: anexosValidos.length };
 }

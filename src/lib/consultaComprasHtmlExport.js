@@ -64,7 +64,7 @@ function prepareCloneForPdfCapture(clonedDoc) {
 /**
  * Captura elemento HTML longo → PDF mobile multi-página (largura ~390px).
  */
-export async function renderConsultaElementToPdfBlob(element, { theme = 'light' } = {}) {
+export async function renderConsultaElementToJsPdf(element, { theme = 'light' } = {}) {
   if (!element) throw new Error('Elemento inválido');
   const { html2canvas, jsPDF } = await loadPdfCaptureLibs();
   const backgroundColor = theme === 'dark' ? '#0f0f0f' : '#ffffff';
@@ -128,7 +128,54 @@ export async function renderConsultaElementToPdfBlob(element, { theme = 'light' 
     pageIndex += 1;
   }
 
+  return pdf;
+}
+
+export async function renderConsultaElementToPdfBlob(element, options = {}) {
+  const pdf = await renderConsultaElementToJsPdf(element, options);
   return pdf.output('blob');
+}
+
+/**
+ * Monta o visual da consulta (mesmos componentes da tela) e devolve jsPDF pronto para anexos.
+ */
+export async function renderConsultaPedidosToJsPdf({
+  pedidosFiltrados = [],
+  groupBy = 'eta_transportadora',
+  sortOrder = 'asc',
+  produtosMap = {},
+  showDetalheCustos = true,
+  theme = 'light',
+  filtrosDesc = '',
+  contextLabel = 'Consulta de compras',
+}) {
+  const host = buildExportHost();
+  const root = createRoot(host);
+
+  try {
+    flushSync(() => {
+      root.render(
+        React.createElement(ConsultaComprasExportDocument, {
+          pedidosFiltrados,
+          groupBy,
+          sortOrder,
+          produtosMap,
+          showDetalheCustos,
+          theme,
+          filtrosDesc,
+          contextLabel,
+        }),
+      );
+    });
+
+    await waitForCaptureLayout(host);
+    const captureEl = host.querySelector('#consulta-export-capture');
+    if (!captureEl) throw new Error('Área de captura não encontrada');
+    return await renderConsultaElementToJsPdf(captureEl, { theme });
+  } finally {
+    root.unmount();
+    host.remove();
+  }
 }
 
 function buildExportHost() {
