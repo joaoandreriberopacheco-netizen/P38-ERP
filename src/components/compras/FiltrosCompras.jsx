@@ -9,6 +9,7 @@ import {
   CalendarCheck,
   Layers,
   ChevronDown,
+  Package,
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -61,39 +62,51 @@ const CHIP_IDLE = COMPRAS_CHIP_IDLE;
 const CHIP_ACTIVE = 'font-medium shadow-sm';
 const SECTION_CARD = COMPRAS_SECTION_CARD;
 
-const ENCOMENDA_FILTRO_OPCOES = [
-  { value: FILTRO_COMPRAS_ENCOMENDA_TODOS, label: 'Mostrar' },
-  { value: FILTRO_COMPRAS_ENCOMENDA_OCULTAR, label: 'Não mostrar' },
-  { value: FILTRO_COMPRAS_ENCOMENDA_SOMENTE, label: 'Mostrar apenas' },
+const ENCOMENDA_FILTRO_CYCLE = [
+  FILTRO_COMPRAS_ENCOMENDA_TODOS,
+  FILTRO_COMPRAS_ENCOMENDA_OCULTAR,
+  FILTRO_COMPRAS_ENCOMENDA_SOMENTE,
 ];
 
-function EncomendaFiltroSegment({ value = FILTRO_COMPRAS_ENCOMENDA_DEFAULT, onChange }) {
+function encomendaFiltroLabel(value) {
+  if (value === FILTRO_COMPRAS_ENCOMENDA_OCULTAR) return 'Encomendas: não mostrar';
+  if (value === FILTRO_COMPRAS_ENCOMENDA_SOMENTE) return 'Encomendas: mostrar apenas';
+  return 'Encomendas: mostrar (normal)';
+}
+
+/** Um ícone — toque alterna: normal → ocultar → só encomendas. */
+function EncomendaFiltroIcon({ value = FILTRO_COMPRAS_ENCOMENDA_DEFAULT, onChange }) {
+  const label = encomendaFiltroLabel(value);
+
+  const cycle = () => {
+    const idx = ENCOMENDA_FILTRO_CYCLE.indexOf(value);
+    const next = ENCOMENDA_FILTRO_CYCLE[(idx + 1) % ENCOMENDA_FILTRO_CYCLE.length];
+    onChange?.(next);
+  };
+
   return (
-    <div
-      className="inline-flex max-w-full flex-wrap items-center gap-1 rounded-2xl bg-muted/40 p-1 dark:bg-muted/50"
-      role="group"
-      aria-label="Pedidos de encomenda"
+    <button
+      type="button"
+      onClick={cycle}
+      title={label}
+      aria-label={label}
+      className={cn(
+        COMPRAS_MOBILE_ICON_BTN,
+        'h-8 w-8 rounded-full',
+        value === FILTRO_COMPRAS_ENCOMENDA_SOMENTE && COMPRAS_CHIP_ACTIVE_OLIVE,
+        value === FILTRO_COMPRAS_ENCOMENDA_OCULTAR && 'text-muted-foreground/55',
+      )}
     >
-      {ENCOMENDA_FILTRO_OPCOES.map((opcao) => {
-        const selected = value === opcao.value;
-        return (
-          <button
-            key={opcao.value}
-            type="button"
-            onClick={() => onChange?.(opcao.value)}
-            className={cn(
-              'rounded-xl px-2.5 py-1.5 text-[10px] sm:text-[11px] leading-none transition-colors font-light uppercase tracking-wide whitespace-nowrap',
-              selected
-                ? cn(CHIP_ACTIVE, COMPRAS_CHIP_ACTIVE_OLIVE)
-                : CHIP_IDLE,
-            )}
-            aria-pressed={selected}
-          >
-            {opcao.label}
-          </button>
-        );
-      })}
-    </div>
+      <Package className="h-4 w-4 shrink-0" aria-hidden />
+      {value === FILTRO_COMPRAS_ENCOMENDA_OCULTAR ? (
+        <span
+          className="pointer-events-none absolute inset-0 flex items-center justify-center"
+          aria-hidden
+        >
+          <span className="h-[1.5px] w-[1.125rem] rotate-45 rounded-full bg-muted-foreground/75 dark:bg-muted-foreground/60" />
+        </span>
+      ) : null}
+    </button>
   );
 }
 
@@ -678,7 +691,7 @@ export default function FiltrosCompras({
           }
         }}
       />
-      <EncomendaFiltroSegment value={filtroEncomenda} onChange={onFiltroEncomenda} />
+      <EncomendaFiltroIcon value={filtroEncomenda} onChange={onFiltroEncomenda} />
     </div>
   );
 
