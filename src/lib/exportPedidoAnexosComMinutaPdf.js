@@ -55,6 +55,10 @@ export async function exportPedidoAnexosComMinutaPdf({
   const anexosValidos = (anexos || []).filter((item) => item?.url_drive);
   const numero = pedidoNumero || pedido.numero || pedidoId;
 
+  if (!pedidosConsulta.length) {
+    throw new Error('Não há dados do pedido para montar a capa da consulta.');
+  }
+
   const doc = await renderConsultaPedidosToJsPdf({
     pedidosFiltrados: pedidosConsulta,
     produtosMap,
@@ -65,6 +69,10 @@ export async function exportPedidoAnexosComMinutaPdf({
     groupBy: 'eta_transportadora',
     sortOrder: 'asc',
   });
+
+  if (doc.internal.getNumberOfPages() < 1) {
+    throw new Error('A capa da consulta não foi gerada. Tente novamente ou atualize a página.');
+  }
 
   if (anexosValidos.length > 0) {
     const pageH = doc.internal.pageSize.getHeight();

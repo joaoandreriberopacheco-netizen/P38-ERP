@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { X, FileText, Image, File, Trash2, ExternalLink, Loader2, Upload, Printer, Plus } from 'lucide-react';
 import exportAnexosToPdf from '@/components/anexos/exportAnexosToPdf';
+import { useToast } from '@/components/ui/use-toast';
 import TipoDocumentoSearch from '@/components/anexos/TipoDocumentoSearch';
 import { TIPOS_DOCUMENTO_ANEXO, ORDEM_TIPOS_DOCUMENTO_ANEXO } from '@/lib/tiposDocumentoAnexo';
 import { brandSurface } from '@/lib/brandSurfaces';
@@ -98,10 +99,24 @@ function AnexoCard({ anexo, onDelete, readOnly = false }) {
   );
 }
 
-export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelete, uploading, referenciaNomero, pedidoId, readOnly = false }) {
+export default function AnexosModal({
+  isOpen,
+  onClose,
+  anexos,
+  onUpload,
+  onDelete,
+  uploading,
+  referenciaNomero,
+  pedidoId,
+  referencias = [],
+  referenciaTipo = null,
+  referenciaId = null,
+  readOnly = false,
+}) {
   const [tipoSelecionado, setTipoSelecionado] = useState('Comprovante');
   const [tiposCustomizados, setTiposCustomizados] = useState([]);
   const [exportingPdf, setExportingPdf] = useState(false);
+  const { toast } = useToast();
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const inputRef = useRef();
 
@@ -133,8 +148,23 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
     if (exportingPdf || anexos.length === 0) return;
 
     setExportingPdf(true);
-    await exportAnexosToPdf(anexos, { pedidoId, pedidoNumero: referenciaNomero });
-    setExportingPdf(false);
+    try {
+      await exportAnexosToPdf(anexos, {
+        pedidoId,
+        pedidoNumero: referenciaNomero,
+        referencias,
+        referenciaTipo,
+        referenciaId,
+      });
+    } catch (err) {
+      toast({
+        variant: 'destructive',
+        title: 'Não foi possível gerar o PDF',
+        description: err?.message || 'Tente novamente em instantes.',
+      });
+    } finally {
+      setExportingPdf(false);
+    }
   };
 
   const tiposDisponiveis = useMemo(() => {

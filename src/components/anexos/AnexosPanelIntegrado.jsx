@@ -23,6 +23,11 @@ export default function AnexosPanelIntegrado({
   const [uploading, setUploading] = useState(false);
   const [modalOpen, setModalOpen] = useState(initialModalOpen);
 
+  const pedidoId = useMemo(() => {
+    const pedidoRef = referencias.find((ref) => ref.referencia_tipo === 'PedidoCompra' && ref.referencia_id);
+    return pedidoRef?.referencia_id || null;
+  }, [referencias]);
+
   const alvoUpload = useMemo(() => {
     if (uploadTarget?.referencia_tipo && uploadTarget?.referencia_id) return uploadTarget;
     const first = referencias[0];
@@ -146,6 +151,8 @@ export default function AnexosPanelIntegrado({
         onDelete={handleDelete}
         uploading={uploading}
         referenciaNomero={referenciaNomero}
+        pedidoId={pedidoId}
+        referencias={referencias}
         readOnly={readOnly}
       />
     </>

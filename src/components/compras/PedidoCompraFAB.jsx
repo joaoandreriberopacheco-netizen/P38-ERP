@@ -195,6 +195,9 @@ export default function PedidoCompraFAB({
         onDelete={handleAnexoDelete}
         uploading={anexoUploading}
         referenciaNomero={pedido?.numero}
+        pedidoId={pedido?.id}
+        referenciaTipo="PedidoCompra"
+        referenciaId={pedido?.id}
       />
     </>
   );

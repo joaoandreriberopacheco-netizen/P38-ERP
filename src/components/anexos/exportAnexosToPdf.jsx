@@ -1,9 +1,23 @@
 import { loadJsPDF } from '@/lib/lazyPdfLibs';
 import { appendAnexosToPdfDoc } from '@/lib/appendAnexosToPdfDoc';
 import { exportPedidoAnexosComMinutaPdf } from '@/lib/exportPedidoAnexosComMinutaPdf';
+import { resolvePedidoIdParaExportAnexos } from '@/lib/resolvePedidoIdAnexosExport';
 
 export default async function exportAnexosToPdf(anexos = [], options = {}) {
-  const { pedidoId, pedidoNumero } = options;
+  const {
+    pedidoId: pedidoIdInput,
+    pedidoNumero,
+    referencias = [],
+    referenciaTipo = null,
+    referenciaId = null,
+  } = options;
+
+  const pedidoId = await resolvePedidoIdParaExportAnexos({
+    pedidoId: pedidoIdInput,
+    referencias,
+    referenciaTipo,
+    referenciaId,
+  });
 
   if (pedidoId) {
     await exportPedidoAnexosComMinutaPdf({
