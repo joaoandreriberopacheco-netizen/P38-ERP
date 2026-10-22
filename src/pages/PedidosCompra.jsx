@@ -35,7 +35,10 @@ import { isEmbarqueSaldoPendente } from '@/lib/embarqueTipoSaldoPendente';
 import { compareEmbarquesConsulta, enrichEmbarqueParaConsulta, buildConsultaItensPendentes, calcConsultaValorEmbarque, buildGruposConsultaEmbarques } from '@/lib/consultaComprasEmbarques';
 import { calcValorEmbarqueCard, calcValorEmbarcadoPedido } from '@/lib/embarqueValorFinanceiro';
 import { pedidoNaoConcluido } from '@/lib/comprasEmbarqueCards';
-import { isPedidoCompraEncomenda } from '@/lib/pedidoCompraEncomenda';
+import {
+  FILTRO_COMPRAS_ENCOMENDA_DEFAULT,
+  passaFiltroEncomendaPedidoCompra,
+} from '@/lib/pedidoCompraEncomenda';
 import {
   cardEmbarqueMatchStatusFiltro,
   comparePedidosNoMesmoGrupoEmbarque,
@@ -152,7 +155,7 @@ const passaFiltrosEmbarqueCard = (
     etaFinal,
     recebimentoInicial,
     recebimentoFinal,
-    filtroSomenteEncomenda = false,
+    filtroEncomenda = FILTRO_COMPRAS_ENCOMENDA_DEFAULT,
     skipSearch = false,
     searchIncludeProdutos = false,
     ocultarPendenteSaldo = false,
@@ -205,7 +208,7 @@ const passaFiltrosEmbarqueCard = (
   if (dataFinal && (!dataPedido || dataPedido > dataFinal)) return false;
   if (!etaMatchesFilter(embarque, etaFiltroModo, etaData, etaInicial, etaFinal)) return false;
   if (!recebimentoMatchesFilter(card, recebimentoInicial, recebimentoFinal)) return false;
-  if (filtroSomenteEncomenda && !isPedidoCompraEncomenda(card)) return false;
+  if (!passaFiltroEncomendaPedidoCompra(card, filtroEncomenda)) return false;
   return true;
 };
 
@@ -283,7 +286,7 @@ export default function PedidosCompraPage() {
   const queryClient = useQueryClient();
   const [filtroUltimos30Dias, setFiltroUltimos30Dias] = useState(FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT);
   const [filtroSomenteNaoConcluidos, setFiltroSomenteNaoConcluidos] = useState(FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT);
-  const [filtroSomenteEncomenda, setFiltroSomenteEncomenda] = useState(false);
+  const [filtroEncomenda, setFiltroEncomenda] = useState(FILTRO_COMPRAS_ENCOMENDA_DEFAULT);
   const comprasFetchFilters = useMemo(
     () => buildComprasGestaoFetchFilters({
       somenteNaoConcluidos: filtroSomenteNaoConcluidos,
@@ -508,14 +511,14 @@ export default function PedidosCompraPage() {
       etaFinal,
       recebimentoInicial,
       recebimentoFinal,
-      filtroSomenteEncomenda,
+      filtroEncomenda,
     }),
     [
       search,
       statusSel,
       filtroUltimos30Dias,
       filtroSomenteNaoConcluidos,
-      filtroSomenteEncomenda,
+      filtroEncomenda,
       tagsSel,
       dataInicial,
       dataFinal,
@@ -697,7 +700,7 @@ export default function PedidosCompraPage() {
     || statusPedidoCompraExplicitos(statusSel).length > 0
     || filtroUltimos30Dias !== FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT
     || filtroSomenteNaoConcluidos !== FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT
-    || filtroSomenteEncomenda;
+    || filtroEncomenda !== FILTRO_COMPRAS_ENCOMENDA_DEFAULT;
 
   const pedidosConsulta = useMemo(() => {
     let cards = filtrados;
@@ -850,7 +853,7 @@ export default function PedidosCompraPage() {
                 search={search} onSearch={setSearch}
                 filtroUltimos30Dias={filtroUltimos30Dias} onFiltroUltimos30Dias={setFiltroUltimos30Dias}
                 filtroSomenteNaoConcluidos={filtroSomenteNaoConcluidos} onFiltroSomenteNaoConcluidos={setFiltroSomenteNaoConcluidos}
-                filtroSomenteEncomenda={filtroSomenteEncomenda} onFiltroSomenteEncomenda={setFiltroSomenteEncomenda}
+                filtroEncomenda={filtroEncomenda} onFiltroEncomenda={setFiltroEncomenda}
                 statusSel={statusSelUi} onStatusSel={setStatusSel}
                 todasTags={todasTags} tagsSel={tagsSel} onTagsSel={setTagsSel}
                 dataInicial={dataInicial} onDataInicial={setDataInicial}
@@ -867,7 +870,7 @@ export default function PedidosCompraPage() {
                   setStatusSel(filtroComprasStatusSelInicial());
                   setFiltroUltimos30Dias(FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT);
                   setFiltroSomenteNaoConcluidos(FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT);
-                  setFiltroSomenteEncomenda(false);
+                  setFiltroEncomenda(FILTRO_COMPRAS_ENCOMENDA_DEFAULT);
                   setTagsSel([]);
                   setDataInicial('');
                   setDataFinal('');
@@ -1017,7 +1020,7 @@ export default function PedidosCompraPage() {
         search={search} onSearch={setSearch}
         filtroUltimos30Dias={filtroUltimos30Dias} onFiltroUltimos30Dias={setFiltroUltimos30Dias}
         filtroSomenteNaoConcluidos={filtroSomenteNaoConcluidos} onFiltroSomenteNaoConcluidos={setFiltroSomenteNaoConcluidos}
-        filtroSomenteEncomenda={filtroSomenteEncomenda} onFiltroSomenteEncomenda={setFiltroSomenteEncomenda}
+        filtroEncomenda={filtroEncomenda} onFiltroEncomenda={setFiltroEncomenda}
         statusSel={statusSelUi} onStatusSel={setStatusSel}
         todasTags={todasTags} tagsSel={tagsSel} onTagsSel={setTagsSel}
         dataInicial={dataInicial} onDataInicial={setDataInicial}
@@ -1034,7 +1037,7 @@ export default function PedidosCompraPage() {
           setStatusSel(filtroComprasStatusSelInicial());
           setFiltroUltimos30Dias(FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT);
           setFiltroSomenteNaoConcluidos(FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT);
-          setFiltroSomenteEncomenda(false);
+          setFiltroEncomenda(FILTRO_COMPRAS_ENCOMENDA_DEFAULT);
           setTagsSel([]);
           setDataInicial('');
           setDataFinal('');

@@ -42,6 +42,12 @@ import {
   COMPRAS_SECTION_CARD,
 } from '@/lib/comprasP38Theme';
 import { statusPedidoCompraExplicitos } from '@/components/compras/StatusPedidoCompraPicker';
+import {
+  FILTRO_COMPRAS_ENCOMENDA_DEFAULT,
+  FILTRO_COMPRAS_ENCOMENDA_OCULTAR,
+  FILTRO_COMPRAS_ENCOMENDA_SOMENTE,
+  FILTRO_COMPRAS_ENCOMENDA_TODOS,
+} from '@/lib/pedidoCompraEncomenda';
 
 const ETA_FILTRO_MODOS = [
   { value: 'antes', label: 'Antes de' },
@@ -54,6 +60,42 @@ const CHIP_BASE = 'inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 ro
 const CHIP_IDLE = COMPRAS_CHIP_IDLE;
 const CHIP_ACTIVE = 'font-medium shadow-sm';
 const SECTION_CARD = COMPRAS_SECTION_CARD;
+
+const ENCOMENDA_FILTRO_OPCOES = [
+  { value: FILTRO_COMPRAS_ENCOMENDA_TODOS, label: 'Mostrar' },
+  { value: FILTRO_COMPRAS_ENCOMENDA_OCULTAR, label: 'Não mostrar' },
+  { value: FILTRO_COMPRAS_ENCOMENDA_SOMENTE, label: 'Mostrar apenas' },
+];
+
+function EncomendaFiltroSegment({ value = FILTRO_COMPRAS_ENCOMENDA_DEFAULT, onChange }) {
+  return (
+    <div
+      className="inline-flex max-w-full flex-wrap items-center gap-1 rounded-2xl bg-muted/40 p-1 dark:bg-muted/50"
+      role="group"
+      aria-label="Pedidos de encomenda"
+    >
+      {ENCOMENDA_FILTRO_OPCOES.map((opcao) => {
+        const selected = value === opcao.value;
+        return (
+          <button
+            key={opcao.value}
+            type="button"
+            onClick={() => onChange?.(opcao.value)}
+            className={cn(
+              'rounded-xl px-2.5 py-1.5 text-[10px] sm:text-[11px] leading-none transition-colors font-light uppercase tracking-wide whitespace-nowrap',
+              selected
+                ? cn(CHIP_ACTIVE, COMPRAS_CHIP_ACTIVE_OLIVE)
+                : CHIP_IDLE,
+            )}
+            aria-pressed={selected}
+          >
+            {opcao.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 function QuickFilterToggle({ label, checked, onCheckedChange }) {
   return (
@@ -395,8 +437,8 @@ export default function FiltrosCompras({
   onFiltroUltimos30Dias,
   filtroSomenteNaoConcluidos = FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT,
   onFiltroSomenteNaoConcluidos,
-  filtroSomenteEncomenda = false,
-  onFiltroSomenteEncomenda,
+  filtroEncomenda = FILTRO_COMPRAS_ENCOMENDA_DEFAULT,
+  onFiltroEncomenda,
   statusSel,
   onStatusSel,
   todasTags,
@@ -439,9 +481,9 @@ export default function FiltrosCompras({
     }
     count += statusPedidoCompraExplicitos(statusSel).length;
     count += tagsSel.length;
-    if (filtroSomenteEncomenda) count += 1;
+    if (filtroEncomenda && filtroEncomenda !== FILTRO_COMPRAS_ENCOMENDA_TODOS) count += 1;
     return count;
-  }, [dataInicial, dataFinal, recebimentoInicial, recebimentoFinal, etaFiltroModo, etaData, etaInicial, etaFinal, statusSel, tagsSel, filtroSomenteEncomenda]);
+  }, [dataInicial, dataFinal, recebimentoInicial, recebimentoFinal, etaFiltroModo, etaData, etaInicial, etaFinal, statusSel, tagsSel, filtroEncomenda]);
 
   const activeChips = useMemo(() => {
     const chips = [];
@@ -538,12 +580,20 @@ export default function FiltrosCompras({
       });
     });
 
-    if (filtroSomenteEncomenda) {
+    if (filtroEncomenda === FILTRO_COMPRAS_ENCOMENDA_SOMENTE) {
       chips.push({
-        key: 'encomenda',
-        label: 'Pedidos de encomenda',
+        key: 'encomenda-somente',
+        label: 'Só pedidos de encomenda',
         tone: 'accent',
-        onRemove: () => onFiltroSomenteEncomenda?.(false),
+        onRemove: () => onFiltroEncomenda?.(FILTRO_COMPRAS_ENCOMENDA_TODOS),
+      });
+    }
+    if (filtroEncomenda === FILTRO_COMPRAS_ENCOMENDA_OCULTAR) {
+      chips.push({
+        key: 'encomenda-ocultar',
+        label: 'Sem pedidos de encomenda',
+        tone: 'neutral',
+        onRemove: () => onFiltroEncomenda?.(FILTRO_COMPRAS_ENCOMENDA_TODOS),
       });
     }
 
@@ -569,8 +619,8 @@ export default function FiltrosCompras({
     onEtaFinal,
     onStatusSel,
     onTagsSel,
-    filtroSomenteEncomenda,
-    onFiltroSomenteEncomenda,
+    filtroEncomenda,
+    onFiltroEncomenda,
   ]);
 
   const painelProps = {
@@ -628,11 +678,7 @@ export default function FiltrosCompras({
           }
         }}
       />
-      <QuickFilterToggle
-        label="Encomendas"
-        checked={filtroSomenteEncomenda}
-        onCheckedChange={(next) => onFiltroSomenteEncomenda?.(next)}
-      />
+      <EncomendaFiltroSegment value={filtroEncomenda} onChange={onFiltroEncomenda} />
     </div>
   );
 
