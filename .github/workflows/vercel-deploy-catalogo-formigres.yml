@@ -47,19 +47,27 @@ jobs:
           } >> "$GITHUB_ENV"
           echo "ready=true" >> "$GITHUB_OUTPUT"
 
-      - name: Validar index.html
+      - name: Validar deploy catálogo
         run: |
           set -e
-          if [ ! -f deploy/catalogo-formigres/index.html ]; then
-            echo "::error::deploy/catalogo-formigres/index.html em falta. Rode npm run catalogo:publicar-formigres"
+          if [ ! -f deploy/catalogo-formigres/catalogo.html ]; then
+            echo "::error::deploy/catalogo-formigres/catalogo.html em falta. Rode npm run catalogo:publicar-formigres"
             exit 1
           fi
-          bytes=$(wc -c < deploy/catalogo-formigres/index.html)
-          if [ "$bytes" -lt 100000 ]; then
-            echo "::error::index.html demasiado pequeno ($bytes bytes)."
+          catalog_bytes=$(wc -c < deploy/catalogo-formigres/catalogo.html)
+          if [ "$catalog_bytes" -lt 100000 ]; then
+            echo "::error::catalogo.html demasiado pequeno ($catalog_bytes bytes)."
             exit 1
           fi
-          echo "OK: index.html ($bytes bytes)"
+          if [ ! -f deploy/catalogo-formigres/access-slug.json ]; then
+            echo "::error::access-slug.json em falta. Rode npm run catalogo:rotacionar-acesso-formigres"
+            exit 1
+          fi
+          if ! grep -q '"rewrites"' deploy/catalogo-formigres/vercel.json; then
+            echo "::error::vercel.json sem rewrites do caminho secreto."
+            exit 1
+          fi
+          echo "OK: catalogo.html ($catalog_bytes bytes) + acesso por slug"
 
       - name: Vercel deploy (catálogo Formigres)
         if: steps.vercel_secrets.outputs.ready == 'true'

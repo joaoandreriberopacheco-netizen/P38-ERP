@@ -6,9 +6,25 @@
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
       ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/fg-3032e93484889b86c5a1c592",
+      "destination": "/catalogo.html"
+    },
+    {
+      "source": "/fg-3032e93484889b86c5a1c592/",
+      "destination": "/catalogo.html"
     }
   ]
 }

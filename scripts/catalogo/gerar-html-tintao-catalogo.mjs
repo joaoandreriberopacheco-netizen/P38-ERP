@@ -21,6 +21,7 @@ import {
   buildCatalogTourFabHtml,
   buildCatalogTourHtml,
 } from '../lib/catalogoTour.mjs';
+import { buildPublicUrl, readAccessSlug } from '../lib/catalogoFormigresAcesso.mjs';
 
 const ROOT = process.cwd();
 const args = process.argv.slice(2);
@@ -63,9 +64,9 @@ const CONFIGS = {
     classifDir: path.join(ROOT, 'docs', 'imports-local', 'formigres', 'classificacao'),
     classifPattern: /^formigres-completo-\d{4}-\d{2}-\d{2}\.json$/,
     outHtml: path.join(ROOT, 'docs', 'imports-local', 'formigres', 'Catálogo Formigres — Demonstração.html'),
-    outDeploy: path.join(ROOT, 'deploy', 'catalogo-formigres', 'index.html'),
+    outDeploy: path.join(ROOT, 'deploy', 'catalogo-formigres', 'catalogo.html'),
     outPdfThumbs: path.join(ROOT, 'docs', 'imports-local', 'formigres', 'catalogo-formigres-pdf-thumbs.json'),
-    publicUrl: (process.env.CATALOGO_FORMIGRES_PUBLIC_URL || 'https://catalogo-formigres-p38.vercel.app/').replace(/\/?$/, '/'),
+    publicUrl: (process.env.CATALOGO_FORMIGRES_PUBLIC_URL || 'https://p38-fg-catalogo-2be33ba9.vercel.app/').replace(/\/?$/, '/'),
     skipApiEnrich: true,
     skipPdfThumbs: false,
     title: 'Catálogo Formigres — Pisos e Porcelanatos',
@@ -161,6 +162,10 @@ const CONFIGS = {
 };
 
 const CFG = CONFIGS[MODO] || CONFIGS.tintao;
+if (MODO === 'formigres') {
+  const slug = readAccessSlug();
+  if (slug) CFG.publicUrl = buildPublicUrl(slug);
+}
 const CLASSIF_DIR = CFG.classifDir;
 const OUT_HTML = CFG.outHtml;
 const OUT_DEPLOY_HTML = CFG.outDeploy;
