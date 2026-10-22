@@ -395,6 +395,8 @@ export default function FiltrosCompras({
   onFiltroUltimos30Dias,
   filtroSomenteNaoConcluidos = FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT,
   onFiltroSomenteNaoConcluidos,
+  filtroSomenteEncomenda = false,
+  onFiltroSomenteEncomenda,
   statusSel,
   onStatusSel,
   todasTags,
@@ -437,8 +439,9 @@ export default function FiltrosCompras({
     }
     count += statusPedidoCompraExplicitos(statusSel).length;
     count += tagsSel.length;
+    if (filtroSomenteEncomenda) count += 1;
     return count;
-  }, [dataInicial, dataFinal, recebimentoInicial, recebimentoFinal, etaFiltroModo, etaData, etaInicial, etaFinal, statusSel, tagsSel]);
+  }, [dataInicial, dataFinal, recebimentoInicial, recebimentoFinal, etaFiltroModo, etaData, etaInicial, etaFinal, statusSel, tagsSel, filtroSomenteEncomenda]);
 
   const activeChips = useMemo(() => {
     const chips = [];
@@ -535,6 +538,15 @@ export default function FiltrosCompras({
       });
     });
 
+    if (filtroSomenteEncomenda) {
+      chips.push({
+        key: 'encomenda',
+        label: 'Pedidos de encomenda',
+        tone: 'accent',
+        onRemove: () => onFiltroSomenteEncomenda?.(false),
+      });
+    }
+
     return chips;
   }, [
     dataInicial,
@@ -557,6 +569,8 @@ export default function FiltrosCompras({
     onEtaFinal,
     onStatusSel,
     onTagsSel,
+    filtroSomenteEncomenda,
+    onFiltroSomenteEncomenda,
   ]);
 
   const painelProps = {
@@ -613,6 +627,11 @@ export default function FiltrosCompras({
             onStatusSel(statusSel.filter((s) => s !== '__nao_concluido__'));
           }
         }}
+      />
+      <QuickFilterToggle
+        label="Encomendas"
+        checked={filtroSomenteEncomenda}
+        onCheckedChange={(next) => onFiltroSomenteEncomenda?.(next)}
       />
     </div>
   );
@@ -694,8 +713,8 @@ export default function FiltrosCompras({
         )}
 
         <Drawer open={showFilters} onOpenChange={setShowFilters}>
-          <DrawerContent className="max-h-[92vh] border-0 rounded-t-[28px] bg-card px-4 pb-0 dark:bg-card">
-            <DrawerHeader className="px-0 pb-1 text-left">
+          <DrawerContent className="max-h-[92dvh] flex flex-col border-0 rounded-t-[28px] bg-card px-4 pb-0 dark:bg-card">
+            <DrawerHeader className="shrink-0 px-0 pb-1 text-left">
               <DrawerTitle className="font-glacial font-light uppercase tracking-wide text-foreground">Filtros</DrawerTitle>
               {activeFilterCount > 0 ? (
                 <p className="text-xs font-light text-muted-foreground">{activeFilterCount} filtro(s) ativo(s)</p>
@@ -703,11 +722,11 @@ export default function FiltrosCompras({
             </DrawerHeader>
 
             {/* Evitar p38-stage-panel-scroll aqui: flex+min-h-0 colapsava o painel a altura 0 no drawer mobile */}
-            <div className="overflow-y-auto overscroll-contain pb-4 -mx-1 px-1 max-h-[calc(92vh-10.5rem)]">
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pb-4 -mx-1 px-1 touch-pan-y">
               <FiltrosComprasPainel {...painelProps} layout="drawer" />
             </div>
 
-            <div className={cn('-mx-4 bg-card/95 px-4 py-3 backdrop-blur-sm dark:bg-card/95', COMPRAS_DIVIDER_TOP)}>
+            <div className={cn('shrink-0 -mx-4 bg-card/95 px-4 py-3 backdrop-blur-sm dark:bg-card/95', COMPRAS_DIVIDER_TOP)}>
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -761,7 +780,12 @@ export default function FiltrosCompras({
       )}
 
       <CollapsibleContent>
-        <div className={cn(COMPRAS_SECTION_CARD, 'p-4')}>
+        <div
+          className={cn(
+            COMPRAS_SECTION_CARD,
+            'p-4 max-h-[min(70vh,calc(100dvh-11rem))] overflow-y-auto overscroll-contain touch-pan-y',
+          )}
+        >
           <div className="mb-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-sm font-light uppercase tracking-wide text-foreground">
               <SlidersHorizontal className={cn('h-4 w-4', COMPRAS_ICON_ACCENT)} />
