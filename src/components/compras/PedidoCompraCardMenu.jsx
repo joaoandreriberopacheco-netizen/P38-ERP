@@ -74,7 +74,8 @@ export default function PedidoCompraCardMenu({
       >
         <DropdownMenuItem
           className={COMPRAS_DROPDOWN_ITEM}
-          onSelect={(event) => {
+          onClick={(event) => {
+            event.stopPropagation();
             event.preventDefault();
             void handleImprimirMinuta(event);
           }}
