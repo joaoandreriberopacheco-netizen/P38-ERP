@@ -52,13 +52,27 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, skipped: true, recalcularViagens: false });
     }
 
-    const viagensExistentes = await base44.asServiceRole.entities.EventoLogisticoSandbox.filter(
-      { transportadora_id: transportadoraId },
-      '-data_saida_origem',
-      500,
-    );
+    const [viagensPorTransportadoraId, viagensPorEmbarcacaoId] = await Promise.all([
+      base44.asServiceRole.entities.EventoLogisticoSandbox.filter(
+        { transportadora_id: transportadoraId },
+        '-data_saida_origem',
+        500,
+      ),
+      base44.asServiceRole.entities.EventoLogisticoSandbox.filter(
+        { embarcacao_template_id: transportadoraId },
+        '-data_saida_origem',
+        500,
+      ),
+    ]);
+    const viagensPorId = new Map();
+    for (const viagem of [...viagensPorTransportadoraId, ...viagensPorEmbarcacaoId]) {
+      const normalizada = viagem.data || viagem;
+      if (normalizada?.id) {
+        viagensPorId.set(normalizada.id, normalizada);
+      }
+    }
 
-    await deleteViagensEmLotes(base44, viagensExistentes);
+    await deleteViagensEmLotes(base44, Array.from(viagensPorId.values()));
 
     const response = await base44.asServiceRole.functions.invoke('gerarViagensTransportadora', {
       transportadoraId,

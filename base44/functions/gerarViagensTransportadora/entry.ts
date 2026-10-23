@@ -96,14 +96,32 @@ Deno.serve(async (req) => {
     const limiteProspectivo = fluvialLimiteProspectivoKey();
     const sequenciaMaxima = 999;
 
-    const viagensDaTransportadora = await base44.asServiceRole.entities.EventoLogisticoSandbox.filter(
-      { transportadora_id: transportadoraId },
-      '-data_saida_origem',
-      500,
-    );
-    const viagensNormalizadas = viagensDaTransportadora.map((viagem) => viagem.data || viagem);
+    const [viagensPorTransportadoraId, viagensPorEmbarcacaoId] = await Promise.all([
+      base44.asServiceRole.entities.EventoLogisticoSandbox.filter(
+        { transportadora_id: transportadoraId },
+        '-data_saida_origem',
+        500,
+      ),
+      base44.asServiceRole.entities.EventoLogisticoSandbox.filter(
+        { embarcacao_template_id: transportadoraId },
+        '-data_saida_origem',
+        500,
+      ),
+    ]);
+    const viagensPorId = new Map();
+    for (const viagem of [...viagensPorTransportadoraId, ...viagensPorEmbarcacaoId]) {
+      const normalizada = viagem.data || viagem;
+      if (normalizada?.id) {
+        viagensPorId.set(normalizada.id, normalizada);
+      }
+    }
+    const viagensNormalizadas = Array.from(viagensPorId.values());
     const codigosLocais = new Set(viagensNormalizadas.map((viagem) => viagem.codigo).filter(Boolean));
-    const saidasExistentes = new Set(viagensNormalizadas.map((viagem) => viagem.data_saida_origem).filter(Boolean));
+    const saidasExistentes = new Set(
+      viagensNormalizadas
+        .map((viagem) => (viagem.data_saida_origem ? String(viagem.data_saida_origem).slice(0, 10) : null))
+        .filter(Boolean),
+    );
 
     let sequencia = 1;
     const novasViagens = [];
