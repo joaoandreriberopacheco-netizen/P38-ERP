@@ -324,7 +324,7 @@ export function describeProdutoFilters(filters, { categorias = [], fornecedores 
       )}`
     );
   }
-  if (filters.estoqueVirtual) parts.push('estoque virtual (pedidos em trânsito)');
+  if (filters.estoqueVirtual) parts.push('estoque virtual (reposição em trânsito, sem encomendas)');
   if (filters.analisePorAgrupamento) {
     const nivel = filters.analiseAgrupamentoNivel || DEFAULT_PRODUTO_FILTERS.analiseAgrupamentoNivel;
     parts.push(`análise por agrupamento (nível ${nivel})`);

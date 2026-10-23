@@ -6,7 +6,7 @@ import { cn } from '@/components/utils';
 import { PRODUTOS_ICON_BTN } from '@/lib/produtosP38Theme';
 
 /**
- * Estoque virtual: soma pedidos em trânsito como se já tivessem chegado.
+ * Estoque virtual: soma pedidos de reposição em trânsito (exclui encomendas).
  * Protetor de gatilho — ativar exige confirmação rápida; desligar é imediato.
  */
 export default function ProdutosEstoqueVirtualToggle({ filters, setFilters }) {
@@ -52,7 +52,7 @@ export default function ProdutosEstoqueVirtualToggle({ filters, setFilters }) {
           variant="ghost"
           size="icon"
           className={cn('h-10 w-10 flex-shrink-0 rounded-xl relative overflow-hidden', PRODUTOS_ICON_BTN)}
-          title="Estoque virtual — incluir pedidos em trânsito"
+          title="Estoque virtual — reposição em trânsito (sem encomendas)"
           aria-label="Ativar estoque virtual"
         >
           <Package className="w-4 h-4 text-muted-foreground" />
