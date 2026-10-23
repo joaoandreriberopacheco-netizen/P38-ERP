@@ -6,7 +6,11 @@ import {
   resolveEmbarqueQuantidadeComercial,
 } from '@/lib/embarqueQuantityResolve';
 import { getEmbarqueItensLinhas, hydrateEmbarquesPedidoFromSql } from '@/lib/fetchEmbarqueItens';
-import { commercialQuantityFromBase, getItemCompraExibicaoVitrine } from '@/lib/productUnits';
+import {
+  calculateBaseQuantity,
+  commercialQuantityFromBase,
+  getItemCompraExibicaoVitrine,
+} from '@/lib/productUnits';
 
 export function qtyPedidaBaseItem(item = {}) {
   return resolveEmbarqueQuantidadeBase(
@@ -246,6 +250,39 @@ export function calcularSaldoPendenteOrfaoUnificadoBase(
   return roundToTwoDecimals(saldo);
 }
 
+function normalizeUnitCodeAcordo(unit) {
+  return String(unit || '').trim().toUpperCase().replace(/\s+/g, '');
+}
+
+/** Quando o cadastro do produto não está em cache, infere fator CX↔M² da linha do pedido. */
+export function inferFatorComercialLinhaPedido(item = {}) {
+  const base = Number(item.quantidade_base) || 0;
+  const com = Number(item.quantidade ?? item.quantidade_comercial) || 0;
+  if (base > 0.009 && com > 0.009) {
+    const ratio = roundToTwoDecimals(base / com);
+    if (ratio > 1.01) return ratio;
+  }
+  return Number(item.fator_aplicado ?? item.fator_conversao) || 1;
+}
+
+export function resolveExibicaoAcordoOrfao(itemPedido = {}, produto = null) {
+  const exib = getItemCompraExibicaoVitrine(itemPedido, produto);
+  const fatorLinha = inferFatorComercialLinhaPedido(itemPedido);
+  const fator = Math.max(Number(exib.fator_conversao) || 1, fatorLinha);
+  let unidade = exib.unidade_medida || itemPedido.unidade_medida || 'UN';
+  if (!produto && fatorLinha > 1.01) {
+    const u = normalizeUnitCodeAcordo(unidade);
+    if (u === 'M2' || u === 'UN' || u === '') unidade = 'CX';
+  }
+  return { fator_conversao: fator, unidade_medida: unidade };
+}
+
+/** Quantidade comercial digitada no acordo → unidade base (M²) para baixa na folha. */
+export function acordoOrfaoComercialParaBase(itemPedido = {}, qComercial = 0, produto = null) {
+  const exib = resolveExibicaoAcordoOrfao(itemPedido, produto);
+  return roundToTwoDecimals(calculateBaseQuantity(qComercial, exib.fator_conversao));
+}
+
 /**
  * Converte pendência em base (M²) para unidade vitrine (CX, PAC…).
  * `qtd_pendente` nos órfãos é sempre em base — evita comparar CX com M².
@@ -256,7 +293,7 @@ export function qtyPendenteComercialParaExibicao(item = {}, produto = null) {
     return { quantidade: 0, unidade: item.unidade_medida || 'UN' };
   }
 
-  const exib = getItemCompraExibicaoVitrine(item, produto);
+  const exib = resolveExibicaoAcordoOrfao(item, produto);
   return {
     quantidade: commercialQuantityFromBase(pendenteBase, exib.fator_conversao, exib.unidade_medida),
     unidade: exib.unidade_medida || item.unidade_medida || 'UN',

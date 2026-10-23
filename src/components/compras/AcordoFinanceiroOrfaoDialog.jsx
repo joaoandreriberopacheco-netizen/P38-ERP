@@ -13,7 +13,11 @@ import {
   calcularFolhaLogisticaLinha,
   particionarBaixaOrfaoAcordo,
 } from '@/lib/aplicarAcordoFinanceiroOrfaos';
-import { calculateBaseQuantity } from '@/lib/productUnits';
+import {
+  acordoOrfaoComercialParaBase,
+  qtyPendenteComercialParaExibicao,
+  resolveExibicaoAcordoOrfao,
+} from '@/lib/embarqueLogisticaHelpers';
 import { listarAcordosOrfaoComBaixaPendente } from '@/lib/acordoFinanceiroOrfaoLancamento';
 import {
   calcularValorSugeridoAcordoOrfao,
@@ -63,11 +67,23 @@ export default function AcordoFinanceiroOrfaoDialog({
 
     const init = {};
     (itensOrfaos || []).forEach((item) => {
-      const q = item.qtd_pendente_comercial ?? item.qtd_pendente;
-      init[item.produto_id] = String(q ?? '');
+      const itemPedido = (pedido?.itens || []).find(
+        (it) => String(it?.produto_id) === String(item?.produto_id),
+      );
+      const produto = produtosMap?.[item.produto_id] || null;
+      const pendExib = itemPedido
+        ? qtyPendenteComercialParaExibicao(
+          { ...itemPedido, qtd_pendente: item.qtd_pendente },
+          produto,
+        )
+        : {
+          quantidade: item.qtd_pendente_comercial ?? item.qtd_pendente,
+          unidade: item.unidade_pendente_exibicao || item.unidade_medida,
+        };
+      init[item.produto_id] = String(pendExib.quantidade ?? '');
     });
     setQtdBaixaComercial(init);
-  }, [isOpen, itensOrfaos, pedido?.id, pedido?.historico]);
+  }, [isOpen, itensOrfaos, pedido?.id, pedido?.historico, pedido?.itens, produtosMap]);
 
   const bloqueadoLegado = Boolean(acordoLegadoSemBaixa);
 
@@ -84,10 +100,10 @@ export default function AcordoFinanceiroOrfaoDialog({
         (it) => String(it?.produto_id) === String(orfao?.produto_id),
       );
       const qCom = parseFloat(qtdBaixaComercial[orfao.produto_id]) || 0;
-      const fator = Number(itemPedido?.fator_aplicado ?? itemPedido?.fator_conversao) || 1;
+      const produto = produtosMap?.[orfao.produto_id] || null;
       return {
         ...orfao,
-        qtd_baixa_base: calculateBaseQuantity(qCom, fator),
+        qtd_baixa_base: acordoOrfaoComercialParaBase(itemPedido, qCom, produto),
       };
     });
 
@@ -98,8 +114,8 @@ export default function AcordoFinanceiroOrfaoDialog({
       );
       if (!itemPedido) return null;
       const qCom = parseFloat(qtdBaixaComercial[orfao.produto_id]) || 0;
-      const fator = Number(itemPedido?.fator_aplicado ?? itemPedido?.fator_conversao) || 1;
-      const qBase = calculateBaseQuantity(qCom, fator);
+      const produto = produtosMap?.[orfao.produto_id] || null;
+      const qBase = acordoOrfaoComercialParaBase(itemPedido, qCom, produto);
       const plano = particionarBaixaOrfaoAcordo({
         itemPedido,
         embarques,
@@ -107,7 +123,7 @@ export default function AcordoFinanceiroOrfaoDialog({
       });
       return { orfao, plano, qBase };
     }).filter(Boolean);
-  }, [itensOrfaos, pedido?.itens, embarques, qtdBaixaComercial]);
+  }, [itensOrfaos, pedido?.itens, embarques, qtdBaixaComercial, produtosMap]);
 
   const handleConfirmar = async () => {
     if (bloqueadoLegado) return;
@@ -252,6 +268,10 @@ export default function AcordoFinanceiroOrfaoDialog({
                   const itemPedido = (pedido?.itens || []).find(
                     (it) => String(it?.produto_id) === String(item?.produto_id),
                   );
+                  const produto = produtosMap?.[item.produto_id] || null;
+                  const unidadeAcordo = itemPedido
+                    ? resolveExibicaoAcordoOrfao(itemPedido, produto).unidade_medida
+                    : (item.unidade_pendente_exibicao || item.unidade_medida);
                   const folha = itemPedido
                     ? calcularFolhaLogisticaLinha(itemPedido, embarques)
                     : null;
@@ -284,7 +304,7 @@ export default function AcordoFinanceiroOrfaoDialog({
                               }))
                             }
                           />
-                          <span>{item.unidade_pendente_exibicao || item.unidade_medida} no acordo</span>
+                          <span>{unidadeAcordo} no acordo</span>
                         </div>
                       )}
                     </li>
