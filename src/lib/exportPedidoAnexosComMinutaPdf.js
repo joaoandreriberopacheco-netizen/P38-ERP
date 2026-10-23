@@ -1,16 +1,16 @@
 import { base44 } from '@/api/base44Client';
+import { gerarRelatorioPedidosCompra } from '@/functions/gerarRelatorioPedidosCompra';
 import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
 import { getEmbarqueItensLinhas, hydrateEmbarquesFromSql } from '@/lib/fetchEmbarqueItens';
 import { carregarProdutosMap } from '@/lib/embarqueVitrineHelpers';
 import { materializePedidosCompraView } from '@/lib/comprasEmbarqueCards';
-import { enrichEmbarqueParaConsulta } from '@/lib/consultaComprasEmbarques';
-import { renderConsultaPedidosToJsPdf } from '@/lib/consultaComprasHtmlExport';
-import { appendAnexosToPdfDoc } from '@/lib/appendAnexosToPdfDoc';
+import { buildGruposConsultaEmbarques, enrichEmbarqueParaConsulta } from '@/lib/consultaComprasEmbarques';
+import { normalizarPedidoParaRelatorio } from '@/lib/comprasRelatorioPedidos';
 
-async function carregarPedidoParaConsultaAnexos(pedidoId) {
+async function carregarPedidoParaMinutaAnexos(pedidoId) {
   const pedido = await base44.entities.PedidoCompra.get(pedidoId);
   if (!pedido?.id) {
-    throw new Error('Pedido não encontrado para gerar a capa do PDF.');
+    throw new Error('Pedido não encontrado para gerar a minuta.');
   }
 
   const [pedidoHidratado] = await hydratePedidosCompraItensFromSql(base44, [pedido]);
@@ -38,8 +38,19 @@ async function carregarPedidoParaConsultaAnexos(pedidoId) {
   return { pedido, pedidosConsulta, produtosMap };
 }
 
+function buildGruposMinutaPedido(pedidosConsulta, produtosMap) {
+  if (!pedidosConsulta.length) return [];
+  return buildGruposConsultaEmbarques(pedidosConsulta, 'eta_transportadora', 'asc').map((grupo) => ({
+    key: grupo.key,
+    label: grupo.label,
+    groupDate: grupo.groupDate,
+    groupCarrier: grupo.groupCarrier,
+    pedidos: (grupo.cards || []).map((card) => normalizarPedidoParaRelatorio(card, produtosMap)),
+  }));
+}
+
 /**
- * Exporta anexos do pedido com a 1ª página = visual da consulta (HTML) + comprovantes.
+ * Minuta individual: capa enxuta (mesmo PDF da consulta nos relatórios) + anexos.
  */
 export async function exportPedidoAnexosComMinutaPdf({
   pedidoId,
@@ -48,52 +59,35 @@ export async function exportPedidoAnexosComMinutaPdf({
   fileName = 'anexos.pdf',
 }) {
   if (!pedidoId) {
-    throw new Error('Pedido não informado para exportar anexos com consulta.');
+    throw new Error('Pedido não informado para exportar anexos com minuta.');
   }
 
-  const { pedido, pedidosConsulta, produtosMap } = await carregarPedidoParaConsultaAnexos(pedidoId);
+  const { pedido, pedidosConsulta, produtosMap } = await carregarPedidoParaMinutaAnexos(pedidoId);
   const anexosValidos = (anexos || []).filter((item) => item?.url_drive);
   const numero = pedidoNumero || pedido.numero || pedidoId;
 
   if (!pedidosConsulta.length) {
-    throw new Error('Não há dados do pedido para montar a capa da consulta.');
+    throw new Error('Não há dados do pedido para montar a minuta.');
   }
 
-  const doc = await renderConsultaPedidosToJsPdf({
-    pedidosFiltrados: pedidosConsulta,
-    produtosMap,
-    showDetalheCustos: true,
-    theme: 'light',
-    filtrosDesc: `Pedido ${numero}`,
-    contextLabel: 'Consulta do pedido',
-    groupBy: 'eta_transportadora',
-    sortOrder: 'asc',
+  const pedidosNormalizados = pedidosConsulta.map((card) => normalizarPedidoParaRelatorio(card, produtosMap));
+  const grupos = buildGruposMinutaPedido(pedidosConsulta, produtosMap);
+  const totalGeral = pedidosConsulta.reduce(
+    (acc, card) => acc + (Number(card._consulta_valor) || Number(card._display_valor) || 0),
+    0,
+  );
+
+  const resultado = await gerarRelatorioPedidosCompra({
+    pedidos: pedidosNormalizados,
+    grupos,
+    version: 'expandida_com_anexos_a4',
+    filtros_desc: `Pedido ${numero}`,
+    kpis: { totalPedidos: pedidosNormalizados.length, totalGeral },
+    produtos_map: produtosMap,
+    anexos_por_pedido: { [pedidoId]: anexosValidos },
   });
 
-  if (doc.internal.getNumberOfPages() < 1) {
-    throw new Error('A capa da consulta não foi gerada. Tente novamente ou atualize a página.');
-  }
-
-  if (anexosValidos.length > 0) {
-    const pageH = doc.internal.pageSize.getHeight();
-    const margin = 8;
-    await appendAnexosToPdfDoc(doc, anexosValidos, {
-      sectionPrefix: `Anexos ${numero}`,
-      mode: 'one_per_page',
-      layout: {
-        margin,
-        titleY: 12,
-        contentTop: 18,
-        contentBottom: pageH - 10,
-      },
-      flow: {
-        newPageY: 10,
-        bottomPad: 10,
-      },
-    });
-  }
-
-  const blob = doc.output('blob');
+  const blob = new Blob([resultado.data], { type: 'application/pdf' });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
@@ -101,5 +95,5 @@ export async function exportPedidoAnexosComMinutaPdf({
   anchor.click();
   URL.revokeObjectURL(url);
 
-  return { pages: 'consulta_com_anexos', anexos: anexosValidos.length };
+  return { pages: resultado.version, anexos: anexosValidos.length };
 }

@@ -127,7 +127,7 @@ export function ConsultaProdutoRow({
         borderClass,
         'flex min-w-0 w-full max-w-full',
         exportPdf ? 'overflow-visible' : 'overflow-hidden',
-        striped && 'bg-secondary/15 dark:bg-secondary/20',
+        striped && !exportPdf && 'bg-secondary/15 dark:bg-secondary/20',
       )}
     >
       <ConsultaQtdUnCol qtd={quantidade} unidade={unidade} accent={accent} compact={compact} exportPdf={exportPdf} />

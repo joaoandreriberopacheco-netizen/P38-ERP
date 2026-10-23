@@ -3297,10 +3297,13 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
 
     const renderPedido = (pedido) => drawMinutaPedidoEnxuto(pedido);
 
+    const pedidosComAnexosJaEmitidos = new Set();
     const appendAnexosDoPedido = async (pedido, minutaEndY) => {
       if (!includeAnexos || !pedido?.id) return;
+      if (pedidosComAnexosJaEmitidos.has(pedido.id)) return;
       const anexos = anexosPorPedido[pedido.id] || [];
       if (!anexos.length) return;
+      pedidosComAnexosJaEmitidos.add(pedido.id);
       await appendAnexosToPdfDoc(doc, anexos, {
         sectionPrefix: `Comprovantes ${getPedidoNumeroRelatorio(pedido)}`,
         mode: isAnexosA4 ? 'one_per_page' : 'flow',
