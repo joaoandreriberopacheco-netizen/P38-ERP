@@ -20,6 +20,7 @@ import { isEmbarqueSaldoPendente } from '@/lib/embarqueTipoSaldoPendente';
 import { cn } from '@/components/utils';
 import { comprasStatusBorderClass, getComprasDisplayStatusLabel, resolveComprasStatusConfig } from '@/lib/comprasEmbarquesPalette';
 import { ComprasRecebimentoDateChip } from '@/components/compras/ComprasStatusChip';
+import PedidoCompraCardMenu from '@/components/compras/PedidoCompraCardMenu';
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 import { caixaTypo } from '@/lib/caixaP38Theme';
 
@@ -226,15 +227,23 @@ function EmbarqueListaCard({
                   displayStatus === 'Aprovado' && 'font-normal',
                   'flex-1 min-w-0',
                 )}>{codigo}</p>
-                {pedido.status === 'Rascunho' && !modoSelecao ? (
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setShowConfirm(true); }}
-                    className="h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-red-500 shrink-0"
-                    aria-label="Excluir rascunho"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                {!modoSelecao ? (
+                  <div className="flex items-center shrink-0 -mr-0.5">
+                    <PedidoCompraCardMenu
+                      pedidoId={pedido.id}
+                      pedidoNumero={pedido.numero}
+                    />
+                    {pedido.status === 'Rascunho' ? (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setShowConfirm(true); }}
+                        className="h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-red-500 shrink-0"
+                        aria-label="Excluir rascunho"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    ) : null}
+                  </div>
                 ) : null}
               </div>
 
