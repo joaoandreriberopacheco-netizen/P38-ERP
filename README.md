@@ -7,6 +7,7 @@
 | **Repositório** | [github.com/joaoandreriberopacheco-netizen/P38-ERP](https://github.com/joaoandreriberopacheco-netizen/P38-ERP) |
 | **Produção** | [p-38erp.vercel.app](https://p-38erp.vercel.app) |
 | **Apresentação** | [/landing.html](https://p-38erp.vercel.app/landing.html) |
+| **Proposta Catálogo B2B** | [/proposta-catalogo-b2b.html](https://p-38erp.vercel.app/proposta-catalogo-b2b.html) — prospecção · doc: [`docs/marketing/PROPOSTA_CATALOGO_B2B.md`](docs/marketing/PROPOSTA_CATALOGO_B2B.md) |
 | **Catálogo B2B Tintão (Formigres)** | [catalogo-tintao-formigres.vercel.app](https://catalogo-tintao-formigres.vercel.app/) — projecto isolado · regenerar: `npm run catalogo:publicar-tintao` |
 | **Stack** | Next.js 15 · Supabase (Postgres) · Vercel |
 
