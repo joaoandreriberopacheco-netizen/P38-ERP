@@ -376,9 +376,17 @@ export async function aplicarBaixaLogisticaAcordoFinanceiroOrfaos(
     };
   }
 
+  const valorTotalPedido = roundToTwoDecimals(
+    pedidoItens.reduce((sum, it) => sum + (Number(it.total ?? it.valor_total_item) || 0), 0),
+  );
+  const pedidoPatch = {
+    itens: pedidoItens,
+    valor_total: valorTotalPedido,
+  };
   if (novoHistorico !== (pedido.historico || '')) {
-    await base44.entities.PedidoCompra.update(pedido.id, { historico: novoHistorico });
+    pedidoPatch.historico = novoHistorico;
   }
+  await base44.entities.PedidoCompra.update(pedido.id, pedidoPatch);
 
   return { ok: true, resumo };
 }

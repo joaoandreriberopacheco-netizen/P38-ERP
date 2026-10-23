@@ -23,6 +23,26 @@ export function pedidoTemBaixaLogisticaAcordo(historico = '', lancamentoId = '')
  * Lançamentos de acordo órfão do pedido cuja baixa logística ainda não foi feita.
  * @returns {Array<{ lancamento, baixaPendente: true }>}
  */
+/** Lê quantidades já baixadas na linha de histórico do pedido para um lançamento. */
+export function parseQtdBaixaAcordoHistorico(historico = '', lancamentoId = '') {
+  const line = String(historico || '')
+    .split('\n')
+    .find((ln) => ln.includes('[ACORDO FINANCEIRO ÓRFÃOS') && ln.includes(`lançamento=${lancamentoId}`));
+  if (!line) return [];
+  const marker = `lançamento=${lancamentoId} | `;
+  const start = line.indexOf(marker);
+  if (start < 0) return [];
+  const rest = line.slice(start + marker.length);
+  const end = rest.lastIndexOf(' | ');
+  const blob = (end > 0 ? rest.slice(0, end) : rest).trim();
+  const out = [];
+  for (const chunk of blob.split(';').map((s) => s.trim()).filter(Boolean)) {
+    const m = chunk.match(/^(.+?):\s*[-−](\d+(?:\.\d+)?)\s*base/i);
+    if (m) out.push({ produto_nome: m[1].trim(), qtd_baixa_base: Number(m[2]) });
+  }
+  return out;
+}
+
 export function listarAcordosOrfaoComBaixaPendente(pedido = {}, lancamentos = []) {
   const historico = pedido.historico || '';
   return (lancamentos || [])
