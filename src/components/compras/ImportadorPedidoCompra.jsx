@@ -235,14 +235,12 @@ export default function ImportadorPedidoCompra({
     setIsUploading(true);
     setStep('processing');
     setProcessingStep(1);
-    setProcessingStatus('Carregando arquivo');
+    setProcessingStatus('Preparando documento');
 
     try {
       const ehPlanilha = isArquivoPlanilhaPedido(arquivo) || mode === 'planilha';
       const fileUpload =
         mode === 'pdf' && !ehPlanilha ? await normalizarArquivoParaImportBoleto(arquivo) : arquivo;
-      const uploadRes = await base44.integrations.Core.UploadFile({ file: fileUpload });
-      const fileUrl = uploadRes.file_url;
 
       setProcessingStep(2);
       setProcessingStatus('Lendo documento');
