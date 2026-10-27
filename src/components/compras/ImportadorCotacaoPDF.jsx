@@ -118,7 +118,6 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
                 const matchGroq = await buscarMatchCatalogoGroq({
                     tipo: OCR_IMPORT_TIPOS.COTACAO_PDF,
                     itens,
-                    produtos,
                     fornecedores,
                 });
                 if (matchGroq) {

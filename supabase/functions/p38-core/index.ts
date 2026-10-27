@@ -81,6 +81,8 @@ Deno.serve(async (req) => {
         const itens = Array.isArray(body.itens) ? body.itens : [];
         const catalogo_tsv = String(body.catalogo_tsv || '');
         const fornecedores_tsv = String(body.fornecedores_tsv || '');
+        const montar_catalogo_no_servidor = body.montar_catalogo_no_servidor === true
+          || body.montar_catalogo_no_servidor === 'true';
         const telemetryCtx = readTelemetryContext(body);
         const promptChars = catalogo_tsv.length + JSON.stringify(itens).length;
         try {
@@ -89,6 +91,7 @@ Deno.serve(async (req) => {
             itens,
             catalogo_tsv,
             fornecedores_tsv,
+            montar_catalogo_no_servidor,
           });
           const parsed = parseMatchResponse(dados);
           await logLlmTelemetry(db, {

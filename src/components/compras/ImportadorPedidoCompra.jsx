@@ -299,7 +299,6 @@ export default function ImportadorPedidoCompra({
         const matchGroq = await buscarMatchCatalogoGroq({
           tipo: OCR_IMPORT_TIPOS.PEDIDO_COMPRA,
           itens: itensExtraidos,
-          produtos: catalogoProdutos,
           fornecedores: listaFornecedores,
           onProgress: (msg) => setProcessingStatus(msg),
         });

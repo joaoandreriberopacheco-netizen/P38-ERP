@@ -1,12 +1,8 @@
 /**
  * Match de itens importados ao catálogo via Groq (2ª chamada — paridade com Gemini antigo).
+ * Catálogo candidato é montado no servidor (p38-core) para não travar o mobile.
  */
 
-import {
-  buildCompactFornecedoresTsv,
-  buildCompactProdutosTsv,
-  buildOcrCatalogCandidatePool,
-} from '@/components/compras/productMatchingUtils';
 import {
   isOcrCloudFallbackEnabled,
   isOcrGroqMatchEnabled,
@@ -33,59 +29,60 @@ function buildItensPayload(itens) {
   })).filter((row) => row.descricao.length >= 2);
 }
 
+function buildFornecedoresTsv(fornecedores = []) {
+  if (!fornecedores.length) return '(nenhum)';
+  return fornecedores
+    .map((f) => {
+      const id = String(f.id || '').trim();
+      const nome = String(f.nome || '').replace(/\|/g, '/').trim();
+      const cnpj = String(f.cpf_cnpj || '').replace(/\D/g, '');
+      return `${id}|${nome}|${cnpj}`;
+    })
+    .join('\n');
+}
+
 /**
  * @param {object} opts
  * @param {'pedido_compra'|'cotacao_pdf'} opts.tipo
  * @param {object[]} opts.itens — linhas já extraídas do documento
- * @param {object[]} opts.produtos — catálogo completo (shortlist local antes do Groq)
+ * @param {object[]} [_opts.produtos] — ignorado (catálogo no servidor)
  * @param {object[]} [opts.fornecedores]
  * @param {(msg: string) => void} [opts.onProgress]
- * @returns {Promise<{ fornecedor_id_match: string, itens: Array<{ indice, produto_id_match, confianca }> } | null>}
  */
 export async function buscarMatchCatalogoGroq({
   tipo,
   itens,
-  produtos,
   fornecedores = [],
   onProgress,
 }) {
   if (!isOcrCloudFallbackEnabled() || !isOcrGroqMatchEnabled()) return null;
   const lista = buildItensPayload(itens);
-  if (!lista.length || !produtos?.length) return null;
-
-  onProgress?.('Preparando candidatos do catálogo');
-  await new Promise((resolve) => {
-    setTimeout(resolve, 0);
-  });
-
-  let candidatos = [];
-  try {
-    candidatos = buildOcrCatalogCandidatePool(itens, produtos);
-  } catch (err) {
-    console.warn('[ocrGroqCatalogMatch] shortlist local falhou:', err);
-    return null;
-  }
-  if (!candidatos.length) return null;
+  if (!lista.length) return null;
 
   onProgress?.('Associando itens ao catálogo (IA)');
 
-  const catalogo_tsv = buildCompactProdutosTsv(candidatos);
-  const fornecedores_tsv = buildCompactFornecedoresTsv(fornecedores);
-
-  const payload = await invokeP38Core({
-    op: 'MatchImportCatalogoGroq',
-    tipo,
-    itens: lista,
-    catalogo_tsv,
-    fornecedores_tsv,
-    telemetry: {
-      source: `ocr_groq_match_${tipo}`,
-      catalog_product_count: candidatos.length,
-    },
-  });
+  let payload;
+  try {
+    payload = await invokeP38Core({
+      op: 'MatchImportCatalogoGroq',
+      tipo,
+      itens: lista,
+      catalogo_tsv: '',
+      montar_catalogo_no_servidor: true,
+      fornecedores_tsv: buildFornecedoresTsv(fornecedores),
+      telemetry: {
+        source: `ocr_groq_match_${tipo}`,
+        catalog_product_count: 0,
+      },
+    });
+  } catch (err) {
+    console.warn('[ocrGroqCatalogMatch] invoke falhou:', err);
+    return null;
+  }
 
   if (payload?.error) {
-    throw new Error(String(payload.error));
+    console.warn('[ocrGroqCatalogMatch]', payload.error);
+    return null;
   }
 
   const dados = payload?.dados ?? payload;
@@ -96,11 +93,18 @@ export async function buscarMatchCatalogoGroq({
 
   return {
     fornecedor_id_match,
-    itens: rows.map((row) => ({
-      indice: Number(row.indice),
-      produto_id_match: String(row.produto_id_match || '').trim(),
-      confianca: String(row.confianca || 'baixa').toLowerCase(),
-    })),
+    itens: rows
+      .map((row) => {
+        if (!row || typeof row !== 'object') return null;
+        const indice = Number(row.indice);
+        if (!Number.isFinite(indice) || indice < 0) return null;
+        return {
+          indice,
+          produto_id_match: String(row.produto_id_match || '').trim(),
+          confianca: String(row.confianca || 'baixa').toLowerCase(),
+        };
+      })
+      .filter(Boolean),
   };
 }
 
@@ -110,7 +114,7 @@ export function aplicarMatchGroqNasLinhas(itens, matchGroq, catalogoProdutos = [
   const catalogoIds = new Set((catalogoProdutos || []).map((p) => p.id));
   const porIndice = new Map();
   for (const row of matchGroq.itens) {
-    if (!Number.isFinite(row.indice)) continue;
+    if (!row || !Number.isFinite(row.indice)) continue;
     porIndice.set(row.indice, row);
   }
 
