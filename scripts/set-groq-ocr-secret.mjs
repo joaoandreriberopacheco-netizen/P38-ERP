@@ -27,7 +27,7 @@ if (!projectRef) {
   process.exit(1);
 }
 
-const model = String(process.env.GROQ_OCR_MODEL || 'llama-3.3-70b-versatile').trim();
+const model = String(process.env.GROQ_OCR_MODEL || 'openai/gpt-oss-20b').trim();
 const args = [
   '--yes',
   'supabase@latest',
