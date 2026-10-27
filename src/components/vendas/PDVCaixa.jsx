@@ -95,6 +95,7 @@ import {
   caixaTypo,
   movimentoTone,
 } from '@/lib/caixaP38Theme';
+import { codigoDespesaTurno } from '@/lib/codigoDespesaTurno';
 import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
 import CaixaMovimentacoesTurno from '@/components/vendas/caixa/CaixaMovimentacoesTurno';
 import CaixaRecebimentosTurno from '@/components/vendas/caixa/CaixaRecebimentosTurno';
@@ -172,7 +173,9 @@ function MovimentoTimelineCard({ item }) {
       </div>
       <div className="flex-1 min-w-0">
         <div className={`${caixaTypo.section} truncate normal-case`}>{item.descricao}</div>
-        <div className={caixaTypo.meta}>{item.tipo} · {item.hora ? format(new Date(item.hora), 'HH:mm') : ''}</div>
+        <div className={caixaTypo.meta}>
+          {item.codigo ? `${item.codigo} · ` : ''}{item.tipo} · {item.hora ? format(new Date(item.hora), 'HH:mm') : ''}
+        </div>
       </div>
       <div className="flex-shrink-0">
         <CaixaValorDisplay valor={item.valor} tone={valorTone} signed={valorTone !== 'neutral'} size="md" />
@@ -1436,6 +1439,7 @@ export default function PDVCaixa({
       tipo: 'Despesa',
       valor: d.valor,
       descricao: d.descricao,
+      codigo: codigoDespesaTurno(d),
       hora: d.created_date,
       operador: null,
       tone: 'danger',
@@ -1683,9 +1687,10 @@ export default function PDVCaixa({
                          `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span>${m.numero} · ${format(new Date(m.created_date),'HH:mm')}${m.observacao ? ' · ' + m.observacao : ''}</span><span style="color:${CAIXA_PRINT.info}">-R$ ${(m.valor||0).toFixed(2)}</span></div>`
                        ).join('') || '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhum recolhimento</p>';
                        // Despesas
-                       const linhasDespesas = (caixaData.despesasLista || []).map(d =>
-                         `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span>${d.descricao} · ${d.created_date ? format(new Date(d.created_date),'HH:mm') : ''}</span><span style="color:${CAIXA_PRINT.danger}">-R$ ${(d.valor||0).toFixed(2)}</span></div>`
-                       ).join('') || '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhuma despesa</p>';
+                       const linhasDespesas = (caixaData.despesasLista || []).map(d => {
+                         const cod = codigoDespesaTurno(d);
+                         return `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span>${cod ? cod + ' · ' : ''}${d.descricao} · ${d.created_date ? format(new Date(d.created_date),'HH:mm') : ''}</span><span style="color:${CAIXA_PRINT.danger}">-R$ ${(d.valor||0).toFixed(2)}</span></div>`;
+                       }).join('') || '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhuma despesa</p>';
                        
                        const linhasCancelamentos = cancelamentos.length > 0
                          ? cancelamentos.map(c => `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span style="color:${CAIXA_PRINT.danger}">${c.pedido_numero} · ${c.cliente_nome || ''}</span><span style="color:${CAIXA_PRINT.danger}">CANCELADO R$ ${(c.valor_total||0).toFixed(2)}</span></div><div style="font-size:10px;color:${CAIXA_PRINT.muted};padding-bottom:4px">${c.motivo_cancelamento || ''} · ${c.cancelado_por || ''}</div>`).join('')

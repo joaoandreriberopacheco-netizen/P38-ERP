@@ -5,9 +5,11 @@ import { ArrowLeft, Printer } from 'lucide-react';
 import { format } from 'date-fns';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 import { caixaClasses } from '@/lib/caixaP38Theme';
+import { codigoDespesaTurno } from '@/lib/codigoDespesaTurno';
 
 export default function ComprovanteDespesaDialog({ open, onOpenChange, despesaCriada, currentUser, formatValor }) {
   const tone = caixaClasses('danger');
+  const codigo = codigoDespesaTurno(despesaCriada);
   const printComprovante = async () => {
     const html = `<html><head><title>Comprovante Despesa</title>
       <style>body{font-family:monospace;font-size:13px;padding:20px;max-width:320px;margin:0 auto}
@@ -15,6 +17,7 @@ export default function ComprovanteDespesaDialog({ open, onOpenChange, despesaCr
       </style></head><body>
       <div class="center"><b>VAREJOSYNC</b><br/><small>Comprovante de Despesa</small></div>
       <div class="dashed"></div>
+      ${codigo ? `<div class="row"><span>Código:</span><span>${codigo}</span></div>` : ''}
       <div class="row"><span>Data/Hora:</span><span>${format(new Date(), 'dd/MM/yyyy HH:mm')}</span></div>
       <div class="row"><span>Operador:</span><span>${currentUser?.full_name}</span></div>
       <div class="row"><span>Categoria:</span><span>${despesaCriada?.categoria}</span></div>
@@ -52,6 +55,7 @@ export default function ComprovanteDespesaDialog({ open, onOpenChange, despesaCr
             </div>
             <div className="px-6 py-4 space-y-2">
               {[
+                ...(codigo ? [{ l: 'Código', v: codigo }] : []),
                 { l: 'Data/Hora', v: format(new Date(), 'dd/MM/yyyy HH:mm') },
                 { l: 'Operador', v: currentUser?.full_name },
                 { l: 'Categoria', v: despesaCriada?.categoria },

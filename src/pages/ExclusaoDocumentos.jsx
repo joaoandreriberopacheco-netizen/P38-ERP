@@ -7,6 +7,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Search, Trash2, AlertTriangle, CheckCircle2, ChevronRight, FileText, ShoppingCart, DollarSign, Package, Calendar, Plus, Minus } from 'lucide-react';
 import { format } from 'date-fns';
 import { P38MobileLine, P38MobileLineList, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
+import { codigoDespesaTurno, despesaTurnoCorrespondeTermo } from '@/lib/codigoDespesaTurno';
 
 const TIPOS = [
   { value: 'PedidoVenda', label: 'Pedido de Venda', icon: ShoppingCart, cor: 'emerald' },
@@ -127,11 +128,22 @@ export default function ExclusaoDocumentosPage() {
       else if (tipoSelecionado === 'Embarque') docs = await base44.entities.Embarque.list();
       else if (tipoSelecionado === 'AgendaLogistica') docs = await base44.entities.AgendaLogistica.list();
 
-      const encontrado = docs.find(d =>
-        (d.numero || d.descricao || d.produto_nome || d.pedido_numero || d.observacao || '')
-          .toUpperCase().includes(t) ||
-        d.id === t
-      );
+      const encontrado = docs.find((d) => {
+        if (tipoSelecionado === 'DespesaTurno') {
+          return despesaTurnoCorrespondeTermo(d, t);
+        }
+        const texto = (
+          d.numero ||
+          d.descricao ||
+          d.produto_nome ||
+          d.pedido_numero ||
+          d.observacao ||
+          ''
+        )
+          .toUpperCase();
+        const id = String(d.id || '').toUpperCase();
+        return texto.includes(t) || id === t || id.includes(t);
+      });
 
       if (!encontrado) {
         toast({ title: 'Documento não encontrado', variant: 'destructive' });
@@ -173,6 +185,10 @@ export default function ExclusaoDocumentosPage() {
 
   const getDocLabel = (doc) => {
     if (!doc) return '';
+    if (tipoSelecionado === 'DespesaTurno') {
+      const codigo = codigoDespesaTurno(doc);
+      return codigo ? `${codigo} — ${doc.descricao?.slice(0, 40) || ''}` : doc.descricao?.slice(0, 40) || doc.id?.slice(0, 8);
+    }
     return doc.codigo_exibicao || doc.numero || doc.descricao?.slice(0, 40) || doc.observacao?.slice(0, 40) || doc.produto_nome || doc.pedido_numero || doc.id?.slice(0, 8);
   };
 
@@ -203,7 +219,13 @@ export default function ExclusaoDocumentosPage() {
             <div className="flex gap-2">
               <Input
                 autoFocus
-                placeholder={tipoSelecionado === 'PedidoVenda' ? 'Ex: PV-00042' : 'Número ou descrição...'}
+                placeholder={
+                  tipoSelecionado === 'PedidoVenda'
+                    ? 'Ex: PV-00042'
+                    : tipoSelecionado === 'DespesaTurno'
+                      ? 'Ex: DSP-A1B2C3D4 ou AREIA'
+                      : 'Número ou descrição...'
+                }
                 value={termo}
                 onChange={e => setTermo(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && buscar()}
