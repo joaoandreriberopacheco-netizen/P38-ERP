@@ -324,6 +324,10 @@ export function findLocalBestProductMatch(textoIdentificado, catalogoProdutos = 
   if (!catalogoProdutos.length) return null;
 
   const ocrItem = item || { descricao: textoIdentificado };
+  const catalogoBase = catalogoProdutos.length > 900
+    ? prefilterCatalogoParaOcrItens([ocrItem], catalogoProdutos, 900)
+    : catalogoProdutos;
+
   const queries = buildOcrItemMatchQueries(ocrItem);
   if (!queries.length && textoIdentificado) queries.push(String(textoIdentificado).trim());
   if (!queries.length) return null;
@@ -336,7 +340,7 @@ export function findLocalBestProductMatch(textoIdentificado, catalogoProdutos = 
     const queryTokens = tokenizeForProductMatch(query);
     if (!queryTokens.length) continue;
 
-    const direct = catalogoProdutos.find((produto) => {
+    const direct = catalogoBase.find((produto) => {
       const catalogTokens = tokenizeForProductMatch(getProductSearchText(produto));
       if (ocrMatchHasDiscriminatorConflict(queryTokens, catalogTokens)) return false;
       if (ocrMarcaConflitaComProduto(query, produto)) return false;
@@ -352,7 +356,7 @@ export function findLocalBestProductMatch(textoIdentificado, catalogoProdutos = 
       };
     }
 
-    for (const produto of catalogoProdutos) {
+    for (const produto of catalogoBase) {
       const catalogTokens = tokenizeForProductMatch(getProductSearchText(produto));
       if (ocrMatchHasDiscriminatorConflict(queryTokens, catalogTokens)) continue;
       if (ocrMarcaConflitaComProduto(query, produto)) continue;
@@ -398,7 +402,29 @@ export function findLocalBestProductMatch(textoIdentificado, catalogoProdutos = 
   return { produto: best, confianca, score: bestScore };
 }
 
-/** Pontuação 0–1 de um item OCR contra um produto (para shortlist antes do match Groq). */
+/** Pontuação rápida (só tokens) — evita fuzzball em N×catálogo no mobile. */
+function scoreOcrItemAgainstProdutoShortlist(ocrItem, produto) {
+  const queries = buildOcrItemMatchQueries(ocrItem || {});
+  if (!queries.length) return 0;
+
+  let best = 0;
+  for (const query of queries) {
+    const queryTokens = tokenizeForProductMatch(query);
+    if (!queryTokens.length) continue;
+
+    const catalogTokens = tokenizeForProductMatch(getProductSearchText(produto));
+    if (ocrMatchHasDiscriminatorConflict(queryTokens, catalogTokens)) continue;
+    if (ocrMarcaConflitaComProduto(query, produto)) continue;
+    if (ocrEmbalagemConflita(query, produto)) continue;
+
+    const tokenScore = scoreProductAgainstTokens(queryTokens, produto)
+      + bonusMarcaEmbalagemOcr(query, produto);
+    best = Math.max(best, tokenScore);
+  }
+  return best;
+}
+
+/** Pontuação 0–1 de um item OCR contra um produto (match local completo, com fuzz). */
 export function scoreOcrItemAgainstProduto(ocrItem, produto) {
   const queries = buildOcrItemMatchQueries(ocrItem || {});
   if (!queries.length) return 0;
@@ -433,11 +459,44 @@ export function scoreOcrItemAgainstProduto(ocrItem, produto) {
   return best;
 }
 
+/** Reduz catálogo antes de loops O(itens×produtos) — crítico no celular. */
+export function prefilterCatalogoParaOcrItens(itens = [], catalogoProdutos = [], maxSize = 1000) {
+  if (!catalogoProdutos?.length || catalogoProdutos.length <= maxSize) {
+    return catalogoProdutos || [];
+  }
+
+  const tokenSet = new Set();
+  for (const item of itens) {
+    const desc = String(
+      item?.descricao || item?.descricao_pdf || item?.texto_identificado || '',
+    ).trim();
+    for (const t of tokenizeForProductMatch(desc)) {
+      if (t.length >= 3) tokenSet.add(t);
+    }
+  }
+
+  if (!tokenSet.size) return catalogoProdutos.slice(0, maxSize);
+
+  const scored = [];
+  for (const produto of catalogoProdutos) {
+    const searchable = getProductSearchText(produto);
+    let hits = 0;
+    for (const t of tokenSet) {
+      if (termMatchesSearchable(t, searchable)) hits += 1;
+    }
+    if (hits > 0) scored.push({ produto, hits });
+  }
+
+  scored.sort((a, b) => b.hits - a.hits);
+  const picked = scored.slice(0, maxSize).map((x) => x.produto);
+  return picked.length >= 40 ? picked : catalogoProdutos.slice(0, maxSize);
+}
+
 export function findTopProductCandidatesForOcrItem(item, catalogoProdutos = [], limit = 18) {
   if (!catalogoProdutos.length || limit <= 0) return [];
   const scored = [];
   for (const produto of catalogoProdutos) {
-    const score = scoreOcrItemAgainstProduto(item, produto);
+    const score = scoreOcrItemAgainstProdutoShortlist(item, produto);
     if (score > 0.06) scored.push({ produto, score });
   }
   scored.sort((a, b) => b.score - a.score);
@@ -445,10 +504,15 @@ export function findTopProductCandidatesForOcrItem(item, catalogoProdutos = [], 
 }
 
 /** União de candidatos prováveis por linha — cabe no prompt Groq sem enviar o catálogo inteiro. */
-export function buildOcrCatalogCandidatePool(itens = [], catalogoProdutos = [], { perItem = 18, maxTotal = 400 } = {}) {
+export function buildOcrCatalogCandidatePool(
+  itens = [],
+  catalogoProdutos = [],
+  { perItem = 15, maxTotal = 280, maxCatalogScan = 1000 } = {},
+) {
+  const catalogoBase = prefilterCatalogoParaOcrItens(itens, catalogoProdutos, maxCatalogScan);
   const byId = new Map();
   for (const item of itens) {
-    for (const { produto } of findTopProductCandidatesForOcrItem(item, catalogoProdutos, perItem)) {
+    for (const { produto } of findTopProductCandidatesForOcrItem(item, catalogoBase, perItem)) {
       if (produto?.id) byId.set(produto.id, produto);
     }
   }
@@ -545,6 +609,10 @@ export function findOcrSiblingProduct(item, catalogoProdutos = []) {
   const descricao = String(item.descricao || item.descricao_pdf || item.texto_identificado || '').trim();
   if (!descricao || !catalogoProdutos.length) return null;
 
+  const catalogoBase = catalogoProdutos.length > 700
+    ? prefilterCatalogoParaOcrItens([item], catalogoProdutos, 700)
+    : catalogoProdutos;
+
   const queryTokens = tokenizeForProductMatch(descricao);
   if (!queryTokens.length) return null;
   const marcasOcr = extrairMarcasOcr(descricao);
@@ -552,7 +620,7 @@ export function findOcrSiblingProduct(item, catalogoProdutos = []) {
   let best = null;
   let bestScore = 0;
 
-  for (const produto of catalogoProdutos) {
+  for (const produto of catalogoBase) {
     const catalogTokens = tokenizeForProductMatch(getProductSearchText(produto));
     if (ocrMatchHasDiscriminatorConflict(queryTokens, catalogTokens)) continue;
     if (ocrMarcaConflitaComProduto(descricao, produto)) continue;

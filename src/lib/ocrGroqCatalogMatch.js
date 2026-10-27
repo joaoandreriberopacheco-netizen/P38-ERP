@@ -53,10 +53,21 @@ export async function buscarMatchCatalogoGroq({
   const lista = buildItensPayload(itens);
   if (!lista.length || !produtos?.length) return null;
 
-  onProgress?.('Associando itens ao catálogo (IA)');
+  onProgress?.('Preparando candidatos do catálogo');
+  await new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
 
-  const candidatos = buildOcrCatalogCandidatePool(itens, produtos);
+  let candidatos = [];
+  try {
+    candidatos = buildOcrCatalogCandidatePool(itens, produtos);
+  } catch (err) {
+    console.warn('[ocrGroqCatalogMatch] shortlist local falhou:', err);
+    return null;
+  }
   if (!candidatos.length) return null;
+
+  onProgress?.('Associando itens ao catálogo (IA)');
 
   const catalogo_tsv = buildCompactProdutosTsv(candidatos);
   const fornecedores_tsv = buildCompactFornecedoresTsv(fornecedores);

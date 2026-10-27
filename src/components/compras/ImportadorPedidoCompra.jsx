@@ -289,6 +289,9 @@ export default function ImportadorPedidoCompra({
 
       setProcessingStep(4);
       setProcessingStatus('Identificando fornecedor e itens');
+      await new Promise((resolve) => {
+        setTimeout(resolve, 0);
+      });
 
       let itensExtraidos = result.itens || [];
       let fornecedorIdGroq = '';
@@ -326,24 +329,42 @@ export default function ImportadorPedidoCompra({
       });
       setProcessingStep(5);
       setProcessingStatus('Validando correspondências');
-
-      const mappedItems = itensExtraidos.map((item) => {
-        const resolved = resolveOcrProductMatch(
-          item,
-          catalogoProdutos,
-          item.produto_id_match_groq || '',
-        );
-        return {
-          ...item,
-          produto_id_match: resolved.produto_id_match,
-          selected_product_id: resolved.selected_product_id,
-          confianca: resolved.confianca,
-          sugerir_criar_novo: resolved.sugerir_criar_novo,
-          produto_irmao_id: resolved.produto_irmao_id,
-          criar_novo_motivo: resolved.criar_novo_motivo,
-          ignored: false,
-        };
+      await new Promise((resolve) => {
+        setTimeout(resolve, 0);
       });
+
+      let mappedItems = [];
+      try {
+        mappedItems = itensExtraidos.map((item) => {
+          const resolved = resolveOcrProductMatch(
+            item,
+            catalogoProdutos,
+            item.produto_id_match_groq || '',
+          );
+          return {
+            ...item,
+            produto_id_match: resolved.produto_id_match,
+            selected_product_id: resolved.selected_product_id,
+            confianca: resolved.confianca,
+            sugerir_criar_novo: resolved.sugerir_criar_novo,
+            produto_irmao_id: resolved.produto_irmao_id,
+            criar_novo_motivo: resolved.criar_novo_motivo,
+            ignored: false,
+          };
+        });
+      } catch (mapErr) {
+        console.error('[ImportadorPedido] validação local de itens:', mapErr);
+        mappedItems = itensExtraidos.map((item) => ({
+          ...item,
+          produto_id_match: item.produto_id_match_groq || '',
+          selected_product_id: '',
+          confianca: item.confianca || '',
+          sugerir_criar_novo: true,
+          produto_irmao_id: '',
+          criar_novo_motivo: 'Revise o vínculo manualmente.',
+          ignored: false,
+        }));
+      }
       const initialSearch = {};
       mappedItems.forEach((item, index) => {
         const id = item.selected_product_id || item.produto_id_match;
