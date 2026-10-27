@@ -4,10 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/use-toast';
 import { Upload, Loader2, Check, X, ArrowLeft, Package, FileText, Camera, Sparkles } from 'lucide-react';
-import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
 import {
   findLocalBestFornecedorMatch,
   getProdutoLabel,
@@ -30,7 +28,8 @@ import {
 } from '@/lib/torrePedidoImportBridge';
 import { useCompactShell } from '@/hooks/use-breakpoint';
 import ImportadorOcrItemCard from '@/components/compras/ImportadorOcrItemCard';
-import OcrSugestaoCriarProduto from '@/components/compras/OcrSugestaoCriarProduto';
+import { PedidoCompraItensListaShell } from '@/components/compras/PedidoCompraItensListaP38';
+import { P38_ACCENT, P38_KPI_SHELL } from '@/components/financeiro/fluxo/financeiroP38';
 import { cn } from '@/lib/utils';
 import { isArquivoPlanilhaPedido } from '@/lib/importarPlanilhaPedidoFlex';
 
@@ -771,7 +770,7 @@ export default function ImportadorPedidoCompra({
         {step === 'review' && (
           <div className="space-y-4">
             {isMobile ? (
-              <div className="rounded-2xl border border-border/50 bg-muted/30 p-4 space-y-3">
+              <div className={cn(P38_KPI_SHELL, 'space-y-3')}>
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                     Revisão do pedido
@@ -781,16 +780,16 @@ export default function ImportadorPedidoCompra({
                   </p>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-center">
-                  <div className="rounded-xl bg-card/80 px-2 py-3">
+                  <div className="rounded-lg bg-muted/40 px-2 py-2.5 dark:bg-[#26262e]/60">
                     <p className="text-lg font-bold tabular-nums text-foreground">{reviewResumo.totalItens}</p>
                     <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Itens</p>
                   </div>
-                  <div className="rounded-xl bg-card/80 px-2 py-3">
+                  <div className="rounded-lg bg-muted/40 px-2 py-2.5 dark:bg-[#26262e]/60">
                     <p className="text-lg font-bold tabular-nums text-foreground">{reviewResumo.vinculados}</p>
                     <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Vinculados</p>
                   </div>
-                  <div className="rounded-xl bg-card/80 px-2 py-3">
-                    <p className="text-lg font-bold tabular-nums text-emerald-700 dark:text-emerald-400">
+                  <div className="rounded-lg bg-muted/40 px-2 py-2.5 dark:bg-[#26262e]/60">
+                    <p className={cn('text-lg font-bold tabular-nums', P38_ACCENT)}>
                       R$ {formatCurrency(reviewResumo.totalEstimado)}
                     </p>
                     <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Total</p>
@@ -834,101 +833,35 @@ export default function ImportadorPedidoCompra({
                 </div>
               ) : null}
 
-              {isMobile ? (
-                <div className="rounded-2xl border border-border/50 bg-card/40">
-                  {items.map((item, index) => (
-                    <ImportadorOcrItemCard
-                      key={index}
-                      item={item}
-                      index={index}
-                      isAcrescimo={isAcrescimo}
-                      discountNumber={discountNumber}
-                      getDiscountedUnitPrice={getDiscountedUnitPrice}
-                      formatCurrency={formatCurrency}
-                      produtos={produtos}
-                      getSuggestedProduct={getSuggestedProduct}
-                      setItems={setItems}
-                      setProductSearch={setProductSearch}
-                      productSearch={productSearch}
-                      onProductCreated={(novoProduto) => handleProdutoCriadoNoImportador(novoProduto, index)}
-                      resolverUnidadeCompra={resolverUnidadeCompra}
-                      textoEquivEstoque={textoEquivEstoque}
-                    />
-                  ))}
-                </div>
-              ) : (
-                items.map((item, index) => (
-                <div key={index} className={`rounded-2xl transition-all ${
-                  item.ignored ? 'opacity-40' : ''
-                } ${
-                  index % 2 === 0 ? 'bg-card/60' : 'bg-muted/40/80 dark:bg-background/60'
-                } shadow-sm`}>
-                  <div className="p-4">
-                    <div className="flex items-start gap-3 mb-3">
-                      <div className="pt-0.5 flex-none">
-                        <Checkbox checked={!item.ignored} onCheckedChange={(checked) => setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, ignored: !checked } : current))} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-foreground leading-tight">{item.descricao}</p>
-                        <div className="mt-0.5 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                          {item.codigo ? <span>Cód: {item.codigo}</span> : null}
-                          {item.marca ? <span>{item.marca}</span> : null}
-                          {item.confianca ? <span className="text-emerald-600 dark:text-emerald-400">{item.confianca}</span> : null}
-                        </div>
-                      </div>
-                      <div className="text-right flex-none">
-                        {discountNumber > 0 && (
-                          <p className="text-xs text-muted-foreground line-through">{item.quantidade || 1}× R$ {formatCurrency(item.preco_unitario)}</p>
-                        )}
-                        {discountNumber > 0 && isAcrescimo && (
-                          <span className="text-[10px] text-amber-600 dark:text-amber-400">+{discountNumber}%</span>
-                        )}
-                        <p className={`text-sm font-semibold ${isAcrescimo ? 'text-amber-700 dark:text-amber-400' : 'text-foreground'}`}>{item.quantidade || 1}× R$ {formatCurrency(getDiscountedUnitPrice(item))}</p>
-                        <p className="text-xs text-muted-foreground">= R$ {formatCurrency((item.quantidade || 1) * getDiscountedUnitPrice(item))}</p>
-                      </div>
-                    </div>
-                    <div className="pl-7 space-y-1">
-                      <OcrSugestaoCriarProduto
-                        item={item}
-                        index={index}
-                        produtos={produtos}
-                        onProductCreated={(novoProduto) => handleProdutoCriadoNoImportador(novoProduto, index)}
-                        className="mb-2"
-                      />
-                      <ProductSearchInputPDV
-                        item={item}
-                        index={index}
-                        produtos={produtos}
-                        getSuggestedProduct={getSuggestedProduct}
-                        setItems={setItems}
-                        setProductSearch={setProductSearch}
-                        productSearch={productSearch}
-                        onProductCreated={(novoProduto) => handleProdutoCriadoNoImportador(novoProduto, index)}
-                      />
-                      {item.selected_product_id && item.selected_product_id !== 'create_new' && (() => {
-                        const p = produtos.find((x) => x.id === item.selected_product_id);
-                        if (!p) return null;
-                        const opt = resolverUnidadeCompra(p, item.unidade_medida_documento);
-                        const eq = textoEquivEstoque(p, item.quantidade || 1, opt);
-                        return (
-                          <p className="text-[11px] text-muted-foreground">
-                            Comprar em: <span className="font-medium text-foreground/90">{opt?.unidade || p.unidade_principal || 'UN'}</span>
-                            {eq ? <span className="block mt-0.5">{eq}</span> : null}
-                          </p>
-                        );
-                      })()}
-                    </div>
-                  </div>
-                </div>
-              ))
-              )}
+              <PedidoCompraItensListaShell>
+                {items.map((item, index) => (
+                  <ImportadorOcrItemCard
+                    key={index}
+                    striped={index % 2 === 1}
+                    item={item}
+                    index={index}
+                    isAcrescimo={isAcrescimo}
+                    discountNumber={discountNumber}
+                    getDiscountedUnitPrice={getDiscountedUnitPrice}
+                    formatCurrency={formatCurrency}
+                    produtos={produtos}
+                    getSuggestedProduct={getSuggestedProduct}
+                    setItems={setItems}
+                    setProductSearch={setProductSearch}
+                    productSearch={productSearch}
+                    onProductCreated={(novoProduto) => handleProdutoCriadoNoImportador(novoProduto, index)}
+                    resolverUnidadeCompra={resolverUnidadeCompra}
+                    textoEquivEstoque={textoEquivEstoque}
+                  />
+                ))}
+              </PedidoCompraItensListaShell>
             </div>
           </div>
         )}
       </div>
 
       {step === 'review' && isMobile ? (
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/60 bg-card/95 backdrop-blur px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(0,0,0,0.08)]">
+        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/50 bg-background/95 backdrop-blur px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] dark:p38-field-surface">
           <div className="mx-auto flex max-w-5xl items-center gap-3">
             <Button
               variant="outline"
@@ -951,7 +884,10 @@ export default function ImportadorPedidoCompra({
                 R$ {formatCurrency(reviewResumo.totalEstimado)}
               </p>
             </div>
-            <Button onClick={handleConfirm} className="h-12 shrink-0 rounded-2xl px-5 shadow-sm">
+            <Button
+              onClick={handleConfirm}
+              className="h-12 shrink-0 rounded-xl px-5 shadow-sm bg-[#4a5240] text-white hover:bg-[#4a5240]/90 dark:bg-[#a4ce33] dark:text-[#1f1d22] dark:hover:bg-[#a4ce33]/90"
+            >
               <Check className="w-4 h-4 mr-2" />
               Confirmar
             </Button>
