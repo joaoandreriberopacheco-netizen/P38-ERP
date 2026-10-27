@@ -14,6 +14,7 @@ import {
   resolveOcrProductMatch,
 } from '@/components/compras/productMatchingUtils';
 import { OCR_IMPORT_TIPOS, processarImportOcrEmSerie } from '@/lib/ocrImportPipeline';
+import { aplicarMatchGroqNasLinhas, buscarMatchCatalogoGroq } from '@/lib/ocrGroqCatalogMatch';
 import {
   buildPurchaseUnitOptions,
   pickDefaultPurchaseUnit,
@@ -288,6 +289,25 @@ export default function ImportadorPedidoCompra({
 
       setProcessingStep(4);
       setProcessingStatus('Identificando fornecedor e itens');
+
+      let itensExtraidos = result.itens || [];
+      let fornecedorIdGroq = '';
+      try {
+        const matchGroq = await buscarMatchCatalogoGroq({
+          tipo: OCR_IMPORT_TIPOS.PEDIDO_COMPRA,
+          itens: itensExtraidos,
+          produtos: catalogoProdutos,
+          fornecedores: listaFornecedores,
+          onProgress: (msg) => setProcessingStatus(msg),
+        });
+        if (matchGroq) {
+          fornecedorIdGroq = matchGroq.fornecedor_id_match || '';
+          itensExtraidos = aplicarMatchGroqNasLinhas(itensExtraidos, matchGroq, catalogoProdutos);
+        }
+      } catch (groqMatchErr) {
+        console.warn('[ImportadorPedido] match catálogo Groq:', groqMatchErr);
+      }
+
       const fornecedorMatch = findLocalBestFornecedorMatch(
         {
           nome: result.fornecedor?.nome_identificado,
@@ -295,16 +315,24 @@ export default function ImportadorPedidoCompra({
         },
         listaFornecedores,
       );
+      const fornecedorIdValido =
+        fornecedorIdGroq && listaFornecedores.some((f) => f.id === fornecedorIdGroq)
+          ? fornecedorIdGroq
+          : (fornecedorMatch?.id || 'new');
       setFornecedorInfo({
-        id: fornecedorMatch?.id || 'new',
+        id: fornecedorIdValido,
         nome: result.fornecedor?.nome_identificado || '',
         cnpj: result.fornecedor?.cnpj_identificado || '',
       });
       setProcessingStep(5);
       setProcessingStatus('Validando correspondências');
 
-      const mappedItems = (result.itens || []).map((item) => {
-        const resolved = resolveOcrProductMatch(item, catalogoProdutos, '');
+      const mappedItems = itensExtraidos.map((item) => {
+        const resolved = resolveOcrProductMatch(
+          item,
+          catalogoProdutos,
+          item.produto_id_match_groq || '',
+        );
         return {
           ...item,
           produto_id_match: resolved.produto_id_match,

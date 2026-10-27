@@ -15,6 +15,13 @@ export function isOcrGroqPrimaryEnabled() {
   return !(flag === '0' || flag === 'false' || flag === 'no');
 }
 
+/** Match semântico itens → catálogo via Groq (default ligado quando fallback cloud está ativo). */
+export function isOcrGroqMatchEnabled() {
+  const flag = String(import.meta.env?.VITE_P38_OCR_GROQ_MATCH ?? 'true').toLowerCase().trim();
+  if (flag === '0' || flag === 'false' || flag === 'no') return false;
+  return isOcrCloudFallbackEnabled();
+}
+
 /**
  * @param {{ texto: string, tipo: string }} params
  * @returns {Promise<{ dados: object, model?: string }>}

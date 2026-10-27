@@ -398,6 +398,63 @@ export function findLocalBestProductMatch(textoIdentificado, catalogoProdutos = 
   return { produto: best, confianca, score: bestScore };
 }
 
+/** Pontuação 0–1 de um item OCR contra um produto (para shortlist antes do match Groq). */
+export function scoreOcrItemAgainstProduto(ocrItem, produto) {
+  const queries = buildOcrItemMatchQueries(ocrItem || {});
+  if (!queries.length) return 0;
+
+  let best = 0;
+  for (const query of queries) {
+    const queryTokens = tokenizeForProductMatch(query);
+    if (!queryTokens.length) continue;
+
+    const catalogTokens = tokenizeForProductMatch(getProductSearchText(produto));
+    if (ocrMatchHasDiscriminatorConflict(queryTokens, catalogTokens)) continue;
+    if (ocrMarcaConflitaComProduto(query, produto)) continue;
+    if (ocrEmbalagemConflita(query, produto)) continue;
+
+    const tokenScore = scoreProductAgainstTokens(queryTokens, produto);
+    const label = getProdutoLabel(produto);
+    const primary = getProductPrimarySearchText(produto);
+    const nomeCompleto = normalizeMatchText(produto?.nome || '');
+    const fuzzyLabel = query.length >= 6 && label
+      ? fuzzRatio(query, label, { full_process: true }) / 100
+      : 0;
+    const fuzzyPrimary = query.length >= 6 && primary
+      ? fuzzRatio(query, primary, { full_process: true }) / 100
+      : 0;
+    const fuzzyNome = query.length >= 6 && nomeCompleto
+      ? fuzzRatio(query, nomeCompleto, { full_process: true }) / 100
+      : 0;
+    const score = Math.max(tokenScore, fuzzyLabel * 0.92, fuzzyPrimary * 0.88, fuzzyNome * 0.95)
+      + bonusMarcaEmbalagemOcr(query, produto);
+    best = Math.max(best, score);
+  }
+  return best;
+}
+
+export function findTopProductCandidatesForOcrItem(item, catalogoProdutos = [], limit = 18) {
+  if (!catalogoProdutos.length || limit <= 0) return [];
+  const scored = [];
+  for (const produto of catalogoProdutos) {
+    const score = scoreOcrItemAgainstProduto(item, produto);
+    if (score > 0.06) scored.push({ produto, score });
+  }
+  scored.sort((a, b) => b.score - a.score);
+  return scored.slice(0, limit);
+}
+
+/** União de candidatos prováveis por linha — cabe no prompt Groq sem enviar o catálogo inteiro. */
+export function buildOcrCatalogCandidatePool(itens = [], catalogoProdutos = [], { perItem = 18, maxTotal = 400 } = {}) {
+  const byId = new Map();
+  for (const item of itens) {
+    for (const { produto } of findTopProductCandidatesForOcrItem(item, catalogoProdutos, perItem)) {
+      if (produto?.id) byId.set(produto.id, produto);
+    }
+  }
+  return [...byId.values()].slice(0, maxTotal);
+}
+
 function normalizeMatchConfianca(value, fallback = 'baixa') {
   const c = String(value || '').toLowerCase().trim();
   if (c === 'alta' || c === 'media' || c === 'baixa') return c;

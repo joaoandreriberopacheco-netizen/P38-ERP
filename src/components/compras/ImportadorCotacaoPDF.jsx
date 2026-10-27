@@ -16,6 +16,7 @@ import {
 } from '@/components/compras/productMatchingUtils';
 import { normalizarArquivoParaImportBoleto } from '@/lib/extrairTextoPdfBrowser';
 import { OCR_IMPORT_TIPOS, processarImportOcrEmSerie } from '@/lib/ocrImportPipeline';
+import { aplicarMatchGroqNasLinhas, buscarMatchCatalogoGroq } from '@/lib/ocrGroqCatalogMatch';
 import { P38TableShell } from '@/components/ui/table';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 import {
@@ -111,7 +112,22 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
             setAiData(resultNormalizado);
             
             // Defensive check for itens array
-            const itens = Array.isArray(result.itens) ? result.itens : [];
+            let itens = Array.isArray(result.itens) ? result.itens : [];
+            let fornecedorIdGroq = '';
+            try {
+                const matchGroq = await buscarMatchCatalogoGroq({
+                    tipo: OCR_IMPORT_TIPOS.COTACAO_PDF,
+                    itens,
+                    produtos,
+                    fornecedores,
+                });
+                if (matchGroq) {
+                    fornecedorIdGroq = matchGroq.fornecedor_id_match || '';
+                    itens = aplicarMatchGroqNasLinhas(itens, matchGroq, produtos);
+                }
+            } catch (groqMatchErr) {
+                console.warn('[ImportadorCotacao] match catálogo Groq:', groqMatchErr);
+            }
             const cotacaoProdutoIds = new Set(
               (cotacao?.itens || []).map((item) => item.produto_id).filter(Boolean),
             );
@@ -120,7 +136,11 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
 
             const initialSearch = {};
             const mapped = itens.map((item, index) => {
-                const resolved = resolveOcrProductMatch(item, catalogoMatch, '');
+                const resolved = resolveOcrProductMatch(
+                    item,
+                    catalogoMatch,
+                    item.produto_id_match_groq || '',
+                );
                 const selectedId = resolved.selected_product_id || resolved.produto_id_match || '';
                 if (selectedId) {
                     const produto = catalogoMatch.find((p) => p.id === selectedId);
@@ -148,8 +168,12 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
               },
               fornecedores,
             );
+            const fornecedorIdValido =
+                fornecedorIdGroq && fornecedores.some((f) => f.id === fornecedorIdGroq)
+                    ? fornecedorIdGroq
+                    : (fornecedorMatch?.id || 'new');
             setFornecedorInfo({
-                id: fornecedorMatch?.id || 'new',
+                id: fornecedorIdValido,
                 nome: result.fornecedor?.nome_identificado,
                 cnpj: result.fornecedor?.cnpj_identificado
             });

@@ -2,6 +2,7 @@
 import { requireUser, jsonResponse, badRequest, handleCorsPreflight, serviceClient } from '../_shared/auth.ts';
 import { buildCoreIntegrations } from '../_shared/integrations.ts';
 import { structurarDocumentoOcrGroq } from '../_shared/groqOcrStruct.ts';
+import { matchImportCatalogoGroq, parseMatchResponse } from '../_shared/groqImportMatch.ts';
 import { logLlmTelemetry } from '../_shared/llmTelemetry.ts';
 
 function readTelemetryContext(body: Record<string, unknown>) {
@@ -74,6 +75,51 @@ Deno.serve(async (req) => {
         return jsonResponse(await Core.SendEmail(body));
       case 'CreateFileSignedUrl':
         return jsonResponse(await Core.CreateFileSignedUrl(body));
+      case 'MatchImportCatalogoGroq': {
+        const started = Date.now();
+        const tipo = String(body.tipo || 'pedido_compra');
+        const itens = Array.isArray(body.itens) ? body.itens : [];
+        const catalogo_tsv = String(body.catalogo_tsv || '');
+        const fornecedores_tsv = String(body.fornecedores_tsv || '');
+        const telemetryCtx = readTelemetryContext(body);
+        const promptChars = catalogo_tsv.length + JSON.stringify(itens).length;
+        try {
+          const { dados, usage, model } = await matchImportCatalogoGroq({
+            tipo: tipo === 'cotacao_pdf' ? 'cotacao_pdf' : 'pedido_compra',
+            itens,
+            catalogo_tsv,
+            fornecedores_tsv,
+          });
+          const parsed = parseMatchResponse(dados);
+          await logLlmTelemetry(db, {
+            usuario_id: auth.user.id,
+            ...telemetryCtx,
+            source: telemetryCtx.source || `ocr_groq_match_${tipo}`,
+            ...usage,
+            prompt_chars: promptChars,
+            duration_ms: Date.now() - started,
+            success: true,
+          });
+          return jsonResponse({ dados: parsed, model, modo: 'groq_catalog_match' });
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          await logLlmTelemetry(db, {
+            usuario_id: auth.user.id,
+            ...telemetryCtx,
+            source: telemetryCtx.source || `ocr_groq_match_${tipo}`,
+            provider: 'groq',
+            model: '',
+            input_tokens: 0,
+            output_tokens: 0,
+            total_tokens: 0,
+            prompt_chars: promptChars,
+            duration_ms: Date.now() - started,
+            success: false,
+            error_message: message,
+          });
+          throw err;
+        }
+      }
       case 'StructurarDocumentoOcr': {
         const started = Date.now();
         const tipo = String(body.tipo || 'pedido_compra');
