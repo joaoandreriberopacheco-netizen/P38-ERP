@@ -1,6 +1,17 @@
 import { pedidoLiberadoParaLogistica } from '@/lib/aprovarPedidoCompraFinanceiro';
 import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
 import { getEmbarqueItensLinhas } from '@/lib/fetchEmbarqueItens';
+import { isPedidoCompraEncomenda } from '@/lib/pedidoCompraEncomenda';
+
+/** Opções do catálogo: estoque virtual = reposição de vitrine, não encomendas. */
+export const CATALOG_ESTOQUE_VIRTUAL_PENDENTE_OPTIONS = {
+  excluirPedidosEncomenda: true,
+};
+
+function pedidoContaNoPendenteEstoque(pedido = {}, options = {}) {
+  if (options.excluirPedidosEncomenda && isPedidoCompraEncomenda(pedido)) return false;
+  return true;
+}
 
 const PEDIDO_COMPRA_APPROVED_STATUSES = new Set([
   'aprovado financeiramente',
@@ -278,7 +289,11 @@ function resolveQuantidadeBaseRecebidaItemEmbarque(item = {}, pedidoItem = null,
 }
 
 /** Pendente por produto a partir de embarques em trânsito (ex.: card E62-67G). */
-export function buildPendenteEmbarcadoNaoRecebidoPorProduto(embarques = [], pedidosById = new Map()) {
+export function buildPendenteEmbarcadoNaoRecebidoPorProduto(
+  embarques = [],
+  pedidosById = new Map(),
+  options = {},
+) {
   const map = {};
   for (const embarque of embarques || []) {
     if (!embarqueEmTransitoNaoRecebido(embarque)) continue;
@@ -286,6 +301,7 @@ export function buildPendenteEmbarcadoNaoRecebidoPorProduto(embarques = [], pedi
     const pedido = pedidosById.get(embarque?.pedido_compra_id) || pedidosById.get(String(embarque?.pedido_compra_id));
     // Embarque em trânsito conta no estoque projetado salvo pedido encerrado/cancelado.
     if (pedido && pedidoCompraEstaConcluido(pedido)) continue;
+    if (pedido && !pedidoContaNoPendenteEstoque(pedido, options)) continue;
 
     const itens = getEmbarqueItensLinhas(embarque);
     for (const item of itens) {
@@ -321,6 +337,7 @@ export function buildPendenteAprovadoFinanceiroPorProduto(
 ) {
   const pedidoMap = {};
   (pedidos || []).forEach((pedido) => {
+    if (!pedidoContaNoPendenteEstoque(pedido, options)) return;
     if (!pedidoCompraAprovadoNaoConcluido(pedido)) return;
     const recebidos = recebidosPorProdutoDoPedido(pedido, recebidosPorPedidoProduto);
     if (pedidoCompraTotalmenteRecebido(pedido, recebidos)) return;
@@ -343,7 +360,7 @@ export function buildPendenteAprovadoFinanceiroPorProduto(
   const pedidosById = new Map(
     (pedidosParaEmbarque || []).filter((p) => p?.id).map((p) => [String(p.id), p]),
   );
-  const embarqueMap = buildPendenteEmbarcadoNaoRecebidoPorProduto(embarques, pedidosById);
+  const embarqueMap = buildPendenteEmbarcadoNaoRecebidoPorProduto(embarques, pedidosById, options);
   return mergePendenteMaps(pedidoMap, embarqueMap);
 }
 
