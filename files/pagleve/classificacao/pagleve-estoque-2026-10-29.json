@@ -1,33 +1,33 @@
 {
-  "geradoEm": "2026-10-29T20:50:16.889Z",
+  "geradoEm": "2026-10-29T21:11:36.327Z",
   "fonte": "/workspace/files/pagleve/pagleve-base-cruzada.csv",
   "resumo": {
     "porRotulo": {
-      "Bold — antiderrapante": 26,
+      "Bold — antiderrapante": 25,
       "Bold — lisa": 60,
-      "Bold — ?": 31,
+      "Bold — ?": 18,
       "Retificada — lisa mate": 22,
-      "Retificada — polido": 46,
+      "Retificada — polido": 54,
       "Retificada — mate": 4,
       "Retificada — lisa brilhante": 4,
-      "Retificada — antiderrapante": 12,
+      "Retificada — antiderrapante": 13,
       "Retificada — granilhado": 1,
       "Retificada — semiderrapante": 7,
-      "Retificada — ?": 14,
+      "Retificada — ?": 19,
       "Bold — semiderrapante": 1
     },
     "porLinha": {
-      "bold": 118,
-      "retificada": 110
+      "bold": 104,
+      "retificada": 124
     },
     "detalhe": {
       "bold": {
-        "antiderrapante": 26,
+        "antiderrapante": 25,
         "semiderrapante": 1,
         "lisa": 60
       },
       "retificada": {
-        "antiderrapante": 12,
+        "antiderrapante": 13,
         "semiderrapante": 7,
         "lisa_mate": 22,
         "lisa_brilhante": 4,
@@ -752,7 +752,11 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "nao_encontrado",
-      "observacao": "sem_ficha;ordem:formigres→rocha→carmelo→lume→cerbras"
+      "observacao": "sem_ficha;ordem:formigres→rocha→carmelo→lume→cerbras",
+      "caixas_por_palete": 40,
+      "m2_por_palete": 100,
+      "peso_kg_caixa": 32,
+      "peso_kg_palete": 1280
     },
     {
       "codigo_tintao": "26798",
@@ -2778,16 +2782,37 @@
       "fabricante_grupo": "Grupo Rocha",
       "pei_uso": "LC",
       "referencia": "PEI LC",
-      "produto_url": "https://www.portalgruporocha.com.br/produtos/pr7026",
-      "imagem_url": "",
-      "imagens": [],
+      "produto_url": "https://www.portalgruporocha.com.br/produtos/pr7026?c=793699",
+      "imagem_url": "https://api.portalgruporocha.com.br/storage/images/pr7026-f1-1788209170.webp",
+      "imagens": [
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7026-f1-1788209170.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7026-f2-1788209179.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7026-f3-1788209187.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7026-1788209214.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 54.9,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "29995",
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug pr7026 (SIAH→site)"
+      "observacao": "portal slug pr7026 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "30059",
@@ -2813,16 +2838,33 @@
       "fabricante_grupo": "Grupo Rocha",
       "pei_uso": "LC",
       "referencia": "PEI LC",
-      "produto_url": "https://www.portalgruporocha.com.br/produtos/pr7067",
-      "imagem_url": "",
-      "imagens": [],
+      "produto_url": "https://www.portalgruporocha.com.br/produtos/pr7067?c=804502",
+      "imagem_url": "https://api.portalgruporocha.com.br/storage/images/pr7067-f1-1788208361.webp",
+      "imagens": [
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7067-f1-1788208361.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7067-f2-1788208371.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7067-f3-1788208380.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 54.9,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "30059",
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug pr7067 (SIAH→site)"
+      "observacao": "portal slug pr7067 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "30063",
@@ -3911,19 +3953,19 @@
       "descricao_erp": "PISO 61X116 ORGANIC BLUE HD ROCHAMAXX (2,83) RET PLD PEI LC",
       "descricao": "Organic Blue",
       "formato": "61x116",
-      "linha": "bold",
-      "subtipo": null,
+      "linha": "retificada",
+      "subtipo": "polida",
       "variante_lisa": null,
-      "rotulo": "Bold — ?",
+      "rotulo": "Retificada — polido",
       "confianca": "media",
-      "motivo": "linha inferida; superfície não identificada",
+      "motivo": "título/lista polida; polida→acabamento em retificada",
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Organic Blue · 61x116 · BOLD",
+      "formigres_titulo": "Organic Blue · 61x116 · RET · Polido",
       "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
+      "formigres_acabamento": "POLIDO",
+      "acabamento_label": "Polido",
       "marca_nome": "Rochaforte / Rocha Cerâmica",
       "fabricante_grupo": "Grupo Rocha",
       "pei_uso": "LC",
@@ -4008,16 +4050,37 @@
       "fabricante_grupo": "Grupo Rocha",
       "pei_uso": "",
       "referencia": "31355",
-      "produto_url": "https://www.portalgruporocha.com.br/produtos/r7074",
-      "imagem_url": "",
-      "imagens": [],
+      "produto_url": "https://www.portalgruporocha.com.br/produtos/r7074?c=808851",
+      "imagem_url": "https://api.portalgruporocha.com.br/storage/images/r7074-f1-1787948972.webp",
+      "imagens": [
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/r7074-f1-1787948972.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/r7074-f2-1787948981.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/r7074-f3-1787948990.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/r7074-1787949075.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 39.9,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "31355",
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug r7074 (SIAH→site)"
+      "observacao": "portal slug r7074 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "31407",
@@ -4083,16 +4146,33 @@
       "fabricante_grupo": "Grupo Rocha",
       "pei_uso": "LC",
       "referencia": "PEI LC",
-      "produto_url": "https://www.portalgruporocha.com.br/produtos/pr7081",
-      "imagem_url": "",
-      "imagens": [],
+      "produto_url": "https://www.portalgruporocha.com.br/produtos/pr7081?c=809072",
+      "imagem_url": "https://api.portalgruporocha.com.br/storage/images/pr7081-f1-1788207304.webp",
+      "imagens": [
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7081-f1-1788207304.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7081-f2-1788207314.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7081-f3-1788207322.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 54.9,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "31721",
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug pr7081 (SIAH→site)"
+      "observacao": "portal slug pr7081 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "31743",
@@ -4238,16 +4318,37 @@
       "fabricante_grupo": "Grupo Rocha",
       "pei_uso": "",
       "referencia": "31778",
-      "produto_url": "https://www.portalgruporocha.com.br/produtos/r7060",
-      "imagem_url": "",
-      "imagens": [],
+      "produto_url": "https://www.portalgruporocha.com.br/produtos/r7060?c=801187",
+      "imagem_url": "https://api.portalgruporocha.com.br/storage/images/r7060-f1-1788179133.webp",
+      "imagens": [
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/r7060-f1-1788179133.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/r7060-f2-1788179148.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/r7060-f3-1788179157.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/r7060-1788179186.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 41,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "31778",
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug r7060 (SIAH→site)"
+      "observacao": "portal slug r7060 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "31918",
@@ -5561,16 +5662,33 @@
       "fabricante_grupo": "Grupo Rocha",
       "pei_uso": "",
       "referencia": "33102",
-      "produto_url": "https://www.portalgruporocha.com.br/produtos/r7063",
-      "imagem_url": "",
-      "imagens": [],
+      "produto_url": "https://www.portalgruporocha.com.br/produtos/r7063?c=804088",
+      "imagem_url": "https://api.portalgruporocha.com.br/storage/images/pr7063-f1-1788175080.webp",
+      "imagens": [
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7063-f1-1788175080.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7063-f2-1788175089.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7063-f3-1788175103.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 39.9,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "33102",
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug r7063 (SIAH→site)"
+      "observacao": "portal slug r7063 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "33200",
@@ -5636,16 +5754,37 @@
       "fabricante_grupo": "Grupo Rocha",
       "pei_uso": "LC",
       "referencia": "PEI LC",
-      "produto_url": "https://www.portalgruporocha.com.br/produtos/pr7096",
-      "imagem_url": "",
-      "imagens": [],
+      "produto_url": "https://www.portalgruporocha.com.br/produtos/pr7096?c=824461",
+      "imagem_url": "https://api.portalgruporocha.com.br/storage/images/pr7096-f1-1788202890.webp",
+      "imagens": [
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7096-f1-1788202890.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7096-f2-1788202901.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7096-f3-1788202911.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7096-f4-1788202922.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 54.9,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "33205",
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug pr7096 (SIAH→site)"
+      "observacao": "portal slug pr7096 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "33251",
@@ -5711,16 +5850,25 @@
       "fabricante_grupo": "Grupo Rocha",
       "pei_uso": "LD",
       "referencia": "PEI LD",
-      "produto_url": "https://www.portalgruporocha.com.br/produtos/r7093",
-      "imagem_url": "",
-      "imagens": [],
+      "produto_url": "https://www.portalgruporocha.com.br/produtos/r7093?c=824019",
+      "imagem_url": "https://api.portalgruporocha.com.br/storage/images/r7093-1787946901.webp",
+      "imagens": [
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/r7093-1787946901.webp",
+          "tipo": "principal"
+        }
+      ],
       "preco_m2": 39.9,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "33346",
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug r7093 (SIAH→site)"
+      "observacao": "portal slug r7093 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "33378",
@@ -5986,16 +6134,37 @@
       "fabricante_grupo": "Grupo Rocha",
       "pei_uso": "LC",
       "referencia": "PEI LC",
-      "produto_url": "https://www.portalgruporocha.com.br/produtos/pr7020",
-      "imagem_url": "",
-      "imagens": [],
+      "produto_url": "https://www.portalgruporocha.com.br/produtos/pr7020?c=792508",
+      "imagem_url": "https://api.portalgruporocha.com.br/storage/images/pr7020-f1-1788209390.webp",
+      "imagens": [
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7020-f1-1788209390.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7020-f2-1788209401.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7020-f3-1788209412.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7020-1788209442.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 54.9,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "33558",
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug pr7020 (SIAH→site)"
+      "observacao": "portal slug pr7020 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "33891",
@@ -6021,16 +6190,33 @@
       "fabricante_grupo": "Grupo Rocha",
       "pei_uso": "LE",
       "referencia": "PEI LE",
-      "produto_url": "https://www.portalgruporocha.com.br/produtos/r7007",
-      "imagem_url": "",
-      "imagens": [],
+      "produto_url": "https://www.portalgruporocha.com.br/produtos/r7007?c=791210",
+      "imagem_url": "https://api.portalgruporocha.com.br/storage/images/r7007-f1-1788195826.webp",
+      "imagens": [
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/r7007-f1-1788195826.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/r7007-f2-1788195840.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/r7007-f3-1788195851.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 39.9,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "33891",
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug r7007 (SIAH→site)"
+      "observacao": "portal slug r7007 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "33938",
@@ -6416,16 +6602,45 @@
       "fabricante_grupo": "Grupo Rocha",
       "pei_uso": "LC",
       "referencia": "PEI LC",
-      "produto_url": "https://www.portalgruporocha.com.br/produtos/pr7097",
-      "imagem_url": "",
-      "imagens": [],
+      "produto_url": "https://www.portalgruporocha.com.br/produtos/pr7097?c=824578",
+      "imagem_url": "https://api.portalgruporocha.com.br/storage/images/pr7097-f1-1788202641.webp",
+      "imagens": [
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7097-f1-1788202641.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7097-f2-1788202651.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7097-f3-1788202661.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7097-f4-1788202673.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7097-f5-1788202684.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7097-f6-1788202694.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 54.9,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "34137",
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug pr7097 (SIAH→site)"
+      "observacao": "portal slug pr7097 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "34158",
@@ -6674,19 +6889,19 @@
       "descricao_erp": "PISO 82X82 CREMA HD ROCHAMAXX (2,70) RET PLD PEI LC",
       "descricao": "Crema",
       "formato": "82x82",
-      "linha": "bold",
-      "subtipo": null,
+      "linha": "retificada",
+      "subtipo": "polida",
       "variante_lisa": null,
-      "rotulo": "Bold — ?",
+      "rotulo": "Retificada — polido",
       "confianca": "media",
-      "motivo": "linha inferida; superfície não identificada",
+      "motivo": "título/lista polida; polida→acabamento em retificada",
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Crema · 82x82 · BOLD",
+      "formigres_titulo": "Crema · 82x82 · RET · Polido",
       "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
+      "formigres_acabamento": "POLIDO",
+      "acabamento_label": "Polido",
       "marca_nome": "Rochaforte / Rocha Cerâmica",
       "fabricante_grupo": "Grupo Rocha",
       "pei_uso": "LC",
@@ -7220,7 +7435,11 @@
       "m2_por_caixa": 2.83,
       "unidade": "",
       "status_site": "nao_encontrado",
-      "observacao": "sem_ficha;ordem:rocha→formigres→lume→carmelo→cerbras"
+      "observacao": "sem_ficha;ordem:rocha→formigres→lume→carmelo→cerbras",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "35040",
@@ -7229,19 +7448,19 @@
       "descricao_erp": "PISO 61X116 BRECCIA LUX HD ROCHAMAXX (2,83) RET PLD PEI LC",
       "descricao": "Breccia",
       "formato": "61x116",
-      "linha": "bold",
-      "subtipo": null,
+      "linha": "retificada",
+      "subtipo": "polida",
       "variante_lisa": null,
-      "rotulo": "Bold — ?",
+      "rotulo": "Retificada — polido",
       "confianca": "media",
-      "motivo": "linha inferida; superfície não identificada",
+      "motivo": "título/lista polida; polida→acabamento em retificada",
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Breccia · 61x116 · BOLD",
+      "formigres_titulo": "Breccia · 61x116 · RET · Polido",
       "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
+      "formigres_acabamento": "POLIDO",
+      "acabamento_label": "Polido",
       "marca_nome": "Rochaforte / Rocha Cerâmica",
       "fabricante_grupo": "Grupo Rocha",
       "pei_uso": "LC",
@@ -7269,33 +7488,50 @@
       "descricao_erp": "PISO 70X70 PR7068 ROCHAPRIME A (3,43) RET PLD PEI LC",
       "descricao": "PR7068",
       "formato": "70x70",
-      "linha": "bold",
-      "subtipo": null,
+      "linha": "retificada",
+      "subtipo": "polida",
       "variante_lisa": null,
-      "rotulo": "Bold — ?",
+      "rotulo": "Retificada — polido",
       "confianca": "media",
-      "motivo": "linha inferida; superfície não identificada",
+      "motivo": "título/lista polida; polida→acabamento em retificada",
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "PR7068 · 70x70 · BOLD",
+      "formigres_titulo": "PR7068 · 70x70 · RET · Polido",
       "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
+      "formigres_acabamento": "POLIDO",
+      "acabamento_label": "Polido",
       "marca_nome": "Rochaforte / Rochamaxx (portal)",
       "fabricante_grupo": "Grupo Rocha",
       "pei_uso": "LC",
       "referencia": "PEI LC",
-      "produto_url": "https://www.portalgruporocha.com.br/produtos/pr7068",
-      "imagem_url": "",
-      "imagens": [],
+      "produto_url": "https://www.portalgruporocha.com.br/produtos/pr7068?c=805127",
+      "imagem_url": "https://api.portalgruporocha.com.br/storage/images/pr7068-f1-1788208182.webp",
+      "imagens": [
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7068-f1-1788208182.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7068-f2-1788208190.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/pr7068-f3-1788208201.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 54.9,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "35043",
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug pr7068 (SIAH→site)"
+      "observacao": "portal slug pr7068 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "35046",
@@ -7321,16 +7557,33 @@
       "fabricante_grupo": "Grupo Rocha",
       "pei_uso": "LE",
       "referencia": "PEI LE",
-      "produto_url": "https://www.portalgruporocha.com.br/produtos/r7041",
-      "imagem_url": "",
-      "imagens": [],
+      "produto_url": "https://www.portalgruporocha.com.br/produtos/r7041?c=798501",
+      "imagem_url": "https://api.portalgruporocha.com.br/storage/images/7041-f1-1788183470.webp",
+      "imagens": [
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/7041-f1-1788183470.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/7041-f2-1788183480.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/7041-f3-1788183496.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 41.9,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "35046",
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug r7041 (SIAH→site)"
+      "observacao": "portal slug r7041 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "35049",
@@ -7356,16 +7609,37 @@
       "fabricante_grupo": "Grupo Rocha",
       "pei_uso": "LE",
       "referencia": "PEI LE",
-      "produto_url": "https://www.portalgruporocha.com.br/produtos/r7042",
-      "imagem_url": "",
-      "imagens": [],
+      "produto_url": "https://www.portalgruporocha.com.br/produtos/r7042?c=798605",
+      "imagem_url": "https://api.portalgruporocha.com.br/storage/images/r7042-f1-1788183005.webp",
+      "imagens": [
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/r7042-f1-1788183005.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/r7042-f2-1788183029.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/r7042-f3-1788183039.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/r7042-1788183068.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 42,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "35049",
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug r7042 (SIAH→site)"
+      "observacao": "portal slug r7042 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "35050",
@@ -7494,16 +7768,16 @@
       "descricao_erp": "PISO 60X60 GRAFFIATO BG EXT A (2,15) RET PEI: LE LE 60X60 PISO 60X60 MILANO CZ A (2,15) RET GRANILHADO PEI: LE",
       "descricao": "Graffiato Bg 60x60 60x60 Milano Cz",
       "formato": "60x60",
-      "linha": "bold",
+      "linha": "retificada",
       "subtipo": "antiderrapante",
       "variante_lisa": null,
-      "rotulo": "Bold — antiderrapante",
+      "rotulo": "Retificada — antiderrapante",
       "confianca": "alta",
       "motivo": "hint descrição (aderente/ABS/granilhado)",
       "match_status": "encontrado",
       "match_score": 100,
-      "formigres_id": "",
-      "formigres_titulo": "Graffiato Bg 60x60 60x60 Milano Cz · 60x60 · BOLD · Granilhado",
+      "formigres_id": "1494",
+      "formigres_titulo": "Graffiato Bg 60x60 60x60 Milano Cz · 60x60 · RET · Granilhado",
       "formigres_tipo": "",
       "formigres_acabamento": "GRANILHADO",
       "acabamento_label": "Granilhado",
@@ -7512,15 +7786,38 @@
       "pei_uso": "LE",
       "referencia": "PEI LE",
       "produto_url": "https://www.formigres.com.br/marca.php?marca=formigres&produto=50",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://www.formigres.com.br/uploads/produtos/jg/milano-cinza-rt-granilhado-60x60-p1494-imgprincipal.webp",
+      "imagens": [
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/jg/milano-cinza-rt-granilhado-60x60-p1494-imgprincipal.webp",
+          "tipo": "principal",
+          "ordem": 0,
+          "principal": true
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/jg/milano-cinza-rt-granilhado-60x60-p1494-imgpiso.webp",
+          "tipo": "piso",
+          "ordem": 20,
+          "principal": false
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/jg/milano-cinza-rt-granilhado-60x60-p1494-imgf1.webp",
+          "tipo": "face",
+          "ordem": 30,
+          "principal": false
+        }
+      ],
       "preco_m2": 37.5,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "35397",
       "m2_por_caixa": 2.15,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Graffiato 60x60 — URL João André"
+      "observacao": "Graffiato 60x60 — URL João André",
+      "caixas_por_palete": 40,
+      "m2_por_palete": 86,
+      "peso_kg_caixa": 35,
+      "peso_kg_palete": 1400
     },
     {
       "codigo_tintao": "35439",
@@ -7569,19 +7866,19 @@
       "descricao_erp": "LD 61X116 PISO 61X116 BRECCIA LUX HD ROCHAMAXX (2,83) RET PLD PEI LC",
       "descricao": "6 Breccia",
       "formato": "61x116",
-      "linha": "bold",
-      "subtipo": null,
+      "linha": "retificada",
+      "subtipo": "polida",
       "variante_lisa": null,
-      "rotulo": "Bold — ?",
+      "rotulo": "Retificada — polido",
       "confianca": "media",
-      "motivo": "linha inferida; superfície não identificada",
+      "motivo": "título/lista polida; polida→acabamento em retificada",
       "match_status": "sem_ficha",
       "match_score": 0,
       "formigres_id": "",
-      "formigres_titulo": "6 Breccia · 61x116 · BOLD",
+      "formigres_titulo": "6 Breccia · 61x116 · RET · Polido",
       "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
+      "formigres_acabamento": "POLIDO",
+      "acabamento_label": "Polido",
       "marca_nome": "Rochaprime",
       "fabricante_grupo": "Grupo Rocha",
       "pei_uso": "LC",
@@ -7595,7 +7892,11 @@
       "m2_por_caixa": 2.83,
       "unidade": "",
       "status_site": "nao_encontrado",
-      "observacao": "sem_ficha;ordem:rocha→formigres→lume→carmelo→cerbras"
+      "observacao": "sem_ficha;ordem:rocha→formigres→lume→carmelo→cerbras",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "35449",
@@ -7644,19 +7945,19 @@
       "descricao_erp": "PISO 61X116 ORGANIC BLACK HD ROCHAMAXX (2,83) RET PLD PEI LC",
       "descricao": "Organic Black",
       "formato": "61x116",
-      "linha": "bold",
-      "subtipo": null,
+      "linha": "retificada",
+      "subtipo": "polida",
       "variante_lisa": null,
-      "rotulo": "Bold — ?",
+      "rotulo": "Retificada — polido",
       "confianca": "media",
-      "motivo": "linha inferida; superfície não identificada",
+      "motivo": "título/lista polida; polida→acabamento em retificada",
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Organic Black · 61x116 · BOLD",
+      "formigres_titulo": "Organic Black · 61x116 · RET · Polido",
       "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
+      "formigres_acabamento": "POLIDO",
+      "acabamento_label": "Polido",
       "marca_nome": "Rochaforte / Rocha Cerâmica",
       "fabricante_grupo": "Grupo Rocha",
       "pei_uso": "LC",
@@ -7684,19 +7985,19 @@
       "descricao_erp": "PISO 61X116 ORGANIC BLUE HD ROCHAMAXX (2,83) RET PLD PEI LC",
       "descricao": "Organic Blue",
       "formato": "61x116",
-      "linha": "bold",
-      "subtipo": null,
+      "linha": "retificada",
+      "subtipo": "polida",
       "variante_lisa": null,
-      "rotulo": "Bold — ?",
+      "rotulo": "Retificada — polido",
       "confianca": "media",
-      "motivo": "linha inferida; superfície não identificada",
+      "motivo": "título/lista polida; polida→acabamento em retificada",
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Organic Blue · 61x116 · BOLD",
+      "formigres_titulo": "Organic Blue · 61x116 · RET · Polido",
       "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
+      "formigres_acabamento": "POLIDO",
+      "acabamento_label": "Polido",
       "marca_nome": "Rochaforte / Rocha Cerâmica",
       "fabricante_grupo": "Grupo Rocha",
       "pei_uso": "LC",
@@ -8004,16 +8305,16 @@
       "descricao_erp": "PISO 82X82 LOFT BEGE EXT ROCHAMAXX (2,70) RET PEI: LD",
       "descricao": "Loft Bege",
       "formato": "82x82",
-      "linha": "bold",
+      "linha": "retificada",
       "subtipo": null,
       "variante_lisa": null,
-      "rotulo": "Bold — ?",
+      "rotulo": "Retificada — ?",
       "confianca": "media",
       "motivo": "linha inferida; superfície não identificada",
       "match_status": "sem_ficha",
       "match_score": 0,
       "formigres_id": "",
-      "formigres_titulo": "Loft Bege · 82x82 · BOLD",
+      "formigres_titulo": "Loft Bege · 82x82 · RET",
       "formigres_tipo": "",
       "formigres_acabamento": "",
       "acabamento_label": "",
@@ -8030,7 +8331,11 @@
       "m2_por_caixa": 2.7,
       "unidade": "",
       "status_site": "nao_encontrado",
-      "observacao": "sem_ficha;ordem:rocha→formigres→lume→carmelo→cerbras"
+      "observacao": "sem_ficha;ordem:rocha→formigres→lume→carmelo→cerbras",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "35487",
@@ -8039,16 +8344,16 @@
       "descricao_erp": "PISO 82X82 LOFT CINZA EXT ROCHAMAXX (2,70) RET PEI: LD",
       "descricao": "Loft Cinza",
       "formato": "82x82",
-      "linha": "bold",
+      "linha": "retificada",
       "subtipo": null,
       "variante_lisa": null,
-      "rotulo": "Bold — ?",
+      "rotulo": "Retificada — ?",
       "confianca": "media",
       "motivo": "linha inferida; superfície não identificada",
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Loft Cinza · 82x82 · BOLD",
+      "formigres_titulo": "Loft Cinza · 82x82 · RET",
       "formigres_tipo": "",
       "formigres_acabamento": "",
       "acabamento_label": "",
@@ -8056,16 +8361,37 @@
       "fabricante_grupo": "Grupo Rocha",
       "pei_uso": "LD",
       "referencia": "PEI LD",
-      "produto_url": "https://www.portalgruporocha.com.br/produtos/loft-cinza-ext",
-      "imagem_url": "",
-      "imagens": [],
+      "produto_url": "https://www.portalgruporocha.com.br/produtos/loft-cinza-ext?c=830613",
+      "imagem_url": "https://api.portalgruporocha.com.br/storage/images/loft-cinza-ext-f1-1788183096.webp",
+      "imagens": [
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/loft-cinza-ext-f1-1788183096.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/loft-cinza-ext-f2-1788183103.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/loft-cinza-ext-f3-1788183110.webp",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/loft-cinza-ext-f4-1788183116.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 44.9,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "35487",
       "m2_por_caixa": 2.7,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "regra João André + URL site"
+      "observacao": "regra João André + URL site",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "35492",
@@ -8714,16 +9040,16 @@
       "descricao_erp": "PISO 70X70 R7061 ROCHAPRIME A (3,43) RET ACET PEI: LD",
       "descricao": "R7061",
       "formato": "70x70",
-      "linha": "bold",
+      "linha": "retificada",
       "subtipo": null,
       "variante_lisa": null,
-      "rotulo": "Bold — ?",
+      "rotulo": "Retificada — ?",
       "confianca": "media",
       "motivo": "linha inferida; superfície não identificada",
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "R7061 · 70x70 · BOLD",
+      "formigres_titulo": "R7061 · 70x70 · RET",
       "formigres_tipo": "",
       "formigres_acabamento": "",
       "acabamento_label": "",
@@ -8731,16 +9057,33 @@
       "fabricante_grupo": "Grupo Rocha",
       "pei_uso": "LD",
       "referencia": "PEI LD",
-      "produto_url": "https://www.portalgruporocha.com.br/produtos/r7061",
-      "imagem_url": "",
-      "imagens": [],
+      "produto_url": "https://www.portalgruporocha.com.br/produtos/r7061?c=801291",
+      "imagem_url": "https://api.portalgruporocha.com.br/storage/images/r7061-f1-1788178609.webp",
+      "imagens": [
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/r7061-f1-1788178609.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/r7061-f2-1788178621.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/r7061-f3-1788178631.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 41,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "35637",
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug r7061 (SIAH→site)"
+      "observacao": "portal slug r7061 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "35638",
@@ -8749,16 +9092,16 @@
       "descricao_erp": "PISO 70X70 R7005 ROCHAPRIME A (3,43) RET ACET PEI: LD",
       "descricao": "R7005",
       "formato": "70x70",
-      "linha": "bold",
+      "linha": "retificada",
       "subtipo": null,
       "variante_lisa": null,
-      "rotulo": "Bold — ?",
+      "rotulo": "Retificada — ?",
       "confianca": "media",
       "motivo": "linha inferida; superfície não identificada",
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "R7005 · 70x70 · BOLD",
+      "formigres_titulo": "R7005 · 70x70 · RET",
       "formigres_tipo": "",
       "formigres_acabamento": "",
       "acabamento_label": "",
@@ -8766,16 +9109,33 @@
       "fabricante_grupo": "Grupo Rocha",
       "pei_uso": "LD",
       "referencia": "PEI LD",
-      "produto_url": "https://www.portalgruporocha.com.br/produtos/r7005",
-      "imagem_url": "",
-      "imagens": [],
+      "produto_url": "https://www.portalgruporocha.com.br/produtos/r7005?c=789445",
+      "imagem_url": "https://api.portalgruporocha.com.br/storage/images/r7005-f1-1788196217.webp",
+      "imagens": [
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/r7005-f1-1788196217.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/r7005-f2-1788196228.webp",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/r7005-f3-1788196238.webp",
+          "tipo": "detalhe"
+        }
+      ],
       "preco_m2": 41,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "35638",
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug r7005 (SIAH→site)"
+      "observacao": "portal slug r7005 (SIAH→site)",
+      "caixas_por_palete": null,
+      "m2_por_palete": null,
+      "peso_kg_caixa": null,
+      "peso_kg_palete": null
     },
     {
       "codigo_tintao": "35639",
@@ -8784,19 +9144,19 @@
       "descricao_erp": "PISO 82X82 STRATO GRIGIO ROCHAMAXX (2,70) RET PLD PEI: LC",
       "descricao": "Strato Grigio",
       "formato": "82x82",
-      "linha": "bold",
-      "subtipo": null,
+      "linha": "retificada",
+      "subtipo": "polida",
       "variante_lisa": null,
-      "rotulo": "Bold — ?",
+      "rotulo": "Retificada — polido",
       "confianca": "media",
-      "motivo": "linha inferida; superfície não identificada",
+      "motivo": "título/lista polida; polida→acabamento em retificada",
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Strato Grigio · 82x82 · BOLD",
+      "formigres_titulo": "Strato Grigio · 82x82 · RET · Polido",
       "formigres_tipo": "",
-      "formigres_acabamento": "",
-      "acabamento_label": "",
+      "formigres_acabamento": "POLIDO",
+      "acabamento_label": "Polido",
       "marca_nome": "Rochaforte / Rocha Cerâmica",
       "fabricante_grupo": "Grupo Rocha",
       "pei_uso": "LC",
@@ -8864,16 +9224,16 @@
       "descricao_erp": "PISO 82X82 STRATO GRIGIO EXT (2,70) RET SAFE STEP PEI:LC",
       "descricao": "Strato Grigio Safe Step",
       "formato": "82x82",
-      "linha": "bold",
+      "linha": "retificada",
       "subtipo": null,
       "variante_lisa": null,
-      "rotulo": "Bold — ?",
+      "rotulo": "Retificada — ?",
       "confianca": "media",
       "motivo": "linha inferida; superfície não identificada",
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Strato Grigio Safe Step · 82x82 · BOLD",
+      "formigres_titulo": "Strato Grigio Safe Step · 82x82 · RET",
       "formigres_tipo": "",
       "formigres_acabamento": "",
       "acabamento_label": "",
@@ -9057,5 +9417,6 @@
       "status_site": "confirmado_site",
       "observacao": "Carmelo Fior — slug 90×90 no site"
     }
-  ]
+  ],
+  "enriquecidoEm": "2026-10-29T21:16:31.401Z"
 }

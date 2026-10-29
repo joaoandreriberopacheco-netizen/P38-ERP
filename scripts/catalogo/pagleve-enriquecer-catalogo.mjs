@@ -33,6 +33,16 @@ import { resolveEmbalagemFormigres } from '../lib/formigresEmbalagem.mjs';
 import { resolvePrecoPagLeve, produtoPrecoFromItem } from '../lib/pagleveTabelaPrecos.mjs';
 import { loadPrecosSiah, resolvePrecoSiah } from '../lib/paglevePrecosSiah.mjs';
 import { parseLumePortfolioHtml } from '../lib/lumePaginaProduto.mjs';
+import {
+  fetchRochaProductPage,
+  isRochaProductHtmlValid,
+  parseRochaCMapFromProdutosHtml,
+  pickRochaImagesFromHtml,
+  rochaNamedSlugCandidates,
+  rochaSlugCandidatesFromErp,
+  rochaSlugFromSiahDesc,
+  ROCHA_PORTAL_BASE,
+} from '../lib/rochaPortalPagina.mjs';
 const UA = 'P38-PagLeve-catalogo/1.0';
 const CLASSIF_DIR = path.join(process.cwd(), 'files', 'pagleve', 'classificacao');
 const PATTERN = /^pagleve-estoque-\d{4}-\d{2}-\d{2}\.json$/;
@@ -56,26 +66,74 @@ function curlGet(url) {
   }
 }
 
+function curlGetRocha(url) {
+  const html = curlGet(url);
+  if (html.length > 2000 || !String(url).includes('portalgruporocha')) return html;
+  try {
+    execSync('sleep 1.2');
+  } catch {
+    /* ignore */
+  }
+  return curlGet(url);
+}
+
 function metaOg(html, prop) {
   const re = new RegExp(`<meta property="${prop}" content="([^"]+)"`, 'i');
   const m = html.match(re);
   return m ? m[1] : '';
 }
 
-function pickRochaImage(html, slug) {
-  const og = metaOg(html, 'og:image');
-  if (og && !og.includes('_og/')) return og;
-  const re = new RegExp(
-    `https://api\\.portalgruporocha\\.com\\.br/storage/images/${slug}[^"'\\s]+\\.(webp|jpg|png)`,
-    'i',
-  );
-  const m = html.match(re);
-  return m ? m[0] : og || '';
-}
-
 function rochaSlugFromUrl(url) {
   const m = String(url).match(/portalgruporocha\.com\.br\/produtos\/([a-z0-9-]+)/i);
-  return m?.[1] || '';
+  return m?.[1]?.replace(/\?.*$/, '') || '';
+}
+
+function applyRochaPortalImages(html, url, imagem_url, imagens) {
+  if (!url.includes('portalgruporocha.com.br') || !html) {
+    return { imagem_url, imagens, produto_url: url };
+  }
+  const slug = rochaSlugFromUrl(url);
+  const picks = pickRochaImagesFromHtml(html, slug);
+  if (!picks.length) return { imagem_url, imagens, produto_url: url };
+  return {
+    imagem_url: picks[0],
+    imagens: mapImagens(picks.slice(0, 6)),
+    produto_url: url,
+  };
+}
+
+function loadRochaCMap(ctx) {
+  if (ctx.rochaCMap) return ctx.rochaCMap;
+  const html = curlGet(`${ROCHA_PORTAL_BASE}/produtos`);
+  ctx.rochaCMap = parseRochaCMapFromProdutosHtml(html);
+  return ctx.rochaCMap;
+}
+
+function enrichRochaPortalItem(item, ctx) {
+  const cMap = loadRochaCMap(ctx);
+  const slugs = [];
+  const fromUrl = rochaSlugFromUrl(item.produto_url || '');
+  if (fromUrl) slugs.push(fromUrl);
+  for (const s of rochaSlugCandidatesFromErp(item.descricao_erp || item.descricao || '')) slugs.push(s);
+  const siah = rochaSlugFromSiahDesc(item.descricao_erp || item.descricao || '');
+  if (siah) slugs.push(siah);
+  for (const s of rochaNamedSlugCandidates(item.descricao_erp || item.descricao || '', item.codigo_tintao)) {
+    slugs.push(s);
+  }
+  const seen = new Set();
+  for (const slug of slugs) {
+    const key = String(slug || '').toLowerCase();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    const { html, url } = fetchRochaProductPage(key, cMap, curlGetRocha);
+    if (!isRochaProductHtmlValid(html)) continue;
+    const applied = applyRochaPortalImages(html, url, '', []);
+    if (applied.imagem_url) {
+      item.produto_url = applied.produto_url || url;
+      return applied;
+    }
+  }
+  return null;
 }
 
 function formigresIdFromUrl(url) {
@@ -162,18 +220,38 @@ async function sanitizeImagensList(imagens = []) {
   });
 }
 
-async function enrichImagens(item, ctx) {
+async function enrichImagens(item, ctx, { refreshImagens = false } = {}) {
   let imagem_url = item.imagem_url || '';
   let imagens = item.imagens?.length ? [...item.imagens] : [];
   const url = item.produto_url || '';
   let pageHtml = '';
+  const isRochaItem =
+    item.fabricante_grupo === 'Grupo Rocha' || url.includes('portalgruporocha.com.br');
+  const needsRochaImages =
+    isRochaItem &&
+    (refreshImagens || !imagem_url || isPlaceholderImageUrl(imagem_url));
 
-  if (!imagem_url && url) {
+  if (needsRochaImages) {
+    const hit = enrichRochaPortalItem(item, ctx);
+    if (hit) {
+      imagem_url = hit.imagem_url;
+      imagens = hit.imagens;
+      if (hit.produto_url) item.produto_url = hit.produto_url;
+      pageHtml = '';
+    } else if (url) {
+      pageHtml = curlGet(url);
+      ({ imagem_url, imagens } = applyRochaPortalImages(pageHtml, url, imagem_url, imagens));
+    }
+  } else if (!imagem_url && url) {
     pageHtml = curlGet(url);
-    const og = metaOg(pageHtml, 'og:image');
-    if (og) {
-      imagem_url = og;
-      imagens = mapImagens([og]);
+    if (isRochaItem) {
+      ({ imagem_url, imagens } = applyRochaPortalImages(pageHtml, url, imagem_url, imagens));
+    } else {
+      const og = metaOg(pageHtml, 'og:image');
+      if (og && !isPlaceholderImageUrl(og)) {
+        imagem_url = og;
+        imagens = mapImagens([og]);
+      }
     }
   }
 
@@ -242,13 +320,8 @@ async function enrichImagens(item, ctx) {
   }
 
   if (!imagem_url && url.includes('portalgruporocha.com.br')) {
-    const slug = rochaSlugFromUrl(url);
     const html = pageHtml || curlGet(url);
-    const img = pickRochaImage(html, slug);
-    if (img) {
-      imagem_url = img;
-      imagens = mapImagens([img]);
-    }
+    ({ imagem_url, imagens } = applyRochaPortalImages(html, url, imagem_url, imagens));
   }
 
   if (isLumeItem(item) && url.includes('lumeceramica.com.br/portfolio-item')) {
@@ -273,13 +346,15 @@ async function enrichImagens(item, ctx) {
   if (!imagem_url && url) {
     const html = pageHtml || curlGet(url);
     const og = metaOg(html, 'og:image');
-    if (og) {
+    if (og && !isPlaceholderImageUrl(og)) {
       imagem_url = og;
       imagens = mapImagens([og]);
     }
-    const extra = html.match(/https:\/\/[^"'\s]+\.(webp|jpg|jpeg|png)/gi) || [];
-    const gallery = [...new Set([og, ...extra].filter(Boolean))].slice(0, 6);
-    if (gallery.length > 1) imagens = mapImagens(gallery);
+    if (!imagem_url && !url.includes('portalgruporocha.com.br')) {
+      const extra = html.match(/https:\/\/[^"'\s]+\.(webp|jpg|jpeg|png)/gi) || [];
+      const gallery = [...new Set([og, ...extra].filter((u) => u && !isPlaceholderImageUrl(u)))].slice(0, 6);
+      if (gallery.length > 1) imagens = mapImagens(gallery);
+    }
   }
 
   imagens = await sanitizeImagensList(imagens);
@@ -359,7 +434,7 @@ async function main() {
   if (!precosSiah) {
     console.error('Aviso: precos-siah-fornecedor.json em falta. Rode: npm run catalogo:extrair-precos-pagleve');
   }
-  const ctx = { formigresSnap, carmeloSnap, formigresById, carmeloRawById, carmeloBySlug, precosSiah };
+  const ctx = { formigresSnap, carmeloSnap, formigresById, carmeloRawById, carmeloBySlug, precosSiah, rochaCMap: null };
 
   const itens = [];
   let comFoto = 0;
@@ -380,7 +455,7 @@ async function main() {
     }
     const precoEmb = enrichPrecoEmbalagem(item, ctx);
     Object.assign(item, precoEmb);
-    const imgs = await enrichImagens(item, ctx);
+    const imgs = await enrichImagens(item, ctx, { refreshImagens });
     Object.assign(item, imgs);
     if (item.imagem_url) comFoto += 1;
     if (item.preco_m2 != null && item.preco_m2 > 0) comPreco += 1;

@@ -64,6 +64,61 @@ export function isBadRochaTitle(title) {
   return false;
 }
 
+/** Ignora OG gerado (_og) — preferir ficheiros em api…/storage/images/. */
+export function isRochaOgPlaceholder(url = '') {
+  return /gruporocha\.com\.br\/_og\//i.test(String(url || ''));
+}
+
+/**
+ * Fotos oficiais no HTML da ficha (api.portalgruporocha.com.br/storage/images/{slug}-f1-….webp).
+ * @returns {string[]} URLs únicas, principal primeiro (f1 antes de f2…)
+ */
+export function pickRochaImagesFromHtml(html, slug = '') {
+  const raw = String(html || '');
+  const s = String(slug || '').toLowerCase().replace(/\?.*$/, '');
+  const slugVariants = new Set();
+  if (s) slugVariants.add(s);
+  if (/^r\d+$/i.test(s)) {
+    slugVariants.add(`pr${s.slice(1)}`);
+    slugVariants.add(s.slice(1));
+  }
+  if (/^pr\d+$/i.test(s)) {
+    slugVariants.add(`r${s.slice(2)}`);
+    slugVariants.add(s.slice(2));
+  }
+  const found = new Set();
+  for (const variant of slugVariants) {
+    const re = new RegExp(
+      `https://api\\.portalgruporocha\\.com\\.br/storage/images/${variant}[^"'\\s]+\\.(webp|jpg|jpeg|png)`,
+      'gi',
+    );
+    for (const m of raw.matchAll(re)) found.add(m[0]);
+  }
+  if (!found.size && s) {
+    const reLoose = /https:\/\/api\.portalgruporocha\.com\.br\/storage\/images\/[^"'\\s]+\.(webp|jpg|jpeg|png)/gi;
+    for (const m of raw.matchAll(reLoose)) {
+      const u = m[0].toLowerCase();
+      for (const variant of slugVariants) {
+        if (u.includes(`/${variant}-`) || u.includes(`/${variant}.`)) {
+          found.add(m[0]);
+          break;
+        }
+      }
+    }
+  }
+  const og = raw.match(/<meta property="og:image" content="([^"]+)"/i)?.[1]?.trim();
+  if (og && !isRochaOgPlaceholder(og)) found.add(og);
+  return [...found].sort((a, b) => {
+    const fa = a.match(/-f(\d+)-/i)?.[1] || '9';
+    const fb = b.match(/-f(\d+)-/i)?.[1] || '9';
+    return Number(fa) - Number(fb);
+  });
+}
+
+export function pickRochaImageFromHtml(html, slug = '') {
+  return pickRochaImagesFromHtml(html, slug)[0] || '';
+}
+
 export function isRochaProductHtmlValid(html) {
   const raw = String(html || '');
   if (raw.length < 500) return false;
@@ -73,6 +128,44 @@ export function isRochaProductHtmlValid(html) {
 }
 
 /** Slug listado no índice /produtos com ?c= — ficha SSR pode falhar, mas URL é do catálogo oficial. */
+/**
+ * Busca HTML da ficha: muitos slugs (Fenix, Loft, Breccia) só respondem com ?c= do índice /produtos.
+ */
+export function fetchRochaProductPage(slug, cMap, curlGet) {
+  const s = String(slug || '').toLowerCase().replace(/\?.*$/, '');
+  if (!s || typeof curlGet !== 'function') return { html: '', url: '' };
+  const urls = [];
+  const withC = rochaProductUrl(s, cMap);
+  if (withC.includes('?c=')) urls.push(withC);
+  const bare = `${ROCHA_PORTAL_BASE}/produtos/${s}`;
+  if (!urls.includes(bare)) urls.push(bare);
+  for (const url of urls) {
+    const html = curlGet(url);
+    if (isRochaProductHtmlValid(html)) return { html, url };
+  }
+  const fallback = urls[0] || bare;
+  return { html: curlGet(fallback), url: fallback };
+}
+
+/** Slugs por código Tintão / nome comercial (Rochamaxx 61×116, Loft 82×82). */
+export function rochaNamedSlugCandidates(desc = '', codigoTintao = '') {
+  const byCode = {
+    '35486': 'loft-bege-ext',
+    '35487': 'loft-cinza-ext',
+  };
+  const out = [];
+  if (byCode[String(codigoTintao)]) out.push(byCode[String(codigoTintao)]);
+  const n = String(desc || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+  if (n.includes('fenix')) out.push('fenix');
+  if (n.includes('breccia')) out.push('breccia-lux');
+  if (n.includes('loft bege')) out.push('loft-bege-ext');
+  if (n.includes('loft cinza')) out.push('loft-cinza-ext');
+  return [...new Set(out)];
+}
+
 export function rochaCatalogFallbackHit(slug, cMap, label = '') {
   const s = String(slug || '').toLowerCase();
   if (!s || !cMap?.has(s)) return null;

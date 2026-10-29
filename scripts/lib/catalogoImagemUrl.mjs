@@ -10,6 +10,7 @@ export function isPlaceholderImageUrl(url = '') {
   if (!u) return true;
   if (/\/sample\.webp$/i.test(u)) return true;
   if (u.includes('placeholder') || u.includes('no-image')) return true;
+  if (u.includes('gruporocha.com.br/_og/')) return true;
   return false;
 }
 

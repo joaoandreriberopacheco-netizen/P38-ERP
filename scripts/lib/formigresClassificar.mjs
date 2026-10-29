@@ -15,18 +15,19 @@ function normTitulo(titulo) {
   return String(titulo || '').trim().toUpperCase();
 }
 
-/** Inferência a partir da descrição Tintão / Excel quando não há match no catálogo. */
+/** Tokens SIAH/PRE: RET = retificada; PLD/POL = polido (não confundir HD com linha Bold). */
 export function inferirDaDescricao(descricao = '') {
   const raw = String(descricao || '').toUpperCase();
+  const temRetificada = /\bRT\b|\bRET\b|\bRETI\b|RETIFICAD/.test(raw);
   const hints = {
-    lista_polidos: /RT\s*POLIDO|\bPOLIDO\b/.test(raw),
-    retificada: /\bRT\b|RETIFICAD/.test(raw),
-    bold: /\bHD\b|\bBOLD\b/.test(raw) && !/\bRT\b/.test(raw),
+    lista_polidos: /RT\s*POLIDO|\bPOLIDO\b|\bPLD\b/.test(raw),
+    retificada: temRetificada,
+    bold: (/\bHD\b|\bBOLD\b/.test(raw) || /\bROCHAMAXX\b/.test(raw)) && !temRetificada,
     antiderrapante: /\bAD\b|ADERENTE|ABS\b|MATE\s*ABS|GRANILHADO\s*ABS|GRANILHAD/.test(raw),
     semiderrapante: /\bMRE\b|GOTEJAD|SEMIDERRAP/.test(raw) && !/GRANILHAD/.test(raw),
     mate: /\bMATE\b|\bMAT\b|ACETINAD/.test(raw),
     brilhante: /BRILH/.test(raw),
-    polido: /RT\s*POLIDO|\bPOLIDO\b/.test(raw),
+    polido: /RT\s*POLIDO|\bPOLIDO\b|\bPLD\b/.test(raw),
   };
   return hints;
 }
@@ -45,7 +46,7 @@ export function classificarFormigres(input = {}) {
     || hints.polido
     || hints.lista_polidos
     || input.lista === 'polidos'
-    || /RT\s*POLIDO|\bPOLIDO\b/.test(titulo);
+    || /RT\s*POLIDO|\bPOLIDO\b|\bPLD\b/.test(titulo);
 
   if (isPolida) {
     return {
@@ -60,7 +61,7 @@ export function classificarFormigres(input = {}) {
 
   const isRetificada = tipo.includes('RETIFICAD')
     || hints.retificada
-    || /\bRT\b/.test(titulo)
+    || /\bRT\b|\bRET\b|\bRETI\b/.test(titulo)
     || input.lista?.includes('retific');
 
   const isBold = tipo === 'BOLD'

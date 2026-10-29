@@ -100,7 +100,7 @@ function parseTipoAcabFromSite(descricaoNoSite) {
 
 function inferAcabamentoFromDescricaoErp(descErp, classif) {
   const u = String(descErp || '').toUpperCase();
-  if (/RT\s*POLIDO|\bPOLIDO\b/.test(u) && classif.linha === 'polida') return 'Polido';
+  if (/RT\s*POLIDO|\bPOLIDO\b|\bPLD\b/.test(u) && classif.linha === 'polida') return 'Polido';
   if (/\bMRE\b/.test(u)) return 'MRE';
   if (/GRANILHAD/.test(u)) return 'Granilhado';
   if (/GOTEJAD/.test(u)) return 'Gotejado';
@@ -124,7 +124,7 @@ function inferAcabamentoLabel(descErp, descSite, classif, row = {}) {
 
   const u = String(descErp || '').toUpperCase();
   const siteUpper = String(descSite || '').toUpperCase();
-  if (/RT\s*POLIDO|\bPOLIDO\b/.test(u) && classif.linha === 'polida') return 'Polido';
+  if (/RT\s*POLIDO|\bPOLIDO\b|\bPLD\b/.test(u) && classif.linha === 'polida') return 'Polido';
   if (/\bMRE\b/.test(u) || (/\bMRE\b/.test(siteUpper) && !/BRILHANTE\s*$/i.test(String(descSite || '').trim()))) {
     return 'MRE';
   }
