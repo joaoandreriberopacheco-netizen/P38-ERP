@@ -23,6 +23,7 @@ import {
   CONFERENCIA_ESTOQUE_COLUMNS,
   CONSUMO_INTERNO_COLUMNS,
   EVENTO_LOGISTICO_SANDBOX_COLUMNS,
+  AGENDA_LOGISTICA_COLUMNS,
   TABLE_PROMOTION_MANIFEST,
 } from './entityColumnManifest.js';
 
@@ -66,7 +67,11 @@ export const ENTITY_TO_TABLE = {
     mode: 'columns',
     columns: CATEGORIA_FINANCEIRA_COLUMNS,
   },
-  AgendaLogistica: { table: 'agenda_logistica', mode: 'columns' },
+  AgendaLogistica: {
+    table: 'agenda_logistica',
+    mode: 'columns',
+    columns: AGENDA_LOGISTICA_COLUMNS,
+  },
   MovimentosCaixa: {
     table: 'movimentos_caixa',
     mode: 'columns',
