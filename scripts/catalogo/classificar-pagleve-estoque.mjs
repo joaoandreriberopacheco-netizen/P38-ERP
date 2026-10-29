@@ -188,7 +188,7 @@ function titleCaseModelo(str = '') {
 }
 
 function nomeModeloPrincipal(row, descricao) {
-  return modeloComercialCatalogo(row.codigo, descricao, row.modelo);
+  return modeloComercialCatalogo(row.codigo, descricao, row.modelo, row.descricao_no_site || '');
 }
 
 function linhaCatalogoLabel(classif, siteHints, descErp) {

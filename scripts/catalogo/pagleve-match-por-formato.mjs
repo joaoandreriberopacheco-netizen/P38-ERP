@@ -216,7 +216,7 @@ function nameSlug(text) {
 /** Nome comercial para busca no site — só texto da descrição, sem códigos internos do fornecedor (PR…, R…). */
 function modeloParaBusca(row) {
   const desc = row.descricao_erp || row.descricao_original || '';
-  return modeloComercialCatalogo(row.codigo, desc, row.modelo);
+  return modeloComercialCatalogo(row.codigo, desc, row.modelo, row.descricao_no_site || '');
 }
 
 function temNomeComercial(row) {

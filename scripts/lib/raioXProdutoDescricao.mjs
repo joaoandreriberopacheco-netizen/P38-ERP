@@ -12,6 +12,50 @@ const MODELO_NOISE_RE =
 
 const FABRICA_PREFIX_RE = /\b(PISO|REV\.?|REVESTIMENTO|PORCELANATO|SEMI\s*GRES?|GRES)\b/gi;
 
+const ROCHA_SIAH_CODE_RE = /^(PR|R)\d{3,}$/i;
+
+/** Nome que não serve para vitrine (código loja, PR/R SIAH, só HD Incopisos). */
+export function nomePareceCodigoFabricante(nome = '') {
+  const s = String(nome || '').trim();
+  if (!s || s.length < 2) return true;
+  if (/^\d{4,5}$/.test(s)) return true;
+  if (ROCHA_SIAH_CODE_RE.test(s)) return true;
+  const hd = stripAccents(s).toUpperCase().replace(/\./g, '').replace(/\s+/g, ' ');
+  if (/^HD\s*\d+$/.test(hd)) return true;
+  return false;
+}
+
+function limparPontuacaoModelo(modelo = '') {
+  return String(modelo || '')
+    .replace(/^\.\s*/, '')
+    .trim();
+}
+
+function nomeFromDescricaoNoSite(descricaoNoSite = '') {
+  const first = String(descricaoNoSite || '').split('·')[0].trim();
+  if (!first || nomePareceCodigoFabricante(first)) return '';
+  return titleCaseModelo(limparPontuacaoModelo(first));
+}
+
+/** Rochaprime: texto entre formato e ROCHAPRIME (ex. BEGE em R7041). */
+function extractTextBetweenFormatoAndRochaprime(descricao = '') {
+  const raw = String(descricao || '');
+  const m = raw.match(/\d{1,3}\s*[x×]\s*\d{1,3}\s+(.+?)\s+ROCHAPRIME/i);
+  if (!m) return '';
+  let chunk = m[1]
+    .replace(/\b(PR|R)\d+\b/gi, ' ')
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(
+      /\b(RT|RET|RETI|POLIDO|POL|PLD|MATE|MATTE|ACETINAD\w*|GRANILHAD\w*|BRILH\w*)\b/gi,
+      ' ',
+    )
+    .replace(MODELO_NOISE_RE, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!chunk || chunk.length < 2 || nomePareceCodigoFabricante(chunk)) return '';
+  return titleCaseModelo(chunk);
+}
+
 function titleCaseModelo(str = '') {
   return String(str || '')
     .trim()
@@ -33,14 +77,18 @@ export function modeloFieldPareceErroDigitacao(modelo = '') {
 
 /**
  * Nome para catálogo (fábrica): só o modelo, sem formato OCR nem códigos SIAH.
+ * @param {string} [descricaoNoSite] — título da ficha oficial (primeiro segmento antes de ·)
  */
-export function modeloComercialCatalogo(codigo, descricao = '', modeloField = '') {
+export function modeloComercialCatalogo(codigo, descricao = '', modeloField = '', descricaoNoSite = '') {
   const desc = String(descricao || '').trim();
   let campo = String(modeloField || '').trim();
   if (modeloFieldPareceErroDigitacao(campo)) campo = '';
+  campo = limparPontuacaoModelo(campo);
 
   const rx = raioXProdutoDescricao(codigo, desc || campo);
   let modelo = rx.modelo || campo;
+  modelo = modelo.replace(/\b(PR|R)\d+\b/gi, ' ');
+  modelo = modelo.replace(/\bJUNTA\s*\d+\s*MM\b/gi, ' ');
   modelo = modelo.replace(/^\s*\d{1,2}\s*[x×]\s*\d{1,2}\s*/gi, ' ');
   modelo = modelo.replace(/^0\s*[x×]\s*\d+\s*/gi, ' ');
   modelo = modelo.replace(FABRICA_PREFIX_RE, ' ');
@@ -49,12 +97,24 @@ export function modeloComercialCatalogo(codigo, descricao = '', modeloField = ''
   modelo = modelo.replace(MODELO_NOISE_RE, ' ');
   modelo = modelo.replace(/\s+/g, ' ').trim();
   modelo = modelo.replace(/\s+[a-z]\s*$/i, '').trim();
+  modelo = limparPontuacaoModelo(modelo);
 
   const low = stripAccents(modelo).toLowerCase();
   if (/nero\s*portor/i.test(low)) return 'Nero Portorio';
   if (/^asphalt\b/.test(low)) return 'Asphalt';
 
-  return titleCaseModelo(modelo);
+  let result = titleCaseModelo(modelo);
+  if (!nomePareceCodigoFabricante(result)) return result;
+
+  const fromSite = nomeFromDescricaoNoSite(descricaoNoSite);
+  if (fromSite) return fromSite;
+
+  const fromRocha = extractTextBetweenFormatoAndRochaprime(desc);
+  if (fromRocha) return fromRocha;
+
+  if (campo && !nomePareceCodigoFabricante(campo)) return titleCaseModelo(campo);
+
+  return result;
 }
 
 /**
@@ -88,7 +148,8 @@ export function raioXProdutoDescricao(codigo, descricao) {
   modelo = modelo.replace(FABRICA_PREFIX_RE, ' ');
   if (formato) modelo = modelo.replace(new RegExp(formato.replace('x', '[xX]'), 'i'), ' ');
   modelo = modelo.replace(/^\s*\d{1,2}\s*[x×]\s*\d{1,2}\s*/i, ' ');
-  modelo = modelo.replace(/\s*\([^)]*\).*/g, ' ');
+  // m²/caixa (2,16) — não confundir com referência Incopisos (HD 160.105)
+  modelo = modelo.replace(/\(\s*\d+[,.]\d+\s*\)/g, ' ');
   modelo = modelo.replace(/["']/g, ' ');
   modelo = modelo.replace(/\b(RT|RET|RETI|BOLD)\b/gi, ' ');
   modelo = modelo.replace(
@@ -96,7 +157,15 @@ export function raioXProdutoDescricao(codigo, descricao) {
     ' ',
   );
   modelo = modelo.replace(MODELO_NOISE_RE, ' ');
+  modelo = modelo.replace(/\b(PR|R)\d+\b/gi, ' ');
+  modelo = modelo.replace(/\bJUNTA\s*\d+\s*MM\b/gi, ' ');
   modelo = modelo.replace(/[-/]+/g, ' ').replace(/\s+/g, ' ').trim();
+
+  const hdRef = modelo.match(/\(\s*HD\s+([0-9][0-9.]+)\s*\)/i);
+  if (hdRef && !modelo.replace(/\(\s*HD\s+[0-9][0-9.]+\s*\)/i, '').trim()) {
+    modelo = `HD ${hdRef[1].replace(/\./g, '')}`;
+  }
+  modelo = modelo.replace(/\(\s*HD\s+[0-9][0-9.]+\s*\)/gi, ' ').replace(/\s+/g, ' ').trim();
 
   const tipo = (raw.match(TIPO_RE) || [])[0]?.toUpperCase().replace(/\.$/, '') || '';
 
