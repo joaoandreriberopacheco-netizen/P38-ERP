@@ -35,7 +35,11 @@ import {
 } from '../lib/incopisosPaginaProduto.mjs';
 
 const ROOT = process.cwd();
-const CSV = process.env.PAGLEVE_OUT || path.join(ROOT, 'files', 'pagleve', 'raio-x-pagleve-site-verificado.csv');
+const CSV =
+  process.env.PAGLEVE_OUT ||
+  (fs.existsSync(path.join(ROOT, 'files', 'pagleve', 'pagleve-base-cruzada.csv'))
+    ? path.join(ROOT, 'files', 'pagleve', 'pagleve-base-cruzada.csv')
+    : path.join(ROOT, 'files', 'pagleve', 'raio-x-pagleve-site-verificado.csv'));
 const ROCHA = 'https://www.portalgruporocha.com.br';
 const LUME = 'https://lumeceramica.com.br';
 const CF = 'https://www.carmelofior.com.br';

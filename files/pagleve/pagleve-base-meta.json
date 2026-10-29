@@ -1,0 +1,20 @@
+{
+  "geradoEm": "2026-10-29T15:53:45.788Z",
+  "pre_os": "PRE_OS_0973.pdf",
+  "itens_pre_os": 185,
+  "itens_catalogo": 185,
+  "cruzados_510": 159,
+  "pre_os_sem_510": 26,
+  "por_fabricante": {
+    "Grupo Formigres": 95,
+    "Lume Cerâmica": 7,
+    "(sem origem)": 17,
+    "Grupo Incopisos": 6,
+    "Carmelo Fior": 25,
+    "Grupo Rocha": 35
+  },
+  "por_cruzamento": {
+    "510_marca": 159,
+    "pre_os_apenas": 26
+  }
+}

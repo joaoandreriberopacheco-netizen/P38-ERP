@@ -44,7 +44,11 @@ import {
 
 const ROOT = process.cwd();
 const IN_CSV = process.env.PAGLEVE_RAIO_X || path.join(ROOT, 'files', 'pagleve', 'raio-x-produtos.csv');
-const OUT_CSV = process.env.PAGLEVE_OUT || path.join(ROOT, 'files', 'pagleve', 'raio-x-pagleve-site-verificado.csv');
+const OUT_CSV =
+  process.env.PAGLEVE_OUT ||
+  (fs.existsSync(path.join(ROOT, 'files', 'pagleve', 'pagleve-base-cruzada.csv'))
+    ? path.join(ROOT, 'files', 'pagleve', 'pagleve-base-cruzada.csv')
+    : path.join(ROOT, 'files', 'pagleve', 'raio-x-pagleve-site-verificado.csv'));
 const ROCHA_BASE = 'https://www.portalgruporocha.com.br';
 const LUME_BASE = 'https://lumeceramica.com.br';
 const UA = 'P38-PagLeve-match/1.0';
@@ -52,6 +56,7 @@ const UA = 'P38-PagLeve-match/1.0';
 const args = process.argv.slice(2);
 const onlyFmt = args.includes('--formato') ? args[args.indexOf('--formato') + 1]?.toLowerCase() : null;
 const onlyIndicacao = args.includes('--only-indicacao');
+const onlyPendente = args.includes('--only-pendente');
 
 const CSV_FIELDS = [
   'codigo',
@@ -82,7 +87,7 @@ function siteTryOrderForRow(row) {
   if (g.includes('lume') || fmt === '45x89' || fmt === '62x119' || fmt === '22x90') {
     return ['lume', 'formigres', 'carmelo', 'rocha', 'cerbras'];
   }
-  if (g.includes('carmelo') || g.includes('arielle')) {
+  if (g.includes('carmelo') || g.includes('arielle') || /arielle/i.test(row.marca_no_site || '')) {
     return ['carmelo', 'formigres', 'lume', 'rocha', 'cerbras'];
   }
   if (g.includes('rocha') || g.includes('rochamaxx') || g.includes('rochaforte')) {
@@ -586,9 +591,51 @@ async function resolveIndicacoesJoao() {
   console.log('Arquivo:', OUT_CSV);
 }
 
+async function resolvePendenteMatch() {
+  if (!fs.existsSync(OUT_CSV)) {
+    console.error('CSV não encontrado:', OUT_CSV);
+    process.exit(1);
+  }
+  const rows = loadCsv(OUT_CSV);
+  const targets = rows.filter(
+    (r) =>
+      r.status !== 'confirmado_site' ||
+      !String(r.evidencia_url || '').trim(),
+  );
+  console.log(`Match pendente (sem ficha confirmada): ${targets.length} itens`);
+  const ctx = await loadMatchContext();
+  let ok = 0;
+  for (const row of targets) {
+    if (!row.formato) {
+      const desc = row.descricao_erp || row.descricao_original || '';
+      const rx = raioXProdutoDescricao(row.codigo, desc);
+      if (rx.formato) row.formato = rx.formato.toLowerCase();
+    }
+    const order = siteTryOrderForRow(row);
+    const hit = await tryMatchersForRow(row, ctx, order);
+    row.sites_consultados = hit.sites_consultados || order.join(';');
+    if (hit.status === 'confirmado_site') {
+      applyHit(row, hit);
+      ok++;
+      console.log(' OK', row.codigo, row.fabricante_grupo, (row.descricao_no_site || '').slice(0, 48));
+    } else {
+      row.status = row.status === 'pendente' ? 'nao_encontrado' : row.status;
+      row.observacao = `sem_ficha;ordem:${order.join('→')}`;
+      console.log(' --', row.codigo, row.fabricante_grupo || '(sem grupo)', order.slice(0, 3).join('→'));
+    }
+  }
+  writeCsv(OUT_CSV, rows, CSV_FIELDS);
+  console.log('\nNovos confirmado_site:', ok, 'ainda sem ficha:', targets.length - ok);
+  console.log('Arquivo:', OUT_CSV);
+}
+
 async function main() {
   if (onlyIndicacao) {
     await resolveIndicacoesJoao();
+    return;
+  }
+  if (onlyPendente) {
+    await resolvePendenteMatch();
     return;
   }
 

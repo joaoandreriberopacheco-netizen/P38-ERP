@@ -454,6 +454,8 @@ function slimItem(item) {
   return {
     codigo_tintao: item.codigo_tintao,
     descricao: item.descricao,
+    descricao_erp: item.descricao_erp || '',
+    catalogo_nome_modelo: item.catalogo_nome_modelo || item.modelo || '',
     formato: item.formato || '—',
     linha: item.linha || 'desconhecida',
     subtipo: item.subtipo,
@@ -3712,7 +3714,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return String(a || '').localeCompare(String(b || ''), 'pt-BR');
     }
     function itemTitulo(item) {
+      if (CATALOG_SKIN === 'pagleve') {
+        return item.catalogo_nome_modelo || item.modelo || item.formigres_titulo || item.descricao || '';
+      }
       return item.formigres_titulo || item.descricao || '';
+    }
+    function pagLeveBuscaExtra(item) {
+      return CATALOG_SKIN === 'pagleve' ? String(item.descricao_erp || '') : '';
     }
     function compareItensFormatoNome(a, b) {
       const byFmt = compareFormato(a.formato, b.formato);
@@ -3759,7 +3767,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       if (linha === 'polida') return 'retificada';
       const acabNorm = String(acabKey(item)).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
       if (acabNorm === 'polido' || acabNorm === 'polida') return 'retificada';
-      const blob = (item.descricao + ' ' + item.formigres_titulo + ' ' + item.formigres_acabamento).toUpperCase();
+      const blob = (String(item.descricao_erp || item.descricao) + ' ' + item.formigres_titulo + ' ' + item.formigres_acabamento).toUpperCase();
       if (linha !== 'bold' && (/\bRT\s*POLIDO\b|\bPOLIDO\b/.test(blob))) return 'retificada';
       return linha;
     }
@@ -3794,7 +3802,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const rawLabel = String(item.acabamento_label || item.formigres_acabamento || '').trim();
       const label = isPeiUsoClasse(rawLabel) ? '' : normPagLeveBlob(rawLabel);
       const blob = normPagLeveBlob(
-        (item.descricao || '') + ' ' + (item.formigres_titulo || '') + ' ' + (item.rotulo || '') + ' ' + (item.subtipo || ''),
+        (item.descricao_erp || item.descricao || '') + ' ' + (item.formigres_titulo || '') + ' ' + (item.rotulo || '') + ' ' + (item.subtipo || ''),
       );
       const inferred = !label ? inferTexturaBlobPagLeve(blob) : '';
       if (label.includes('antiderrap') || item.subtipo === 'antiderrapante' || inferred === 'antiderrapante') return 'Antiderrapante';
@@ -4018,7 +4026,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function renderTableRow(item) {
       const imgs = getGaleria(item);
       const img = imgs[0]?.url || item.imagem_url || '';
-      const titulo = item.formigres_titulo || item.descricao;
+      const titulo = itemTitulo(item);
       const cod = item.codigo_tintao;
       const qty = getQty(cod);
       const pack = fmtEmbalagemText(item);
@@ -4040,7 +4048,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const titleHtml = gemeasTrigger
           ? '<span class="pedido-row-title-line"><span class="pedido-row-title">' + esc(titulo) + '</span>' + gemeasTrigger + '</span>'
           : '<span class="pedido-row-title">' + esc(titulo) + '</span>';
-        return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(normalize((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + formatSearchBlob(item.formato) + ' ' + cod + ' ' + pack + ' ' + resistSearch + ' ' + searchExtra))) + '" data-qty="' + qty + '">' +
+        return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(normalize((titulo + ' ' + pagLeveBuscaExtra(item) + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + formatSearchBlob(item.formato) + ' ' + cod + ' ' + pack + ' ' + resistSearch + ' ' + searchExtra))) + '" data-qty="' + qty + '">' +
           '<td class="pedido-col-foto col-foto">' + foto + '</td>' +
           '<td class="pedido-col-modelo col-modelo">' + titleHtml + warn + gemeasMarcasHtml + '<div class="pedido-row-meta">' + rowMeta + '</div></td>' +
           '<td class="pedido-col-qty col-qty">' +
@@ -4061,7 +4069,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         ? esc(item.marca_nome || '—') + ' · ' + esc(item.fabricante_grupo || '—') + ' · '
         : '';
       const metaMobile = '<div class="model-meta-mobile">' + marcaGrupoMobile + esc(pack) + ' · ' + fmtPrecoHtml(item.preco_m2) + '</div>';
-      const searchBlob = (titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack + ' ' + (item.marca_nome || '') + ' ' + (item.fabricante_grupo || '')).toLowerCase();
+      const searchBlob = (titulo + ' ' + pagLeveBuscaExtra(item) + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack + ' ' + (item.marca_nome || '') + ' ' + (item.fabricante_grupo || '')).toLowerCase();
       const pagLeveAttrs = CATALOG_SKIN === 'pagleve'
         ? ' data-textura="' + esc(catalogTexturaGrupo(item)) + '" data-marca="' + esc(pagLeveMarcaKey(item)) + '"'
         : '';
@@ -4078,7 +4086,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function formigresItemSearchKey(item, cod, pack, titulo, extra) {
       const resistSearch = modelResistencia(item);
       const fmtBlob = formatSearchBlob(item.formato);
-      return normalize(titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + fmtBlob + ' ' + cod + ' ' + pack + ' ' + resistSearch + ' ' + (extra || ''));
+      return normalize(titulo + ' ' + pagLeveBuscaExtra(item) + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + fmtBlob + ' ' + cod + ' ' + pack + ' ' + resistSearch + ' ' + (extra || ''));
     }
     function formatSearchBlob(fmt) {
       const raw = String(fmt || '').trim();
@@ -4122,7 +4130,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function renderCatalogCardFormigres(item) {
       const imgs = getGaleria(item);
       const img = imgs[0]?.url || item.imagem_url || '';
-      const titulo = item.formigres_titulo || item.descricao;
+      const titulo = itemTitulo(item);
       const cod = item.codigo_tintao;
       const qty = getQty(cod);
       const pack = fmtEmbalagemText(item);
@@ -4454,7 +4462,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         if (sub) totalValor += sub;
         const imgs = getGaleria(item);
         const img = imgs[0]?.url || '';
-        const titulo = item.formigres_titulo || item.descricao;
+        const titulo = itemTitulo(item);
         const rowData = { item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl: emb.cxpl, sub };
         bodyRows.push(renderPedidoTableRow(rowData, null, null));
         cardRows.push(renderPedidoCard(rowData));
@@ -4606,7 +4614,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         if (sub) totalValor += sub;
         const imgs = getGaleria(item);
         const img = imgs[0]?.url || '';
-        const titulo = item.formigres_titulo || item.descricao;
+        const titulo = itemTitulo(item);
         const rowData = { item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl: emb.cxpl, sub };
         cards.push(renderPedidoCard(rowData, { pdf: true, thumbs }));
       }

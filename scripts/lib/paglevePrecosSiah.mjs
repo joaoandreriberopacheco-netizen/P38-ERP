@@ -5,7 +5,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { stripAccents } from './formigresCatalog.mjs';
 
-const DEFAULT_JSON = path.join(process.cwd(), 'files', 'pagleve', 'precos-siah-fornecedor.json');
+const ROOT = process.cwd();
+const PRE_OS_JSON = path.join(ROOT, 'files', 'pagleve', 'precos-pre-os.json');
+const LEGACY_JSON = path.join(ROOT, 'files', 'pagleve', 'precos-siah-fornecedor.json');
+
+function defaultPrecosJsonPath() {
+  if (process.env.PAGLEVE_PRECOS_JSON && fs.existsSync(process.env.PAGLEVE_PRECOS_JSON)) {
+    return process.env.PAGLEVE_PRECOS_JSON;
+  }
+  if (fs.existsSync(PRE_OS_JSON)) return PRE_OS_JSON;
+  return LEGACY_JSON;
+}
 
 export function normDescKey(s) {
   return stripAccents(String(s || ''))
@@ -15,20 +25,20 @@ export function normDescKey(s) {
     .trim();
 }
 
-export function loadPrecosSiah(jsonPath = DEFAULT_JSON) {
+export function loadPrecosSiah(jsonPath = defaultPrecosJsonPath()) {
   if (!fs.existsSync(jsonPath)) return null;
   const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
   const byCode = new Map();
   const list = [];
   for (const row of data.itens || []) {
-    const cod = String(row.codigo_siah || '');
+    const cod = String(row.codigo_siah || row.codigo_loja || '');
     if (!cod) continue;
     if (!byCode.has(cod)) {
       byCode.set(cod, row);
       list.push(row);
     }
   }
-  return { byCode, list, meta: data };
+  return { byCode, list, meta: data, path: jsonPath };
 }
 
 /**
@@ -39,7 +49,11 @@ export function resolvePrecoSiah(item, precos) {
   const cod = String(item.codigo_tintao || item.referencia || item.codigo || '').trim();
   if (/^\d{4,6}$/.test(cod) && precos.byCode.has(cod)) {
     const r = precos.byCode.get(cod);
-    return { preco_m2: r.preco_varejo_m2, codigo_siah: cod, fonte: 'siah_codigo' };
+  if (/^\d{4,6}$/.test(cod) && precos.byCode.has(cod)) {
+    const r = precos.byCode.get(cod);
+    const fonte = precos.meta?.tipo === 'pre_os' ? 'pre_os_codigo' : 'siah_codigo';
+    return { preco_m2: r.preco_varejo_m2, codigo_siah: cod, fonte };
+  }
   }
 
   const fmt = normDescKey((item.formato || '').replace(/x/gi, 'X'));
