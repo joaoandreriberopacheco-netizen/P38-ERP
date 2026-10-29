@@ -135,6 +135,7 @@ export function parse510EstoqueText(text, meta) {
     let descricao = m[3].replace(/\s+/g, ' ').trim();
     descricao = descricao.replace(MARCA_TAIL_RE, '').trim();
     descricao = descricao.replace(/\s+\d[\d.,]*\s*$/, '').trim();
+    if (/^\d{5}$/.test(descricao)) descricao = '';
     items.push({
       codigo_loja: m[1],
       codigo_barras: m[2],
@@ -191,8 +192,20 @@ export function inferFabricanteFromDescricao(descricao = '') {
   return { fabricante_grupo: '', marca_catalogo: '' };
 }
 
+/** Descrição ERP: PRE_OS costuma ser completa; PDF 510 Formigres às vezes traz só outro código. */
+export function pickDescricaoErp(pre, marca510) {
+  const fromPre = String(pre?.descricao || '').replace(/\s+/g, ' ').trim();
+  const from510 = String(marca510?.descricao || '').replace(/\s+/g, ' ').trim();
+  const ok = (s) => s.length >= 12 && !/^\d{5}$/.test(s) && /PISO|REV\.|REVESTIMENTO/i.test(s);
+  if (ok(fromPre)) return fromPre;
+  if (ok(from510)) return from510;
+  if (fromPre && !/^\d{5}$/.test(fromPre)) return fromPre;
+  if (from510 && !/^\d{5}$/.test(from510)) return from510;
+  return fromPre || from510;
+}
+
 export function rowFromPreOsCross(pre, marca510) {
-  const descricao = (marca510?.descricao || pre.descricao).replace(/\s+/g, ' ').trim();
+  const descricao = pickDescricaoErp(pre, marca510);
   const codigo = pre.codigo_loja;
   const rx = raioXProdutoDescricao(codigo, descricao);
   let formato = resolveFormatoPagLeve(descricao, rx.formato || pre.formato_raw) || rx.formato || pre.formato_raw;

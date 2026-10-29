@@ -291,7 +291,10 @@ async function tryFormigres(row, snap) {
   if (!temNomeComercial(row) && !nome) {
     return { reason: 'sem_nome', sites_consultados: 'formigres.com.br' };
   }
-  const desc = nome ? `${row.formato} ${nome}` : row.descricao_original || '';
+  const desc =
+    row.descricao_erp ||
+    row.descricao_original ||
+    (nome ? `${row.formato || ''} ${nome}`.trim() : '');
   const { match, score, reason } = findInFormigresSnapshot(snap, desc, {
     minScore: 32,
     requireFormato: true,
