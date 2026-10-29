@@ -14,7 +14,6 @@ import { extractImagensFromDetalhe, fetchProdutoDetalhe } from '../lib/formigres
 import { extractImagensFromProduto } from '../lib/carmeloFiorCatalog.mjs';
 import { loadSnapshotFromFile } from '../lib/formigresSnapshot.mjs';
 import { dedupeFormigresGemeas } from '../lib/formigresGemeas.mjs';
-import { referenciaRochaprimeCatalogo, referenciaRochaprimeErp } from '../lib/raioXProdutoDescricao.mjs';
 import { REGIME_COMPRADOR_UF_LIST, buildSuframaClientJs, isRegimeCompradorUf } from '../lib/catalogoSuframa.mjs';
 import {
   buildCatalogTourClientJs,
@@ -3725,11 +3724,27 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       }
       return item.formigres_titulo || item.descricao || '';
     }
+    function referenciaRochaprimeErpCliente(descricao) {
+      const raw = String(descricao || '');
+      if (!/ROCHAPRIME|ROCHAMAXX|ROCHAFORTE/i.test(raw)) return '';
+      const m = raw.match(/\\b(PR|R)(\\d{3,})\\b/i);
+      if (!m) return '';
+      return (m[1] + m[2]).toUpperCase();
+    }
+    function referenciaRochaprimeCatalogoCliente(descricao) {
+      const erp = referenciaRochaprimeErpCliente(descricao);
+      if (!erp) return '';
+      const m = erp.match(/^(PR|R)(\\d+)$/i);
+      if (!m) return erp;
+      let digits = m[2];
+      if (digits.length >= 5 && digits.endsWith('1')) digits = digits.slice(0, -1);
+      return (m[1] + digits).toUpperCase();
+    }
     function pagLeveBuscaExtra(item) {
       if (CATALOG_SKIN !== 'pagleve') return '';
       let extra = String(item.descricao_erp || '');
-      const erp = referenciaRochaprimeErp(extra);
-      const cat = referenciaRochaprimeCatalogo(extra);
+      const erp = referenciaRochaprimeErpCliente(extra);
+      const cat = referenciaRochaprimeCatalogoCliente(extra);
       if (cat && erp && cat !== erp) extra += ' ' + cat;
       return extra;
     }
