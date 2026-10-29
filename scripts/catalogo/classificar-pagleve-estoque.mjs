@@ -172,8 +172,8 @@ function parseImagensJson(raw, imagemUrl) {
   return out;
 }
 
-function mapStatus(status) {
-  if (status === 'confirmado_site') return 'encontrado';
+function mapStatus(status, row = {}) {
+  if (status === 'confirmado_site' || String(row.evidencia_url || '').trim()) return 'encontrado';
   if (status === 'indicacao_joao' || status === 'pendente') return 'indicacao';
   return 'sem_ficha';
 }
@@ -290,7 +290,7 @@ function main() {
       rotulo: classifPl.rotulo,
       confianca: classifPl.confianca,
       motivo: classifPl.motivo,
-      match_status: mapStatus(row.status),
+      match_status: mapStatus(row.status, row),
       match_score: row.status === 'confirmado_site' ? 100 : 0,
       formigres_id: (String(row.evidencia_url || '').match(/formigres\.com\.br\/produto\/(\d+)/i) || [])[1] || '',
       formigres_titulo: catalogoSubtitulo,

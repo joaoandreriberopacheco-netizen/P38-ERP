@@ -1,8 +1,8 @@
 {
-  "geradoEm": "2026-10-29T15:53:45.787Z",
+  "geradoEm": "2026-10-29T16:15:39.283Z",
   "fonte": "/workspace/files/pagleve/fonte/PRE_OS_0973.pdf",
   "tipo": "pre_os",
-  "count": 185,
+  "count": 264,
   "itens": [
     {
       "codigo_siah": "30218",
@@ -131,6 +131,12 @@
       "descricao_norm": "PISO 45X45 GLACIAL BR 45 A 2 PEI LE JUNTA 5MM"
     },
     {
+      "codigo_siah": "28693",
+      "descricao": "PISO 45X45 IMBUIA M-45 \"A\" (2) PEI LC JUNTA 5MM",
+      "preco_varejo_m2": 32.9,
+      "descricao_norm": "PISO 45X45 IMBUIA M 45 A 2 PEI LC JUNTA 5MM"
+    },
+    {
       "codigo_siah": "34288",
       "descricao": "PISO 45X45 JACARANDA M 45 PE \"A\" (2) PEI LC JUNTA 5MM",
       "preco_varejo_m2": 32.9,
@@ -167,16 +173,46 @@
       "descricao_norm": "PISO 45X45 PRETO 45110 A 2 04 ESM BRILH BOLD PEI LB"
     },
     {
+      "codigo_siah": "27532",
+      "descricao": "PISO 45X45 ROCHEDO-45 HD \"A\" (2) PEI LD JUNTA 5MM",
+      "preco_varejo_m2": 32.9,
+      "descricao_norm": "PISO 45X45 ROCHEDO 45 HD A 2 PEI LD JUNTA 5MM"
+    },
+    {
       "codigo_siah": "33246",
       "descricao": "PISO 45X45 ROCHOSA -45 HD \"A\" (2) PEI LD JUNTA 5MM",
       "preco_varejo_m2": 31,
       "descricao_norm": "PISO 45X45 ROCHOSA 45 HD A 2 PEI LD JUNTA 5MM"
     },
     {
+      "codigo_siah": "27010",
+      "descricao": "PISO 45X45 STONE45 \"A\" (2) PEI LD JUNTA 5MM",
+      "preco_varejo_m2": 33.45,
+      "descricao_norm": "PISO 45X45 STONE45 A 2 PEI LD JUNTA 5MM"
+    },
+    {
+      "codigo_siah": "28809",
+      "descricao": "PISO 45X45 TRAFEGO BG-45 \"A\" (2) PEI LE JUNTA 5MM",
+      "preco_varejo_m2": 33.45,
+      "descricao_norm": "PISO 45X45 TRAFEGO BG 45 A 2 PEI LE JUNTA 5MM"
+    },
+    {
+      "codigo_siah": "27551",
+      "descricao": "PISO 45X45 TRAFEGO-45 \"A\" (2) PEI LE JUNTA 5MM",
+      "preco_varejo_m2": 32.9,
+      "descricao_norm": "PISO 45X45 TRAFEGO 45 A 2 PEI LE JUNTA 5MM"
+    },
+    {
       "codigo_siah": "27737",
       "descricao": "PISO 45X45 TREVISO45 \"A\" (2) PEI LD JUNTA 5MM",
       "preco_varejo_m2": 33.45,
       "descricao_norm": "PISO 45X45 TREVISO45 A 2 PEI LD JUNTA 5MM"
+    },
+    {
+      "codigo_siah": "27683",
+      "descricao": "PISO 45X45 TROIA-45 \"A\" (2) PEI LE JUNTA 5MM",
+      "preco_varejo_m2": 33.45,
+      "descricao_norm": "PISO 45X45 TROIA 45 A 2 PEI LE JUNTA 5MM"
     },
     {
       "codigo_siah": "26769",
@@ -209,6 +245,24 @@
       "descricao_norm": "PISO 50X50 ARTICO 50 A 2 5 PEI LE JUNTA 5MM"
     },
     {
+      "codigo_siah": "27950",
+      "descricao": "PISO 50X50 BEGE-50 \"A\" (2,5) PEI LD JUNTA 5MM",
+      "preco_varejo_m2": 32.9,
+      "descricao_norm": "PISO 50X50 BEGE 50 A 2 5 PEI LD JUNTA 5MM"
+    },
+    {
+      "codigo_siah": "30179",
+      "descricao": "PISO 50X50 BIANCO 50 \"A\" (2,5) PEI LD JUNTA 5MM",
+      "preco_varejo_m2": 32.9,
+      "descricao_norm": "PISO 50X50 BIANCO 50 A 2 5 PEI LD JUNTA 5MM"
+    },
+    {
+      "codigo_siah": "27530",
+      "descricao": "PISO 50X50 BRANCO-50 \"A\" (2,5) PEI LD JUNTA 5MM",
+      "preco_varejo_m2": 32.9,
+      "descricao_norm": "PISO 50X50 BRANCO 50 A 2 5 PEI LD JUNTA 5MM"
+    },
+    {
       "codigo_siah": "31179",
       "descricao": "PISO 50X50 CAIRO HD-50 \"A\" (2,5) PEI LC JUNTA 5MM",
       "preco_varejo_m2": 32.9,
@@ -221,16 +275,70 @@
       "descricao_norm": "PISO 50X50 CAL ADA HD 50 A 2 5 PEI LD JUNTA 5MM"
     },
     {
+      "codigo_siah": "31344",
+      "descricao": "PISO 50X50 CALENDULA HD-50 \"A\" (2,5) PEI LD JT 5MM",
+      "preco_varejo_m2": 32.9,
+      "descricao_norm": "PISO 50X50 CALENDULA HD 50 A 2 5 PEI LD JT 5MM"
+    },
+    {
+      "codigo_siah": "31364",
+      "descricao": "PISO 50X50 CORUMBA PE \"A\" (2,5) PEI LD JUNTA 5MM",
+      "preco_varejo_m2": 32.9,
+      "descricao_norm": "PISO 50X50 CORUMBA PE A 2 5 PEI LD JUNTA 5MM"
+    },
+    {
+      "codigo_siah": "30941",
+      "descricao": "PISO 50X50 DAKOTA BG 50 (2,5) PEI LE JUNTA 5MM",
+      "preco_varejo_m2": 32.9,
+      "descricao_norm": "PISO 50X50 DAKOTA BG 50 2 5 PEI LE JUNTA 5MM"
+    },
+    {
+      "codigo_siah": "30942",
+      "descricao": "PISO 50X50 DAKOTA BR 50 (2,5) PEI LE JUNTA 5MM",
+      "preco_varejo_m2": 32.9,
+      "descricao_norm": "PISO 50X50 DAKOTA BR 50 2 5 PEI LE JUNTA 5MM"
+    },
+    {
       "codigo_siah": "32182",
       "descricao": "PISO 50X50 DISTRITO CZ HD 50 (2,5) PEI LE JUNTA 5MM",
       "preco_varejo_m2": 32.9,
       "descricao_norm": "PISO 50X50 DISTRITO CZ HD 50 2 5 PEI LE JUNTA 5MM"
     },
     {
+      "codigo_siah": "26643",
+      "descricao": "PISO 50X50 DUCALE-50 HD \"A\" (2,5) PEI LD JUNTA 5MM",
+      "preco_varejo_m2": 32.9,
+      "descricao_norm": "PISO 50X50 DUCALE 50 HD A 2 5 PEI LD JUNTA 5MM"
+    },
+    {
+      "codigo_siah": "27528",
+      "descricao": "PISO 50X50 ENDURO BEGE-50 \"A\" (2,5) PEI LE JUNTA 5MM",
+      "preco_varejo_m2": 32.9,
+      "descricao_norm": "PISO 50X50 ENDURO BEGE 50 A 2 5 PEI LE JUNTA 5MM"
+    },
+    {
+      "codigo_siah": "31743",
+      "descricao": "PISO 50X50 ENDURO CINZA-50 \"A\" (2,5) PEI LE JUNTA 5MM",
+      "preco_varejo_m2": 32.9,
+      "descricao_norm": "PISO 50X50 ENDURO CINZA 50 A 2 5 PEI LE JUNTA 5MM"
+    },
+    {
+      "codigo_siah": "29062",
+      "descricao": "PISO 50X50 GANTE BEGE-50 \"A\" (2,5) PEI LD JUNTA 5MM",
+      "preco_varejo_m2": 32.9,
+      "descricao_norm": "PISO 50X50 GANTE BEGE 50 A 2 5 PEI LD JUNTA 5MM"
+    },
+    {
       "codigo_siah": "26774",
       "descricao": "PISO 50X50 GIARDINO CL-50 HD \"A\" (2,5) PEI LD JUNTA 5MM",
       "preco_varejo_m2": 32.9,
       "descricao_norm": "PISO 50X50 GIARDINO CL 50 HD A 2 5 PEI LD JUNTA 5MM"
+    },
+    {
+      "codigo_siah": "27531",
+      "descricao": "PISO 50X50 MADEIRO-50 HD \"A\" (2,5) PEI LD JUNTA 5MM",
+      "preco_varejo_m2": 32.9,
+      "descricao_norm": "PISO 50X50 MADEIRO 50 HD A 2 5 PEI LD JUNTA 5MM"
     },
     {
       "codigo_siah": "35573",
@@ -251,10 +359,22 @@
       "descricao_norm": "PISO 50X50 MOZART GRAY HD50 A 2 50 BOLD MATE PEI LD"
     },
     {
+      "codigo_siah": "26646",
+      "descricao": "PISO 50X50 MURANO HD-50 \"A\" (2,5) PEI LD JUNTA 5MM",
+      "preco_varejo_m2": 32.9,
+      "descricao_norm": "PISO 50X50 MURANO HD 50 A 2 5 PEI LD JUNTA 5MM"
+    },
+    {
       "codigo_siah": "32183",
       "descricao": "PISO 50X50 NATURALE MR HD 50 (2,5) PEI LC JUNTA 5MM",
       "preco_varejo_m2": 32.9,
       "descricao_norm": "PISO 50X50 NATURALE MR HD 50 2 5 PEI LC JUNTA 5MM"
+    },
+    {
+      "codigo_siah": "26793",
+      "descricao": "PISO 50X50 PORCELANAT CZ-50 \"A\" (2,5) PEI LD JUNTA 5MM",
+      "preco_varejo_m2": 32.9,
+      "descricao_norm": "PISO 50X50 PORCELANAT CZ 50 A 2 5 PEI LD JUNTA 5MM"
     },
     {
       "codigo_siah": "26798",
@@ -275,10 +395,28 @@
       "descricao_norm": "PISO 50X50 RAVEL CL HD 50 A 2 5 PEI 4"
     },
     {
+      "codigo_siah": "33473",
+      "descricao": "PISO 50X50 SIENA HD-50 \"A\" (2,5) PEI LD JUNTA 5MM",
+      "preco_varejo_m2": 32.9,
+      "descricao_norm": "PISO 50X50 SIENA HD 50 A 2 5 PEI LD JUNTA 5MM"
+    },
+    {
       "codigo_siah": "33042",
       "descricao": "PISO 50X50 STILUS BLACK HD-50 \"A\" (2,5) PEI LB JUNTA 5MM",
       "preco_varejo_m2": 32.9,
       "descricao_norm": "PISO 50X50 STILUS BLACK HD 50 A 2 5 PEI LB JUNTA 5MM"
+    },
+    {
+      "codigo_siah": "32185",
+      "descricao": "PISO 50X50 STREET HD 50 (2,5) PEI LD JUNTA 5MM",
+      "preco_varejo_m2": 32.9,
+      "descricao_norm": "PISO 50X50 STREET HD 50 2 5 PEI LD JUNTA 5MM"
+    },
+    {
+      "codigo_siah": "28470",
+      "descricao": "PISO 50X50 TABOEIRO HD-50 \"A\" (2,5) PEI LD JUNTA 5MM",
+      "preco_varejo_m2": 32.9,
+      "descricao_norm": "PISO 50X50 TABOEIRO HD 50 A 2 5 PEI LD JUNTA 5MM"
     },
     {
       "codigo_siah": "35493",
@@ -287,10 +425,34 @@
       "descricao_norm": "PISO 50X50 TOZETO HD 50 A 2 5 BOLD MATE PEI LD JUNTA 5MM"
     },
     {
+      "codigo_siah": "32159",
+      "descricao": "PISO 50X50 TRAFEGO 50 PE \"A\" (2,5) PEI LE",
+      "preco_varejo_m2": 32.9,
+      "descricao_norm": "PISO 50X50 TRAFEGO 50 PE A 2 5 PEI LE"
+    },
+    {
+      "codigo_siah": "30940",
+      "descricao": "PISO 50X50 WOOD HD-50 (2,5) PEI LD JUNTA 5MM",
+      "preco_varejo_m2": 32.9,
+      "descricao_norm": "PISO 50X50 WOOD HD 50 2 5 PEI LD JUNTA 5MM"
+    },
+    {
       "codigo_siah": "35601",
       "descricao": "PISO 54X54 CLAIR HD \"A\"(2,62) BOLD BRILHANTE PEI:LB 5MM",
       "preco_varejo_m2": 33.9,
       "descricao_norm": "PISO 54X54 CLAIR HD A 2 62 BOLD BRILHANTE PEI LB 5MM"
+    },
+    {
+      "codigo_siah": "28929",
+      "descricao": "PISO 54X54 CORDOVA HD \"A\" (2,62) PEI LB JUNTA 5MM",
+      "preco_varejo_m2": 32.9,
+      "descricao_norm": "PISO 54X54 CORDOVA HD A 2 62 PEI LB JUNTA 5MM"
+    },
+    {
+      "codigo_siah": "28931",
+      "descricao": "PISO 54X54 FLORENCE HD \"A\" (2,62) PEI LB JUNTA 5MM",
+      "preco_varejo_m2": 33.9,
+      "descricao_norm": "PISO 54X54 FLORENCE HD A 2 62 PEI LB JUNTA 5MM"
     },
     {
       "codigo_siah": "27261",
@@ -299,10 +461,40 @@
       "descricao_norm": "PISO 54X54 GRETNA A 2 62 PEI LD JUNTA 5MM"
     },
     {
+      "codigo_siah": "29215",
+      "descricao": "PISO 54X54 OLIMPO AD \"A\" (2,62) PEI LE JUNTA 5MM BOLD",
+      "preco_varejo_m2": 33.9,
+      "descricao_norm": "PISO 54X54 OLIMPO AD A 2 62 PEI LE JUNTA 5MM BOLD"
+    },
+    {
+      "codigo_siah": "26548",
+      "descricao": "PISO 54X54 RIVIERA BRANCO BRILHO\"A\" (2,62) PEI LB JUNTA 5MM",
+      "preco_varejo_m2": 33.9,
+      "descricao_norm": "PISO 54X54 RIVIERA BRANCO BRILHO A 2 62 PEI LB JUNTA 5MM"
+    },
+    {
+      "codigo_siah": "34545",
+      "descricao": "PISO 57X57 ALVOR HD \"A\"(2,59) ACET BOLD PEI LC JUNTA 5MM",
+      "preco_varejo_m2": 32,
+      "descricao_norm": "PISO 57X57 ALVOR HD A 2 59 ACET BOLD PEI LC JUNTA 5MM"
+    },
+    {
+      "codigo_siah": "33200",
+      "descricao": "PISO 57X57 BRANCO NEVE \"A\" (2,59) BOLD PEI LB JUNTA 5MM",
+      "preco_varejo_m2": 32,
+      "descricao_norm": "PISO 57X57 BRANCO NEVE A 2 59 BOLD PEI LB JUNTA 5MM"
+    },
+    {
       "codigo_siah": "34158",
       "descricao": "PISO 57X57 CLEAN \"A\" (2,59) PEI LB JUNTA 5MM",
       "preco_varejo_m2": 32,
       "descricao_norm": "PISO 57X57 CLEAN A 2 59 PEI LB JUNTA 5MM"
+    },
+    {
+      "codigo_siah": "33939",
+      "descricao": "PISO 57X57 DRITTO BEGE MRE HD \"A\" (2,59) PEI LE JUNTA 5MM",
+      "preco_varejo_m2": 32,
+      "descricao_norm": "PISO 57X57 DRITTO BEGE MRE HD A 2 59 PEI LE JUNTA 5MM"
     },
     {
       "codigo_siah": "32147",
@@ -315,6 +507,12 @@
       "descricao": "PISO 57X57 NOBLE A HD\"A\"(2,59)PEI LB JUNTA 5MM",
       "preco_varejo_m2": 32,
       "descricao_norm": "PISO 57X57 NOBLE A HD A 2 59 PEI LB JUNTA 5MM"
+    },
+    {
+      "codigo_siah": "34639",
+      "descricao": "PISO 57X57 SELENA BEGE HD\"A\"(2,59) ESM BOLD PEI LB JUNTA 5MM",
+      "preco_varejo_m2": 32,
+      "descricao_norm": "PISO 57X57 SELENA BEGE HD A 2 59 ESM BOLD PEI LB JUNTA 5MM"
     },
     {
       "codigo_siah": "34554",
@@ -407,10 +605,22 @@
       "descricao_norm": "PISO 60X120 GRAN VENATO BG RT POLIDO A 2 16 PEI LB EXTRA"
     },
     {
+      "codigo_siah": "32826",
+      "descricao": "PISO 60X120 GRAN VENATO CZ RT POLIDO \"A\"(2,16) PEI LB EXTRA 60X120 PISO 60X120 TIMBO MATE \"A\"(2,16) RT PEI LD JUNTA 2MM",
+      "preco_varejo_m2": 64.7,
+      "descricao_norm": "PISO 60X120 GRAN VENATO CZ RT POLIDO A 2 16 PEI LB EXTRA 60X120 PISO 60X120 TIMBO MATE A 2 16 RT PEI LD JUNTA 2MM"
+    },
+    {
       "codigo_siah": "28262",
       "descricao": "PISO 60X120 GRAN VENATO CZ RT POLIDO \"A\"(2,16) PEI LB EXTRA 60X120 PISO 60X120 TIMBO MATE \"A\"(2,16) RT PEI LD JUNTA 2MM",
       "preco_varejo_m2": 64.7,
       "descricao_norm": "PISO 60X120 GRAN VENATO CZ RT POLIDO A 2 16 PEI LB EXTRA 60X120 PISO 60X120 TIMBO MATE A 2 16 RT PEI LD JUNTA 2MM"
+    },
+    {
+      "codigo_siah": "35455",
+      "descricao": "PISO 60X60 CEMENT CLEAR \"A\" (2,15) RET MATE PEI: LD LD 60X60 PISO 60X60 CORONHA \"A\" (2,15) RET MATE PEI: LD",
+      "preco_varejo_m2": 37.5,
+      "descricao_norm": "PISO 60X60 CEMENT CLEAR A 2 15 RET MATE PEI LD LD 60X60 PISO 60X60 CORONHA A 2 15 RET MATE PEI LD"
     },
     {
       "codigo_siah": "35456",
@@ -426,9 +636,9 @@
     },
     {
       "codigo_siah": "35397",
-      "descricao": "PISO 60X60 GRAFFIATO BG EXT \"A\" (2,15) RET PEI: LE 35454 LE 60X60 PISO 60X60 MILANO CZ \"A\" (2,15) RET GRANILHADO PEI: LE",
+      "descricao": "PISO 60X60 GRAFFIATO BG EXT \"A\" (2,15) RET PEI: LE LE 60X60 PISO 60X60 MILANO CZ \"A\" (2,15) RET GRANILHADO PEI: LE",
       "preco_varejo_m2": 37.5,
-      "descricao_norm": "PISO 60X60 GRAFFIATO BG EXT A 2 15 RET PEI LE 35454 LE 60X60 PISO 60X60 MILANO CZ A 2 15 RET GRANILHADO PEI LE"
+      "descricao_norm": "PISO 60X60 GRAFFIATO BG EXT A 2 15 RET PEI LE LE 60X60 PISO 60X60 MILANO CZ A 2 15 RET GRANILHADO PEI LE"
     },
     {
       "codigo_siah": "35454",
@@ -444,9 +654,9 @@
     },
     {
       "codigo_siah": "35447",
-      "descricao": "35040 LD 61X116 PISO 61X116 BRECCIA LUX HD ROCHAMAXX (2,83) RET PLD PEI LC",
+      "descricao": "LD 61X116 PISO 61X116 BRECCIA LUX HD ROCHAMAXX (2,83) RET PLD PEI LC",
       "preco_varejo_m2": 61.9,
-      "descricao_norm": "35040 LD 61X116 PISO 61X116 BRECCIA LUX HD ROCHAMAXX 2 83 RET PLD PEI LC"
+      "descricao_norm": "LD 61X116 PISO 61X116 BRECCIA LUX HD ROCHAMAXX 2 83 RET PLD PEI LC"
     },
     {
       "codigo_siah": "35040",
@@ -456,9 +666,9 @@
     },
     {
       "codigo_siah": "33251",
-      "descricao": "PISO 61X116 DAMASCO HD ROCHAMAXX (2,83)RT POLIDO PEI LC 35449 LC 61X116 PISO 61X116 DOMMUS HD ROCHAMAXX (2,83) RET POLIDO PEI LC",
+      "descricao": "PISO 61X116 DAMASCO HD ROCHAMAXX (2,83)RT POLIDO PEI LC LC 61X116 PISO 61X116 DOMMUS HD ROCHAMAXX (2,83) RET POLIDO PEI LC",
       "preco_varejo_m2": 62.9,
-      "descricao_norm": "PISO 61X116 DAMASCO HD ROCHAMAXX 2 83 RT POLIDO PEI LC 35449 LC 61X116 PISO 61X116 DOMMUS HD ROCHAMAXX 2 83 RET POLIDO PEI LC"
+      "descricao_norm": "PISO 61X116 DAMASCO HD ROCHAMAXX 2 83 RT POLIDO PEI LC LC 61X116 PISO 61X116 DOMMUS HD ROCHAMAXX 2 83 RET POLIDO PEI LC"
     },
     {
       "codigo_siah": "35449",
@@ -474,9 +684,9 @@
     },
     {
       "codigo_siah": "33557",
-      "descricao": "35453 LD 61X116 PISO 61X116 MARMO ALLURE HD ROCHAMAXX (2,83)RT POLIDO PEI LC",
+      "descricao": "LD 61X116 PISO 61X116 MARMO ALLURE HD ROCHAMAXX (2,83)RT POLIDO PEI LC",
       "preco_varejo_m2": 61.9,
-      "descricao_norm": "35453 LD 61X116 PISO 61X116 MARMO ALLURE HD ROCHAMAXX 2 83 RT POLIDO PEI LC"
+      "descricao_norm": "LD 61X116 PISO 61X116 MARMO ALLURE HD ROCHAMAXX 2 83 RT POLIDO PEI LC"
     },
     {
       "codigo_siah": "35453",
@@ -489,6 +699,12 @@
       "descricao": "PISO 61X116 ORGANIC BLACK HD ROCHAMAXX (2,83) RET PLD PEI LC",
       "preco_varejo_m2": 61.9,
       "descricao_norm": "PISO 61X116 ORGANIC BLACK HD ROCHAMAXX 2 83 RET PLD PEI LC"
+    },
+    {
+      "codigo_siah": "35452",
+      "descricao": "PISO 61X116 ORGANIC BLUE HD ROCHAMAXX (2,83) RET PLD PEI LC",
+      "preco_varejo_m2": 61.9,
+      "descricao_norm": "PISO 61X116 ORGANIC BLUE HD ROCHAMAXX 2 83 RET PLD PEI LC"
     },
     {
       "codigo_siah": "31201",
@@ -519,6 +735,12 @@
       "descricao": "PISO 61X61 BRANCO-61 \"A\" (2,23) PEI LD JUNTA 5MM",
       "preco_varejo_m2": 34.5,
       "descricao_norm": "PISO 61X61 BRANCO 61 A 2 23 PEI LD JUNTA 5MM"
+    },
+    {
+      "codigo_siah": "26094",
+      "descricao": "PISO 61X61 CAMBRIDJE BG EXT HD-61 \"A\" (2,23) PEI LD",
+      "preco_varejo_m2": 34.5,
+      "descricao_norm": "PISO 61X61 CAMBRIDJE BG EXT HD 61 A 2 23 PEI LD"
     },
     {
       "codigo_siah": "26987",
@@ -575,6 +797,12 @@
       "descricao_norm": "PISO 66X66 GOLD RT POLIDO A 2 18 PEI LB JUNTA 2MM"
     },
     {
+      "codigo_siah": "27709",
+      "descricao": "PISO 66X66 GRAFITE MATE RT \"A\" (2,18) PEI LD JUNTA 2MM",
+      "preco_varejo_m2": 43.5,
+      "descricao_norm": "PISO 66X66 GRAFITE MATE RT A 2 18 PEI LD JUNTA 2MM"
+    },
+    {
       "codigo_siah": "31035",
       "descricao": "PISO 66X66 MARMI DELUX RT POLIDO\"A\" (2,18)PEI LB JUNTA 2MM",
       "preco_varejo_m2": 55.9,
@@ -623,10 +851,22 @@
       "descricao_norm": "PISO 70X70 CINZA URBANO ROCHAPRIME A 3 43 RT MATE PEI LD"
     },
     {
+      "codigo_siah": "33995",
+      "descricao": "PISO 70X70 METROPLE ROCHAPRIME \"A\" (3,43)RT MATE PEI LD",
+      "preco_varejo_m2": 39.9,
+      "descricao_norm": "PISO 70X70 METROPLE ROCHAPRIME A 3 43 RT MATE PEI LD"
+    },
+    {
       "codigo_siah": "34427",
       "descricao": "PISO 70X70 PEDRA NOBRE ROCHAPRIME \"A\" (3,43)RT MATE PEI LD",
       "preco_varejo_m2": 41,
       "descricao_norm": "PISO 70X70 PEDRA NOBRE ROCHAPRIME A 3 43 RT MATE PEI LD"
+    },
+    {
+      "codigo_siah": "33558",
+      "descricao": "PISO 70X70 PR70201 ROCHAPRIME \"A\" (3,43)RT POLIDO PEI LC",
+      "preco_varejo_m2": 54.9,
+      "descricao_norm": "PISO 70X70 PR70201 ROCHAPRIME A 3 43 RT POLIDO PEI LC"
     },
     {
       "codigo_siah": "29995",
@@ -635,16 +875,46 @@
       "descricao_norm": "PISO 70X70 PR70261 ROCHAPRIME A 3 43 RT POLIDO PEI LC"
     },
     {
+      "codigo_siah": "30059",
+      "descricao": "PISO 70X70 PR70671 ROCHAPRIME \"A\" (3,43)RT POLIDO PEI LC",
+      "preco_varejo_m2": 54.9,
+      "descricao_norm": "PISO 70X70 PR70671 ROCHAPRIME A 3 43 RT POLIDO PEI LC"
+    },
+    {
       "codigo_siah": "35043",
       "descricao": "PISO 70X70 PR7068 ROCHAPRIME \"A\" (3,43) RET PLD PEI LC",
       "preco_varejo_m2": 54.9,
       "descricao_norm": "PISO 70X70 PR7068 ROCHAPRIME A 3 43 RET PLD PEI LC"
     },
     {
+      "codigo_siah": "31721",
+      "descricao": "PISO 70X70 PR70811 ROCHAPRIME \"A\" (3,43)RT POLIDO PEI LC",
+      "preco_varejo_m2": 54.9,
+      "descricao_norm": "PISO 70X70 PR70811 ROCHAPRIME A 3 43 RT POLIDO PEI LC"
+    },
+    {
+      "codigo_siah": "33205",
+      "descricao": "PISO 70X70 PR70961 ROCHAPRIME \"A\" (3,43)RT POLIDO PEI LC",
+      "preco_varejo_m2": 54.9,
+      "descricao_norm": "PISO 70X70 PR70961 ROCHAPRIME A 3 43 RT POLIDO PEI LC"
+    },
+    {
+      "codigo_siah": "34137",
+      "descricao": "PISO 70X70 PR70971 ROCHAPRIME \"A\" (3,43)RT POLIDO PEI LC",
+      "preco_varejo_m2": 54.9,
+      "descricao_norm": "PISO 70X70 PR70971 ROCHAPRIME A 3 43 RT POLIDO PEI LC"
+    },
+    {
       "codigo_siah": "35638",
       "descricao": "PISO 70X70 R7005 ROCHAPRIME \"A\" (3,43) RET ACET PEI: LD",
       "preco_varejo_m2": 41,
       "descricao_norm": "PISO 70X70 R7005 ROCHAPRIME A 3 43 RET ACET PEI LD"
+    },
+    {
+      "codigo_siah": "33891",
+      "descricao": "PISO 70X70 R70071 ROCHAPRIME \"A\" (3,43)RT GRANILHADO PEI LE",
+      "preco_varejo_m2": 39.9,
+      "descricao_norm": "PISO 70X70 R70071 ROCHAPRIME A 3 43 RT GRANILHADO PEI LE"
     },
     {
       "codigo_siah": "35046",
@@ -657,6 +927,12 @@
       "descricao": "PISO 70X70 R7042 HD ROCHAPRIME \"A\"(3,43) RT GRANIL PEI LE",
       "preco_varejo_m2": 42,
       "descricao_norm": "PISO 70X70 R7042 HD ROCHAPRIME A 3 43 RT GRANIL PEI LE"
+    },
+    {
+      "codigo_siah": "31778",
+      "descricao": "PISO 70X70 R70601 ROCHAPRIME \"A\" (3,43)RT MATE PEI4",
+      "preco_varejo_m2": 41,
+      "descricao_norm": "PISO 70X70 R70601 ROCHAPRIME A 3 43 RT MATE PEI4"
     },
     {
       "codigo_siah": "35637",
@@ -689,6 +965,12 @@
       "descricao_norm": "PISO 70X70 TERRA FIRME ROCHAPRIME A 3 43 RT MATE PEI LD"
     },
     {
+      "codigo_siah": "33526",
+      "descricao": "PISO 74X74 BREDA \"A\" (2,20) POLIDO RT PEI LB",
+      "preco_varejo_m2": 54.9,
+      "descricao_norm": "PISO 74X74 BREDA A 2 20 POLIDO RT PEI LB"
+    },
+    {
       "codigo_siah": "33940",
       "descricao": "PISO 74X74 LISBOA \"A\" (2,20) POLIDO RT PEI LB",
       "preco_varejo_m2": 54.9,
@@ -707,6 +989,12 @@
       "descricao_norm": "PISO 75X75 ASPHALT A 2 25 ACETINADO RT PEI LC JUNTA 2MM"
     },
     {
+      "codigo_siah": "35509",
+      "descricao": "PISO 76X76 AVÓRIO BEGE HD \"A\"(2,88) RET ACETINADO PEI LZ",
+      "preco_varejo_m2": 43.9,
+      "descricao_norm": "PISO 76X76 AV RIO BEGE HD A 2 88 RET ACETINADO PEI LZ"
+    },
+    {
       "codigo_siah": "32325",
       "descricao": "PISO 81X81 ACAPULCO SILVER GRANILHADO RT(1,97) PEI LE JT 2MM",
       "preco_varejo_m2": 46.5,
@@ -717,6 +1005,12 @@
       "descricao": "PISO 81X81 CALACATA BIANCO RT POLIDO (1,97)PEI LB JUNTA 2MM",
       "preco_varejo_m2": 61.5,
       "descricao_norm": "PISO 81X81 CALACATA BIANCO RT POLIDO 1 97 PEI LB JUNTA 2MM"
+    },
+    {
+      "codigo_siah": "31142",
+      "descricao": "PISO 81X81 CLEANTEC GREY GRANILHADO RT(1,97) PEI LE JT 2MM",
+      "preco_varejo_m2": 46.5,
+      "descricao_norm": "PISO 81X81 CLEANTEC GREY GRANILHADO RT 1 97 PEI LE JT 2MM"
     },
     {
       "codigo_siah": "30625",
@@ -737,6 +1031,12 @@
       "descricao_norm": "PISO 81X81 CLEANTEC WHITE GRANILHAD RT 1 97 PEI LE JUNTA 2MM"
     },
     {
+      "codigo_siah": "32094",
+      "descricao": "PISO 81X81 CLEANTEC WHITE RT POLIDO (1,97) PEI LB JUNTA 2MM",
+      "preco_varejo_m2": 59.5,
+      "descricao_norm": "PISO 81X81 CLEANTEC WHITE RT POLIDO 1 97 PEI LB JUNTA 2MM"
+    },
+    {
       "codigo_siah": "31407",
       "descricao": "PISO 81X81 GOLDEN LUX MATE RT \"A\" (1,97)PEI LD JUNTA 2MM",
       "preco_varejo_m2": 46.5,
@@ -755,10 +1055,52 @@
       "descricao_norm": "PISO 81X81 GOLDEN ORO RT POLIDO A 1 97 PEI LB JUNTA 2MM"
     },
     {
+      "codigo_siah": "30623",
+      "descricao": "PISO 81X81 LOMBARDIA CINZA MATE RT (1,97)PEI LE JUNTA 2MM",
+      "preco_varejo_m2": 46.5,
+      "descricao_norm": "PISO 81X81 LOMBARDIA CINZA MATE RT 1 97 PEI LE JUNTA 2MM"
+    },
+    {
       "codigo_siah": "32654",
       "descricao": "PISO 81X81 MARMO BLUE MATE RT \"A\" (1,97)PEI JUNTA 2MM",
       "preco_varejo_m2": 46.5,
       "descricao_norm": "PISO 81X81 MARMO BLUE MATE RT A 1 97 PEI JUNTA 2MM"
+    },
+    {
+      "codigo_siah": "30884",
+      "descricao": "PISO 81X81 MARMO BLUE RT POLIDO\"A\" (1,97)PEI LB JUNTA 2MM ,",
+      "preco_varejo_m2": 61.5,
+      "descricao_norm": "PISO 81X81 MARMO BLUE RT POLIDO A 1 97 PEI LB JUNTA 2MM"
+    },
+    {
+      "codigo_siah": "30624",
+      "descricao": "PISO 81X81 PLACE BR MATE RT (1,97) PEI LD JUNTA 2MM",
+      "preco_varejo_m2": 46.5,
+      "descricao_norm": "PISO 81X81 PLACE BR MATE RT 1 97 PEI LD JUNTA 2MM"
+    },
+    {
+      "codigo_siah": "31001",
+      "descricao": "PISO 81X81 PLACE BR POLIDO RT (1,97) PEI LB JUNTA 2MM",
+      "preco_varejo_m2": 61.9,
+      "descricao_norm": "PISO 81X81 PLACE BR POLIDO RT 1 97 PEI LB JUNTA 2MM"
+    },
+    {
+      "codigo_siah": "34487",
+      "descricao": "PISO 82X82 CREMA HD ROCHAMAXX (2,70) RET PLD PEI LC",
+      "preco_varejo_m2": 59.5,
+      "descricao_norm": "PISO 82X82 CREMA HD ROCHAMAXX 2 70 RET PLD PEI LC"
+    },
+    {
+      "codigo_siah": "32646",
+      "descricao": "PISO 82X82 DAMASCO HD ROCHAMAXX (2,70)RT POLIDO PEI LC",
+      "preco_varejo_m2": 59.5,
+      "descricao_norm": "PISO 82X82 DAMASCO HD ROCHAMAXX 2 70 RT POLIDO PEI LC"
+    },
+    {
+      "codigo_siah": "31918",
+      "descricao": "PISO 82X82 BIANCO SUPREME ROCHAMAXX (2,70) RT POLIDO PEI LC",
+      "preco_varejo_m2": 59.5,
+      "descricao_norm": "PISO 82X82 BIANCO SUPREME ROCHAMAXX 2 70 RT POLIDO PEI LC"
     },
     {
       "codigo_siah": "30947",
@@ -815,6 +1157,18 @@
       "descricao_norm": "PISO 82X82 OCEANO TR ROCHAMAXX 2 70 RT POLIDO PEI LC"
     },
     {
+      "codigo_siah": "33938",
+      "descricao": "PISO 82X82 OLIMPO TR ROCHAMAXX (2,70) RT POLIDO PEI LC",
+      "preco_varejo_m2": 59.5,
+      "descricao_norm": "PISO 82X82 OLIMPO TR ROCHAMAXX 2 70 RT POLIDO PEI LC"
+    },
+    {
+      "codigo_siah": "31042",
+      "descricao": "PISO 82X82 ORO REALLE HD ROCHAMAXX (2,70)RT POLIDO PEI LC 31042",
+      "preco_varejo_m2": 59.5,
+      "descricao_norm": "PISO 82X82 ORO REALLE HD ROCHAMAXX 2 70 RT POLIDO PEI LC 31042"
+    },
+    {
       "codigo_siah": "35050",
       "descricao": "PISO 82X82 SERENA ROCHAMAXX (2,70) RET POLIDO PEI LC",
       "preco_varejo_m2": 59.5,
@@ -839,6 +1193,12 @@
       "descricao_norm": "PISO 88X88 ARDOSIA POLIDO RT 2 32 PEI LB JUNTA 2MM"
     },
     {
+      "codigo_siah": "32553",
+      "descricao": "PISO 88X88 ARENITO BLACK MATE RT (2,32) PEI LD JUNTA 2MM",
+      "preco_varejo_m2": 51,
+      "descricao_norm": "PISO 88X88 ARENITO BLACK MATE RT 2 32 PEI LD JUNTA 2MM"
+    },
+    {
       "codigo_siah": "32908",
       "descricao": "PISO 88X88 ARENITO CINZA MATE RT (2,32) PEI LD JUNTA 2MM",
       "preco_varejo_m2": 51,
@@ -846,15 +1206,27 @@
     },
     {
       "codigo_siah": "34235",
-      "descricao": "32560 LB 88X88 PISO 88X88 ARTICO POLIDO RT(2,32) PEI LB JUNTA 2MM",
+      "descricao": "LB 88X88 PISO 88X88 ARTICO POLIDO RT(2,32) PEI LB JUNTA 2MM",
       "preco_varejo_m2": 68.5,
-      "descricao_norm": "32560 LB 88X88 PISO 88X88 ARTICO POLIDO RT 2 32 PEI LB JUNTA 2MM"
+      "descricao_norm": "LB 88X88 PISO 88X88 ARTICO POLIDO RT 2 32 PEI LB JUNTA 2MM"
     },
     {
       "codigo_siah": "32560",
       "descricao": "PISO 88X88 ARTICO POLIDO RT(2,32) PEI LB JUNTA 2MM",
       "preco_varejo_m2": 68.5,
       "descricao_norm": "PISO 88X88 ARTICO POLIDO RT 2 32 PEI LB JUNTA 2MM"
+    },
+    {
+      "codigo_siah": "32555",
+      "descricao": "PISO 88X88 CEMENT GRIGIO MATE RT (2,32) PEI LD JUNTA 2MM EXT",
+      "preco_varejo_m2": 51,
+      "descricao_norm": "PISO 88X88 CEMENT GRIGIO MATE RT 2 32 PEI LD JUNTA 2MM EXT"
+    },
+    {
+      "codigo_siah": "33448",
+      "descricao": "PISO 88X88 CEMENT GRIGIO MATE RT (2,32) PEI LD JUNTA 2MM EXT",
+      "preco_varejo_m2": 51,
+      "descricao_norm": "PISO 88X88 CEMENT GRIGIO MATE RT 2 32 PEI LD JUNTA 2MM EXT"
     },
     {
       "codigo_siah": "33377",
@@ -869,10 +1241,28 @@
       "descricao_norm": "PISO 90X90 ALASKA MATE PLUS RT A 2 41 PEI LB JUNTA 2MM"
     },
     {
+      "codigo_siah": "33999",
+      "descricao": "PISO 90X90 ALBURY LUX PLUS RT \"A\"(2,41) PEI LB JUNTA 2MM",
+      "preco_varejo_m2": 45.9,
+      "descricao_norm": "PISO 90X90 ALBURY LUX PLUS RT A 2 41 PEI LB JUNTA 2MM"
+    },
+    {
+      "codigo_siah": "32102",
+      "descricao": "PISO 90X90 ALBURY PLUS RT \"A\"(2,41) PEI LC JUNTA 2MM",
+      "preco_varejo_m2": 45.9,
+      "descricao_norm": "PISO 90X90 ALBURY PLUS RT A 2 41 PEI LC JUNTA 2MM"
+    },
+    {
       "codigo_siah": "32955",
       "descricao": "PISO 90X90 CRONOS PLUS MRE RT \"A\"(2,41) PEI LE JUNTA 2MM",
       "preco_varejo_m2": 45.9,
       "descricao_norm": "PISO 90X90 CRONOS PLUS MRE RT A 2 41 PEI LE JUNTA 2MM"
+    },
+    {
+      "codigo_siah": "33530",
+      "descricao": "PISO 90X90 DACITO PLUS MRE RT \"A\"(2,41) PEI LE JUNTA 2MM",
+      "preco_varejo_m2": 45.9,
+      "descricao_norm": "PISO 90X90 DACITO PLUS MRE RT A 2 41 PEI LE JUNTA 2MM"
     },
     {
       "codigo_siah": "32137",
@@ -881,10 +1271,28 @@
       "descricao_norm": "PISO 90X90 DREAM PLUS RT A 2 41 PEI LC JUNTA 2MM"
     },
     {
+      "codigo_siah": "32103",
+      "descricao": "PISO 90X90 ELEMENTO CINZA PLUS RT \"A\"(2,41) PEI LC JUNTA 2MM",
+      "preco_varejo_m2": 45.9,
+      "descricao_norm": "PISO 90X90 ELEMENTO CINZA PLUS RT A 2 41 PEI LC JUNTA 2MM"
+    },
+    {
       "codigo_siah": "32138",
       "descricao": "PISO 90X90 FORTUNATA PLUS MRE RT \"A\"(2,41) PEI LE JUNTA 2MM",
       "preco_varejo_m2": 45.9,
       "descricao_norm": "PISO 90X90 FORTUNATA PLUS MRE RT A 2 41 PEI LE JUNTA 2MM"
+    },
+    {
+      "codigo_siah": "35678",
+      "descricao": "PISO 90X90 LELIS PLUS HD \"A\"(2,41)RET BRILH PEI:LB JUNTA 2MM",
+      "preco_varejo_m2": 45.9,
+      "descricao_norm": "PISO 90X90 LELIS PLUS HD A 2 41 RET BRILH PEI LB JUNTA 2MM"
+    },
+    {
+      "codigo_siah": "34002",
+      "descricao": "PISO 90X90 NARBONA PLUS RT \"A\"(2,41) PEI LC JUNTA 2MM",
+      "preco_varejo_m2": 45.9,
+      "descricao_norm": "PISO 90X90 NARBONA PLUS RT A 2 41 PEI LC JUNTA 2MM"
     },
     {
       "codigo_siah": "35677",
@@ -929,10 +1337,28 @@
       "descricao_norm": "PISO 90X90 VERNE PLUS HD A 2 41 RET BRILH PEI LB JUNTA 2MM"
     },
     {
+      "codigo_siah": "34003",
+      "descricao": "PISO 90X90 VINCI PLUS MRE RT \"A\"(2,41) PEI LE JUNTA 2MM",
+      "preco_varejo_m2": 45.9,
+      "descricao_norm": "PISO 90X90 VINCI PLUS MRE RT A 2 41 PEI LE JUNTA 2MM"
+    },
+    {
+      "codigo_siah": "34800",
+      "descricao": "REV 62X119 SEMI GRES ARCADIA POLIDO \"A\"(2,20) RT PEI LW",
+      "preco_varejo_m2": 67.9,
+      "descricao_norm": "REV 62X119 SEMI GRES ARCADIA POLIDO A 2 20 RT PEI LW"
+    },
+    {
       "codigo_siah": "35508",
       "descricao": "REV 62X119 SEMI GRES PATAGONIA LIGHT \"A\"(2,20)RET PLD PEI LW",
       "preco_varejo_m2": 67.9,
       "descricao_norm": "REV 62X119 SEMI GRES PATAGONIA LIGHT A 2 20 RET PLD PEI LW"
+    },
+    {
+      "codigo_siah": "34799",
+      "descricao": "REV 62X119 SEMI GRES PIETRA FERRO LAPADO \"A\"(2,20)RT PEI LW",
+      "preco_varejo_m2": 84.9,
+      "descricao_norm": "REV 62X119 SEMI GRES PIETRA FERRO LAPADO A 2 20 RT PEI LW"
     },
     {
       "codigo_siah": "34988",
@@ -941,16 +1367,34 @@
       "descricao_norm": "REV 62X119 SEMI GRES RIPADO LIMESTONE PLD A 2 20 RT PEI LW"
     },
     {
+      "codigo_siah": "34801",
+      "descricao": "REV 62X119 SEMI GRES TAURUS BLACK POLIDO \"A\"(2,20) RT PEI LW",
+      "preco_varejo_m2": 80.9,
+      "descricao_norm": "REV 62X119 SEMI GRES TAURUS BLACK POLIDO A 2 20 RT PEI LW"
+    },
+    {
       "codigo_siah": "34989",
       "descricao": "REV 75X75 SEMI GRES ALVORADA GRIS OUTSIDE\"A\"(2,84)RET PEI LM",
       "preco_varejo_m2": 48.9,
       "descricao_norm": "REV 75X75 SEMI GRES ALVORADA GRIS OUTSIDE A 2 84 RET PEI LM"
     },
     {
+      "codigo_siah": "34990",
+      "descricao": "REV 75X75 SEMI GRES AVORIO CINZA LISO\"A\"(2,84)RT ACET PEI LZ",
+      "preco_varejo_m2": 44.9,
+      "descricao_norm": "REV 75X75 SEMI GRES AVORIO CINZA LISO A 2 84 RT ACET PEI LZ"
+    },
+    {
       "codigo_siah": "35507",
       "descricao": "REV 75X75 SEMI GRES MONTERREY GRIGIO OUT\"A\"(2,84)RET PEI: LM",
       "preco_varejo_m2": 48.9,
       "descricao_norm": "REV 75X75 SEMI GRES MONTERREY GRIGIO OUT A 2 84 RET PEI LM"
+    },
+    {
+      "codigo_siah": "26817",
+      "descricao": "REV. 32X45 BRANCO-32 \"A\" (2) PEI LC JUNTA 5MM",
+      "preco_varejo_m2": 33.9,
+      "descricao_norm": "REV 32X45 BRANCO 32 A 2 PEI LC JUNTA 5MM"
     },
     {
       "codigo_siah": "27908",
@@ -965,6 +1409,12 @@
       "descricao_norm": "REV 34X60 AVILA CZ HD A 2 1 PEI LC JUNTA 5MM"
     },
     {
+      "codigo_siah": "28473",
+      "descricao": "REV. 34X60 BEGE HD \"A\" (2,1) PEI LC JUNTA 5MM",
+      "preco_varejo_m2": 34.5,
+      "descricao_norm": "REV 34X60 BEGE HD A 2 1 PEI LC JUNTA 5MM"
+    },
+    {
       "codigo_siah": "32838",
       "descricao": "REV. 34X60 BILBAO BG HD \"A\" (2,1) PEI LC JUNTA 5MM",
       "preco_varejo_m2": 34.5,
@@ -975,6 +1425,12 @@
       "descricao": "REV. 34X60 BRANCO ACETINADO \"A\" (2,1) PEI LC JUNTA 5MM",
       "preco_varejo_m2": 34.5,
       "descricao_norm": "REV 34X60 BRANCO ACETINADO A 2 1 PEI LC JUNTA 5MM"
+    },
+    {
+      "codigo_siah": "28690",
+      "descricao": "REV. 34X60 BRANCO HD \"A\" (2,1) PEI LC JUNTA 5MM",
+      "preco_varejo_m2": 34.5,
+      "descricao_norm": "REV 34X60 BRANCO HD A 2 1 PEI LC JUNTA 5MM"
     },
     {
       "codigo_siah": "26522",
@@ -1050,15 +1506,21 @@
     },
     {
       "codigo_siah": "35602",
-      "descricao": "35618 LD 37X59 REV. 37X59 AXIS GRAY HD \"A\"(2,43) BOLD BRIL PEI: LA JUNTA3MM",
+      "descricao": "LD 37X59 REV. 37X59 AXIS GRAY HD \"A\"(2,43) BOLD BRIL PEI: LA JUNTA3MM",
       "preco_varejo_m2": 33.9,
-      "descricao_norm": "35618 LD 37X59 REV 37X59 AXIS GRAY HD A 2 43 BOLD BRIL PEI LA JUNTA3MM"
+      "descricao_norm": "LD 37X59 REV 37X59 AXIS GRAY HD A 2 43 BOLD BRIL PEI LA JUNTA3MM"
     },
     {
       "codigo_siah": "35618",
       "descricao": "REV. 37X59 AXIS GRAY HD \"A\"(2,43) BOLD BRIL PEI: LA JUNTA3MM",
       "preco_varejo_m2": 33.9,
       "descricao_norm": "REV 37X59 AXIS GRAY HD A 2 43 BOLD BRIL PEI LA JUNTA3MM"
+    },
+    {
+      "codigo_siah": "35617",
+      "descricao": "REV. 37X59 DELTA SILVER HD \"A\"(2,43)BOLD BRILHANT PEI:LA 3MM",
+      "preco_varejo_m2": 33.9,
+      "descricao_norm": "REV 37X59 DELTA SILVER HD A 2 43 BOLD BRILHANT PEI LA 3MM"
     },
     {
       "codigo_siah": "35603",
@@ -1073,6 +1535,12 @@
       "descricao_norm": "REV 37X59 RIVIERA BEGE BRILHO A 2 43 PEI LA JUNTA 5MM"
     },
     {
+      "codigo_siah": "34609",
+      "descricao": "REV. 38X75 BRANCO NEVE PLUS \"A\"(2,0) ESM BOLD PEI: LA",
+      "preco_varejo_m2": 33.5,
+      "descricao_norm": "REV 38X75 BRANCO NEVE PLUS A 2 0 ESM BOLD PEI LA"
+    },
+    {
       "codigo_siah": "31929",
       "descricao": "REV. 38X75 BRANCO NEVE PLUS \"A\"(2,0) ESM BOLD PEI: LA",
       "preco_varejo_m2": 33.5,
@@ -1083,6 +1551,12 @@
       "descricao": "REV. 39X75 STUDIO COTTO VRU \"A\" (2,06) RT PEI LA JT 2MM",
       "preco_varejo_m2": 39.9,
       "descricao_norm": "REV 39X75 STUDIO COTTO VRU A 2 06 RT PEI LA JT 2MM"
+    },
+    {
+      "codigo_siah": "34435",
+      "descricao": "REV. 75X75 SEMI GRES PETRA NAT OUTSIDE\"A\"(2,84)RET GR PEI LZ",
+      "preco_varejo_m2": 48.9,
+      "descricao_norm": "REV 75X75 SEMI GRES PETRA NAT OUTSIDE A 2 84 RET GR PEI LZ"
     },
     {
       "codigo_siah": "27906",

@@ -61,6 +61,69 @@ function writeCsv(filePath, rows) {
   fs.writeFileSync(filePath, `${lines.join('\n')}\n`);
 }
 
+function parseCsvLine(line) {
+  const out = [];
+  let cur = '';
+  let q = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') {
+      if (q && line[i + 1] === '"') {
+        cur += '"';
+        i++;
+      } else q = !q;
+    } else if (c === ',' && !q) {
+      out.push(cur);
+      cur = '';
+    } else cur += c;
+  }
+  out.push(cur);
+  return out;
+}
+
+function loadPriorMatchByCodigo() {
+  const pathPrior = fs.existsSync(OUT_CSV) ? OUT_CSV : OUT_RAIOX;
+  if (!fs.existsSync(pathPrior)) return new Map();
+  const text = fs.readFileSync(pathPrior, 'utf8').replace(/\r\n/g, '\n');
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return new Map();
+  const headers = parseCsvLine(lines[0]);
+  const byCodigo = new Map();
+  for (let i = 1; i < lines.length; i++) {
+    const cols = parseCsvLine(lines[i]);
+    const o = {};
+    headers.forEach((h, j) => {
+      o[h] = cols[j] ?? '';
+    });
+    if (o.codigo) byCodigo.set(String(o.codigo), o);
+  }
+  return byCodigo;
+}
+
+const MATCH_PRESERVE = [
+  'descricao_no_site',
+  'evidencia_url',
+  'imagem_url',
+  'imagens_json',
+  'status',
+  'sites_consultados',
+  'match_metodo',
+  'match_score',
+  'observacao',
+  'marca_no_site',
+];
+
+function mergePriorSiteMatch(row, prior) {
+  if (!prior) return row;
+  if (prior.status !== 'confirmado_site' || !String(prior.evidencia_url || '').trim()) return row;
+  const merged = { ...row };
+  for (const k of MATCH_PRESERVE) {
+    if (prior[k]) merged[k] = prior[k];
+  }
+  if (prior.fabricante_grupo && !merged.fabricante_grupo) merged.fabricante_grupo = prior.fabricante_grupo;
+  return merged;
+}
+
 function load510ByCodigo() {
   const byCodigo = new Map();
   if (!fs.existsSync(FONTE_DIR)) return byCodigo;
@@ -92,8 +155,12 @@ function main() {
 
   const preItens = parsePreOsPdf(prePath);
   const map510 = load510ByCodigo();
+  const priorByCodigo = loadPriorMatchByCodigo();
 
-  const rows = preItens.map((pre) => rowFromPreOsCross(pre, map510.get(pre.codigo_loja)));
+  const rows = preItens.map((pre) => {
+    const row = rowFromPreOsCross(pre, map510.get(pre.codigo_loja));
+    return mergePriorSiteMatch(row, priorByCodigo.get(pre.codigo_loja));
+  });
 
   const cruzados = rows.filter((r) => r.cruzamento === '510_marca').length;
   const sem510 = rows.length - cruzados;

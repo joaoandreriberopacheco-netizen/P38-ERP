@@ -15,6 +15,53 @@ export function pdftotext(filePath) {
 
 /** @typedef {{ codigo_loja: string, classe_pei: string, formato_raw: string, descricao: string, preco_varejo_m2: number, estoque_m2: number|null }} PreOsItem */
 
+function parseBrDecimal(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return null;
+  const n = Number(s.replace(/\./g, '').replace(',', '.'));
+  return Number.isFinite(n) ? n : null;
+}
+
+/** Linha após M2: só preço ou `preço estoque` na mesma linha. */
+function parsePrecoExistAfterM2(val, nextVal) {
+  const line = String(val || '').trim();
+  const two = line.match(/^(\d{1,3}(?:\.\d{3})*,\d{2})\s+(\d+(?:\.\d{3})*,\d{2})$/);
+  if (two) {
+    return {
+      preco_varejo_m2: parseBrDecimal(two[1]),
+      estoque_m2: parseBrDecimal(two[2]),
+    };
+  }
+  const preco = parseBrDecimal(line);
+  if (preco == null) return null;
+  const estoque = nextVal ? parseBrDecimal(nextVal) : null;
+  return { preco_varejo_m2: preco, estoque_m2: estoque };
+}
+
+const PEI_CLASS_RE = /^(LE|LD|LM|LB|LC|LA|LU|LZ|LW)$/i;
+
+function findClasseAndFormato(rawLines, startIdx, nextNonEmpty) {
+  let pos = startIdx;
+  let classe_pei = '';
+  let formato_raw = '';
+  for (let step = 0; step < 12 && pos < rawLines.length; step++) {
+    const hit = nextNonEmpty(pos);
+    if (!hit) break;
+    pos = hit.idx + 1;
+    if (PEI_CLASS_RE.test(hit.val)) {
+      classe_pei = hit.val.toUpperCase();
+      continue;
+    }
+    if (/^\d{5}$/.test(hit.val)) continue;
+    if (/^\d{1,3}X\d{1,3}/i.test(hit.val)) {
+      formato_raw = hit.val;
+      break;
+    }
+  }
+  if (!classe_pei || !formato_raw) return null;
+  return { classe_pei, formato_raw, descStart: pos };
+}
+
 /** PRE_OS: código + LE/LD/LM… + formato + descrição + M2 + preço + exist */
 export function parsePreOsText(text) {
   const rawLines = text.split(/\n/).map((l) => l.trim());
@@ -32,36 +79,34 @@ export function parsePreOsText(text) {
   for (let i = 0; i < rawLines.length; i++) {
     if (!/^\d{5}$/.test(rawLines[i])) continue;
     const codigo_loja = rawLines[i];
-    const cls = nextNonEmpty(i + 1);
-    if (!cls || !/^(LE|LD|LM|LB|LC|LA|LU)$/i.test(cls.val)) continue;
-    const fmt = nextNonEmpty(cls.idx + 1);
-    if (!fmt || !/^\d{1,3}X\d{1,3}/i.test(fmt.val)) continue;
+    const cf = findClasseAndFormato(rawLines, i + 1, nextNonEmpty);
+    if (!cf) continue;
 
-    let j = fmt.idx + 1;
+    let j = cf.descStart;
     let descricao = '';
     while (j < rawLines.length) {
       const v = rawLines[j];
       if (v === 'M2') break;
-      if (v) descricao += (descricao ? ' ' : '') + v;
+      if (v && !/^\d{5}$/.test(v)) descricao += (descricao ? ' ' : '') + v;
       j++;
     }
     if (rawLines[j] !== 'M2') continue;
     const precoHit = nextNonEmpty(j + 1);
     if (!precoHit) continue;
-    const precoStr = precoHit.val.replace(/\./g, '').replace(',', '.');
-    const preco_varejo_m2 = Number(precoStr);
-    if (!Number.isFinite(preco_varejo_m2)) continue;
     const existHit = nextNonEmpty(precoHit.idx + 1);
-    const existStr = (existHit?.val || '').replace(/\./g, '').replace(',', '.');
-    const estoque_m2 = Number(existStr);
+    const pe = parsePrecoExistAfterM2(
+      precoHit.val,
+      existHit && !/^\d{5}$/.test(existHit.val) ? existHit.val : null,
+    );
+    if (!pe || pe.preco_varejo_m2 == null) continue;
 
     items.push({
       codigo_loja,
-      classe_pei: cls.val.toUpperCase(),
-      formato_raw: fmt.val,
+      classe_pei: cf.classe_pei,
+      formato_raw: cf.formato_raw,
       descricao: descricao.replace(/\s+/g, ' ').trim(),
-      preco_varejo_m2,
-      estoque_m2: Number.isFinite(estoque_m2) ? estoque_m2 : null,
+      preco_varejo_m2: pe.preco_varejo_m2,
+      estoque_m2: pe.estoque_m2,
     });
   }
   return items;
