@@ -69,15 +69,14 @@ export function isRochaOgPlaceholder(url = '') {
   return /gruporocha\.com\.br\/_og\//i.test(String(url || ''));
 }
 
-/**
- * Fotos oficiais no HTML da ficha (api.portalgruporocha.com.br/storage/images/{slug}-f1-….webp).
- * @returns {string[]} URLs únicas, principal primeiro (f1 antes de f2…)
- */
-export function pickRochaImagesFromHtml(html, slug = '') {
-  const raw = String(html || '');
+function rochaSlugVariants(slug = '') {
   const s = String(slug || '').toLowerCase().replace(/\?.*$/, '');
   const slugVariants = new Set();
   if (s) slugVariants.add(s);
+  if (s.startsWith('hd-')) slugVariants.add(s.slice(3));
+  else {
+    slugVariants.add(`hd-${s}`);
+  }
   if (/^r\d+$/i.test(s)) {
     slugVariants.add(`pr${s.slice(1)}`);
     slugVariants.add(s.slice(1));
@@ -86,6 +85,29 @@ export function pickRochaImagesFromHtml(html, slug = '') {
     slugVariants.add(`r${s.slice(2)}`);
     slugVariants.add(s.slice(2));
   }
+  return slugVariants;
+}
+
+function rochaStorageFileMatchesSlug(url, slugVariants) {
+  const u = String(url).toLowerCase();
+  const file = u.split('/storage/images/')[1]?.split(/[?#'"\s]/)[0] || '';
+  if (!file) return false;
+  for (const v of slugVariants) {
+    if (!v) continue;
+    if (file === v || file.startsWith(`${v}-`) || file.startsWith(`${v}.`)) return true;
+    if (file.startsWith(`hd-${v}-`) || file.startsWith(`hd-${v}.`)) return true;
+  }
+  return false;
+}
+
+/**
+ * Fotos oficiais no HTML da ficha (api.portalgruporocha.com.br/storage/images/{slug}-f1-….webp).
+ * @returns {string[]} URLs únicas, principal primeiro (f1 antes de f2…)
+ */
+export function pickRochaImagesFromHtml(html, slug = '') {
+  const raw = String(html || '');
+  const slugVariants = rochaSlugVariants(slug);
+  const s = String(slug || '').toLowerCase().replace(/\?.*$/, '');
   const found = new Set();
   for (const variant of slugVariants) {
     const re = new RegExp(
@@ -97,18 +119,13 @@ export function pickRochaImagesFromHtml(html, slug = '') {
   if (!found.size && s) {
     const reLoose = /https:\/\/api\.portalgruporocha\.com\.br\/storage\/images\/[^"'\\s]+\.(webp|jpg|jpeg|png)/gi;
     for (const m of raw.matchAll(reLoose)) {
-      const u = m[0].toLowerCase();
-      for (const variant of slugVariants) {
-        if (u.includes(`/${variant}-`) || u.includes(`/${variant}.`)) {
-          found.add(m[0]);
-          break;
-        }
-      }
+      if (rochaStorageFileMatchesSlug(m[0], slugVariants)) found.add(m[0]);
     }
   }
   const og = raw.match(/<meta property="og:image" content="([^"]+)"/i)?.[1]?.trim();
-  if (og && !isRochaOgPlaceholder(og)) found.add(og);
-  return [...found].sort((a, b) => {
+  if (og && !isRochaOgPlaceholder(og) && rochaStorageFileMatchesSlug(og, slugVariants)) found.add(og);
+  const filtered = [...found].filter((u) => rochaStorageFileMatchesSlug(u, slugVariants));
+  return filtered.sort((a, b) => {
     const fa = a.match(/-f(\d+)-/i)?.[1] || '9';
     const fb = b.match(/-f(\d+)-/i)?.[1] || '9';
     return Number(fa) - Number(fb);

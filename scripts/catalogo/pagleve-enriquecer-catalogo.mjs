@@ -39,6 +39,7 @@ import {
   parseRochaCMapFromProdutosHtml,
   pickRochaImagesFromHtml,
   rochaNamedSlugCandidates,
+  rochaProductUrl,
   rochaSlugCandidatesFromErp,
   rochaSlugFromSiahDesc,
   ROCHA_PORTAL_BASE,
@@ -97,7 +98,7 @@ function applyRochaPortalImages(html, url, imagem_url, imagens) {
   if (!picks.length) return { imagem_url, imagens, produto_url: url };
   return {
     imagem_url: picks[0],
-    imagens: mapImagens(picks.slice(0, 6)),
+    imagens: mapImagens(picks.slice(0, 8)),
     produto_url: url,
   };
 }
@@ -132,6 +133,11 @@ function enrichRochaPortalItem(item, ctx) {
       item.produto_url = applied.produto_url || url;
       return applied;
     }
+  }
+  for (const slug of slugs) {
+    const key = String(slug || '').toLowerCase();
+    if (!key || !cMap?.has(key)) continue;
+    item.produto_url = item.produto_url || rochaProductUrl(key, cMap);
   }
   return null;
 }
@@ -220,16 +226,21 @@ async function sanitizeImagensList(imagens = []) {
   });
 }
 
-async function enrichImagens(item, ctx, { refreshImagens = false } = {}) {
+async function enrichImagens(item, ctx, { refreshImagens = false, refreshGalerias = false } = {}) {
   let imagem_url = item.imagem_url || '';
   let imagens = item.imagens?.length ? [...item.imagens] : [];
   const url = item.produto_url || '';
   let pageHtml = '';
   const isRochaItem =
     item.fabricante_grupo === 'Grupo Rocha' || url.includes('portalgruporocha.com.br');
+  const galeriaCurta = (imagens?.length || 0) < 2;
   const needsRochaImages =
     isRochaItem &&
-    (refreshImagens || !imagem_url || isPlaceholderImageUrl(imagem_url));
+    (refreshImagens ||
+      refreshGalerias ||
+      galeriaCurta ||
+      !imagem_url ||
+      isPlaceholderImageUrl(imagem_url));
 
   if (needsRochaImages) {
     const hit = enrichRochaPortalItem(item, ctx);
@@ -259,13 +270,18 @@ async function enrichImagens(item, ctx, { refreshImagens = false } = {}) {
   if (fgId) {
     const p = ctx.formigresById.get(String(fgId));
     if (p?.imagem_url) imagem_url = p.imagem_url;
-    if (!imagens.length) {
+    const needsFormigresDetalhe =
+      refreshImagens || refreshGalerias || galeriaCurta || !imagens.length;
+    if (needsFormigresDetalhe) {
       try {
         const det = await fetchProdutoDetalhe(fgId);
         const imgs = extractImagensFromDetalhe(det || p);
-        if (imgs.length) imagens = imgs;
+        if (imgs.length) {
+          imagens = imgs.slice(0, 8);
+          imagem_url = imgs[0]?.url || imagem_url;
+        }
       } catch {
-        if (p?.imagem_url) imagens = mapImagens([p.imagem_url]);
+        if (!imagens.length && p?.imagem_url) imagens = mapImagens([p.imagem_url]);
       }
     }
     if (!item.formigres_id) item.formigres_id = fgId;
@@ -275,6 +291,8 @@ async function enrichImagens(item, ctx, { refreshImagens = false } = {}) {
   if (isCarmeloFiorItem(item)) {
     const slug = carmeloSlugFromUrl(url);
     const snapRaw = slug && ctx.carmeloBySlug?.get(slug);
+    const needsCarmeloHtml =
+      refreshImagens || refreshGalerias || galeriaCurta || !imagem_url;
     if (snapRaw && !imagem_url) {
       const imgs = extractImagensFromProduto(snapRaw);
       if (imgs.length) {
@@ -283,7 +301,7 @@ async function enrichImagens(item, ctx, { refreshImagens = false } = {}) {
       }
     }
 
-    const html = pageHtml || (url ? curlGet(url) : '');
+    const html = pageHtml || (needsCarmeloHtml && url ? curlGet(url) : '');
     if (html) pageHtml = html;
     const galeria = parseCarmeloGaleriaCatalogoFromHtml(html);
     if (galeria.length) {
@@ -357,6 +375,33 @@ async function enrichImagens(item, ctx, { refreshImagens = false } = {}) {
     }
   }
 
+  if (!imagem_url && item.fabricante_grupo === 'Grupo Formigres') {
+    const { match } = findInFormigresSnapshot(ctx.formigresSnap, item.descricao_erp || item.descricao, {
+      minScore: 32,
+      requireFormato: true,
+    });
+    if (match) {
+      item.formigres_id = match.id;
+      try {
+        const det = await fetchProdutoDetalhe(match.id);
+        const imgs = extractImagensFromDetalhe(det || match);
+        if (imgs.length) {
+          imagens = imgs.slice(0, 8);
+          imagem_url = imgs[0]?.url || match.imagem_url || imagem_url;
+          if (!item.produto_url && match.produto_url) item.produto_url = match.produto_url;
+        } else if (match.imagem_url) {
+          imagem_url = match.imagem_url;
+          imagens = mapImagens([match.imagem_url]);
+        }
+      } catch {
+        if (match.imagem_url) {
+          imagem_url = match.imagem_url;
+          imagens = mapImagens([match.imagem_url]);
+        }
+      }
+    }
+  }
+
   imagens = await sanitizeImagensList(imagens);
   imagem_url = imagens[0]?.url || (imagem_url && !isPlaceholderImageUrl(imagem_url) && probeImageUrlOk(imagem_url) ? imagem_url : '');
   if (!imagem_url && imagens.length) imagem_url = imagens[0].url;
@@ -413,6 +458,8 @@ function enrichPrecoEmbalagem(item, ctx) {
 async function main() {
   const onlyMissing = process.argv.includes('--only-missing');
   const refreshImagens = process.argv.includes('--refresh-imagens');
+  const refreshGalerias =
+    process.argv.includes('--refresh-galerias') || refreshImagens;
   const onlyCarmelo = process.argv.includes('--only-carmelo');
   const jsonPath = findLatestClassif();
   if (!jsonPath) {
@@ -447,7 +494,15 @@ async function main() {
       if (item.preco_m2 != null && item.preco_m2 > 0) comPreco += 1;
       continue;
     }
-    if (onlyMissing && !refreshImagens && item.imagem_url && item.preco_m2 != null && item.preco_m2 > 0) {
+    if (
+      onlyMissing &&
+      !refreshImagens &&
+      !refreshGalerias &&
+      item.imagem_url &&
+      (item.imagens?.length || 0) >= 2 &&
+      item.preco_m2 != null &&
+      item.preco_m2 > 0
+    ) {
       itens.push(item);
       if (item.imagem_url) comFoto += 1;
       if (item.preco_m2 > 0) comPreco += 1;
@@ -455,7 +510,7 @@ async function main() {
     }
     const precoEmb = enrichPrecoEmbalagem(item, ctx);
     Object.assign(item, precoEmb);
-    const imgs = await enrichImagens(item, ctx, { refreshImagens });
+    const imgs = await enrichImagens(item, ctx, { refreshImagens, refreshGalerias });
     Object.assign(item, imgs);
     if (item.imagem_url) comFoto += 1;
     if (item.preco_m2 != null && item.preco_m2 > 0) comPreco += 1;

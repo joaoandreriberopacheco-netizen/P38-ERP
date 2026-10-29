@@ -40,6 +40,18 @@ export async function filterReachableImageUrls(urls = [], { probe = probeImageUr
 export function mapUrlsToImagensCatalogo(urls = []) {
   return urls.map((url, i) => ({
     url,
-    tipo: i === 0 ? 'principal' : i === 1 ? 'ambiente' : 'detalhe',
+    tipo: tipoImagemCatalogoFromUrl(url, i),
   }));
+}
+
+/** Classifica URL da fábrica/portal para o lightbox do catálogo. */
+export function tipoImagemCatalogoFromUrl(url = '', index = 0) {
+  const u = String(url).toLowerCase();
+  if (/ambiente|\/amb[-_]|imagem_amb|lifestyle|room|decor/.test(u)) return 'ambiente';
+  if (/\/piso[-_]|imagem_piso|piso\./.test(u)) return 'piso';
+  if (/face|faces|detalhe|detail|-f2-|-f3-|-f4-/.test(u)) return index === 0 ? 'principal' : 'detalhe';
+  if (/-f1-|imgprincipal|principal|_f1\./.test(u)) return 'principal';
+  if (index === 0) return 'principal';
+  if (index === 1) return 'ambiente';
+  return 'detalhe';
 }
