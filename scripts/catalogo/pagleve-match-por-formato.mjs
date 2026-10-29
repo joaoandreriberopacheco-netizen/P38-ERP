@@ -34,7 +34,7 @@ import {
   fetchProdutoDetalhe,
 } from '../lib/formigresCatalog.mjs';
 import { stripAccents } from '../lib/formigresCatalog.mjs';
-import { modeloComercialCatalogo, raioXProdutoDescricao, referenciaRochaprimeErp } from '../lib/raioXProdutoDescricao.mjs';
+import { modeloComercialCatalogo, raioXProdutoDescricao, referenciaRochaprimeCatalogo, referenciaRochaprimeErp } from '../lib/raioXProdutoDescricao.mjs';
 import {
   imagensJsonFromLumeFicha,
   lumePortfolioSlugFromRow,
@@ -222,9 +222,10 @@ function modeloParaBusca(row) {
 
 function temNomeComercial(row) {
   const desc = row.descricao_erp || row.descricao_original || '';
-  const ref = referenciaRochaprimeErp(desc);
+  const ref = referenciaRochaprimeCatalogo(desc);
+  const refErp = referenciaRochaprimeErp(desc);
   const m = modeloParaBusca(row);
-  if (ref && (!m || m.toUpperCase() === ref)) return false;
+  if (ref && (!m || m.toUpperCase() === refErp || m.toUpperCase() === ref)) return false;
   if (!m || m.length < 4) return false;
   const tokens = m.split(/\s+/).filter((t) => t.length >= 4 && !/^(rochaprime|rochamaxx)$/i.test(t));
   return tokens.length > 0;

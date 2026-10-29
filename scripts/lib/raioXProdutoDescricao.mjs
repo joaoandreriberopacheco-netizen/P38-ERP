@@ -40,13 +40,27 @@ function modeloSoPontuacao(s = '') {
   return !String(s || '').replace(/[^a-zA-Z0-9]/g, '').trim();
 }
 
-/** Referência Rochaprime/Rochamaxx na descrição (ex. R7061, PR70261). */
+/** Referência Rochaprime/Rochamaxx na descrição SIAH (ex. PR70971). */
 export function referenciaRochaprimeErp(descricao = '') {
   const raw = String(descricao || '');
   if (!/ROCHAPRIME|ROCHAMAXX|ROCHAFORTE/i.test(raw)) return '';
   const m = raw.match(/\b(PR|R)(\d{3,})\b/i);
   if (!m) return '';
   return `${m[1].toUpperCase()}${m[2]}`;
+}
+
+/**
+ * Referência no catálogo portal Rocha (ex. PR70971 → PR7097).
+ * Mesma regra do slug: 5+ dígitos terminados em 1 perdem o último 1.
+ */
+export function referenciaRochaprimeCatalogo(descricao = '') {
+  const erp = referenciaRochaprimeErp(descricao);
+  if (!erp) return '';
+  const m = erp.match(/^(PR|R)(\d+)$/i);
+  if (!m) return erp;
+  let digits = m[2];
+  if (digits.length >= 5 && digits.endsWith('1')) digits = digits.slice(0, -1);
+  return `${m[1].toUpperCase()}${digits}`;
 }
 
 function nomeFromDescricaoNoSite(descricaoNoSite = '') {
@@ -122,7 +136,9 @@ export function modeloComercialCatalogo(codigo, descricao = '', modeloField = ''
   if (/^asphalt\b/.test(low)) return 'Asphalt';
 
   let result = titleCaseModelo(modelo);
-  const refRocha = referenciaRochaprimeErp(desc);
+  const refCat = referenciaRochaprimeCatalogo(desc);
+
+  if (refCat && ROCHA_SIAH_CODE_RE.test(String(result).replace(/\s/g, ''))) return refCat;
 
   if (!modeloSoPontuacao(result) && !nomePareceCodigoFabricante(result)) return result;
 
@@ -134,7 +150,7 @@ export function modeloComercialCatalogo(codigo, descricao = '', modeloField = ''
 
   if (campo && !nomePareceCodigoFabricante(campo)) return titleCaseModelo(campo);
 
-  if (refRocha) return refRocha;
+  if (refCat) return refCat;
 
   return result;
 }
@@ -182,7 +198,10 @@ export function raioXProdutoDescricao(codigo, descricao) {
   modelo = modelo.replace(/\bJUNTA\s*\d+\s*MM\b/gi, ' ');
   modelo = modelo.replace(/[:;]+/g, ' ').replace(/[-/]+/g, ' ').replace(/\s+/g, ' ').trim();
   if (!modelo || modeloSoPontuacao(modelo)) {
-    const ref = referenciaRochaprimeErp(raw);
+    const ref = referenciaRochaprimeCatalogo(raw);
+    if (ref) modelo = ref;
+  } else if (ROCHA_SIAH_CODE_RE.test(modelo.replace(/\s/g, ''))) {
+    const ref = referenciaRochaprimeCatalogo(raw);
     if (ref) modelo = ref;
   }
 

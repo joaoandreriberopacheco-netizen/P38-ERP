@@ -14,6 +14,7 @@ import { extractImagensFromDetalhe, fetchProdutoDetalhe } from '../lib/formigres
 import { extractImagensFromProduto } from '../lib/carmeloFiorCatalog.mjs';
 import { loadSnapshotFromFile } from '../lib/formigresSnapshot.mjs';
 import { dedupeFormigresGemeas } from '../lib/formigresGemeas.mjs';
+import { referenciaRochaprimeCatalogo, referenciaRochaprimeErp } from '../lib/raioXProdutoDescricao.mjs';
 import { REGIME_COMPRADOR_UF_LIST, buildSuframaClientJs, isRegimeCompradorUf } from '../lib/catalogoSuframa.mjs';
 import {
   buildCatalogTourClientJs,
@@ -3725,7 +3726,12 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return item.formigres_titulo || item.descricao || '';
     }
     function pagLeveBuscaExtra(item) {
-      return CATALOG_SKIN === 'pagleve' ? String(item.descricao_erp || '') : '';
+      if (CATALOG_SKIN !== 'pagleve') return '';
+      let extra = String(item.descricao_erp || '');
+      const erp = referenciaRochaprimeErp(extra);
+      const cat = referenciaRochaprimeCatalogo(extra);
+      if (cat && erp && cat !== erp) extra += ' ' + cat;
+      return extra;
     }
     function compareItensFormatoNome(a, b) {
       const byFmt = compareFormato(a.formato, b.formato);
