@@ -17,7 +17,10 @@ import { loadPrecosSiah, resolvePrecoSiah } from '../lib/paglevePrecosSiah.mjs';
 
 const ROOT = process.cwd();
 const IN_CSV =
-  process.env.PAGLEVE_CSV || path.join(ROOT, 'files', 'pagleve', 'raio-x-pagleve-site-verificado.csv');
+  process.env.PAGLEVE_CSV ||
+  (fs.existsSync(path.join(ROOT, 'files', 'pagleve', 'pagleve-base-cruzada.csv'))
+    ? path.join(ROOT, 'files', 'pagleve', 'pagleve-base-cruzada.csv')
+    : path.join(ROOT, 'files', 'pagleve', 'raio-x-pagleve-site-verificado.csv'));
 const OUT_DIR = path.join(ROOT, 'files', 'pagleve', 'classificacao');
 
 function parseCsvLine(line) {
@@ -171,7 +174,7 @@ function parseImagensJson(raw, imagemUrl) {
 
 function mapStatus(status) {
   if (status === 'confirmado_site') return 'encontrado';
-  if (status === 'indicacao_joao') return 'indicacao';
+  if (status === 'indicacao_joao' || status === 'pendente') return 'indicacao';
   return 'sem_ficha';
 }
 
@@ -256,6 +259,9 @@ function main() {
     const catalogoNomeModelo = nomeModeloPrincipal(row, descricao);
     const catalogoSubtitulo = subtituloCatalogoPagLeve(row, descricao, classifPl, acabLabel, siteHints);
     const peiUso = extrairClassificacaoPei(descricao) || extrairClassificacaoPei(row.site_classificacao_pei || '');
+    const precoCsv = row.preco_varejo_m2
+      ? Number(String(row.preco_varejo_m2).replace(',', '.'))
+      : null;
     const precoHit = precosSiah
       ? resolvePrecoSiah(
           {
@@ -267,11 +273,16 @@ function main() {
           precosSiah,
         )
       : { preco_m2: null };
+    const precoFinal = precoCsv ?? precoHit.preco_m2 ?? null;
+    const precoFonte = precoCsv != null ? 'pre_os_coluna' : precoHit.fonte || '';
+    const descricaoErp = descricao;
+    const nomeCurto = catalogoNomeModelo || row.modelo || row.codigo;
     return {
       codigo_tintao: row.codigo,
       modelo: catalogoNomeModelo || row.modelo || '',
       catalogo_nome_modelo: catalogoNomeModelo,
-      descricao,
+      descricao_erp: descricaoErp,
+      descricao: nomeCurto,
       formato: (row.formato || '').replace(/×/g, 'x'),
       linha: classifPl.linha,
       subtipo: classifPl.subtipo,
@@ -282,7 +293,7 @@ function main() {
       match_status: mapStatus(row.status),
       match_score: row.status === 'confirmado_site' ? 100 : 0,
       formigres_id: (String(row.evidencia_url || '').match(/formigres\.com\.br\/produto\/(\d+)/i) || [])[1] || '',
-      formigres_titulo: catalogoSubtitulo,
+      formigres_titulo: nomeCurto,
       formigres_tipo: siteHints.tipo,
       formigres_acabamento:
         (siteHints.acabamento && !isClasseUsoPei(siteHints.acabamento) ? siteHints.acabamento : acabLabel.toUpperCase()),
@@ -294,10 +305,10 @@ function main() {
       produto_url: row.evidencia_url || '',
       imagem_url: row.imagem_url || imagens[0]?.url || '',
       imagens,
-      preco_m2: precoHit.preco_m2 ?? null,
-      preco_fonte: precoHit.fonte || '',
+      preco_m2: precoFinal,
+      preco_fonte: precoFonte,
       codigo_siah: precoHit.codigo_siah || '',
-      m2_por_caixa: parseM2Caixa(descricao),
+      m2_por_caixa: parseM2Caixa(descricaoErp),
       unidade: '',
       status_site: row.status,
       observacao: row.observacao || '',

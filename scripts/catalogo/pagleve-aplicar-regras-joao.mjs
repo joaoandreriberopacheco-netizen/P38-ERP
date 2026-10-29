@@ -28,27 +28,19 @@ import {
 } from '../lib/lumePaginaProduto.mjs';
 import { resolveFormatoPagLeve } from '../lib/pagleveFormatoOcr.mjs';
 import {
-  hdCodigoSlugCandidatesFromErp,
   incopisosProdutoUrl,
   incopisosSlugCandidates,
   parseIncopisosOembedJson,
   parseIncopisosProdutoHtml,
 } from '../lib/incopisosPaginaProduto.mjs';
-import {
-  ROCHA_PORTAL_BASE,
-  isRochaProductHtmlValid,
-  parseRochaCMapFromProdutosHtml,
-  rochaProductUrl,
-  rochaSlugFromSiahDesc,
-  rochaTitleFromHtml,
-  rochaCatalogFallbackHit,
-} from '../lib/rochaPortalPagina.mjs';
-
-export { rochaSlugFromSiahDesc };
 
 const ROOT = process.cwd();
-const CSV = process.env.PAGLEVE_OUT || path.join(ROOT, 'files', 'pagleve', 'raio-x-pagleve-site-verificado.csv');
-const ROCHA = ROCHA_PORTAL_BASE;
+const CSV =
+  process.env.PAGLEVE_OUT ||
+  (fs.existsSync(path.join(ROOT, 'files', 'pagleve', 'pagleve-base-cruzada.csv'))
+    ? path.join(ROOT, 'files', 'pagleve', 'pagleve-base-cruzada.csv')
+    : path.join(ROOT, 'files', 'pagleve', 'raio-x-pagleve-site-verificado.csv'));
+const ROCHA = 'https://www.portalgruporocha.com.br';
 const LUME = 'https://lumeceramica.com.br';
 const CF = 'https://www.carmelofior.com.br';
 const UA = 'P38-PagLeve-regras/1.0';
@@ -110,32 +102,34 @@ function curl(url) {
   }
 }
 
-let rochaCMapCache = null;
-
-function loadRochaCMap() {
-  if (rochaCMapCache) return rochaCMapCache;
-  const html = curl(`${ROCHA}/produtos`);
-  rochaCMapCache = parseRochaCMapFromProdutosHtml(html);
-  return rochaCMapCache;
+function ogTitle(html) {
+  return html.match(/<meta property="og:title" content="([^"]+)"/i)?.[1] || '';
 }
 
-function tryRochaSlug(slug, cOverride) {
+/** PR70001 no SIAH → slug pr7000 no portal (descarta 1 final + 4 dígitos). */
+export function rochaSlugFromSiahDesc(desc) {
+  const m = String(desc || '').match(/\b(PR|R)(\d{4,})\b/i);
+  if (!m) return '';
+  let digits = m[2];
+  if (digits.length >= 5 && digits.endsWith('1')) digits = digits.slice(0, -1);
+  const core = digits.length > 4 ? digits.slice(0, 4) : digits;
+  return `${m[1].toLowerCase()}${core}`;
+}
+
+function tryRochaSlug(slug) {
   if (!slug) return null;
-  const cMap = loadRochaCMap();
-  const url = rochaProductUrl(slug, cMap, cOverride);
+  const url = `${ROCHA}/produtos/${slug}`;
   const html = curl(url);
-  if (isRochaProductHtmlValid(html)) {
-    const title = rochaTitleFromHtml(html);
-    return {
-      fabricante_grupo: 'Grupo Rocha',
-      marca_no_site: 'Rochaforte / Rochamaxx (portal)',
-      descricao_no_site: title,
-      evidencia_url: url,
-      status: 'confirmado_site',
-      match_metodo: `rocha_portal:${slug}`,
-    };
-  }
-  return rochaCatalogFallbackHit(slug, cMap);
+  const title = ogTitle(html);
+  if (!title || html.length < 500) return null;
+  return {
+    fabricante_grupo: 'Grupo Rocha',
+    marca_no_site: 'Rochaforte / Rochamaxx (portal)',
+    descricao_no_site: title.replace(/\s*\|\s*Grupo Rocha\s*$/i, '').trim(),
+    evidencia_url: url,
+    status: 'confirmado_site',
+    match_metodo: `rocha_portal_codigo:${slug}`,
+  };
 }
 
 function tryLumePortfolioForRow(row) {
@@ -213,40 +207,11 @@ const INCOPISOS_SLUG_BY_CODE = {
   'INDF-102': 'studio-cotto',
   'INDF-079': 'hd-160101',
   'INDF-047': 'puglia-grigio-2',
-  'INDF-046': 'hd-90070',
-  'INDF-048': 'hd-170048',
-  'INDF-103': 'esmal',
-  'INDF-110': 'cimento',
-};
-
-/** Slug no portalgruporocha.com.br (índice /produtos traz ?c= quando necessário). */
-const ROCHA_SLUG_BY_CODE = {
-  'INDF-023': 'pr70100',
-  'INDF-040': 'marmo-douro',
-  'INDF-129': 'bianco-supreme',
-  'INDF-149': 'oro-realle',
-  35039: 'fenix',
-  35447: 'breccia-lux',
-  35486: 'loft-bege-ext',
-  35509: 'r4076',
-};
-
-/** Ficha oficial fora dos conectores habituais — só códigos validados manualmente (busca agressiva). */
-const MANUAL_SITE_BY_CODE = {
-  'INDF-077': {
-    fabricante_grupo: 'Delta Cerâmica',
-    marca_no_site: 'Delta Porcelanato Intense',
-    descricao_no_site: 'SALINAS-84 IN · 84×84 · acetinado',
-    evidencia_url: 'https://deltaceramica.com.br/produto-in.php?id=460',
-    status: 'confirmado_site',
-    match_metodo: 'manual_agressivo:delta_salinas_84',
-  },
 };
 
 function acabamentoLabelFromSuperficie(s) {
   const t = String(s || '').trim();
   if (!t) return '';
-  if (/^mre$/i.test(t) || /escorregamento/i.test(t)) return 'MRE';
   if (/^brilhante$/i.test(t)) return 'Brilhante';
   if (/^mate$/i.test(t)) return 'Mate';
   if (/^acetinado$/i.test(t)) return 'Acetinado';
@@ -437,24 +402,6 @@ async function main() {
     if (resolved) r.formato = resolved;
   }
 
-  for (const [codigo, hit] of Object.entries(MANUAL_SITE_BY_CODE)) {
-    const r = byCode.get(codigo);
-    if (!r || r.status === 'confirmado_site') continue;
-    applyHit(r, { ...hit }, 'busca agressiva — ficha oficial validada');
-  }
-
-  for (const [codigo, slug] of Object.entries(ROCHA_SLUG_BY_CODE)) {
-    const r = byCode.get(codigo);
-    if (!r || r.status === 'confirmado_site') continue;
-    const hit = tryRochaSlug(slug);
-    if (hit) {
-      if (/rochamaxx|loft|fenix|breccia|bianco|oro|marmo/i.test(r.descricao_erp || '')) {
-        hit.marca_no_site = 'Rochamaxx';
-      }
-      applyHit(r, hit, `portal Rocha slug ${slug}`);
-    }
-  }
-
   // 70x70 — Rocha por código portal
   for (const r of rows.filter((x) => x.formato === '70x70' && x.status !== 'confirmado_site')) {
     const slug = rochaSlugFromSiahDesc(r.descricao_erp);
@@ -470,19 +417,10 @@ async function main() {
   };
   for (const r of rows.filter((x) => x.formato === '82x82')) {
     if (r.status === 'confirmado_site') continue;
-    const n = stripAccents(`${r.descricao_erp || ''} ${modeloNome(r)}`).toLowerCase();
-    const slug =
-      rocha82[r.codigo] ||
-      (n.includes('loft bege') ? 'loft-bege-ext' : '') ||
-      (n.includes('loft cinza') ? 'loft-cinza-ext' : '') ||
-      (n.includes('bianco supreme') ? 'bianco-supreme' : '') ||
-      (n.includes('oro realle') ? 'oro-realle' : '') ||
-      (n.includes('marmo duro') || n.includes('marmo douro') ? 'marmo-douro' : '');
+    const slug = rocha82[r.codigo] || (modeloNome(r).toLowerCase().includes('loft bege') ? 'loft-bege-ext' : modeloNome(r).toLowerCase().includes('loft cinza') ? 'loft-cinza-ext' : '');
     const hit = slug ? tryRochaSlug(slug) : null;
-    if (hit) {
-      hit.marca_no_site = 'Rochamaxx';
-      applyHit(r, hit);
-    } else indicacao(r, 'Grupo Rocha', 'Rochamaxx', '82x82');
+    if (hit) applyHit(r, hit);
+    else indicacao(r, 'Grupo Rocha', 'Rochamaxx', '82x82');
   }
 
   // 61x116 — Rocha
@@ -651,26 +589,9 @@ async function main() {
     }
   }
 
-  // 58×58 — Incopisos (não sobrescrever fichas já confirmadas)
-  for (const r of rows.filter((x) => x.formato === '58x58' && x.status !== 'confirmado_site')) {
-    const hit = tryIncopisosForRow(r);
-    if (hit) applyHit(r, hit, 'Grupo Incopisos — 58×58');
-    else indicacao(r, 'Grupo Incopisos', 'Incopisos', '58x58');
-  }
-
-  // Busca agressiva Incopisos: HD / código entre parênteses na descrição (ex. HD 170048 → /produto/hd-170048/)
-  for (const r of rows.filter((x) => /incopisos/i.test(String(x.fabricante_grupo || x.marca_no_site || '')) && x.status !== 'confirmado_site')) {
-    const slugs = [
-      ...hdCodigoSlugCandidatesFromErp(r.descricao_erp || ''),
-      ...incopisosSlugCandidates(r, modeloNome(r) || r.modelo || ''),
-    ];
-    for (const slug of [...new Set(slugs)]) {
-      const hit = tryIncopisosSlug(slug);
-      if (hit) {
-        applyHit(r, hit, `Incopisos — código ERP → ${slug}`);
-        break;
-      }
-    }
+  // 58x58 — Incopisos
+  for (const r of rows.filter((x) => x.formato === '58x58')) {
+    indicacao(r, 'Grupo Incopisos', 'Incopisos', '58x58');
   }
 
   const incopisos56 = {

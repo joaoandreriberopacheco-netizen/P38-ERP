@@ -5,25 +5,16 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { stripAccents } from './formigresCatalog.mjs';
 
-const DEFAULT_JSON = path.join(process.cwd(), 'files', 'pagleve', 'precos-siah-fornecedor.json');
-const MANUAL_PRECO_JSON = path.join(process.cwd(), 'files', 'pagleve', 'precos-varejo-por-codigo.json');
+const ROOT = process.cwd();
+const PRE_OS_JSON = path.join(ROOT, 'files', 'pagleve', 'precos-pre-os.json');
+const LEGACY_JSON = path.join(ROOT, 'files', 'pagleve', 'precos-siah-fornecedor.json');
 
-let manualPrecoCache = null;
-
-export function loadPrecosVarejoPorCodigo(jsonPath = MANUAL_PRECO_JSON) {
-  if (manualPrecoCache && jsonPath === MANUAL_PRECO_JSON) return manualPrecoCache;
-  if (!fs.existsSync(jsonPath)) return null;
-  const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
-  const map = data.por_codigo_tintao || data;
-  const out = new Map();
-  for (const [cod, row] of Object.entries(map)) {
-    if (cod === 'meta' || !row || typeof row !== 'object') continue;
-    const preco = Number(row.preco_varejo_m2);
-    if (!Number.isFinite(preco) || preco <= 0) continue;
-    out.set(String(cod).trim(), { ...row, preco_varejo_m2: preco });
+function defaultPrecosJsonPath() {
+  if (process.env.PAGLEVE_PRECOS_JSON && fs.existsSync(process.env.PAGLEVE_PRECOS_JSON)) {
+    return process.env.PAGLEVE_PRECOS_JSON;
   }
-  if (jsonPath === MANUAL_PRECO_JSON) manualPrecoCache = out;
-  return out;
+  if (fs.existsSync(PRE_OS_JSON)) return PRE_OS_JSON;
+  return LEGACY_JSON;
 }
 
 export function normDescKey(s) {
@@ -34,42 +25,35 @@ export function normDescKey(s) {
     .trim();
 }
 
-export function loadPrecosSiah(jsonPath = DEFAULT_JSON) {
+export function loadPrecosSiah(jsonPath = defaultPrecosJsonPath()) {
   if (!fs.existsSync(jsonPath)) return null;
   const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
   const byCode = new Map();
   const list = [];
   for (const row of data.itens || []) {
-    const cod = String(row.codigo_siah || '');
+    const cod = String(row.codigo_siah || row.codigo_loja || '');
     if (!cod) continue;
     if (!byCode.has(cod)) {
       byCode.set(cod, row);
       list.push(row);
     }
   }
-  return { byCode, list, meta: data };
+  return { byCode, list, meta: data, path: jsonPath };
 }
 
 /**
  * @returns {{ preco_m2: number|null, codigo_siah?: string, fonte?: string }}
  */
 export function resolvePrecoSiah(item, precos) {
-  const ref = String(item.codigo_tintao || item.referencia || item.codigo || '').trim();
-  const manual = loadPrecosVarejoPorCodigo();
-  if (ref && manual?.has(ref)) {
-    const row = manual.get(ref);
-    return {
-      preco_m2: row.preco_varejo_m2,
-      codigo_siah: row.codigo_siah || '',
-      fonte: 'varejo_manual',
-    };
-  }
-
   if (!precos?.byCode) return { preco_m2: null };
-  const cod = ref;
+  const cod = String(item.codigo_tintao || item.referencia || item.codigo || '').trim();
   if (/^\d{4,6}$/.test(cod) && precos.byCode.has(cod)) {
     const r = precos.byCode.get(cod);
-    return { preco_m2: r.preco_varejo_m2, codigo_siah: cod, fonte: 'siah_codigo' };
+  if (/^\d{4,6}$/.test(cod) && precos.byCode.has(cod)) {
+    const r = precos.byCode.get(cod);
+    const fonte = precos.meta?.tipo === 'pre_os' ? 'pre_os_codigo' : 'siah_codigo';
+    return { preco_m2: r.preco_varejo_m2, codigo_siah: cod, fonte };
+  }
   }
 
   const fmt = normDescKey((item.formato || '').replace(/x/gi, 'X'));
