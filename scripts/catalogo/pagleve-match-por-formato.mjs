@@ -34,7 +34,7 @@ import {
   fetchProdutoDetalhe,
 } from '../lib/formigresCatalog.mjs';
 import { stripAccents } from '../lib/formigresCatalog.mjs';
-import { modeloComercialCatalogo, raioXProdutoDescricao } from '../lib/raioXProdutoDescricao.mjs';
+import { modeloComercialCatalogo, raioXProdutoDescricao, referenciaRochaprimeErp } from '../lib/raioXProdutoDescricao.mjs';
 import {
   imagensJsonFromLumeFicha,
   lumePortfolioSlugFromRow,
@@ -45,6 +45,7 @@ import {
   isRochaProductHtmlValid,
   parseRochaCMapFromProdutosHtml,
   rochaProductUrl,
+  rochaSlugCandidatesFromErp,
   rochaSlugFromSiahDesc,
   rochaTitleFromHtml,
 } from '../lib/rochaPortalPagina.mjs';
@@ -220,7 +221,10 @@ function modeloParaBusca(row) {
 }
 
 function temNomeComercial(row) {
+  const desc = row.descricao_erp || row.descricao_original || '';
+  const ref = referenciaRochaprimeErp(desc);
   const m = modeloParaBusca(row);
+  if (ref && (!m || m.toUpperCase() === ref)) return false;
   if (!m || m.length < 4) return false;
   const tokens = m.split(/\s+/).filter((t) => t.length >= 4 && !/^(rochaprime|rochamaxx)$/i.test(t));
   return tokens.length > 0;
@@ -247,15 +251,18 @@ function rochaSlugCandidates(row) {
 function tryRocha(row, rochaCtx) {
   const { slugs: rochaSlugs, cMap } = rochaCtx;
   const candidates = rochaSlugCandidates(row);
-  const codeSlug = rochaSlugFromSiahDesc(row.descricao_erp || row.descricao_original);
+  const desc = row.descricao_erp || row.descricao_original || '';
+  for (const s of rochaSlugCandidatesFromErp(desc)) {
+    if (s) candidates.unshift(s);
+  }
+  const codeSlug = rochaSlugFromSiahDesc(desc);
   if (codeSlug) candidates.unshift(codeSlug);
   const tried = [];
+  const seen = new Set();
   for (let c of candidates) {
-    if (/^(pr|r)\d+$/i.test(c) && c !== codeSlug) {
-      tried.push(c);
-      continue;
-    }
-    if (!rochaSlugs.has(c) && /^\d/.test(c)) {
+    if (!c || seen.has(c)) continue;
+    seen.add(c);
+    if (!/^(pr|r)\d+$/i.test(c) && !rochaSlugs.has(c) && /^\d/.test(c)) {
       tried.push(c);
       continue;
     }

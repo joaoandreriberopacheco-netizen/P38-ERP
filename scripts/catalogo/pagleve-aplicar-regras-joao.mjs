@@ -33,6 +33,7 @@ import {
   parseIncopisosOembedJson,
   parseIncopisosProdutoHtml,
 } from '../lib/incopisosPaginaProduto.mjs';
+import { rochaSlugCandidatesFromErp, rochaSlugFromSiahDesc } from '../lib/rochaPortalPagina.mjs';
 
 const ROOT = process.cwd();
 const CSV =
@@ -106,16 +107,6 @@ function ogTitle(html) {
   return html.match(/<meta property="og:title" content="([^"]+)"/i)?.[1] || '';
 }
 
-/** PR70001 no SIAH → slug pr7000 no portal (descarta 1 final + 4 dígitos). */
-export function rochaSlugFromSiahDesc(desc) {
-  const m = String(desc || '').match(/\b(PR|R)(\d{4,})\b/i);
-  if (!m) return '';
-  let digits = m[2];
-  if (digits.length >= 5 && digits.endsWith('1')) digits = digits.slice(0, -1);
-  const core = digits.length > 4 ? digits.slice(0, 4) : digits;
-  return `${m[1].toLowerCase()}${core}`;
-}
-
 function tryRochaSlug(slug) {
   if (!slug) return null;
   const url = `${ROCHA}/produtos/${slug}`;
@@ -130,6 +121,15 @@ function tryRochaSlug(slug) {
     status: 'confirmado_site',
     match_metodo: `rocha_portal_codigo:${slug}`,
   };
+}
+
+function tryRochaSlugsFromDesc(desc) {
+  const slugs = [...new Set([...rochaSlugCandidatesFromErp(desc), rochaSlugFromSiahDesc(desc)].filter(Boolean))];
+  for (const slug of slugs) {
+    const hit = tryRochaSlug(slug);
+    if (hit) return hit;
+  }
+  return null;
 }
 
 function tryLumePortfolioForRow(row) {
@@ -404,10 +404,12 @@ async function main() {
 
   // 70x70 — Rocha por código portal
   for (const r of rows.filter((x) => x.formato === '70x70' && x.status !== 'confirmado_site')) {
-    const slug = rochaSlugFromSiahDesc(r.descricao_erp);
-    const hit = tryRochaSlug(slug);
-    if (hit) applyHit(r, hit, `portal slug ${slug} (SIAH→site)`);
-    else indicacao(r, 'Grupo Rocha', 'Rochaforte / Rochaprime (portal)', '70x70', `slug tentado: ${slug}`);
+    const hit = tryRochaSlugsFromDesc(r.descricao_erp);
+    if (hit) applyHit(r, hit, `portal slug (SIAH→site)`);
+    else {
+      const tried = rochaSlugCandidatesFromErp(r.descricao_erp).join(',') || rochaSlugFromSiahDesc(r.descricao_erp);
+      indicacao(r, 'Grupo Rocha', 'Rochaforte / Rochaprime (portal)', '70x70', `slug tentado: ${tried}`);
+    }
   }
 
   // 82x82 — Rocha (loft)

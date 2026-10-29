@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-10-29T20:31:52.592Z",
+  "geradoEm": "2026-10-29T20:45:14.032Z",
   "fonte": "/workspace/files/pagleve/pagleve-base-cruzada.csv",
   "resumo": {
     "porRotulo": {
@@ -77,11 +77,7 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "26091",
@@ -121,11 +117,7 @@
       "m2_por_caixa": 2.23,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 36,
-      "m2_por_palete": 80.28,
-      "peso_kg_caixa": 38,
-      "peso_kg_palete": 1368
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "26094",
@@ -165,11 +157,7 @@
       "m2_por_caixa": 2.23,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 36,
-      "m2_por_palete": 80.28,
-      "peso_kg_caixa": 38,
-      "peso_kg_palete": 1368
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "26096",
@@ -209,11 +197,7 @@
       "m2_por_caixa": 2.23,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 36,
-      "m2_por_palete": 80.28,
-      "peso_kg_caixa": 38,
-      "peso_kg_palete": 1368
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "26102",
@@ -253,11 +237,7 @@
       "m2_por_caixa": 2.1,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 84,
-      "peso_kg_caixa": 34,
-      "peso_kg_palete": 1360
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "26522",
@@ -297,11 +277,7 @@
       "m2_por_caixa": 2.1,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 84,
-      "peso_kg_caixa": 34,
-      "peso_kg_palete": 1360
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "26548",
@@ -341,11 +317,7 @@
       "m2_por_caixa": 2.62,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (ARIELLE) + PRE_OS",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "lista fábrica (ARIELLE) + PRE_OS"
     },
     {
       "codigo_tintao": "26564",
@@ -385,11 +357,7 @@
       "m2_por_caixa": 2.1,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 84,
-      "peso_kg_caixa": 34,
-      "peso_kg_palete": 1360
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "26623",
@@ -426,14 +394,10 @@
       "preco_m2": 32.9,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "26623",
-      "m2_por_caixa": 2,
+      "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 50,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 28,
-      "peso_kg_palete": 1400
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "26626",
@@ -473,11 +437,7 @@
       "m2_por_caixa": 2.1,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 84,
-      "peso_kg_caixa": 34,
-      "peso_kg_palete": 1360
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "26635",
@@ -517,11 +477,7 @@
       "m2_por_caixa": 2.23,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 36,
-      "m2_por_palete": 80.28,
-      "peso_kg_caixa": 38,
-      "peso_kg_palete": 1368
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "26640",
@@ -561,11 +517,7 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "26643",
@@ -605,11 +557,7 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "26646",
@@ -649,11 +597,7 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "26649",
@@ -693,11 +637,7 @@
       "m2_por_caixa": 2.1,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 84,
-      "peso_kg_caixa": 34,
-      "peso_kg_palete": 1360
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "26769",
@@ -734,14 +674,10 @@
       "preco_m2": 33.45,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "26769",
-      "m2_por_caixa": 2,
+      "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 50,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 28,
-      "peso_kg_palete": 1400
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "26774",
@@ -781,11 +717,7 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "26793",
@@ -820,11 +752,7 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "nao_encontrado",
-      "observacao": "sem_ficha;ordem:formigres→rocha→carmelo→lume→cerbras",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": "sem_ficha;ordem:formigres→rocha→carmelo→lume→cerbras"
     },
     {
       "codigo_tintao": "26798",
@@ -864,11 +792,7 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "26817",
@@ -905,14 +829,10 @@
       "preco_m2": 33.9,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "26817",
-      "m2_por_caixa": 2,
+      "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 50,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 26,
-      "peso_kg_palete": 1300
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "26826",
@@ -952,11 +872,7 @@
       "m2_por_caixa": 2.16,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 24,
-      "m2_por_palete": 51.84,
-      "peso_kg_caixa": 41,
-      "peso_kg_palete": 984
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "26981",
@@ -993,14 +909,10 @@
       "preco_m2": 32.9,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "26981",
-      "m2_por_caixa": 2,
+      "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 50,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 28,
-      "peso_kg_palete": 1400
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "26987",
@@ -1040,11 +952,7 @@
       "m2_por_caixa": 2.23,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 36,
-      "m2_por_palete": 80.28,
-      "peso_kg_caixa": 38,
-      "peso_kg_palete": 1368
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "27010",
@@ -1081,14 +989,10 @@
       "preco_m2": 33.45,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "27010",
-      "m2_por_caixa": 2,
+      "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 50,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 28,
-      "peso_kg_palete": 1400
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "27014",
@@ -1128,11 +1032,7 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "27088",
@@ -1169,14 +1069,10 @@
       "preco_m2": 33.45,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "27088",
-      "m2_por_caixa": 2,
+      "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 50,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 28,
-      "peso_kg_palete": 1400
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "27091",
@@ -1216,11 +1112,7 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "27261",
@@ -1252,10 +1144,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/2c07c02ebf46f1668065afdb3ddd126f.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/d1eda54ed443ff550235858d0c121fa8.webp",
-          "tipo": "ambiente"
         }
       ],
       "preco_m2": 33.9,
@@ -1264,11 +1152,7 @@
       "m2_por_caixa": 2.62,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (ARIELLE) + PRE_OS",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "lista fábrica (ARIELLE) + PRE_OS"
     },
     {
       "codigo_tintao": "27528",
@@ -1308,11 +1192,7 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "27530",
@@ -1352,11 +1232,7 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "27531",
@@ -1396,11 +1272,7 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "27532",
@@ -1437,14 +1309,10 @@
       "preco_m2": 32.9,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "27532",
-      "m2_por_caixa": 2,
+      "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 50,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 28,
-      "peso_kg_palete": 1400
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "27551",
@@ -1481,14 +1349,10 @@
       "preco_m2": 32.9,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "27551",
-      "m2_por_caixa": 2,
+      "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 50,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 28,
-      "peso_kg_palete": 1400
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "27555",
@@ -1528,11 +1392,7 @@
       "m2_por_caixa": 2.1,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 84,
-      "peso_kg_caixa": 34,
-      "peso_kg_palete": 1360
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "27683",
@@ -1569,14 +1429,10 @@
       "preco_m2": 33.45,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "27683",
-      "m2_por_caixa": 2,
+      "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 50,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 28,
-      "peso_kg_palete": 1400
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "27693",
@@ -1613,14 +1469,10 @@
       "preco_m2": 32.9,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "27693",
-      "m2_por_caixa": 2,
+      "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 50,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 28,
-      "peso_kg_palete": 1400
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "27707",
@@ -1660,11 +1512,7 @@
       "m2_por_caixa": 2.18,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 36,
-      "m2_por_palete": 78.48,
-      "peso_kg_caixa": 41,
-      "peso_kg_palete": 1476
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "27708",
@@ -1704,11 +1552,7 @@
       "m2_por_caixa": 2.18,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 36,
-      "m2_por_palete": 78.48,
-      "peso_kg_caixa": 41,
-      "peso_kg_palete": 1476
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "27709",
@@ -1748,11 +1592,7 @@
       "m2_por_caixa": 2.18,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 36,
-      "m2_por_palete": 78.48,
-      "peso_kg_caixa": 41,
-      "peso_kg_palete": 1476
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "27737",
@@ -1789,21 +1629,17 @@
       "preco_m2": 33.45,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "27737",
-      "m2_por_caixa": 2,
+      "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 50,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 28,
-      "peso_kg_palete": 1400
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "27906",
-      "modelo": "Branco Retificado :",
-      "catalogo_nome_modelo": "Branco Retificado :",
+      "modelo": "Branco Retificado",
+      "catalogo_nome_modelo": "Branco Retificado",
       "descricao_erp": "REVESTIMENTO 33X59 BRANCO A (2,02)RETIFICADO PEI:LC",
-      "descricao": "Branco Retificado :",
+      "descricao": "Branco Retificado",
       "formato": "33x59",
       "linha": "retificada",
       "subtipo": "lisa",
@@ -1814,7 +1650,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "60",
-      "formigres_titulo": "Branco Retificado : · 33x59 · RET · Brilhante",
+      "formigres_titulo": "Branco Retificado · 33x59 · RET · Brilhante",
       "formigres_tipo": "RETIFICADO",
       "formigres_acabamento": "BRILHANTE",
       "acabamento_label": "Brilhante",
@@ -1836,11 +1672,7 @@
       "m2_por_caixa": 2.02,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 80.8,
-      "peso_kg_caixa": 34,
-      "peso_kg_palete": 1360
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "27908",
@@ -1880,11 +1712,7 @@
       "m2_por_caixa": 2.1,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 84,
-      "peso_kg_caixa": 34,
-      "peso_kg_palete": 1360
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "27947",
@@ -1924,11 +1752,7 @@
       "m2_por_caixa": 2.23,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 36,
-      "m2_por_palete": 80.28,
-      "peso_kg_caixa": 38,
-      "peso_kg_palete": 1368
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "27950",
@@ -1968,11 +1792,7 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "27974",
@@ -2012,11 +1832,7 @@
       "m2_por_caixa": 2.23,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 36,
-      "m2_por_palete": 80.28,
-      "peso_kg_caixa": 38,
-      "peso_kg_palete": 1368
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "28055",
@@ -2056,11 +1872,7 @@
       "m2_por_caixa": 2.1,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 84,
-      "peso_kg_caixa": 34,
-      "peso_kg_palete": 1360
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "28058",
@@ -2100,11 +1912,7 @@
       "m2_por_caixa": 2.23,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 36,
-      "m2_por_palete": 80.28,
-      "peso_kg_caixa": 38,
-      "peso_kg_palete": 1368
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "28071",
@@ -2144,11 +1952,7 @@
       "m2_por_caixa": 2.1,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 84,
-      "peso_kg_caixa": 34,
-      "peso_kg_palete": 1360
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "28253",
@@ -2188,11 +1992,7 @@
       "m2_por_caixa": 1.68,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 24,
-      "m2_por_palete": 57.6,
-      "peso_kg_caixa": 43,
-      "peso_kg_palete": 1032
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "28256",
@@ -2232,11 +2032,7 @@
       "m2_por_caixa": 2.16,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 24,
-      "m2_por_palete": 51.84,
-      "peso_kg_caixa": 41,
-      "peso_kg_palete": 984
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "28262",
@@ -2276,11 +2072,7 @@
       "m2_por_caixa": 2.16,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 24,
-      "m2_por_palete": 51.84,
-      "peso_kg_caixa": 41,
-      "peso_kg_palete": 984
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "28470",
@@ -2320,11 +2112,7 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "28473",
@@ -2364,11 +2152,7 @@
       "m2_por_caixa": 2.1,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 84,
-      "peso_kg_caixa": 34,
-      "peso_kg_palete": 1360
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "28477",
@@ -2408,11 +2192,7 @@
       "m2_por_caixa": 2.1,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 84,
-      "peso_kg_caixa": 34,
-      "peso_kg_palete": 1360
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "28533",
@@ -2449,14 +2229,10 @@
       "preco_m2": 32.9,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "28533",
-      "m2_por_caixa": 2,
+      "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 50,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 28,
-      "peso_kg_palete": 1400
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "28536",
@@ -2496,11 +2272,7 @@
       "m2_por_caixa": 2.23,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 36,
-      "m2_por_palete": 80.28,
-      "peso_kg_caixa": 38,
-      "peso_kg_palete": 1368
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "28690",
@@ -2540,11 +2312,7 @@
       "m2_por_caixa": 2.1,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 84,
-      "peso_kg_caixa": 34,
-      "peso_kg_palete": 1360
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "28693",
@@ -2581,14 +2349,10 @@
       "preco_m2": 32.9,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "28693",
-      "m2_por_caixa": 2,
+      "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 50,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 28,
-      "peso_kg_palete": 1400
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "28809",
@@ -2625,14 +2389,10 @@
       "preco_m2": 33.45,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "28809",
-      "m2_por_caixa": 2,
+      "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 50,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 28,
-      "peso_kg_palete": 1400
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "28812",
@@ -2672,11 +2432,7 @@
       "m2_por_caixa": 2.16,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 24,
-      "m2_por_palete": 51.84,
-      "peso_kg_caixa": 41,
-      "peso_kg_palete": 984
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "28814",
@@ -2716,11 +2472,7 @@
       "m2_por_caixa": 2.18,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 36,
-      "m2_por_palete": 78.48,
-      "peso_kg_caixa": 41,
-      "peso_kg_palete": 1476
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "28929",
@@ -2752,26 +2504,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/eff45154d7e4dba0d081dca54537b316.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/a5397ae82b502e1d836d8c69b3f65eb7.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/41ec701542b78ba6cf9c72da20722bc5.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/82eac5cdee88fbe44a5fa2dba6085ab9.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/9c0647c5ff778068f819fba0d4a66d39.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/79b8c4c2159d3220e9b602663bee1568.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 32.9,
@@ -2780,11 +2512,7 @@
       "m2_por_caixa": 2.62,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (ARIELLE) + PRE_OS",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "lista fábrica (ARIELLE) + PRE_OS"
     },
     {
       "codigo_tintao": "28931",
@@ -2816,26 +2544,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/5d2cbba13c6bd962db2e2587aaef8436.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/62b9b3285d154811340ed7bd37f1bee6.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/c1376539c09f3f92b9ed0342e8955bf8.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/84413a4d99c6cb4b8247ce478b942506.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/0d1bda008836163d49238e740fe841cd.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/34b90e91f5346e117511031d046d4ec2.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 33.9,
@@ -2844,11 +2552,7 @@
       "m2_por_caixa": 2.62,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (ARIELLE) + PRE_OS",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "lista fábrica (ARIELLE) + PRE_OS"
     },
     {
       "codigo_tintao": "29044",
@@ -2888,11 +2592,7 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "29062",
@@ -2932,11 +2632,7 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "29215",
@@ -2976,11 +2672,7 @@
       "m2_por_caixa": 2.62,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (ARIELLE) + PRE_OS",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "lista fábrica (ARIELLE) + PRE_OS"
     },
     {
       "codigo_tintao": "29954",
@@ -3012,10 +2704,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/25c842c248dcf2b03e57636f6308469b.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/2f71b4c82d655f3ea8ecd55e1865ac75.webp",
-          "tipo": "ambiente"
         }
       ],
       "preco_m2": 31.9,
@@ -3024,11 +2712,7 @@
       "m2_por_caixa": 2.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (ARIELLE) + PRE_OS",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "lista fábrica (ARIELLE) + PRE_OS"
     },
     {
       "codigo_tintao": "29978",
@@ -3068,16 +2752,12 @@
       "m2_por_caixa": 2.18,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 36,
-      "m2_por_palete": 78.48,
-      "peso_kg_caixa": 41,
-      "peso_kg_palete": 1476
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "29995",
       "modelo": "PR70261",
-      "catalogo_nome_modelo": "",
+      "catalogo_nome_modelo": "PR70261",
       "descricao_erp": "PISO 70X70 PR70261 ROCHAPRIME A (3,43)RT POLIDO PEI LC",
       "descricao": "PR70261",
       "formato": "70x70",
@@ -3090,7 +2770,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "70x70 · RET · Polido",
+      "formigres_titulo": "PR70261 · 70x70 · RET · Polido",
       "formigres_tipo": "",
       "formigres_acabamento": "POLIDO",
       "acabamento_label": "Polido",
@@ -3107,16 +2787,12 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug pr7026 (SIAH→site)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "portal slug pr7026 (SIAH→site)"
     },
     {
       "codigo_tintao": "30059",
       "modelo": "PR70671",
-      "catalogo_nome_modelo": "",
+      "catalogo_nome_modelo": "PR70671",
       "descricao_erp": "PISO 70X70 PR70671 ROCHAPRIME A (3,43)RT POLIDO PEI LC",
       "descricao": "PR70671",
       "formato": "70x70",
@@ -3129,7 +2805,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "70x70 · RET · Polido",
+      "formigres_titulo": "PR70671 · 70x70 · RET · Polido",
       "formigres_tipo": "",
       "formigres_acabamento": "POLIDO",
       "acabamento_label": "Polido",
@@ -3146,11 +2822,7 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug pr7067 (SIAH→site)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "portal slug pr7067 (SIAH→site)"
     },
     {
       "codigo_tintao": "30063",
@@ -3190,11 +2862,7 @@
       "m2_por_caixa": 2.18,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 36,
-      "m2_por_palete": 78.48,
-      "peso_kg_caixa": 41,
-      "peso_kg_palete": 1476
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "30108",
@@ -3234,11 +2902,7 @@
       "m2_por_caixa": 2.18,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 36,
-      "m2_por_palete": 78.48,
-      "peso_kg_caixa": 41,
-      "peso_kg_palete": 1476
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "30176",
@@ -3278,11 +2942,7 @@
       "m2_por_caixa": 1.97,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 30,
-      "m2_por_palete": 66,
-      "peso_kg_caixa": 42,
-      "peso_kg_palete": 1260
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "30179",
@@ -3322,11 +2982,7 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "30212",
@@ -3366,11 +3022,7 @@
       "m2_por_caixa": 1.68,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 24,
-      "m2_por_palete": 57.6,
-      "peso_kg_caixa": 43,
-      "peso_kg_palete": 1032
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "30218",
@@ -3410,11 +3062,7 @@
       "m2_por_caixa": 1.68,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 24,
-      "m2_por_palete": 57.6,
-      "peso_kg_caixa": 43,
-      "peso_kg_palete": 1032
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "30219",
@@ -3454,11 +3102,7 @@
       "m2_por_caixa": 2.16,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 24,
-      "m2_por_palete": 51.84,
-      "peso_kg_caixa": 41,
-      "peso_kg_palete": 984
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "30220",
@@ -3498,11 +3142,7 @@
       "m2_por_caixa": 2.18,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 36,
-      "m2_por_palete": 78.48,
-      "peso_kg_caixa": 41,
-      "peso_kg_palete": 1476
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "30230",
@@ -3542,11 +3182,7 @@
       "m2_por_caixa": 2.16,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 24,
-      "m2_por_palete": 51.84,
-      "peso_kg_caixa": 41,
-      "peso_kg_palete": 984
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "30586",
@@ -3586,11 +3222,7 @@
       "m2_por_caixa": 2.1,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 84,
-      "peso_kg_caixa": 34,
-      "peso_kg_palete": 1360
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "30623",
@@ -3630,11 +3262,7 @@
       "m2_por_caixa": 1.97,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 30,
-      "m2_por_palete": 66,
-      "peso_kg_caixa": 42,
-      "peso_kg_palete": 1260
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "30624",
@@ -3674,11 +3302,7 @@
       "m2_por_caixa": 1.97,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 30,
-      "m2_por_palete": 66,
-      "peso_kg_caixa": 42,
-      "peso_kg_palete": 1260
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "30625",
@@ -3718,11 +3342,7 @@
       "m2_por_caixa": 1.97,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 30,
-      "m2_por_palete": 66,
-      "peso_kg_caixa": 42,
-      "peso_kg_palete": 1260
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "30638",
@@ -3762,11 +3382,7 @@
       "m2_por_caixa": 2.7,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (ROCHAPRIME)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "base PRE_OS×510 (ROCHAPRIME)"
     },
     {
       "codigo_tintao": "30639",
@@ -3806,11 +3422,7 @@
       "m2_por_caixa": 2.7,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (ROCHAPRIME)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "base PRE_OS×510 (ROCHAPRIME)"
     },
     {
       "codigo_tintao": "30884",
@@ -3850,11 +3462,7 @@
       "m2_por_caixa": 1.97,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 30,
-      "m2_por_palete": 66,
-      "peso_kg_caixa": 42,
-      "peso_kg_palete": 1260
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "30927",
@@ -3894,11 +3502,7 @@
       "m2_por_caixa": 1.97,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 30,
-      "m2_por_palete": 66,
-      "peso_kg_caixa": 42,
-      "peso_kg_palete": 1260
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "30940",
@@ -3938,11 +3542,7 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "30941",
@@ -3982,11 +3582,7 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "30942",
@@ -4026,11 +3622,7 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "30947",
@@ -4070,11 +3662,7 @@
       "m2_por_caixa": 2.7,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (ROCHAPRIME)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "base PRE_OS×510 (ROCHAPRIME)"
     },
     {
       "codigo_tintao": "31001",
@@ -4114,11 +3702,7 @@
       "m2_por_caixa": 1.97,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 30,
-      "m2_por_palete": 66,
-      "peso_kg_caixa": 42,
-      "peso_kg_palete": 1260
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "31035",
@@ -4158,11 +3742,7 @@
       "m2_por_caixa": 2.18,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 36,
-      "m2_por_palete": 78.48,
-      "peso_kg_caixa": 41,
-      "peso_kg_palete": 1476
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "31042",
@@ -4202,11 +3782,7 @@
       "m2_por_caixa": 2.7,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (ROCHAPRIME) + PRE_OS",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "lista fábrica (ROCHAPRIME) + PRE_OS"
     },
     {
       "codigo_tintao": "31086",
@@ -4243,14 +3819,10 @@
       "preco_m2": 34.9,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "31086",
-      "m2_por_caixa": 2,
+      "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 50,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 28,
-      "peso_kg_palete": 1400
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "31142",
@@ -4290,11 +3862,7 @@
       "m2_por_caixa": 1.97,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 30,
-      "m2_por_palete": 66,
-      "peso_kg_caixa": 42,
-      "peso_kg_palete": 1260
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "31179",
@@ -4334,11 +3902,7 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "31201",
@@ -4378,11 +3942,7 @@
       "m2_por_caixa": 2.83,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (ROCHAPRIME)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "base PRE_OS×510 (ROCHAPRIME)"
     },
     {
       "codigo_tintao": "31344",
@@ -4422,16 +3982,12 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": ""
     },
     {
       "codigo_tintao": "31355",
       "modelo": "R70741",
-      "catalogo_nome_modelo": "",
+      "catalogo_nome_modelo": "R70741",
       "descricao_erp": "PISO 70X70 R70741 ROCHAPRIME MATE A (3,43) RT PEI 4",
       "descricao": "R70741",
       "formato": "70x70",
@@ -4444,7 +4000,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "70x70 · RET · Mate",
+      "formigres_titulo": "R70741 · 70x70 · RET · Mate",
       "formigres_tipo": "",
       "formigres_acabamento": "MATE",
       "acabamento_label": "Mate",
@@ -4461,11 +4017,7 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug r7074 (SIAH→site)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "portal slug r7074 (SIAH→site)"
     },
     {
       "codigo_tintao": "31407",
@@ -4505,16 +4057,12 @@
       "m2_por_caixa": 1.97,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": 30,
-      "m2_por_palete": 66,
-      "peso_kg_caixa": 42,
-      "peso_kg_palete": 1260
+      "observacao": ""
     },
     {
       "codigo_tintao": "31721",
       "modelo": "PR70811",
-      "catalogo_nome_modelo": "",
+      "catalogo_nome_modelo": "PR70811",
       "descricao_erp": "PISO 70X70 PR70811 ROCHAPRIME A (3,43)RT POLIDO PEI LC",
       "descricao": "PR70811",
       "formato": "70x70",
@@ -4527,7 +4075,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "70x70 · RET · Polido",
+      "formigres_titulo": "PR70811 · 70x70 · RET · Polido",
       "formigres_tipo": "",
       "formigres_acabamento": "POLIDO",
       "acabamento_label": "Polido",
@@ -4544,11 +4092,7 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug pr7081 (SIAH→site)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "portal slug pr7081 (SIAH→site)"
     },
     {
       "codigo_tintao": "31743",
@@ -4588,11 +4132,7 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": ""
     },
     {
       "codigo_tintao": "31750",
@@ -4632,11 +4172,7 @@
       "m2_por_caixa": 2.1,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 84,
-      "peso_kg_caixa": 34,
-      "peso_kg_palete": 1360
+      "observacao": ""
     },
     {
       "codigo_tintao": "31756",
@@ -4676,16 +4212,12 @@
       "m2_por_caixa": 2.16,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": 24,
-      "m2_por_palete": 51.84,
-      "peso_kg_caixa": 41,
-      "peso_kg_palete": 984
+      "observacao": ""
     },
     {
       "codigo_tintao": "31778",
       "modelo": "R70601",
-      "catalogo_nome_modelo": "",
+      "catalogo_nome_modelo": "R70601",
       "descricao_erp": "PISO 70X70 R70601 ROCHAPRIME A (3,43)RT MATE PEI4",
       "descricao": "R70601",
       "formato": "70x70",
@@ -4698,7 +4230,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "70x70 · RET · Mate",
+      "formigres_titulo": "R70601 · 70x70 · RET · Mate",
       "formigres_tipo": "",
       "formigres_acabamento": "MATE",
       "acabamento_label": "Mate",
@@ -4715,11 +4247,7 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug r7060 (SIAH→site)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "portal slug r7060 (SIAH→site)"
     },
     {
       "codigo_tintao": "31918",
@@ -4759,11 +4287,7 @@
       "m2_por_caixa": 2.7,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (ROCHAPRIME) + PRE_OS",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "lista fábrica (ROCHAPRIME) + PRE_OS"
     },
     {
       "codigo_tintao": "31923",
@@ -4803,18 +4327,14 @@
       "m2_por_caixa": 2.23,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": 36,
-      "m2_por_palete": 80.28,
-      "peso_kg_caixa": 38,
-      "peso_kg_palete": 1368
+      "observacao": ""
     },
     {
       "codigo_tintao": "31929",
-      "modelo": "Branco Neve :",
-      "catalogo_nome_modelo": "Branco Neve :",
+      "modelo": "Branco Neve",
+      "catalogo_nome_modelo": "Branco Neve",
       "descricao_erp": "REV. 38X75 BRANCO NEVE PLUS A(2,0) ESM BOLD PEI: LA",
-      "descricao": "Branco Neve :",
+      "descricao": "Branco Neve",
       "formato": "38x75",
       "linha": "bold",
       "subtipo": null,
@@ -4825,7 +4345,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Branco Neve : · 38x75 · BOLD",
+      "formigres_titulo": "Branco Neve · 38x75 · BOLD",
       "formigres_tipo": "",
       "formigres_acabamento": "MARMOCERÂMICA",
       "acabamento_label": "",
@@ -4847,11 +4367,7 @@
       "m2_por_caixa": 2,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Grupo Incopisos — ficha grupoincopisos.com.br",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "Grupo Incopisos — ficha grupoincopisos.com.br"
     },
     {
       "codigo_tintao": "31947",
@@ -4891,11 +4407,7 @@
       "m2_por_caixa": 2.02,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": ""
     },
     {
       "codigo_tintao": "31949",
@@ -4935,18 +4447,14 @@
       "m2_por_caixa": 2.02,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": ""
     },
     {
       "codigo_tintao": "32083",
-      "modelo": "Taiko Bege Retificado :",
-      "catalogo_nome_modelo": "Taiko Bege Retificado :",
+      "modelo": "Taiko Bege Retificado",
+      "catalogo_nome_modelo": "Taiko Bege Retificado",
       "descricao_erp": "REVESTIMENTO 33X59 TAIKO BEGE A (2,02)RETIFICADO PEI:LC",
-      "descricao": "Taiko Bege Retificado :",
+      "descricao": "Taiko Bege Retificado",
       "formato": "33x59",
       "linha": "retificada",
       "subtipo": "lisa",
@@ -4957,7 +4465,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "56",
-      "formigres_titulo": "Taiko Bege Retificado : · 33x59 · RET · Mate",
+      "formigres_titulo": "Taiko Bege Retificado · 33x59 · RET · Mate",
       "formigres_tipo": "RETIFICADO",
       "formigres_acabamento": "MATE",
       "acabamento_label": "Mate",
@@ -4979,18 +4487,14 @@
       "m2_por_caixa": 2.02,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 80.8,
-      "peso_kg_caixa": 34,
-      "peso_kg_palete": 1360
+      "observacao": ""
     },
     {
       "codigo_tintao": "32092",
-      "modelo": "Taiko Cafe Retificado :",
-      "catalogo_nome_modelo": "Taiko Cafe Retificado :",
+      "modelo": "Taiko Cafe Retificado",
+      "catalogo_nome_modelo": "Taiko Cafe Retificado",
       "descricao_erp": "REVESTIMENTO 33X59 TAIKO CAFE A (2,02)RETIFICADO PEI:LC",
-      "descricao": "Taiko Cafe Retificado :",
+      "descricao": "Taiko Cafe Retificado",
       "formato": "33x59",
       "linha": "retificada",
       "subtipo": "lisa",
@@ -5001,7 +4505,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "55",
-      "formigres_titulo": "Taiko Cafe Retificado : · 33x59 · RET · Mate",
+      "formigres_titulo": "Taiko Cafe Retificado · 33x59 · RET · Mate",
       "formigres_tipo": "RETIFICADO",
       "formigres_acabamento": "MATE",
       "acabamento_label": "Mate",
@@ -5023,11 +4527,7 @@
       "m2_por_caixa": 2.02,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 80.8,
-      "peso_kg_caixa": 34,
-      "peso_kg_palete": 1360
+      "observacao": ""
     },
     {
       "codigo_tintao": "32094",
@@ -5067,11 +4567,7 @@
       "m2_por_caixa": 1.97,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": 30,
-      "m2_por_palete": 66,
-      "peso_kg_caixa": 42,
-      "peso_kg_palete": 1260
+      "observacao": ""
     },
     {
       "codigo_tintao": "32102",
@@ -5103,26 +4599,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/e7c191d78ae78bfcd314935364db4889.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/ca199a714d09839b3c1589ca449a197c.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/af807389d15bc861de2d8c4b3aab295a.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/cf65175da321fe9a7a4c5a96d07ac640.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/701bf38a5fd69fc6d0997640604132d0.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/58a9bf3be8c0f04e059ff83f73185645.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 45.9,
@@ -5131,11 +4607,7 @@
       "m2_por_caixa": 2.41,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Carmelo Fior — slug 90×90 no site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "Carmelo Fior — slug 90×90 no site"
     },
     {
       "codigo_tintao": "32103",
@@ -5167,22 +4639,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/08aaa1cc156102dbf44a49757ed7a507.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/fdc699267b8d381e1a302ed9182f4ce6.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/655b5614093ccaa209cfdeed6edde83d.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/dd8dc9b8526b3f1393c4894b873033d9.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/5079d69df0c43c5bafa9eabb01cd552a.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 45.9,
@@ -5191,11 +4647,7 @@
       "m2_por_caixa": 2.41,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "regra João André + URL site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "regra João André + URL site"
     },
     {
       "codigo_tintao": "32137",
@@ -5227,22 +4679,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/6fd109c7e6766e888f06106fab1afb7a.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/592b896d00fa5f7876acfd9389eeb26c.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/1df48fce9534c3a1451ec064d8d7a017.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/d8863dd2fceb3c6118aebb097994378d.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/53149404bf0331ba43df183b740b0123.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 45.9,
@@ -5251,11 +4687,7 @@
       "m2_por_caixa": 2.41,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Carmelo Fior — slug 90×90 no site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "Carmelo Fior — slug 90×90 no site"
     },
     {
       "codigo_tintao": "32138",
@@ -5287,22 +4719,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/9121d3dc6a375778f68642e06e39e3d7.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/346b56613eec408cd5708184afcf9b76.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/6dba6a1f512443fd86d033291db03f1d.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/51440f476b8d4c5313cb7285a8679aa0.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/279de15e9d7e28e6af6cb81e35dfd84c.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 45.9,
@@ -5311,11 +4727,7 @@
       "m2_por_caixa": 2.41,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Carmelo Fior — slug 90×90 no site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "Carmelo Fior — slug 90×90 no site"
     },
     {
       "codigo_tintao": "32147",
@@ -5347,22 +4759,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/85a2fed91e7f75c60c6f0051646fdc90.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/a1e86df843a507f57b22a5a48c6cb60e.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/9c408160fd4c5b15928b5373d45b2c65.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/17866fd6b0a09fa4f2a72eff7b809540.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/4da97d66d24ccba5d34a450d8897166a.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 32,
@@ -5371,11 +4767,7 @@
       "m2_por_caixa": 2.59,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site"
     },
     {
       "codigo_tintao": "32159",
@@ -5415,11 +4807,7 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": ""
     },
     {
       "codigo_tintao": "32183",
@@ -5459,11 +4847,7 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": ""
     },
     {
       "codigo_tintao": "32185",
@@ -5503,11 +4887,7 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": ""
     },
     {
       "codigo_tintao": "32292",
@@ -5547,11 +4927,7 @@
       "m2_por_caixa": 1.68,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": 24,
-      "m2_por_palete": 57.6,
-      "peso_kg_caixa": 43,
-      "peso_kg_palete": 1032
+      "observacao": ""
     },
     {
       "codigo_tintao": "32325",
@@ -5591,11 +4967,7 @@
       "m2_por_caixa": 1.97,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": 30,
-      "m2_por_palete": 66,
-      "peso_kg_caixa": 42,
-      "peso_kg_palete": 1260
+      "observacao": ""
     },
     {
       "codigo_tintao": "32552",
@@ -5635,11 +5007,7 @@
       "m2_por_caixa": 1.68,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": 24,
-      "m2_por_palete": 57.6,
-      "peso_kg_caixa": 43,
-      "peso_kg_palete": 1032
+      "observacao": ""
     },
     {
       "codigo_tintao": "32555",
@@ -5687,11 +5055,7 @@
       "m2_por_caixa": 2.32,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": 28,
-      "m2_por_palete": 64.96,
-      "peso_kg_caixa": 45,
-      "peso_kg_palete": 1260
+      "observacao": ""
     },
     {
       "codigo_tintao": "32559",
@@ -5731,11 +5095,7 @@
       "m2_por_caixa": 2.32,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": 28,
-      "m2_por_palete": 64.96,
-      "peso_kg_caixa": 45,
-      "peso_kg_palete": 1260
+      "observacao": ""
     },
     {
       "codigo_tintao": "32646",
@@ -5775,11 +5135,7 @@
       "m2_por_caixa": 2.7,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (ROCHAPRIME) + PRE_OS",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "lista fábrica (ROCHAPRIME) + PRE_OS"
     },
     {
       "codigo_tintao": "32654",
@@ -5819,11 +5175,7 @@
       "m2_por_caixa": 1.97,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": 30,
-      "m2_por_palete": 66,
-      "peso_kg_caixa": 42,
-      "peso_kg_palete": 1260
+      "observacao": ""
     },
     {
       "codigo_tintao": "32726",
@@ -5863,11 +5215,7 @@
       "m2_por_caixa": 2.83,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (ROCHAPRIME)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "base PRE_OS×510 (ROCHAPRIME)"
     },
     {
       "codigo_tintao": "32787",
@@ -5907,11 +5255,7 @@
       "m2_por_caixa": 2.16,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": 24,
-      "m2_por_palete": 51.84,
-      "peso_kg_caixa": 41,
-      "peso_kg_palete": 984
+      "observacao": ""
     },
     {
       "codigo_tintao": "32838",
@@ -5951,11 +5295,7 @@
       "m2_por_caixa": 2.1,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 84,
-      "peso_kg_caixa": 34,
-      "peso_kg_palete": 1360
+      "observacao": ""
     },
     {
       "codigo_tintao": "32840",
@@ -5995,11 +5335,7 @@
       "m2_por_caixa": 2.1,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 84,
-      "peso_kg_caixa": 34,
-      "peso_kg_palete": 1360
+      "observacao": ""
     },
     {
       "codigo_tintao": "32885",
@@ -6039,11 +5375,7 @@
       "m2_por_caixa": 2.06,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": ""
     },
     {
       "codigo_tintao": "32908",
@@ -6083,11 +5415,7 @@
       "m2_por_caixa": 2.32,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": 28,
-      "m2_por_palete": 64.96,
-      "peso_kg_caixa": 45,
-      "peso_kg_palete": 1260
+      "observacao": ""
     },
     {
       "codigo_tintao": "32955",
@@ -6119,22 +5447,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/b17eb5e41f91954372ce33a9b7fdeb76.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/7ba268bae35f8f52c428ad1b82e3593a.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/39f1e0cf51f62ec19c12048f6d86bb3d.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/e80cc75749b61eb89e8df6c5188c12ad.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/10fc8670d9221a95b0e56a8b4009c5ec.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 45.9,
@@ -6143,11 +5455,7 @@
       "m2_por_caixa": 2.41,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Carmelo Fior — slug 90×90 no site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "Carmelo Fior — slug 90×90 no site"
     },
     {
       "codigo_tintao": "33042",
@@ -6187,11 +5495,7 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": ""
     },
     {
       "codigo_tintao": "33090",
@@ -6223,22 +5527,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/4101346e7c34fc3de0008687ba9d8db9.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/55198d1db4e395cb4441b0a98557e1ee.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/142adcfc232c95dace046df2f492854c.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/81b4435d4d9d3f0e02fc95484d3c68fd.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/64c5495a7fc62cace83b37854e172c76.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 32,
@@ -6247,16 +5535,12 @@
       "m2_por_caixa": 2.59,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site"
     },
     {
       "codigo_tintao": "33102",
       "modelo": "R70631",
-      "catalogo_nome_modelo": "",
+      "catalogo_nome_modelo": "R70631",
       "descricao_erp": "PISO 70X70 R70631 ROCHAPRIME A (3,43)RT ACETINADO PEI4",
       "descricao": "R70631",
       "formato": "70x70",
@@ -6269,7 +5553,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "70x70 · RET · Acetinado",
+      "formigres_titulo": "R70631 · 70x70 · RET · Acetinado",
       "formigres_tipo": "",
       "formigres_acabamento": "ACETINADO",
       "acabamento_label": "Acetinado",
@@ -6286,11 +5570,7 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug r7063 (SIAH→site)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "portal slug r7063 (SIAH→site)"
     },
     {
       "codigo_tintao": "33200",
@@ -6322,10 +5602,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/b6b0522dd57e8938f4181cf150ecefef.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/71be8d1753b394813693ec8bfa08e605.webp",
-          "tipo": "ambiente"
         }
       ],
       "preco_m2": 32,
@@ -6334,16 +5610,12 @@
       "m2_por_caixa": 2.59,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site"
     },
     {
       "codigo_tintao": "33205",
       "modelo": "PR70961",
-      "catalogo_nome_modelo": "",
+      "catalogo_nome_modelo": "PR70961",
       "descricao_erp": "PISO 70X70 PR70961 ROCHAPRIME A (3,43)RT POLIDO PEI LC",
       "descricao": "PR70961",
       "formato": "70x70",
@@ -6356,7 +5628,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "70x70 · RET · Polido",
+      "formigres_titulo": "PR70961 · 70x70 · RET · Polido",
       "formigres_tipo": "",
       "formigres_acabamento": "POLIDO",
       "acabamento_label": "Polido",
@@ -6373,11 +5645,7 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug pr7096 (SIAH→site)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "portal slug pr7096 (SIAH→site)"
     },
     {
       "codigo_tintao": "33251",
@@ -6417,16 +5685,12 @@
       "m2_por_caixa": 2.83,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (ROCHAPRIME)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "base PRE_OS×510 (ROCHAPRIME)"
     },
     {
       "codigo_tintao": "33346",
       "modelo": "R70931",
-      "catalogo_nome_modelo": "",
+      "catalogo_nome_modelo": "R70931",
       "descricao_erp": "PISO 70X70 R70931 ROCHAPRIME A (3,43)RT ACETINADO PEI LD",
       "descricao": "R70931",
       "formato": "70x70",
@@ -6439,7 +5703,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "70x70 · RET · Acetinado",
+      "formigres_titulo": "R70931 · 70x70 · RET · Acetinado",
       "formigres_tipo": "",
       "formigres_acabamento": "ACETINADO",
       "acabamento_label": "Acetinado",
@@ -6456,11 +5720,7 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug r7093 (SIAH→site)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "portal slug r7093 (SIAH→site)"
     },
     {
       "codigo_tintao": "33378",
@@ -6500,11 +5760,7 @@
       "m2_por_caixa": 2.16,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": 24,
-      "m2_por_palete": 51.84,
-      "peso_kg_caixa": 41,
-      "peso_kg_palete": 984
+      "observacao": ""
     },
     {
       "codigo_tintao": "33472",
@@ -6536,26 +5792,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/81893e526aefef3555936a0c8f021b68.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/8d01c5e4e9c0117a45476c9cd9828e22.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/362d0a0dc2e94e0b941f76ea43734c28.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/3a44c71745492339ee719b93922b7d4a.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/bbd81670dca4759830f6db17f526fc68.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/fb9dc6ab21dbe584ff38640761069587.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 54.9,
@@ -6564,11 +5800,7 @@
       "m2_por_caixa": 2.2,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "regra João André + URL site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "regra João André + URL site"
     },
     {
       "codigo_tintao": "33473",
@@ -6608,11 +5840,7 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": ""
     },
     {
       "codigo_tintao": "33526",
@@ -6652,11 +5880,7 @@
       "m2_por_caixa": 2.2,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "regra João André + URL site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "regra João André + URL site"
     },
     {
       "codigo_tintao": "33530",
@@ -6688,26 +5912,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/7affd6031a67432bef9510f48f9c8785.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/da4a52a0ed2c9f875c631f2b3b03105c.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/48577d6eaa8a959cf29c5b5a59df8ba9.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/aceb12edb2747c2cd0dd17cb0f97849c.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/70411272889347dcb0e197ff2aeb0691.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/5710b431e9b50fd525f9509cb26d5612.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 45.9,
@@ -6716,11 +5920,7 @@
       "m2_por_caixa": 2.41,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Carmelo Fior — slug 90×90 no site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "Carmelo Fior — slug 90×90 no site"
     },
     {
       "codigo_tintao": "33557",
@@ -6760,16 +5960,12 @@
       "m2_por_caixa": 2.83,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (ROCHAPRIME)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "base PRE_OS×510 (ROCHAPRIME)"
     },
     {
       "codigo_tintao": "33558",
       "modelo": "PR70201",
-      "catalogo_nome_modelo": "",
+      "catalogo_nome_modelo": "PR70201",
       "descricao_erp": "PISO 70X70 PR70201 ROCHAPRIME A (3,43)RT POLIDO PEI LC",
       "descricao": "PR70201",
       "formato": "70x70",
@@ -6782,7 +5978,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "70x70 · RET · Polido",
+      "formigres_titulo": "PR70201 · 70x70 · RET · Polido",
       "formigres_tipo": "",
       "formigres_acabamento": "POLIDO",
       "acabamento_label": "Polido",
@@ -6799,16 +5995,12 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug pr7020 (SIAH→site)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "portal slug pr7020 (SIAH→site)"
     },
     {
       "codigo_tintao": "33891",
       "modelo": "R70071",
-      "catalogo_nome_modelo": "",
+      "catalogo_nome_modelo": "R70071",
       "descricao_erp": "PISO 70X70 R70071 ROCHAPRIME A (3,43)RT GRANILHADO PEI LE",
       "descricao": "R70071",
       "formato": "70x70",
@@ -6821,7 +6013,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "70x70 · RET · Granilhado",
+      "formigres_titulo": "R70071 · 70x70 · RET · Granilhado",
       "formigres_tipo": "",
       "formigres_acabamento": "GRANILHADO",
       "acabamento_label": "Granilhado",
@@ -6838,11 +6030,7 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug r7007 (SIAH→site)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "portal slug r7007 (SIAH→site)"
     },
     {
       "codigo_tintao": "33938",
@@ -6882,11 +6070,7 @@
       "m2_por_caixa": 2.7,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (ROCHAPRIME) + PRE_OS",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "lista fábrica (ROCHAPRIME) + PRE_OS"
     },
     {
       "codigo_tintao": "33939",
@@ -6918,22 +6102,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/833ebe6d3b9a31877683c1282db40f4a.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/f43ab2e48d9aeea87f2fc997cd033f49.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/3253c80e1ac0caff7c7460aa315e68cd.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/2cf8ad487d5f8edf1edaac8d2f09f9dc.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/72daa6cc5758e7adad7d6e8d280a9132.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 32,
@@ -6942,11 +6110,7 @@
       "m2_por_caixa": 2.59,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site"
     },
     {
       "codigo_tintao": "33940",
@@ -6978,26 +6142,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/7902255ed03012f379a8b1b03a624466.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/937961f212b73eaa16249d8be5f2c608.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/eb7ffac43bbce4dba0ba66d91c842a19.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/8ca2d94fe085bfad6548a69113f8f1f4.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/0ab8906ec1351226d5ca76c14d42dc5f.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/f2869c0f25d870d410507c5741bb9be4.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 54.9,
@@ -7006,11 +6150,7 @@
       "m2_por_caixa": 2.2,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (CARMELO FIOR) + PRE_OS",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "lista fábrica (CARMELO FIOR) + PRE_OS"
     },
     {
       "codigo_tintao": "33992",
@@ -7050,11 +6190,7 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (ROCHAPRIME)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "base PRE_OS×510 (ROCHAPRIME)"
     },
     {
       "codigo_tintao": "33993",
@@ -7094,11 +6230,7 @@
       "m2_por_caixa": 2.7,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (ROCHAPRIME)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "base PRE_OS×510 (ROCHAPRIME)"
     },
     {
       "codigo_tintao": "33995",
@@ -7138,11 +6270,7 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (ROCHAPRIME) + PRE_OS",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "lista fábrica (ROCHAPRIME) + PRE_OS"
     },
     {
       "codigo_tintao": "33999",
@@ -7174,26 +6302,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/e7c191d78ae78bfcd314935364db4889.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/ca199a714d09839b3c1589ca449a197c.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/af807389d15bc861de2d8c4b3aab295a.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/cf65175da321fe9a7a4c5a96d07ac640.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/701bf38a5fd69fc6d0997640604132d0.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/58a9bf3be8c0f04e059ff83f73185645.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 45.9,
@@ -7202,11 +6310,7 @@
       "m2_por_caixa": 2.41,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Carmelo Fior — slug 90×90 no site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "Carmelo Fior — slug 90×90 no site"
     },
     {
       "codigo_tintao": "34002",
@@ -7238,26 +6342,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/68ec9eee8e59db0ec57a74e5c9a17c66.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/88f3244e636907139c05d7395720a650.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/ac73cdc88800eb652b01070f9d318a78.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/4520b4cbd3b32346a14da5315c3a34f2.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/17a452dc9f4785a44e6194ab80fa523c.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/b4e9a0110b635424845e7bbb19d6a1ee.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 45.9,
@@ -7266,11 +6350,7 @@
       "m2_por_caixa": 2.41,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Carmelo Fior — slug 90×90 no site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "Carmelo Fior — slug 90×90 no site"
     },
     {
       "codigo_tintao": "34003",
@@ -7302,22 +6382,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/4f3de85a813166331d3452ee385721c4.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/926822ad32850c8be28e9020490d5c35.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/7d0d7a71fe9d2bc45fdb4d50392e4fd4.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/4db1fa6febf349f917a6bc4c020e27a4.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/424fd244c6991b3cbdae5eb94baf4e70.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 45.9,
@@ -7326,16 +6390,12 @@
       "m2_por_caixa": 2.41,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Carmelo Fior — slug 90×90 no site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "Carmelo Fior — slug 90×90 no site"
     },
     {
       "codigo_tintao": "34137",
       "modelo": "PR70971",
-      "catalogo_nome_modelo": "",
+      "catalogo_nome_modelo": "PR70971",
       "descricao_erp": "PISO 70X70 PR70971 ROCHAPRIME A (3,43)RT POLIDO PEI LC",
       "descricao": "PR70971",
       "formato": "70x70",
@@ -7348,7 +6408,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "70x70 · RET · Polido",
+      "formigres_titulo": "PR70971 · 70x70 · RET · Polido",
       "formigres_tipo": "",
       "formigres_acabamento": "POLIDO",
       "acabamento_label": "Polido",
@@ -7365,11 +6425,7 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug pr7097 (SIAH→site)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "portal slug pr7097 (SIAH→site)"
     },
     {
       "codigo_tintao": "34158",
@@ -7401,10 +6457,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/efc69e060c018ab783d01807080fb12a.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/2d00dd650a7bdd2c9b8a47c74c318eaa.webp",
-          "tipo": "ambiente"
         }
       ],
       "preco_m2": 32,
@@ -7413,11 +6465,7 @@
       "m2_por_caixa": 2.59,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site"
     },
     {
       "codigo_tintao": "34190",
@@ -7457,11 +6505,7 @@
       "m2_por_caixa": 2.16,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 24,
-      "m2_por_palete": 51.84,
-      "peso_kg_caixa": 41,
-      "peso_kg_palete": 984
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "34235",
@@ -7501,11 +6545,7 @@
       "m2_por_caixa": 2.32,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 28,
-      "m2_por_palete": 64.96,
-      "peso_kg_caixa": 45,
-      "peso_kg_palete": 1260
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "34288",
@@ -7542,14 +6582,10 @@
       "preco_m2": 32.9,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "34288",
-      "m2_por_caixa": 2,
+      "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 50,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 28,
-      "peso_kg_palete": 1400
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "34426",
@@ -7589,11 +6625,7 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (ROCHAPRIME)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "base PRE_OS×510 (ROCHAPRIME)"
     },
     {
       "codigo_tintao": "34427",
@@ -7633,11 +6665,7 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (ROCHAPRIME)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "base PRE_OS×510 (ROCHAPRIME)"
     },
     {
       "codigo_tintao": "34487",
@@ -7677,11 +6705,7 @@
       "m2_por_caixa": 2.7,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (ROCHAPRIME) + PRE_OS",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "lista fábrica (ROCHAPRIME) + PRE_OS"
     },
     {
       "codigo_tintao": "34488",
@@ -7713,26 +6737,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/5b8ea38868539b727ebc9d2b0c8f01db.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/fb63bb17b9fca64b9128cc292a44ec65.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/104d7b2a1dae4c79611c692f4adadf23.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/ef4baa9eb5e25fbea2dae3492b55eb10.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/0b2796ee393053e846c7e9abc1ad1f16.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/ab146b0cc079b21c17c8fd24af19088a.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 45.9,
@@ -7741,11 +6745,7 @@
       "m2_por_caixa": 2.41,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Carmelo Fior — slug 90×90 no site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "Carmelo Fior — slug 90×90 no site"
     },
     {
       "codigo_tintao": "34489",
@@ -7777,22 +6777,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/6950f89300bd0179f334c33c8388bce5.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/cbc497d3f6e39a4b784225e5f34c6bf5.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/ad70dfa87f5438ae52856b5a7e558d55.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/e06cc3ed3ce1c1cf4974ee72a17fe018.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/910b88c8403d4f08a98b180ccbc84f61.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 45.9,
@@ -7801,11 +6785,7 @@
       "m2_por_caixa": 2.41,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Carmelo Fior — slug 90×90 no site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "Carmelo Fior — slug 90×90 no site"
     },
     {
       "codigo_tintao": "34494",
@@ -7837,26 +6817,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/c4a08cda0acaa45f07a22b81e4024057.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/6a672a1cbd4738446e1fc026e99633a7.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/4d97a4d8806ae0e8e70233f5a844601e.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/56048083d42caef0c0fad5138e35d6e6.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/9e74ca5806c66604c5ea14c7ed0366e2.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/107aa5630e937112c073179d63f141a5.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 45.9,
@@ -7865,11 +6825,7 @@
       "m2_por_caixa": 2.41,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Carmelo Fior — slug 90×90 no site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "Carmelo Fior — slug 90×90 no site"
     },
     {
       "codigo_tintao": "34495",
@@ -7909,11 +6865,7 @@
       "m2_por_caixa": 2.41,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Carmelo Fior — slug 90×90 no site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "Carmelo Fior — slug 90×90 no site"
     },
     {
       "codigo_tintao": "34545",
@@ -7945,22 +6897,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/bd5103bf5fbbb13c5a3c3dc6b0332735.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/1b4cc36ea2c71ebec97ff26783d50d3b.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/ebc9f0d52065183457be1abf45fabc18.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/f5771d44db2d5e8ad5a0176f9fce8160.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/8388e47da8b40e77ab249c6c4b9b6071.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 32,
@@ -7969,11 +6905,7 @@
       "m2_por_caixa": 2.59,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site"
     },
     {
       "codigo_tintao": "34554",
@@ -8013,11 +6945,7 @@
       "m2_por_caixa": 2.59,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site"
     },
     {
       "codigo_tintao": "34565",
@@ -8057,18 +6985,14 @@
       "m2_por_caixa": 2.45,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": ""
     },
     {
       "codigo_tintao": "34609",
-      "modelo": "Branco Neve :",
-      "catalogo_nome_modelo": "Branco Neve :",
+      "modelo": "Branco Neve",
+      "catalogo_nome_modelo": "Branco Neve",
       "descricao_erp": "REV. 38X75 BRANCO NEVE PLUS A(2,0) ESM BOLD PEI: LA",
-      "descricao": "Branco Neve :",
+      "descricao": "Branco Neve",
       "formato": "38x75",
       "linha": "bold",
       "subtipo": null,
@@ -8079,7 +7003,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Branco Neve : · 38x75 · BOLD",
+      "formigres_titulo": "Branco Neve · 38x75 · BOLD",
       "formigres_tipo": "BOLD",
       "formigres_acabamento": "",
       "acabamento_label": "",
@@ -8093,10 +7017,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/73393396fa48fcd6aaa2c1a0a2cddcc3.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/4decc387489c174f714595532f0da1c1.webp",
-          "tipo": "ambiente"
         }
       ],
       "preco_m2": 33.5,
@@ -8105,11 +7025,7 @@
       "m2_por_caixa": 2,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site"
     },
     {
       "codigo_tintao": "34616",
@@ -8149,11 +7065,7 @@
       "m2_por_caixa": 2.7,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (ROCHAPRIME)",
-      "caixas_por_palete": 30,
-      "m2_por_palete": 66,
-      "peso_kg_caixa": 42,
-      "peso_kg_palete": 1260
+      "observacao": "base PRE_OS×510 (ROCHAPRIME)"
     },
     {
       "codigo_tintao": "34639",
@@ -8185,26 +7097,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/984649fe8bf265f646405787b4558a95.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/c3b0e10b92ec4681d93219688dc15da6.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/3e6c5fb0750f658feb412d3be1806c57.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/0f9fd3c273076a4851f9d1432efd443a.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/9968706347a20f0ced0bc3ebe9f32eee.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/8706c0159d5f83f0d940f53ebbf11853.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 32,
@@ -8213,11 +7105,7 @@
       "m2_por_caixa": 2.59,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Grupo Carmelo Fior — marca na ficha do site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "Grupo Carmelo Fior — marca na ficha do site"
     },
     {
       "codigo_tintao": "34757",
@@ -8254,14 +7142,10 @@
       "preco_m2": 33.45,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "34757",
-      "m2_por_caixa": 2,
+      "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 50,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 28,
-      "peso_kg_palete": 1400
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "34788",
@@ -8293,10 +7177,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/3639e164586db56f1ac24e4e4073f04b.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/a660ae3725852d5dd51fcb3d8d4ddeb9.webp",
-          "tipo": "ambiente"
         }
       ],
       "preco_m2": 37.9,
@@ -8305,11 +7185,7 @@
       "m2_por_caixa": 2.25,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (CARMELO FIOR) + PRE_OS",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "lista fábrica (CARMELO FIOR) + PRE_OS"
     },
     {
       "codigo_tintao": "35039",
@@ -8344,11 +7220,7 @@
       "m2_por_caixa": 2.83,
       "unidade": "",
       "status_site": "nao_encontrado",
-      "observacao": "sem_ficha;ordem:rocha→formigres→lume→carmelo→cerbras",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "sem_ficha;ordem:rocha→formigres→lume→carmelo→cerbras"
     },
     {
       "codigo_tintao": "35040",
@@ -8388,16 +7260,12 @@
       "m2_por_caixa": 2.83,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (ROCHAPRIME)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "base PRE_OS×510 (ROCHAPRIME)"
     },
     {
       "codigo_tintao": "35043",
       "modelo": "PR7068",
-      "catalogo_nome_modelo": "",
+      "catalogo_nome_modelo": "PR7068",
       "descricao_erp": "PISO 70X70 PR7068 ROCHAPRIME A (3,43) RET PLD PEI LC",
       "descricao": "PR7068",
       "formato": "70x70",
@@ -8410,7 +7278,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "70x70 · BOLD",
+      "formigres_titulo": "PR7068 · 70x70 · BOLD",
       "formigres_tipo": "",
       "formigres_acabamento": "",
       "acabamento_label": "",
@@ -8427,18 +7295,14 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug pr7068 (SIAH→site)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "portal slug pr7068 (SIAH→site)"
     },
     {
       "codigo_tintao": "35046",
-      "modelo": "Bege Granil",
-      "catalogo_nome_modelo": "Bege Granil",
+      "modelo": "R7041 Bege Granil",
+      "catalogo_nome_modelo": "R7041 Bege Granil",
       "descricao_erp": "PISO 70X70 R7041 ROCHAPRIME A(3,43) BEGE RT GRANIL PEI LE",
-      "descricao": "Bege Granil",
+      "descricao": "R7041 Bege Granil",
       "formato": "70x70",
       "linha": "retificada",
       "subtipo": null,
@@ -8449,7 +7313,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Bege Granil · 70x70 · RET",
+      "formigres_titulo": "R7041 Bege Granil · 70x70 · RET",
       "formigres_tipo": "",
       "formigres_acabamento": "",
       "acabamento_label": "",
@@ -8466,18 +7330,14 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug r7041 (SIAH→site)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "portal slug r7041 (SIAH→site)"
     },
     {
       "codigo_tintao": "35049",
-      "modelo": "Granil",
-      "catalogo_nome_modelo": "Granil",
+      "modelo": "R7042 Granil",
+      "catalogo_nome_modelo": "R7042 Granil",
       "descricao_erp": "PISO 70X70 R7042 HD ROCHAPRIME A(3,43) RT GRANIL PEI LE",
-      "descricao": "Granil",
+      "descricao": "R7042 Granil",
       "formato": "70x70",
       "linha": "retificada",
       "subtipo": null,
@@ -8488,7 +7348,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Granil · 70x70 · RET",
+      "formigres_titulo": "R7042 Granil · 70x70 · RET",
       "formigres_tipo": "",
       "formigres_acabamento": "",
       "acabamento_label": "",
@@ -8505,11 +7365,7 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug r7042 (SIAH→site)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "portal slug r7042 (SIAH→site)"
     },
     {
       "codigo_tintao": "35050",
@@ -8549,11 +7405,7 @@
       "m2_por_caixa": 2.7,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (ROCHAPRIME)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "base PRE_OS×510 (ROCHAPRIME)"
     },
     {
       "codigo_tintao": "35064",
@@ -8593,11 +7445,7 @@
       "m2_por_caixa": 2.83,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (ROCHAPRIME)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "base PRE_OS×510 (ROCHAPRIME)"
     },
     {
       "codigo_tintao": "35065",
@@ -8637,18 +7485,14 @@
       "m2_por_caixa": 2.7,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (ROCHAPRIME)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "base PRE_OS×510 (ROCHAPRIME)"
     },
     {
       "codigo_tintao": "35397",
-      "modelo": "Graffiato Bg : 60x60 60x60 Milano Cz :",
-      "catalogo_nome_modelo": "Graffiato Bg : 60x60 60x60 Milano Cz :",
+      "modelo": "Graffiato Bg 60x60 60x60 Milano Cz",
+      "catalogo_nome_modelo": "Graffiato Bg 60x60 60x60 Milano Cz",
       "descricao_erp": "PISO 60X60 GRAFFIATO BG EXT A (2,15) RET PEI: LE LE 60X60 PISO 60X60 MILANO CZ A (2,15) RET GRANILHADO PEI: LE",
-      "descricao": "Graffiato Bg : 60x60 60x60 Milano Cz :",
+      "descricao": "Graffiato Bg 60x60 60x60 Milano Cz",
       "formato": "60x60",
       "linha": "bold",
       "subtipo": "antiderrapante",
@@ -8658,8 +7502,8 @@
       "motivo": "hint descrição (aderente/ABS/granilhado)",
       "match_status": "encontrado",
       "match_score": 100,
-      "formigres_id": "1494",
-      "formigres_titulo": "Graffiato Bg : 60x60 60x60 Milano Cz : · 60x60 · BOLD · Granilhado",
+      "formigres_id": "",
+      "formigres_titulo": "Graffiato Bg 60x60 60x60 Milano Cz · 60x60 · BOLD · Granilhado",
       "formigres_tipo": "",
       "formigres_acabamento": "GRANILHADO",
       "acabamento_label": "Granilhado",
@@ -8668,38 +7512,15 @@
       "pei_uso": "LE",
       "referencia": "PEI LE",
       "produto_url": "https://www.formigres.com.br/marca.php?marca=formigres&produto=50",
-      "imagem_url": "https://www.formigres.com.br/uploads/produtos/jg/milano-cinza-rt-granilhado-60x60-p1494-imgprincipal.webp",
-      "imagens": [
-        {
-          "url": "https://www.formigres.com.br/uploads/produtos/jg/milano-cinza-rt-granilhado-60x60-p1494-imgprincipal.webp",
-          "tipo": "principal",
-          "ordem": 0,
-          "principal": true
-        },
-        {
-          "url": "https://www.formigres.com.br/uploads/produtos/jg/milano-cinza-rt-granilhado-60x60-p1494-imgpiso.webp",
-          "tipo": "piso",
-          "ordem": 20,
-          "principal": false
-        },
-        {
-          "url": "https://www.formigres.com.br/uploads/produtos/jg/milano-cinza-rt-granilhado-60x60-p1494-imgf1.webp",
-          "tipo": "face",
-          "ordem": 30,
-          "principal": false
-        }
-      ],
+      "imagem_url": "",
+      "imagens": [],
       "preco_m2": 37.5,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "35397",
       "m2_por_caixa": 2.15,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Graffiato 60x60 — URL João André",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 86,
-      "peso_kg_caixa": 35,
-      "peso_kg_palete": 1400
+      "observacao": "Graffiato 60x60 — URL João André"
     },
     {
       "codigo_tintao": "35439",
@@ -8739,11 +7560,7 @@
       "m2_por_caixa": 2.04,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "",
-      "caixas_por_palete": 50,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 28,
-      "peso_kg_palete": 1400
+      "observacao": ""
     },
     {
       "codigo_tintao": "35447",
@@ -8778,11 +7595,7 @@
       "m2_por_caixa": 2.83,
       "unidade": "",
       "status_site": "nao_encontrado",
-      "observacao": "sem_ficha;ordem:rocha→formigres→lume→carmelo→cerbras",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "sem_ficha;ordem:rocha→formigres→lume→carmelo→cerbras"
     },
     {
       "codigo_tintao": "35449",
@@ -8822,11 +7635,7 @@
       "m2_por_caixa": 2.83,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (ROCHAPRIME)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "base PRE_OS×510 (ROCHAPRIME)"
     },
     {
       "codigo_tintao": "35451",
@@ -8853,19 +7662,20 @@
       "pei_uso": "LC",
       "referencia": "PEI LC",
       "produto_url": "https://www.portalgruporocha.com.br/produtos/organic-black?c=823172",
-      "imagem_url": "",
-      "imagens": [],
+      "imagem_url": "https://gruporocha.com.br/_og/d/c_Produto,title_Organic+Black,category_~Q2Vyw6JtaWNh,q_eyJjIjoiODIzMTcyIn0,p_Ii9wcm9kdXRvcy9vcmdhbmljLWJsYWNrIg,s_WvowpcW25sN-X2w9.png?_query=%7B%22c%22:%22823172%22%7D",
+      "imagens": [
+        {
+          "url": "https://gruporocha.com.br/_og/d/c_Produto,title_Organic+Black,category_~Q2Vyw6JtaWNh,q_eyJjIjoiODIzMTcyIn0,p_Ii9wcm9kdXRvcy9vcmdhbmljLWJsYWNrIg,s_WvowpcW25sN-X2w9.png?_query=%7B%22c%22:%22823172%22%7D",
+          "tipo": "principal"
+        }
+      ],
       "preco_m2": 61.9,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "35451",
       "m2_por_caixa": 2.83,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (ROCHAPRIME)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "base PRE_OS×510 (ROCHAPRIME)"
     },
     {
       "codigo_tintao": "35452",
@@ -8905,11 +7715,7 @@
       "m2_por_caixa": 2.83,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (ROCHAPRIME) + PRE_OS",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "lista fábrica (ROCHAPRIME) + PRE_OS"
     },
     {
       "codigo_tintao": "35453",
@@ -8949,18 +7755,14 @@
       "m2_por_caixa": 2.83,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (ROCHAPRIME)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "base PRE_OS×510 (ROCHAPRIME)"
     },
     {
       "codigo_tintao": "35454",
-      "modelo": "Milano Cz :",
-      "catalogo_nome_modelo": "Milano Cz :",
+      "modelo": "Milano Cz",
+      "catalogo_nome_modelo": "Milano Cz",
       "descricao_erp": "PISO 60X60 MILANO CZ A (2,15) RET GRANILHADO PEI: LE",
-      "descricao": "Milano Cz :",
+      "descricao": "Milano Cz",
       "formato": "60x60",
       "linha": "retificada",
       "subtipo": "antiderrapante",
@@ -8971,7 +7773,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "1494",
-      "formigres_titulo": "Milano Cz : · 60x60 · RET · Granilhado",
+      "formigres_titulo": "Milano Cz · 60x60 · RET · Granilhado",
       "formigres_tipo": "RETIFICADO",
       "formigres_acabamento": "GRANILHADO",
       "acabamento_label": "Granilhado",
@@ -8993,18 +7795,14 @@
       "m2_por_caixa": 2.15,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 86,
-      "peso_kg_caixa": 35,
-      "peso_kg_palete": 1400
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "35455",
-      "modelo": "Cement Clear : 60x60 60x60 Coronha :",
-      "catalogo_nome_modelo": "Cement Clear : 60x60 60x60 Coronha :",
+      "modelo": "Cement Clear 60x60 60x60 Coronha",
+      "catalogo_nome_modelo": "Cement Clear 60x60 60x60 Coronha",
       "descricao_erp": "PISO 60X60 CEMENT CLEAR A (2,15) RET MATE PEI: LD LD 60X60 PISO 60X60 CORONHA A (2,15) RET MATE PEI: LD",
-      "descricao": "Cement Clear : 60x60 60x60 Coronha :",
+      "descricao": "Cement Clear 60x60 60x60 Coronha",
       "formato": "60x60",
       "linha": "retificada",
       "subtipo": "lisa",
@@ -9015,7 +7813,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "1493",
-      "formigres_titulo": "Cement Clear : 60x60 60x60 Coronha : · 60x60 · RET · Mate",
+      "formigres_titulo": "Cement Clear 60x60 60x60 Coronha · 60x60 · RET · Mate",
       "formigres_tipo": "RETIFICADO",
       "formigres_acabamento": "MATE",
       "acabamento_label": "Mate",
@@ -9037,18 +7835,14 @@
       "m2_por_caixa": 2.15,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (FORMIGRES) + PRE_OS",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 86,
-      "peso_kg_caixa": 35,
-      "peso_kg_palete": 1400
+      "observacao": "lista fábrica (FORMIGRES) + PRE_OS"
     },
     {
       "codigo_tintao": "35456",
-      "modelo": "Cement Clear : 60x60 60x60 Coronha :",
-      "catalogo_nome_modelo": "Cement Clear : 60x60 60x60 Coronha :",
+      "modelo": "Cement Clear 60x60 60x60 Coronha",
+      "catalogo_nome_modelo": "Cement Clear 60x60 60x60 Coronha",
       "descricao_erp": "PISO 60X60 CEMENT CLEAR A (2,15) RET MATE PEI: LD LD 60X60 PISO 60X60 CORONHA A (2,15) RET MATE PEI: LD",
-      "descricao": "Cement Clear : 60x60 60x60 Coronha :",
+      "descricao": "Cement Clear 60x60 60x60 Coronha",
       "formato": "60x60",
       "linha": "retificada",
       "subtipo": "lisa",
@@ -9059,7 +7853,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "37",
-      "formigres_titulo": "Cement Clear : 60x60 60x60 Coronha : · 60x60 · RET · Mate",
+      "formigres_titulo": "Cement Clear 60x60 60x60 Coronha · 60x60 · RET · Mate",
       "formigres_tipo": "RETIFICADO",
       "formigres_acabamento": "MATE",
       "acabamento_label": "Mate",
@@ -9081,18 +7875,14 @@
       "m2_por_caixa": 2.15,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 86,
-      "peso_kg_caixa": 35,
-      "peso_kg_palete": 1400
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "35465",
-      "modelo": "Darwin Cz Rust :",
-      "catalogo_nome_modelo": "Darwin Cz Rust :",
+      "modelo": "Darwin Cz Rust",
+      "catalogo_nome_modelo": "Darwin Cz Rust",
       "descricao_erp": "PISO 60X60 DARWIN CZ EXT A (2,15) RET RUST PEI:LD",
-      "descricao": "Darwin Cz Rust :",
+      "descricao": "Darwin Cz Rust",
       "formato": "60x60",
       "linha": "retificada",
       "subtipo": "antiderrapante",
@@ -9103,7 +7893,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "36",
-      "formigres_titulo": "Darwin Cz Rust : · 60x60 · RET · Antiderrapante",
+      "formigres_titulo": "Darwin Cz Rust · 60x60 · RET · Antiderrapante",
       "formigres_tipo": "RETIFICADO",
       "formigres_acabamento": "GRANILHADO",
       "acabamento_label": "Antiderrapante",
@@ -9125,18 +7915,14 @@
       "m2_por_caixa": 2.15,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 86,
-      "peso_kg_caixa": 35,
-      "peso_kg_palete": 1400
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "35474",
-      "modelo": "Porcellanat Mr 50 Brilhan :",
-      "catalogo_nome_modelo": "Porcellanat Mr 50 Brilhan :",
+      "modelo": "Porcellanat Mr 50 Brilhan",
+      "catalogo_nome_modelo": "Porcellanat Mr 50 Brilhan",
       "descricao_erp": "PISO 50X50 PORCELLANAT MR 50 A (2,50) BOLD BRILHAN PEI:LD",
-      "descricao": "Porcellanat Mr 50 Brilhan :",
+      "descricao": "Porcellanat Mr 50 Brilhan",
       "formato": "50x50",
       "linha": "bold",
       "subtipo": "lisa",
@@ -9147,7 +7933,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "333",
-      "formigres_titulo": "Porcellanat Mr 50 Brilhan : · 50x50 · BOLD · Brilhante",
+      "formigres_titulo": "Porcellanat Mr 50 Brilhan · 50x50 · BOLD · Brilhante",
       "formigres_tipo": "BOLD",
       "formigres_acabamento": "BRILHANTE",
       "acabamento_label": "Brilhante",
@@ -9169,18 +7955,14 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "35481",
-      "modelo": "Mozart Gray Hd50 :",
-      "catalogo_nome_modelo": "Mozart Gray Hd50 :",
+      "modelo": "Mozart Gray Hd50",
+      "catalogo_nome_modelo": "Mozart Gray Hd50",
       "descricao_erp": "PISO 50X50 MOZART GRAY HD50 A(2,50) BOLD MATE PEI: LD",
-      "descricao": "Mozart Gray Hd50 :",
+      "descricao": "Mozart Gray Hd50",
       "formato": "50x50",
       "linha": "bold",
       "subtipo": "lisa",
@@ -9191,7 +7973,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "6",
-      "formigres_titulo": "Mozart Gray Hd50 : · 50x50 · BOLD · Mate",
+      "formigres_titulo": "Mozart Gray Hd50 · 50x50 · BOLD · Mate",
       "formigres_tipo": "BOLD",
       "formigres_acabamento": "MATE",
       "acabamento_label": "Mate",
@@ -9213,18 +7995,14 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "35486",
-      "modelo": "Loft Bege :",
-      "catalogo_nome_modelo": "Loft Bege :",
+      "modelo": "Loft Bege",
+      "catalogo_nome_modelo": "Loft Bege",
       "descricao_erp": "PISO 82X82 LOFT BEGE EXT ROCHAMAXX (2,70) RET PEI: LD",
-      "descricao": "Loft Bege :",
+      "descricao": "Loft Bege",
       "formato": "82x82",
       "linha": "bold",
       "subtipo": null,
@@ -9235,7 +8013,7 @@
       "match_status": "sem_ficha",
       "match_score": 0,
       "formigres_id": "",
-      "formigres_titulo": "Loft Bege : · 82x82 · BOLD",
+      "formigres_titulo": "Loft Bege · 82x82 · BOLD",
       "formigres_tipo": "",
       "formigres_acabamento": "",
       "acabamento_label": "",
@@ -9252,18 +8030,14 @@
       "m2_por_caixa": 2.7,
       "unidade": "",
       "status_site": "nao_encontrado",
-      "observacao": "sem_ficha;ordem:rocha→formigres→lume→carmelo→cerbras",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "sem_ficha;ordem:rocha→formigres→lume→carmelo→cerbras"
     },
     {
       "codigo_tintao": "35487",
-      "modelo": "Loft Cinza :",
-      "catalogo_nome_modelo": "Loft Cinza :",
+      "modelo": "Loft Cinza",
+      "catalogo_nome_modelo": "Loft Cinza",
       "descricao_erp": "PISO 82X82 LOFT CINZA EXT ROCHAMAXX (2,70) RET PEI: LD",
-      "descricao": "Loft Cinza :",
+      "descricao": "Loft Cinza",
       "formato": "82x82",
       "linha": "bold",
       "subtipo": null,
@@ -9274,7 +8048,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Loft Cinza : · 82x82 · BOLD",
+      "formigres_titulo": "Loft Cinza · 82x82 · BOLD",
       "formigres_tipo": "",
       "formigres_acabamento": "",
       "acabamento_label": "",
@@ -9291,18 +8065,14 @@
       "m2_por_caixa": 2.7,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "regra João André + URL site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "regra João André + URL site"
     },
     {
       "codigo_tintao": "35492",
-      "modelo": "Centauro Mr 45 (2) Gran :",
-      "catalogo_nome_modelo": "Centauro Mr 45 (2) Gran :",
+      "modelo": "Centauro Mr 45 (2) Gran",
+      "catalogo_nome_modelo": "Centauro Mr 45 (2) Gran",
       "descricao_erp": "PISO 45X45 CENTAURO MR HD-45 A (2) BOLD GRAN PEI: LD",
-      "descricao": "Centauro Mr 45 (2) Gran :",
+      "descricao": "Centauro Mr 45 (2) Gran",
       "formato": "45x45",
       "linha": "bold",
       "subtipo": "antiderrapante",
@@ -9313,7 +8083,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "251",
-      "formigres_titulo": "Centauro Mr 45 (2) Gran : · 45x45 · BOLD · Antiderrapante",
+      "formigres_titulo": "Centauro Mr 45 (2) Gran · 45x45 · BOLD · Antiderrapante",
       "formigres_tipo": "BOLD",
       "formigres_acabamento": "GRANILHADO",
       "acabamento_label": "Antiderrapante",
@@ -9332,14 +8102,10 @@
       "preco_m2": 32.9,
       "preco_fonte": "pre_os_codigo",
       "codigo_siah": "35492",
-      "m2_por_caixa": 2,
+      "m2_por_caixa": null,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 50,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 28,
-      "peso_kg_palete": 1400
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "35493",
@@ -9379,11 +8145,7 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "35506",
@@ -9423,18 +8185,14 @@
       "m2_por_caixa": 2.16,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 24,
-      "m2_por_palete": 51.84,
-      "peso_kg_caixa": 41,
-      "peso_kg_palete": 984
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "35527",
-      "modelo": "Planalto 45 Gran :",
-      "catalogo_nome_modelo": "Planalto 45 Gran :",
+      "modelo": "Planalto 45 Gran",
+      "catalogo_nome_modelo": "Planalto 45 Gran",
       "descricao_erp": "PISO 45X45 PLANALTO 45 A(2,00) BOLD GRAN PEI: LD JUNTA 5MM",
-      "descricao": "Planalto 45 Gran :",
+      "descricao": "Planalto 45 Gran",
       "formato": "45x45",
       "linha": "bold",
       "subtipo": "antiderrapante",
@@ -9445,7 +8203,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "595",
-      "formigres_titulo": "Planalto 45 Gran : · 45x45 · BOLD · Antiderrapante",
+      "formigres_titulo": "Planalto 45 Gran · 45x45 · BOLD · Antiderrapante",
       "formigres_tipo": "BOLD",
       "formigres_acabamento": "PROTETIVA ADERENTE",
       "acabamento_label": "Antiderrapante",
@@ -9467,18 +8225,14 @@
       "m2_por_caixa": 2,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 50,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 28,
-      "peso_kg_palete": 1400
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "35559",
-      "modelo": "Gran Carbonara Grafite :",
-      "catalogo_nome_modelo": "Gran Carbonara Grafite :",
+      "modelo": "Gran Carbonara Grafite",
+      "catalogo_nome_modelo": "Gran Carbonara Grafite",
       "descricao_erp": "PISO 60X120 GRAN CARBONARA GRAFITE A(2,16) RET PLD PEI:LB",
-      "descricao": "Gran Carbonara Grafite :",
+      "descricao": "Gran Carbonara Grafite",
       "formato": "60x120",
       "linha": "retificada",
       "subtipo": "polida",
@@ -9489,7 +8243,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "844",
-      "formigres_titulo": "Gran Carbonara Grafite : · 60x120 · RET · Polido",
+      "formigres_titulo": "Gran Carbonara Grafite · 60x120 · RET · Polido",
       "formigres_tipo": "",
       "formigres_acabamento": "POLIDO",
       "acabamento_label": "Polido",
@@ -9511,18 +8265,14 @@
       "m2_por_caixa": 2.16,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 24,
-      "m2_por_palete": 51.84,
-      "peso_kg_caixa": 41,
-      "peso_kg_palete": 984
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "35572",
-      "modelo": "Mercury Cinza :",
-      "catalogo_nome_modelo": "Mercury Cinza :",
+      "modelo": "Mercury Cinza",
+      "catalogo_nome_modelo": "Mercury Cinza",
       "descricao_erp": "PISO 50X50 MERCURY CINZA HD A(2,50) BOLD PEI:LD JUNTA 5MM",
-      "descricao": "Mercury Cinza :",
+      "descricao": "Mercury Cinza",
       "formato": "50x50",
       "linha": "bold",
       "subtipo": "lisa",
@@ -9533,7 +8283,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "1297",
-      "formigres_titulo": "Mercury Cinza : · 50x50 · BOLD · Brilhante",
+      "formigres_titulo": "Mercury Cinza · 50x50 · BOLD · Brilhante",
       "formigres_tipo": "BOLD",
       "formigres_acabamento": "BRILHANTE",
       "acabamento_label": "Brilhante",
@@ -9555,18 +8305,14 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "35573",
-      "modelo": "Mercury Bege 50 :",
-      "catalogo_nome_modelo": "Mercury Bege 50 :",
+      "modelo": "Mercury Bege 50",
+      "catalogo_nome_modelo": "Mercury Bege 50",
       "descricao_erp": "PISO 50X50 MERCURY BEGE HD 50 (2,50) BOLD PEI:LD JUNTA 5MM",
-      "descricao": "Mercury Bege 50 :",
+      "descricao": "Mercury Bege 50",
       "formato": "50x50",
       "linha": "bold",
       "subtipo": "lisa",
@@ -9577,7 +8323,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "1343",
-      "formigres_titulo": "Mercury Bege 50 : · 50x50 · BOLD · Brilhante",
+      "formigres_titulo": "Mercury Bege 50 · 50x50 · BOLD · Brilhante",
       "formigres_tipo": "BOLD",
       "formigres_acabamento": "BRILHANTE",
       "acabamento_label": "Brilhante",
@@ -9599,18 +8345,14 @@
       "m2_por_caixa": 2.5,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 40,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 32,
-      "peso_kg_palete": 1280
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "35601",
-      "modelo": "Clair : 5mm",
-      "catalogo_nome_modelo": "Clair : 5mm",
+      "modelo": "Clair 5mm",
+      "catalogo_nome_modelo": "Clair 5mm",
       "descricao_erp": "PISO 54X54 CLAIR HD A(2,62) BOLD BRILHANTE PEI:LB 5MM",
-      "descricao": "Clair : 5mm",
+      "descricao": "Clair 5mm",
       "formato": "54x54",
       "linha": "bold",
       "subtipo": "lisa",
@@ -9621,7 +8363,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Clair : 5mm · 54x54 · BOLD · Brilhante",
+      "formigres_titulo": "Clair 5mm · 54x54 · BOLD · Brilhante",
       "formigres_tipo": "BOLD",
       "formigres_acabamento": "BOLD",
       "acabamento_label": "Brilhante",
@@ -9635,26 +8377,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/796405265a3b2ea9cd5472cd03be472c.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/4f0e760f918a717d080d7eac1eaf1aed.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/c80095c696459f31837e300b859e2471.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/efe48bc9bbeb2d579687f58a99fe61a3.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/229ab72d09a8ef26a24aabc5561ed504.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/8e8debdd2eba9ea608e97aa9be8838e4.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 33.9,
@@ -9663,18 +8385,14 @@
       "m2_por_caixa": 2.62,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (ARIELLE) + PRE_OS",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "lista fábrica (ARIELLE) + PRE_OS"
     },
     {
       "codigo_tintao": "35602",
-      "modelo": "37x59 Axis Gray Bril :",
-      "catalogo_nome_modelo": "37x59 Axis Gray Bril :",
+      "modelo": "37x59 Axis Gray Bril",
+      "catalogo_nome_modelo": "37x59 Axis Gray Bril",
       "descricao_erp": "LD 37X59 REV. 37X59 AXIS GRAY HD A(2,43) BOLD BRIL PEI: LA JUNTA3MM",
-      "descricao": "37x59 Axis Gray Bril :",
+      "descricao": "37x59 Axis Gray Bril",
       "formato": "37x59",
       "linha": "bold",
       "subtipo": null,
@@ -9685,7 +8403,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "37x59 Axis Gray Bril : · 37x59 · BOLD",
+      "formigres_titulo": "37x59 Axis Gray Bril · 37x59 · BOLD",
       "formigres_tipo": "BOLD",
       "formigres_acabamento": "BOLD",
       "acabamento_label": "",
@@ -9699,22 +8417,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/4769a0ec99d996d6036c12be3b9571e8.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/b40ebb79e490beee08ad6d73badb8bb9.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/502d742bbf6b5c453948c96fce7d7409.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/167ac857a8bd9c53664cffb4a040360d.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/f9eb69e31bc7e417db3d69efb5ae975d.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 33.9,
@@ -9723,18 +8425,14 @@
       "m2_por_caixa": 2.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (ARIELLE) + PRE_OS",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "lista fábrica (ARIELLE) + PRE_OS"
     },
     {
       "codigo_tintao": "35603",
-      "modelo": "Delta Silver Brilhant : 3mm",
-      "catalogo_nome_modelo": "Delta Silver Brilhant : 3mm",
+      "modelo": "Delta Silver Brilhant 3mm",
+      "catalogo_nome_modelo": "Delta Silver Brilhant 3mm",
       "descricao_erp": "REV. 37X59 DELTA SILVER HD A(2,43)BOLD BRILHANT PEI:LA 3MM",
-      "descricao": "Delta Silver Brilhant : 3mm",
+      "descricao": "Delta Silver Brilhant 3mm",
       "formato": "37x59",
       "linha": "bold",
       "subtipo": "lisa",
@@ -9745,7 +8443,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Delta Silver Brilhant : 3mm · 37x59 · BOLD · Brilhante",
+      "formigres_titulo": "Delta Silver Brilhant 3mm · 37x59 · BOLD · Brilhante",
       "formigres_tipo": "BOLD",
       "formigres_acabamento": "BOLD",
       "acabamento_label": "Brilhante",
@@ -9759,26 +8457,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/fbd98c6d86e27e71f700725c967ac684.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/4f55d04ab53c86c59857eff5d27d3f4d.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/5c43eb3389d55e3176ca7ce661861302.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/a9fe57b37bbf8a5bee40c9b88257e98c.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/ff390bceae1bcb3134d8f9df06878284.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/ef0e0e483106b975d9f2314441841c39.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 33.9,
@@ -9787,18 +8465,14 @@
       "m2_por_caixa": 2.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (ARIELLE) + PRE_OS",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "lista fábrica (ARIELLE) + PRE_OS"
     },
     {
       "codigo_tintao": "35604",
-      "modelo": "Arden Gray :",
-      "catalogo_nome_modelo": "Arden Gray :",
+      "modelo": "Arden Gray",
+      "catalogo_nome_modelo": "Arden Gray",
       "descricao_erp": "REV. 37X59 ARDEN GRAY HD A(2,43) BOLD PEI: LA JUNTA3MM",
-      "descricao": "Arden Gray :",
+      "descricao": "Arden Gray",
       "formato": "37x59",
       "linha": "bold",
       "subtipo": null,
@@ -9809,7 +8483,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Arden Gray : · 37x59 · BOLD",
+      "formigres_titulo": "Arden Gray · 37x59 · BOLD",
       "formigres_tipo": "BOLD",
       "formigres_acabamento": "BOLD",
       "acabamento_label": "",
@@ -9823,22 +8497,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/3a6e7a5b1e4976f72a713235808ce27f.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/7a45667a6b0d7810079e2ce96c0054a7.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/b42e044021a7b8fe480457750c114da1.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/3025616d5c0565ff4965694a05135ed3.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/18c57d3162e82feac77d7402d97d1ea9.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 33.9,
@@ -9847,18 +8505,14 @@
       "m2_por_caixa": 2.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (ARIELLE) + PRE_OS",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "lista fábrica (ARIELLE) + PRE_OS"
     },
     {
       "codigo_tintao": "35616",
-      "modelo": "Lírio : 2mm",
-      "catalogo_nome_modelo": "Lírio : 2mm",
+      "modelo": "Lírio 2mm",
+      "catalogo_nome_modelo": "Lírio 2mm",
       "descricao_erp": "PISO 67X67 LÍRIO LUX HD A(2,71) RET BRILHANTE PEI:LC 2MM",
-      "descricao": "Lírio : 2mm",
+      "descricao": "Lírio 2mm",
       "formato": "67x67",
       "linha": "retificada",
       "subtipo": "lisa",
@@ -9869,7 +8523,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Lírio : 2mm · 67x67 · RET · Brilhante",
+      "formigres_titulo": "Lírio 2mm · 67x67 · RET · Brilhante",
       "formigres_tipo": "RETIFICADO",
       "formigres_acabamento": "RETIFICADO",
       "acabamento_label": "Brilhante",
@@ -9883,26 +8537,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/41321dab97614ca16dcb187782d9699b.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/dbe0090581b2d174a8a26833ca0bd3c4.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/ddf9a6444dab6f4bffd9addd96032d6c.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/d6dbbe6bf9b9d685bd2e8a450ab8b88f.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/e09b14c99768f143e99c9b8dab8cea96.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/ddf5d6fb06359a58ba650f6f50dc14f0.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 39.9,
@@ -9911,18 +8545,14 @@
       "m2_por_caixa": 2.71,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (ARIELLE) + PRE_OS",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "lista fábrica (ARIELLE) + PRE_OS"
     },
     {
       "codigo_tintao": "35617",
-      "modelo": "Delta Silver Brilhant : 3mm",
-      "catalogo_nome_modelo": "Delta Silver Brilhant : 3mm",
+      "modelo": "Delta Silver Brilhant 3mm",
+      "catalogo_nome_modelo": "Delta Silver Brilhant 3mm",
       "descricao_erp": "REV. 37X59 DELTA SILVER HD A(2,43)BOLD BRILHANT PEI:LA 3MM",
-      "descricao": "Delta Silver Brilhant : 3mm",
+      "descricao": "Delta Silver Brilhant 3mm",
       "formato": "37x59",
       "linha": "bold",
       "subtipo": "lisa",
@@ -9933,7 +8563,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Delta Silver Brilhant : 3mm · 37x59 · BOLD · Brilhante",
+      "formigres_titulo": "Delta Silver Brilhant 3mm · 37x59 · BOLD · Brilhante",
       "formigres_tipo": "BOLD",
       "formigres_acabamento": "BOLD",
       "acabamento_label": "Brilhante",
@@ -9947,22 +8577,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/a988da4e538ea4111ac75b3b2efa2f5e.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/9d5de38646dc3e3ab81e996b66081f0e.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/fa03d21ed1a076410128d69be839c83e.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/e62e6b4f7407fd9761b4e238c7cb894f.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/b1d708f20f9adaf15b2b9a99923bf77d.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 33.9,
@@ -9971,18 +8585,14 @@
       "m2_por_caixa": 2.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (ARIELLE) + PRE_OS",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "lista fábrica (ARIELLE) + PRE_OS"
     },
     {
       "codigo_tintao": "35618",
-      "modelo": "Axis Gray Bril :",
-      "catalogo_nome_modelo": "Axis Gray Bril :",
+      "modelo": "Axis Gray Bril",
+      "catalogo_nome_modelo": "Axis Gray Bril",
       "descricao_erp": "REV. 37X59 AXIS GRAY HD A(2,43) BOLD BRIL PEI: LA JUNTA3MM",
-      "descricao": "Axis Gray Bril :",
+      "descricao": "Axis Gray Bril",
       "formato": "37x59",
       "linha": "bold",
       "subtipo": null,
@@ -9993,7 +8603,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Axis Gray Bril : · 37x59 · BOLD",
+      "formigres_titulo": "Axis Gray Bril · 37x59 · BOLD",
       "formigres_tipo": "BOLD",
       "formigres_acabamento": "BOLD",
       "acabamento_label": "",
@@ -10007,22 +8617,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/cf6626c25af08b9db08cd6b12fe74419.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/a80662c78c99854bd390b6e917b8f133.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/775109facd854067c14ceee62472992d.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/24414dbdb9d4970547945f5c3f778407.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/5c45b29009a91ad26872e1a0d61b4fa3.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 33.9,
@@ -10031,18 +8625,14 @@
       "m2_por_caixa": 2.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (ARIELLE) + PRE_OS",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "lista fábrica (ARIELLE) + PRE_OS"
     },
     {
       "codigo_tintao": "35619",
-      "modelo": "Deck 45 Aderent :",
-      "catalogo_nome_modelo": "Deck 45 Aderent :",
+      "modelo": "Deck 45 Aderent",
+      "catalogo_nome_modelo": "Deck 45 Aderent",
       "descricao_erp": "PISO 45X45 DECK-45 A (2,00) BOLD ADERENT PEI:LD JUNTA 5MM",
-      "descricao": "Deck 45 Aderent :",
+      "descricao": "Deck 45 Aderent",
       "formato": "45x45",
       "linha": "bold",
       "subtipo": "antiderrapante",
@@ -10053,7 +8643,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "406",
-      "formigres_titulo": "Deck 45 Aderent : · 45x45 · BOLD · Antiderrapante",
+      "formigres_titulo": "Deck 45 Aderent · 45x45 · BOLD · Antiderrapante",
       "formigres_tipo": "BOLD",
       "formigres_acabamento": "PROTETIVA ADERENTE",
       "acabamento_label": "Antiderrapante",
@@ -10075,18 +8665,14 @@
       "m2_por_caixa": 2,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 50,
-      "m2_por_palete": 100,
-      "peso_kg_caixa": 28,
-      "peso_kg_palete": 1400
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "35629",
-      "modelo": "Piemont :",
-      "catalogo_nome_modelo": "Piemont :",
+      "modelo": "Piemont",
+      "catalogo_nome_modelo": "Piemont",
       "descricao_erp": "PISO 20X120 PIEMONT HD (1,68) RET MATE PEI: LD JUNTA 2MM",
-      "descricao": "Piemont :",
+      "descricao": "Piemont",
       "formato": "20x120",
       "linha": "retificada",
       "subtipo": "antiderrapante",
@@ -10097,7 +8683,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "1533",
-      "formigres_titulo": "Piemont : · 20x120 · RET · Mate",
+      "formigres_titulo": "Piemont · 20x120 · RET · Mate",
       "formigres_tipo": "RETIFICADO",
       "formigres_acabamento": "GRANILHADO ABS",
       "acabamento_label": "Mate",
@@ -10119,18 +8705,14 @@
       "m2_por_caixa": 1.68,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (FORMIGRES)",
-      "caixas_por_palete": 24,
-      "m2_por_palete": 57.6,
-      "peso_kg_caixa": 43,
-      "peso_kg_palete": 1032
+      "observacao": "base PRE_OS×510 (FORMIGRES)"
     },
     {
       "codigo_tintao": "35637",
-      "modelo": ":",
-      "catalogo_nome_modelo": ":",
+      "modelo": "R7061",
+      "catalogo_nome_modelo": "R7061",
       "descricao_erp": "PISO 70X70 R7061 ROCHAPRIME A (3,43) RET ACET PEI: LD",
-      "descricao": ":",
+      "descricao": "R7061",
       "formato": "70x70",
       "linha": "bold",
       "subtipo": null,
@@ -10141,7 +8723,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": ": · 70x70 · BOLD",
+      "formigres_titulo": "R7061 · 70x70 · BOLD",
       "formigres_tipo": "",
       "formigres_acabamento": "",
       "acabamento_label": "",
@@ -10158,18 +8740,14 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug r7061 (SIAH→site)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "portal slug r7061 (SIAH→site)"
     },
     {
       "codigo_tintao": "35638",
-      "modelo": ":",
-      "catalogo_nome_modelo": ":",
+      "modelo": "R7005",
+      "catalogo_nome_modelo": "R7005",
       "descricao_erp": "PISO 70X70 R7005 ROCHAPRIME A (3,43) RET ACET PEI: LD",
-      "descricao": ":",
+      "descricao": "R7005",
       "formato": "70x70",
       "linha": "bold",
       "subtipo": null,
@@ -10180,7 +8758,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": ": · 70x70 · BOLD",
+      "formigres_titulo": "R7005 · 70x70 · BOLD",
       "formigres_tipo": "",
       "formigres_acabamento": "",
       "acabamento_label": "",
@@ -10197,18 +8775,14 @@
       "m2_por_caixa": 3.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "portal slug r7005 (SIAH→site)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "portal slug r7005 (SIAH→site)"
     },
     {
       "codigo_tintao": "35639",
-      "modelo": "Strato Grigio :",
-      "catalogo_nome_modelo": "Strato Grigio :",
+      "modelo": "Strato Grigio",
+      "catalogo_nome_modelo": "Strato Grigio",
       "descricao_erp": "PISO 82X82 STRATO GRIGIO ROCHAMAXX (2,70) RET PLD PEI: LC",
-      "descricao": "Strato Grigio :",
+      "descricao": "Strato Grigio",
       "formato": "82x82",
       "linha": "bold",
       "subtipo": null,
@@ -10219,7 +8793,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Strato Grigio : · 82x82 · BOLD",
+      "formigres_titulo": "Strato Grigio · 82x82 · BOLD",
       "formigres_tipo": "",
       "formigres_acabamento": "",
       "acabamento_label": "",
@@ -10241,18 +8815,14 @@
       "m2_por_caixa": 2.7,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (ROCHAPRIME)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "base PRE_OS×510 (ROCHAPRIME)"
     },
     {
       "codigo_tintao": "35648",
-      "modelo": "Strato Grigio :",
-      "catalogo_nome_modelo": "Strato Grigio :",
+      "modelo": "Strato Grigio",
+      "catalogo_nome_modelo": "Strato Grigio",
       "descricao_erp": "PISO 82X82 MATTE STRATO GRIGIO ROCHAMAXX(2,70)RT ACET PEI:LC",
-      "descricao": "Strato Grigio :",
+      "descricao": "Strato Grigio",
       "formato": "82x82",
       "linha": "retificada",
       "subtipo": null,
@@ -10263,7 +8833,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Strato Grigio : · 82x82 · RET",
+      "formigres_titulo": "Strato Grigio · 82x82 · RET",
       "formigres_tipo": "",
       "formigres_acabamento": "",
       "acabamento_label": "",
@@ -10285,18 +8855,14 @@
       "m2_por_caixa": 2.7,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (ROCHAPRIME)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "base PRE_OS×510 (ROCHAPRIME)"
     },
     {
       "codigo_tintao": "35651",
-      "modelo": "Strato Grigio Safe Step :",
-      "catalogo_nome_modelo": "Strato Grigio Safe Step :",
+      "modelo": "Strato Grigio Safe Step",
+      "catalogo_nome_modelo": "Strato Grigio Safe Step",
       "descricao_erp": "PISO 82X82 STRATO GRIGIO EXT (2,70) RET SAFE STEP PEI:LC",
-      "descricao": "Strato Grigio Safe Step :",
+      "descricao": "Strato Grigio Safe Step",
       "formato": "82x82",
       "linha": "bold",
       "subtipo": null,
@@ -10307,7 +8873,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Strato Grigio Safe Step : · 82x82 · BOLD",
+      "formigres_titulo": "Strato Grigio Safe Step · 82x82 · BOLD",
       "formigres_tipo": "",
       "formigres_acabamento": "",
       "acabamento_label": "",
@@ -10329,18 +8895,14 @@
       "m2_por_caixa": 2.7,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "base PRE_OS×510 (ROCHAPRIME)",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "base PRE_OS×510 (ROCHAPRIME)"
     },
     {
       "codigo_tintao": "35676",
-      "modelo": "Verne Brilh :",
-      "catalogo_nome_modelo": "Verne Brilh :",
+      "modelo": "Verne Brilh",
+      "catalogo_nome_modelo": "Verne Brilh",
       "descricao_erp": "PISO 90X90 VERNE PLUS HD A(2,41)RET BRILH PEI:LB JUNTA 2MM",
-      "descricao": "Verne Brilh :",
+      "descricao": "Verne Brilh",
       "formato": "90x90",
       "linha": "retificada",
       "subtipo": "lisa",
@@ -10351,7 +8913,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Verne Brilh : · 90x90 · RET · Brilhante",
+      "formigres_titulo": "Verne Brilh · 90x90 · RET · Brilhante",
       "formigres_tipo": "BOLD",
       "formigres_acabamento": "BRILHANTE",
       "acabamento_label": "Brilhante",
@@ -10365,22 +8927,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/44073bf5d09003fa76db157332541b39.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/b07798e1d878041b69b39ad288bfa6f8.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/8777328f5b4974b7efafe3917f8c6c60.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/36b5eac14055782a28bf8f8bfcad8f6e.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/a015ffd33d4414ead9eefbf8a80eaf85.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 45.9,
@@ -10389,18 +8935,14 @@
       "m2_por_caixa": 2.41,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Carmelo Fior — slug 90×90 no site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "Carmelo Fior — slug 90×90 no site"
     },
     {
       "codigo_tintao": "35677",
-      "modelo": "Panis Acetin : Junt 2mm",
-      "catalogo_nome_modelo": "Panis Acetin : Junt 2mm",
+      "modelo": "Panis Acetin Junt 2mm",
+      "catalogo_nome_modelo": "Panis Acetin Junt 2mm",
       "descricao_erp": "PISO 90X90 PANIS PLUS HD A(2,41)RET ACETIN PEI:LC JUNT 2MM",
-      "descricao": "Panis Acetin : Junt 2mm",
+      "descricao": "Panis Acetin Junt 2mm",
       "formato": "90x90",
       "linha": "retificada",
       "subtipo": null,
@@ -10411,7 +8953,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Panis Acetin : Junt 2mm · 90x90 · RET",
+      "formigres_titulo": "Panis Acetin Junt 2mm · 90x90 · RET",
       "formigres_tipo": "BOLD",
       "formigres_acabamento": "",
       "acabamento_label": "",
@@ -10425,26 +8967,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/d8f7e9893ae64d923340a3511c87db60.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/dd7a97f47b7517aa2f1a1b76e5718b92.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/5246a265108d9d46f9a377934fb48945.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/734ccf45f28110e819c463589c785d28.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/68f526a3f02508160b311088404993fe.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/c90c5912ae6f1a79f6205bcaa66ee973.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 45.9,
@@ -10453,18 +8975,14 @@
       "m2_por_caixa": 2.41,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Carmelo Fior — slug 90×90 no site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "Carmelo Fior — slug 90×90 no site"
     },
     {
       "codigo_tintao": "35678",
-      "modelo": "Lelis Brilh :",
-      "catalogo_nome_modelo": "Lelis Brilh :",
+      "modelo": "Lelis Brilh",
+      "catalogo_nome_modelo": "Lelis Brilh",
       "descricao_erp": "PISO 90X90 LELIS PLUS HD A(2,41)RET BRILH PEI:LB JUNTA 2MM",
-      "descricao": "Lelis Brilh :",
+      "descricao": "Lelis Brilh",
       "formato": "90x90",
       "linha": "retificada",
       "subtipo": "lisa",
@@ -10475,7 +8993,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Lelis Brilh : · 90x90 · RET · Brilhante",
+      "formigres_titulo": "Lelis Brilh · 90x90 · RET · Brilhante",
       "formigres_tipo": "BOLD",
       "formigres_acabamento": "BRILHANTE",
       "acabamento_label": "Brilhante",
@@ -10489,26 +9007,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/6cb88b9956587749950e60ca86f4e22d.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/5599db8ad14ba025ef05d33685b3b204.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/22acbf46ffb636084cee5e15345727de.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/7f41b18c47cf361ba95c00223a87461e.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/69da4a3787a62b7f206aa3d2f3fddb61.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/8c3da44535e3ba7bc076284e4de05b2b.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 45.9,
@@ -10517,18 +9015,14 @@
       "m2_por_caixa": 2.41,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Carmelo Fior — slug 90×90 no site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "Carmelo Fior — slug 90×90 no site"
     },
     {
       "codigo_tintao": "35679",
-      "modelo": "Varena : Junt 2mm",
-      "catalogo_nome_modelo": "Varena : Junt 2mm",
+      "modelo": "Varena Junt 2mm",
+      "catalogo_nome_modelo": "Varena Junt 2mm",
       "descricao_erp": "PISO 90X90 VARENA PLUS HD A(2,41)RT ACET PEI:LC JUNT 2MM",
-      "descricao": "Varena : Junt 2mm",
+      "descricao": "Varena Junt 2mm",
       "formato": "90x90",
       "linha": "retificada",
       "subtipo": null,
@@ -10539,7 +9033,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Varena : Junt 2mm · 90x90 · RET",
+      "formigres_titulo": "Varena Junt 2mm · 90x90 · RET",
       "formigres_tipo": "BOLD",
       "formigres_acabamento": "",
       "acabamento_label": "",
@@ -10553,22 +9047,6 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/7b9dd619eb1345c43e45d173de813ebf.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/6d50431cf3961d2b5cd9ae764c46b8ba.webp",
-          "tipo": "ambiente"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/c0a45c47fd4a3a19eacaf563174c85cf.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/21323788d479a5f2d7e6cd3a89c18352.webp",
-          "tipo": "detalhe"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/8711deb86ca61718e028dac8751a5583.webp",
-          "tipo": "detalhe"
         }
       ],
       "preco_m2": 45.9,
@@ -10577,12 +9055,7 @@
       "m2_por_caixa": 2.41,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "Carmelo Fior — slug 90×90 no site",
-      "caixas_por_palete": null,
-      "m2_por_palete": null,
-      "peso_kg_caixa": null,
-      "peso_kg_palete": null
+      "observacao": "Carmelo Fior — slug 90×90 no site"
     }
-  ],
-  "enriquecidoEm": "2026-10-29T20:36:19.909Z"
+  ]
 }

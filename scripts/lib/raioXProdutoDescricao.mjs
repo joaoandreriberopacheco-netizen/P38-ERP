@@ -31,6 +31,24 @@ function limparPontuacaoModelo(modelo = '') {
     .trim();
 }
 
+/** "PEI: LD" no ERP vira "PEI LD" para não sobrar só ":" no modelo. */
+function normalizarPeiColonNoTexto(text = '') {
+  return String(text || '').replace(/PEI\s*:\s*/gi, 'PEI ');
+}
+
+function modeloSoPontuacao(s = '') {
+  return !String(s || '').replace(/[^a-zA-Z0-9]/g, '').trim();
+}
+
+/** Referência Rochaprime/Rochamaxx na descrição (ex. R7061, PR70261). */
+export function referenciaRochaprimeErp(descricao = '') {
+  const raw = String(descricao || '');
+  if (!/ROCHAPRIME|ROCHAMAXX|ROCHAFORTE/i.test(raw)) return '';
+  const m = raw.match(/\b(PR|R)(\d{3,})\b/i);
+  if (!m) return '';
+  return `${m[1].toUpperCase()}${m[2]}`;
+}
+
 function nomeFromDescricaoNoSite(descricaoNoSite = '') {
   const first = String(descricaoNoSite || '').split('·')[0].trim();
   if (!first || nomePareceCodigoFabricante(first)) return '';
@@ -80,14 +98,14 @@ export function modeloFieldPareceErroDigitacao(modelo = '') {
  * @param {string} [descricaoNoSite] — título da ficha oficial (primeiro segmento antes de ·)
  */
 export function modeloComercialCatalogo(codigo, descricao = '', modeloField = '', descricaoNoSite = '') {
-  const desc = String(descricao || '').trim();
+  const desc = normalizarPeiColonNoTexto(String(descricao || '').trim());
   let campo = String(modeloField || '').trim();
   if (modeloFieldPareceErroDigitacao(campo)) campo = '';
   campo = limparPontuacaoModelo(campo);
 
   const rx = raioXProdutoDescricao(codigo, desc || campo);
   let modelo = rx.modelo || campo;
-  modelo = modelo.replace(/\b(PR|R)\d+\b/gi, ' ');
+  modelo = normalizarPeiColonNoTexto(modelo);
   modelo = modelo.replace(/\bJUNTA\s*\d+\s*MM\b/gi, ' ');
   modelo = modelo.replace(/^\s*\d{1,2}\s*[x×]\s*\d{1,2}\s*/gi, ' ');
   modelo = modelo.replace(/^0\s*[x×]\s*\d+\s*/gi, ' ');
@@ -95,7 +113,7 @@ export function modeloComercialCatalogo(codigo, descricao = '', modeloField = ''
   modelo = modelo.replace(/\b(POL|POLIDO|SEMI|GRES)\b/gi, ' ');
   modelo = modelo.replace(/["'`]+/g, ' ');
   modelo = modelo.replace(MODELO_NOISE_RE, ' ');
-  modelo = modelo.replace(/\s+/g, ' ').trim();
+  modelo = modelo.replace(/[:;]+/g, ' ').replace(/\s+/g, ' ').trim();
   modelo = modelo.replace(/\s+[a-z]\s*$/i, '').trim();
   modelo = limparPontuacaoModelo(modelo);
 
@@ -104,7 +122,9 @@ export function modeloComercialCatalogo(codigo, descricao = '', modeloField = ''
   if (/^asphalt\b/.test(low)) return 'Asphalt';
 
   let result = titleCaseModelo(modelo);
-  if (!nomePareceCodigoFabricante(result)) return result;
+  const refRocha = referenciaRochaprimeErp(desc);
+
+  if (!modeloSoPontuacao(result) && !nomePareceCodigoFabricante(result)) return result;
 
   const fromSite = nomeFromDescricaoNoSite(descricaoNoSite);
   if (fromSite) return fromSite;
@@ -114,6 +134,8 @@ export function modeloComercialCatalogo(codigo, descricao = '', modeloField = ''
 
   if (campo && !nomePareceCodigoFabricante(campo)) return titleCaseModelo(campo);
 
+  if (refRocha) return refRocha;
+
   return result;
 }
 
@@ -122,7 +144,7 @@ export function modeloComercialCatalogo(codigo, descricao = '', modeloField = ''
  * @param {string} descricao — só a descrição (sem código) ou linha completa com código
  */
 export function raioXProdutoDescricao(codigo, descricao) {
-  let raw = sanitizeTintaoDesc(descricao || '');
+  let raw = sanitizeTintaoDesc(normalizarPeiColonNoTexto(descricao || ''));
   const codeFromLine = raw.match(/^(\d{4,5})\s+/);
   const codigoFinal = String(codigo || codeFromLine?.[1] || '').trim();
   if (codeFromLine) raw = raw.replace(/^\d{4,5}\s+/, '');
@@ -157,9 +179,12 @@ export function raioXProdutoDescricao(codigo, descricao) {
     ' ',
   );
   modelo = modelo.replace(MODELO_NOISE_RE, ' ');
-  modelo = modelo.replace(/\b(PR|R)\d+\b/gi, ' ');
   modelo = modelo.replace(/\bJUNTA\s*\d+\s*MM\b/gi, ' ');
-  modelo = modelo.replace(/[-/]+/g, ' ').replace(/\s+/g, ' ').trim();
+  modelo = modelo.replace(/[:;]+/g, ' ').replace(/[-/]+/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!modelo || modeloSoPontuacao(modelo)) {
+    const ref = referenciaRochaprimeErp(raw);
+    if (ref) modelo = ref;
+  }
 
   const hdRef = modelo.match(/\(\s*HD\s+([0-9][0-9.]+)\s*\)/i);
   if (hdRef && !modelo.replace(/\(\s*HD\s+[0-9][0-9.]+\s*\)/i, '').trim()) {

@@ -12,6 +12,19 @@ export function rochaSlugFromSiahDesc(desc) {
   return `${m[1].toLowerCase()}${digits}`;
 }
 
+/** Slugs a tentar no portal (código completo, SIAH sem 1 final, núcleo 4 dígitos). */
+export function rochaSlugCandidatesFromErp(desc) {
+  const m = String(desc || '').match(/\b(PR|R)(\d{4,})\b/i);
+  if (!m) return [];
+  const prefix = m[1].toLowerCase();
+  let digits = m[2];
+  const out = new Set();
+  out.add(`${prefix}${digits}`);
+  if (digits.length >= 5 && digits.endsWith('1')) out.add(`${prefix}${digits.slice(0, -1)}`);
+  if (digits.length > 4) out.add(`${prefix}${digits.slice(0, 4)}`);
+  return [...out];
+}
+
 export function parseRochaCMapFromProdutosHtml(html) {
   const map = new Map();
   for (const m of String(html || '').matchAll(/produtos\/([a-z0-9-]+)\?c=(\d+)/gi)) {
