@@ -3720,7 +3720,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     function itemTitulo(item) {
       if (CATALOG_SKIN === 'pagleve') {
-        return item.catalogo_nome_modelo || item.modelo || item.formigres_titulo || item.descricao || '';
+        return item.formigres_titulo || item.catalogo_nome_modelo || item.modelo || item.descricao || '';
       }
       return item.formigres_titulo || item.descricao || '';
     }

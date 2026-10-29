@@ -293,7 +293,7 @@ function main() {
       match_status: mapStatus(row.status),
       match_score: row.status === 'confirmado_site' ? 100 : 0,
       formigres_id: (String(row.evidencia_url || '').match(/formigres\.com\.br\/produto\/(\d+)/i) || [])[1] || '',
-      formigres_titulo: nomeCurto,
+      formigres_titulo: catalogoSubtitulo,
       formigres_tipo: siteHints.tipo,
       formigres_acabamento:
         (siteHints.acabamento && !isClasseUsoPei(siteHints.acabamento) ? siteHints.acabamento : acabLabel.toUpperCase()),
