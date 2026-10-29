@@ -156,14 +156,25 @@ function main() {
   const preItens = parsePreOsPdf(prePath);
   const map510 = load510ByCodigo();
   const priorByCodigo = loadPriorMatchByCodigo();
+  const preByCod = new Map(preItens.map((p) => [p.codigo_loja, p]));
 
-  const rows = preItens.map((pre) => {
-    const row = rowFromPreOsCross(pre, map510.get(pre.codigo_loja));
-    return mergePriorSiteMatch(row, priorByCodigo.get(pre.codigo_loja));
-  });
+  /** Catálogo = só códigos nos PDFs de fábrica (510) **e** com preço no PRE_OS. */
+  const rows = [];
+  let fabricaSemPreOs = 0;
+  for (const [cod, marca510] of map510) {
+    const pre = preByCod.get(cod);
+    if (!pre) {
+      fabricaSemPreOs++;
+      continue;
+    }
+    const row = rowFromPreOsCross(pre, marca510);
+    row.cruzamento = '510_marca';
+    row.observacao = `lista fábrica (${marca510.marca_erp || marca510.fonte_pdf || '510'}) + PRE_OS`;
+    rows.push(mergePriorSiteMatch(row, priorByCodigo.get(cod)));
+  }
+  rows.sort((a, b) => String(a.codigo).localeCompare(String(b.codigo), 'pt-BR', { numeric: true }));
 
-  const cruzados = rows.filter((r) => r.cruzamento === '510_marca').length;
-  const sem510 = rows.length - cruzados;
+  const preOsForaCatalogo = preItens.filter((p) => !map510.has(p.codigo_loja)).length;
 
   writeCsv(OUT_CSV, rows);
   writeCsv(OUT_RAIOX, rows);
@@ -184,12 +195,12 @@ function main() {
     geradoEm: new Date().toISOString(),
     fonte: prePath,
     tipo: 'pre_os',
-    count: preItens.length,
-    itens: preItens.map((p) => ({
-      codigo_siah: p.codigo_loja,
-      descricao: p.descricao,
-      preco_varejo_m2: p.preco_varejo_m2,
-      descricao_norm: p.descricao
+    count: rows.length,
+    itens: rows.map((r) => ({
+      codigo_siah: r.codigo_loja,
+      descricao: r.descricao_erp,
+      preco_varejo_m2: Number(r.preco_varejo_m2),
+      descricao_norm: String(r.descricao_erp || '')
         .toUpperCase()
         .replace(/[^A-Z0-9]+/g, ' ')
         .replace(/\s+/g, ' ')
@@ -201,17 +212,17 @@ function main() {
   const meta = {
     geradoEm: new Date().toISOString(),
     pre_os: PRE_OS_NAME,
+    regra: 'catalogo_somente_pdf_fabrica_com_preco_pre_os',
     itens_pre_os: preItens.length,
+    itens_pdf_fabrica_510: map510.size,
     itens_catalogo: rows.length,
-    cruzados_510: cruzados,
-    pre_os_sem_510: sem510,
+    pre_os_fora_catalogo: preOsForaCatalogo,
+    fabrica_sem_pre_os: fabricaSemPreOs,
     por_fabricante: {},
-    por_cruzamento: {},
   };
   for (const r of rows) {
     const g = r.fabricante_grupo || '(sem origem)';
     meta.por_fabricante[g] = (meta.por_fabricante[g] || 0) + 1;
-    meta.por_cruzamento[r.cruzamento] = (meta.por_cruzamento[r.cruzamento] || 0) + 1;
   }
   fs.writeFileSync(OUT_META, `${JSON.stringify(meta, null, 2)}\n`);
 
@@ -220,8 +231,10 @@ function main() {
       {
         ok: true,
         itens: rows.length,
-        cruzados_510: cruzados,
-        pre_os_sem_510: sem510,
+        pre_os: preItens.length,
+        pdf_fabrica: map510.size,
+        pre_os_fora_catalogo: preOsForaCatalogo,
+        fabrica_sem_pre_os: fabricaSemPreOs,
         csv: OUT_CSV,
         precos: OUT_PRECOS_JSON,
         meta: OUT_META,

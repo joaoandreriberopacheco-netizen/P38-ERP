@@ -1,20 +1,16 @@
 {
-  "geradoEm": "2026-10-29T16:15:39.284Z",
+  "geradoEm": "2026-10-29T16:55:08.008Z",
   "pre_os": "PRE_OS_0973.pdf",
+  "regra": "catalogo_somente_pdf_fabrica_com_preco_pre_os",
   "itens_pre_os": 264,
-  "itens_catalogo": 264,
-  "cruzados_510": 228,
-  "pre_os_sem_510": 36,
+  "itens_pdf_fabrica_510": 308,
+  "itens_catalogo": 228,
+  "pre_os_fora_catalogo": 36,
+  "fabrica_sem_pre_os": 80,
   "por_fabricante": {
-    "Grupo Formigres": 146,
-    "Lume Cerâmica": 12,
-    "Grupo Incopisos": 9,
-    "(sem origem)": 5,
+    "Grupo Formigres": 130,
     "Carmelo Fior": 43,
-    "Grupo Rocha": 49
-  },
-  "por_cruzamento": {
-    "510_marca": 228,
-    "pre_os_apenas": 36
+    "Grupo Rocha": 49,
+    "Grupo Incopisos": 6
   }
 }

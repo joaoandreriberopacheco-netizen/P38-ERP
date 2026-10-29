@@ -1,11 +1,12 @@
-# PagLeve — catálogo virtual (PRE_OS × marca 510)
+# PagLeve — catálogo virtual (PDF fábrica × PRE_OS)
 
-Base **canónica** = cruzamento entre:
+**Regra:** entram no site **só** produtos que aparecem nos **PDFs de fábrica** (relatório 510 por marca) **e** têm **preço no PRE_OS**.  
+Está no PRE_OS mas **não** está em Incopisos / Formigres / Carmelo Fior / Arielle / Rochaprime → **fora do catálogo**.
 
 | Fonte | Ficheiro em `fonte/` | Papel |
 |--------|----------------------|--------|
-| **Preços / lista vendável** | `PRE_OS_0973.pdf` | Só entra no site quem está aqui; **preço/m²** e código loja (5 dígitos). Estoque físico ignorado → **disponível**. |
-| **Origem por fabricante** | `formigres_*.pdf`, `rochaprime_*.pdf`, `carmelo_fior_*.pdf`, `arielle_*.pdf`, `incopisos_*.pdf` | Relatório ERP **510** — EAN + descrição + marca; cruzamento pelo **mesmo código loja**. |
+| **PDF fábrica (510)** | `formigres_*.pdf`, `rochaprime_*.pdf`, `carmelo_fior_*.pdf`, `arielle_*.pdf`, `incopisos_*.pdf` | **Quem entra** — código loja + origem + descrição |
+| **PRE_OS** | `PRE_OS_0973.pdf` | **Preço/m²** (e confirma venda); estoque ignorado → disponível |
 
 Gerar / atualizar base:
 
