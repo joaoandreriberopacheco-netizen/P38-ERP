@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-11T16:39:22.951Z",
+  "generated_at": "2026-09-11T17:05:42.174Z",
   "apply": true,
   "fonte": "Trial Elétricos (trialeletricos.com.br)",
   "snapshot": "/workspace/docs/exports/trial-luminarias-catalog-snapshot.json",
@@ -147,24 +147,280 @@
       "url": "https://trialeletricos.com.br/wp-content/uploads/2023/11/Sport-LED-quadrado--scaled.jpg",
       "fonte_ref": "trial:spot-led-auxiliar-quadrado-luz-amarela",
       "fallback": null
-    }
-  ],
-  "missing": [],
-  "skipped_no_trial": [
-    {
-      "codigo_interno": "7X7-W6L",
-      "nome": "LUMINÁRIA LED TATARTARUGA 6500K 12W",
-      "motivo": "não listada no catálogo Trial online"
     },
     {
       "codigo_interno": "MNG-PX8",
       "nome": "SPOT LED AUXILIAR GRANDE 06W QUAD 6500K",
-      "motivo": "Trial só tem spot 03W"
+      "trial_slug": "2484",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/2484/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/11/Sport-LED-quadrado-01_122543-scaled.jpg",
+      "fonte_ref": "trial:2484",
+      "fallback": "spot 03W quad branco para 06W"
     },
     {
       "codigo_interno": "W70-3U1",
       "nome": "SPOT LED AUXILIAR GRANDE 06W RED 3000K",
-      "motivo": "Trial só tem spot 03W"
+      "trial_slug": "spot-led-auxiliar-redondo-luz-amarela",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/spot-led-auxiliar-redondo-luz-amarela/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/11/Sport-LED-Redondo-01_122549-scaled.jpg",
+      "fonte_ref": "trial:spot-led-auxiliar-redondo-luz-amarela",
+      "fallback": "spot 03W red 3000K para 06W"
+    },
+    {
+      "codigo_interno": "R5D-PII",
+      "nome": "LAMPADA LED BULBO 6500K 4,9W",
+      "trial_slug": "lampada-bulbo-a55",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/lampada-bulbo-a55/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Trial-Lampada-de-Bulbo_120117-scaled.jpg",
+      "fonte_ref": "trial:lampada-bulbo-a55",
+      "fallback": null
+    },
+    {
+      "codigo_interno": "UZS-0GB",
+      "nome": "LAMPADA LED BULBO 6500K 09W",
+      "trial_slug": "lampada-bulbo-a55",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/lampada-bulbo-a55/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Trial-Lampada-de-Bulbo_120117-scaled.jpg",
+      "fonte_ref": "trial:lampada-bulbo-a55",
+      "fallback": "bulbo Trial 4,9W para 09W"
+    },
+    {
+      "codigo_interno": "43F-7ES",
+      "nome": "LAMPADA LED BULBO 6500K 09W",
+      "trial_slug": "lampada-bulbo-a55",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/lampada-bulbo-a55/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Trial-Lampada-de-Bulbo_120117-scaled.jpg",
+      "fonte_ref": "trial:lampada-bulbo-a55",
+      "fallback": "bulbo Trial 4,9W para 09W"
+    },
+    {
+      "codigo_interno": "H2H-D50",
+      "nome": "LAMPADA LED BULBO 6500K 12W",
+      "trial_slug": "lampada-bulbo-a55",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/lampada-bulbo-a55/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Trial-Lampada-de-Bulbo_120117-scaled.jpg",
+      "fonte_ref": "trial:lampada-bulbo-a55",
+      "fallback": "bulbo Trial 4,9W para 12W"
+    },
+    {
+      "codigo_interno": "D1N-BU0",
+      "nome": "LAMPADA LED BULBO 6500K 15W",
+      "trial_slug": "lampada-bulbo-a55",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/lampada-bulbo-a55/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Trial-Lampada-de-Bulbo_120117-scaled.jpg",
+      "fonte_ref": "trial:lampada-bulbo-a55",
+      "fallback": "bulbo Trial 4,9W para 15W"
+    },
+    {
+      "codigo_interno": "LJD-7QS",
+      "nome": "LAMPADA LED BULBO 6500K 20W",
+      "trial_slug": "lampada-bulbo-a55",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/lampada-bulbo-a55/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Trial-Lampada-de-Bulbo_120117-scaled.jpg",
+      "fonte_ref": "trial:lampada-bulbo-a55",
+      "fallback": "bulbo Trial 4,9W para 20W"
+    },
+    {
+      "codigo_interno": "W4Q-Y6I",
+      "nome": "LAMPADA LED BULBO 6500K 40W",
+      "trial_slug": "lampada-bulbo-a55",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/lampada-bulbo-a55/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Trial-Lampada-de-Bulbo_120117-scaled.jpg",
+      "fonte_ref": "trial:lampada-bulbo-a55",
+      "fallback": "bulbo Trial 4,9W para 40W"
+    },
+    {
+      "codigo_interno": "T3D-4AN",
+      "nome": "LAMPADA LED CILINDRICA 6500K 40W",
+      "trial_slug": "lampada-cilindrica-t150",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/lampada-cilindrica-t150/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/10/Trial-lampada-cilindrica_015247-scaled.jpg",
+      "fonte_ref": "trial:lampada-cilindrica-t150",
+      "fallback": "cilíndrica Trial 100W para 40W"
+    },
+    {
+      "codigo_interno": "PY4-X5U",
+      "nome": "LAMPADA LED CILINDRICA 6500K 60W",
+      "trial_slug": "lampada-cilindrica-t150",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/lampada-cilindrica-t150/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/10/Trial-lampada-cilindrica_015247-scaled.jpg",
+      "fonte_ref": "trial:lampada-cilindrica-t150",
+      "fallback": "cilíndrica Trial 100W para 60W"
+    },
+    {
+      "codigo_interno": "Y9J-MZA",
+      "nome": "LAMPADA LED T8 6500K 09W",
+      "trial_slug": "lampada-cilindrica-t150",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/lampada-cilindrica-t150/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/10/Trial-lampada-cilindrica_015247-scaled.jpg",
+      "fonte_ref": "trial:lampada-cilindrica-t150",
+      "fallback": "cilíndrica Trial como referência tubular 09W"
+    },
+    {
+      "codigo_interno": "FAN-10A",
+      "nome": "LAMPADA LED T8 6500K 18W",
+      "trial_slug": "lampada-cilindrica-t150",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/lampada-cilindrica-t150/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/10/Trial-lampada-cilindrica_015247-scaled.jpg",
+      "fonte_ref": "trial:lampada-cilindrica-t150",
+      "fallback": "cilíndrica Trial como referência tubular 18W"
+    },
+    {
+      "codigo_interno": "7X7-W6L",
+      "nome": "LUMINÁRIA LED TATARTARUGA 6500K 12W",
+      "trial_slug": "luminaria-led-sobrepor-12w-redonda",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/luminaria-led-sobrepor-12w-redonda/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/11/Trial-12W-Red-scaled.jpg",
+      "fonte_ref": "trial:luminaria-led-sobrepor-12w-redonda",
+      "fallback": "sobrepor red 12W para tartaruga 12W"
+    }
+  ],
+  "missing": [],
+  "skipped_no_trial": [],
+  "with_fallback": [
+    {
+      "codigo_interno": "TA0-0YC",
+      "nome": "LUMINÁRIA LED P/EMBUTIR 6500K QUAD 06W (12CM)",
+      "trial_slug": "luminaria-led-embutir-12w-2",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/luminaria-led-embutir-12w-2/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Lum.-Embutir-12W_120645-scaled.jpg",
+      "fonte_ref": "trial:luminaria-led-embutir-12w-2",
+      "fallback": "12W quad embutir para 06W"
+    },
+    {
+      "codigo_interno": "T74-OVN",
+      "nome": "LUMINÁRIA LED P/EMBUTIR 6500K RED 06W (12CM)",
+      "trial_slug": "luminaria-led-embutir-12w",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/luminaria-led-embutir-12w/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Lumin.-Embutir-12W_121838-scaled.jpg",
+      "fonte_ref": "trial:luminaria-led-embutir-12w",
+      "fallback": "12W red embutir para 06W"
+    },
+    {
+      "codigo_interno": "44R-E44",
+      "nome": "LUMINÁRIA LED P/EMBUTIR 6500K RED 24W (30CM)",
+      "trial_slug": "luminaria-led-sobrepor-24w-redonda",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/luminaria-led-sobrepor-24w-redonda/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Lumin.-Redonda-Sobrepor-24W_122418-scaled.jpg",
+      "fonte_ref": "trial:luminaria-led-sobrepor-24w-redonda",
+      "fallback": "Trial sem embutir 24W red"
+    },
+    {
+      "codigo_interno": "MNG-PX8",
+      "nome": "SPOT LED AUXILIAR GRANDE 06W QUAD 6500K",
+      "trial_slug": "2484",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/2484/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/11/Sport-LED-quadrado-01_122543-scaled.jpg",
+      "fonte_ref": "trial:2484",
+      "fallback": "spot 03W quad branco para 06W"
+    },
+    {
+      "codigo_interno": "W70-3U1",
+      "nome": "SPOT LED AUXILIAR GRANDE 06W RED 3000K",
+      "trial_slug": "spot-led-auxiliar-redondo-luz-amarela",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/spot-led-auxiliar-redondo-luz-amarela/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/11/Sport-LED-Redondo-01_122549-scaled.jpg",
+      "fonte_ref": "trial:spot-led-auxiliar-redondo-luz-amarela",
+      "fallback": "spot 03W red 3000K para 06W"
+    },
+    {
+      "codigo_interno": "UZS-0GB",
+      "nome": "LAMPADA LED BULBO 6500K 09W",
+      "trial_slug": "lampada-bulbo-a55",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/lampada-bulbo-a55/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Trial-Lampada-de-Bulbo_120117-scaled.jpg",
+      "fonte_ref": "trial:lampada-bulbo-a55",
+      "fallback": "bulbo Trial 4,9W para 09W"
+    },
+    {
+      "codigo_interno": "43F-7ES",
+      "nome": "LAMPADA LED BULBO 6500K 09W",
+      "trial_slug": "lampada-bulbo-a55",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/lampada-bulbo-a55/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Trial-Lampada-de-Bulbo_120117-scaled.jpg",
+      "fonte_ref": "trial:lampada-bulbo-a55",
+      "fallback": "bulbo Trial 4,9W para 09W"
+    },
+    {
+      "codigo_interno": "H2H-D50",
+      "nome": "LAMPADA LED BULBO 6500K 12W",
+      "trial_slug": "lampada-bulbo-a55",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/lampada-bulbo-a55/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Trial-Lampada-de-Bulbo_120117-scaled.jpg",
+      "fonte_ref": "trial:lampada-bulbo-a55",
+      "fallback": "bulbo Trial 4,9W para 12W"
+    },
+    {
+      "codigo_interno": "D1N-BU0",
+      "nome": "LAMPADA LED BULBO 6500K 15W",
+      "trial_slug": "lampada-bulbo-a55",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/lampada-bulbo-a55/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Trial-Lampada-de-Bulbo_120117-scaled.jpg",
+      "fonte_ref": "trial:lampada-bulbo-a55",
+      "fallback": "bulbo Trial 4,9W para 15W"
+    },
+    {
+      "codigo_interno": "LJD-7QS",
+      "nome": "LAMPADA LED BULBO 6500K 20W",
+      "trial_slug": "lampada-bulbo-a55",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/lampada-bulbo-a55/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Trial-Lampada-de-Bulbo_120117-scaled.jpg",
+      "fonte_ref": "trial:lampada-bulbo-a55",
+      "fallback": "bulbo Trial 4,9W para 20W"
+    },
+    {
+      "codigo_interno": "W4Q-Y6I",
+      "nome": "LAMPADA LED BULBO 6500K 40W",
+      "trial_slug": "lampada-bulbo-a55",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/lampada-bulbo-a55/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/12/Trial-Lampada-de-Bulbo_120117-scaled.jpg",
+      "fonte_ref": "trial:lampada-bulbo-a55",
+      "fallback": "bulbo Trial 4,9W para 40W"
+    },
+    {
+      "codigo_interno": "T3D-4AN",
+      "nome": "LAMPADA LED CILINDRICA 6500K 40W",
+      "trial_slug": "lampada-cilindrica-t150",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/lampada-cilindrica-t150/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/10/Trial-lampada-cilindrica_015247-scaled.jpg",
+      "fonte_ref": "trial:lampada-cilindrica-t150",
+      "fallback": "cilíndrica Trial 100W para 40W"
+    },
+    {
+      "codigo_interno": "PY4-X5U",
+      "nome": "LAMPADA LED CILINDRICA 6500K 60W",
+      "trial_slug": "lampada-cilindrica-t150",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/lampada-cilindrica-t150/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/10/Trial-lampada-cilindrica_015247-scaled.jpg",
+      "fonte_ref": "trial:lampada-cilindrica-t150",
+      "fallback": "cilíndrica Trial 100W para 60W"
+    },
+    {
+      "codigo_interno": "Y9J-MZA",
+      "nome": "LAMPADA LED T8 6500K 09W",
+      "trial_slug": "lampada-cilindrica-t150",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/lampada-cilindrica-t150/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/10/Trial-lampada-cilindrica_015247-scaled.jpg",
+      "fonte_ref": "trial:lampada-cilindrica-t150",
+      "fallback": "cilíndrica Trial como referência tubular 09W"
+    },
+    {
+      "codigo_interno": "FAN-10A",
+      "nome": "LAMPADA LED T8 6500K 18W",
+      "trial_slug": "lampada-cilindrica-t150",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/lampada-cilindrica-t150/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/10/Trial-lampada-cilindrica_015247-scaled.jpg",
+      "fonte_ref": "trial:lampada-cilindrica-t150",
+      "fallback": "cilíndrica Trial como referência tubular 18W"
+    },
+    {
+      "codigo_interno": "7X7-W6L",
+      "nome": "LUMINÁRIA LED TATARTARUGA 6500K 12W",
+      "trial_slug": "luminaria-led-sobrepor-12w-redonda",
+      "trial_permalink": "https://trialeletricos.com.br/produtos/luminaria-led-sobrepor-12w-redonda/",
+      "url": "https://trialeletricos.com.br/wp-content/uploads/2023/11/Trial-12W-Red-scaled.jpg",
+      "fonte_ref": "trial:luminaria-led-sobrepor-12w-redonda",
+      "fallback": "sobrepor red 12W para tartaruga 12W"
     }
   ]
 }
