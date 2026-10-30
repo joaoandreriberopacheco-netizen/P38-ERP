@@ -14,7 +14,45 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { setTimeout as sleep } from 'node:timers/promises';
 import { resolveSupabaseDeployEnv } from './supabase-env.mjs';
+
+/** CLI estável — evita surpresas de `latest` em CI (bundling API). */
+const SUPABASE_CLI_PACKAGE = 'supabase@2.20.12';
+
+const DEPLOY_MAX_ATTEMPTS = 3;
+const DEPLOY_RETRY_DELAY_MS = 8000;
+
+function formatDeployFailure(result) {
+  const combined = [result.stderr, result.stdout].filter(Boolean).join('\n').trim();
+  if (!combined) return '(sem output do CLI)';
+  const max = 4000;
+  if (combined.length <= max) return combined;
+  return `…${combined.slice(-max)}`;
+}
+
+function deployOneFunction(name, projectRef, token) {
+  const deployArgs = [
+    '--yes',
+    SUPABASE_CLI_PACKAGE,
+    'functions',
+    'deploy',
+    name,
+    '--project-ref',
+    projectRef,
+    '--use-api',
+  ];
+  if (functionSkipsJwtVerify(name)) {
+    deployArgs.push('--no-verify-jwt');
+  }
+
+  return spawnSync('npx', deployArgs, {
+    cwd: root,
+    env: { ...process.env, SUPABASE_ACCESS_TOKEN: token },
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
@@ -71,31 +109,19 @@ export async function deploySupabaseFunctions({ dryRun = false } = {}) {
       continue;
     }
 
-    const deployArgs = [
-      '--yes',
-      'supabase@latest',
-      'functions',
-      'deploy',
-      name,
-      '--project-ref',
-      projectRef,
-      '--use-api',
-    ];
-    if (functionSkipsJwtVerify(name)) {
-      deployArgs.push('--no-verify-jwt');
+    let lastResult = null;
+    for (let attempt = 1; attempt <= DEPLOY_MAX_ATTEMPTS; attempt += 1) {
+      lastResult = deployOneFunction(name, projectRef, token);
+      if (lastResult.status === 0) break;
+      if (attempt < DEPLOY_MAX_ATTEMPTS) {
+        console.log(`retry ${attempt}/${DEPLOY_MAX_ATTEMPTS - 1} …`);
+        await sleep(DEPLOY_RETRY_DELAY_MS);
+      }
     }
 
-    const result = spawnSync('npx', deployArgs, {
-        cwd: root,
-        env: { ...process.env, SUPABASE_ACCESS_TOKEN: token },
-        encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-
-    if (result.status !== 0) {
+    if (lastResult.status !== 0) {
       console.log('FALHOU');
-      const errText = (result.stderr || result.stdout || '').trim();
-      throw new Error(`Deploy ${name} falhou: ${errText.slice(0, 800)}`);
+      throw new Error(`Deploy ${name} falhou: ${formatDeployFailure(lastResult)}`);
     }
     console.log('ok');
     deployed.push(name);
