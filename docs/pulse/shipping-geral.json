@@ -41,6 +41,33 @@
           "action": "wait",
           "sensor": "compras.tab-sugestoes",
           "label": "Aba sugestões"
+        },
+        {
+          "action": "click",
+          "sensor": "compras.tab-cotacoes",
+          "label": "Aba cotações"
+        },
+        {
+          "action": "wait",
+          "sensor": "cotacoes.hub-scroll",
+          "label": "Área scroll hub"
+        },
+        {
+          "action": "wait",
+          "sensor": "cotacoes.busca",
+          "label": "Busca cotações"
+        },
+        {
+          "action": "fill",
+          "sensor": "cotacoes.busca",
+          "value": "a",
+          "label": "Busca — digitar (dry)"
+        },
+        {
+          "action": "fill",
+          "sensor": "cotacoes.busca",
+          "value": "",
+          "label": "Busca — limpar"
         }
       ]
     },
