@@ -12,6 +12,7 @@ import TrocaCaixaCard from '@/components/vendas/caixa/TrocaCaixaCard';
 import ConsultaSubstituicaoPainel from '@/components/vendas/caixa/ConsultaSubstituicaoPainel';
 import { ConsultaProdutoRow } from '@/components/vendas/caixa/ConsultaProdutoRow';
 import VendaValorResumo from '@/components/vendas/caixa/VendaValorResumo';
+import VendasGestaoMargemKpiSuffix from '@/components/vendas/VendasGestaoMargemKpiSuffix';
 import { montarConsultaComprovantePosMovimentacao, aggregateProdutosConsulta } from '@/lib/consultaVendaPosMovimentacao';
 import {
   partitionVendasConsultaCaixa,
@@ -54,6 +55,7 @@ export default function ConsultaVendasCaixa({
   formaPagamentoLabel = null,
   totalFormaPagamento = null,
   forcarModoComprovante = false,
+  margemKpi = null,
 }) {
   const [modo, setModo] = useState('comprovante');
   const modoEfetivo = forcarModoComprovante || formaPagamentoKey ? 'comprovante' : modo;
@@ -96,7 +98,10 @@ export default function ConsultaVendasCaixa({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <p className={caixaTypo.labelSm}>{contextLabel}</p>
-          <CaixaValorDisplay valor={totalGeral} tone="success" size="lg" />
+          <div className="flex flex-wrap items-baseline gap-x-1 gap-y-0.5">
+            <CaixaValorDisplay valor={totalGeral} tone="success" size="lg" />
+            <VendasGestaoMargemKpiSuffix kpi={margemKpi} className="text-sm sm:text-base" />
+          </div>
           <p className={`${caixaTypo.meta} mt-1`}>
             {normais.length} venda{normais.length === 1 ? '' : 's'}
             {trocas.length > 0

@@ -41,6 +41,10 @@ import { getVendasGestaoPeriodoPadrao } from '@/lib/vendasPeriodoFiltro';
 import ValesTrocaTab from '@/components/vendas/ValesTrocaTab';
 import ConsultaVendasCaixa from '@/components/vendas/caixa/ConsultaVendasCaixa';
 import FormaPagamentoBadges from '@/components/vendas/FormaPagamentoBadges';
+import VendasGestaoMargemKpiSuffix from '@/components/vendas/VendasGestaoMargemKpiSuffix';
+import { fetchAllProdutosCatalogo } from '@/lib/fetchProdutosAtivos';
+import { fetchPedidosOrigemTrocaMargem } from '@/lib/fetchPedidosVenda90d';
+import { calcularMargemKpiVendasGestaoFiltradas } from '@/lib/vendasGestaoMargemKpi';
 import { STATUS_PEDIDO_CONTA_NO_TURNO_CAIXA } from '@/lib/pdvCaixaTurnoVendas';
 import {
   getVirtualPadding,
@@ -507,6 +511,10 @@ function VendasGestaoPage() {
   const [pedidosConsultaComItens, setPedidosConsultaComItens] = useState([]);
   const [consultaHydrating, setConsultaHydrating] = useState(false);
   const [devolucoesConsulta, setDevolucoesConsulta] = useState([]);
+  const [produtosMargem, setProdutosMargem] = useState([]);
+  const [pedidosOrigemTrocaMargem, setPedidosOrigemTrocaMargem] = useState({});
+  const [devolucoesMargem, setDevolucoesMargem] = useState([]);
+  const [pedidosTabComItens, setPedidosTabComItens] = useState([]);
 
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [pedidoDetalhes, setPedidoDetalhes] = useState(null);
@@ -727,6 +735,85 @@ function VendasGestaoPage() {
   const pedidosFiltradosParaSoma = useMemo(
     () => filterPedidosVendaElegiblesKpi(pedidosFiltrados),
     [pedidosFiltrados],
+  );
+
+  useEffect(() => {
+    if (activeTab !== 'consulta' && activeTab !== 'pedidos') {
+      setProdutosMargem([]);
+      setPedidosOrigemTrocaMargem({});
+      setDevolucoesMargem([]);
+      return undefined;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const prods = await fetchAllProdutosCatalogo();
+        if (cancelled) return;
+        setProdutosMargem(Array.isArray(prods) ? prods : []);
+        let devolucoes = devolucoesConsulta;
+        if (activeTab === 'pedidos') {
+          const rows = await base44.entities.DevolucaoTroca.list('-created_date', 1000);
+          devolucoes = Array.isArray(rows) ? rows : [];
+        }
+        if (!cancelled) setDevolucoesMargem(devolucoes);
+        const origem = await fetchPedidosOrigemTrocaMargem(devolucoes);
+        if (!cancelled) setPedidosOrigemTrocaMargem(origem || {});
+      } catch {
+        if (!cancelled) {
+          setProdutosMargem([]);
+          setPedidosOrigemTrocaMargem({});
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, devolucoesConsulta]);
+
+  useEffect(() => {
+    if (activeTab !== 'pedidos') {
+      setPedidosTabComItens([]);
+      return undefined;
+    }
+    if (!pedidosFiltradosParaSoma.length) {
+      setPedidosTabComItens([]);
+      return undefined;
+    }
+    const precisaHidratar = pedidosFiltradosParaSoma.some(
+      (pedido) => !Array.isArray(pedido.itens) || pedido.itens.length === 0,
+    );
+    if (!precisaHidratar) {
+      setPedidosTabComItens(pedidosFiltradosParaSoma);
+      return undefined;
+    }
+    let cancelled = false;
+    hydratePedidosVendaItensFromSql(base44, pedidosFiltradosParaSoma)
+      .then((hydrated) => {
+        if (!cancelled) setPedidosTabComItens(hydrated);
+      })
+      .catch(() => {
+        if (!cancelled) setPedidosTabComItens(pedidosFiltradosParaSoma);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, pedidosFiltradosParaSoma]);
+
+  const pedidosFonteMargemKpi = useMemo(() => {
+    if (activeTab === 'consulta') return pedidosConsultaComItens;
+    if (activeTab === 'pedidos') return pedidosTabComItens;
+    return [];
+  }, [activeTab, pedidosConsultaComItens, pedidosTabComItens]);
+
+  const margemKpiFiltrado = useMemo(
+    () =>
+      calcularMargemKpiVendasGestaoFiltradas({
+        pedidos: pedidosFonteMargemKpi,
+        produtos: produtosMargem,
+        devolucoesTroca: activeTab === 'consulta' ? devolucoesConsulta : devolucoesMargem,
+        pedidosOrigemTroca: pedidosOrigemTrocaMargem,
+      }),
+    [pedidosFonteMargemKpi, produtosMargem, devolucoesConsulta, devolucoesMargem, activeTab, pedidosOrigemTrocaMargem],
   );
 
   // Calcular subtotal dos pedidos filtrados (orçamentos listados mas não somam)
@@ -1075,7 +1162,12 @@ function VendasGestaoPage() {
           {/* Total no topo */}
           <div className="flex items-start justify-between gap-3 text-sm min-w-0">
             <span className="text-muted-foreground min-w-0">{quantidadeFiltrada} pedido(s)</span>
-            <span className="text-base sm:text-lg font-semibold text-foreground text-right break-words leading-tight">R$ {formatValor(subtotalFiltrado)}</span>
+            <span className="text-base sm:text-lg font-semibold text-foreground text-right break-words leading-tight">
+              R$ {formatValor(subtotalFiltrado)}
+              {(activeTab === 'pedidos' || activeTab === 'consulta') ? (
+                <VendasGestaoMargemKpiSuffix kpi={margemKpiFiltrado} className="text-sm sm:text-base" />
+              ) : null}
+            </span>
           </div>
 
           {/* Lista de Rascunhos */}
@@ -1113,7 +1205,12 @@ function VendasGestaoPage() {
           {/* Total no topo */}
           <div className="flex items-start justify-between gap-3 text-sm min-w-0">
             <span className="text-muted-foreground min-w-0">{quantidadeFiltrada} pedido(s)</span>
-            <span className="text-base sm:text-lg font-semibold text-foreground text-right break-words leading-tight">R$ {formatValor(subtotalFiltrado)}</span>
+            <span className="text-base sm:text-lg font-semibold text-foreground text-right break-words leading-tight">
+              R$ {formatValor(subtotalFiltrado)}
+              {(activeTab === 'pedidos' || activeTab === 'consulta') ? (
+                <VendasGestaoMargemKpiSuffix kpi={margemKpiFiltrado} className="text-sm sm:text-base" />
+              ) : null}
+            </span>
           </div>
 
           {/* Lista de Pedidos */}
@@ -1156,7 +1253,12 @@ function VendasGestaoPage() {
         <div className="space-y-4 min-w-0">
           <div className="flex items-start justify-between gap-3 text-sm min-w-0">
             <span className="text-muted-foreground min-w-0">{quantidadeFiltrada} orçamento(s)</span>
-            <span className="text-base sm:text-lg font-semibold text-foreground text-right break-words leading-tight">R$ {formatValor(subtotalFiltrado)}</span>
+            <span className="text-base sm:text-lg font-semibold text-foreground text-right break-words leading-tight">
+              R$ {formatValor(subtotalFiltrado)}
+              {(activeTab === 'pedidos' || activeTab === 'consulta') ? (
+                <VendasGestaoMargemKpiSuffix kpi={margemKpiFiltrado} className="text-sm sm:text-base" />
+              ) : null}
+            </span>
           </div>
           <p className="text-xs text-muted-foreground">
             Orçamentos ainda não são vendas — não têm senha nem passaram no caixa.
@@ -1204,6 +1306,7 @@ function VendasGestaoPage() {
             <ConsultaVendasCaixa
               vendasFinalizadas={pedidosConsultaComItens}
               indiceDevolucoes={indiceDevolucoesConsulta}
+              margemKpi={margemKpiFiltrado}
               contextLabel="Consulta de vendas"
               emptyMessage="Nenhuma venda finalizada no período selecionado"
             />
