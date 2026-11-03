@@ -6,10 +6,13 @@ import { normalizeItemCompraParaExibicao, custoApresentacaoParaFator1 } from '@/
 import { base44 } from '@/api/base44Client';
 import { gerarConsultaComprasHtmlPdf } from '@/lib/consultaComprasHtmlExport';
 import { gerarRelatorioSaldoEmbarquePdf } from '@/lib/comprasRelatorioSaldoEmbarque';
+import { fetchFluxoOrganicoEncomendaReport } from '@/lib/relatorioFluxoOrganicoEncomenda/fetchFluxoOrganicoEncomendaReport';
+import { generateRelatorioFluxoOrganicoEncomendaPdf } from '@/lib/relatorioFluxoOrganicoEncomenda/generateRelatorioFluxoOrganicoEncomendaPdf';
 
 const VERSOES_RELATORIO_COM_ANEXOS = new Set(['expandida_com_anexos', 'expandida_com_anexos_a4']);
 const VERSOES_HTML_CONSULTA = new Set(['expandida_mobile', 'expandida_mobile_claro']);
 const VERSAO_SALDO_EMBARQUE = 'saldo_a_embarcar';
+export const VERSAO_FLUXO_ORGANICO_ENCOMENDA = 'fluxo_organico_encomenda';
 
 /** Quatro formatos canónicos — mobile consulta via HTML (mesmos componentes da tela). */
 export const COMPRAS_RELATORIOS = [
@@ -42,6 +45,13 @@ export const COMPRAS_RELATORIOS = [
     label: 'PDF saldo a embarcar',
     icon: 'list',
     title: 'Falta operacional por pedido (exclui trânsito)',
+  },
+  {
+    version: VERSAO_FLUXO_ORGANICO_ENCOMENDA,
+    label: 'PDF fluxo orgânico × encomenda',
+    icon: 'list',
+    title:
+      'Duas páginas: reposição convencional + cruzamento encomenda (mês corrente; não usa o filtro da consulta)',
   },
 ];
 
@@ -171,6 +181,22 @@ export async function gerarComprasRelatorioPdf({
   groupBy = 'eta_transportadora',
   sortOrder = 'asc',
 }) {
+  if (version === VERSAO_FLUXO_ORGANICO_ENCOMENDA) {
+    const competencia = dataHoje().slice(0, 7);
+    onProgress?.(`Carregando vendas, compras e catálogo (${competencia})…`);
+    const report = await fetchFluxoOrganicoEncomendaReport(competencia);
+    onProgress?.('Montando PDF (fluxo orgânico + encomendas)…');
+    const resposta = await generateRelatorioFluxoOrganicoEncomendaPdf(report);
+    const blob = new Blob([resposta.data], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `FluxoOrganicoEncomenda_${competencia}_${dataHoje()}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+    return;
+  }
+
   onProgress?.('Sincronizando itens do pedido (SQL)...');
   const pedidosSql = await loadPedidosCompraComItensCanonico(base44, pedidos || []);
   const gruposSql = Array.isArray(grupos) && grupos.length
