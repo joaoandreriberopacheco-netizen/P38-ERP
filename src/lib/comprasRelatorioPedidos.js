@@ -14,6 +14,18 @@ const VERSOES_HTML_CONSULTA = new Set(['expandida_mobile', 'expandida_mobile_cla
 const VERSAO_SALDO_EMBARQUE = 'saldo_a_embarcar';
 export const VERSAO_FLUXO_ORGANICO_ENCOMENDA = 'fluxo_organico_encomenda';
 
+const COMPETENCIA_MES_RE = /^\d{4}-\d{2}$/;
+
+/** Mês civil YYYY-MM (Tabatinga) para relatórios; fallback = mês corrente. */
+export function normalizarCompetenciaRelatorioMes(competencia) {
+  const fallback = dataHoje().slice(0, 7);
+  const raw = String(competencia ?? fallback).slice(0, 7);
+  if (!COMPETENCIA_MES_RE.test(raw)) return fallback;
+  const [, m] = raw.split('-').map(Number);
+  if (!m || m < 1 || m > 12) return fallback;
+  return raw;
+}
+
 /** Quatro formatos canónicos — mobile consulta via HTML (mesmos componentes da tela). */
 export const COMPRAS_RELATORIOS = [
   {
@@ -51,7 +63,7 @@ export const COMPRAS_RELATORIOS = [
     label: 'PDF fluxo orgânico × encomenda',
     icon: 'list',
     title:
-      'Duas páginas: reposição convencional + cruzamento encomenda (mês corrente; não usa o filtro da consulta)',
+      'Duas páginas: reposição convencional + cruzamento encomenda — escolhe o mês; não usa o filtro da consulta',
   },
 ];
 
@@ -180,9 +192,10 @@ export async function gerarComprasRelatorioPdf({
   produtosMap: produtosMapInput = {},
   groupBy = 'eta_transportadora',
   sortOrder = 'asc',
+  competencia: competenciaInput,
 }) {
   if (version === VERSAO_FLUXO_ORGANICO_ENCOMENDA) {
-    const competencia = dataHoje().slice(0, 7);
+    const competencia = normalizarCompetenciaRelatorioMes(competenciaInput);
     onProgress?.(`Carregando vendas, compras e catálogo (${competencia})…`);
     const report = await fetchFluxoOrganicoEncomendaReport(competencia);
     onProgress?.('Montando PDF (fluxo orgânico + encomendas)…');

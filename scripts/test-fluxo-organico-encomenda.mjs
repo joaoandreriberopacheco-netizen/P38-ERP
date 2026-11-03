@@ -1,5 +1,9 @@
 import assert from 'node:assert/strict';
 import { alocarVendasEncomenda } from '../src/lib/relatorioFluxoOrganicoEncomenda/computeFluxoOrganicoEncomenda.js';
+import { normalizarCompetenciaRelatorioMes } from '../src/lib/comprasRelatorioPedidos.js';
+
+assert.equal(normalizarCompetenciaRelatorioMes('2026-10'), '2026-10');
+assert.equal(normalizarCompetenciaRelatorioMes('invalid'), normalizarCompetenciaRelatorioMes());
 
 const slots = [
   { produtoId: 'p1', qtyEncomenda: 10, qtyAlocada: 0 },
