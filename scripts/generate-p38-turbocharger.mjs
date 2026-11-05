@@ -14,27 +14,49 @@ import {
   styleDataCell,
   colLetter,
   addListValidation,
+  addDependentListValidation,
   FILL_DIM,
 } from './lib/turboChargerExcelStyle.mjs';
+import {
+  buildCascadeTables,
+  dependentListFormula,
+  emptyGuardForCascade,
+  excelCascadeJoinExpr,
+  writeCascadeBlocks,
+} from './lib/turboChargerCascade.mjs';
 import { TURBO_SKU_COMPLETO_COLS } from './lib/turboChargerSkuCols.mjs';
+import { normalizeFactRowTaxonomy } from './lib/turboChargerCategorias.mjs';
 
 const ROOT = process.cwd();
 const OUT = path.join(ROOT, 'docs', 'exports', 'P38-TurboCharger.xlsx');
 const SRC_4X3 = path.join(ROOT, 'docs', 'exports', 'P38-catalogo-4x3.xlsx');
 const WITH_SB = process.argv.includes('--with-supabase');
 
+/** Uma aba horizontal: colunas A–G = listas para dropdowns na Fact. */
+const LISTAS_SHEET = 'Listas';
+/** Linhas vazias no fim de cada coluna para o utilizador acrescentar valores. */
+const LIST_EXTRA_ROWS = 80;
+
 const FACT_COLS = [
   { key: 'codigo_interno', label: 'Cód. Interno (*)', editavel: true, width: 14 },
-  { key: 'etapa', label: 'ETAPA (lista)', editavel: true, width: 18, list: 'Dim_Etapa' },
-  { key: 'categoria', label: 'CATEGORIA (lista)', editavel: true, width: 22, list: 'Dim_Categoria' },
-  { key: 'subcategoria', label: 'SUB (lista)', editavel: true, width: 20, list: 'Dim_Sub' },
-  { key: 'linha', label: 'LINHA (lista)', editavel: true, width: 22, list: 'Dim_Linha' },
-  { key: 'comp1', label: 'Produto compra (lista)', editavel: true, width: 28, list: 'Dim_ProdutoCompra' },
-  { key: 'comp2', label: 'Eixo A (lista)', editavel: true, width: 18, list: 'Dim_Comp2' },
-  { key: 'comp3', label: 'Eixo B (lista)', editavel: true, width: 18, list: 'Dim_Comp3' },
+  { key: 'etapa', label: 'ETAPA (lista)', editavel: true, width: 18, listCol: 'A' },
+  { key: 'categoria', label: 'CATEGORIA (filtra ETAPA)', editavel: true, width: 22, cascade: 'etapa_categoria' },
+  { key: 'subcategoria', label: 'SUB (filtra acima)', editavel: true, width: 20, cascade: 'categoria_sub' },
+  { key: 'linha', label: 'LINHA (filtra acima)', editavel: true, width: 22, cascade: 'sub_linha' },
+  { key: 'comp1', label: 'Produto compra (filtra LINHA)', editavel: true, width: 28, cascade: 'linha_comp1' },
+  { key: 'comp2', label: 'Eixo A (filtra comp1)', editavel: true, width: 18, cascade: 'comp1_comp2' },
+  { key: 'comp3', label: 'Eixo B (filtra comp2)', editavel: true, width: 18, cascade: 'comp2_comp3' },
   { key: 'novo_sku', label: 'Nome vitrine 4×3', editavel: true, width: 42 },
+  { key: 'sku_atual', label: 'SKU antigo (cadastro)', editavel: true, width: 42 },
   { key: 'codigo_4x', label: 'Código caminho 4', editavel: false, width: 12, calculado: true },
   { key: 'legenda', label: 'Legenda caminho', editavel: false, width: 48, calculado: true },
+  {
+    key: 'observacoes',
+    label: 'Observações (revisão)',
+    editavel: true,
+    width: 48,
+    revisao: true,
+  },
 ];
 
 function cellStr(cell) {
@@ -76,11 +98,44 @@ async function loadFactRowsFrom4x3() {
       comp2: pick(row, 'comp2'),
       comp3: pick(row, 'comp3'),
       novo_sku: pick(row, 'novo_sku'),
+      sku_atual: pick(row, 'sku_atual'),
       codigo_4x: pick(row, 'codigo_4x'),
       legenda: pick(row, 'legenda'),
     });
   });
   return rows;
+}
+
+/** Preserva notas humanas ao regenerar (coluna «Observações» na Fact). */
+async function loadObservacoesFromExistingTurbo() {
+  if (!fs.existsSync(OUT)) return new Map();
+  try {
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.readFile(OUT);
+    const ws = wb.getWorksheet('Fact_Catalogo_4x3');
+    if (!ws) return new Map();
+
+    let codCol = null;
+    let obsCol = null;
+    ws.getRow(1).eachCell((cell, colNumber) => {
+      const h = cellStr(cell).toLowerCase();
+      if (h.includes('cód') && h.includes('interno')) codCol = colNumber;
+      if (h.includes('observ')) obsCol = colNumber;
+    });
+    if (codCol == null) codCol = 1;
+    if (obsCol == null) return new Map();
+
+    const map = new Map();
+    ws.eachRow((row, n) => {
+      if (n === 1) return;
+      const cod = cellStr(row.getCell(codCol)).toUpperCase();
+      const obs = cellStr(row.getCell(obsCol));
+      if (cod && obs) map.set(cod, obs);
+    });
+    return map;
+  } catch {
+    return new Map();
+  }
 }
 
 function uniqueSorted(values) {
@@ -100,20 +155,104 @@ function buildDimensions(factRows) {
   return { etapas, categorias, subs, linhas, pc, c2, c3 };
 }
 
-function writeDimSheet(wb, name, headers, dataRows) {
-  const ws = wb.addWorksheet(name, { views: [{ state: 'frozen', ySplit: 1 }] });
-  ws.columns = headers.map((h) => ({ header: h.label, key: h.key, width: h.width || 18 }));
+function listasColumnSpecs(dim) {
+  return [
+    { label: 'ETAPA', width: 20, values: dim.etapas },
+    { label: 'CATEGORIA', width: 24, values: dim.categorias },
+    { label: 'SUBCATEGORIA', width: 22, values: dim.subs },
+    { label: 'LINHA', width: 24, values: dim.linhas },
+    { label: 'PRODUTO COMPRA (comp1)', width: 30, values: dim.pc },
+    { label: 'EIXO A (comp2)', width: 20, values: dim.c2 },
+    { label: 'EIXO B (comp3)', width: 20, values: dim.c3 },
+  ];
+}
+
+/** @returns {{ ws, endRowByCol: Record<string, number>, cascadeMeta: Record<string, object> }} */
+function writeListasSheet(wb, dim, cascades) {
+  const specs = listasColumnSpecs(dim);
+  const bodyRows = Math.max(...specs.map((s) => s.values.length), 1) + LIST_EXTRA_ROWS;
+  const ws = wb.addWorksheet(LISTAS_SHEET, { views: [{ state: 'frozen', ySplit: 1 }] });
+
+  specs.forEach((spec, colIdx) => {
+    ws.getColumn(colIdx + 1).width = spec.width;
+    ws.getCell(1, colIdx + 1).value = spec.label;
+  });
   styleHeaderRow(ws.getRow(1));
-  for (const row of dataRows) {
-    const r = ws.addRow(row);
-    r.eachCell((cell) => {
+
+  for (let r = 0; r < bodyRows; r += 1) {
+    const rowNum = r + 2;
+    specs.forEach((spec, colIdx) => {
+      const val = spec.values[r];
+      if (!val) return;
+      const cell = ws.getCell(rowNum, colIdx + 1);
+      cell.value = val;
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: FILL_DIM } };
     });
   }
-  if (dataRows.length) {
-    ws.autoFilter = { from: 'A1', to: `${colLetter(headers.length)}${dataRows.length + 1}` };
+
+  ws.autoFilter = { from: 'A1', to: `${colLetter(specs.length)}${bodyRows + 1}` };
+
+  const endRowByCol = {};
+  specs.forEach((spec, colIdx) => {
+    const letter = colLetter(colIdx + 1);
+    endRowByCol[letter] = Math.max(spec.values.length + 1, 2) + LIST_EXTRA_ROWS;
+  });
+
+  const cascadeMeta = writeCascadeBlocks(ws, cascades, {
+    extraRows: LIST_EXTRA_ROWS,
+    styleHeaderRow,
+    FILL_DIM,
+  });
+
+  return { ws, endRowByCol, cascadeMeta };
+}
+
+function factParentExprForCascade(cascadeId) {
+  switch (cascadeId) {
+    case 'etapa_categoria':
+      return '$B2';
+    case 'categoria_sub':
+      return excelCascadeJoinExpr('$B2', '$C2');
+    case 'sub_linha':
+      return excelCascadeJoinExpr('$B2', '$C2', '$D2');
+    case 'linha_comp1':
+      return excelCascadeJoinExpr('$B2', '$C2', '$D2', '$E2');
+    case 'comp1_comp2':
+      return excelCascadeJoinExpr('$B2', '$C2', '$D2', '$E2', '$F2');
+    case 'comp2_comp3':
+      return excelCascadeJoinExpr('$B2', '$C2', '$D2', '$E2', '$F2', '$G2');
+    default:
+      return '$B2';
   }
-  return ws;
+}
+
+function applyFactListValidations(factWs, maxFactRow, listEndRowByCol, cascadeMeta) {
+  FACT_COLS.forEach((col, idx) => {
+    const factLetter = colLetter(idx + 1);
+    const range = `${factLetter}2:${factLetter}${maxFactRow}`;
+
+    if (col.listCol) {
+      const endRow = listEndRowByCol[col.listCol] ?? 500;
+      addListValidation(factWs, range, dimListFormula(LISTAS_SHEET, col.listCol, 2, endRow));
+      return;
+    }
+
+    if (!col.cascade) return;
+    const block = cascadeMeta[col.cascade];
+    if (!block) return;
+
+    const parentExpr = factParentExprForCascade(col.cascade);
+    const formula = dependentListFormula({
+      sheet: LISTAS_SHEET,
+      parentCol: block.parentCol,
+      childCol: block.childCol,
+      startRow: block.startRow,
+      endRow: block.endRow,
+      factParentExpr: parentExpr,
+      emptyGuard: emptyGuardForCascade(col.cascade),
+    });
+    addDependentListValidation(factWs, range, formula);
+  });
 }
 
 function dimListFormula(sheetName, col = 'A', start = 2, end = 500) {
@@ -138,7 +277,12 @@ async function fetchProdutosSupabase() {
 }
 
 async function main() {
-  const factRows = await loadFactRowsFrom4x3();
+  let factRows = await loadFactRowsFrom4x3();
+  factRows = factRows.map((row) => normalizeFactRowTaxonomy({ ...row }));
+  const observacoesByCod = await loadObservacoesFromExistingTurbo();
+  for (const row of factRows) {
+    row.observacoes = observacoesByCod.get(row.codigo_interno) ?? '';
+  }
   const dim = buildDimensions(factRows);
 
   const wb = new ExcelJS.Workbook();
@@ -152,8 +296,15 @@ async function main() {
   const lines = [
     ['P38 · TurboCharger', 'Base de catálogo 4×3 — interface alimentada por Excel'],
     ['Design', 'Igual importador em massa: cabeçalho cinza, células editáveis claras, Supabase em azul'],
-    ['Abas «Dim»', 'Listas para dropdowns — edite para incluir novos valores'],
+    [
+      'Aba «Listas»',
+      'A–G visão geral · colunas I+ cascatas pai→filho — dropdowns na Fact filtram automaticamente',
+    ],
     ['Fact_Catalogo_4x3', 'Uma linha por SKU — alimenta a UI Catálogo 4×3 após publicar'],
+    [
+      'Observações (revisão)',
+      'Suas notas ao editar — não entram no catálogo publicado; guia o «anexar e aplicar». Regenerar o ficheiro mantém o texto desta coluna.',
+    ],
     ['SKU_Completo', 'Snapshot do cadastro (Supabase) — npm run turbocharger:generate -- --with-supabase'],
     ['Regenerar', 'npm run turbocharger:generate'],
     ['Fonte fact (seed)', fs.existsSync(SRC_4X3) ? path.relative(ROOT, SRC_4X3) : '(4×3 em falta)'],
@@ -165,48 +316,8 @@ async function main() {
     if (i === 0) readme.getCell(`A${i + 1}`).font = { bold: true, size: 14 };
   });
 
-  writeDimSheet(
-    wb,
-    'Dim_Etapa',
-    [{ key: 'nome', label: 'ETAPA' }],
-    dim.etapas.map((nome) => ({ nome })),
-  );
-  writeDimSheet(
-    wb,
-    'Dim_Categoria',
-    [{ key: 'nome', label: 'CATEGORIA' }],
-    dim.categorias.map((nome) => ({ nome })),
-  );
-  writeDimSheet(
-    wb,
-    'Dim_Sub',
-    [{ key: 'nome', label: 'SUBCATEGORIA' }],
-    dim.subs.map((nome) => ({ nome })),
-  );
-  writeDimSheet(
-    wb,
-    'Dim_Linha',
-    [{ key: 'nome', label: 'LINHA' }],
-    dim.linhas.map((nome) => ({ nome })),
-  );
-  writeDimSheet(
-    wb,
-    'Dim_ProdutoCompra',
-    [{ key: 'nome', label: 'PRODUTO COMPRA (comp1)' }],
-    dim.pc.map((nome) => ({ nome })),
-  );
-  writeDimSheet(
-    wb,
-    'Dim_Comp2',
-    [{ key: 'nome', label: 'EIXO A (comp2)' }],
-    dim.c2.map((nome) => ({ nome })),
-  );
-  writeDimSheet(
-    wb,
-    'Dim_Comp3',
-    [{ key: 'nome', label: 'EIXO B (comp3)' }],
-    dim.c3.map((nome) => ({ nome })),
-  );
+  const cascades = buildCascadeTables(factRows);
+  const { endRowByCol: listEndRowByCol, cascadeMeta } = writeListasSheet(wb, dim, cascades);
 
   // ── Fact ──
   const factWs = wb.addWorksheet('Fact_Catalogo_4x3', { views: [{ state: 'frozen', ySplit: 1 }] });
@@ -216,12 +327,7 @@ async function main() {
   const extraBlank = 200;
   const maxFactRow = 1 + Math.max(factRows.length, 1) + extraBlank;
 
-  FACT_COLS.forEach((col, idx) => {
-    if (!col.list) return;
-    const letter = colLetter(idx + 1);
-    const sheet = col.list;
-    addListValidation(factWs, `${letter}2:${letter}${maxFactRow}`, dimListFormula(sheet, 'A'));
-  });
+  applyFactListValidations(factWs, maxFactRow, listEndRowByCol, cascadeMeta);
 
   for (const row of factRows) {
     const r = factWs.addRow(row);
@@ -230,6 +336,7 @@ async function main() {
       styleDataCell(cell, {
         editavel: cfg?.editavel !== false,
         calculado: cfg?.calculado === true,
+        revisao: cfg?.revisao === true,
       });
     });
   }
