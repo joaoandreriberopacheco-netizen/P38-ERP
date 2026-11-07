@@ -49,21 +49,15 @@ export function FinanceiroPopoverToolbarIcon({
   children,
 }) {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <PopoverTrigger asChild>
-          <button
-            type="button"
-            className={iconButtonClass(active, className)}
-            aria-label={label}
-          >
-            {children}
-          </button>
-        </PopoverTrigger>
-      </TooltipTrigger>
-      <TooltipContent side="bottom" className="max-w-[14rem] text-center">
-        {label}
-      </TooltipContent>
-    </Tooltip>
+    <PopoverTrigger asChild>
+      <button
+        type="button"
+        className={iconButtonClass(active, className)}
+        aria-label={label}
+        title={label}
+      >
+        {children}
+      </button>
+    </PopoverTrigger>
   );
 }

@@ -6,10 +6,17 @@ import { cn } from '@/lib/utils';
 import { P38_CHIP_ACTIVE, P38_CHIP_INACTIVE, P38_POPOVER } from './financeiroP38';
 import { labelContasSaldoSelecionadas } from '@/lib/preferenciasSaldoContas';
 import { FinanceiroPopoverToolbarIcon } from './FinanceiroToolbarIcon';
+import {
+  contaMarcadaNoFluxo,
+  filtroContasFluxoAtivo,
+  marcarPadraoContasFluxo,
+  marcarTodasContasFluxo,
+  selecaoContasFluxoEhPadrao,
+  toggleContaFluxoSelecao,
+} from './contasFluxoSelecaoUi';
 
 /**
- * Escolhe quais contas entram no total do chip de saldo (carteira).
- * `sel` vazio = todas incluídas.
+ * Escolhe contas no saldo (e no Fluxo, quando modoFluxo).
  * `variant="icon"` — ícone Wallet compacto; `variant="chip"` — pill com rótulo (aba Caixas).
  */
 export default function ContasSaldoPicker({
@@ -18,18 +25,32 @@ export default function ContasSaldoPicker({
   onSel,
   className = '',
   variant = 'chip',
+  modoFluxo = false,
+  contasTodasParaMarcar = [],
 }) {
   const opcoes = contas.filter(Boolean);
-  const allIds = opcoes.map((c) => c.id);
-  const todasIncluidas = !sel.length || sel.length >= allIds.length;
-  const label = labelContasSaldoSelecionadas(sel, opcoes);
-  const tooltipLabel = todasIncluidas
-    ? 'Contas no saldo total'
-    : `Saldo: ${label}`;
+  const todasRef = contasTodasParaMarcar.length ? contasTodasParaMarcar : opcoes;
 
-  const estaSelecionada = (id) => !sel.length || sel.includes(id);
+  const fluxoAtivo = modoFluxo && filtroContasFluxoAtivo(sel, opcoes, todasRef);
+  const caixasTodas = !modoFluxo && (!sel.length || sel.length >= opcoes.length);
+
+  const label = modoFluxo
+    ? (selecaoContasFluxoEhPadrao(sel, opcoes) ? 'Contas operacionais' : labelContasSaldoSelecionadas(sel, opcoes))
+    : labelContasSaldoSelecionadas(sel, opcoes);
+  const tooltipLabel = modoFluxo
+    ? 'Filtrar contas no Fluxo (saldo e lançamentos)'
+    : (caixasTodas ? 'Contas no saldo total' : `Saldo: ${label}`);
+
+  const estaSelecionada = (id) => (
+    modoFluxo ? contaMarcadaNoFluxo(id, sel, opcoes) : (!sel.length || sel.includes(id))
+  );
 
   const toggle = (id) => {
+    if (modoFluxo) {
+      onSel?.(toggleContaFluxoSelecao(id, sel, opcoes));
+      return;
+    }
+    const allIds = opcoes.map((c) => c.id);
     const base = sel.length ? [...sel] : [...allIds];
     const next = base.includes(id) ? base.filter((x) => x !== id) : [...base, id];
     if (next.length >= allIds.length) {
@@ -39,7 +60,15 @@ export default function ContasSaldoPicker({
     onSel?.(next);
   };
 
-  const marcarTodas = () => onSel?.([]);
+  const marcarTodas = () => {
+    if (modoFluxo) onSel?.(marcarTodasContasFluxo(todasRef));
+    else onSel?.([]);
+  };
+
+  const marcarPadrao = () => {
+    if (modoFluxo) onSel?.(marcarPadraoContasFluxo());
+    else onSel?.([]);
+  };
 
   if (!opcoes.length) return null;
 
@@ -48,18 +77,41 @@ export default function ContasSaldoPicker({
       <div className="mb-2 px-2 pt-1">
         <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Contas no saldo total</p>
         <p className="mt-1 text-[10px] leading-snug text-muted-foreground/80">
-          Só altera o valor da carteira; a lista de movimentos mantém os filtros habituais.
+          {modoFluxo
+            ? 'Altera o saldo da carteira e quais lançamentos aparecem na lista.'
+            : 'Só altera o valor da carteira na aba Contas.'}
         </p>
       </div>
-      <button
-        type="button"
-        onClick={marcarTodas}
-        className={`mb-1.5 w-full rounded-2xl px-3 py-2 text-left text-xs transition-colors ${todasIncluidas
-          ? `${P38_CHIP_ACTIVE} font-medium`
-          : 'text-muted-foreground hover:bg-secondary/80 dark:hover:bg-[#383e47]'}`}
-      >
-        Todas no saldo
-      </button>
+      {modoFluxo ? (
+        <div className="mb-1.5 flex gap-1">
+          <button
+            type="button"
+            onClick={marcarPadrao}
+            className={`flex-1 rounded-2xl px-2 py-2 text-left text-xs transition-colors ${selecaoContasFluxoEhPadrao(sel, opcoes)
+              ? `${P38_CHIP_ACTIVE} font-medium`
+              : 'text-muted-foreground hover:bg-secondary/80 dark:hover:bg-[#383e47]'}`}
+          >
+            Operacionais
+          </button>
+          <button
+            type="button"
+            onClick={marcarTodas}
+            className="flex-1 rounded-2xl px-2 py-2 text-left text-xs text-muted-foreground transition-colors hover:bg-secondary/80 dark:hover:bg-[#383e47]"
+          >
+            Todas
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={marcarTodas}
+          className={`mb-1.5 w-full rounded-2xl px-3 py-2 text-left text-xs transition-colors ${caixasTodas
+            ? `${P38_CHIP_ACTIVE} font-medium`
+            : 'text-muted-foreground hover:bg-secondary/80 dark:hover:bg-[#383e47]'}`}
+        >
+          Todas no saldo
+        </button>
+      )}
       <div className="max-h-64 space-y-1 overflow-y-auto">
         {opcoes.map((c) => (
           <label
@@ -89,7 +141,7 @@ export default function ContasSaldoPicker({
       <Popover>
         <FinanceiroPopoverToolbarIcon
           label={tooltipLabel}
-          active={!todasIncluidas}
+          active={modoFluxo ? fluxoAtivo : !caixasTodas}
           className={className}
         >
           <Wallet className="h-4 w-4 text-foreground/90" />
@@ -108,7 +160,7 @@ export default function ContasSaldoPicker({
           type="button"
           className={cn(
             'flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors',
-            !todasIncluidas ? P38_CHIP_ACTIVE : P38_CHIP_INACTIVE,
+            (modoFluxo ? fluxoAtivo : !caixasTodas) ? P38_CHIP_ACTIVE : P38_CHIP_INACTIVE,
             className,
           )}
           aria-label="Escolher contas incluídas no saldo total"

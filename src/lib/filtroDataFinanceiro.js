@@ -170,8 +170,34 @@ export function contasIdsFiltroFluxoPadrao(contas = []) {
     .map((c) => c.id);
 }
 
+export function contasAtivasOperacionais(contas = []) {
+  return (contas || []).filter((c) => c && c.ativo !== false && !isContaTransicao(c));
+}
+
+/** `[]` = padrão operacional (sem PP/PJ). Lista completa de ids ativos = todas. */
+export function contasSelModoTodasContas(contasSel = [], contasAtivas = []) {
+  const ativas = contasAtivasOperacionais(contasAtivas);
+  const allIds = ativas.map((c) => c.id);
+  if (!contasSel?.length || !allIds.length) return false;
+  return contasSel.length >= allIds.length && allIds.every((id) => contasSel.includes(id));
+}
+
+/** IDs que entram no saldo, na lista e nos KPIs do Fluxo. */
+export function contasSelEfetivoFluxo(contasSel = [], contasAtivas = []) {
+  const ativas = contasAtivasOperacionais(contasAtivas);
+  const allIds = ativas.map((c) => c.id);
+  if (!contasSel?.length) {
+    return contasIdsFiltroFluxoPadrao(ativas);
+  }
+  if (contasSelModoTodasContas(contasSel, ativas)) {
+    return allIds;
+  }
+  const setAtivos = new Set(allIds);
+  return contasSel.filter((id) => setAtivos.has(id));
+}
+
 export function contasSelEquivaleFiltroFluxoPadrao(contasSel = [], contasAtivas = []) {
-  if (!contasSel.length) return false;
+  if (!contasSel?.length) return true;
   const padrao = contasIdsFiltroFluxoPadrao(contasAtivas);
   if (contasSel.length !== padrao.length) return false;
   const set = new Set(padrao);

@@ -1,3 +1,5 @@
+import { contasSelEfetivoFluxo } from '@/lib/filtroDataFinanceiro';
+
 /**
  * Busca no Fluxo de Caixa.
  * Prefixo \\ (duas barras) filtra por conta: \\PP → "CAIXA PP".
@@ -88,9 +90,8 @@ export function contasMatchBuscaFluxo(search, contas = []) {
  */
 export function contasSelEfetivasFluxo(contasSel = [], contasAtivas = [], contasBusca = null) {
   if (!contasBusca?.length) return null;
-  const base = contasSel.length
-    ? contasAtivas.filter((c) => contasSel.includes(c.id))
-    : [...contasAtivas];
+  const efetivos = new Set(contasSelEfetivoFluxo(contasSel, contasAtivas));
+  const base = contasAtivas.filter((c) => efetivos.has(c.id));
   const buscaIds = new Set(contasBusca.map((c) => c.id));
   return base.filter((c) => buscaIds.has(c.id)).map((c) => c.id);
 }
@@ -100,14 +101,12 @@ export function contasVisiveisFluxo(contasSel = [], contasAtivas = [], contasSel
   if (contasSelBusca !== null) {
     return contasAtivas.filter((c) => contasSelBusca.includes(c.id));
   }
-  if (contasSel.length) {
-    return contasAtivas.filter((c) => contasSel.includes(c.id));
-  }
-  return contasAtivas;
+  const ids = new Set(contasSelEfetivoFluxo(contasSel, contasAtivas));
+  return contasAtivas.filter((c) => ids.has(c.id));
 }
 
-/** IDs para filtrar movimentos/KPIs (vazio = sem filtro por conta). */
-export function idsFiltroContasFluxo(contasSel = [], contasSelBusca = null) {
+/** IDs para filtrar movimentos/KPIs (`[]` em contasSel = padrão sem PP/PJ). */
+export function idsFiltroContasFluxo(contasSel = [], contasSelBusca = null, contasAtivas = []) {
   if (contasSelBusca !== null) return contasSelBusca;
-  return contasSel;
+  return contasSelEfetivoFluxo(contasSel, contasAtivas);
 }

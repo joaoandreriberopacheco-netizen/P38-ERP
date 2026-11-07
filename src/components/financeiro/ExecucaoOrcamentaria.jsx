@@ -78,15 +78,19 @@ import { lerPreferenciasFluxoUnificado, gravarPreferenciasFluxoUnificado } from 
 import {
   gravarPreferenciasSaldoContas,
   lerPreferenciasSaldoContas,
-  contasParaSaldoKpi,
+  migrarPreferenciasSaldoLegadoFluxo,
+  sanitizarPreferenciasSaldoContas,
 } from '@/lib/preferenciasSaldoContas';
 import { consolidarTransferenciasListaFluxo } from '@/lib/gruposMovimentacaoConta';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   DATA_CORTE_HISTORICO_PADRAO,
   contasIdsFiltroFluxoPadrao,
+  contasSelEfetivoFluxo,
   contasSelEquivaleFiltroFluxoPadrao,
+  contasSelModoTodasContas,
   gravarPreferenciasCorteHistorico,
+  isContaOcultaSaldoPadrao,
   isContaTransicao,
   lerPreferenciasCorteHistorico,
   passaFiltroCorteHistorico,
@@ -144,7 +148,7 @@ export default function ExecucaoOrcamentaria() {
   const [cs, setCs] = useState('');
   const [ce, setCe] = useState('');
   const [contasSel, setContasSel] = useState([]);
-  const [contasSaldoSel, setContasSaldoSel] = useState(() => lerPreferenciasSaldoContas());
+  const [contasSaldoSel, setContasSaldoSel] = useState([]);
   const [tiposSel, setTiposSel] = useState([]);
   const [statusSel, setStatusSel] = useState([]);
   const [pendentes, setPendentes] = useState(false);
@@ -187,7 +191,14 @@ export default function ExecucaoOrcamentaria() {
     gravarPreferenciasCorteHistorico(mostrar, dataCorte);
   }, []);
 
-  const atualizarContasSaldoSel = useCallback((ids) => {
+  /** Carteira (ícone) e filtro de movimentos partilham o mesmo estado. */
+  const atualizarSelecaoContasFluxo = useCallback((ids) => {
+    setContasSel(ids);
+    setContasSaldoSel(ids);
+    gravarPreferenciasSaldoContas(ids);
+  }, []);
+
+  const atualizarSelecaoContasSaldo = useCallback((ids) => {
     setContasSaldoSel(ids);
     gravarPreferenciasSaldoContas(ids);
   }, []);
@@ -260,7 +271,10 @@ export default function ExecucaoOrcamentaria() {
         if (cancelled) return;
         setContas(cts);
         const ativas = cts.filter((c) => c.ativo !== false);
-        setContasSel((prev) => (prev.length ? prev : contasIdsFiltroFluxoPadrao(ativas)));
+        const brutos = migrarPreferenciasSaldoLegadoFluxo(lerPreferenciasSaldoContas(), ativas);
+        const restaurar = sanitizarPreferenciasSaldoContas(brutos, ativas);
+        setContasSel(restaurar);
+        setContasSaldoSel(restaurar);
       } catch (error) {
         console.error('[Fluxo de Caixa] Erro ao carregar contas:', error);
       }
@@ -447,11 +461,15 @@ export default function ExecucaoOrcamentaria() {
 
   useEffect(() => {
     if (!contasAtivas.length) return;
+    setContasSel((prev) => {
+      const next = sanitizarPreferenciasSaldoContas(prev, contasAtivas);
+      if (next.length !== prev.length) gravarPreferenciasSaldoContas(next);
+      return next;
+    });
     setContasSaldoSel((prev) => {
-      if (!prev.length) return prev;
-      const valid = prev.filter((id) => contasAtivas.some((c) => c.id === id));
-      if (valid.length !== prev.length) gravarPreferenciasSaldoContas(valid);
-      return valid;
+      const next = sanitizarPreferenciasSaldoContas(prev, contasAtivas);
+      if (next.length !== prev.length) gravarPreferenciasSaldoContas(next);
+      return next;
     });
   }, [contasAtivas]);
 
@@ -466,13 +484,13 @@ export default function ExecucaoOrcamentaria() {
   );
 
   const contasFiltroIds = useMemo(
-    () => idsFiltroContasFluxo(contasSel, contasSelBusca),
-    [contasSel, contasSelBusca],
+    () => idsFiltroContasFluxo(contasSel, contasSelBusca, contasAtivas),
+    [contasSel, contasSelBusca, contasAtivas],
   );
 
   const contasVisiveisSaldo = useMemo(
-    () => contasParaSaldoKpi(contasSaldoSel, contasAtivas),
-    [contasSaldoSel, contasAtivas],
+    () => contasVisiveisFluxo(contasSel, contasAtivas, contasSelBusca),
+    [contasSel, contasAtivas, contasSelBusca],
   );
 
   const filtrados = useMemo(() => lancs.filter(l => {
@@ -483,14 +501,14 @@ export default function ExecucaoOrcamentaria() {
     if (ds && dataKey < ds) return false;
     if (de && dataKey > de) return false;
     if (!passaFiltroCorteHistorico(dataKey, { mostrarHistoricoAnterior, dataCorte: dataCorteHistorico })) return false;
-    if (contasSel.length && !lancamentoPertenceContasSelecionadas(l, contasSel, contasById)) return false;
+    if (contasFiltroIds.length && !lancamentoPertenceContasSelecionadas(l, contasFiltroIds, contasById)) return false;
     if (!passaFiltroTiposLancamento(l, tiposSel)) return false;
     if (statusSel.length && !statusSel.includes(l.status)) return false;
     if (pendentes && l.status_conciliacao !== 'Pendente') return false;
     if (cmvOnly && !l.is_custo_mercadoria) return false;
     if (search && !lancamentoPassaBuscaFluxo(l, search, contasAtivas, contasById)) return false;
     return true;
-  }), [lancs, ds, de, contasSel, contasById, contasAtivas, tiposSel, statusSel, pendentes, cmvOnly, search, mostrarHistoricoAnterior, dataCorteHistorico]);
+  }), [lancs, ds, de, contasFiltroIds, contasById, contasAtivas, tiposSel, statusSel, pendentes, cmvOnly, search, mostrarHistoricoAnterior, dataCorteHistorico]);
 
   const movimentosFiltrados = useMemo(() => movimentos.filter((m) => {
     if (contasFiltroIds.length && !contasFiltroIds.includes(m.conta_id)) return false;
@@ -581,7 +599,7 @@ export default function ExecucaoOrcamentaria() {
   }, [filtrados, movimentosFiltrados, lancs, contas, contasFiltroIds, contasById, ordemLancamentos, kpis.saldoContas, movimentos]);
 
   const programadasFiltradas = useMemo(() => filtrarProgramadasFluxo(lancs, {
-    contasSel,
+    contasSel: contasFiltroIds,
     contasById,
     contasAtivas,
     tiposSel,
@@ -589,7 +607,7 @@ export default function ExecucaoOrcamentaria() {
     search,
     mostrarHistoricoAnterior,
     dataCorteHistorico,
-  }), [lancs, contasSel, contasById, contasAtivas, tiposSel, cmvOnly, search, mostrarHistoricoAnterior, dataCorteHistorico]);
+  }), [lancs, contasFiltroIds, contasById, contasAtivas, tiposSel, cmvOnly, search, mostrarHistoricoAnterior, dataCorteHistorico]);
 
   const programadasLista = useMemo(
     () => consolidarTransferenciasListaFluxo(programadasFiltradas, { movimentos }),
@@ -629,8 +647,7 @@ export default function ExecucaoOrcamentaria() {
 
   const totalPend = useMemo(() => lancs.filter(l => l.status_conciliacao === 'Pendente').length, [lancs]);
   const filtroContasDesviouPadrao = contasAtivas.length > 0
-    && !contasSelEquivaleFiltroFluxoPadrao(contasSel, contasAtivas)
-    && !(contasSel.length === 0);
+    && !contasSelEquivaleFiltroFluxoPadrao(contasSel, contasAtivas);
   const hasActiveFilters = tiposSel.length > 0 || filtroContasDesviouPadrao || statusSel.length > 0 || pendentes || cmvOnly || mostrarHistoricoAnterior || !!search;
 
   const abrirConciliacao = useCallback((conta) => {
@@ -652,13 +669,14 @@ export default function ExecucaoOrcamentaria() {
   }, [periodo, cs, ce]);
 
   const contasSelecionadasLabel = useMemo(() => {
-    if (contas.length && contasSel.length === contas.length) return 'Todas as contas';
+    if (contasSelModoTodasContas(contasSel, contasAtivas)) return 'Todas as contas';
+    if (contasSelEquivaleFiltroFluxoPadrao(contasSel, contasAtivas)) return 'Contas operacionais';
     if (contasSel.length === 1) {
-      return contas.find(conta => conta.id === contasSel[0])?.nome || '1 conta';
+      return contas.find((conta) => conta.id === contasSel[0])?.nome || '1 conta';
     }
     if (contasSel.length > 1) return `${contasSel.length} contas`;
-    return 'Nenhuma conta';
-  }, [contas, contasSel]);
+    return 'Contas operacionais';
+  }, [contas, contasSel, contasAtivas]);
 
   const buildGruposComFiltros = useCallback(({
     periodoFiltro,
@@ -676,7 +694,7 @@ export default function ExecucaoOrcamentaria() {
       ? contasMatchBuscaFluxo(searchFiltro, contasAtivas)
       : contasAtivas;
     const contasSelBuscaF = contasSelEfetivasFluxo(contasSelFiltro, contasAtivas, contasBuscaF);
-    const contasFiltroIdsF = idsFiltroContasFluxo(contasSelFiltro, contasSelBuscaF);
+    const contasFiltroIdsF = idsFiltroContasFluxo(contasSelFiltro, contasSelBuscaF, contasAtivas);
     const contasVisiveisF = contasVisiveisFluxo(contasSelFiltro, contasAtivas, contasSelBuscaF);
 
     const filtradosF = lancs.filter((l) => {
@@ -687,7 +705,7 @@ export default function ExecucaoOrcamentaria() {
       if (dsF && dataKey < dsF) return false;
       if (deF && dataKey > deF) return false;
       if (!passaFiltroCorteHistorico(dataKey, { mostrarHistoricoAnterior, dataCorte: dataCorteHistorico })) return false;
-      if (contasSelFiltro.length && !lancamentoPertenceContasSelecionadas(l, contasSelFiltro, contasById)) return false;
+      if (contasFiltroIdsF.length && !lancamentoPertenceContasSelecionadas(l, contasFiltroIdsF, contasById)) return false;
       if (!passaFiltroTiposLancamento(l, tiposSelFiltro)) return false;
       if (statusSelFiltro.length && !statusSelFiltro.includes(l.status)) return false;
       if (pendentesFiltro && l.status_conciliacao !== 'Pendente') return false;
@@ -771,7 +789,7 @@ export default function ExecucaoOrcamentaria() {
       periodo,
       customStart: cs,
       customEnd: ce,
-      contasSel: contasSel.length ? contasSel : contasAtivas.map((c) => c.id),
+      contasSel: contasSelEfetivoFluxo(contasSel, contasAtivas),
     });
     setShowPrintDialog(true);
   }, [periodo, cs, ce, contasSel, contasAtivas]);
@@ -829,6 +847,11 @@ export default function ExecucaoOrcamentaria() {
     () => contasAtivas.filter((c) => !isContaTransicao(c)),
     [contasAtivas],
   );
+  /** Ícone carteira no Fluxo: só operacionais (PP/PJ só pelo filtro completo). */
+  const contasPickerFluxoOpcoes = useMemo(
+    () => contasAtivas.filter((c) => !isContaTransicao(c) && !isContaOcultaSaldoPadrao(c)),
+    [contasAtivas],
+  );
 
   const financeiroShared = useMemo(
     () => ({
@@ -841,10 +864,10 @@ export default function ExecucaoOrcamentaria() {
       loading,
       reload: load,
       contasSaldoSel,
-      atualizarContasSaldoSel,
+      atualizarContasSaldoSel: atualizarSelecaoContasFluxo,
       contasSaldoOpcoes,
     }),
-    [lancs, movimentos, lancsSaldo, movsSaldo, contas, contasAtivas, loading, contasSaldoSel, atualizarContasSaldoSel, contasSaldoOpcoes],
+    [lancs, movimentos, lancsSaldo, movsSaldo, contas, contasAtivas, loading, contasSaldoSel, atualizarSelecaoContasFluxo, contasSaldoOpcoes],
   );
 
   const abasPrincipais = ABAS_FINANCEIRO;
@@ -927,9 +950,11 @@ export default function ExecucaoOrcamentaria() {
                 <div className="flex shrink-0 items-center gap-0.5 no-pdf-capture overflow-x-auto overscroll-x-contain touch-pan-x no-scrollbar">
                   <ContasSaldoPicker
                     variant="icon"
-                    contas={contasSaldoOpcoes}
-                    sel={contasSaldoSel}
-                    onSel={atualizarContasSaldoSel}
+                    contas={contasPickerFluxoOpcoes}
+                    sel={contasSel}
+                    onSel={atualizarSelecaoContasFluxo}
+                    modoFluxo
+                    contasTodasParaMarcar={contasAtivas}
                   />
                   <TipoFiltroBar sel={tiposSel} onSel={setTiposSel} />
                   <FinanceiroToolbarIcon
@@ -945,7 +970,7 @@ export default function ExecucaoOrcamentaria() {
                   variant="icon"
                   contas={contasSaldoOpcoes}
                   sel={contasSaldoSel}
-                  onSel={atualizarContasSaldoSel}
+                  onSel={atualizarSelecaoContasSaldo}
                 />
               )}
             </div>
@@ -956,9 +981,11 @@ export default function ExecucaoOrcamentaria() {
               <div className="flex shrink-0 items-center gap-0.5 no-pdf-capture overflow-x-auto overscroll-x-contain touch-pan-x no-scrollbar">
                 <ContasSaldoPicker
                   variant="icon"
-                  contas={contasSaldoOpcoes}
-                  sel={contasSaldoSel}
-                  onSel={atualizarContasSaldoSel}
+                  contas={contasPickerFluxoOpcoes}
+                  sel={contasSel}
+                  onSel={atualizarSelecaoContasFluxo}
+                  modoFluxo
+                  contasTodasParaMarcar={contasAtivas}
                 />
                 <TipoFiltroBar sel={tiposSel} onSel={setTiposSel} />
                 <FinanceiroToolbarIcon
@@ -1063,7 +1090,7 @@ export default function ExecucaoOrcamentaria() {
         onCustom={(k, v) => (k === 'start' ? setCs(v) : setCe(v))}
         contas={contasAtivas}
         contasSel={contasSel}
-        onContasSel={setContasSel}
+        onContasSel={atualizarSelecaoContasFluxo}
         statusSel={statusSel}
         onStatusSel={setStatusSel}
         pendentes={pendentes}
@@ -1089,7 +1116,7 @@ export default function ExecucaoOrcamentaria() {
           setCs('');
           setCe('');
           setTiposSel([]);
-          setContasSel(contasIdsFiltroFluxoPadrao(contasAtivas));
+          atualizarSelecaoContasFluxo([]);
           setStatusSel([]);
           setPendentes(false);
           setCmvOnly(false);

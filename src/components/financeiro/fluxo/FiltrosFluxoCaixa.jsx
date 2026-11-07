@@ -19,6 +19,16 @@ import {
   P38_CHIP_INACTIVE,
   P38_POPOVER,
 } from './financeiroP38';
+import { contasSelEfetivoFluxo, contasSelEquivaleFiltroFluxoPadrao } from '@/lib/filtroDataFinanceiro';
+import {
+  contaMarcadaNoFluxo,
+  filtroContasFluxoAtivo,
+  marcarPadraoContasFluxo,
+  marcarTodasContasFluxo,
+  selecaoContasFluxoEhPadrao,
+  selecaoContasFluxoEhTodas,
+  toggleContaFluxoSelecao,
+} from './contasFluxoSelecaoUi';
 
 const P38_CAL_SELECTED =
   'bg-[#4a5240] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22] font-bold';
@@ -175,25 +185,15 @@ function PeriodoPicker({ periodo, onPeriodo, customStart, customEnd, onCustom, i
 // ─── Filtro Contas ────────────────────────────────────────────────────────────
 function ContasFiltro({ contas, sel, onSel }) {
   const allIds = contas.map((c) => c.id);
-  /** Vazio = filtro desativado (todas as contas na lista). */
-  const filtroAtivo = sel.length > 0 && sel.length < contas.length;
-  const estaSelecionada = (id) => !sel.length || sel.includes(id);
+  const filtroAtivo = filtroContasFluxoAtivo(sel, contas, contas);
+  const estaSelecionada = (id) => contaMarcadaNoFluxo(id, sel, contas);
+  const toggle = (id) => onSel(toggleContaFluxoSelecao(id, sel, contas));
+  const handleTodas = () => onSel(marcarTodasContasFluxo(contas));
+  const handlePadrao = () => onSel(marcarPadraoContasFluxo());
 
-  const toggle = (id) => {
-    const base = sel.length ? [...sel] : [...allIds];
-    const next = base.includes(id) ? base.filter((c) => c !== id) : [...base, id];
-    if (next.length >= allIds.length || next.length === 0) {
-      onSel([]);
-      return;
-    }
-    onSel(next);
-  };
-
-  const handleTodas = () => onSel([]);
-
-  const label = !filtroAtivo
-    ? 'Todas as contas'
-    : `${sel.length} selecionada${sel.length > 1 ? 's' : ''}`;
+  let label = 'Contas operacionais';
+  if (selecaoContasFluxoEhTodas(sel, contas)) label = 'Todas as contas';
+  else if (filtroAtivo) label = `${contasSelEfetivoFluxo(sel, contas).length} selecionada(s)`;
 
   return (
     <Popover>
@@ -212,15 +212,26 @@ function ContasFiltro({ contas, sel, onSel }) {
         <div className="mb-2 px-2 pt-1">
           <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Contas financeiras</p>
         </div>
-        <button
-          type="button"
-          onClick={handleTodas}
-          className={`w-full text-left px-3 py-2 rounded-2xl text-xs mb-1.5 transition-colors ${!filtroAtivo
-            ? `${P38_CHIP_ACTIVE} font-medium`
-            : 'text-muted-foreground hover:bg-secondary/80 dark:hover:bg-[#383e47]'}`}
-        >
-          Todas as contas
-        </button>
+        <div className="mb-1.5 flex gap-1">
+          <button
+            type="button"
+            onClick={handlePadrao}
+            className={`flex-1 rounded-2xl px-2 py-2 text-left text-xs transition-colors ${selecaoContasFluxoEhPadrao(sel, contas)
+              ? `${P38_CHIP_ACTIVE} font-medium`
+              : 'text-muted-foreground hover:bg-secondary/80 dark:hover:bg-[#383e47]'}`}
+          >
+            Operacionais
+          </button>
+          <button
+            type="button"
+            onClick={handleTodas}
+            className={`flex-1 rounded-2xl px-2 py-2 text-left text-xs transition-colors ${selecaoContasFluxoEhTodas(sel, contas)
+              ? `${P38_CHIP_ACTIVE} font-medium`
+              : 'text-muted-foreground hover:bg-secondary/80 dark:hover:bg-[#383e47]'}`}
+          >
+            Todas
+          </button>
+        </div>
         <div className="space-y-1">
           {contas.map(c => (
             <label
@@ -388,7 +399,7 @@ export default function FiltrosFluxoCaixa({
     mostrarHistoricoAnterior ||
     !!customStart ||
     !!customEnd ||
-    (contas.length > 0 && contasSel.length > 0 && contasSel.length < contas.length);
+    (contas.length > 0 && !contasSelEquivaleFiltroFluxoPadrao(contasSel, contas));
 
   return (
     <FinanceiroFiltrosShell

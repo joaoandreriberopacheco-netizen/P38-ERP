@@ -1,8 +1,48 @@
-import { isContaOcultaSaldoPadrao, isContaTransicao } from '@/lib/filtroDataFinanceiro';
+import {
+  contasSelModoTodasContas,
+  isContaOcultaSaldoPadrao,
+  isContaTransicao,
+} from '@/lib/filtroDataFinanceiro';
 
 const STORAGE_KEY = 'p38-financeiro-contas-saldo';
+const STORAGE_MIGRACAO_FLUXO_OCULTAS = 'p38-financeiro-contas-saldo-mig-fluxo-ocultas-v1';
 
-/** IDs incluídos no chip de saldo; vazio = todas as contas operacionais. */
+/** Remove PP/PJ gravados por engano; vazio volta ao padrão do Fluxo. */
+export function sanitizarPreferenciasSaldoContas(contasIds = [], contas = []) {
+  if (!contasIds?.length) return [];
+  const operacionais = (contas || []).filter((c) => c && c.ativo !== false && !isContaTransicao(c));
+  const allIds = new Set(operacionais.map((c) => c.id));
+  const ocultas = new Set(
+    operacionais.filter((c) => isContaOcultaSaldoPadrao(c)).map((c) => c.id),
+  );
+  const valid = contasIds.filter((id) => allIds.has(id));
+  if (valid.some((id) => ocultas.has(id))) {
+    return valid.filter((id) => !ocultas.has(id));
+  }
+  return valid;
+}
+
+/**
+ * Preferência antiga gravava todos os IDs (PP/PJ) quando vazio = "todas".
+ * Uma vez: volta ao padrão operacional (`[]`) se ainda incluir contas ocultas em modo "todas".
+ */
+export function migrarPreferenciasSaldoLegadoFluxo(contasIds = [], contas = []) {
+  if (!contasIds?.length || typeof window === 'undefined') return contasIds;
+  if (localStorage.getItem(STORAGE_MIGRACAO_FLUXO_OCULTAS)) return contasIds;
+  const operacionais = (contas || []).filter((c) => c && c.ativo !== false && !isContaTransicao(c));
+  if (!contasSelModoTodasContas(contasIds, operacionais)) return contasIds;
+  const ocultas = operacionais.filter((c) => isContaOcultaSaldoPadrao(c));
+  if (!ocultas.some((c) => contasIds.includes(c.id))) return contasIds;
+  try {
+    localStorage.setItem(STORAGE_MIGRACAO_FLUXO_OCULTAS, '1');
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ contasIds: [] }));
+  } catch {
+    /* ignore */
+  }
+  return [];
+}
+
+/** IDs incluídos no chip de saldo; vazio = padrão operacional (ver contasSelEfetivoFluxo). */
 export function lerPreferenciasSaldoContas() {
   if (typeof window === 'undefined') return [];
   try {
