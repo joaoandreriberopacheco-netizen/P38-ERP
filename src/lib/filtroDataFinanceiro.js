@@ -164,9 +164,9 @@ export function isContaTransicao(conta) {
   return tipo.includes('transicao') || nome.includes('transicao');
 }
 
-/** Contas no painel do ícone carteira — inclui PP/PJ; exclui Caixa PDV. */
+/** Contas no ícone carteira do Fluxo — inclui PP/PJ e Caixa PDV (manual); PDV fica fora do saldo/lista padrão. */
 export function contasOpcoesSeletorContasFinanceiro(contas = []) {
-  return contasAtivasOperacionais(contas).filter((c) => !isContaCaixaPDVFinanceiro(c));
+  return contasAtivasOperacionais(contas);
 }
 
 /** Fora do total de saldo por defeito (continuam no seletor de contas). */

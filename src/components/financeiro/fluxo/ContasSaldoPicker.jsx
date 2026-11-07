@@ -10,6 +10,7 @@ import {
   contasSelPadraoGestaoCaixas,
   contasComTipoEfetivoGestaoCaixas,
 } from '@/lib/preferenciasCaixasContas';
+import { isContaCaixaPDVFinanceiro } from '@/lib/filtroDataFinanceiro';
 import { FINANCEIRO_TOOLBAR_ICON_CLASS } from './FinanceiroToolbarIcon';
 import {
   contaMarcadaNoFluxo,
@@ -34,11 +35,14 @@ export default function ContasSaldoPicker({
   modoGestaoCaixas = false,
   contasTodasParaMarcar = [],
 }) {
+  const baseContas = contas.filter(Boolean);
   const opcoes = modoGestaoCaixas
-    ? contasComTipoEfetivoGestaoCaixas(contas.filter(Boolean))
-    : contas.filter(Boolean);
+    ? contasComTipoEfetivoGestaoCaixas(baseContas.filter((c) => !isContaCaixaPDVFinanceiro(c)))
+    : baseContas;
   const todasRef = contasTodasParaMarcar.length
-    ? (modoGestaoCaixas ? contasComTipoEfetivoGestaoCaixas(contasTodasParaMarcar) : contasTodasParaMarcar)
+    ? (modoGestaoCaixas
+      ? contasComTipoEfetivoGestaoCaixas(contasTodasParaMarcar.filter((c) => !isContaCaixaPDVFinanceiro(c)))
+      : contasTodasParaMarcar)
     : opcoes;
 
   const padraoCaixasIds = () => contasSelPadraoGestaoCaixas(todasRef);
