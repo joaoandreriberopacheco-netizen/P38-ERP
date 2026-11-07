@@ -5,6 +5,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { P38_CHIP_ACTIVE, P38_CHIP_INACTIVE, P38_POPOVER } from './financeiroP38';
 import { labelContasSaldoSelecionadas } from '@/lib/preferenciasSaldoContas';
+import {
+  contasSelEfetivoGestaoCaixas,
+  contasSelPadraoGestaoCaixas,
+} from '@/lib/preferenciasCaixasContas';
 import { FINANCEIRO_TOOLBAR_ICON_CLASS } from './FinanceiroToolbarIcon';
 import {
   contaMarcadaNoFluxo,
@@ -26,26 +30,50 @@ export default function ContasSaldoPicker({
   className = '',
   variant = 'chip',
   modoFluxo = false,
+  modoGestaoCaixas = false,
   contasTodasParaMarcar = [],
 }) {
   const opcoes = contas.filter(Boolean);
   const todasRef = contasTodasParaMarcar.length ? contasTodasParaMarcar : opcoes;
 
-  const fluxoAtivo = modoFluxo && filtroContasFluxoAtivo(sel, opcoes, todasRef);
-  const caixasTodas = !modoFluxo && (!sel.length || sel.length >= opcoes.length);
+  const padraoCaixasIds = () => contasSelPadraoGestaoCaixas(todasRef);
+  const selecaoCaixasEhPadrao = () => {
+    const padrao = new Set(padraoCaixasIds());
+    const ativos = new Set(contasSelEfetivoGestaoCaixas(sel, todasRef));
+    if (!padrao.size || padrao.size !== ativos.size) return false;
+    return [...padrao].every((id) => ativos.has(id));
+  };
 
-  const label = modoFluxo
-    ? (selecaoContasFluxoEhPadrao(sel, opcoes) ? 'Contas operacionais' : labelContasSaldoSelecionadas(sel, opcoes))
-    : labelContasSaldoSelecionadas(sel, opcoes);
+  const fluxoAtivo = modoFluxo && !modoGestaoCaixas && filtroContasFluxoAtivo(sel, opcoes, todasRef);
+  const caixasPadraoPrincipal = modoGestaoCaixas && selecaoCaixasEhPadrao();
+  const caixasTodas = !modoFluxo && !modoGestaoCaixas && (!sel.length || sel.length >= opcoes.length);
+
+  const label = modoGestaoCaixas
+    ? (selecaoCaixasEhPadrao()
+      ? 'Caixas e bancos principais'
+      : labelContasSaldoSelecionadas(contasSelEfetivoGestaoCaixas(sel, todasRef), opcoes))
+    : modoFluxo
+      ? (selecaoContasFluxoEhPadrao(sel, opcoes) ? 'Contas operacionais' : labelContasSaldoSelecionadas(sel, opcoes))
+      : labelContasSaldoSelecionadas(sel, opcoes);
   const tooltipLabel = modoFluxo
     ? 'Filtrar contas no Fluxo (saldo e lançamentos)'
     : (caixasTodas ? 'Contas no saldo total' : `Saldo: ${label}`);
 
-  const estaSelecionada = (id) => (
-    modoFluxo ? contaMarcadaNoFluxo(id, sel, opcoes) : (!sel.length || sel.includes(id))
-  );
+  const estaSelecionada = (id) => {
+    if (modoGestaoCaixas) {
+      return contasSelEfetivoGestaoCaixas(sel, todasRef).includes(id);
+    }
+    return modoFluxo ? contaMarcadaNoFluxo(id, sel, opcoes) : (!sel.length || sel.includes(id));
+  };
 
   const toggle = (id) => {
+    if (modoGestaoCaixas) {
+      const efetivos = contasSelEfetivoGestaoCaixas(sel, todasRef);
+      const base = sel.length ? [...sel] : [...efetivos];
+      const next = base.includes(id) ? base.filter((x) => x !== id) : [...base, id];
+      onSel?.(next.length ? next : padraoCaixasIds());
+      return;
+    }
     if (modoFluxo) {
       onSel?.(toggleContaFluxoSelecao(id, sel, opcoes));
       return;
@@ -66,7 +94,8 @@ export default function ContasSaldoPicker({
   };
 
   const marcarPadrao = () => {
-    if (modoFluxo) onSel?.(marcarPadraoContasFluxo());
+    if (modoGestaoCaixas) onSel?.(padraoCaixasIds());
+    else if (modoFluxo) onSel?.(marcarPadraoContasFluxo());
     else onSel?.([]);
   };
 
@@ -87,11 +116,11 @@ export default function ContasSaldoPicker({
           <button
             type="button"
             onClick={marcarPadrao}
-            className={`flex-1 rounded-2xl px-2 py-2 text-left text-xs transition-colors ${selecaoContasFluxoEhPadrao(sel, opcoes)
+            className={`flex-1 rounded-2xl px-2 py-2 text-left text-xs transition-colors ${(modoGestaoCaixas ? selecaoCaixasEhPadrao() : selecaoContasFluxoEhPadrao(sel, opcoes))
               ? `${P38_CHIP_ACTIVE} font-medium`
               : 'text-muted-foreground hover:bg-secondary/80 dark:hover:bg-[#383e47]'}`}
           >
-            Operacionais
+            {modoGestaoCaixas ? 'Principais' : 'Operacionais'}
           </button>
           <button
             type="button"
@@ -136,7 +165,7 @@ export default function ContasSaldoPicker({
     </>
   );
 
-  const triggerAtivo = modoFluxo ? fluxoAtivo : !caixasTodas;
+  const triggerAtivo = modoGestaoCaixas ? !caixasPadraoPrincipal : (modoFluxo ? fluxoAtivo : !caixasTodas);
 
   if (variant === 'icon') {
     return (

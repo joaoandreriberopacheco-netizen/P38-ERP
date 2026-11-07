@@ -5,7 +5,8 @@
 - Data de corte histórico padrão: `2026-11-06` (`src/lib/filtroDataFinanceiro.js`).
 - Fluxo de Caixa abre com período **Tudo** (desde o corte, sem chip “este mês” por defeito).
 - Saldo = `saldo_inicial` na abertura do corte + movimentação paga desde 06/11.
-- Poupança / Caixa PJ fora da carteira padrão (ícone carteira); ainda visíveis no seletor.
+- Aba **Caixas e Bancos**: por defeito só **Caixa Geral, Caixa PDV, Banco do Brasil e PagBank** (saldos com abertura do corte).
+- Fluxo: Poupança / Caixa PJ fora da carteira padrão (ícone carteira); ainda visíveis no seletor.
 
 ## Aplicar saldos de abertura na Supabase (uma vez)
 

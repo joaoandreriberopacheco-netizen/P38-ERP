@@ -81,6 +81,11 @@ import {
   migrarPreferenciasSaldoLegadoFluxo,
   sanitizarPreferenciasSaldoContas,
 } from '@/lib/preferenciasSaldoContas';
+import {
+  contasSelPadraoGestaoCaixas,
+  gravarPreferenciasCaixasContas,
+  lerPreferenciasCaixasContas,
+} from '@/lib/preferenciasCaixasContas';
 import { consolidarTransferenciasListaFluxo } from '@/lib/gruposMovimentacaoConta';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -150,6 +155,8 @@ export default function ExecucaoOrcamentaria() {
   const [ce, setCe] = useState('');
   const [contasSel, setContasSel] = useState([]);
   const [contasSaldoSel, setContasSaldoSel] = useState([]);
+  /** Aba Caixas: só Geral, PDV, BB e PagBank por defeito (independente do Fluxo). */
+  const [contasSelCaixas, setContasSelCaixas] = useState([]);
   const [tiposSel, setTiposSel] = useState([]);
   const [statusSel, setStatusSel] = useState([]);
   const [pendentes, setPendentes] = useState(false);
@@ -202,6 +209,11 @@ export default function ExecucaoOrcamentaria() {
   const atualizarSelecaoContasSaldo = useCallback((ids) => {
     setContasSaldoSel(ids);
     gravarPreferenciasSaldoContas(ids);
+  }, []);
+
+  const atualizarSelecaoContasCaixas = useCallback((ids) => {
+    setContasSelCaixas(ids);
+    gravarPreferenciasCaixasContas(ids);
   }, []);
 
   const { s: ds, e: de } = useMemo(() => dateRange(periodo, cs, ce), [periodo, cs, ce]);
@@ -276,6 +288,12 @@ export default function ExecucaoOrcamentaria() {
         const restaurar = sanitizarPreferenciasSaldoContas(brutos, ativas);
         setContasSel(restaurar);
         setContasSaldoSel(restaurar);
+        const prefsCaixas = lerPreferenciasCaixasContas().filter((id) => ativas.some((c) => c.id === id));
+        const padraoCaixas = contasSelPadraoGestaoCaixas(ativas);
+        setContasSelCaixas(prefsCaixas.length ? prefsCaixas : padraoCaixas);
+        if (!prefsCaixas.length && padraoCaixas.length) {
+          gravarPreferenciasCaixasContas(padraoCaixas);
+        }
       } catch (error) {
         console.error('[Fluxo de Caixa] Erro ao carregar contas:', error);
       }
@@ -864,10 +882,10 @@ export default function ExecucaoOrcamentaria() {
       contasAtivas,
       loading,
       reload: load,
-      contasSel,
-      contasSaldoSel,
-      atualizarSelecaoContasFluxo,
-      atualizarContasSaldoSel: atualizarSelecaoContasFluxo,
+      contasSel: contasSelCaixas,
+      contasSaldoSel: contasSelCaixas,
+      atualizarSelecaoContasFluxo: atualizarSelecaoContasCaixas,
+      atualizarContasSaldoSel: atualizarSelecaoContasCaixas,
       contasSaldoOpcoes,
       contasPickerOpcoes: contasPickerFluxoOpcoes,
       mostrarHistoricoAnterior,
@@ -882,9 +900,8 @@ export default function ExecucaoOrcamentaria() {
       contas,
       contasAtivas,
       loading,
-      contasSel,
-      contasSaldoSel,
-      atualizarSelecaoContasFluxo,
+      contasSelCaixas,
+      atualizarSelecaoContasCaixas,
       contasSaldoOpcoes,
       contasPickerFluxoOpcoes,
       mostrarHistoricoAnterior,

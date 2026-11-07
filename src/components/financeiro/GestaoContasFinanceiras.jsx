@@ -44,6 +44,12 @@ import {
   migrarPreferenciasSaldoLegadoFluxo,
   sanitizarPreferenciasSaldoContas,
 } from '@/lib/preferenciasSaldoContas';
+import {
+  contasSelEfetivoGestaoCaixas,
+  contasSelPadraoGestaoCaixas,
+  gravarPreferenciasCaixasContas,
+  lerPreferenciasCaixasContas,
+} from '@/lib/preferenciasCaixasContas';
 
 const GestaoContasCtx = createContext(null);
 
@@ -121,19 +127,20 @@ function useGestaoContasModel(shared) {
       return;
     }
     setContasSelLocal(ids);
-    gravarPreferenciasSaldoContas(ids);
+    gravarPreferenciasCaixasContas(ids);
   }, [shared]);
 
   const incluiContasOcultas = useMemo(() => {
     const ocultas = contasAtivasLista.filter((c) => isContaOcultaSaldoPadrao(c));
     if (!ocultas.length) return false;
-    const efetivos = new Set(contasSelEfetivoFluxo(contasSel, contasAtivasLista));
+    const efetivos = new Set(contasSelEfetivoGestaoCaixas(contasSel, contasAtivasLista));
     return ocultas.some((c) => efetivos.has(c.id));
   }, [contasSel, contasAtivasLista]);
 
   const toggleContasOcultasLista = useCallback(() => {
     if (incluiContasOcultas) {
-      atualizarSelecaoContas(marcarPadraoContasFluxo());
+      const padrao = contasSelPadraoGestaoCaixas(contasAtivasLista);
+      atualizarSelecaoContas(padrao);
       return;
     }
     atualizarSelecaoContas(marcarTodasContasFluxo(contasAtivasLista));
@@ -209,13 +216,11 @@ function useGestaoContasModel(shared) {
     if (shared) return;
     const ativas = accounts.filter((c) => c.ativo !== false);
     if (!ativas.length) return;
-    const brutos = migrarPreferenciasSaldoLegadoFluxo(lerPreferenciasSaldoContas(), ativas);
-    const restaurar = sanitizarPreferenciasSaldoContas(brutos, ativas);
-    setContasSelLocal((prev) => {
-      const base = prev.length ? sanitizarPreferenciasSaldoContas(prev, ativas) : restaurar;
-      if (base.length !== prev.length) gravarPreferenciasSaldoContas(base);
-      return base;
-    });
+    const prefs = lerPreferenciasCaixasContas().filter((id) => ativas.some((c) => c.id === id));
+    const padrao = contasSelPadraoGestaoCaixas(ativas);
+    const sel = prefs.length ? prefs : padrao;
+    setContasSelLocal(sel);
+    if (!prefs.length && padrao.length) gravarPreferenciasCaixasContas(padrao);
   }, [shared, accounts]);
 
   const precisaBaseCompletaSaldo = !mostrarHistoricoAnterior && !!dataCorteHistorico;
@@ -280,7 +285,7 @@ function useGestaoContasModel(shared) {
   );
 
   const idsContasVisiveis = useMemo(
-    () => new Set(contasSelEfetivoFluxo(contasSel, contasAtivasLista)),
+    () => new Set(contasSelEfetivoGestaoCaixas(contasSel, contasAtivasLista)),
     [contasSel, contasAtivasLista],
   );
 
@@ -493,6 +498,7 @@ export function GestaoContasKpis() {
         onSel={m.atualizarSelecaoContas}
         contasTodasParaMarcar={m.contasAtivasLista}
         modoFluxo
+        modoGestaoCaixas
         className="shrink-0"
       />
     </div>

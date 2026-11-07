@@ -65,3 +65,14 @@ export function saldoInicialParaCalculoCorte(conta, dataCorte) {
   if (hit && Number.isFinite(hit.alvo)) return hit.alvo;
   return gravado;
 }
+
+/** Caixas e Bancos: só Geral, PDV, Banco do Brasil e PagBank (corte 06/11/2026). */
+export function contasIdsContasPrincipaisCorte(contas = []) {
+  return (contas || [])
+    .filter((c) => {
+      if (!c || c.ativo === false) return false;
+      const hit = classificarContaCorteFinanceiro(c);
+      return hit && hit.ocultar === false;
+    })
+    .map((c) => c.id);
+}
