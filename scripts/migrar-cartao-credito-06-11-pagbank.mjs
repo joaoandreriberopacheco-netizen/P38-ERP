@@ -10,9 +10,15 @@
  *   env PAGBANK_MIGRAR_EXCLUIR_REFS=PV-05055,PV-99999
  *   + lista padrão EXCLUIR_REFS_MIGRACAO_PAGBANK (PV-05055 — já pago no BB, decisão negócio).
  *
+ * Ao aplicar (--apply), cada lançamento migrado fica na conta PagBank com status **Pago**
+ * e conciliação **Conciliado** (data_pagamento = data de vencimento do lançamento).
+ * Isto reflecte-se em Caixas / Fluxo / saldo PagBank no ERP — não há integração com o
+ * portal/app externo da PagBank; conferência lá é manual se necessário.
+ *
  * Secrets: NEXT_PUBLIC_SUPABASE_URL (ou VITE_SUPABASE_URL) + SUPABASE_SERVICE_ROLE_KEY.
  */
 import { requireP38SupabaseAdmin } from './p38-supabase-admin.mjs';
+import { camposLancamentoPagBankPago } from './lib/pagbank-lancamento-pago.mjs';
 
 /** PV já liquidado no BB — manter fora da migração PagBank (06/11/2026). */
 export const EXCLUIR_REFS_MIGRACAO_PAGBANK = Object.freeze(['PV-05055']);
@@ -146,13 +152,21 @@ const report = {
   totalLiquidoMigrar: Math.round(totalLiquidoMigrar * 100) / 100,
   totalDia06: dia6.length,
   idsDia06: dia6.map((r) => r.id),
-  amostra: rows.slice(0, 15).map((r) => ({
-    id: r.id,
-    data: (r.data_vencimento || '').slice(0, 10),
-    valor: r.valor_liquido ?? r.valor,
-    status: r.status,
-    ref: r.referencia_numero || r.dados?.referencia_numero,
-  })),
+  amostra: rows.slice(0, 15).map((r) => {
+    const dv = String(r.data_vencimento || r.dados?.data_vencimento || DATA_CORTE).slice(0, 10);
+    return {
+      id: r.id,
+      data: dv,
+      valor: r.valor_liquido ?? r.valor,
+      status: r.status,
+      ref: r.referencia_numero || r.dados?.referencia_numero,
+      contaAtual: 'Banco do Brasil',
+      contaDestino: 'PagBank',
+      aposApply: camposLancamentoPagBankPago(dv),
+    };
+  }),
+  notaPagamento:
+    'aposApply: Pago + Conciliado na conta PagBank do ERP (PV-05065, PV-05082, PV-05103 após --apply).',
 };
 
 console.log(JSON.stringify(report, null, 2));
@@ -173,10 +187,7 @@ for (const l of rows) {
   const patch = {
     conta_financeira_id: pagId,
     conta_financeira_nome: pagBank.nome || 'PagBank',
-    data_pagamento: dv,
-    data_liquidacao_prevista: dv,
-    status: 'Pago',
-    status_conciliacao: 'Conciliado',
+    ...camposLancamentoPagBankPago(dv),
   };
   const { error } = await supabase.from('lancamento_financeiro').update(patch).eq('id', l.id);
   if (error) {
