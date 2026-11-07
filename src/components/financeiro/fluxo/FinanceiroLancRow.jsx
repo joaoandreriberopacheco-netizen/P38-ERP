@@ -43,6 +43,22 @@ function tipoLinha(l) {
   return l.tipo;
 }
 
+function rotuloFormaPagamento(l) {
+  const direto = l?.forma_pagamento_tipo || l?.forma_pagamento;
+  const dados = l?.dados?.forma_pagamento_tipo || l?.dados?.forma_pagamento;
+  return String(direto || dados || '').trim();
+}
+
+function descricaoComFormaPagamento(l) {
+  const base = String(l?.descricao || '').trim();
+  const forma = rotuloFormaPagamento(l);
+  if (!forma) return base;
+  const sufixo = `(${forma})`;
+  if (base.toLowerCase().includes(sufixo.toLowerCase())) return base;
+  if (!base) return sufixo;
+  return `${base} ${sufixo}`;
+}
+
 /** Barra lateral — mesmo critério do Fluxo de Caixa: verde receita, vermelho despesa. */
 function rowAccent(l, { dimPago = false } = {}) {
   const tipo = tipoLinha(l);
@@ -205,7 +221,9 @@ export default function FinanceiroLancRow({
       </span>
     </span>
   ) : (
-    <span className={cn('line-clamp-2 normal-case leading-snug', cancelado && 'line-through')}>{l.descricao}</span>
+    <span className={cn('line-clamp-2 normal-case leading-snug break-words', cancelado && 'line-through')}>
+      {descricaoComFormaPagamento(l)}
+    </span>
   );
 
   const lancamentoClick = l._lancamentoTransferencia || (isTransfConsolidada ? (l._lancamentoDespesa || l) : l);
