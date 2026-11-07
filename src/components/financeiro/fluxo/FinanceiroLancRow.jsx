@@ -1,6 +1,6 @@
 import React from 'react';
 import { formatarDataCurta } from '@/components/utils/dateUtils';
-import { AlertCircle, ArrowDown, ArrowRightLeft, ArrowUp, Clock } from 'lucide-react';
+import { AlertCircle, ArrowDown, ArrowRightLeft, ArrowUp } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   P38MobileLine,
@@ -49,8 +49,15 @@ function rotuloFormaPagamento(l) {
   return String(direto || dados || '').trim();
 }
 
+/** Receitas geradas a partir de pedido de venda (PDV / gestão de vendas). */
+function isLancamentoVenda(l) {
+  const ref = l?.referencia_tipo || l?.dados?.referencia_tipo;
+  return ref === 'PedidoVenda';
+}
+
 function descricaoComFormaPagamento(l) {
   const base = String(l?.descricao || '').trim();
+  if (!isLancamentoVenda(l)) return base;
   const forma = rotuloFormaPagamento(l);
   if (!forma) return base;
   const sufixo = `(${forma})`;
@@ -84,14 +91,9 @@ function valorNode(l) {
   if (isT) return formatFinanceiroValor(Math.abs(l.valor || 0));
 
   const valorFmt = formatFinanceiroValor(Math.abs(l.valor || 0));
-  const Icon = isR ? ArrowUp : ArrowDown;
-  const iconClass = isR
-    ? 'text-green-600 dark:text-green-400'
-    : 'text-red-500 dark:text-red-400';
 
   return (
     <span className="inline-flex items-center justify-end gap-0.5 tabular-nums">
-      <Icon className={cn('h-3 w-3 shrink-0 opacity-80', iconClass)} aria-hidden />
       <span
         className={
           isR
@@ -106,6 +108,19 @@ function valorNode(l) {
       {valorFmt}
     </span>
   );
+}
+
+function setaTipoAoLadoValor(l) {
+  const tipo = tipoLinha(l);
+  const isR = tipo === 'Receita';
+  const isT = tipo === 'Transferência';
+  const cancelado = l.status === 'Cancelado';
+  if (cancelado || isT) return null;
+  const Icon = isR ? ArrowUp : ArrowDown;
+  const iconClass = isR
+    ? 'text-green-600 dark:text-green-400'
+    : 'text-red-500 dark:text-red-400';
+  return <Icon className={cn('h-3 w-3 shrink-0 opacity-80', iconClass)} aria-hidden />;
 }
 
 function rowMeta(l, { showPago = false, dimProgramada = false } = {}) {
@@ -180,7 +195,7 @@ export default function FinanceiroLancRow({
       {podeSelecionar && (
         <Checkbox checked={selecionado} onCheckedChange={() => onToggleSelecionado?.(l.id)} />
       )}
-      {conc === 'Pendente' && <Clock className="h-2.5 w-2.5 text-muted-foreground" />}
+      {setaTipoAoLadoValor(l)}
       {conc === 'Discrepância' && <AlertCircle className="h-2.5 w-2.5 text-muted-foreground" />}
     </>
   );
