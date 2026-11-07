@@ -1,5 +1,6 @@
 import { saldoInicialParaCalculoCorte } from '@/lib/corteFinanceiroAbertura';
 import { roundToTwoDecimals, getDataChaveLancamento } from '@/lib/financialUtils';
+import { passaFiltroCorteHistorico } from '@/lib/filtroDataFinanceiro';
 import { toLocalDateKey } from '@/components/utils/dateUtils';
 import { getValorFluxoCaixa } from '@/lib/lancamentoFinanceiroStatus';
 import {
@@ -439,11 +440,6 @@ export function calcularSaldosTodasContas(contas = [], todosLancamentos = [], to
   return map;
 }
 
-function dataChaveLancamentoSaldo(l) {
-  const dr = l?.data_pagamento || l?.data_vencimento;
-  return dr ? toLocalDateKey(dr) : null;
-}
-
 /** Líquido de lançamentos + movimentos de caixa a partir da data de corte (inclusive). */
 export function liquidoContaDesdeDataCorte(conta, todosLancamentos = [], todosMovimentos = [], dataCorte) {
   if (!conta || !dataCorte) return 0;
@@ -458,10 +454,14 @@ export function liquidoContaDesdeDataCorte(conta, todosLancamentos = [], todosMo
 
   lancamentos.forEach((l) => {
     if (lancamentosEspelhadosEmMov.has(String(l.id))) return;
-    const dataKey = dataChaveLancamentoSaldo(l);
-    if (dataKey && dataKey >= dataCorte) {
-      liquido += deltaLancamentoSaldoConta(conta, l);
+    const dataKey = getDataChaveLancamento(l);
+    if (!passaFiltroCorteHistorico(dataKey, {
+      mostrarHistoricoAnterior: false,
+      dataCorte,
+    })) {
+      return;
     }
+    liquido += deltaLancamentoSaldoConta(conta, l);
   });
 
   filtrarMovimentosDaConta(conta.id, todosMovimentos).forEach((m) => {

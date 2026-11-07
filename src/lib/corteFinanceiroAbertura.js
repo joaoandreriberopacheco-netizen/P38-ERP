@@ -19,10 +19,15 @@ export function normNomeContaCorte(nome) {
     .trim();
 }
 
+/** Nome + banco para classificar contas (ex.: BB com nome curto na lista). */
+export function textoClassificacaoContaCorte(conta) {
+  return normNomeContaCorte([conta?.nome, conta?.banco].filter(Boolean).join(' '));
+}
+
 /** Abertura 06/11/2026 — nomes na BD podem variar; combina flags + nome. */
 export function classificarContaCorteFinanceiro(conta) {
   if (!conta) return null;
-  const nome = normNomeContaCorte(conta.nome);
+  const nome = textoClassificacaoContaCorte(conta);
   const tipo = normNomeContaCorte(conta.tipo || '');
   const isGeral = conta.is_caixa_geral === true;
   const isPdv = conta.is_caixa_pdv === true;
