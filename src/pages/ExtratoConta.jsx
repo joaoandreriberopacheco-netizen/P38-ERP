@@ -505,6 +505,8 @@ export default function ExtratoContaPage() {
               mapaContrapartes: mapaContrapartesPares,
               contasById,
               mapaParIds: mapaParIdsPares,
+              contaContext: conta,
+              contasSel: conta?.id ? [conta.id] : [],
             },
           ),
           'desc',
@@ -527,7 +529,7 @@ export default function ExtratoContaPage() {
         },
       };
     });
-  }, [diasExibicao, movimentosCaixa, mapaContrapartesPares, contasById, mapaParIdsPares]);
+  }, [diasExibicao, movimentosCaixa, mapaContrapartesPares, contasById, mapaParIdsPares, conta]);
 
   const totalMovimentacoes = movimentacoesFiltradas.length;
   const kpisExtrato = useMemo(() => ({

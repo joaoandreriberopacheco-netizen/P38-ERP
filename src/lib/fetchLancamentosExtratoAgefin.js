@@ -1,6 +1,7 @@
 import { base44 } from '@/api/base44Client';
 import { inicioDiaSistemaISO, fimDiaSistemaISO } from '@/components/utils/dateUtils';
 import { boundsMesCivil, dataHoje } from '@/components/utils/dateUtils';
+import { filtrarLancamentosDaConta } from '@/lib/saldoContaFinanceira';
 
 const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -29,7 +30,7 @@ export async function fetchLancamentosExtratoConta({
     $lte: fimDiaSistemaISO(dataFim),
   };
 
-  const [porVencimento, porPagamento] = await Promise.all([
+  const [porVencimento, porPagamento, porDestinoVenc, porDestinoPag] = await Promise.all([
     base44.entities.LancamentoFinanceiro.filter(
       { data_vencimento: dateFilter },
       '-data_vencimento',
@@ -40,21 +41,35 @@ export async function fetchLancamentosExtratoConta({
       '-data_pagamento',
       limit,
     ).catch(() => []),
+    isCaixaGeral
+      ? Promise.resolve([])
+      : base44.entities.LancamentoFinanceiro.filter(
+          { conta_destino_id: contaId, data_vencimento: dateFilter },
+          '-data_vencimento',
+          limit,
+        ).catch(() => []),
+    isCaixaGeral
+      ? Promise.resolve([])
+      : base44.entities.LancamentoFinanceiro.filter(
+          { conta_destino_id: contaId, data_pagamento: { $gte: dataInicio, $lte: dataFim } },
+          '-data_pagamento',
+          limit,
+        ).catch(() => []),
   ]);
 
   const merged = new Map();
-  for (const row of [...normalizeRows(porVencimento), ...normalizeRows(porPagamento)]) {
+  for (const row of [
+    ...normalizeRows(porVencimento),
+    ...normalizeRows(porPagamento),
+    ...normalizeRows(porDestinoVenc),
+    ...normalizeRows(porDestinoPag),
+  ]) {
     if (!row?.id) continue;
-    if (isCaixaGeral) {
-      // Mesma regra de filtrarLancamentosDaConta: legado sem id + vinculados à Caixa Geral.
-      if (!row.conta_financeira_id || row.conta_financeira_id === contaId) {
-        merged.set(row.id, row);
-      }
-    } else if (row.conta_financeira_id === contaId) {
-      merged.set(row.id, row);
-    }
+    merged.set(row.id, row);
   }
-  return [...merged.values()];
+
+  const contaStub = { id: contaId, is_caixa_geral: isCaixaGeral };
+  return filtrarLancamentosDaConta(contaStub, [...merged.values()]);
 }
 
 export async function fetchMovimentosExtratoConta({
