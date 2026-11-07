@@ -1,3 +1,4 @@
+import { saldoInicialParaCalculoCorte } from '@/lib/corteFinanceiroAbertura';
 import { roundToTwoDecimals, getDataChaveLancamento } from '@/lib/financialUtils';
 import { toLocalDateKey } from '@/components/utils/dateUtils';
 import { getValorFluxoCaixa } from '@/lib/lancamentoFinanceiroStatus';
@@ -485,7 +486,7 @@ export function calcularSaldoContaAposDataCorte(conta, todosLancamentos = [], to
     return calcularSaldoContaFinanceira(conta, todosLancamentos, todosMovimentos);
   }
 
-  const saldoInicial = Number(conta.saldo_inicial || 0);
+  const saldoInicial = saldoInicialParaCalculoCorte(conta, dataCorte);
   const liquidoDesdeCorte = liquidoContaDesdeDataCorte(conta, todosLancamentos, todosMovimentos, dataCorte);
   return roundToTwoDecimals(saldoInicial + liquidoDesdeCorte);
 }

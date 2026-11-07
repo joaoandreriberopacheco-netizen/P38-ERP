@@ -1,40 +1,17 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  DATA_CORTE_FINANCEIRO_ABERTURA,
+  classificarContaCorteFinanceiro,
+  normNomeContaCorte,
+} from '../src/lib/corteFinanceiroAbertura.js';
 
-export const DATA_CORTE_PADRAO = '2026-11-06';
+export const DATA_CORTE_PADRAO = DATA_CORTE_FINANCEIRO_ABERTURA;
+export const normNome = normNomeContaCorte;
 
-export function normNome(nome) {
-  return (nome || '')
-    .normalize('NFD')
-    .replace(/\p{M}/gu, '')
-    .toLowerCase()
-    .trim();
-}
-
-/** Abertura 06/11/2026 — nomes na BD podem variar; combina flags + nome. */
 export function classificarContaCorte(row) {
-  const nome = normNome(row.nome);
-  const tipo = normNome(row.tipo || '');
-  const isGeral = row.is_caixa_geral === true;
-  const isPdv = row.is_caixa_pdv === true;
-
-  if (isGeral || (nome.includes('geral') && nome.includes('caixa'))) {
-    return { alvo: 0, ocultar: false };
-  }
-  if (isPdv || nome.includes('gaveta') || (nome.includes('pdv') && nome.includes('caixa')) || nome === 'caixa pdv') {
-    return { alvo: 0, ocultar: false };
-  }
-  if (nome.includes('brasil') || (nome.includes('banco') && nome.includes('brasil'))) {
-    return { alvo: 0, ocultar: false };
-  }
-  if (tipo.includes('poup') || nome.includes('poupanca') || (nome.includes('poup') && nome.includes('caixa'))) {
-    return { alvo: 5997, ocultar: true };
-  }
-  if (nome.includes('pj') && nome.includes('caixa')) {
-    return { alvo: 8.55, ocultar: true };
-  }
-  return null;
+  return classificarContaCorteFinanceiro(row);
 }
 
 export function loadDatabaseUrlFromEnvFiles() {

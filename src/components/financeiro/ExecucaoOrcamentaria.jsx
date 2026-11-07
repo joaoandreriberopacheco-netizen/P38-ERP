@@ -525,7 +525,7 @@ export default function ExecucaoOrcamentaria() {
   const lancsParaSaldo = lancsSaldo.length ? lancsSaldo : lancs;
   const movsParaSaldo = movsSaldo.length ? movsSaldo : movimentos;
   const precisaBaseCarteiraSaldo = !mostrarHistoricoAnterior && !!dataCorteHistorico;
-  const baseCarteiraSaldoDisponivel = lancsSaldo.length > 0 && movsSaldo.length > 0;
+  const baseCarteiraSaldoDisponivel = lancsSaldo.length > 0;
   const saldosCarteiraProntos = !loading && (!precisaBaseCarteiraSaldo || baseCarteiraSaldoDisponivel);
   const lancsParaSaldoCarteira = baseCarteiraSaldoDisponivel
     ? lancsSaldo
@@ -848,9 +848,9 @@ export default function ExecucaoOrcamentaria() {
     () => contasAtivas.filter((c) => !isContaTransicao(c) && !isContaOcultaSaldoPadrao(c)),
     [contasAtivas],
   );
-  /** Ícone carteira no Fluxo: só operacionais (PP/PJ só pelo filtro completo). */
+  /** Painel carteira: todas as operacionais, incluindo PP/PJ (ocultas só no saldo/lista por defeito). */
   const contasPickerFluxoOpcoes = useMemo(
-    () => contasAtivas.filter((c) => !isContaTransicao(c) && !isContaOcultaSaldoPadrao(c)),
+    () => contasOpcoesSeletorContasFinanceiro(contasAtivas),
     [contasAtivas],
   );
 
@@ -870,8 +870,27 @@ export default function ExecucaoOrcamentaria() {
       atualizarContasSaldoSel: atualizarSelecaoContasFluxo,
       contasSaldoOpcoes,
       contasPickerOpcoes: contasPickerFluxoOpcoes,
+      mostrarHistoricoAnterior,
+      dataCorteHistorico,
+      atualizarCorteHistorico,
     }),
-    [lancs, movimentos, lancsSaldo, movsSaldo, contas, contasAtivas, loading, contasSel, contasSaldoSel, atualizarSelecaoContasFluxo, contasSaldoOpcoes, contasPickerFluxoOpcoes],
+    [
+      lancs,
+      movimentos,
+      lancsSaldo,
+      movsSaldo,
+      contas,
+      contasAtivas,
+      loading,
+      contasSel,
+      contasSaldoSel,
+      atualizarSelecaoContasFluxo,
+      contasSaldoOpcoes,
+      contasPickerFluxoOpcoes,
+      mostrarHistoricoAnterior,
+      dataCorteHistorico,
+      atualizarCorteHistorico,
+    ],
   );
 
   const abasPrincipais = ABAS_FINANCEIRO;

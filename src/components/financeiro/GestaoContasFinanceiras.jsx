@@ -80,20 +80,27 @@ function useGestaoContasModel(shared) {
   const [lancamentosSaldo, setLancamentosSaldo] = useState([]);
   const [movimentosSaldo, setMovimentosSaldo] = useState([]);
   const [carregandoSaldosBase, setCarregandoSaldosBase] = useState(true);
-  const [mostrarHistoricoAnterior, setMostrarHistoricoAnterior] = useState(
+  const [mostrarHistoricoLocal, setMostrarHistoricoLocal] = useState(
     () => lerPreferenciasCorteHistorico().mostrarHistoricoAnterior,
   );
-  const [dataCorteHistorico, setDataCorteHistorico] = useState(
+  const [dataCorteLocal, setDataCorteLocal] = useState(
     () => lerPreferenciasCorteHistorico().dataCorte || DATA_CORTE_HISTORICO_PADRAO,
   );
+
+  const mostrarHistoricoAnterior = shared?.mostrarHistoricoAnterior ?? mostrarHistoricoLocal;
+  const dataCorteHistorico = shared?.dataCorteHistorico ?? dataCorteLocal;
   /** Mesma semântica do Fluxo: `[]` = operacionais (sem PP/PJ). */
   const [contasSelLocal, setContasSelLocal] = useState([]);
 
   const atualizarCorteHistorico = useCallback((mostrar, dataCorte) => {
-    setMostrarHistoricoAnterior(mostrar);
-    setDataCorteHistorico(dataCorte);
+    if (shared?.atualizarCorteHistorico) {
+      shared.atualizarCorteHistorico(mostrar, dataCorte);
+      return;
+    }
+    setMostrarHistoricoLocal(mostrar);
+    setDataCorteLocal(dataCorte);
     gravarPreferenciasCorteHistorico(mostrar, dataCorte);
-  }, []);
+  }, [shared]);
 
   const accounts = shared?.contas ?? accountsLocal;
   const lancamentos = shared?.lancs ?? lancamentosLocal;
@@ -101,9 +108,8 @@ function useGestaoContasModel(shared) {
   const loading = shared ? shared.loading : loadingLocal;
   const contasAtivasLista = shared?.contasAtivas ?? contasAtivasOperacionais(accounts);
   const contasSel = shared?.contasSel ?? contasSelLocal;
-  const contasPickerOpcoes = shared?.contasPickerOpcoes ?? contasAtivasLista.filter(
-    (c) => !isContaTransicao(c) && !isContaOcultaSaldoPadrao(c),
-  );
+  const contasPickerOpcoes = shared?.contasPickerOpcoes
+    ?? contasOpcoesSeletorContasFinanceiro(contasAtivasLista);
 
   const atualizarSelecaoContas = useCallback((ids) => {
     if (shared?.atualizarSelecaoContasFluxo) {
@@ -135,7 +141,7 @@ function useGestaoContasModel(shared) {
 
   const aplicarSaldoBase = useCallback((lancsFull, movsFull) => {
     if (!Array.isArray(lancsFull) || !Array.isArray(movsFull)) return false;
-    if (!lancsFull.length || !movsFull.length) return false;
+    if (!lancsFull.length) return false;
     setLancamentosSaldo(lancsFull);
     setMovimentosSaldo(movsFull);
     setCarregandoSaldosBase(false);
@@ -213,8 +219,14 @@ function useGestaoContasModel(shared) {
   }, [shared, accounts]);
 
   const precisaBaseCompletaSaldo = !mostrarHistoricoAnterior && !!dataCorteHistorico;
-  const baseSaldoDisponivel = lancamentosSaldo.length > 0 && movimentosSaldo.length > 0;
+  /** Com corte ativo, saldo usa base completa de lançamentos (movimentos podem ser vazios). */
+  const baseSaldoDisponivel = lancamentosSaldo.length > 0;
   const saldosProntos = !carregandoSaldosBase && (!precisaBaseCompletaSaldo || baseSaldoDisponivel);
+
+  const contasParaMapaSaldo = useMemo(
+    () => accounts.filter((c) => c && !isContaTransicao(c)),
+    [accounts],
+  );
 
   const lancsParaSaldo = baseSaldoDisponivel
     ? lancamentosSaldo
@@ -240,10 +252,22 @@ function useGestaoContasModel(shared) {
   const saldosCalculados = useMemo(() => {
     if (!saldosProntos) return null;
     if (!mostrarHistoricoAnterior && dataCorteHistorico) {
-      return calcularSaldosAposDataCorte(accounts, lancsParaSaldo, movsParaSaldo, dataCorteHistorico);
+      return calcularSaldosAposDataCorte(
+        contasParaMapaSaldo,
+        lancsParaSaldo,
+        movsParaSaldo,
+        dataCorteHistorico,
+      );
     }
-    return calcularSaldosTodasContas(accounts, lancsParaSaldo, movsParaSaldo);
-  }, [accounts, lancsParaSaldo, movsParaSaldo, mostrarHistoricoAnterior, dataCorteHistorico, saldosProntos]);
+    return calcularSaldosTodasContas(contasParaMapaSaldo, lancsParaSaldo, movsParaSaldo);
+  }, [
+    contasParaMapaSaldo,
+    lancsParaSaldo,
+    movsParaSaldo,
+    mostrarHistoricoAnterior,
+    dataCorteHistorico,
+    saldosProntos,
+  ]);
 
   const contasEnriquecidas = useMemo(() => accounts.map((account) => ({
     ...account,
