@@ -35,8 +35,8 @@ const args = [
   'set',
   `GROQ_API_KEY=${groqKey}`,
   `GROQ_OCR_MODEL=${model}`,
-  '--project-ref',
-  projectRef,
+  `--remote=${projectRef}`,
+  '--yes',
 ];
 
 const result = spawnSync('npx', args, {
