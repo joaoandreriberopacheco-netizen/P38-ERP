@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { base44 } from '@/api/base44Client';
-import { X } from 'lucide-react';
+import { Trash2, X } from 'lucide-react';
+import CancelarLancamentoDialog from './CancelarLancamentoDialog';
 import { useToast } from '@/components/ui/use-toast';
 import { addWeeks, addMonths, addYears, format } from 'date-fns';
 import { dataHoje, datetimeLocalParaISO, codigoOrdenacaoDesdeInstante } from '@/components/utils/dateUtils';
@@ -104,6 +105,7 @@ export default function NovoLancamentoDialog({
   const [observacoes, setObservacoes] = useState('');
   const [showEscopoPagamento, setShowEscopoPagamento] = useState(false);
   const [showEscopoCadastro, setShowEscopoCadastro] = useState(false);
+  const [showCancelarDialog, setShowCancelarDialog] = useState(false);
   const [pendingEscopoPagamento, setPendingEscopoPagamento] = useState('apenas_esta');
   const [isValeFolha, setIsValeFolha] = useState(false);
   const [valeFolhaModeloId, setValeFolhaModeloId] = useState('');
@@ -120,6 +122,7 @@ export default function NovoLancamentoDialog({
   const isCompactShell = useCompactShell();
 
   const modoEdicao = !!lancamentoExistente;
+  const lancamentoJaCancelado = lancamentoExistente?.status === 'Cancelado';
 
   const centroCustoEfetivo = modoPlanejamento ? centroCusto : centroCustoLocal;
   const centroCustoIdEfetivo = modoPlanejamento ? centroCustoId : centroCustoIdLocal;
@@ -867,6 +870,20 @@ export default function NovoLancamentoDialog({
         saving={saving}
         onSalvar={handleSave}
         onCancelar={onClose}
+        rodapeExtra={
+          modoEdicao && !lancamentoJaCancelado ? (
+            <div className="shrink-0 px-4 pt-3">
+              <button
+                type="button"
+                onClick={() => setShowCancelarDialog(true)}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-50 py-2.5 text-sm font-medium text-red-600 transition-all active:scale-95 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
+              >
+                <Trash2 className="h-4 w-4" />
+                Cancelar lançamento
+              </button>
+            </div>
+          ) : null
+        }
         salvarLabel={modoEdicao ? 'Salvar alterações' : 'Salvar'}
         bloquearRecorrencia={modoEdicao}
         modoPlanejamento={modoPlanejamento}
@@ -895,6 +912,17 @@ export default function NovoLancamentoDialog({
         stackElevated
       />
       </div>
+
+      <CancelarLancamentoDialog
+        lancamento={lancamentoExistente}
+        isOpen={showCancelarDialog}
+        onClose={() => setShowCancelarDialog(false)}
+        onSuccess={() => {
+          setShowCancelarDialog(false);
+          void onSaved?.();
+          fecharFluxo();
+        }}
+      />
 
       <LancamentoFormSheet
         open={showDataDialog}

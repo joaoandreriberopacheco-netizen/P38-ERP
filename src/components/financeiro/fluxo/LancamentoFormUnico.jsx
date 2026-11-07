@@ -105,6 +105,7 @@ export default function LancamentoFormUnico({
   saving,
   onSalvar,
   onCancelar,
+  rodapeExtra = null,
   bloquearTipo = false,
   bloquearRecorrencia = false,
   salvarLabel = 'Salvar',
@@ -417,6 +418,8 @@ export default function LancamentoFormUnico({
           </>
         )}
       </div>
+
+      {rodapeExtra}
 
       <div className="shrink-0 flex gap-2 px-4 pt-2 pb-4 border-t border-border/30">
         <button
