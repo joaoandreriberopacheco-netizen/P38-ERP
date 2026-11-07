@@ -164,6 +164,8 @@ export function isContaOcultaSaldoPadrao(conta) {
   if (tipo.includes('poup') || nome.includes('poupanca') || (nome.includes('poup') && nome.includes('caixa'))) {
     return true;
   }
+  // CAIXA PP (poupança) sem a palavra "poupanca" no nome
+  if (nome.includes('caixa') && /\bpp\b/.test(nome)) return true;
   if (nome.includes('pj') && nome.includes('caixa')) return true;
   return false;
 }

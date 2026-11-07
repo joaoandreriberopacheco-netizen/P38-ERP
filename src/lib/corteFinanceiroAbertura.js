@@ -6,6 +6,7 @@ export const SALDOS_ABERTURA_CORTE_2026_11_06 = Object.freeze({
   caixaGeral: 0,
   caixaPdv: 0,
   bancoDoBrasil: 0,
+  pagBank: 0,
   caixaPoupancaPP: 5997,
   caixaPj: 8.55,
 });
@@ -34,6 +35,9 @@ export function classificarContaCorteFinanceiro(conta) {
   }
   if (nome.includes('brasil') || (nome.includes('banco') && nome.includes('brasil'))) {
     return { alvo: SALDOS_ABERTURA_CORTE_2026_11_06.bancoDoBrasil, ocultar: false };
+  }
+  if (nome.includes('pagbank') || (nome.includes('pag') && nome.includes('bank'))) {
+    return { alvo: SALDOS_ABERTURA_CORTE_2026_11_06.pagBank, ocultar: false };
   }
   if (
     tipo.includes('poup')
