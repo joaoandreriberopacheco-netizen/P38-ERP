@@ -36,7 +36,7 @@ export function classificarContaCorteFinanceiro(conta) {
     return { alvo: SALDOS_ABERTURA_CORTE_2026_11_06.caixaGeral, ocultar: false };
   }
   if (isPdv || nome.includes('gaveta') || (nome.includes('pdv') && nome.includes('caixa')) || nome === 'caixa pdv') {
-    return { alvo: SALDOS_ABERTURA_CORTE_2026_11_06.caixaPdv, ocultar: false };
+    return { alvo: SALDOS_ABERTURA_CORTE_2026_11_06.caixaPdv, ocultar: true };
   }
   if (nome.includes('brasil') || (nome.includes('banco') && nome.includes('brasil'))) {
     return { alvo: SALDOS_ABERTURA_CORTE_2026_11_06.bancoDoBrasil, ocultar: false };
@@ -71,7 +71,7 @@ export function saldoInicialParaCalculoCorte(conta, dataCorte) {
   return gravado;
 }
 
-/** Caixas e Bancos: só Geral, PDV, Banco do Brasil e PagBank (corte 06/11/2026). */
+/** Caixas e Bancos (lista principal): Geral, Banco do Brasil e PagBank — PDV fora. */
 export function contasIdsContasPrincipaisCorte(contas = []) {
   return (contas || [])
     .filter((c) => {

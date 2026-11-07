@@ -142,6 +142,20 @@ function normalizarTextoConta(s) {
     .replace(/\p{M}/gu, '');
 }
 
+/** Caixa PDV (gaveta) — fora da lista padrão de Caixas/Bancos e do Fluxo. */
+export function isContaCaixaPDVFinanceiro(conta) {
+  if (!conta) return false;
+  if (conta.is_caixa_pdv === true) return true;
+  const nome = normalizarTextoConta(conta.nome);
+  const tipo = normalizarTextoConta(conta.tipo);
+  if (tipo === 'caixa pdv') return true;
+  return (
+    nome.includes('gaveta')
+    || (nome.includes('pdv') && nome.includes('caixa'))
+    || nome === 'caixa pdv'
+  );
+}
+
 /** Contas de migração / transição — ocultas por defeito em Caixas e Bancos. */
 export function isContaTransicao(conta) {
   if (!conta) return false;
@@ -150,14 +164,15 @@ export function isContaTransicao(conta) {
   return tipo.includes('transicao') || nome.includes('transicao');
 }
 
-/** Contas no painel do ícone carteira — inclui PP/PJ para marcar manualmente. */
+/** Contas no painel do ícone carteira — inclui PP/PJ; exclui Caixa PDV. */
 export function contasOpcoesSeletorContasFinanceiro(contas = []) {
-  return contasAtivasOperacionais(contas);
+  return contasAtivasOperacionais(contas).filter((c) => !isContaCaixaPDVFinanceiro(c));
 }
 
 /** Fora do total de saldo por defeito (continuam no seletor de contas). */
 export function isContaOcultaSaldoPadrao(conta) {
   if (!conta) return false;
+  if (isContaCaixaPDVFinanceiro(conta)) return true;
   if (conta.ocultar_no_fluxo === true) return true;
   const nome = normalizarTextoConta(conta.nome);
   const tipo = normalizarTextoConta(conta.tipo);

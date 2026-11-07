@@ -155,7 +155,7 @@ export default function ExecucaoOrcamentaria() {
   const [ce, setCe] = useState('');
   const [contasSel, setContasSel] = useState([]);
   const [contasSaldoSel, setContasSaldoSel] = useState([]);
-  /** Aba Caixas: só Geral, PDV, BB e PagBank por defeito (independente do Fluxo). */
+  /** Aba Caixas: Geral, BB e PagBank por defeito (sem Caixa PDV; independente do Fluxo). */
   const [contasSelCaixas, setContasSelCaixas] = useState([]);
   const [tiposSel, setTiposSel] = useState([]);
   const [statusSel, setStatusSel] = useState([]);
@@ -288,7 +288,7 @@ export default function ExecucaoOrcamentaria() {
         const restaurar = sanitizarPreferenciasSaldoContas(brutos, ativas);
         setContasSel(restaurar);
         setContasSaldoSel(restaurar);
-        const prefsCaixas = lerPreferenciasCaixasContas().filter((id) => ativas.some((c) => c.id === id));
+        const prefsCaixas = lerPreferenciasCaixasContas(ativas).filter((id) => ativas.some((c) => c.id === id));
         const padraoCaixas = contasSelPadraoGestaoCaixas(ativas);
         setContasSelCaixas(prefsCaixas.length ? prefsCaixas : padraoCaixas);
         if (!prefsCaixas.length && padraoCaixas.length) {

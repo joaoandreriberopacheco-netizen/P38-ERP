@@ -32,6 +32,7 @@ import {
   contasSelEquivaleFiltroFluxoPadrao,
   contasSelModoTodasContas,
   gravarPreferenciasCorteHistorico,
+  isContaCaixaPDVFinanceiro,
   isContaOcultaSaldoPadrao,
   isContaTransicao,
   lerPreferenciasCorteHistorico,
@@ -218,7 +219,7 @@ function useGestaoContasModel(shared) {
     if (shared) return;
     const ativas = accounts.filter((c) => c.ativo !== false);
     if (!ativas.length) return;
-    const prefs = lerPreferenciasCaixasContas().filter((id) => ativas.some((c) => c.id === id));
+    const prefs = lerPreferenciasCaixasContas(ativas).filter((id) => ativas.some((c) => c.id === id));
     const padrao = contasSelPadraoGestaoCaixas(ativas);
     const sel = prefs.length ? prefs : padrao;
     setContasSelLocal(sel);
@@ -285,7 +286,9 @@ function useGestaoContasModel(shared) {
   );
 
   const contasOperacionais = useMemo(
-    () => contasEnriquecidas.filter((account) => !isContaTransicao(account)),
+    () => contasEnriquecidas.filter(
+      (account) => !isContaTransicao(account) && !isContaCaixaPDVFinanceiro(account),
+    ),
     [contasEnriquecidas],
   );
 
