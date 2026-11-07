@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { formatFinanceiroValor } from './FinanceiroListaShared';
+import ContaTipoChip from './ContaTipoChip';
 import { getSaldoExibicaoConta } from '@/lib/saldoContaFinanceira';
 import { p38Accent } from '@/lib/p38ThemeSurfaces';
 import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
@@ -30,6 +31,7 @@ export default function ContaFinanceiraRow({
   onAjuste,
   onConciliar,
   striped,
+  listaUnificada = false,
 }) {
   const saldo = saldosProntos && saldosCalculados
     ? getSaldoExibicaoConta(conta, saldosCalculados)
@@ -37,7 +39,9 @@ export default function ContaFinanceiraRow({
   const isNegativo = saldo != null && saldo < 0;
   const ativa = conta.ativo !== false;
 
-  const subtitle = [conta.tipo, conta.banco].filter(Boolean).join(' · ');
+  const subtitle = listaUnificada
+    ? null
+    : [conta.tipo, conta.banco].filter(Boolean).join(' · ');
   const valueSub = conta.is_caixa_pdv
     ? 'Dinheiro na gaveta'
     : conta.agencia
@@ -63,17 +67,21 @@ export default function ContaFinanceiraRow({
       }}
       className={cn(
         'group w-full border-b border-border/50 text-left font-din-1451 dark:border-white/10',
-        'border-l px-3 py-3 pr-3 sm:px-4 cursor-pointer',
+        'border-l px-3 pr-3 sm:px-4 cursor-pointer',
+        listaUnificada ? 'py-2.5' : 'py-3',
         borderAccent,
         striped && 'bg-secondary/15 dark:bg-secondary/20',
         !ativa && 'opacity-70',
       )}
     >
-      <div className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
         <div className="min-w-0 flex-1">
-          <p className="line-clamp-2 text-[13px] font-semibold uppercase leading-snug text-foreground sm:truncate sm:text-[15px]">
-            {conta.nome}
-          </p>
+          <div className="flex min-w-0 items-center gap-2">
+            {listaUnificada && <ContaTipoChip conta={conta} />}
+            <p className="line-clamp-2 min-w-0 flex-1 text-[13px] font-semibold uppercase leading-snug text-foreground sm:truncate sm:text-[15px]">
+              {conta.nome}
+            </p>
+          </div>
           {subtitle && (
             <p className="mt-0.5 truncate text-[11px] text-muted-foreground sm:text-xs">{subtitle}</p>
           )}

@@ -19,6 +19,7 @@ import FiltrosContasFinanceiras, { TIPOS_CONTA } from './fluxo/FiltrosContasFina
 import ListaContasFinanceiras from './fluxo/ListaContasFinanceiras';
 import { marcarPadraoContasFluxo, marcarTodasContasFluxo } from './fluxo/contasFluxoSelecaoUi';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from './fluxo/FinanceiroListaMeta';
+import { P38_FINANCEIRO_FILTROS_BAR } from './fluxo/financeiroP38';
 import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
 import {
   calcularSaldosAposDataCorte,
@@ -368,6 +369,12 @@ function useGestaoContasModel(shared) {
       }));
   }, [filtrados]);
 
+  /** Mobile (aba Caixas): uma lista só, por nome — sem cabeçalhos por tipo. */
+  const contasListaUnificada = useMemo(
+    () => [...filtrados].sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR')),
+    [filtrados],
+  );
+
   const totalPendencias = kpis.pendencias;
   const selecaoContasPersonalizada = contasSel.length > 0
     && !contasSelEquivaleFiltroFluxoPadrao(contasSel, contasAtivasLista)
@@ -443,6 +450,7 @@ function useGestaoContasModel(shared) {
     loading,
     filtrados,
     grupos,
+    contasListaUnificada,
     kpis,
     saldosCalculados,
     pendenciasConciliacao,
@@ -528,6 +536,7 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
     loading,
     filtrados,
     grupos,
+    contasListaUnificada,
     pendenciasConciliacao,
     search,
     setSearch,
@@ -656,6 +665,7 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
   const listaBlock = (
     <ListaContasFinanceiras
       grupos={grupos}
+      contasFlat={mobileShell ? contasListaUnificada : null}
       loading={loading}
       pendenciasMap={pendenciasConciliacao}
       saldosCalculados={saldosCalculados}
@@ -835,13 +845,13 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
   if (mobileShell) {
     return (
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="shrink-0 z-10 space-y-2 border-b border-border/25 bg-background/95 px-4 pb-2 backdrop-blur-sm md:px-6">
+        <div className={cn('space-y-2 px-4 md:px-6', P38_FINANCEIRO_FILTROS_BAR)}>
           {filtrosBlock}
           {showMetaOnMobile ? metaBlock : null}
         </div>
         <div
           ref={listScrollRef}
-          className="flex-1 min-h-0 min-w-0 p38-stage-panel-scroll overflow-x-hidden touch-pan-y p38-scroll-pad-fab"
+          className="flex-1 min-h-0 min-w-0 p38-stage-panel-scroll overflow-x-hidden overscroll-y-contain touch-pan-y p38-scroll-pad-fab px-1 pb-2"
         >
           {listaBlock}
         </div>

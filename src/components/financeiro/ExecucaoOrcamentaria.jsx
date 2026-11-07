@@ -45,6 +45,7 @@ import KpiFluxoBar from './fluxo/KpiFluxoBar';
 import ContasSaldoPicker from './fluxo/ContasSaldoPicker';
 import ListaLancamentos from './fluxo/ListaLancamentos';
 import { formatFinanceiroGrupoLabel } from './fluxo/FinanceiroListaShared';
+import { P38_FINANCEIRO_FILTROS_BAR } from './fluxo/financeiroP38';
 import {
   GestaoContasEmbedded,
   GestaoContasKpis,
@@ -1267,13 +1268,13 @@ export default function ExecucaoOrcamentaria() {
 
       {aba === 'fluxo' && usesStageScroll && (
         <>
-          <div className="shrink-0 z-10 space-y-2 border-b border-border/25 bg-background/95 px-4 pb-2 backdrop-blur-sm md:px-6">
+          <div className={cn('space-y-2 px-4 md:px-6', P38_FINANCEIRO_FILTROS_BAR)}>
             {fluxoFiltrosBar}
           </div>
           <div
             key={`fluxo-scroll-${aba}`}
             ref={scrollRef}
-            className="relative flex-1 min-h-0 min-w-0 p38-stage-panel-scroll overflow-x-hidden touch-pan-y p38-scroll-pad-fab md:px-2"
+            className="relative z-0 flex-1 min-h-0 min-w-0 p38-stage-panel-scroll overflow-x-hidden touch-pan-y p38-scroll-pad-fab md:px-2"
           >
             <P38ModuleLoadingOverlay
               open={loading}

@@ -26,9 +26,16 @@ export const P38_POPOVER =
 export const P38_KPI_SHELL =
   'rounded-xl bg-card border-0 shadow-sm px-3 py-2.5 sm:px-3 sm:py-2.5 dark:p38-field-surface dark:shadow-none';
 export const P38_ACCENT = 'text-[#a8942e] dark:text-[#a4ce33]';
-/** Mobile: busca + ícones fixos ao rolar; desktop sem sticky. */
+/**
+ * Mobile: busca + ícones fixos ao rolar (dentro do painel que scrolla).
+ * Fundo opaco + z alto para o conteúdo da lista não “vazar” por baixo.
+ */
 export const P38_FILTROS_STICKY =
-  'sticky top-0 z-30 bg-background/95 py-2 backdrop-blur-sm md:static md:z-auto md:bg-transparent md:py-0 md:backdrop-blur-none';
+  'sticky top-0 z-50 isolate bg-background py-2 shadow-[0_1px_0_0_hsl(var(--border)/0.45)] md:static md:z-auto md:isolate-auto md:bg-transparent md:py-0 md:shadow-none';
+
+/** Faixa de filtros fora do scroll (Fluxo/Caixas) — sempre por cima da lista. */
+export const P38_FINANCEIRO_FILTROS_BAR =
+  'relative z-40 shrink-0 isolate border-b border-border/35 bg-background pb-2 shadow-sm dark:border-white/10 md:z-auto md:border-b-0 md:shadow-none';
 
 /** Abas Contas / Fluxo — ícones ao lado do título (mobile). */
 export const FINANCEIRO_ABA_TAB_GROUP =

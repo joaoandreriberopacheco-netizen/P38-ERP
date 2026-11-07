@@ -597,10 +597,13 @@ export default function ExtratoContaPage() {
   }
 
   return (
-    <div id="extrato-print-root" className="w-full min-w-0 max-w-full space-y-2 pb-[var(--p38-scroll-pad-below-nav)] font-din-1451 bg-background">
-      <div className="min-w-0 max-w-full space-y-1.5">
+    <div
+      id="extrato-print-root"
+      className="flex min-h-[100dvh] w-full min-w-0 max-w-full flex-col overflow-hidden font-din-1451 bg-background md:min-h-0 md:overflow-visible md:space-y-2 md:pb-[var(--p38-scroll-pad-below-nav)]"
+    >
+      <div className="shrink-0 space-y-1.5 px-0 md:min-w-0 md:max-w-full">
         {/* Mobile */}
-        <div className="flex flex-col gap-1.5 md:hidden">
+        <div className="flex flex-col gap-1 md:hidden">
           <KpiExtratoConta
             kpis={kpisExtrato}
             layout="oneline"
@@ -694,49 +697,53 @@ export default function ExtratoContaPage() {
         </div>
       </div>
 
-      <FiltrosExtratoConta
-        search={searchTerm}
-        onSearch={setSearchTerm}
-        filtersOpen={filtersOpen}
-        onFiltersOpenChange={setFiltersOpen}
-        periodo={filtroPeriodo}
-        onPeriodo={setFiltroPeriodo}
-        cs={dataInicio}
-        ce={dataFim}
-        onCs={setDataInicio}
-        onCe={setDataFim}
-      />
+      <div className="relative z-0 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-contain p38-stage-panel-scroll touch-pan-y pb-[var(--p38-scroll-pad-below-nav)] md:flex-none md:overflow-visible md:pb-0">
+        <div className="shrink-0 space-y-1 md:space-y-2">
+          <FiltrosExtratoConta
+            search={searchTerm}
+            onSearch={setSearchTerm}
+            filtersOpen={filtersOpen}
+            onFiltersOpenChange={setFiltersOpen}
+            periodo={filtroPeriodo}
+            onPeriodo={setFiltroPeriodo}
+            cs={dataInicio}
+            ce={dataFim}
+            onCs={setDataInicio}
+            onCe={setDataFim}
+          />
 
-      <FinanceiroListaMeta
-        showTotal={false}
-        hasActiveFilters={hasActiveFilters || !!searchTerm}
-        onLimparFiltros={() => {
-          setFiltroPeriodo('mes');
-          setDataInicio('');
-          setDataFim('');
-          setTiposSel([]);
-          setSearchTerm('');
-        }}
-        summaryChips={
-          <>
-            {filtroPeriodo !== 'mes' && <FinanceiroSummaryChip>{periodoLabel}</FinanceiroSummaryChip>}
-            {tiposSel.length > 0 && (
-              <FinanceiroSummaryChip>{labelTiposSelecionados(tiposSel)}</FinanceiroSummaryChip>
-            )}
-            {searchTerm && <FinanceiroSummaryChip>Busca</FinanceiroSummaryChip>}
-          </>
-        }
-      />
+          <FinanceiroListaMeta
+            showTotal={false}
+            hasActiveFilters={hasActiveFilters || !!searchTerm}
+            onLimparFiltros={() => {
+              setFiltroPeriodo('mes');
+              setDataInicio('');
+              setDataFim('');
+              setTiposSel([]);
+              setSearchTerm('');
+            }}
+            summaryChips={
+              <>
+                {filtroPeriodo !== 'mes' && <FinanceiroSummaryChip>{periodoLabel}</FinanceiroSummaryChip>}
+                {tiposSel.length > 0 && (
+                  <FinanceiroSummaryChip>{labelTiposSelecionados(tiposSel)}</FinanceiroSummaryChip>
+                )}
+                {searchTerm && <FinanceiroSummaryChip>Busca</FinanceiroSummaryChip>}
+              </>
+            }
+          />
+        </div>
 
-      <ListaExtratoConta
-        grupos={grupos}
-        loading={isLoading}
-        contaVisualizadaId={conta?.id ?? null}
-        onRow={(l) => {
-          if (l?.origem === 'movimento') return;
-          setEditando(l);
-        }}
-      />
+        <ListaExtratoConta
+          grupos={grupos}
+          loading={isLoading}
+          contaVisualizadaId={conta?.id ?? null}
+          onRow={(l) => {
+            if (l?.origem === 'movimento') return;
+            setEditando(l);
+          }}
+        />
+      </div>
 
       <AjusteSaldoDialog
         open={ajusteDialogOpen}

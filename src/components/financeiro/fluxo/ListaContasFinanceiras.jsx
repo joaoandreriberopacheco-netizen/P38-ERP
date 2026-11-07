@@ -4,8 +4,37 @@ import ContaFinanceiraRow from './ContaFinanceiraRow';
 import { FinanceiroGrupo, FinanceiroListaEstado } from './FinanceiroListaShared';
 import { getSaldoExibicaoConta } from '@/lib/saldoContaFinanceira';
 
+function renderContaRows({
+  items,
+  pendenciasMap,
+  saldosCalculados,
+  saldosProntos,
+  onExtrato,
+  onEdit,
+  onAjuste,
+  onConciliar,
+  listaUnificada = false,
+}) {
+  return items.map((conta, index) => (
+    <ContaFinanceiraRow
+      key={conta.id}
+      conta={conta}
+      pendencias={pendenciasMap[conta.id] || 0}
+      saldosCalculados={saldosCalculados}
+      saldosProntos={saldosProntos}
+      striped={index % 2 === 1}
+      listaUnificada={listaUnificada}
+      onExtrato={onExtrato}
+      onEdit={onEdit}
+      onAjuste={onAjuste}
+      onConciliar={onConciliar}
+    />
+  ));
+}
+
 export default function ListaContasFinanceiras({
   grupos,
+  contasFlat = null,
   loading,
   pendenciasMap = {},
   saldosCalculados = null,
@@ -15,15 +44,33 @@ export default function ListaContasFinanceiras({
   onAjuste,
   onConciliar,
 }) {
+  const listaUnificada = Array.isArray(contasFlat);
+  const vazio = !loading && (listaUnificada ? contasFlat.length === 0 : grupos.length === 0);
+
   return (
     <FinanceiroListaEstado
       loading={loading}
       loadingMessage="Carregando contas e saldos…"
-      vazio={!loading && grupos.length === 0}
+      vazio={vazio}
       vazioMensagem="Nenhuma conta encontrada"
       vazioIcon={Wallet}
+      flushBottom={listaUnificada}
     >
-      {grupos.map(({ k, label, items }) => {
+      {listaUnificada ? (
+        <div className="divide-y divide-border/40 dark:divide-white/10">
+          {renderContaRows({
+            items: contasFlat,
+            pendenciasMap,
+            saldosCalculados,
+            saldosProntos,
+            onExtrato,
+            onEdit,
+            onAjuste,
+            onConciliar,
+            listaUnificada: true,
+          })}
+        </div>
+      ) : grupos.map(({ k, label, items }) => {
         const totalGrupo = saldosProntos && saldosCalculados
           ? items.reduce(
             (acc, c) => acc + getSaldoExibicaoConta(c, saldosCalculados),
@@ -41,20 +88,16 @@ export default function ListaContasFinanceiras({
             ocultarTotais={!saldosProntos}
             card
           >
-            {items.map((conta, index) => (
-              <ContaFinanceiraRow
-                key={conta.id}
-                conta={conta}
-                pendencias={pendenciasMap[conta.id] || 0}
-                saldosCalculados={saldosCalculados}
-                saldosProntos={saldosProntos}
-                striped={index % 2 === 1}
-                onExtrato={onExtrato}
-                onEdit={onEdit}
-                onAjuste={onAjuste}
-                onConciliar={onConciliar}
-              />
-            ))}
+            {renderContaRows({
+              items,
+              pendenciasMap,
+              saldosCalculados,
+              saldosProntos,
+              onExtrato,
+              onEdit,
+              onAjuste,
+              onConciliar,
+            })}
           </FinanceiroGrupo>
         );
       })}

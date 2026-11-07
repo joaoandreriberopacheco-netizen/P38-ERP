@@ -211,7 +211,7 @@ export function FinanceiroListaEstado({
       <P38ModuleLoadingOverlay open={showOverlay} message={loadingMessage} />
       <div
         className={cn(
-          'min-w-0 w-full max-w-full space-y-2 overflow-x-hidden',
+          'relative z-0 min-w-0 w-full max-w-full space-y-2 overflow-x-hidden',
           showOverlay && 'pointer-events-none select-none opacity-25',
         )}
       >
