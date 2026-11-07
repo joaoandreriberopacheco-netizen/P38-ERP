@@ -1,4 +1,4 @@
-import { isContaTransicao } from '@/lib/filtroDataFinanceiro';
+import { isContaOcultaSaldoPadrao, isContaTransicao } from '@/lib/filtroDataFinanceiro';
 
 const STORAGE_KEY = 'p38-financeiro-contas-saldo';
 
@@ -32,7 +32,9 @@ export function gravarPreferenciasSaldoContas(contasIds = []) {
 /** Contas que compõem o total do chip carteira/saldo. */
 export function contasParaSaldoKpi(contasSaldoSel = [], contas = []) {
   const operacionais = (contas || []).filter((c) => c && !isContaTransicao(c));
-  if (!contasSaldoSel?.length) return operacionais;
+  if (!contasSaldoSel?.length) {
+    return operacionais.filter((c) => !isContaOcultaSaldoPadrao(c));
+  }
   const ids = new Set(contasSaldoSel);
   return operacionais.filter((c) => ids.has(c.id));
 }

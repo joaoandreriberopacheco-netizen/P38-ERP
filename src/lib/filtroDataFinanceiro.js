@@ -68,7 +68,10 @@ export const PERIODOS_DATA_PAGAMENTO = [
 ];
 
 /** Data padrão para ocultar histórico confuso no Fluxo de Caixa (ajustável pelo utilizador). */
-export const DATA_CORTE_HISTORICO_PADRAO = '2026-08-12';
+export const DATA_CORTE_HISTORICO_PADRAO = '2026-11-06';
+
+/** Corte anterior — migra preferência gravada no browser para o novo padrão. */
+const DATA_CORTE_HISTORICO_ANTIGO = '2026-08-12';
 
 const STORAGE_MOSTRAR_HISTORICO = 'p38-fluxo-mostrar-historico-anterior';
 const STORAGE_OCULTAR_HISTORICO_LEGADO = 'p38-fluxo-ocultar-historico';
@@ -81,22 +84,38 @@ export function lerPreferenciasCorteHistorico() {
   try {
     const salvo = localStorage.getItem(STORAGE_MOSTRAR_HISTORICO);
     if (salvo !== null) {
+      const dataCorte = migrarDataCorteArmazenada(
+        localStorage.getItem(STORAGE_DATA_CORTE) || DATA_CORTE_HISTORICO_PADRAO,
+      );
       return {
         mostrarHistoricoAnterior: salvo === 'true',
-        dataCorte: localStorage.getItem(STORAGE_DATA_CORTE) || DATA_CORTE_HISTORICO_PADRAO,
+        dataCorte,
       };
     }
     const legado = localStorage.getItem(STORAGE_OCULTAR_HISTORICO_LEGADO);
     if (legado !== null) {
+      const dataCorte = migrarDataCorteArmazenada(
+        localStorage.getItem(STORAGE_DATA_CORTE) || DATA_CORTE_HISTORICO_PADRAO,
+      );
       return {
         mostrarHistoricoAnterior: legado !== 'true',
-        dataCorte: localStorage.getItem(STORAGE_DATA_CORTE) || DATA_CORTE_HISTORICO_PADRAO,
+        dataCorte,
       };
     }
     return { mostrarHistoricoAnterior: false, dataCorte: DATA_CORTE_HISTORICO_PADRAO };
   } catch {
     return { mostrarHistoricoAnterior: false, dataCorte: DATA_CORTE_HISTORICO_PADRAO };
   }
+}
+
+function migrarDataCorteArmazenada(dataCorte) {
+  if (dataCorte !== DATA_CORTE_HISTORICO_ANTIGO) return dataCorte;
+  try {
+    localStorage.setItem(STORAGE_DATA_CORTE, DATA_CORTE_HISTORICO_PADRAO);
+  } catch {
+    /* ignore */
+  }
+  return DATA_CORTE_HISTORICO_PADRAO;
 }
 
 export function gravarPreferenciasCorteHistorico(mostrarHistoricoAnterior, dataCorte) {
@@ -129,4 +148,17 @@ export function isContaTransicao(conta) {
   const tipo = normalizarTextoConta(conta.tipo);
   const nome = normalizarTextoConta(conta.nome);
   return tipo.includes('transicao') || nome.includes('transicao');
+}
+
+/** Fora do total de saldo por defeito (continuam no seletor de contas). */
+export function isContaOcultaSaldoPadrao(conta) {
+  if (!conta) return false;
+  if (conta.ocultar_no_fluxo === true) return true;
+  const nome = normalizarTextoConta(conta.nome);
+  const tipo = normalizarTextoConta(conta.tipo);
+  if (tipo.includes('poup') || nome.includes('poupanca') || (nome.includes('poup') && nome.includes('caixa'))) {
+    return true;
+  }
+  if (nome.includes('pj') && nome.includes('caixa')) return true;
+  return false;
 }
