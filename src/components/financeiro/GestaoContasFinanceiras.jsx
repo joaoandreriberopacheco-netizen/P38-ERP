@@ -739,7 +739,7 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
   if (mobileShell) {
     return (
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="shrink-0 z-10 space-y-2 border-b border-border/25 bg-background/95 px-4 pb-2 backdrop-blur-sm">
+        <div className="shrink-0 z-10 space-y-2 border-b border-border/25 bg-background/95 px-4 pb-2 backdrop-blur-sm md:px-6">
           {filtrosBlock}
           {showMetaOnMobile ? metaBlock : null}
         </div>

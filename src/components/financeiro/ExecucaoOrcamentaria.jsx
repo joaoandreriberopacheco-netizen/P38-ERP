@@ -195,6 +195,8 @@ export default function ExecucaoOrcamentaria() {
   const { s: ds, e: de } = useMemo(() => dateRange(periodo, cs, ce), [periodo, cs, ce]);
 
   const isCompactShell = useCompactShell();
+  /** Sempre true nesta rota — Layout usa overflow-hidden no desktop (DESKTOP_FULL_HEIGHT_PAGES). */
+  const usesStageScroll = true;
   const { chromeVisible, scrollRef, scrollEl } = useScrollChromeVisibility(isCompactShell, MOBILE_LIST_CHROME_OPTIONS);
 
   useEffect(() => {
@@ -1163,8 +1165,8 @@ export default function ExecucaoOrcamentaria() {
     <div
       className={cn(
         'w-full min-w-0 max-w-full font-din-1451',
-        isCompactShell
-          ? 'flex flex-col h-full min-h-0 overflow-hidden'
+        usesStageScroll
+          ? 'flex h-full min-h-0 flex-col overflow-hidden'
           : 'space-y-3 pb-[var(--p38-scroll-pad-below-nav)]',
       )}
     >
@@ -1181,29 +1183,15 @@ export default function ExecucaoOrcamentaria() {
         </div>
       )}
 
-      {aba === 'fluxo' && !isCompactShell && (
-        <div className="relative min-h-[min(48vh,480px)]">
-          <P38ModuleLoadingOverlay
-            open={loading}
-            message="Carregando lançamentos e saldos…"
-          />
-          <div className={cn('space-y-3', loading && 'pointer-events-none select-none opacity-25')}>
-            {fluxoFiltrosBar}
-            {fluxoLista}
-            {fluxoDialogs}
-          </div>
-        </div>
-      )}
-
-      {aba === 'fluxo' && isCompactShell && (
+      {aba === 'fluxo' && usesStageScroll && (
         <>
-          <div className="shrink-0 z-10 space-y-2 border-b border-border/25 bg-background/95 px-4 pb-2 backdrop-blur-sm">
+          <div className="shrink-0 z-10 space-y-2 border-b border-border/25 bg-background/95 px-4 pb-2 backdrop-blur-sm md:px-6">
             {fluxoFiltrosBar}
           </div>
           <div
             key={`fluxo-scroll-${aba}`}
             ref={scrollRef}
-            className="relative flex-1 min-h-0 min-w-0 p38-stage-panel-scroll overflow-x-hidden touch-pan-y p38-scroll-pad-fab"
+            className="relative flex-1 min-h-0 min-w-0 p38-stage-panel-scroll overflow-x-hidden touch-pan-y p38-scroll-pad-fab md:px-2"
           >
             <P38ModuleLoadingOverlay
               open={loading}
@@ -1325,11 +1313,11 @@ export default function ExecucaoOrcamentaria() {
       )}
 
       {caixasAtiva && (
-        <div className={cn(isCompactShell && 'flex min-h-0 flex-1 flex-col overflow-hidden')}>
+        <div className={cn(usesStageScroll && 'flex min-h-0 flex-1 flex-col overflow-hidden')}>
           <GestaoContasPane
             key={`caixas-scroll-${aba}`}
-            mobileShell={isCompactShell}
-            listScrollRef={isCompactShell ? scrollRef : null}
+            mobileShell={usesStageScroll}
+            listScrollRef={usesStageScroll ? scrollRef : null}
           />
         </div>
       )}
