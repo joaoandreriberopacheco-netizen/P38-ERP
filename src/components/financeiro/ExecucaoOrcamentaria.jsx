@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { format, subDays } from 'date-fns';
@@ -137,6 +137,8 @@ const FAB_ITEMS = [
 
 function abaFinanceiroInicial() {
   if (typeof window === 'undefined') return 'caixas';
+  const abaUrl = new URLSearchParams(window.location.search).get('aba');
+  if (abaUrl && ABAS_URL_VALIDAS.has(abaUrl)) return abaUrl;
   const layout = resolveViewportLayout(window.innerWidth, window.innerHeight);
   return layout === 'mobile' ? 'caixas' : 'fluxo';
 }
@@ -144,6 +146,7 @@ function abaFinanceiroInicial() {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function ExecucaoOrcamentaria() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [lancs, setLancs] = useState([]);
   const [movimentos, setMovimentos] = useState([]);
   /** Base completa para saldo da carteira (período filtrado não basta). */
@@ -231,7 +234,7 @@ export default function ExecucaoOrcamentaria() {
   }, [aba, isCompactShell, scrollEl]);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(location.search);
     const abaParam = params.get('aba');
     const legacyPage = abaParam ? ABA_LEGACY_PAGE[abaParam] : null;
     if (legacyPage) {
@@ -243,7 +246,7 @@ export default function ExecucaoOrcamentaria() {
     if (abaParam && ABAS_URL_VALIDAS.has(abaParam)) {
       setAba(abaParam);
     }
-  }, [navigate]);
+  }, [location.search, navigate]);
 
   useEffect(() => {
     // Ler params de URL e abrir dialog ou seletor de tipo (atalho PWA ?novo=1)
@@ -277,8 +280,14 @@ export default function ExecucaoOrcamentaria() {
     if (refTipo) setUrlReferenciaTipo(refTipo);
     if (tipo && novoAtalho !== '1' && novoAtalho !== 'true') setNovoTipo(tipo);
 
-    // Limpar URL
-    window.history.replaceState({}, '', window.location.pathname);
+    const abaManter = params.get('aba');
+    const qsLimpo = new URLSearchParams();
+    if (abaManter && ABAS_URL_VALIDAS.has(abaManter)) {
+      qsLimpo.set('aba', abaManter);
+    }
+    const path = window.location.pathname;
+    const suffix = qsLimpo.toString() ? `?${qsLimpo.toString()}` : '';
+    window.history.replaceState(window.history.state, '', `${path}${suffix}`);
   }, []);
 
   useEffect(() => {

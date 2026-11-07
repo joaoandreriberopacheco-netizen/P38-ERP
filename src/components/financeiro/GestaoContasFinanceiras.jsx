@@ -421,7 +421,7 @@ function useGestaoContasModel(shared) {
   const handleExtrato = (account) => {
     const lancsPreload = lancamentosSaldo.length ? lancamentosSaldo : shared?.lancsSaldo;
     const movsPreload = movimentosSaldo.length ? movimentosSaldo : shared?.movsSaldo;
-    navigate(`${createPageUrl('ExtratoConta')}?id=${account.id}`, {
+    navigate(`${createPageUrl('ExtratoConta')}?id=${account.id}&from=caixas`, {
       state: {
         financeiroAba: 'caixas',
         extratoPreload: {

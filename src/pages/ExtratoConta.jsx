@@ -52,7 +52,6 @@ import {
 } from '@/lib/saldoContaFinanceira';
 import { reconciliarSaldoCaixaPDVSemTurnoAberto, backfillLancamentosMovimentosCaixaPDV } from '@/lib/contaDestinoCaixaPDV';
 import { consolidarTransferenciasListaFluxo } from '@/lib/gruposMovimentacaoConta';
-import { navigateBackOr } from '@/lib/navigateBackOr';
 import { createPageUrl } from '@/utils';
 
 function getDataKeyMovimentoExtrato(mov) {
@@ -136,12 +135,16 @@ export default function ExtratoContaPage() {
     || !!editando;
 
   const voltar = useCallback(() => {
-    const abaOrigem = location.state?.financeiroAba;
-    if (abaOrigem === 'caixas' || abaOrigem === 'fluxo') {
-      navigate(`${createPageUrl('FluxoCaixa')}?aba=${abaOrigem}`);
-      return;
-    }
-    navigateBackOr(navigate, 'FluxoCaixa');
+    const params = new URLSearchParams(window.location.search);
+    const fromQuery = params.get('from');
+    const abaState = location.state?.financeiroAba;
+    const abaOrigem =
+      (abaState === 'caixas' || abaState === 'fluxo')
+        ? abaState
+        : (fromQuery === 'caixas' || fromQuery === 'fluxo')
+          ? fromQuery
+          : 'caixas';
+    navigate(`${createPageUrl('FluxoCaixa')}?aba=${abaOrigem}`);
   }, [navigate, location.state]);
 
   const aplicarSaldoBase = useCallback((lancsFull, movsFull) => {
