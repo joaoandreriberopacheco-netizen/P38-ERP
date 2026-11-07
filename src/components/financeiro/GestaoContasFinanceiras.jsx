@@ -27,6 +27,7 @@ import {
 import {
   DATA_CORTE_HISTORICO_PADRAO,
   contasAtivasOperacionais,
+  contasOpcoesSeletorContasFinanceiro,
   contasSelEfetivoFluxo,
   contasSelEquivaleFiltroFluxoPadrao,
   contasSelModoTodasContas,

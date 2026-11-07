@@ -150,6 +150,11 @@ export function isContaTransicao(conta) {
   return tipo.includes('transicao') || nome.includes('transicao');
 }
 
+/** Contas no painel do ícone carteira — inclui PP/PJ para marcar manualmente. */
+export function contasOpcoesSeletorContasFinanceiro(contas = []) {
+  return contasAtivasOperacionais(contas);
+}
+
 /** Fora do total de saldo por defeito (continuam no seletor de contas). */
 export function isContaOcultaSaldoPadrao(conta) {
   if (!conta) return false;

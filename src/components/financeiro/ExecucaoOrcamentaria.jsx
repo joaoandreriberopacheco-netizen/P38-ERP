@@ -86,6 +86,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import {
   DATA_CORTE_HISTORICO_PADRAO,
   contasIdsFiltroFluxoPadrao,
+  contasOpcoesSeletorContasFinanceiro,
   contasSelEfetivoFluxo,
   contasSelEquivaleFiltroFluxoPadrao,
   contasSelModoTodasContas,
