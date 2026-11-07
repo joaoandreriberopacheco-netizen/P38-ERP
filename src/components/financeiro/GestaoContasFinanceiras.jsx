@@ -26,6 +26,7 @@ import {
 import {
   DATA_CORTE_HISTORICO_PADRAO,
   gravarPreferenciasCorteHistorico,
+  isContaOcultaSaldoPadrao,
   isContaTransicao,
   lerPreferenciasCorteHistorico,
   passaFiltroCorteHistorico,
@@ -35,6 +36,8 @@ import {
   contasParaSaldoKpi,
   gravarPreferenciasSaldoContas,
   lerPreferenciasSaldoContas,
+  migrarPreferenciasSaldoLegadoFluxo,
+  sanitizarPreferenciasSaldoContas,
 } from '@/lib/preferenciasSaldoContas';
 
 const GestaoContasCtx = createContext(null);
@@ -78,7 +81,8 @@ function useGestaoContasModel(shared) {
   const [dataCorteHistorico, setDataCorteHistorico] = useState(
     () => lerPreferenciasCorteHistorico().dataCorte || DATA_CORTE_HISTORICO_PADRAO,
   );
-  const [contasSaldoSelLocal, setContasSaldoSelLocal] = useState(() => lerPreferenciasSaldoContas());
+  const [contasSaldoSelLocal, setContasSaldoSelLocal] = useState([]);
+  const [mostrarContasOcultas, setMostrarContasOcultas] = useState(false);
 
   const atualizarCorteHistorico = useCallback((mostrar, dataCorte) => {
     setMostrarHistoricoAnterior(mostrar);
@@ -92,7 +96,7 @@ function useGestaoContasModel(shared) {
   const loading = shared ? shared.loading : loadingLocal;
   const contasSaldoSel = shared?.contasSaldoSel ?? contasSaldoSelLocal;
   const contasSaldoOpcoes = shared?.contasSaldoOpcoes ?? accounts.filter(
-    (c) => c.ativo !== false && !isContaTransicao(c),
+    (c) => c.ativo !== false && !isContaTransicao(c) && !isContaOcultaSaldoPadrao(c),
   );
 
   const atualizarContasSaldoSel = useCallback((ids) => {
@@ -174,11 +178,12 @@ function useGestaoContasModel(shared) {
     if (shared) return;
     const ativas = accounts.filter((c) => c.ativo !== false);
     if (!ativas.length) return;
+    const brutos = migrarPreferenciasSaldoLegadoFluxo(lerPreferenciasSaldoContas(), ativas);
+    const restaurar = sanitizarPreferenciasSaldoContas(brutos, ativas);
     setContasSaldoSelLocal((prev) => {
-      if (!prev.length) return prev;
-      const valid = prev.filter((id) => ativas.some((c) => c.id === id));
-      if (valid.length !== prev.length) gravarPreferenciasSaldoContas(valid);
-      return valid;
+      const base = prev.length ? sanitizarPreferenciasSaldoContas(prev, ativas) : restaurar;
+      if (base.length !== prev.length) gravarPreferenciasSaldoContas(base);
+      return base;
     });
   }, [shared, accounts]);
 
@@ -231,6 +236,7 @@ function useGestaoContasModel(shared) {
   );
 
   const filtrados = useMemo(() => contasOperacionais.filter((account) => {
+    if (!mostrarContasOcultas && isContaOcultaSaldoPadrao(account)) return false;
     if (statusFiltro === 'ativas' && account.ativo === false) return false;
     if (statusFiltro === 'inativas' && account.ativo !== false) return false;
     if (tipoFiltro !== 'todos' && account.tipo !== tipoFiltro) return false;
@@ -245,7 +251,7 @@ function useGestaoContasModel(shared) {
       );
     }
     return true;
-  }), [contasOperacionais, statusFiltro, tipoFiltro, somentePendencias, pendenciasConciliacao, search]);
+  }), [contasOperacionais, mostrarContasOcultas, statusFiltro, tipoFiltro, somentePendencias, pendenciasConciliacao, search]);
 
   const kpis = useMemo(() => {
     let saldoTotal = 0;
@@ -297,7 +303,7 @@ function useGestaoContasModel(shared) {
   }, [filtrados]);
 
   const totalPendencias = kpis.pendencias;
-  const hasActiveFilters = tipoFiltro !== 'todos' || statusFiltro !== 'ativas' || somentePendencias || mostrarHistoricoAnterior;
+  const hasActiveFilters = tipoFiltro !== 'todos' || statusFiltro !== 'ativas' || somentePendencias || mostrarHistoricoAnterior || mostrarContasOcultas;
 
   const resetForm = () => {
     setSelectedAccount(null);
@@ -405,6 +411,8 @@ function useGestaoContasModel(shared) {
     contasSaldoSel,
     contasSaldoOpcoes,
     atualizarContasSaldoSel,
+    mostrarContasOcultas,
+    setMostrarContasOcultas,
   };
 }
 
@@ -481,6 +489,8 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
     dataCorteHistorico,
     atualizarCorteHistorico,
     saldosProntos,
+    mostrarContasOcultas,
+    setMostrarContasOcultas,
   } = m;
 
   const tipoLabel = TIPOS_CONTA.find((t) => t.v === tipoFiltro)?.l;
@@ -503,6 +513,8 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
       dataCorteHistorico={dataCorteHistorico}
       onMostrarHistoricoAnterior={(v) => atualizarCorteHistorico(v, dataCorteHistorico)}
       onDataCorteHistorico={(v) => atualizarCorteHistorico(mostrarHistoricoAnterior, v || DATA_CORTE_HISTORICO_PADRAO)}
+      mostrarContasOcultas={mostrarContasOcultas}
+      onMostrarContasOcultas={setMostrarContasOcultas}
     />
   );
 
@@ -517,6 +529,7 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
         setTipoFiltro('todos');
         setStatusFiltro('ativas');
         setSomentePendencias(false);
+        setMostrarContasOcultas(false);
         setSearch('');
       }}
       summaryChips={
@@ -552,6 +565,9 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
             )}
             {mostrarHistoricoAnterior && (
               <FinanceiroSummaryChip>Histórico completo</FinanceiroSummaryChip>
+            )}
+            {mostrarContasOcultas && (
+              <FinanceiroSummaryChip>Caixa PP / PJ visíveis</FinanceiroSummaryChip>
             )}
           </>
         )

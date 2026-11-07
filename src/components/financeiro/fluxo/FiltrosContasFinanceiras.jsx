@@ -34,12 +34,15 @@ export default function FiltrosContasFinanceiras({
   dataCorteHistorico,
   onMostrarHistoricoAnterior,
   onDataCorteHistorico,
+  mostrarContasOcultas = false,
+  onMostrarContasOcultas,
 }) {
   const hasActiveFilters =
     tipoFiltro !== 'todos' ||
     statusFiltro !== 'ativas' ||
     somentePendencias ||
-    mostrarHistoricoAnterior;
+    mostrarHistoricoAnterior ||
+    mostrarContasOcultas;
 
   return (
     <FinanceiroFiltrosShell
@@ -86,6 +89,22 @@ export default function FiltrosContasFinanceiras({
             ))}
           </div>
         </div>
+
+        {onMostrarContasOcultas ? (
+          <div>
+            <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Contas de migração</p>
+            <button
+              type="button"
+              onClick={() => onMostrarContasOcultas(!mostrarContasOcultas)}
+              className={`rounded-full px-2.5 py-1.5 text-xs font-medium transition-colors ${mostrarContasOcultas ? P38_CHIP_ACTIVE : P38_CHIP_INACTIVE}`}
+            >
+              Mostrar Caixa PP / PJ
+            </button>
+            <p className="mt-1.5 text-[10px] leading-snug text-muted-foreground/80">
+              Por defeito ficam ocultas (poupança e PJ de transição).
+            </p>
+          </div>
+        ) : null}
 
         <FinanceiroCorteHistoricoFiltro
           mostrarHistoricoAnterior={mostrarHistoricoAnterior}

@@ -844,7 +844,7 @@ export default function ExecucaoOrcamentaria() {
 
   const caixasAtiva = aba === 'caixas';
   const contasSaldoOpcoes = useMemo(
-    () => contasAtivas.filter((c) => !isContaTransicao(c)),
+    () => contasAtivas.filter((c) => !isContaTransicao(c) && !isContaOcultaSaldoPadrao(c)),
     [contasAtivas],
   );
   /** Ícone carteira no Fluxo: só operacionais (PP/PJ só pelo filtro completo). */
@@ -864,10 +864,10 @@ export default function ExecucaoOrcamentaria() {
       loading,
       reload: load,
       contasSaldoSel,
-      atualizarContasSaldoSel: atualizarSelecaoContasFluxo,
+      atualizarContasSaldoSel: atualizarSelecaoContasSaldo,
       contasSaldoOpcoes,
     }),
-    [lancs, movimentos, lancsSaldo, movsSaldo, contas, contasAtivas, loading, contasSaldoSel, atualizarSelecaoContasFluxo, contasSaldoOpcoes],
+    [lancs, movimentos, lancsSaldo, movsSaldo, contas, contasAtivas, loading, contasSaldoSel, atualizarSelecaoContasSaldo, contasSaldoOpcoes],
   );
 
   const abasPrincipais = ABAS_FINANCEIRO;
