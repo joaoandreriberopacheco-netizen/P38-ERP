@@ -4,21 +4,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { montarCorteDiarioMapa, ordenarContasCorteDiario } from '@/lib/corteDiarioMapa';
-import { contaUsaRegraCaixaPDV } from '@/lib/saldoContaFinanceira';
+import { contasIdsFiltroFluxoPadrao } from '@/lib/filtroDataFinanceiro';
 import BalanceteDiaFiltros from './BalanceteDiaFiltros';
 import CorteDiarioPainel from './CorteDiarioPainel';
 
 function contasPadraoCorte(contas = []) {
-  const ativas = contas.filter((c) => c.ativo !== false);
-  const pdv = ativas.filter((c) => contaUsaRegraCaixaPDV(c));
-  const geral = ativas.filter((c) => c.is_caixa_geral);
-  const bancos = ativas.filter((c) => {
-    const tipo = String(c.tipo || '').toLowerCase();
-    return tipo.includes('banc') || tipo.includes('poupan');
-  });
-  const ids = [...pdv, ...geral, ...bancos].map((c) => c.id);
-  if (ids.length) return [...new Set(ids)];
-  return ativas.map((c) => c.id);
+  const ids = contasIdsFiltroFluxoPadrao(contas);
+  if (ids.length) return ids;
+  return contas.filter((c) => c.ativo !== false).map((c) => c.id);
 }
 
 export default function CorteDiarioDialog({

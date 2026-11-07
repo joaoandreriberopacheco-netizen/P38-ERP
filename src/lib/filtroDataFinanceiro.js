@@ -162,3 +162,18 @@ export function isContaOcultaSaldoPadrao(conta) {
   if (nome.includes('pj') && nome.includes('caixa')) return true;
   return false;
 }
+
+/** Contas visíveis no Fluxo por defeito (PP/PJ fora até o utilizador marcar no filtro). */
+export function contasIdsFiltroFluxoPadrao(contas = []) {
+  return (contas || [])
+    .filter((c) => c && c.ativo !== false && !isContaTransicao(c) && !isContaOcultaSaldoPadrao(c))
+    .map((c) => c.id);
+}
+
+export function contasSelEquivaleFiltroFluxoPadrao(contasSel = [], contasAtivas = []) {
+  if (!contasSel.length) return false;
+  const padrao = contasIdsFiltroFluxoPadrao(contasAtivas);
+  if (contasSel.length !== padrao.length) return false;
+  const set = new Set(padrao);
+  return contasSel.every((id) => set.has(id));
+}

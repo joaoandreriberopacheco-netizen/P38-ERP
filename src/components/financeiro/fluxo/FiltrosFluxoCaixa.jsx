@@ -174,20 +174,37 @@ function PeriodoPicker({ periodo, onPeriodo, customStart, customEnd, onCustom, i
 
 // ─── Filtro Contas ────────────────────────────────────────────────────────────
 function ContasFiltro({ contas, sel, onSel }) {
-  const allIds = contas.map(c => c.id);
-  const todasSel = contas.length > 0 && sel.length === contas.length;
-  const toggle = (id) => sel.includes(id) ? onSel(sel.filter(c => c !== id)) : onSel([...sel, id]);
-  const handleTodas = () => onSel(todasSel ? [] : allIds);
+  const allIds = contas.map((c) => c.id);
+  /** Vazio = filtro desativado (todas as contas na lista). */
+  const filtroAtivo = sel.length > 0 && sel.length < contas.length;
+  const estaSelecionada = (id) => !sel.length || sel.includes(id);
+
+  const toggle = (id) => {
+    const base = sel.length ? [...sel] : [...allIds];
+    const next = base.includes(id) ? base.filter((c) => c !== id) : [...base, id];
+    if (next.length >= allIds.length || next.length === 0) {
+      onSel([]);
+      return;
+    }
+    onSel(next);
+  };
+
+  const handleTodas = () => onSel([]);
+
+  const label = !filtroAtivo
+    ? 'Todas as contas'
+    : `${sel.length} selecionada${sel.length > 1 ? 's' : ''}`;
+
   return (
     <Popover>
       <PopoverTrigger asChild>
         <button
           type="button"
           className={`flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all shadow-sm
-          ${!todasSel ? P38_CHIP_ACTIVE : P38_CHIP_INACTIVE}`}
+          ${filtroAtivo ? P38_CHIP_ACTIVE : P38_CHIP_INACTIVE}`}
         >
           <Wallet className="w-3.5 h-3.5" />
-          <span>{todasSel ? 'Todas as contas' : `${sel.length} selecionada${sel.length > 1 ? 's' : ''}`}</span>
+          <span>{label}</span>
           <ChevronDown className="w-3 h-3 opacity-70" />
         </button>
       </PopoverTrigger>
@@ -198,7 +215,7 @@ function ContasFiltro({ contas, sel, onSel }) {
         <button
           type="button"
           onClick={handleTodas}
-          className={`w-full text-left px-3 py-2 rounded-2xl text-xs mb-1.5 transition-colors ${todasSel
+          className={`w-full text-left px-3 py-2 rounded-2xl text-xs mb-1.5 transition-colors ${!filtroAtivo
             ? `${P38_CHIP_ACTIVE} font-medium`
             : 'text-muted-foreground hover:bg-secondary/80 dark:hover:bg-[#383e47]'}`}
         >
@@ -208,11 +225,11 @@ function ContasFiltro({ contas, sel, onSel }) {
           {contas.map(c => (
             <label
               key={c.id}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-2xl cursor-pointer transition-all ${sel.includes(c.id)
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-2xl cursor-pointer transition-all ${estaSelecionada(c.id)
                 ? 'bg-secondary/80 dark:bg-[#383e47] shadow-sm'
                 : 'hover:bg-secondary/60 dark:hover:bg-[#383e47]/60'}`}
             >
-              <Checkbox checked={sel.includes(c.id)} onCheckedChange={() => toggle(c.id)} className="w-4 h-4" />
+              <Checkbox checked={estaSelecionada(c.id)} onCheckedChange={() => toggle(c.id)} className="w-4 h-4" />
               <span className="w-2.5 h-2.5 rounded-full flex-none shadow-sm" style={{ background: c.cor || '#a4ce33' }} />
               <span className="text-xs truncate text-foreground/90">{c.nome}</span>
             </label>

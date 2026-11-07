@@ -84,6 +84,8 @@ import { consolidarTransferenciasListaFluxo } from '@/lib/gruposMovimentacaoCont
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   DATA_CORTE_HISTORICO_PADRAO,
+  contasIdsFiltroFluxoPadrao,
+  contasSelEquivaleFiltroFluxoPadrao,
   gravarPreferenciasCorteHistorico,
   isContaTransicao,
   lerPreferenciasCorteHistorico,
@@ -256,7 +258,7 @@ export default function ExecucaoOrcamentaria() {
         if (cancelled) return;
         setContas(cts);
         const ativas = cts.filter((c) => c.ativo !== false);
-        setContasSel((prev) => (prev.length ? prev : ativas.map((c) => c.id)));
+        setContasSel((prev) => (prev.length ? prev : contasIdsFiltroFluxoPadrao(ativas)));
       } catch (error) {
         console.error('[Fluxo de Caixa] Erro ao carregar contas:', error);
       }
@@ -356,8 +358,6 @@ export default function ExecucaoOrcamentaria() {
     try {
       const cts = await base44.entities.ContasFinanceiras.list();
       setContas(cts);
-      const ativas = cts.filter((c) => c.ativo !== false);
-      setContasSel((prev) => (prev.length ? prev : ativas.map((c) => c.id)));
 
       const { lancs: ls, movimentos: movs } = await carregarDadosPeriodo({
         ds,
@@ -626,7 +626,10 @@ export default function ExecucaoOrcamentaria() {
   });
 
   const totalPend = useMemo(() => lancs.filter(l => l.status_conciliacao === 'Pendente').length, [lancs]);
-  const hasActiveFilters = tiposSel.length > 0 || contasSel.length > 0 || statusSel.length > 0 || pendentes || cmvOnly || mostrarHistoricoAnterior || !!search;
+  const filtroContasDesviouPadrao = contasAtivas.length > 0
+    && !contasSelEquivaleFiltroFluxoPadrao(contasSel, contasAtivas)
+    && !(contasSel.length === 0);
+  const hasActiveFilters = tiposSel.length > 0 || filtroContasDesviouPadrao || statusSel.length > 0 || pendentes || cmvOnly || mostrarHistoricoAnterior || !!search;
 
   const abrirConciliacao = useCallback((conta) => {
     if (conta === null) {
@@ -1084,7 +1087,7 @@ export default function ExecucaoOrcamentaria() {
           setCs('');
           setCe('');
           setTiposSel([]);
-          setContasSel(contasAtivas.map((conta) => conta.id));
+          setContasSel(contasIdsFiltroFluxoPadrao(contasAtivas));
           setStatusSel([]);
           setPendentes(false);
           setCmvOnly(false);
