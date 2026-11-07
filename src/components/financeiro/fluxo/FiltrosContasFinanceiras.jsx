@@ -95,7 +95,7 @@ export default function FiltrosContasFinanceiras({
             <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Contas de migração</p>
             <button
               type="button"
-              onClick={() => onMostrarContasOcultas(!mostrarContasOcultas)}
+              onClick={() => onMostrarContasOcultas()}
               className={`rounded-full px-2.5 py-1.5 text-xs font-medium transition-colors ${mostrarContasOcultas ? P38_CHIP_ACTIVE : P38_CHIP_INACTIVE}`}
             >
               Mostrar Caixa PP / PJ

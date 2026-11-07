@@ -17,6 +17,7 @@ import KpiContasBar from './fluxo/KpiContasBar';
 import ContasSaldoPicker from './fluxo/ContasSaldoPicker';
 import FiltrosContasFinanceiras, { TIPOS_CONTA } from './fluxo/FiltrosContasFinanceiras';
 import ListaContasFinanceiras from './fluxo/ListaContasFinanceiras';
+import { marcarPadraoContasFluxo, marcarTodasContasFluxo } from './fluxo/contasFluxoSelecaoUi';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from './fluxo/FinanceiroListaMeta';
 import {
   calcularSaldosAposDataCorte,
@@ -25,6 +26,10 @@ import {
 } from '@/lib/saldoContaFinanceira';
 import {
   DATA_CORTE_HISTORICO_PADRAO,
+  contasAtivasOperacionais,
+  contasSelEfetivoFluxo,
+  contasSelEquivaleFiltroFluxoPadrao,
+  contasSelModoTodasContas,
   gravarPreferenciasCorteHistorico,
   isContaOcultaSaldoPadrao,
   isContaTransicao,
@@ -33,7 +38,6 @@ import {
 } from '@/lib/filtroDataFinanceiro';
 import { getDataAncoraFluxoKey } from '@/lib/lancamentoFinanceiroStatus';
 import {
-  contasParaSaldoKpi,
   gravarPreferenciasSaldoContas,
   lerPreferenciasSaldoContas,
   migrarPreferenciasSaldoLegadoFluxo,
@@ -81,8 +85,8 @@ function useGestaoContasModel(shared) {
   const [dataCorteHistorico, setDataCorteHistorico] = useState(
     () => lerPreferenciasCorteHistorico().dataCorte || DATA_CORTE_HISTORICO_PADRAO,
   );
-  const [contasSaldoSelLocal, setContasSaldoSelLocal] = useState([]);
-  const [mostrarContasOcultas, setMostrarContasOcultas] = useState(false);
+  /** Mesma semântica do Fluxo: `[]` = operacionais (sem PP/PJ). */
+  const [contasSelLocal, setContasSelLocal] = useState([]);
 
   const atualizarCorteHistorico = useCallback((mostrar, dataCorte) => {
     setMostrarHistoricoAnterior(mostrar);
@@ -94,19 +98,39 @@ function useGestaoContasModel(shared) {
   const lancamentos = shared?.lancs ?? lancamentosLocal;
   const movimentosCaixa = shared?.movimentos ?? movimentosLocal;
   const loading = shared ? shared.loading : loadingLocal;
-  const contasSaldoSel = shared?.contasSaldoSel ?? contasSaldoSelLocal;
-  const contasSaldoOpcoes = shared?.contasSaldoOpcoes ?? accounts.filter(
-    (c) => c.ativo !== false && !isContaTransicao(c) && !isContaOcultaSaldoPadrao(c),
+  const contasAtivasLista = shared?.contasAtivas ?? contasAtivasOperacionais(accounts);
+  const contasSel = shared?.contasSel ?? contasSelLocal;
+  const contasPickerOpcoes = shared?.contasPickerOpcoes ?? contasAtivasLista.filter(
+    (c) => !isContaTransicao(c) && !isContaOcultaSaldoPadrao(c),
   );
 
-  const atualizarContasSaldoSel = useCallback((ids) => {
+  const atualizarSelecaoContas = useCallback((ids) => {
+    if (shared?.atualizarSelecaoContasFluxo) {
+      shared.atualizarSelecaoContasFluxo(ids);
+      return;
+    }
     if (shared?.atualizarContasSaldoSel) {
       shared.atualizarContasSaldoSel(ids);
       return;
     }
-    setContasSaldoSelLocal(ids);
+    setContasSelLocal(ids);
     gravarPreferenciasSaldoContas(ids);
   }, [shared]);
+
+  const incluiContasOcultas = useMemo(() => {
+    const ocultas = contasAtivasLista.filter((c) => isContaOcultaSaldoPadrao(c));
+    if (!ocultas.length) return false;
+    const efetivos = new Set(contasSelEfetivoFluxo(contasSel, contasAtivasLista));
+    return ocultas.some((c) => efetivos.has(c.id));
+  }, [contasSel, contasAtivasLista]);
+
+  const toggleContasOcultasLista = useCallback(() => {
+    if (incluiContasOcultas) {
+      atualizarSelecaoContas(marcarPadraoContasFluxo());
+      return;
+    }
+    atualizarSelecaoContas(marcarTodasContasFluxo(contasAtivasLista));
+  }, [atualizarSelecaoContas, contasAtivasLista, incluiContasOcultas]);
 
   const aplicarSaldoBase = useCallback((lancsFull, movsFull) => {
     if (!Array.isArray(lancsFull) || !Array.isArray(movsFull)) return false;
@@ -180,7 +204,7 @@ function useGestaoContasModel(shared) {
     if (!ativas.length) return;
     const brutos = migrarPreferenciasSaldoLegadoFluxo(lerPreferenciasSaldoContas(), ativas);
     const restaurar = sanitizarPreferenciasSaldoContas(brutos, ativas);
-    setContasSaldoSelLocal((prev) => {
+    setContasSelLocal((prev) => {
       const base = prev.length ? sanitizarPreferenciasSaldoContas(prev, ativas) : restaurar;
       if (base.length !== prev.length) gravarPreferenciasSaldoContas(base);
       return base;
@@ -230,13 +254,17 @@ function useGestaoContasModel(shared) {
     [contasEnriquecidas],
   );
 
-  const contasNoSaldoKpi = useMemo(
-    () => contasParaSaldoKpi(contasSaldoSel, contasSaldoOpcoes),
-    [contasSaldoSel, contasSaldoOpcoes],
+  const idsContasVisiveis = useMemo(
+    () => new Set(contasSelEfetivoFluxo(contasSel, contasAtivasLista)),
+    [contasSel, contasAtivasLista],
   );
 
-  const filtrados = useMemo(() => contasOperacionais.filter((account) => {
-    if (!mostrarContasOcultas && isContaOcultaSaldoPadrao(account)) return false;
+  const contasVisiveisSelecao = useMemo(
+    () => contasOperacionais.filter((account) => idsContasVisiveis.has(account.id)),
+    [contasOperacionais, idsContasVisiveis],
+  );
+
+  const filtrados = useMemo(() => contasVisiveisSelecao.filter((account) => {
     if (statusFiltro === 'ativas' && account.ativo === false) return false;
     if (statusFiltro === 'inativas' && account.ativo !== false) return false;
     if (tipoFiltro !== 'todos' && account.tipo !== tipoFiltro) return false;
@@ -251,7 +279,7 @@ function useGestaoContasModel(shared) {
       );
     }
     return true;
-  }), [contasOperacionais, mostrarContasOcultas, statusFiltro, tipoFiltro, somentePendencias, pendenciasConciliacao, search]);
+  }), [contasVisiveisSelecao, statusFiltro, tipoFiltro, somentePendencias, pendenciasConciliacao, search]);
 
   const kpis = useMemo(() => {
     let saldoTotal = 0;
@@ -261,9 +289,8 @@ function useGestaoContasModel(shared) {
     let saldoNegativo = 0;
     let pendencias = 0;
 
-    contasOperacionais.forEach((a) => {
+    contasVisiveisSelecao.forEach((a) => {
       if (!saldosProntos || !saldosCalculados) return;
-      if (!contasNoSaldoKpi.some((c) => c.id === a.id)) return;
       const saldo = getSaldoExibicaoConta(a, saldosCalculados);
       saldoTotal += saldo;
       if (a.ativo !== false) qtdAtivas++;
@@ -277,14 +304,14 @@ function useGestaoContasModel(shared) {
 
     return {
       saldoTotal: saldosProntos ? saldoTotal : null,
-      qtdTotal: contasOperacionais.length,
+      qtdTotal: contasVisiveisSelecao.length,
       qtdAtivas,
       qtdInativas,
       negativas,
       saldoNegativo: Math.abs(saldoNegativo),
       pendencias,
     };
-  }, [contasOperacionais, contasNoSaldoKpi, saldosCalculados, pendenciasConciliacao, saldosProntos]);
+  }, [contasVisiveisSelecao, saldosCalculados, pendenciasConciliacao, saldosProntos]);
 
   const grupos = useMemo(() => {
     const map = {};
@@ -303,7 +330,10 @@ function useGestaoContasModel(shared) {
   }, [filtrados]);
 
   const totalPendencias = kpis.pendencias;
-  const hasActiveFilters = tipoFiltro !== 'todos' || statusFiltro !== 'ativas' || somentePendencias || mostrarHistoricoAnterior || mostrarContasOcultas;
+  const selecaoContasPersonalizada = contasSel.length > 0
+    && !contasSelEquivaleFiltroFluxoPadrao(contasSel, contasAtivasLista)
+    && !contasSelModoTodasContas(contasSel, contasAtivasLista);
+  const hasActiveFilters = tipoFiltro !== 'todos' || statusFiltro !== 'ativas' || somentePendencias || mostrarHistoricoAnterior || incluiContasOcultas || selecaoContasPersonalizada;
 
   const resetForm = () => {
     setSelectedAccount(null);
@@ -408,11 +438,12 @@ function useGestaoContasModel(shared) {
     dataCorteHistorico,
     atualizarCorteHistorico,
     saldosProntos,
-    contasSaldoSel,
-    contasSaldoOpcoes,
-    atualizarContasSaldoSel,
-    mostrarContasOcultas,
-    setMostrarContasOcultas,
+    contasSel,
+    contasPickerOpcoes,
+    contasAtivasLista,
+    atualizarSelecaoContas,
+    incluiContasOcultas,
+    toggleContasOcultasLista,
   };
 }
 
@@ -432,9 +463,11 @@ export function GestaoContasKpis({ compact = false }) {
       </div>
       {!compact && (
         <ContasSaldoPicker
-          contas={m.contasSaldoOpcoes}
-          sel={m.contasSaldoSel}
-          onSel={m.atualizarContasSaldoSel}
+          contas={m.contasPickerOpcoes}
+          sel={m.contasSel}
+          onSel={m.atualizarSelecaoContas}
+          contasTodasParaMarcar={m.contasAtivasLista}
+          modoFluxo
           className="self-start"
         />
       )}
@@ -489,8 +522,9 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
     dataCorteHistorico,
     atualizarCorteHistorico,
     saldosProntos,
-    mostrarContasOcultas,
-    setMostrarContasOcultas,
+    incluiContasOcultas,
+    toggleContasOcultasLista,
+    atualizarSelecaoContas,
   } = m;
 
   const tipoLabel = TIPOS_CONTA.find((t) => t.v === tipoFiltro)?.l;
@@ -513,8 +547,8 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
       dataCorteHistorico={dataCorteHistorico}
       onMostrarHistoricoAnterior={(v) => atualizarCorteHistorico(v, dataCorteHistorico)}
       onDataCorteHistorico={(v) => atualizarCorteHistorico(mostrarHistoricoAnterior, v || DATA_CORTE_HISTORICO_PADRAO)}
-      mostrarContasOcultas={mostrarContasOcultas}
-      onMostrarContasOcultas={setMostrarContasOcultas}
+      mostrarContasOcultas={incluiContasOcultas}
+      onMostrarContasOcultas={toggleContasOcultasLista}
     />
   );
 
@@ -529,7 +563,7 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
         setTipoFiltro('todos');
         setStatusFiltro('ativas');
         setSomentePendencias(false);
-        setMostrarContasOcultas(false);
+        atualizarSelecaoContas(marcarPadraoContasFluxo());
         setSearch('');
       }}
       summaryChips={
@@ -566,7 +600,7 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
             {mostrarHistoricoAnterior && (
               <FinanceiroSummaryChip>Histórico completo</FinanceiroSummaryChip>
             )}
-            {mostrarContasOcultas && (
+            {incluiContasOcultas && (
               <FinanceiroSummaryChip>Caixa PP / PJ visíveis</FinanceiroSummaryChip>
             )}
           </>

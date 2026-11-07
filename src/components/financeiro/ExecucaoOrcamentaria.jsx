@@ -863,11 +863,14 @@ export default function ExecucaoOrcamentaria() {
       contasAtivas,
       loading,
       reload: load,
+      contasSel,
       contasSaldoSel,
-      atualizarContasSaldoSel: atualizarSelecaoContasSaldo,
+      atualizarSelecaoContasFluxo,
+      atualizarContasSaldoSel: atualizarSelecaoContasFluxo,
       contasSaldoOpcoes,
+      contasPickerOpcoes: contasPickerFluxoOpcoes,
     }),
-    [lancs, movimentos, lancsSaldo, movsSaldo, contas, contasAtivas, loading, contasSaldoSel, atualizarSelecaoContasSaldo, contasSaldoOpcoes],
+    [lancs, movimentos, lancsSaldo, movsSaldo, contas, contasAtivas, loading, contasSel, contasSaldoSel, atualizarSelecaoContasFluxo, contasSaldoOpcoes, contasPickerFluxoOpcoes],
   );
 
   const abasPrincipais = ABAS_FINANCEIRO;
@@ -968,9 +971,11 @@ export default function ExecucaoOrcamentaria() {
               {caixasAtiva && (
                 <ContasSaldoPicker
                   variant="icon"
-                  contas={contasSaldoOpcoes}
-                  sel={contasSaldoSel}
-                  onSel={atualizarSelecaoContasSaldo}
+                  contas={contasPickerFluxoOpcoes}
+                  sel={contasSel}
+                  onSel={atualizarSelecaoContasFluxo}
+                  modoFluxo
+                  contasTodasParaMarcar={contasAtivas}
                 />
               )}
             </div>
