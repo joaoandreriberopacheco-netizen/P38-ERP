@@ -5,7 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { P38_CHIP_ACTIVE, P38_CHIP_INACTIVE, P38_POPOVER } from './financeiroP38';
 import { labelContasSaldoSelecionadas } from '@/lib/preferenciasSaldoContas';
-import { FinanceiroPopoverToolbarIcon } from './FinanceiroToolbarIcon';
+import { FINANCEIRO_TOOLBAR_ICON_CLASS } from './FinanceiroToolbarIcon';
 import {
   contaMarcadaNoFluxo,
   filtroContasFluxoAtivo,
@@ -136,17 +136,32 @@ export default function ContasSaldoPicker({
     </>
   );
 
+  const triggerAtivo = modoFluxo ? fluxoAtivo : !caixasTodas;
+
   if (variant === 'icon') {
     return (
-      <Popover>
-        <FinanceiroPopoverToolbarIcon
-          label={tooltipLabel}
-          active={modoFluxo ? fluxoAtivo : !caixasTodas}
-          className={className}
+      <Popover modal={false}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className={cn(
+              FINANCEIRO_TOOLBAR_ICON_CLASS,
+              triggerAtivo && 'ring-1 ring-[#4a5240] dark:ring-[#a4ce33]',
+              className,
+            )}
+            aria-label={tooltipLabel}
+            aria-haspopup="dialog"
+            title={tooltipLabel}
+          >
+            <Wallet className="h-4 w-4 text-foreground/90" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent
+          className={cn('z-[80] w-64 p-2.5', P38_POPOVER)}
+          align="end"
+          sideOffset={8}
+          onOpenAutoFocus={(e) => e.preventDefault()}
         >
-          <Wallet className="h-4 w-4 text-foreground/90" />
-        </FinanceiroPopoverToolbarIcon>
-        <PopoverContent className={cn('w-64 p-2.5', P38_POPOVER)} align="end">
           {painel}
         </PopoverContent>
       </Popover>
@@ -154,7 +169,7 @@ export default function ContasSaldoPicker({
   }
 
   return (
-    <Popover>
+    <Popover modal={false}>
       <PopoverTrigger asChild>
         <button
           type="button"
@@ -170,7 +185,12 @@ export default function ContasSaldoPicker({
           <span className="max-w-[9rem] truncate sm:max-w-[12rem]">{label}</span>
         </button>
       </PopoverTrigger>
-      <PopoverContent className={cn('w-64 p-2.5', P38_POPOVER)} align="start">
+      <PopoverContent
+        className={cn('z-[80] w-64 p-2.5', P38_POPOVER)}
+        align="start"
+        sideOffset={8}
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         {painel}
       </PopoverContent>
     </Popover>

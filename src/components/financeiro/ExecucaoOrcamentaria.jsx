@@ -968,20 +968,10 @@ export default function ExecucaoOrcamentaria() {
                   </FinanceiroToolbarIcon>
                 </div>
               )}
-              {caixasAtiva && (
-                <ContasSaldoPicker
-                  variant="icon"
-                  contas={contasPickerFluxoOpcoes}
-                  sel={contasSel}
-                  onSel={atualizarSelecaoContasFluxo}
-                  modoFluxo
-                  contasTodasParaMarcar={contasAtivas}
-                />
-              )}
             </div>
           </TooltipProvider>
         ) : (
-          aba === 'fluxo' && (
+          (aba === 'fluxo' || caixasAtiva) && (
             <TooltipProvider delayDuration={300}>
               <div className="flex shrink-0 items-center gap-0.5 no-pdf-capture overflow-x-auto overscroll-x-contain touch-pan-x no-scrollbar">
                 <ContasSaldoPicker
@@ -992,13 +982,17 @@ export default function ExecucaoOrcamentaria() {
                   modoFluxo
                   contasTodasParaMarcar={contasAtivas}
                 />
-                <TipoFiltroBar sel={tiposSel} onSel={setTiposSel} />
-                <FinanceiroToolbarIcon
-                  label="Relatórios — balancete e extrato"
-                  onClick={abrirMenuRelatorios}
-                >
-                  <Printer className="w-4 h-4 text-foreground/90" />
-                </FinanceiroToolbarIcon>
+                {aba === 'fluxo' && (
+                  <>
+                    <TipoFiltroBar sel={tiposSel} onSel={setTiposSel} />
+                    <FinanceiroToolbarIcon
+                      label="Relatórios — balancete e extrato"
+                      onClick={abrirMenuRelatorios}
+                    >
+                      <Printer className="w-4 h-4 text-foreground/90" />
+                    </FinanceiroToolbarIcon>
+                  </>
+                )}
               </div>
             </TooltipProvider>
           )
@@ -1038,7 +1032,7 @@ export default function ExecucaoOrcamentaria() {
         </div>
       )}
 
-      {caixasAtiva && <GestaoContasKpis compact={isCompactShell} />}
+      {caixasAtiva && <GestaoContasKpis />}
     </div>
   );
 

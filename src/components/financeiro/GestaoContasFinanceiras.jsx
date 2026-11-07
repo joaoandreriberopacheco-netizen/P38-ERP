@@ -452,25 +452,24 @@ function GestaoContasProvider({ shared, children }) {
   return <GestaoContasCtx.Provider value={value}>{children}</GestaoContasCtx.Provider>;
 }
 
-/** KPIs — faixa compacta (mobile e desktop). */
-export function GestaoContasKpis({ compact = false }) {
+/** KPIs — faixa compacta (mobile e desktop). Ícone carteira abre o seletor ao lado do saldo. */
+export function GestaoContasKpis() {
   const m = useContext(GestaoContasCtx);
   if (!m) return null;
   return (
-    <div className={cn('flex min-w-0 items-center gap-2', !compact && 'flex-col gap-2 sm:flex-row sm:items-center sm:gap-3')}>
+    <div className="flex min-w-0 items-center gap-1.5 md:gap-2">
       <div className="min-w-0 flex-1">
         <KpiContasBar kpis={m.kpis} saldosProntos={m.saldosProntos} />
       </div>
-      {!compact && (
-        <ContasSaldoPicker
-          contas={m.contasPickerOpcoes}
-          sel={m.contasSel}
-          onSel={m.atualizarSelecaoContas}
-          contasTodasParaMarcar={m.contasAtivasLista}
-          modoFluxo
-          className="self-start"
-        />
-      )}
+      <ContasSaldoPicker
+        variant="icon"
+        contas={m.contasPickerOpcoes}
+        sel={m.contasSel}
+        onSel={m.atualizarSelecaoContas}
+        contasTodasParaMarcar={m.contasAtivasLista}
+        modoFluxo
+        className="shrink-0"
+      />
     </div>
   );
 }

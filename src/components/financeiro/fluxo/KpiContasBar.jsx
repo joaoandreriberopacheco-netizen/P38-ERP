@@ -4,9 +4,10 @@ import { cn } from '@/lib/utils';
 import { formatKpiValor } from './FinanceiroKpiInline';
 import { P38_ACCENT } from './financeiroP38';
 
-function KpiSegment({ icon: Icon, value, valueClass, iconClass }) {
+function KpiSegment({ icon: Icon, value, valueClass, iconClass, hint }) {
   return (
     <span
+      title={hint}
       className={cn(
         'inline-flex shrink-0 items-center gap-1 tabular-nums text-[11px] font-semibold md:text-xs',
         valueClass,
@@ -53,6 +54,7 @@ export default function KpiContasBar({ kpis, saldosProntos = false }) {
         value={String(kpis.qtdTotal)}
         valueClass="text-foreground"
         iconClass="text-foreground/70"
+        hint="Quantidade de contas na lista — para filtrar, use o ícone carteira ao lado"
       />
       {kpis.pendencias > 0 && (
         <>
