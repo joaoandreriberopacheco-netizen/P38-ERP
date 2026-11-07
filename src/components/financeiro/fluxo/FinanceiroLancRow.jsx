@@ -1,6 +1,6 @@
 import React from 'react';
 import { formatarDataCurta } from '@/components/utils/dateUtils';
-import { AlertCircle, ArrowRightLeft, Clock } from 'lucide-react';
+import { AlertCircle, ArrowDown, ArrowRightLeft, ArrowUp } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   P38MobileLine,
@@ -67,8 +67,10 @@ function valorNode(l) {
   if (cancelado) return '—';
   if (isT) return formatFinanceiroValor(Math.abs(l.valor || 0));
 
+  const valorFmt = formatFinanceiroValor(Math.abs(l.valor || 0));
+
   return (
-    <>
+    <span className="inline-flex items-center justify-end gap-0.5 tabular-nums">
       <span
         className={
           isR
@@ -80,9 +82,67 @@ function valorNode(l) {
       >
         {isR ? '+' : '−'}
       </span>
-      {formatFinanceiroValor(Math.abs(l.valor || 0))}
-    </>
+      {valorFmt}
+    </span>
   );
+}
+
+/** entrada = seta verde ↑ | saida = seta vermelha ↓ (extrato) | neutra = sem seta (fluxo multi-conta) */
+export function resolverDirecaoSetaTransferencia(l, contaVisualizadaId = null) {
+  if (!l || l.status === 'Cancelado') return null;
+  const eTransfer = tipoLinha(l) === 'Transferência' || isTransferenciaEntreContas(l);
+  if (!eTransfer) return null;
+
+  const perspectiva = l.perspectivaTransferencia;
+  if (perspectiva === 'entrada') return 'entrada';
+  if (perspectiva === 'saida') return 'saida';
+  if (perspectiva === 'neutra') return null;
+
+  if (contaVisualizadaId) {
+    const destinoId = l.conta_destino_id || (l.tipo === 'Receita' ? l.conta_financeira_id : null);
+    const origemId =
+      l.conta_origem_id || (l.tipo === 'Despesa' ? l.conta_financeira_id : null) || l.conta_financeira_id;
+    if (destinoId === contaVisualizadaId && origemId !== contaVisualizadaId) return 'entrada';
+    if (origemId === contaVisualizadaId && destinoId && destinoId !== contaVisualizadaId) return 'saida';
+  }
+
+  if (l.tipo === 'Receita' && isTransferenciaEntreContas(l)) return 'entrada';
+  if (l.tipo === 'Despesa' && isTransferenciaEntreContas(l)) return 'saida';
+
+  return null;
+}
+
+function setaTipoAoLadoValor(l, contaVisualizadaId = null) {
+  const cancelado = l.status === 'Cancelado';
+  if (cancelado) return null;
+
+  const dirTransf = resolverDirecaoSetaTransferencia(l, contaVisualizadaId);
+  if (dirTransf === 'entrada') {
+    return (
+      <ArrowUp
+        className="h-3 w-3 shrink-0 opacity-80 text-green-600 dark:text-green-400"
+        aria-hidden
+      />
+    );
+  }
+  if (dirTransf === 'saida') {
+    return (
+      <ArrowDown
+        className="h-3 w-3 shrink-0 opacity-80 text-red-500 dark:text-red-400"
+        aria-hidden
+      />
+    );
+  }
+
+  const tipo = tipoLinha(l);
+  if (tipo === 'Transferência') return null;
+
+  const isR = tipo === 'Receita';
+  const Icon = isR ? ArrowUp : ArrowDown;
+  const iconClass = isR
+    ? 'text-green-600 dark:text-green-400'
+    : 'text-red-500 dark:text-red-400';
+  return <Icon className={cn('h-3 w-3 shrink-0 opacity-80', iconClass)} aria-hidden />;
 }
 
 function rowMeta(l, { showPago = false, dimProgramada = false } = {}) {
@@ -138,13 +198,18 @@ export default function FinanceiroLancRow({
   selecionarPagos = false,
   selecionado = false,
   onToggleSelecionado,
+  contaVisualizadaId = null,
 }) {
   const cancelado = l.status === 'Cancelado';
   const isPago = l.status === 'Pago' || !!l.data_pagamento;
   const podeSelecionar = emSelecao && (selecionarPagos ? isPago : !isPago);
   const conc = l.status_conciliacao || 'N/A';
-  const isTransfConsolidada = l.isTransferenciaConsolidada || l.perspectivaTransferencia === 'neutra';
-  const perspectiva = l.perspectivaTransferencia;
+
+  const dirExtrato = contaVisualizadaId ? resolverDirecaoSetaTransferencia(l, contaVisualizadaId) : null;
+  const perspectiva = dirExtrato || l.perspectivaTransferencia;
+  const isTransfConsolidada =
+    !contaVisualizadaId && (l.isTransferenciaConsolidada || l.perspectivaTransferencia === 'neutra');
+
   const data =
     dataField === 'vencimento'
       ? l.data_vencimento
@@ -157,7 +222,7 @@ export default function FinanceiroLancRow({
       {podeSelecionar && (
         <Checkbox checked={selecionado} onCheckedChange={() => onToggleSelecionado?.(l.id)} />
       )}
-      {conc === 'Pendente' && <Clock className="h-2.5 w-2.5 text-muted-foreground" />}
+      {setaTipoAoLadoValor(l, contaVisualizadaId)}
       {conc === 'Discrepância' && <AlertCircle className="h-2.5 w-2.5 text-muted-foreground" />}
     </>
   );
@@ -198,7 +263,9 @@ export default function FinanceiroLancRow({
       </span>
     </span>
   ) : (
-    <span className={cn('line-clamp-2 normal-case leading-snug', cancelado && 'line-through')}>{l.descricao}</span>
+    <span className={cn('line-clamp-2 normal-case leading-snug break-words', cancelado && 'line-through')}>
+      {l.descricao}
+    </span>
   );
 
   const lancamentoClick = l._lancamentoTransferencia || (isTransfConsolidada ? (l._lancamentoDespesa || l) : l);
