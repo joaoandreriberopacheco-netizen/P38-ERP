@@ -1,7 +1,5 @@
-import { DATA_CORTE_HISTORICO_PADRAO } from './filtroDataFinanceiro.js';
-
 /** Data do corte de abertura (mesma referência do Fluxo e scripts de migração). */
-export const DATA_CORTE_FINANCEIRO_ABERTURA = DATA_CORTE_HISTORICO_PADRAO;
+export const DATA_CORTE_FINANCEIRO_ABERTURA = '2026-11-06';
 
 /** Saldos de abertura em 06/11/2026 — documentação canónica. */
 export const SALDOS_ABERTURA_CORTE_2026_11_06 = Object.freeze({
