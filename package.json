@@ -48,6 +48,8 @@
     "financeiro:migrar-cartao-credito-pagbank:apply": "node scripts/migrar-cartao-credito-06-11-pagbank.mjs --apply",
     "financeiro:pv-05055-data-pre-corte": "node scripts/ajustar-pv-05055-data-pre-corte.mjs",
     "financeiro:pv-05055-data-pre-corte:apply": "node scripts/ajustar-pv-05055-data-pre-corte.mjs --apply",
+    "financeiro:corrigir-datas-pagbank-venda": "node scripts/corrigir-datas-lancamentos-pagbank-venda.mjs",
+    "financeiro:corrigir-datas-pagbank-venda:apply": "node scripts/corrigir-datas-lancamentos-pagbank-venda.mjs --apply",
     "audit:pedido-sugestao": "node scripts/audit-pedido-sugestao-estoque.mjs",
     "audit:estoque-canonico": "node scripts/audit-estoque-canonico.mjs",
     "audit:valor-tela": "node scripts/audit-consistencia-valor-tela.mjs",
