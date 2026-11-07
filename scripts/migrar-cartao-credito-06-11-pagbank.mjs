@@ -5,12 +5,36 @@
  *   npm run financeiro:migrar-cartao-credito-pagbank              # dry-run
  *   npm run financeiro:migrar-cartao-credito-pagbank:apply       # update rows
  *
+ * Exclusões (não migram para PagBank):
+ *   --exclude=PV-05055   (repetível)
+ *   env PAGBANK_MIGRAR_EXCLUIR_REFS=PV-05055,PV-99999
+ *   + lista padrão EXCLUIR_REFS_MIGRACAO_PAGBANK (PV-05055 — já pago no BB, decisão negócio).
+ *
  * Secrets: NEXT_PUBLIC_SUPABASE_URL (ou VITE_SUPABASE_URL) + SUPABASE_SERVICE_ROLE_KEY.
  */
 import { requireP38SupabaseAdmin } from './p38-supabase-admin.mjs';
 
+/** PV já liquidado no BB — manter fora da migração PagBank (06/11/2026). */
+export const EXCLUIR_REFS_MIGRACAO_PAGBANK = Object.freeze(['PV-05055']);
+
 const DATA_CORTE = '2026-11-06';
 const apply = process.argv.includes('--apply');
+
+function parseExcluirReferencias() {
+  const fromEnv = (process.env.PAGBANK_MIGRAR_EXCLUIR_REFS || '')
+    .split(',')
+    .map((s) => s.trim().toUpperCase())
+    .filter(Boolean);
+  const fromArgv = process.argv
+    .filter((a) => a.startsWith('--exclude='))
+    .map((a) => a.slice('--exclude='.length).trim().toUpperCase())
+    .filter(Boolean);
+  return [...new Set([...EXCLUIR_REFS_MIGRACAO_PAGBANK.map((r) => r.toUpperCase()), ...fromEnv, ...fromArgv])];
+}
+
+function refPedidoVenda(lanc) {
+  return String(lanc?.referencia_numero || lanc?.dados?.referencia_numero || '').trim().toUpperCase();
+}
 
 const norm = (s) =>
   String(s || '')
@@ -88,19 +112,38 @@ if (errLan) {
   process.exit(1);
 }
 
-const rows = (candidatos || []).filter((l) => {
+const excluirRefs = parseExcluirReferencias();
+
+const creditoRows = (candidatos || []).filter((l) => {
   const fpt = l.forma_pagamento_tipo || l.dados?.forma_pagamento_tipo || '';
   return fpt === 'Cartão Crédito' || fpt === 'Cartão de Crédito' || String(fpt).includes('Crédito');
 });
 
+const excluidos = creditoRows.filter((l) => excluirRefs.includes(refPedidoVenda(l)));
+const rows = creditoRows.filter((l) => !excluirRefs.includes(refPedidoVenda(l)));
+
 const dia6 = rows.filter((l) => String(l.data_vencimento || l.dados?.data_vencimento || '').slice(0, 10) === DATA_CORTE);
+
+const totalLiquidoMigrar = rows.reduce(
+  (s, l) => s + Number(l.valor_liquido ?? l.valor ?? 0),
+  0,
+);
 
 const report = {
   dataCorte: DATA_CORTE,
   apply,
+  excluirReferencias: excluirRefs,
+  excluidos: excluidos.map((r) => ({
+    ref: refPedidoVenda(r),
+    data: (r.data_vencimento || '').slice(0, 10),
+    valor: r.valor_liquido ?? r.valor,
+    status: r.status,
+    motivo: 'excluído da migração (referencia_numero)',
+  })),
   contaBancoBrasil: { id: bbId, nome: bb.nome },
   contaPagBank: pagBank ? { id: pagId, nome: pagBank.nome } : null,
   totalEncontrados: rows.length,
+  totalLiquidoMigrar: Math.round(totalLiquidoMigrar * 100) / 100,
   totalDia06: dia6.length,
   idsDia06: dia6.map((r) => r.id),
   amostra: rows.slice(0, 15).map((r) => ({
@@ -143,4 +186,6 @@ for (const l of rows) {
   }
 }
 
-console.log(JSON.stringify({ reaplicados: updated, dia06: dia6.length }, null, 2));
+console.log(
+  JSON.stringify({ reaplicados: updated, dia06: dia6.length, excluirReferencias: excluirRefs }, null, 2),
+);
