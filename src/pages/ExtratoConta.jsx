@@ -736,6 +736,7 @@ export default function ExtratoContaPage() {
       <ListaExtratoConta
         grupos={grupos}
         loading={isLoading}
+        contaVisualizadaId={conta?.id}
         onRow={(l) => {
           if (l?.origem === 'movimento') return;
           setEditando(l);

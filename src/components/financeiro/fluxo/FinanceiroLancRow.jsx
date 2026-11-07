@@ -110,12 +110,57 @@ function valorNode(l) {
   );
 }
 
-function setaTipoAoLadoValor(l) {
-  const tipo = tipoLinha(l);
-  const isR = tipo === 'Receita';
-  const isT = tipo === 'Transferência';
+/** entrada = seta verde ↑ | saida = seta vermelha ↓ */
+function resolverDirecaoSetaTransferencia(l, contaVisualizadaId = null) {
+  if (!l || l.status === 'Cancelado') return null;
+  const eTransfer = tipoLinha(l) === 'Transferência' || isTransferenciaEntreContas(l);
+  if (!eTransfer) return null;
+
+  const perspectiva = l.perspectivaTransferencia;
+  if (perspectiva === 'entrada') return 'entrada';
+  if (perspectiva === 'saida') return 'saida';
+  if (perspectiva === 'neutra') return null;
+
+  if (contaVisualizadaId) {
+    const destinoId = l.conta_destino_id || (l.tipo === 'Receita' ? l.conta_financeira_id : null);
+    const origemId = l.conta_origem_id || (l.tipo === 'Despesa' ? l.conta_financeira_id : null) || l.conta_financeira_id;
+    if (destinoId === contaVisualizadaId && origemId !== contaVisualizadaId) return 'entrada';
+    if (origemId === contaVisualizadaId && destinoId && destinoId !== contaVisualizadaId) return 'saida';
+  }
+
+  if (l.tipo === 'Receita' && isTransferenciaEntreContas(l)) return 'entrada';
+  if (l.tipo === 'Despesa' && isTransferenciaEntreContas(l)) return 'saida';
+  if (l.tipo === 'Transferência' && l.conta_destino_id) return 'saida';
+
+  return null;
+}
+
+function setaTipoAoLadoValor(l, contaVisualizadaId = null) {
   const cancelado = l.status === 'Cancelado';
-  if (cancelado || isT) return null;
+  if (cancelado) return null;
+
+  const dirTransf = resolverDirecaoSetaTransferencia(l, contaVisualizadaId);
+  if (dirTransf === 'entrada') {
+    return (
+      <ArrowUp
+        className="h-3 w-3 shrink-0 opacity-80 text-green-600 dark:text-green-400"
+        aria-hidden
+      />
+    );
+  }
+  if (dirTransf === 'saida') {
+    return (
+      <ArrowDown
+        className="h-3 w-3 shrink-0 opacity-80 text-red-500 dark:text-red-400"
+        aria-hidden
+      />
+    );
+  }
+
+  const tipo = tipoLinha(l);
+  if (tipo === 'Transferência') return null;
+
+  const isR = tipo === 'Receita';
   const Icon = isR ? ArrowUp : ArrowDown;
   const iconClass = isR
     ? 'text-green-600 dark:text-green-400'
@@ -176,6 +221,7 @@ export default function FinanceiroLancRow({
   selecionarPagos = false,
   selecionado = false,
   onToggleSelecionado,
+  contaVisualizadaId = null,
 }) {
   const cancelado = l.status === 'Cancelado';
   const isPago = l.status === 'Pago' || !!l.data_pagamento;
@@ -195,7 +241,7 @@ export default function FinanceiroLancRow({
       {podeSelecionar && (
         <Checkbox checked={selecionado} onCheckedChange={() => onToggleSelecionado?.(l.id)} />
       )}
-      {setaTipoAoLadoValor(l)}
+      {setaTipoAoLadoValor(l, contaVisualizadaId)}
       {conc === 'Discrepância' && <AlertCircle className="h-2.5 w-2.5 text-muted-foreground" />}
     </>
   );
