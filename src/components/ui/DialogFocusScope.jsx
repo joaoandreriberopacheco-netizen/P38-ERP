@@ -8,13 +8,14 @@ import { cn } from '@/lib/utils';
 export default function DialogFocusScope({
   className,
   children,
+  trapped = true,
   onMountAutoFocus,
   onUnmountAutoFocus,
   ...props
 }) {
   return (
     <FocusScope
-      trapped
+      trapped={trapped}
       loop
       className={cn(className)}
       onMountAutoFocus={onMountAutoFocus}

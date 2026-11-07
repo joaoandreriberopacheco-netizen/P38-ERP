@@ -17,6 +17,7 @@ import {
   deltaSaldoConciliacao,
   processarEmLotes,
 } from '@/lib/conciliacaoEmLote';
+import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
 import {
   dataFinanceiraKey,
   hojeFinanceiroStr,
@@ -443,19 +444,21 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <div className="shrink-0 space-y-3 pb-3">
-      <div className="bg-muted/50/50 rounded-2xl p-4 flex items-start gap-3 border border-border/40">
-        <Info className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-        <div className="text-sm text-muted-foreground">
-          <p className="font-medium mb-1 text-foreground/90">
-            {mostrarConciliados ? 'Conciliados' : 'Como conciliar'}
-          </p>
-          <p className="text-xs leading-relaxed">
-            {mostrarConciliados
-              ? 'Visualize e corrija datas de liquidação em lote. Use o filtro por data de pagamento para achar um lote específico.'
-              : `Selecione os lançamentos confirmados no extrato. Operações grandes são processadas em lotes de ${CONCILIACAO_LOTE_TAMANHO}.`}
-          </p>
+      {EXIBIR_UI_CONCILIACAO_FINANCEIRO && (
+        <div className="bg-muted/50/50 rounded-2xl p-4 flex items-start gap-3 border border-border/40">
+          <Info className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+          <div className="text-sm text-muted-foreground">
+            <p className="font-medium mb-1 text-foreground/90">
+              {mostrarConciliados ? 'Conciliados' : 'Como conciliar'}
+            </p>
+            <p className="text-xs leading-relaxed">
+              {mostrarConciliados
+                ? 'Visualize e corrija datas de liquidação em lote. Use o filtro por data de pagamento para achar um lote específico.'
+                : `Selecione os lançamentos confirmados no extrato. Operações grandes são processadas em lotes de ${CONCILIACAO_LOTE_TAMANHO}.`}
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="max-h-[min(34vh,15rem)] space-y-3 overflow-y-auto overscroll-contain rounded-2xl border border-border/40 bg-card/60 p-3 [scrollbar-gutter:stable]">
         <div className="flex flex-wrap items-center justify-between gap-2">

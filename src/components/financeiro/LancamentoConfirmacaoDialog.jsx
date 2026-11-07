@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import { LancamentoFormSheet } from './fluxo/LancamentoPickerDialog';
+import { useRegisterLancamentoModalOpen } from './fluxo/lancamentoModalStack';
 import { useCompactShell } from '@/hooks/use-breakpoint';
 
 function ConfirmacaoBody({ processing, successTitle, successMessage, onCreateAnother, onFinish, createAnotherLabel, finishLabel }) {
@@ -59,6 +60,7 @@ export default function LancamentoConfirmacaoDialog({
 }) {
   const processing = mode === 'processing';
   const isMobile = useCompactShell();
+  useRegisterLancamentoModalOpen(open);
 
   useEffect(() => {
     if (!open || processing) return;

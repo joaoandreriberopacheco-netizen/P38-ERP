@@ -13,6 +13,7 @@ import {
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import FinanceiroFiltrosShell from './FinanceiroFiltrosShell';
+import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
 import FinanceiroCorteHistoricoFiltro from './FinanceiroCorteHistoricoFiltro';
 import {
   P38_CHIP_ACTIVE,
@@ -357,7 +358,9 @@ function FiltrosFluxoPainel({
         <ContasFiltro contas={contas} sel={contasSel} onSel={onContasSel} />
         <StatusFiltro sel={statusSel} onSel={onStatusSel} />
         <CmvFiltro cmvOnly={cmvOnly} onToggle={onCmvOnly} />
-        <ConciliacaoLoteFiltro contas={contas} onOpenConciliacao={onOpenConciliacao} />
+        {EXIBIR_UI_CONCILIACAO_FINANCEIRO && (
+          <ConciliacaoLoteFiltro contas={contas} onOpenConciliacao={onOpenConciliacao} />
+        )}
       </div>
 
       <FinanceiroCorteHistoricoFiltro
@@ -410,9 +413,9 @@ export default function FiltrosFluxoCaixa({
       filtersOpen={filtersOpen}
       onFiltersOpenChange={setFiltersOpen}
       hasActiveFilters={hasPanelFilters}
-      conciliacaoPendente={conciliacaoPendente}
-      pendentes={pendentes}
-      onPendentesToggle={onPendentes}
+      conciliacaoPendente={EXIBIR_UI_CONCILIACAO_FINANCEIRO ? conciliacaoPendente : 0}
+      pendentes={EXIBIR_UI_CONCILIACAO_FINANCEIRO ? pendentes : false}
+      onPendentesToggle={EXIBIR_UI_CONCILIACAO_FINANCEIRO ? onPendentes : undefined}
       ordemLancamentos={ordemLancamentos}
       onOrdemLancamentosChange={onOrdemLancamentosChange}
     >

@@ -21,6 +21,10 @@ import { concluirFluxoTorreCompartilhamento } from '@/lib/torreLancamentoBridge'
 import { useCompactShell } from '@/hooks/use-breakpoint';
 import { useInertAppBackground } from '@/hooks/useInertAppBackground';
 import DialogFocusScope from '@/components/ui/DialogFocusScope';
+import {
+  LancamentoModalStackProvider,
+  useLancamentoModalStackDepth,
+} from './fluxo/lancamentoModalStack';
 import RecorrenciaEscopoDialog from './RecorrenciaEscopoDialog';
 import {
   descricaoPadraoVale,
@@ -963,8 +967,26 @@ export default function NovoLancamentoDialog({
     </div>
   );
 
+  return createPortal(
+    <LancamentoModalStackProvider>
+      <NovoLancamentoDialogPortal layout={layout} onClose={onClose} panel={panel} />
+    </LancamentoModalStackProvider>,
+    document.body,
+  );
+}
+
+function NovoLancamentoDialogPortal({ layout, onClose, panel }) {
+  const nestedDepth = useLancamentoModalStackDepth();
+  const focusTrapped = nestedDepth === 0;
+
+  const focusMount = (event) => {
+    event.preventDefault();
+    const closeBtn = event.currentTarget.querySelector('[data-novo-lancamento-close]');
+    if (closeBtn instanceof HTMLElement) closeBtn.focus();
+  };
+
   if (layout === 'bottomSheet') {
-    return createPortal(
+    return (
       <>
         <button
           type="button"
@@ -982,22 +1004,18 @@ export default function NovoLancamentoDialog({
             role="dialog"
             aria-modal="true"
             aria-labelledby="novo-lancamento-titulo"
+            trapped={focusTrapped}
             className="pointer-events-auto flex h-[92dvh] max-h-[92dvh] w-full max-w-2xl min-h-0 flex-col outline-none"
-            onMountAutoFocus={(event) => {
-              event.preventDefault();
-              const closeBtn = event.currentTarget.querySelector('[data-novo-lancamento-close]');
-              if (closeBtn instanceof HTMLElement) closeBtn.focus();
-            }}
+            onMountAutoFocus={focusMount}
           >
             {panel}
           </DialogFocusScope>
         </div>
-      </>,
-      document.body,
+      </>
     );
   }
 
-  return createPortal(
+  return (
     <>
       <button
         type="button"
@@ -1012,17 +1030,13 @@ export default function NovoLancamentoDialog({
           role="dialog"
           aria-modal="true"
           aria-labelledby="novo-lancamento-titulo"
+          trapped={focusTrapped}
           className="pointer-events-auto flex max-h-[100dvh] w-full max-w-2xl min-h-0 flex-col outline-none"
-          onMountAutoFocus={(event) => {
-            event.preventDefault();
-            const closeBtn = event.currentTarget.querySelector('[data-novo-lancamento-close]');
-            if (closeBtn instanceof HTMLElement) closeBtn.focus();
-          }}
+          onMountAutoFocus={focusMount}
         >
           {panel}
         </DialogFocusScope>
       </div>
-    </>,
-    document.body,
+    </>
   );
 }

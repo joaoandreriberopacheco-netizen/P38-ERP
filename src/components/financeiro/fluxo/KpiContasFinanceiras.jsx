@@ -6,6 +6,7 @@ import {
   FinanceiroKpiStrip,
   formatKpiValor,
 } from './FinanceiroKpiInline';
+import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
 
 export default function KpiContasFinanceiras({ kpis, layout = 'card' }) {
   return (
@@ -26,7 +27,7 @@ export default function KpiContasFinanceiras({ kpis, layout = 'card' }) {
         value={String(kpis.qtdTotal)}
         sub={kpis.qtdInativas > 0 ? `${kpis.qtdInativas} inativa${kpis.qtdInativas > 1 ? 's' : ''}` : null}
       />
-      {kpis.pendencias > 0 && (
+      {EXIBIR_UI_CONCILIACAO_FINANCEIRO && kpis.pendencias > 0 && (
         <FinanceiroKpiItem
           layout={layout}
           icon={Clock}

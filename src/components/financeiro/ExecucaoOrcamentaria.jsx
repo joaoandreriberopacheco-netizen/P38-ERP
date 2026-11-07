@@ -62,6 +62,7 @@ import { P38_PAGE_TITLE } from '@/lib/p38FormTypography';
 import { passaFiltroTiposLancamento, filtrarGruposPorTipo } from '@/lib/filtroTipoFinanceiro';
 import usePagamentoLoteFluxo from './fluxo/usePagamentoLoteFluxo';
 import { CONCILIACAO_LOTE_TAMANHO } from '@/lib/conciliacaoEmLote';
+import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
 import { consumirArquivoLancamentoTorreDoBridge, temFluxoLancamentoTorreAtivo, concluirFluxoTorreCompartilhamento } from '@/lib/torreLancamentoBridge';
 import { uploadAnexoParaLancamentoFinanceiro } from '@/lib/uploadAnexoReferencia';
 import { resolveViewportLayout, useCompactShell } from '@/hooks/use-breakpoint';
@@ -948,7 +949,9 @@ export default function ExecucaoOrcamentaria() {
       {statusSel.length > 0 && (
         <FinanceiroSummaryChip>{statusSel.length} status</FinanceiroSummaryChip>
       )}
-      {pendentes && <FinanceiroSummaryChip>Conciliação</FinanceiroSummaryChip>}
+      {EXIBIR_UI_CONCILIACAO_FINANCEIRO && pendentes && (
+        <FinanceiroSummaryChip>Conciliação</FinanceiroSummaryChip>
+      )}
       {cmvOnly && <FinanceiroSummaryChip>CMV</FinanceiroSummaryChip>}
       {mostrarHistoricoAnterior && (
         <FinanceiroSummaryChip>Histórico completo</FinanceiroSummaryChip>
@@ -975,7 +978,9 @@ export default function ExecucaoOrcamentaria() {
       {statusSel.length > 0 && (
         <FinanceiroSummaryChip>{statusSel.length} status</FinanceiroSummaryChip>
       )}
-      {pendentes && <FinanceiroSummaryChip>Conciliação</FinanceiroSummaryChip>}
+      {EXIBIR_UI_CONCILIACAO_FINANCEIRO && pendentes && (
+        <FinanceiroSummaryChip>Conciliação</FinanceiroSummaryChip>
+      )}
       {cmvOnly && <FinanceiroSummaryChip>CMV</FinanceiroSummaryChip>}
       {mostrarHistoricoAnterior && (
         <FinanceiroSummaryChip>Histórico completo</FinanceiroSummaryChip>
@@ -1366,7 +1371,7 @@ export default function ExecucaoOrcamentaria() {
         }}
       />
 
-      {aba === 'fluxo' && (
+      {aba === 'fluxo' && EXIBIR_UI_CONCILIACAO_FINANCEIRO && (
         <>
           <Dialog open={conciliacaoConta != null} onOpenChange={(open) => !open && setConciliacaoConta(null)}>
             <DialogContent className="flex h-[min(85dvh,90vh)] max-h-[min(85dvh,90vh)] w-[calc(100vw-1rem)] max-w-3xl flex-col gap-0 overflow-hidden border-border/40 p-0 dark:border-border/40 dark:bg-muted">

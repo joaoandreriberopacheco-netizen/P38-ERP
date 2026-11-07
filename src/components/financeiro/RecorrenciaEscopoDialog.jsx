@@ -3,6 +3,10 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { RefreshCw, ChevronRight, FileEdit, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { lancamentoStackDialogClass, lancamentoStackOverlayClass } from './fluxo/LancamentoPickerDialog';
+import {
+  focusPrimeiroCampoModal,
+  useRegisterLancamentoModalOpen,
+} from './fluxo/lancamentoModalStack';
 
 const OPCOES_PAGAMENTO = [
   { value: 'apenas_esta',  label: 'Apenas esta',          desc: 'Altera somente este lançamento' },
@@ -29,6 +33,7 @@ export default function RecorrenciaEscopoDialog({
   stackElevated = false,
 }) {
   const [working, setWorking] = useState(false);
+  useRegisterLancamentoModalOpen(open);
 
   if (!open) return null;
   const opcoes = mode === 'cadastro' ? OPCOES_CADASTRO : OPCOES_PAGAMENTO;
@@ -48,6 +53,7 @@ export default function RecorrenciaEscopoDialog({
           'sm:max-w-xs gap-0 overflow-hidden rounded-2xl p-0 dark:border-border/40 dark:bg-background',
           stackElevated && lancamentoStackDialogClass('sm:max-w-xs'),
         )}
+        onOpenAutoFocus={focusPrimeiroCampoModal}
       >
         <div className="px-5 pt-5 pb-3 flex items-center gap-2">
           <Icon className="w-4 h-4 text-muted-foreground" />

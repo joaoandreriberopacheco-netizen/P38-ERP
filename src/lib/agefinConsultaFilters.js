@@ -26,7 +26,7 @@ export function lancamentoEhFreteItinerario(l) {
 }
 
 export function lancamentoPago(l) {
-  return l?.status === 'Pago';
+  return l?.status === 'Pago' || !!l?.data_pagamento;
 }
 
 /** Conta encerrada administrativamente — não deve aparecer na consulta Agefin nem como dívida. */

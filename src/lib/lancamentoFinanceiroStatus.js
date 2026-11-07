@@ -76,6 +76,17 @@ export function isLancamentoVencido(l, hojeKey = dataHoje()) {
   return !!venc && venc < hojeKey;
 }
 
+/** Status para chips/labels na lista — prioriza pago real (data_pagamento) sobre campo `status` desatualizado. */
+export function statusRotuloListaFinanceiro(l) {
+  if (!l) return null;
+  if (isLancamentoCancelado(l)) return 'Cancelado';
+  if (isLancamentoPago(l)) return 'Pago';
+  if (isLancamentoVencido(l)) return 'Vencido';
+  const s = String(l.status || '').trim();
+  if (s === 'Vencido' || s === 'Em Aberto' || s === 'Pago' || s === 'Cancelado') return s;
+  return s || 'Em Aberto';
+}
+
 /** Tag `conta_pagar` / `conta_receber` / cartão / fiado — regra das contas abertas. */
 export function lancamentoPassaFiltroContasAbertas(l) {
   if (isLancamentoCancelado(l) || l?.tipo === 'Transferência') return false;

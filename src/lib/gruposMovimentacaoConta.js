@@ -13,8 +13,12 @@ import {
   movimentoParticipaExtrato,
   projetarLinhaFluxoCaixa,
   totaisGrupoFluxoCaixa,
+  transferenciaInternaAoFiltro,
 } from '@/lib/saldoContaFinanceira';
-import { projetarTransferenciaParaExibicao } from '@/lib/projecaoTransferenciaFinanceira';
+import {
+  calcularPerspectivaTransferencia,
+  projetarTransferenciaParaExibicao,
+} from '@/lib/projecaoTransferenciaFinanceira';
 import {
   getDataAncoraFluxoKey,
   isLancamentoCancelado,
@@ -178,9 +182,81 @@ function extrairNomesTransferenciaLadoUnico(item, contasById = {}, mapaContrapar
   return null;
 }
 
+function lancamentoBaseTransferencia(item) {
+  return item?._lancamentoTransferencia || item?._lancamentoDespesa || item;
+}
+
+function chaveCanonicaTransferenciaExibicao(item, mapaParIds = null) {
+  const base = lancamentoBaseTransferencia(item);
+  if (base?.tipo === 'Transferência' && base.conta_destino_id) {
+    return `u:${base.id}`;
+  }
+  if (item._lancamentoDespesa?.id && item._lancamentoReceita?.id) {
+    const ids = [item._lancamentoDespesa.id, item._lancamentoReceita.id]
+      .map(String)
+      .sort();
+    return `p:${ids.join(':')}`;
+  }
+  const id = item._lancamentoDespesa?.id || item._lancamentoReceita?.id || item.id;
+  const parId = mapaParIds?.get(id);
+  if (parId) {
+    const ids = [id, parId].map(String).sort();
+    return `p:${ids.join(':')}`;
+  }
+  if (item.conta_origem_id && item.conta_destino_id) {
+    const data = (item.data_pagamento || item.data_vencimento || '').slice(0, 10);
+    return `t:${item.conta_origem_id}:${item.conta_destino_id}:${Number(item.valor || 0).toFixed(2)}:${data}`;
+  }
+  return null;
+}
+
+function pontuacaoLinhaTransferencia(item) {
+  if (item._lancamentoDespesa && item._lancamentoReceita) return 4;
+  if (item._lancamentoTransferencia) return 3;
+  if (item.isTransferenciaConsolidada && item.perspectivaTransferencia === 'neutra') return 3;
+  if (item.isTransferenciaConsolidada) return 2;
+  return 1;
+}
+
+/** No fluxo com várias contas, transferência interna ao filtro aparece uma vez só (neutra A→B). */
+function deduplicarTransferenciasInternasFluxo(
+  items,
+  { contaContext, contasSel, contasById, mapaContrapartes, mapaParIds },
+) {
+  if (contaContext?.id) return items;
+
+  const melhorPorChave = new Map();
+  items.forEach((item) => {
+    const base = lancamentoBaseTransferencia(item);
+    const chave = chaveCanonicaTransferenciaExibicao(item, mapaParIds);
+    if (!chave || !transferenciaInternaAoFiltro(base, contasSel, contasById, mapaContrapartes)) return;
+    const atual = melhorPorChave.get(chave);
+    if (!atual || pontuacaoLinhaTransferencia(item) > pontuacaoLinhaTransferencia(atual)) {
+      melhorPorChave.set(chave, item);
+    }
+  });
+
+  const chavesVistas = new Set();
+  const saida = [];
+  items.forEach((item) => {
+    const base = lancamentoBaseTransferencia(item);
+    const chave = chaveCanonicaTransferenciaExibicao(item, mapaParIds);
+    const interna =
+      chave && transferenciaInternaAoFiltro(base, contasSel, contasById, mapaContrapartes);
+    if (!interna) {
+      saida.push(item);
+      return;
+    }
+    if (chavesVistas.has(chave)) return;
+    chavesVistas.add(chave);
+    saida.push(melhorPorChave.get(chave) || item);
+  });
+  return saida;
+}
+
 function projetarTransferenciaLadoUnico(
   item,
-  { reforcosPorLancamento, mapaParIds, contasById, mapaContrapartes },
+  { reforcosPorLancamento, mapaParIds, contasById, mapaContrapartes, contasSel = [], contaContext = null },
 ) {
   if (!isTransferenciaEntreContas(item) || item.origem === 'movimento') return null;
 
@@ -192,9 +268,12 @@ function projetarTransferenciaLadoUnico(
     ? statusReforcoTransferenciaPdv(reforcosPorLancamento.get(String(receitaId)))
     : null;
 
+  const perspectiva = calcularPerspectivaTransferencia(item, contasSel, contaContext);
+
   return {
     id: `transfer-single-${item.id}`,
-    isTransferenciaConsolidada: true,
+    isTransferenciaConsolidada: perspectiva === 'neutra',
+    perspectivaTransferencia: perspectiva,
     tipoExibicao: 'Transferência',
     tipo: 'Transferência',
     valor: item.valor,
@@ -228,6 +307,10 @@ export function consolidarTransferenciasListaFluxo(
   } = {},
 ) {
   const reforcosPorLancamento = mapReforcosTransferenciaPorLancamentoId(movimentos);
+  const mapaContrapartesEff = mapaContrapartes || buildMapaContrapartesTransferencia(items);
+  const mapaParIdsEff = mapaParIds || buildMapaParIdsTransferencia(items);
+  const byId = new Map(items.map((i) => [i.id, i]));
+
   const grupos = new Map();
   items.forEach((item) => {
     const key = chaveParTransferenciaLancamento(item);
@@ -239,15 +322,17 @@ export function consolidarTransferenciasListaFluxo(
   const consolidados = new Map();
   const receitaOculta = new Set();
 
-  grupos.forEach((grupo) => {
-    const despesa = grupo.find((i) => i.tipo === 'Despesa');
-    const receita = grupo.find((i) => i.tipo === 'Receita');
+  const registrarPar = (despesa, receita) => {
     if (!despesa || !receita) return;
+    if (consolidados.has(despesa.id)) return;
     if (Math.abs(Number(despesa.valor || 0) - Number(receita.valor || 0)) > 0.009) return;
+
+    const perspectiva = calcularPerspectivaTransferencia(despesa, contasSel, contaContext);
 
     consolidados.set(despesa.id, {
       id: `transfer-par-${despesa.id}-${receita.id}`,
-      isTransferenciaConsolidada: true,
+      isTransferenciaConsolidada: perspectiva === 'neutra',
+      perspectivaTransferencia: perspectiva,
       tipoExibicao: 'Transferência',
       tipo: 'Transferência',
       valor: despesa.valor,
@@ -272,11 +357,25 @@ export function consolidarTransferenciasListaFluxo(
       _lancamentoReceita: receita,
     });
     receitaOculta.add(receita.id);
+  };
+
+  grupos.forEach((grupo) => {
+    const despesa = grupo.find((i) => i.tipo === 'Despesa');
+    const receita = grupo.find((i) => i.tipo === 'Receita');
+    registrarPar(despesa, receita);
   });
 
-  const parIds = mapaParIds || buildMapaParIdsTransferencia(items);
+  mapaParIdsEff.forEach((parId, id) => {
+    if (String(id) > String(parId)) return;
+    const a = byId.get(id);
+    const b = byId.get(parId);
+    if (!a || !b) return;
+    const despesa = a.tipo === 'Despesa' ? a : b.tipo === 'Despesa' ? b : null;
+    const receita = a.tipo === 'Receita' ? a : b.tipo === 'Receita' ? b : null;
+    registrarPar(despesa, receita);
+  });
 
-  return items
+  const mapeados = items
     .filter((item) => !receitaOculta.has(item.id))
     .map((item) => {
       if (consolidados.has(item.id)) return consolidados.get(item.id);
@@ -289,13 +388,23 @@ export function consolidarTransferenciasListaFluxo(
       if (unico) return unico;
       const projetado = projetarTransferenciaLadoUnico(item, {
         reforcosPorLancamento,
-        mapaParIds: parIds,
+        mapaParIds: mapaParIdsEff,
         contasById,
-        mapaContrapartes,
+        mapaContrapartes: mapaContrapartesEff,
+        contasSel,
+        contaContext,
       });
       if (projetado) return projetado;
       return isTransferenciaEntreContas(item) ? projetarLinhaFluxoCaixa(item) : item;
     });
+
+  return deduplicarTransferenciasInternasFluxo(mapeados, {
+    contaContext,
+    contasSel,
+    contasById,
+    mapaContrapartes: mapaContrapartesEff,
+    mapaParIds: mapaParIdsEff,
+  });
 }
 
 export function normalizarMovimentoCaixaParaLinha(mov) {
@@ -371,11 +480,14 @@ export function montarGruposFluxoCaixa({
     .map((dia) => {
       const brutos = map[dia];
       const itemsOrdenados = sortLancamentosPorCodigo(brutos, ordemLancamentos);
+      const mapaParIdsGlobal = buildMapaParIdsTransferencia(todosLancamentos);
       const itemsConsolidados = sortLancamentosPorCodigo(
         consolidarTransferenciasListaFluxo(itemsOrdenados, {
           movimentos,
           contasSel,
           contasById,
+          mapaContrapartes,
+          mapaParIds: mapaParIdsGlobal,
         }),
         ordemLancamentos,
       );

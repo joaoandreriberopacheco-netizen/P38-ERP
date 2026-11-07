@@ -13,6 +13,7 @@ import {
 import { formatFinanceiroValor } from './FinanceiroListaShared';
 import { getSaldoExibicaoConta } from '@/lib/saldoContaFinanceira';
 import { p38Accent } from '@/lib/p38ThemeSurfaces';
+import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
 
 function stopClick(e) {
   e.preventDefault();
@@ -100,7 +101,7 @@ export default function ContaFinanceiraRow({
             onClick={stopClick}
             onKeyDown={stopClick}
           >
-            {pendencias > 0 && (
+            {EXIBIR_UI_CONCILIACAO_FINANCEIRO && pendencias > 0 && (
               <Clock className="mr-1 h-3.5 w-3.5 text-amber-500" aria-hidden />
             )}
             <DropdownMenu>
@@ -115,7 +116,7 @@ export default function ContaFinanceiraRow({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
-                {pendencias > 0 && (
+                {EXIBIR_UI_CONCILIACAO_FINANCEIRO && pendencias > 0 && (
                   <DropdownMenuItem onClick={() => onConciliar?.(conta)}>
                     <ArrowRightLeft className="mr-2 h-4 w-4" />
                     Conciliar ({pendencias})
@@ -141,7 +142,7 @@ export default function ContaFinanceiraRow({
           <P38StatusPill tone={ativa ? 'success' : 'muted'} className="text-[10px]">
             {ativa ? 'Ativa' : 'Inativa'}
           </P38StatusPill>
-          {pendencias > 0 && (
+          {EXIBIR_UI_CONCILIACAO_FINANCEIRO && pendencias > 0 && (
             <P38StatusPill tone="warning" className="max-w-[8.5rem] truncate text-[10px]">
               {pendencias} conc.
             </P38StatusPill>
@@ -170,7 +171,7 @@ export default function ContaFinanceiraRow({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52">
-              {pendencias > 0 && (
+              {EXIBIR_UI_CONCILIACAO_FINANCEIRO && pendencias > 0 && (
                 <DropdownMenuItem onClick={() => onConciliar?.(conta)}>
                   <ArrowRightLeft className="mr-2 h-4 w-4" />
                   Conciliar ({pendencias})

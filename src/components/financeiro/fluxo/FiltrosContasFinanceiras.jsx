@@ -2,6 +2,7 @@ import React from 'react';
 import FinanceiroFiltrosShell from './FinanceiroFiltrosShell';
 import FinanceiroCorteHistoricoFiltro from './FinanceiroCorteHistoricoFiltro';
 import { P38_CHIP_ACTIVE, P38_CHIP_INACTIVE } from './financeiroP38';
+import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
 
 export const TIPOS_CONTA = [
   { v: 'todos', l: 'Todos' },
@@ -53,9 +54,9 @@ export default function FiltrosContasFinanceiras({
       filtersOpen={filtersOpen}
       onFiltersOpenChange={onFiltersOpenChange}
       hasActiveFilters={hasActiveFilters}
-      conciliacaoPendente={totalPendencias}
-      pendentes={somentePendencias}
-      onPendentesToggle={onSomentePendencias}
+      conciliacaoPendente={EXIBIR_UI_CONCILIACAO_FINANCEIRO ? totalPendencias : 0}
+      pendentes={EXIBIR_UI_CONCILIACAO_FINANCEIRO ? somentePendencias : false}
+      onPendentesToggle={EXIBIR_UI_CONCILIACAO_FINANCEIRO ? onSomentePendencias : undefined}
     >
       <div className="space-y-3">
         <div>

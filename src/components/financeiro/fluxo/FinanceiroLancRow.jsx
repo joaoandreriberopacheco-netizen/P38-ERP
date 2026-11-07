@@ -12,6 +12,8 @@ import {
 import { cn } from '@/lib/utils';
 import { formatFinanceiroValor } from './FinanceiroListaShared';
 import { isTransferenciaEntreContas } from '@/lib/saldoContaFinanceira';
+import { isLancamentoPago, statusRotuloListaFinanceiro } from '@/lib/lancamentoFinanceiroStatus';
+import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
 
 const LINE_TITLE_CLASS =
   '[&>div>div:first-child]:text-[15px] [&>div>div:first-child]:font-semibold sm:[&>div>div:first-child]:text-base';
@@ -72,7 +74,7 @@ function rowAccent(l, { dimPago = false } = {}) {
   const isR = tipo === 'Receita';
   const isT = tipo === 'Transferência';
   const cancelado = l.status === 'Cancelado';
-  const isPago = l.status === 'Pago' || !!l.data_pagamento;
+  const isPago = isLancamentoPago(l);
 
   if (dimPago && isPago) return 'muted';
   if (cancelado) return 'muted';
@@ -86,6 +88,8 @@ function valorNode(l) {
   const isR = tipo === 'Receita';
   const isT = tipo === 'Transferência';
   const cancelado = l.status === 'Cancelado';
+  const pago = isLancamentoPago(l);
+  const statusLista = statusRotuloListaFinanceiro(l);
 
   if (cancelado) return '—';
   if (isT) return formatFinanceiroValor(Math.abs(l.valor || 0));
@@ -98,7 +102,7 @@ function valorNode(l) {
         className={
           isR
             ? 'text-[#4A5D23] dark:text-[#a4ce33]'
-            : l.status === 'Vencido'
+            : !pago && statusLista === 'Vencido'
               ? 'text-amber-600 dark:text-amber-400'
               : 'text-foreground/85'
         }
@@ -110,8 +114,8 @@ function valorNode(l) {
   );
 }
 
-/** entrada = seta verde ↑ | saida = seta vermelha ↓ */
-function resolverDirecaoSetaTransferencia(l, contaVisualizadaId = null) {
+/** entrada = seta verde ↑ | saida = seta vermelha ↓ (extrato) | neutra = sem seta (fluxo multi-conta) */
+export function resolverDirecaoSetaTransferencia(l, contaVisualizadaId = null) {
   if (!l || l.status === 'Cancelado') return null;
   const eTransfer = tipoLinha(l) === 'Transferência' || isTransferenciaEntreContas(l);
   if (!eTransfer) return null;
@@ -123,7 +127,8 @@ function resolverDirecaoSetaTransferencia(l, contaVisualizadaId = null) {
 
   if (contaVisualizadaId) {
     const destinoId = l.conta_destino_id || (l.tipo === 'Receita' ? l.conta_financeira_id : null);
-    const origemId = l.conta_origem_id || (l.tipo === 'Despesa' ? l.conta_financeira_id : null) || l.conta_financeira_id;
+    const origemId =
+      l.conta_origem_id || (l.tipo === 'Despesa' ? l.conta_financeira_id : null) || l.conta_financeira_id;
     if (destinoId === contaVisualizadaId && origemId !== contaVisualizadaId) return 'entrada';
     if (origemId === contaVisualizadaId && destinoId && destinoId !== contaVisualizadaId) return 'saida';
   }
@@ -170,7 +175,8 @@ function setaTipoAoLadoValor(l, contaVisualizadaId = null) {
 
 function rowMeta(l, { showPago = false, dimProgramada = false } = {}) {
   const cancelado = l.status === 'Cancelado';
-  const isPago = l.status === 'Pago' || !!l.data_pagamento;
+  const isPago = isLancamentoPago(l);
+  const statusExib = statusRotuloListaFinanceiro(l);
   const visiveis = tagsVisiveisFinanceiro(l.tags);
   const programada = l._isProgramada || dimProgramada;
 
@@ -187,11 +193,11 @@ function rowMeta(l, { showPago = false, dimProgramada = false } = {}) {
       {programada && !isPago && (
         <P38StatusLabel tone="warning">Programado</P38StatusLabel>
       )}
-      {l.status && l.status !== 'Pago' && !programada && (
-        showPago && l.status === 'Vencido' ? (
-          <P38StatusPill tone="danger">{l.status}</P38StatusPill>
+      {!programada && statusExib && statusExib !== 'Pago' && !isPago && (
+        showPago && statusExib === 'Vencido' ? (
+          <P38StatusPill tone="danger">{statusExib}</P38StatusPill>
         ) : (
-          <P38StatusLabel tone={lancStatusTone(l.status)}>{l.status}</P38StatusLabel>
+          <P38StatusLabel tone={lancStatusTone(statusExib)}>{statusExib}</P38StatusLabel>
         )
       )}
       {showPago && isPago && <P38StatusLabel tone="success">Pago</P38StatusLabel>}
@@ -224,11 +230,15 @@ export default function FinanceiroLancRow({
   contaVisualizadaId = null,
 }) {
   const cancelado = l.status === 'Cancelado';
-  const isPago = l.status === 'Pago' || !!l.data_pagamento;
+  const isPago = isLancamentoPago(l);
   const podeSelecionar = emSelecao && (selecionarPagos ? isPago : !isPago);
   const conc = l.status_conciliacao || 'N/A';
-  const isTransfConsolidada = l.isTransferenciaConsolidada || l.perspectivaTransferencia === 'neutra';
-  const perspectiva = l.perspectivaTransferencia;
+
+  const dirExtrato = contaVisualizadaId ? resolverDirecaoSetaTransferencia(l, contaVisualizadaId) : null;
+  const perspectiva = dirExtrato || l.perspectivaTransferencia;
+  const isTransfConsolidada =
+    !contaVisualizadaId && (l.isTransferenciaConsolidada || l.perspectivaTransferencia === 'neutra');
+
   const data =
     dataField === 'vencimento'
       ? l.data_vencimento
@@ -242,7 +252,9 @@ export default function FinanceiroLancRow({
         <Checkbox checked={selecionado} onCheckedChange={() => onToggleSelecionado?.(l.id)} />
       )}
       {setaTipoAoLadoValor(l, contaVisualizadaId)}
-      {conc === 'Discrepância' && <AlertCircle className="h-2.5 w-2.5 text-muted-foreground" />}
+      {EXIBIR_UI_CONCILIACAO_FINANCEIRO && conc === 'Discrepância' && (
+        <AlertCircle className="h-2.5 w-2.5 text-muted-foreground" />
+      )}
     </>
   );
 

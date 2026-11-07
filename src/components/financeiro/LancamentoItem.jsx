@@ -2,6 +2,7 @@ import React from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ArrowDownLeft, ArrowUpRight, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
 
 const formatCurrency = (v) =>
   `R$ ${Math.abs(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -67,7 +68,7 @@ export default function LancamentoItem({ lancamento, onClick }) {
         }`}>
           {isReceita ? '+' : '-'}{formatCurrency(lancamento.valor)}
         </p>
-        {concStatus !== 'N/A' && concStatus !== 'Conciliado' && (
+        {EXIBIR_UI_CONCILIACAO_FINANCEIRO && concStatus !== 'N/A' && concStatus !== 'Conciliado' && (
           <ConcIcon className={`w-3 h-3 ${concColor}`} />
         )}
       </div>

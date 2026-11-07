@@ -19,6 +19,7 @@ import FiltrosContasFinanceiras, { TIPOS_CONTA } from './fluxo/FiltrosContasFina
 import ListaContasFinanceiras from './fluxo/ListaContasFinanceiras';
 import { marcarPadraoContasFluxo, marcarTodasContasFluxo } from './fluxo/contasFluxoSelecaoUi';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from './fluxo/FinanceiroListaMeta';
+import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
 import {
   calcularSaldosAposDataCorte,
   calcularSaldosTodasContas,
@@ -618,7 +619,7 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
             {statusFiltro !== 'ativas' && statusLabel && (
               <FinanceiroSummaryChip>{statusLabel}</FinanceiroSummaryChip>
             )}
-            {somentePendencias && (
+            {EXIBIR_UI_CONCILIACAO_FINANCEIRO && somentePendencias && (
               <FinanceiroSummaryChip className="text-amber-700 dark:text-amber-400">
                 Conciliação
               </FinanceiroSummaryChip>
@@ -630,7 +631,7 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
               <FinanceiroSummaryChip>{tipoLabel}</FinanceiroSummaryChip>
             )}
             {statusLabel && <FinanceiroSummaryChip>{statusLabel}</FinanceiroSummaryChip>}
-            {somentePendencias && (
+            {EXIBIR_UI_CONCILIACAO_FINANCEIRO && somentePendencias && (
               <FinanceiroSummaryChip className="text-amber-700 dark:text-amber-400">
                 Conciliação
               </FinanceiroSummaryChip>
@@ -806,26 +807,28 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!conciliacaoConta} onOpenChange={(open) => !open && setConciliacaoConta(null)}>
-        <DialogContent className="flex h-[min(85dvh,90vh)] max-h-[min(85dvh,90vh)] w-[calc(100vw-1rem)] max-w-3xl flex-col gap-0 overflow-hidden border-border/40 p-0 dark:border-border/40 dark:bg-muted">
-          <DialogHeader className="shrink-0 px-6 pb-3 pt-6">
-            <DialogTitle className="flex items-center gap-2 text-foreground">
-              <ArrowRightLeft className="h-5 w-5 text-amber-500" />
-              Conciliação — {conciliacaoConta?.nome}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pb-4 md:px-6 md:pb-6">
-            {conciliacaoConta && (
-              <ConciliacaoBancaria
-                contaId={conciliacaoConta.id}
-                contaNome={conciliacaoConta.nome}
-                onClose={() => setConciliacaoConta(null)}
-                onConciliado={loadData}
-              />
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {EXIBIR_UI_CONCILIACAO_FINANCEIRO && (
+        <Dialog open={!!conciliacaoConta} onOpenChange={(open) => !open && setConciliacaoConta(null)}>
+          <DialogContent className="flex h-[min(85dvh,90vh)] max-h-[min(85dvh,90vh)] w-[calc(100vw-1rem)] max-w-3xl flex-col gap-0 overflow-hidden border-border/40 p-0 dark:border-border/40 dark:bg-muted">
+            <DialogHeader className="shrink-0 px-6 pb-3 pt-6">
+              <DialogTitle className="flex items-center gap-2 text-foreground">
+                <ArrowRightLeft className="h-5 w-5 text-amber-500" />
+                Conciliação — {conciliacaoConta?.nome}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pb-4 md:px-6 md:pb-6">
+              {conciliacaoConta && (
+                <ConciliacaoBancaria
+                  contaId={conciliacaoConta.id}
+                  contaNome={conciliacaoConta.nome}
+                  onClose={() => setConciliacaoConta(null)}
+                  onConciliado={loadData}
+                />
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 
