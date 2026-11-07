@@ -2,10 +2,12 @@
 /**
  * Reassign credit-card sales from Banco do Brasil → PagBank from 2026-11-06 (corte).
  *
- *   npm run migrar:cartao-credito-pagbank              # dry-run
- *   npm run migrar:cartao-credito-pagbank -- --apply   # update rows
+ *   npm run financeiro:migrar-cartao-credito-pagbank              # dry-run
+ *   npm run financeiro:migrar-cartao-credito-pagbank:apply       # update rows
+ *
+ * Secrets: NEXT_PUBLIC_SUPABASE_URL (ou VITE_SUPABASE_URL) + SUPABASE_SERVICE_ROLE_KEY.
  */
-import { requireP38SupabaseScriptClient } from './p38-supabase-script-client.mjs';
+import { requireP38SupabaseAdmin } from './p38-supabase-admin.mjs';
 
 const DATA_CORTE = '2026-11-06';
 const apply = process.argv.includes('--apply');
@@ -27,7 +29,7 @@ function isBancoBrasil(conta) {
   return n.includes('brasil') || (n.includes('banco') && n.includes('brasil'));
 }
 
-const { supabase } = requireP38SupabaseScriptClient();
+const supabase = requireP38SupabaseAdmin();
 
 const { data: contas, error: errContas } = await supabase.from('contas_financeiras').select('id,nome,ativo');
 if (errContas) {

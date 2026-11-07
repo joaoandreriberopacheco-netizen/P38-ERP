@@ -195,7 +195,18 @@ export function resolveP38Secrets() {
     if (legacy.pat && !trim(process.env.SUPABASE_TOKEN)) aliasesUsed.push('supabase→SUPABASE_ACCESS_TOKEN');
   }
 
-  const serviceRoleKey = trim(process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const serviceRoleKey =
+    trim(process.env.SUPABASE_SERVICE_ROLE_KEY) ||
+    trim(process.env.SUPABASE_SERVICE_KEY) ||
+    trim(process.env.SERVICE_ROLE_KEY);
+  if (!trim(process.env.SUPABASE_SERVICE_ROLE_KEY)) {
+    if (trim(process.env.SUPABASE_SERVICE_KEY)) {
+      aliasesUsed.push('SUPABASE_SERVICE_KEY→SUPABASE_SERVICE_ROLE_KEY');
+    }
+    if (trim(process.env.SERVICE_ROLE_KEY)) {
+      aliasesUsed.push('SERVICE_ROLE_KEY→SUPABASE_SERVICE_ROLE_KEY');
+    }
+  }
 
   let projectRef =
     trim(process.env.SUPABASE_PROJECT_REF) ||
