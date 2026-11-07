@@ -1,8 +1,8 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { format } from 'date-fns';
 import {
   ArrowDownLeft, ArrowUpRight, ArrowRightLeft,
-  Calendar, ChevronRight, Tag, Wallet,
+  Calendar, ChevronDown, ChevronRight, ChevronUp, Tag, Wallet,
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
@@ -16,7 +16,8 @@ import TagsInput from './TagsInput';
 import LancamentoMaisOpcoes from './LancamentoMaisOpcoes';
 import RecorrenciaConfig from './RecorrenciaConfig';
 import LancamentoValeFolha from './LancamentoValeFolha';
-import LancamentoPickerDialog from './LancamentoPickerDialog';
+import LancamentoPickerDialog, { LancamentoFormSheet } from './LancamentoPickerDialog';
+import { agoraParaInputDatetimeLocal } from '@/components/utils/dateUtils';
 import BudgetCategoriaSelect from '@/components/budget-previsao/BudgetCategoriaSelect';
 import BudgetModeloSelect from '@/components/budget-previsao/BudgetModeloSelect';
 import FolhaCentroCustoSelect from '@/components/folha-previsao/FolhaCentroCustoSelect';
@@ -26,6 +27,197 @@ const TIPOS = [
   { value: 'Despesa', label: 'Despesa', icon: ArrowUpRight },
   { value: 'Transferência', label: 'Transf.', icon: ArrowRightLeft },
 ];
+
+function pad2(n) {
+  return String(n).padStart(2, '0');
+}
+
+function formatTextoDataHora(ymd, hora, minuto) {
+  if (!ymd || !/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return '';
+  const [y, mo, d] = ymd.split('-');
+  return `${d}/${mo}/${y} ${pad2(hora)}:${pad2(minuto)}`;
+}
+
+/** Converte dd/MM/yyyy HH:mm → yyyy-MM-ddThh:mm (null se incompleto). */
+function parseTextoDataHora(texto) {
+  const t = String(texto || '').trim();
+  if (!t) return null;
+  const m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2})(?::(\d{1,2}))?)?$/);
+  if (!m) return null;
+  const day = parseInt(m[1], 10);
+  const mo = parseInt(m[2], 10);
+  const y = parseInt(m[3], 10);
+  const hora = m[4] !== undefined ? parseInt(m[4], 10) : 0;
+  const minuto = m[5] !== undefined ? parseInt(m[5], 10) : 0;
+  if (mo < 1 || mo > 12 || day < 1 || day > 31) return null;
+  if (hora < 0 || hora > 23 || minuto < 0 || minuto > 59) return null;
+  return `${y}-${pad2(mo)}-${pad2(day)}T${pad2(hora)}:${pad2(minuto)}`;
+}
+
+function partesDeDatetimeLocal(local) {
+  const [ymd, rest] = String(local || '').split('T');
+  const [hh = '12', mm = '00'] = (rest || '').split(':');
+  return {
+    ymd: ymd || '',
+    hora: Math.min(23, Math.max(0, parseInt(hh, 10) || 0)),
+    minuto: Math.min(59, Math.max(0, parseInt(mm, 10) || 0)),
+  };
+}
+
+function ajustarHora(hora, delta) {
+  return ((hora + delta) % 24 + 24) % 24;
+}
+
+function ajustarMinuto(minuto, delta) {
+  return ((minuto + delta) % 60 + 60) % 60;
+}
+
+function ColunaHorario({ label, valor, onIncrement, onDecrement, ariaLabel }) {
+  const colRef = useRef(null);
+
+  const onWheel = (e) => {
+    e.preventDefault();
+    if (e.deltaY < 0) onIncrement();
+    else onDecrement();
+  };
+
+  return (
+    <div className="flex flex-1 flex-col items-center">
+      <span className="mb-1 text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
+      <button
+        type="button"
+        aria-label={`Aumentar ${ariaLabel}`}
+        onClick={onIncrement}
+        className="flex h-8 w-full items-center justify-center rounded-lg text-muted-foreground hover:bg-muted active:scale-95"
+      >
+        <ChevronUp className="h-4 w-4" />
+      </button>
+      <div
+        ref={colRef}
+        tabIndex={0}
+        role="spinbutton"
+        aria-label={ariaLabel}
+        aria-valuenow={valor}
+        onWheel={onWheel}
+        className="my-1 flex h-12 w-full max-h-[120px] touch-pan-y items-center justify-center overflow-y-auto rounded-xl bg-muted text-lg font-semibold tabular-nums text-foreground"
+      >
+        {pad2(valor)}
+      </div>
+      <button
+        type="button"
+        aria-label={`Diminuir ${ariaLabel}`}
+        onClick={onDecrement}
+        className="flex h-8 w-full items-center justify-center rounded-lg text-muted-foreground hover:bg-muted active:scale-95"
+      >
+        <ChevronDown className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+function LancamentoDataHoraSheet({
+  open,
+  onOpenChange,
+  dataCustomizada,
+  dataHoraCustomizada,
+  onConfirm,
+  stackElevated = false,
+}) {
+  const [textoManual, setTextoManual] = useState('');
+  const [ymd, setYmd] = useState('');
+  const [hora, setHora] = useState(12);
+  const [minuto, setMinuto] = useState(0);
+
+  const aplicarPartes = (novaYmd, novaHora, novoMinuto) => {
+    setYmd(novaYmd);
+    setHora(novaHora);
+    setMinuto(novoMinuto);
+    setTextoManual(formatTextoDataHora(novaYmd, novaHora, novoMinuto));
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const base =
+      dataHoraCustomizada
+      || (dataCustomizada ? `${dataCustomizada}T12:00` : null)
+      || agoraParaInputDatetimeLocal();
+    const partes = partesDeDatetimeLocal(base);
+    aplicarPartes(partes.ymd, partes.hora, partes.minuto);
+  }, [open, dataCustomizada, dataHoraCustomizada]);
+
+  const confirmar = () => {
+    const parsed = parseTextoDataHora(textoManual);
+    let local = parsed;
+    if (!local && ymd) {
+      local = `${ymd}T${pad2(hora)}:${pad2(minuto)}`;
+    }
+    if (!local) {
+      onOpenChange(false);
+      return;
+    }
+    const partes = partesDeDatetimeLocal(local);
+    onConfirm(partes.ymd, local);
+    onOpenChange(false);
+  };
+
+  const cancelar = () => onOpenChange(false);
+
+  return (
+    <LancamentoFormSheet open={open} onOpenChange={onOpenChange} title="Data e hora" elevated={stackElevated}>
+      <input
+        autoComplete="off"
+        type="text"
+        inputMode="numeric"
+        placeholder="dd/mm/aaaa hh:mm"
+        value={textoManual}
+        onChange={(e) => setTextoManual(e.target.value)}
+        className="h-12 w-full rounded-xl border-0 bg-muted px-3 text-sm outline-none text-foreground"
+      />
+      <input
+        autoComplete="off"
+        type="date"
+        value={ymd}
+        onChange={(e) => {
+          const novaData = e.target.value;
+          aplicarPartes(novaData, hora, minuto);
+        }}
+        className="mt-3 h-12 w-full rounded-xl border-0 bg-muted px-3 text-sm outline-none"
+      />
+      <div className="mt-3 flex gap-3 rounded-xl bg-card px-2 py-2 shadow-sm">
+        <ColunaHorario
+          label="Hora"
+          valor={hora}
+          ariaLabel="Hora"
+          onIncrement={() => aplicarPartes(ymd, ajustarHora(hora, 1), minuto)}
+          onDecrement={() => aplicarPartes(ymd, ajustarHora(hora, -1), minuto)}
+        />
+        <ColunaHorario
+          label="Min"
+          valor={minuto}
+          ariaLabel="Minutos"
+          onIncrement={() => aplicarPartes(ymd, hora, ajustarMinuto(minuto, 1))}
+          onDecrement={() => aplicarPartes(ymd, hora, ajustarMinuto(minuto, -1))}
+        />
+      </div>
+      <div className="flex gap-2 pt-4">
+        <button
+          type="button"
+          onClick={cancelar}
+          className="h-11 flex-1 rounded-xl bg-muted text-sm font-medium text-muted-foreground"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          onClick={confirmar}
+          className="h-11 flex-1 rounded-xl bg-[#4a5240] text-sm font-semibold text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]"
+        >
+          Confirmar
+        </button>
+      </div>
+    </LancamentoFormSheet>
+  );
+}
 
 function CampoLinha({ label, value, placeholder, onClick, icon: Icon, className }) {
   return (
@@ -66,7 +258,9 @@ export default function LancamentoFormUnico({
   realizado,
   onRealizadoChange,
   dataExibicao,
-  onEditarData,
+  dataCustomizada,
+  dataHoraCustomizada,
+  onDataVencimentoConfirm,
   contaId,
   contaDestinoId,
   contas,
@@ -125,6 +319,7 @@ export default function LancamentoFormUnico({
 }) {
   const [campoAtivo, setCampoAtivo] = useState('valor');
   const [picker, setPicker] = useState(null); // 'conta' | 'contaDestino' | 'categoria' | 'tags'
+  const [showDataSheet, setShowDataSheet] = useState(false);
   const scrollRef = useRef(null);
 
   const focarCampo = (campo, el) => {
@@ -259,7 +454,7 @@ export default function LancamentoFormUnico({
           value={dataExibicao}
           placeholder="Agora (ao salvar)"
           icon={Calendar}
-          onClick={onEditarData}
+          onClick={() => setShowDataSheet(true)}
         />
 
         {isTransfer ? (
@@ -493,6 +688,21 @@ export default function LancamentoFormUnico({
       >
         <TagsInput tags={tags} onChange={onTagsChange} pickerMode />
       </LancamentoPickerDialog>
+
+      <LancamentoDataHoraSheet
+        open={showDataSheet}
+        onOpenChange={setShowDataSheet}
+        dataCustomizada={dataCustomizada}
+        dataHoraCustomizada={dataHoraCustomizada}
+        stackElevated={stackElevated}
+        onConfirm={(ymd, dataHoraLocal) => {
+          if (dataHoraLocal?.includes('T')) {
+            onDataVencimentoConfirm?.(ymd, dataHoraLocal);
+          } else {
+            onDataVencimentoConfirm?.(ymd, null);
+          }
+        }}
+      />
     </div>
   );
 }

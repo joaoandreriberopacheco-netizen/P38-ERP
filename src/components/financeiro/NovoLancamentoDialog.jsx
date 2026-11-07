@@ -13,13 +13,14 @@ import { criarReforcoPendenteTransferenciaCaixaPDV } from '@/lib/reforcoPendente
 import { useCategorias } from './fluxo/DialogCategoria';
 import LancamentoConfirmacaoDialog from './LancamentoConfirmacaoDialog';
 import LancamentoFormUnico, { formatarDataFormulario } from './fluxo/LancamentoFormUnico';
-import { LancamentoFormSheet } from './fluxo/LancamentoPickerDialog';
 import { normalizeDataText } from '@/lib/normalizeDataText';
 import { gravarPreferenciasLancamento, resolverPreferenciasLancamento } from '@/lib/lancamentoPreferencias';
 import { resolverDataLancamentoInput } from '@/lib/lancamentoOrdemMeta';
 import { isLancamentoPago } from '@/lib/lancamentoFinanceiroStatus';
 import { concluirFluxoTorreCompartilhamento } from '@/lib/torreLancamentoBridge';
 import { useCompactShell } from '@/hooks/use-breakpoint';
+import { useInertAppBackground } from '@/hooks/useInertAppBackground';
+import DialogFocusScope from '@/components/ui/DialogFocusScope';
 import RecorrenciaEscopoDialog from './RecorrenciaEscopoDialog';
 import {
   descricaoPadraoVale,
@@ -43,12 +44,6 @@ const FREQS_MAP = {
   Semestral: (d, i) => addMonths(d, i * 6),
   Anual: (d, i) => addYears(d, i),
 };
-
-function agoraDatetimeLocal() {
-  const d = new Date();
-  const pad = (n) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
 
 /**
  * @param {'center' | 'bottomSheet'} [presentation] — Se omitido: `bottomSheet` quando `origemContaPagar`, senão `center`.
@@ -82,8 +77,6 @@ export default function NovoLancamentoDialog({
   const [descricao, setDescricao] = useState('');
   const [dataCustomizada, setDataCustomizada] = useState(null);
   const [dataHoraCustomizada, setDataHoraCustomizada] = useState(null);
-  const [showDataDialog, setShowDataDialog] = useState(false);
-  const [dataTemp, setDataTemp] = useState('');
   const [dataLancamento, setDataLancamento] = useState('');
   const [categoria, setCategoria] = useState('');
   const [categoriaId, setCategoriaId] = useState('');
@@ -120,6 +113,7 @@ export default function NovoLancamentoDialog({
   const { toast } = useToast();
   const { categorias, reload: reloadCats } = useCategorias();
   const isCompactShell = useCompactShell();
+  useInertAppBackground(open);
 
   const modoEdicao = !!lancamentoExistente;
   const lancamentoJaCancelado = lancamentoExistente?.status === 'Cancelado';
@@ -372,31 +366,6 @@ export default function NovoLancamentoDialog({
   };
 
   const dataExibicao = formatarDataFormulario(dataCustomizada, dataHoraCustomizada);
-
-  const abrirEditorData = () => {
-    setDataTemp(dataHoraCustomizada || dataCustomizada || agoraDatetimeLocal());
-    setShowDataDialog(true);
-  };
-
-  const confirmarData = () => {
-    if (!dataTemp) {
-      setShowDataDialog(false);
-      return;
-    }
-    if (dataTemp.includes('T')) {
-      setDataHoraCustomizada(dataTemp);
-      setDataCustomizada(dataTemp.slice(0, 10));
-    } else {
-      setDataCustomizada(dataTemp);
-      setDataHoraCustomizada(null);
-    }
-    setShowDataDialog(false);
-  };
-
-  const cancelarData = () => {
-    setDataTemp('');
-    setShowDataDialog(false);
-  };
 
   const gerarGrupoId = () => `grp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
@@ -805,12 +774,13 @@ export default function NovoLancamentoDialog({
       <div className="flex items-center justify-between px-4 pt-5 pb-2 shrink-0">
         <button
           type="button"
+          data-novo-lancamento-close
           onClick={fecharFluxo}
           className="w-9 h-9 flex items-center justify-center rounded-full bg-muted dark:bg-muted active:scale-95"
         >
           <X className="w-4 h-4 text-muted-foreground" />
         </button>
-        <p className="text-sm font-semibold text-foreground">
+        <p id="novo-lancamento-titulo" className="text-sm font-semibold text-foreground">
           {modoEdicao ? 'Editar lançamento' : 'Novo lançamento'}
         </p>
         <div className="w-9" />
@@ -828,7 +798,12 @@ export default function NovoLancamentoDialog({
         realizado={realizado}
         onRealizadoChange={(v) => setStatus(v ? 'Pago' : 'Em Aberto')}
         dataExibicao={dataExibicao}
-        onEditarData={abrirEditorData}
+        dataCustomizada={dataCustomizada}
+        dataHoraCustomizada={dataHoraCustomizada}
+        onDataVencimentoConfirm={(ymd, dataHoraLocal) => {
+          setDataCustomizada(ymd);
+          setDataHoraCustomizada(dataHoraLocal);
+        }}
         contaId={contaId}
         contaDestinoId={contaDestinoId}
         contas={contas}
@@ -924,36 +899,6 @@ export default function NovoLancamentoDialog({
         }}
       />
 
-      <LancamentoFormSheet
-        open={showDataDialog}
-        onOpenChange={setShowDataDialog}
-        title="Data e hora"
-      >
-        <input
-          autoComplete="off"
-          type="datetime-local"
-          value={dataTemp}
-          onChange={(e) => setDataTemp(e.target.value)}
-          className="h-12 w-full rounded-xl border-0 bg-muted px-3 text-sm outline-none"
-        />
-        <div className="flex gap-2 pt-4">
-          <button
-            type="button"
-            onClick={cancelarData}
-            className="h-11 flex-1 rounded-xl bg-muted text-sm font-medium text-muted-foreground"
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            onClick={confirmarData}
-            className="h-11 flex-1 rounded-xl bg-[#4a5240] text-sm font-semibold text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]"
-          >
-            Confirmar
-          </button>
-        </div>
-      </LancamentoFormSheet>
-
       <LancamentoConfirmacaoDialog
         open={showConfirmDialog}
         mode={confirmDialogMode}
@@ -1024,6 +969,8 @@ export default function NovoLancamentoDialog({
         <button
           type="button"
           aria-label="Fechar"
+          tabIndex={-1}
+          aria-hidden="true"
           className="fixed inset-0 z-[59] cursor-default bg-muted/25 dark:bg-muted/40"
           onClick={onClose}
         />
@@ -1031,9 +978,19 @@ export default function NovoLancamentoDialog({
           className="fixed inset-x-0 bottom-0 z-[60] flex max-h-[92dvh] justify-center px-0"
           style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >
-          <div className="pointer-events-auto flex h-[92dvh] max-h-[92dvh] w-full max-w-2xl min-h-0 flex-col" role="dialog" aria-modal="true">
+          <DialogFocusScope
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="novo-lancamento-titulo"
+            className="pointer-events-auto flex h-[92dvh] max-h-[92dvh] w-full max-w-2xl min-h-0 flex-col outline-none"
+            onMountAutoFocus={(event) => {
+              event.preventDefault();
+              const closeBtn = event.currentTarget.querySelector('[data-novo-lancamento-close]');
+              if (closeBtn instanceof HTMLElement) closeBtn.focus();
+            }}
+          >
             {panel}
-          </div>
+          </DialogFocusScope>
         </div>
       </>,
       document.body,
@@ -1045,13 +1002,25 @@ export default function NovoLancamentoDialog({
       <button
         type="button"
         aria-label="Fechar"
+        tabIndex={-1}
+        aria-hidden="true"
         className="fixed inset-0 z-[59] cursor-default bg-muted/55 backdrop-blur-[2px] dark:bg-muted/40"
         onClick={onClose}
       />
       <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 pointer-events-none md:p-4">
-        <div className="pointer-events-auto flex max-h-[100dvh] w-full max-w-2xl min-h-0 flex-col" role="dialog" aria-modal="true">
+        <DialogFocusScope
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="novo-lancamento-titulo"
+          className="pointer-events-auto flex max-h-[100dvh] w-full max-w-2xl min-h-0 flex-col outline-none"
+          onMountAutoFocus={(event) => {
+            event.preventDefault();
+            const closeBtn = event.currentTarget.querySelector('[data-novo-lancamento-close]');
+            if (closeBtn instanceof HTMLElement) closeBtn.focus();
+          }}
+        >
           {panel}
-        </div>
+        </DialogFocusScope>
       </div>
     </>,
     document.body,
