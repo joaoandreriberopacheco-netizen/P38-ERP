@@ -18,10 +18,26 @@ export function contaEhTipoBanco(conta) {
 }
 
 /** Chip compacto — ícone banco ou caixa + rótulo curto do tipo. */
-export default function ContaTipoChip({ conta, className }) {
+export default function ContaTipoChip({ conta, className, variant = 'chip' }) {
   const banco = contaEhTipoBanco(conta);
   const Icon = banco ? Landmark : Banknote;
   const label = contaTipoRotuloCurto(conta);
+  const tipo = tipoContaFinanceiraEfetivo(conta);
+
+  if (variant === 'inline') {
+    return (
+      <span
+        className={cn(
+          'inline-flex shrink-0 items-center gap-1 text-xs text-muted-foreground',
+          className,
+        )}
+        title={tipo}
+      >
+        <Icon className="h-3 w-3 shrink-0 opacity-75" aria-hidden />
+        <span>{label}</span>
+      </span>
+    );
+  }
 
   return (
     <span
@@ -29,7 +45,7 @@ export default function ContaTipoChip({ conta, className }) {
         'inline-flex shrink-0 items-center gap-1 rounded-full border border-border/40 bg-secondary/50 px-1.5 py-0.5 text-[10px] font-medium leading-none text-muted-foreground dark:border-white/10 dark:bg-[#383e47]/80',
         className,
       )}
-      title={tipoContaFinanceiraEfetivo(conta)}
+      title={tipo}
     >
       <Icon className="h-3 w-3 shrink-0 opacity-80" aria-hidden />
       <span>{label}</span>

@@ -1,7 +1,10 @@
 import React from 'react';
 import { Wallet } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 import ContaFinanceiraRow from './ContaFinanceiraRow';
 import { FinanceiroGrupo, FinanceiroListaEstado } from './FinanceiroListaShared';
+import { P38_FIELD_SURFACE } from './financeiroP38';
 import { getSaldoExibicaoConta } from '@/lib/saldoContaFinanceira';
 
 function renderContaRows({
@@ -57,7 +60,13 @@ export default function ListaContasFinanceiras({
       flushBottom={listaUnificada}
     >
       {listaUnificada ? (
-        <div className="divide-y divide-border/40 dark:divide-white/10">
+        <P38MobileLineList
+          allViewports
+          className={cn(
+            'min-w-0 w-full max-w-full overflow-hidden rounded-xl border border-border/50 dark:border-white/10',
+            P38_FIELD_SURFACE,
+          )}
+        >
           {renderContaRows({
             items: contasFlat,
             pendenciasMap,
@@ -69,7 +78,7 @@ export default function ListaContasFinanceiras({
             onConciliar,
             listaUnificada: true,
           })}
-        </div>
+        </P38MobileLineList>
       ) : grupos.map(({ k, label, items }) => {
         const totalGrupo = saldosProntos && saldosCalculados
           ? items.reduce(

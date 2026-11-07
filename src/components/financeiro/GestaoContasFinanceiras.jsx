@@ -19,7 +19,8 @@ import FiltrosContasFinanceiras, { TIPOS_CONTA } from './fluxo/FiltrosContasFina
 import ListaContasFinanceiras from './fluxo/ListaContasFinanceiras';
 import { marcarPadraoContasFluxo, marcarTodasContasFluxo } from './fluxo/contasFluxoSelecaoUi';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from './fluxo/FinanceiroListaMeta';
-import { P38_FINANCEIRO_FILTROS_BAR } from './fluxo/financeiroP38';
+import { P38_FINANCEIRO_FILTROS_BAR, P38_KPI_SHELL } from './fluxo/financeiroP38';
+import { useCompactShell } from '@/hooks/use-breakpoint';
 import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
 import {
   calcularSaldosAposDataCorte,
@@ -507,9 +508,15 @@ function GestaoContasProvider({ shared, children }) {
 /** KPIs — faixa compacta (mobile e desktop). Ícone carteira abre o seletor ao lado do saldo. */
 export function GestaoContasKpis() {
   const m = useContext(GestaoContasCtx);
+  const compact = useCompactShell();
   if (!m) return null;
   return (
-    <div className="flex min-w-0 items-center gap-1.5 md:gap-2">
+    <div
+      className={cn(
+        'flex min-w-0 items-center gap-1.5 md:gap-2',
+        compact && cn('w-full rounded-xl px-3 py-2.5', P38_KPI_SHELL),
+      )}
+    >
       <div className="min-w-0 flex-1">
         <KpiContasBar kpis={m.kpis} saldosProntos={m.saldosProntos} />
       </div>
@@ -530,7 +537,9 @@ export function GestaoContasKpis() {
 /** Filtros + meta + lista + FAB + diálogos. */
 export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) {
   const m = useContext(GestaoContasCtx);
+  const compact = useCompactShell();
   if (!m) return null;
+  const listaEstiloPlanejamento = mobileShell || compact;
 
   const {
     loading,
@@ -665,7 +674,7 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
   const listaBlock = (
     <ListaContasFinanceiras
       grupos={grupos}
-      contasFlat={mobileShell ? contasListaUnificada : null}
+      contasFlat={listaEstiloPlanejamento ? contasListaUnificada : null}
       loading={loading}
       pendenciasMap={pendenciasConciliacao}
       saldosCalculados={saldosCalculados}
@@ -851,7 +860,7 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
         </div>
         <div
           ref={listScrollRef}
-          className="flex-1 min-h-0 min-w-0 p38-stage-panel-scroll overflow-x-hidden overscroll-y-contain touch-pan-y p38-scroll-pad-fab px-1 pb-2"
+          className="flex-1 min-h-0 min-w-0 p38-stage-panel-scroll overflow-x-hidden overscroll-y-contain touch-pan-y p38-scroll-pad-fab px-2 pb-2 pt-1"
         >
           {listaBlock}
         </div>
