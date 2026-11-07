@@ -531,7 +531,6 @@ export default function ExtratoContaPage() {
     });
   }, [diasExibicao, movimentosCaixa, mapaContrapartesPares, contasById, mapaParIdsPares, conta]);
 
-  const totalMovimentacoes = movimentacoesFiltradas.length;
   const kpisExtrato = useMemo(() => ({
     entradas: totalEntradasPeriodo,
     saidas: totalSaidasPeriodo,
@@ -602,6 +601,11 @@ export default function ExtratoContaPage() {
       <div className="min-w-0 max-w-full space-y-1.5">
         {/* Mobile */}
         <div className="flex flex-col gap-1.5 md:hidden">
+          <KpiExtratoConta
+            kpis={kpisExtrato}
+            layout="oneline"
+            saldoLabel={contaUsaRegraCaixaPDV(conta) ? 'Saldo na gaveta' : 'Saldo na conta'}
+          />
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
@@ -642,11 +646,6 @@ export default function ExtratoContaPage() {
               </div>
             </TooltipProvider>
           </div>
-          <KpiExtratoConta
-            kpis={kpisExtrato}
-            layout="stack"
-            saldoLabel={contaUsaRegraCaixaPDV(conta) ? 'Saldo na gaveta' : 'Saldo na conta'}
-          />
         </div>
 
         {/* Desktop */}
@@ -709,8 +708,7 @@ export default function ExtratoContaPage() {
       />
 
       <FinanceiroListaMeta
-        total={totalMovimentacoes}
-        totalLabel={totalMovimentacoes === 1 ? 'movimentação' : 'movimentações'}
+        showTotal={false}
         hasActiveFilters={hasActiveFilters || !!searchTerm}
         onLimparFiltros={() => {
           setFiltroPeriodo('mes');
@@ -721,9 +719,6 @@ export default function ExtratoContaPage() {
         }}
         summaryChips={
           <>
-            {!mostrarHistoricoAnterior && dataCorteHistorico && (
-              <FinanceiroSummaryChip>Movimentos desde {formatarSoData(dataCorteHistorico)}</FinanceiroSummaryChip>
-            )}
             {filtroPeriodo !== 'mes' && <FinanceiroSummaryChip>{periodoLabel}</FinanceiroSummaryChip>}
             {tiposSel.length > 0 && (
               <FinanceiroSummaryChip>{labelTiposSelecionados(tiposSel)}</FinanceiroSummaryChip>
