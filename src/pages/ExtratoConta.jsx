@@ -58,6 +58,7 @@ import { sincronizarSaldosAposAlteracao } from '@/lib/sincronizarSaldoContasFina
 import { criarReforcoPendenteTransferenciaCaixaPDV } from '@/lib/reforcoPendenteCaixaPDV';
 import { consolidarTransferenciasListaFluxo } from '@/lib/gruposMovimentacaoConta';
 import { navigateBackOr } from '@/lib/navigateBackOr';
+import { createPageUrl } from '@/utils';
 
 function getDataKeyMovimentoExtrato(mov) {
   if (mov?.origem === 'movimento' || (mov?.conta_id && !mov?.conta_financeira_id)) {
@@ -141,8 +142,13 @@ export default function ExtratoContaPage() {
   });
 
   const voltar = useCallback(() => {
-    navigateBackOr(navigate, 'Financeiro');
-  }, [navigate]);
+    const abaOrigem = location.state?.financeiroAba;
+    if (abaOrigem === 'caixas' || abaOrigem === 'fluxo') {
+      navigate(`${createPageUrl('FluxoCaixa')}?aba=${abaOrigem}`);
+      return;
+    }
+    navigateBackOr(navigate, 'FluxoCaixa');
+  }, [navigate, location.state]);
 
   const aplicarSaldoBase = useCallback((lancsFull, movsFull) => {
     if (!Array.isArray(lancsFull) || !Array.isArray(movsFull)) return false;

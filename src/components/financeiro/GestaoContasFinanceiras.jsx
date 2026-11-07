@@ -423,6 +423,7 @@ function useGestaoContasModel(shared) {
     const movsPreload = movimentosSaldo.length ? movimentosSaldo : shared?.movsSaldo;
     navigate(`${createPageUrl('ExtratoConta')}?id=${account.id}`, {
       state: {
+        financeiroAba: 'caixas',
         extratoPreload: {
           conta: account,
           lancsSaldo: lancsPreload?.length ? lancsPreload : undefined,

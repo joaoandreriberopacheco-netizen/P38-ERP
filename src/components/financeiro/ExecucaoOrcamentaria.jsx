@@ -121,6 +121,8 @@ const ABA_LEGACY_PAGE = {
   planejamento: 'PlanejamentoFinanceiro',
   agefin: 'PlanejamentoFinanceiro',
 };
+
+const ABAS_URL_VALIDAS = new Set(['caixas', 'fluxo']);
 function parseDateKey(dateKey) {
   return new Date(`${dateKey}T12:00:00-05:00`);
 }
@@ -237,6 +239,9 @@ export default function ExecucaoOrcamentaria() {
       const qs = params.toString();
       navigate(`${createPageUrl(legacyPage)}${qs ? `?${qs}` : ''}`, { replace: true });
       return;
+    }
+    if (abaParam && ABAS_URL_VALIDAS.has(abaParam)) {
+      setAba(abaParam);
     }
   }, [navigate]);
 
