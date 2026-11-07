@@ -77,9 +77,9 @@ export async function deploySupabaseFunctions({ dryRun = false } = {}) {
       'functions',
       'deploy',
       name,
-      '--project-ref',
-      projectRef,
+      `--remote=${projectRef}`,
       '--use-api',
+      '--yes',
     ];
     if (functionSkipsJwtVerify(name)) {
       deployArgs.push('--no-verify-jwt');

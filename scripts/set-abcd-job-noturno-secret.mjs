@@ -21,7 +21,15 @@ if (!projectRef) {
 
 const result = spawnSync(
   'npx',
-  ['--yes', 'supabase@latest', 'secrets', 'set', 'ABCD_JOB_NOTURNO=true', '--project-ref', projectRef],
+  [
+    '--yes',
+    'supabase@latest',
+    'secrets',
+    'set',
+    'ABCD_JOB_NOTURNO=true',
+    `--remote=${projectRef}`,
+    '--yes',
+  ],
   {
     env: { ...process.env, SUPABASE_ACCESS_TOKEN: accessToken },
     encoding: 'utf8',
