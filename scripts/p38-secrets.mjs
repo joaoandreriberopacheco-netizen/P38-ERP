@@ -19,6 +19,32 @@ function trim(value) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+/** Cursor Cloud às vezes grava `supabase-service-role-key`; scripts usam SUPABASE_SERVICE_ROLE_KEY. */
+function hydrateCloudAgentSecretAliases() {
+  const aliasesUsed = [];
+  const directPairs = [
+    ['supabase-service-role-key', 'SUPABASE_SERVICE_ROLE_KEY'],
+    ['SUPABASE-SERVICE-ROLE-KEY', 'SUPABASE_SERVICE_ROLE_KEY'],
+  ];
+  for (const [from, to] of directPairs) {
+    const v = trim(process.env[from]);
+    if (v && !trim(process.env[to])) {
+      process.env[to] = v;
+      aliasesUsed.push(`${from}→${to}`);
+    }
+  }
+  for (const [key, raw] of Object.entries(process.env)) {
+    const v = trim(raw);
+    if (!v || !key.includes('-')) continue;
+    const canon = key.toUpperCase().replace(/-/g, '_');
+    if (canon === 'SUPABASE_SERVICE_ROLE_KEY' && !trim(process.env.SUPABASE_SERVICE_ROLE_KEY)) {
+      process.env.SUPABASE_SERVICE_ROLE_KEY = v;
+      aliasesUsed.push(`${key}→SUPABASE_SERVICE_ROLE_KEY`);
+    }
+  }
+  return aliasesUsed;
+}
+
 /**
  * Extrai metadados seguros de uma connection string (sem expor password).
  * @param {string | undefined} databaseUrl
@@ -145,7 +171,7 @@ function resolveLegacySupabaseSecret() {
  */
 export function resolveP38Secrets() {
   const legacy = resolveLegacySupabaseSecret();
-  const aliasesUsed = [];
+  const aliasesUsed = hydrateCloudAgentSecretAliases();
 
   const nextPublicSupabaseUrl = trim(process.env.NEXT_PUBLIC_SUPABASE_URL);
   const nextPublicSupabaseAnonKey = trim(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);

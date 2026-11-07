@@ -35,6 +35,15 @@ export function requireP38SupabaseAdmin() {
     console.error(
       '[P38] SUPABASE_SERVICE_ROLE_KEY em falta (service_role no dashboard Supabase → API).',
     );
+    const all = (process.env.CLOUD_AGENT_ALL_SECRET_NAMES || '').split(',').map((s) => s.trim());
+    if (all.length && !all.some((n) => /service.?role/i.test(n))) {
+      console.error(
+        '[P38] Cursor Cloud: este ambiente não lista supabase-service-role-key nem SUPABASE_SERVICE_ROLE_KEY.',
+      );
+      console.error(
+        '[P38] No painel do ambiente, associe o secret (nome canónico SUPABASE_SERVICE_ROLE_KEY recomendado) e abra nova sessão.',
+      );
+    }
     console.error('Guia: docs/migration/P38_CONFIGURAR_SECRETS_PASSO_A_PASSO.md');
     process.exit(1);
   }
