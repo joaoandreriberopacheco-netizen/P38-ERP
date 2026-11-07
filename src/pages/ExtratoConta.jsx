@@ -105,6 +105,7 @@ export default function ExtratoContaPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [fabOpen, setFabOpen] = useState(false);
   const [dialogType, setDialogType] = useState(null);
+  const [editando, setEditando] = useState(null);
   const [filtroPeriodo, setFiltroPeriodo] = useState('mes');
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
@@ -121,11 +122,18 @@ export default function ExtratoContaPage() {
   const { toast } = useToast();
 
   const tipoInicialExtrato = useMemo(() => {
+    if (editando?.tipo) return editando.tipo;
     if (dialogType === 'receita') return 'Receita';
     if (dialogType === 'despesa') return 'Despesa';
     if (dialogType === 'transferencia') return 'Transferência';
     return 'Despesa';
-  }, [dialogType]);
+  }, [dialogType, editando?.tipo]);
+
+  const novoLancamentoOpen =
+    dialogType === 'receita'
+    || dialogType === 'despesa'
+    || dialogType === 'transferencia'
+    || !!editando;
 
   const voltar = useCallback(() => {
     const abaOrigem = location.state?.financeiroAba;
@@ -720,7 +728,14 @@ export default function ExtratoContaPage() {
         }
       />
 
-      <ListaExtratoConta grupos={grupos} loading={isLoading} />
+      <ListaExtratoConta
+        grupos={grupos}
+        loading={isLoading}
+        onRow={(l) => {
+          if (l?.origem === 'movimento') return;
+          setEditando(l);
+        }}
+      />
 
       <AjusteSaldoDialog
         open={ajusteDialogOpen}
@@ -772,13 +787,18 @@ export default function ExtratoContaPage() {
       </div>
 
       <NovoLancamentoDialog
-        open={dialogType === 'receita' || dialogType === 'despesa' || dialogType === 'transferencia'}
+        open={novoLancamentoOpen}
+        lancamentoExistente={editando}
         tipoInicial={tipoInicialExtrato}
         contaDefaultId={conta?.id}
-        onClose={() => setDialogType(null)}
+        onClose={() => {
+          setDialogType(null);
+          setEditando(null);
+        }}
         onSaved={async () => {
           if (conta?.id) await loadExtrato(conta.id);
           setDialogType(null);
+          setEditando(null);
         }}
       />
     </div>
