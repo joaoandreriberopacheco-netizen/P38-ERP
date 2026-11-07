@@ -138,7 +138,7 @@ export default function ExecucaoOrcamentaria() {
   const [contas, setContas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [periodo, setPeriodo] = useState('mes');
+  const [periodo, setPeriodo] = useState('tudo');
   const [cs, setCs] = useState('');
   const [ce, setCe] = useState('');
   const [contasSel, setContasSel] = useState([]);
