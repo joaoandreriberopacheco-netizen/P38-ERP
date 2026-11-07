@@ -21,7 +21,7 @@ export async function resolveContaDestinoCartao(base44, pag, opts = {}) {
     const pagBank = findContaPagBank(contas);
     if (!pagBank) {
       throw new Error(
-        'Conta PagBank não encontrada. Crie a conta "PagBank" em Caixas e Bancos (Carteira Digital).',
+        'Conta PagBank não encontrada. Crie a conta "PagBank" em Caixas e Bancos (Conta Bancária).',
       );
     }
     return { id: pagBank.id, nome: pagBank.nome };

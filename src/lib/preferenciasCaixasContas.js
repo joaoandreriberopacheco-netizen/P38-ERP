@@ -1,6 +1,17 @@
 import { contasIdsContasPrincipaisCorte } from '@/lib/corteFinanceiroAbertura';
+import { tipoContaFinanceiraEfetivo } from '@/lib/contaPagBank';
 
 const STORAGE_KEY = 'p38-financeiro-caixas-contas-sel';
+
+export function contaComTipoEfetivoGestaoCaixas(conta) {
+  if (!conta) return conta;
+  const tipo = tipoContaFinanceiraEfetivo(conta);
+  return tipo === conta.tipo ? conta : { ...conta, tipo };
+}
+
+export function contasComTipoEfetivoGestaoCaixas(contas = []) {
+  return (contas || []).map(contaComTipoEfetivoGestaoCaixas);
+}
 
 export function contasSelPadraoGestaoCaixas(contas = []) {
   const ids = contasIdsContasPrincipaisCorte(contas);

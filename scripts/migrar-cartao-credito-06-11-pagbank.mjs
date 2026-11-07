@@ -78,7 +78,7 @@ if (!pagBank) {
       .from('contas_financeiras')
       .insert({
         nome: 'PagBank',
-        tipo: 'Carteira Digital',
+        tipo: 'Conta Bancária',
         ativo: true,
         saldo_inicial: 0,
         saldo_atual: 0,

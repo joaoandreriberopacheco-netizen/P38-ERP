@@ -23,6 +23,12 @@ export function isContaPagBank(conta) {
   return conta ? isNomeContaPagBank(conta.nome) : false;
 }
 
+/** PagBank entra no grupo Conta Bancária na aba Caixas (dados antigos podem vir como Carteira Digital). */
+export function tipoContaFinanceiraEfetivo(conta) {
+  if (isContaPagBank(conta)) return 'Conta Bancária';
+  return conta?.tipo || 'Outros';
+}
+
 export function findContaBancoBrasil(contas = []) {
   return (contas || []).find((c) => {
     if (!c?.nome) return false;

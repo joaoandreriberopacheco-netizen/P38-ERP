@@ -47,9 +47,11 @@ import {
 import {
   contasSelEfetivoGestaoCaixas,
   contasSelPadraoGestaoCaixas,
+  contasComTipoEfetivoGestaoCaixas,
   gravarPreferenciasCaixasContas,
   lerPreferenciasCaixasContas,
 } from '@/lib/preferenciasCaixasContas';
+import { isContaPagBank, tipoContaFinanceiraEfetivo } from '@/lib/contaPagBank';
 
 const GestaoContasCtx = createContext(null);
 
@@ -274,10 +276,13 @@ function useGestaoContasModel(shared) {
     saldosProntos,
   ]);
 
-  const contasEnriquecidas = useMemo(() => accounts.map((account) => ({
-    ...account,
-    saldo_calculado: saldosCalculados ? saldosCalculados[account.id] : null,
-  })), [accounts, saldosCalculados]);
+  const contasEnriquecidas = useMemo(
+    () => contasComTipoEfetivoGestaoCaixas(accounts).map((account) => ({
+      ...account,
+      saldo_calculado: saldosCalculados ? saldosCalculados[account.id] : null,
+    })),
+    [accounts, saldosCalculados],
+  );
 
   const contasOperacionais = useMemo(
     () => contasEnriquecidas.filter((account) => !isContaTransicao(account)),
@@ -371,12 +376,16 @@ function useGestaoContasModel(shared) {
   };
 
   const handleSave = async () => {
+    const payload = {
+      ...formData,
+      ...(isContaPagBank({ nome: formData.nome }) ? { tipo: 'Conta Bancária' } : {}),
+    };
     if (selectedAccount) {
-      await base44.entities.ContasFinanceiras.update(selectedAccount.id, formData);
+      await base44.entities.ContasFinanceiras.update(selectedAccount.id, payload);
     } else {
       await base44.entities.ContasFinanceiras.create({
-        ...formData,
-        saldo_atual: formData.saldo_inicial,
+        ...payload,
+        saldo_atual: payload.saldo_inicial,
       });
     }
     await loadData();
@@ -388,7 +397,7 @@ function useGestaoContasModel(shared) {
     setSelectedAccount(account);
     setFormData({
       nome: account.nome || '',
-      tipo: account.tipo || 'Caixa Físico',
+      tipo: tipoContaFinanceiraEfetivo(account) || 'Caixa Físico',
       banco: account.banco || '',
       agencia: account.agencia || '',
       conta: account.conta || '',

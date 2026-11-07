@@ -8,6 +8,7 @@ import { labelContasSaldoSelecionadas } from '@/lib/preferenciasSaldoContas';
 import {
   contasSelEfetivoGestaoCaixas,
   contasSelPadraoGestaoCaixas,
+  contasComTipoEfetivoGestaoCaixas,
 } from '@/lib/preferenciasCaixasContas';
 import { FINANCEIRO_TOOLBAR_ICON_CLASS } from './FinanceiroToolbarIcon';
 import {
@@ -33,8 +34,12 @@ export default function ContasSaldoPicker({
   modoGestaoCaixas = false,
   contasTodasParaMarcar = [],
 }) {
-  const opcoes = contas.filter(Boolean);
-  const todasRef = contasTodasParaMarcar.length ? contasTodasParaMarcar : opcoes;
+  const opcoes = modoGestaoCaixas
+    ? contasComTipoEfetivoGestaoCaixas(contas.filter(Boolean))
+    : contas.filter(Boolean);
+  const todasRef = contasTodasParaMarcar.length
+    ? (modoGestaoCaixas ? contasComTipoEfetivoGestaoCaixas(contasTodasParaMarcar) : contasTodasParaMarcar)
+    : opcoes;
 
   const padraoCaixasIds = () => contasSelPadraoGestaoCaixas(todasRef);
   const selecaoCaixasEhPadrao = () => {
