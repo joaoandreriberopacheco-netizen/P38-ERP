@@ -2,10 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import NovoLancamentoDialog from '@/components/financeiro/NovoLancamentoDialog';
 import {
   ArrowLeft,
   Plus,
@@ -54,8 +51,6 @@ import {
   totaisEntradaSaidaMovimentos,
 } from '@/lib/saldoContaFinanceira';
 import { reconciliarSaldoCaixaPDVSemTurnoAberto, backfillLancamentosMovimentosCaixaPDV } from '@/lib/contaDestinoCaixaPDV';
-import { sincronizarSaldosAposAlteracao } from '@/lib/sincronizarSaldoContasFinanceiras';
-import { criarReforcoPendenteTransferenciaCaixaPDV } from '@/lib/reforcoPendenteCaixaPDV';
 import { consolidarTransferenciasListaFluxo } from '@/lib/gruposMovimentacaoConta';
 import { navigateBackOr } from '@/lib/navigateBackOr';
 import { createPageUrl } from '@/utils';
@@ -125,21 +120,12 @@ export default function ExtratoContaPage() {
   );
   const { toast } = useToast();
 
-  const [formLancamento, setFormLancamento] = useState({
-    tipo: 'Receita',
-    descricao: '',
-    valor: 0,
-    categoria: 'Outros',
-    data_vencimento: format(new Date(), 'yyyy-MM-dd'),
-    data_pagamento: format(new Date(), 'yyyy-MM-dd'),
-    status: 'Pago'
-  });
-
-  const [formTransferencia, setFormTransferencia] = useState({
-    conta_destino_id: '',
-    valor: 0,
-    descricao: ''
-  });
+  const tipoInicialExtrato = useMemo(() => {
+    if (dialogType === 'receita') return 'Receita';
+    if (dialogType === 'despesa') return 'Despesa';
+    if (dialogType === 'transferencia') return 'Transferência';
+    return 'Despesa';
+  }, [dialogType]);
 
   const voltar = useCallback(() => {
     const abaOrigem = location.state?.financeiroAba;
@@ -317,123 +303,9 @@ export default function ExtratoContaPage() {
     }
   }, [loadExtrato, location.state]);
 
-  const handleSaveLancamento = async () => {
-    try {
-      const lancamentoData = {
-        ...formLancamento,
-        valor: parseFloat(formLancamento.valor),
-        conta_financeira_id: conta.id,
-        observacoes: `Lançamento manual via conta ${conta.nome}`
-      };
-
-      await base44.entities.LancamentoFinanceiro.create(lancamentoData);
-
-      await loadExtrato(conta.id);
-
-      toast({
-        title: "Lançamento registrado",
-        description: `${formLancamento.tipo} de ${formatCurrency(formLancamento.valor)} registrada`,
-        className: "bg-green-100 text-green-800"
-      });
-
-      setDialogType(null);
-    } catch (error) {
-      toast({
-        title: "Erro ao salvar",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleSaveTransferencia = async () => {
-    try {
-      const valor = parseFloat(formTransferencia.valor);
-      const contaDestino = contas.find(c => c.id === formTransferencia.conta_destino_id);
-
-      if (!contaDestino) {
-        toast({ title: "Selecione uma conta de destino", variant: "destructive" });
-        return;
-      }
-
-      const descricao =
-        formTransferencia.descricao?.trim() ||
-        `Transferência ${conta.nome} → ${contaDestino.nome}`;
-
-      const transferencia = await base44.entities.LancamentoFinanceiro.create({
-        tipo: 'Transferência',
-        descricao,
-        valor,
-        categoria: 'Transferência entre Contas',
-        data_vencimento: format(new Date(), 'yyyy-MM-dd'),
-        data_pagamento: format(new Date(), 'yyyy-MM-dd'),
-        status: 'Pago',
-        status_conciliacao: 'N/A',
-        referencia_tipo: 'Manual',
-        conta_financeira_id: conta.id,
-        conta_financeira_nome: conta.nome,
-        conta_destino_id: contaDestino.id,
-        conta_destino_nome: contaDestino.nome,
-        observacoes: formTransferencia.descricao?.trim() || '',
-      });
-
-      await sincronizarSaldosAposAlteracao(base44, [conta.id, contaDestino.id]);
-
-      if (contaUsaRegraCaixaPDV(contaDestino)) {
-        const user = await base44.auth.me().catch(() => null);
-        await criarReforcoPendenteTransferenciaCaixaPDV(base44, {
-          contaDestino,
-          contaOrigem: conta,
-          valor,
-          lancamentoReceitaId: transferencia?.id,
-          usuarioId: user?.id,
-          usuarioNome: user?.full_name || user?.email,
-          observacaoExtra: formTransferencia.descricao?.trim() || '',
-        });
-      }
-
-      toast({
-        title: "Transferência realizada",
-        description: `${formatCurrency(valor)} transferido para ${contaDestino.nome}`,
-        className: "bg-green-100 text-green-800"
-      });
-
-      setDialogType(null);
-      await loadExtrato(conta.id);
-    } catch (error) {
-      toast({
-        title: "Erro ao transferir",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  };
-
-  const formatCurrency = (value) => {
-    return `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
-
   const openDialog = (type) => {
     setDialogType(type);
     setFabOpen(false);
-    
-    if (type === 'receita' || type === 'despesa') {
-      setFormLancamento({
-        tipo: type === 'receita' ? 'Receita' : 'Despesa',
-        descricao: '',
-        valor: 0,
-        categoria: 'Outros',
-        data_vencimento: format(new Date(), 'yyyy-MM-dd'),
-        data_pagamento: format(new Date(), 'yyyy-MM-dd'),
-        status: 'Pago'
-      });
-    } else if (type === 'transferencia') {
-      setFormTransferencia({
-        conta_destino_id: '',
-        valor: 0,
-        descricao: ''
-      });
-    }
   };
 
   const getDataMovimento = (mov) => mov.data_pagamento || mov.data_vencimento || mov.data_movimento || mov.created_date;
@@ -899,125 +771,16 @@ export default function ExtratoContaPage() {
         </button>
       </div>
 
-      {/* Dialog Receita/Despesa */}
-      <Dialog open={dialogType === 'receita' || dialogType === 'despesa'} onOpenChange={() => setDialogType(null)}>
-        <DialogContent className="flex max-h-[min(92vh,36rem)] min-h-0 flex-col gap-0 overflow-hidden dark:border-border/40 dark:bg-muted sm:max-w-md">
-          <DialogHeader className="shrink-0">
-            <DialogTitle className="text-foreground">
-              {dialogType === 'receita' ? 'Nova Receita' : 'Nova Despesa'}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto py-4 [scrollbar-gutter:stable]">
-            <div>
-              <Label className="text-foreground/90">Descrição</Label>
-              <Input
-                placeholder="Ex: Venda de produto, Pagamento de fornecedor..."
-                value={formLancamento.descricao}
-                onChange={(e) => setFormLancamento({ ...formLancamento, descricao: e.target.value })}
-                className="dark:bg-muted dark:border-border/40 dark:text-foreground"
-              />
-            </div>
-            <div>
-              <Label className="text-foreground/90">Valor</Label>
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="0,00"
-                value={formLancamento.valor}
-                onChange={(e) => setFormLancamento({ ...formLancamento, valor: e.target.value })}
-                className="dark:bg-muted dark:border-border/40 dark:text-foreground"
-              />
-            </div>
-            <div>
-              <Label className="text-foreground/90">Categoria</Label>
-              <Select 
-                value={formLancamento.categoria} 
-                onValueChange={(v) => setFormLancamento({ ...formLancamento, categoria: v })}
-              >
-                <SelectTrigger className="dark:bg-muted dark:border-border/40 dark:text-foreground">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="dark:bg-muted dark:border-border/40">
-                  <SelectItem value="Venda de Produto">Venda de Produto</SelectItem>
-                  <SelectItem value="Prestação de Serviço">Prestação de Serviço</SelectItem>
-                  <SelectItem value="Compra de Mercadoria">Compra de Mercadoria</SelectItem>
-                  <SelectItem value="Aluguel">Aluguel</SelectItem>
-                  <SelectItem value="Salários">Salários</SelectItem>
-                  <SelectItem value="Impostos">Impostos</SelectItem>
-                  <SelectItem value="Marketing">Marketing</SelectItem>
-                  <SelectItem value="Outros">Outros</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter className="shrink-0 border-t border-border/50 pt-4 dark:border-border/50">
-            <Button variant="outline" onClick={() => setDialogType(null)} className="dark:bg-muted dark:border-border/40">
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleSaveLancamento} 
-              className={dialogType === 'receita' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}
-            >
-              Registrar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog Transferência */}
-      <Dialog open={dialogType === 'transferencia'} onOpenChange={() => setDialogType(null)}>
-        <DialogContent className="flex max-h-[min(92vh,32rem)] min-h-0 flex-col gap-0 overflow-hidden dark:border-border/40 dark:bg-muted sm:max-w-md">
-          <DialogHeader className="shrink-0">
-            <DialogTitle className="text-foreground">Nova Transferência</DialogTitle>
-          </DialogHeader>
-          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto py-4 [scrollbar-gutter:stable]">
-            <div>
-              <Label className="text-foreground/90">Conta de Destino</Label>
-              <Select 
-                value={formTransferencia.conta_destino_id} 
-                onValueChange={(v) => setFormTransferencia({ ...formTransferencia, conta_destino_id: v })}
-              >
-                <SelectTrigger className="dark:bg-muted dark:border-border/40 dark:text-foreground">
-                  <SelectValue placeholder="Selecione a conta..." />
-                </SelectTrigger>
-                <SelectContent className="dark:bg-muted dark:border-border/40">
-                  {contas.filter(c => c.id !== conta.id && c.ativo).map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-foreground/90">Valor</Label>
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="0,00"
-                value={formTransferencia.valor}
-                onChange={(e) => setFormTransferencia({ ...formTransferencia, valor: e.target.value })}
-                className="dark:bg-muted dark:border-border/40 dark:text-foreground"
-              />
-            </div>
-            <div>
-              <Label className="text-foreground/90">Descrição</Label>
-              <Input
-                placeholder="Ex: Reforço de caixa, Sangria..."
-                value={formTransferencia.descricao}
-                onChange={(e) => setFormTransferencia({ ...formTransferencia, descricao: e.target.value })}
-                className="dark:bg-muted dark:border-border/40 dark:text-foreground"
-              />
-            </div>
-          </div>
-          <DialogFooter className="shrink-0 border-t border-border/50 pt-4 dark:border-border/50">
-            <Button variant="outline" onClick={() => setDialogType(null)} className="dark:bg-muted dark:border-border/40">
-              Cancelar
-            </Button>
-            <Button onClick={handleSaveTransferencia} className="bg-blue-600 hover:bg-blue-700">
-              Transferir
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <NovoLancamentoDialog
+        open={dialogType === 'receita' || dialogType === 'despesa' || dialogType === 'transferencia'}
+        tipoInicial={tipoInicialExtrato}
+        contaDefaultId={conta?.id}
+        onClose={() => setDialogType(null)}
+        onSaved={async () => {
+          if (conta?.id) await loadExtrato(conta.id);
+          setDialogType(null);
+        }}
+      />
     </div>
   );
 }
