@@ -1,6 +1,6 @@
 import React from 'react';
 import { formatarDataCurta } from '@/components/utils/dateUtils';
-import { AlertCircle, ArrowRightLeft, Clock } from 'lucide-react';
+import { AlertCircle, ArrowDown, ArrowRightLeft, ArrowUp, Clock } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   P38MobileLine,
@@ -67,8 +67,15 @@ function valorNode(l) {
   if (cancelado) return '—';
   if (isT) return formatFinanceiroValor(Math.abs(l.valor || 0));
 
+  const valorFmt = formatFinanceiroValor(Math.abs(l.valor || 0));
+  const Icon = isR ? ArrowUp : ArrowDown;
+  const iconClass = isR
+    ? 'text-green-600 dark:text-green-400'
+    : 'text-red-500 dark:text-red-400';
+
   return (
-    <>
+    <span className="inline-flex items-center justify-end gap-0.5 tabular-nums">
+      <Icon className={cn('h-3 w-3 shrink-0 opacity-80', iconClass)} aria-hidden />
       <span
         className={
           isR
@@ -80,8 +87,8 @@ function valorNode(l) {
       >
         {isR ? '+' : '−'}
       </span>
-      {formatFinanceiroValor(Math.abs(l.valor || 0))}
-    </>
+      {valorFmt}
+    </span>
   );
 }
 
