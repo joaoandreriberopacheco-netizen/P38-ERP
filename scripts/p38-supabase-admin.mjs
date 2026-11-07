@@ -7,6 +7,14 @@ import { loadDotEnvFiles } from './base44-env.mjs';
 import { loadP38SecretsBundle } from './load-p38-secrets-bundle.mjs';
 import { resolveP38Secrets } from './p38-secrets.mjs';
 
+/** Project URL only — secrets às vezes trazem …/rest/v1 (PostgREST). */
+export function normalizeSupabaseProjectUrl(url) {
+  if (!url) return url;
+  return String(url)
+    .replace(/\/rest\/v1\/?$/i, '')
+    .replace(/\/+$/, '');
+}
+
 export function resolveP38SupabaseAdminConfig() {
   loadDotEnvFiles();
   loadP38SecretsBundle();
@@ -18,7 +26,7 @@ export function resolveP38SupabaseAdminConfig() {
     url = `https://${secrets.projectRef}.supabase.co`;
   }
 
-  return { url, serviceRoleKey, secrets };
+  return { url: normalizeSupabaseProjectUrl(url), serviceRoleKey, secrets };
 }
 
 export function requireP38SupabaseAdmin() {
