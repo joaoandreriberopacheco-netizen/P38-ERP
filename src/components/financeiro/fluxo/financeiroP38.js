@@ -4,6 +4,12 @@ import { cn } from '@/lib/utils';
 /** Layout extrato mobile (protótipo v8) — hero colapsável + barra verde claro. */
 export const FLUXO_EXTRATO_MOBILE_V8 = true;
 
+/** Barra fixa do extrato — abas Contas/Fluxo à esquerda (paridade com tela Contas). */
+export const P38_EXTRATO_V8_APP_BAR = cn(
+  'relative z-30 grid shrink-0 grid-cols-[auto_1fr_auto] items-center gap-2 px-4 py-2.5',
+  'bg-[#3d5a3d] text-white dark:bg-[#2d333b] dark:text-foreground',
+);
+
 /**
  * `--font` em `fluxo-caixa-extrato-prototype.html` (system stack; sem @font-face / Google Fonts).
  * Aplica só na árvore `FluxoExtratoMobileShell`.

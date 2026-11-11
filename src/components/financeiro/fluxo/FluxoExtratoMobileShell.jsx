@@ -5,7 +5,12 @@ import { formatFinanceiroValor } from './FinanceiroListaShared';
 import FluxoExtratoUtilShortcuts from './FluxoExtratoUtilShortcuts';
 import { useFluxoExtratoScrollCollapse } from '@/hooks/useFluxoExtratoScrollCollapse';
 import FinanceiroAbaIconTabs from './FinanceiroAbaIconTabs';
-import { P38_EXTRATO_V8_FONT_SCOPE, P38_EXTRATO_V8_LIST_BG, P38_SEARCH } from './financeiroP38';
+import {
+  P38_EXTRATO_V8_APP_BAR,
+  P38_EXTRATO_V8_FONT_SCOPE,
+  P38_EXTRATO_V8_LIST_BG,
+  P38_SEARCH,
+} from './financeiroP38';
 
 export default function FluxoExtratoMobileShell({
   scrollRef,
@@ -37,15 +42,17 @@ export default function FluxoExtratoMobileShell({
 
   return (
     <div className={cn('flex min-h-0 flex-1 flex-col overflow-hidden', P38_EXTRATO_V8_FONT_SCOPE, className)}>
-      <header
-        className={cn(
-          'relative z-30 flex shrink-0 items-center justify-between px-3.5 py-2.5',
-          'bg-[#3d5a3d] text-white dark:bg-[#2d333b] dark:text-foreground',
-        )}
-      >
-        <span className="text-[15px] font-semibold tracking-tight">Extrato</span>
-        <div className="flex items-center gap-2 [&_button]:text-white dark:[&_button]:text-inherit">
-          <FinanceiroAbaIconTabs value={aba} onChange={onAbaChange} items={abasItems} />
+      <header className={P38_EXTRATO_V8_APP_BAR} aria-label="Barra do extrato">
+        <FinanceiroAbaIconTabs
+          value={aba}
+          onChange={onAbaChange}
+          items={abasItems}
+          className="shrink-0 justify-self-start"
+        />
+        <span className="min-w-0 truncate text-center text-[15px] font-semibold tracking-tight">
+          Extrato
+        </span>
+        <div className="flex shrink-0 items-center justify-end gap-2 [&_button]:text-white dark:[&_button]:text-inherit">
           <button type="button" className="p-1 opacity-90" aria-label="Ocultar valores">
             <Eye className="h-[18px] w-[18px]" strokeWidth={2} />
           </button>
