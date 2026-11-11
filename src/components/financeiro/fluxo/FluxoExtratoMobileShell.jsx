@@ -52,7 +52,7 @@ export default function FluxoExtratoMobileShell({
           'bg-[#3d5a3d] dark:bg-[#2d333b] dark:text-foreground',
         )}
       >
-        <span className="text-[15px] font-semibold">Fluxo de caixa</span>
+        <span className="text-[15px] font-semibold">Extrato</span>
         <div className="flex items-center gap-2">
           <FinanceiroAbaIconTabs value={aba} onChange={onAbaChange} items={abasItems} />
           <button type="button" className="p-1 opacity-90" aria-label="Ocultar valores">
