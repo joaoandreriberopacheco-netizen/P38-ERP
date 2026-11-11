@@ -13,6 +13,15 @@ const OUT = path.join(ROOT, 'docs/pulse/shipping-geral.json');
 
 /** Roteiros dry run completos (substituem geração automática). */
 const SHIPPING_OVERRIDES = {
+  Compras: [
+    { action: 'wait', sensor: 'Compras.shell', state: 'attached', label: 'Shell página' },
+    { action: 'wait', sensor: 'compras.tab-sugestoes', label: 'Aba sugestões' },
+    { action: 'click', sensor: 'compras.tab-cotacoes', label: 'Aba cotações' },
+    { action: 'wait', sensor: 'cotacoes.hub-scroll', label: 'Área scroll hub' },
+    { action: 'wait', sensor: 'cotacoes.busca', label: 'Busca cotações' },
+    { action: 'fill', sensor: 'cotacoes.busca', value: 'a', label: 'Busca — digitar (dry)' },
+    { action: 'fill', sensor: 'cotacoes.busca', value: '', label: 'Busca — limpar' },
+  ],
   PedidosCompra: [
     { action: 'wait', sensor: 'PedidosCompra.shell', state: 'attached', label: 'Lista pedidos' },
     { action: 'click', sensor: 'pedidos-compra.novo-pedido', label: 'FAB novo pedido' },
@@ -47,7 +56,7 @@ const SHIPPING_OVERRIDES = {
 };
 
 const FILL_DRY = /\.(busca|codigo-pedido|busca-produto|busca-cliente|busca-pedido)/;
-const CLICK_SAFE = /\.(atualizar|tab-consulta|tab-embarques|tab-sugestoes|tab-vendas|tab-contas|tab-mix|tab-codigos|tab-separacao|tab-produtos|tab-geral|modo-fluvial)/;
+const CLICK_SAFE = /\.(atualizar|tab-consulta|tab-embarques|tab-sugestoes|tab-cotacoes|tab-vendas|tab-contas|tab-mix|tab-codigos|tab-separacao|tab-produtos|tab-geral|modo-fluvial)/;
 
 function shipmentId(screen) {
   if (screen.pageName === 'PDV') return 'pdv-vendedor';

@@ -13,7 +13,6 @@ const OUT = path.join(ROOT, 'docs/pulse/sensors-geral.json');
 /** Controlos críticos por pageName (além do .shell automático em P38LazyPage). */
 const CONTROLS = {
   Home: { id: 'home.personalizar', label: 'Personalizar atalhos' },
-  Compras: { id: 'compras.tab-sugestoes', label: 'Aba sugestões' },
   Estoque: { id: 'estoque.link-contagem', label: 'Atalho contagem express' },
   Configuracoes: { id: 'configuracoes.tab-vendas', label: 'Aba vendas' },
   PlanejamentoFinanceiro: { id: 'planejamento-financeiro.tab-contas', label: 'Aba contas' },
@@ -49,6 +48,12 @@ const CONTROLS = {
 };
 
 const DETAILED = {
+  Compras: [
+    { id: 'compras.tab-sugestoes', type: 'presence', label: 'Aba sugestões' },
+    { id: 'compras.tab-cotacoes', type: 'click', label: 'Aba cotações' },
+    { id: 'cotacoes.hub-scroll', type: 'presence', label: 'Lista cotações (scroll)' },
+    { id: 'cotacoes.busca', type: 'presence', label: 'Busca cotações' },
+  ],
   PedidosCompra: [
     { id: 'pedidos-compra.tab-embarques', type: 'presence', label: 'Aba embarques' },
     { id: 'pedidos-compra.tab-consulta', type: 'click', label: 'Aba consulta', expectVisible: 'pedidos-compra.tab-consulta' },
