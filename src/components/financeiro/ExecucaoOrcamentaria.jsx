@@ -68,7 +68,10 @@ import { P38_PAGE_TITLE } from '@/lib/p38FormTypography';
 import { passaFiltroTiposLancamento, filtrarGruposPorTipo } from '@/lib/filtroTipoFinanceiro';
 import usePagamentoLoteFluxo from './fluxo/usePagamentoLoteFluxo';
 import { CONCILIACAO_LOTE_TAMANHO } from '@/lib/conciliacaoEmLote';
-import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
+import {
+  EXIBIR_FILTRO_HISTORICO_ANTERIOR_FLUXO,
+  EXIBIR_UI_CONCILIACAO_FINANCEIRO,
+} from '@/lib/financeiroConciliacaoUiFlags';
 import { consumirArquivoLancamentoTorreDoBridge, temFluxoLancamentoTorreAtivo, concluirFluxoTorreCompartilhamento } from '@/lib/torreLancamentoBridge';
 import { uploadAnexoParaLancamentoFinanceiro } from '@/lib/uploadAnexoReferencia';
 import { resolveViewportLayout, useCompactShell } from '@/hooks/use-breakpoint';
@@ -709,7 +712,14 @@ export default function ExecucaoOrcamentaria() {
   const totalPend = useMemo(() => lancs.filter(l => l.status_conciliacao === 'Pendente').length, [lancs]);
   const filtroContasDesviouPadrao = contasAtivas.length > 0
     && !contasSelEquivaleFiltroFluxoPadrao(contasSel, contasAtivas);
-  const hasActiveFilters = tiposSel.length > 0 || filtroContasDesviouPadrao || statusSel.length > 0 || pendentes || cmvOnly || mostrarHistoricoAnterior || !!search;
+  const hasActiveFilters =
+    tiposSel.length > 0 ||
+    filtroContasDesviouPadrao ||
+    statusSel.length > 0 ||
+    pendentes ||
+    cmvOnly ||
+    (EXIBIR_FILTRO_HISTORICO_ANTERIOR_FLUXO && mostrarHistoricoAnterior) ||
+    !!search;
 
   const abrirConciliacao = useCallback((conta) => {
     if (conta === null) {
@@ -982,7 +992,7 @@ export default function ExecucaoOrcamentaria() {
         <FinanceiroSummaryChip>Conciliação</FinanceiroSummaryChip>
       )}
       {cmvOnly && <FinanceiroSummaryChip>CMV</FinanceiroSummaryChip>}
-      {mostrarHistoricoAnterior && (
+      {EXIBIR_FILTRO_HISTORICO_ANTERIOR_FLUXO && mostrarHistoricoAnterior && (
         <FinanceiroSummaryChip>Histórico completo</FinanceiroSummaryChip>
       )}
     </>
@@ -1011,7 +1021,7 @@ export default function ExecucaoOrcamentaria() {
         <FinanceiroSummaryChip>Conciliação</FinanceiroSummaryChip>
       )}
       {cmvOnly && <FinanceiroSummaryChip>CMV</FinanceiroSummaryChip>}
-      {mostrarHistoricoAnterior && (
+      {EXIBIR_FILTRO_HISTORICO_ANTERIOR_FLUXO && mostrarHistoricoAnterior && (
         <FinanceiroSummaryChip>Histórico completo</FinanceiroSummaryChip>
       )}
     </>
