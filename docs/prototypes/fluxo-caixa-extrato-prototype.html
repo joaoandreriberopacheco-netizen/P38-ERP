@@ -240,9 +240,98 @@
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
     }
+    .chip-calendar {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 10px;
+      vertical-align: middle;
+    }
+    .chip-calendar svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      fill: none;
+    }
+    [data-theme="light"] .chip-calendar { color: var(--income); }
+    [data-theme="dark"] .chip-calendar { color: var(--text-muted); }
+
+    .fab-stack {
+      position: absolute;
+      right: 14px;
+      bottom: 18px;
+      z-index: 40;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+      pointer-events: none;
+    }
+    .fab-stack > * { pointer-events: auto; }
+    .fab-menu {
+      display: none;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    .fab-stack.open .fab-menu { display: flex; }
+    .fab-action {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: var(--fab-shadow);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    [data-theme="light"] .fab-action {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    [data-theme="dark"] .fab-action {
+      background: #383e47;
+      color: #f3f4f6;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .fab-main {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      line-height: 1;
+      cursor: pointer;
+      box-shadow: var(--fab-shadow);
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+    [data-theme="light"] .fab-main {
+      background: var(--income);
+      color: #fff;
+    }
+    [data-theme="light"] .fab-stack.open .fab-main {
+      transform: rotate(45deg);
+      background: #374151;
+    }
+    [data-theme="dark"] .fab-main {
+      background: #a4ce33;
+      color: #1f1d22;
+    }
+    [data-theme="dark"] .fab-stack.open .fab-main {
+      transform: rotate(45deg);
+      background: #383e47;
+      color: #fff;
+    }
+    .screen[data-screen="detail"] ~ .fab-stack,
+    .phone:not(:has(.screen[data-screen="list"].active)) .fab-stack { display: none; }
+
     [data-theme="light"] .hero-collapsible {
       overflow: hidden;
-      max-height: 520px;
+      max-height: 380px;
       opacity: 1;
       transition: max-height 0.38s ease, opacity 0.28s ease;
       will-change: max-height, opacity;
@@ -544,14 +633,6 @@
                     <span class="hero-pill">Detalhar saldo</span>
                   </div>
                 </div>
-                <div class="shortcuts-wrap">
-                  <div class="shortcuts">
-                    <button type="button" class="shortcut" title="Protótipo"><span class="shortcut-icon">◆</span>Receita</button>
-                    <button type="button" class="shortcut"><span class="shortcut-icon">↑</span>Despesa</button>
-                    <button type="button" class="shortcut"><span class="shortcut-icon">⇄</span>Transf.</button>
-                    <button type="button" class="shortcut"><span class="shortcut-icon">⎙</span>Exportar</button>
-                  </div>
-                </div>
                 <p class="hero-dica">Dica: Presença no Mercado — desbloqueie seu potencial com Open Finance ›</p>
               </div>
               <div class="filters filters--sticky">
@@ -567,10 +648,22 @@
                   <span class="chip">Out</span>
                   <span class="chip on">Nov</span>
                   <span class="chip">Futuros</span>
-                  <span class="chip" style="margin-left:4px" title="Calendário">📅</span>
+                  <button type="button" class="chip chip-calendar" title="Calendário" aria-label="Calendário">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>
+                    </svg>
+                  </button>
                 </div>
               </div>
               <div class="list-scroll" id="list-light"></div>
+            </div>
+            <div class="fab-stack" data-fab>
+              <div class="fab-menu" role="menu" aria-label="Novo lançamento">
+                <button type="button" class="fab-action" role="menuitem">Receita</button>
+                <button type="button" class="fab-action" role="menuitem">Despesa</button>
+                <button type="button" class="fab-action" role="menuitem">Transferência</button>
+              </div>
+              <button type="button" class="fab-main" aria-label="Novo lançamento" aria-expanded="false">+</button>
             </div>
           </div>
           <!-- detail -->
@@ -604,14 +697,6 @@
                 <span class="hero-pill">3 contas selecionadas</span>
               </div>
             </div>
-            <div class="shortcuts-wrap">
-              <div class="shortcuts">
-                <button type="button" class="shortcut"><span class="shortcut-icon">↓</span>Receita</button>
-                <button type="button" class="shortcut"><span class="shortcut-icon">↑</span>Despesa</button>
-                <button type="button" class="shortcut"><span class="shortcut-icon">⇄</span>Transf.</button>
-                <button type="button" class="shortcut"><span class="shortcut-icon">⎙</span>Filtros</button>
-              </div>
-            </div>
             <div class="filters">
               <div class="chips">
                 <span class="chip on">Tudo</span>
@@ -619,6 +704,14 @@
               </div>
             </div>
             <div class="list-scroll" id="list-dark"></div>
+            <div class="fab-stack" data-fab>
+              <div class="fab-menu" role="menu" aria-label="Novo lançamento">
+                <button type="button" class="fab-action" role="menuitem">Receita</button>
+                <button type="button" class="fab-action" role="menuitem">Despesa</button>
+                <button type="button" class="fab-action" role="menuitem">Transferência</button>
+              </div>
+              <button type="button" class="fab-main" aria-label="Novo lançamento" aria-expanded="false">+</button>
+            </div>
           </div>
           <div class="screen" data-screen="detail">
             <div class="detail-hero" style="background:#2d333b">
@@ -869,11 +962,20 @@
       });
     });
 
-    document.querySelectorAll('.chip').forEach((chip) => {
+    document.querySelectorAll('.chip:not(.chip-calendar)').forEach((chip) => {
       chip.addEventListener('click', () => {
         const parent = chip.parentElement;
         parent.querySelectorAll('.chip').forEach((c) => c.classList.remove('on'));
         chip.classList.add('on');
+      });
+    });
+
+    document.querySelectorAll('[data-fab]').forEach((stack) => {
+      const main = stack.querySelector('.fab-main');
+      if (!main) return;
+      main.addEventListener('click', () => {
+        const open = stack.classList.toggle('open');
+        main.setAttribute('aria-expanded', open ? 'true' : 'false');
       });
     });
   </script>
