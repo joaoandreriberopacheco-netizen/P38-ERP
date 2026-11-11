@@ -1,3 +1,6 @@
+/** Layout extrato mobile (protótipo v8) — hero colapsável + barra verde claro. */
+export const FLUXO_EXTRATO_MOBILE_V8 = true;
+
 /**
  * Tokens P38 partilhados — fluxo de caixa, contas abertas e Planejamento.
  *
