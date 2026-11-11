@@ -1,6 +1,6 @@
 import React from 'react';
 import { formatarDataCurta } from '@/components/utils/dateUtils';
-import { AlertCircle, ArrowDown, ArrowRightLeft, ArrowUp, ChevronRight } from 'lucide-react';
+import { AlertCircle, ArrowDown, ArrowRightLeft, ArrowUp, ChevronRight, Pencil } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   P38MobileLine,
@@ -21,7 +21,8 @@ import {
   P38_EXTRATO_V8_ROW_META,
   P38_EXTRATO_V8_ROW_TITLE,
   P38_EXTRATO_V8_ROW_VALUE,
-  extratoCompraMercadoriaMetaExtras,
+  extratoFornecedorNome,
+  lancamentoExtratoEhCompraMercadoria,
 } from './financeiroP38';
 
 const LINE_TITLE_CLASS =
@@ -64,6 +65,28 @@ function rotuloFormaPagamento(l) {
 function isLancamentoVenda(l) {
   const ref = l?.referencia_tipo || l?.dados?.referencia_tipo;
   return ref === 'PedidoVenda';
+}
+
+/** Lançamento real para detalhe/edição (linhas sintéticas de transferência no extrato). */
+function resolverLancamentoAcaoExtrato(l, { perspectiva, isTransfConsolidada }) {
+  if (!l) return null;
+  if (l._lancamentoTransferencia) return l._lancamentoTransferencia;
+  if (perspectiva === 'entrada' && l._lancamentoReceita) return l._lancamentoReceita;
+  if (perspectiva === 'saida' && l._lancamentoDespesa) return l._lancamentoDespesa;
+  if (isTransfConsolidada) return l._lancamentoDespesa || l._lancamentoReceita;
+  if (l._lancamentoDespesa) return l._lancamentoDespesa;
+  if (l._lancamentoReceita) return l._lancamentoReceita;
+  const id = String(l.id || '');
+  if (id.startsWith('transfer-single-') || id.startsWith('transfer-par-') || id.startsWith('transfer-unico-')) {
+    return l._lancamentoDespesa || l._lancamentoReceita || null;
+  }
+  if (l.tipo === 'Transferência' || isTransferenciaEntreContas(l)) return l;
+  return l;
+}
+
+function idLancamentoEditavel(lanc) {
+  const id = String(lanc?.id || '');
+  return !!id && !id.startsWith('transfer-') && !id.startsWith('pdv-');
 }
 
 function descricaoComFormaPagamento(l) {
@@ -284,6 +307,7 @@ export default function FinanceiroLancRow({
   onToggleSelecionado,
   contaVisualizadaId = null,
   extratoMobile = false,
+  onEdit,
 }) {
   const cancelado = l.status === 'Cancelado';
   const isPago = isLancamentoPago(l);
@@ -315,11 +339,15 @@ export default function FinanceiroLancRow({
   );
 
   const subtitleExtratoMeta = () => {
+    if (lancamentoExtratoEhCompraMercadoria(l)) {
+      return [data ? formatarDataCurta(data) : null, extratoFornecedorNome(l)]
+        .filter(Boolean)
+        .join(' · ');
+    }
     const categoria = String(l?.categoria || l?.dados?.categoria || '').trim();
     const parts = [
       data ? formatarDataCurta(data) : null,
       categoria || null,
-      ...extratoCompraMercadoriaMetaExtras(l),
       l.conta_financeira_nome,
       rotuloFormaPagamentoExtrato(l) || null,
     ].filter(Boolean);
@@ -367,7 +395,13 @@ export default function FinanceiroLancRow({
     </span>
   );
 
-  const lancamentoClick = l._lancamentoTransferencia || (isTransfConsolidada ? (l._lancamentoDespesa || l) : l);
+  const lancamentoClick = resolverLancamentoAcaoExtrato(l, { perspectiva, isTransfConsolidada }) || l;
+  const lancamentoEdicao = resolverLancamentoAcaoExtrato(l, { perspectiva, isTransfConsolidada });
+  const podeEditarExtrato =
+    extratoMobile
+    && !!onEdit
+    && l.origem !== 'movimento'
+    && idLancamentoEditavel(lancamentoEdicao);
 
   const esmaecido = cancelado || (showPago && isPago) || dimProgramada || l._isProgramada;
 
@@ -419,8 +453,10 @@ export default function FinanceiroLancRow({
     const metaExtra =
       (isTransfConsolidada || perspectiva) && l.notaTransferencia ? String(l.notaTransferencia).trim() : null;
 
-    const extratoGridClass =
-      'grid w-full grid-cols-[1rem_minmax(0,1fr)_7.25rem] items-center gap-x-2 gap-y-0';
+    const extratoGridClass = cn(
+      'grid w-full grid-cols-[1rem_minmax(0,1fr)_auto] items-center gap-x-2 gap-y-0',
+      podeEditarExtrato ? 'pr-0.5' : '',
+    );
     const extratoRow = (
       <div className={extratoGridClass}>
         <div className="flex w-4 shrink-0 items-center justify-start self-center">
@@ -440,13 +476,32 @@ export default function FinanceiroLancRow({
             ) : null}
           </div>
         </div>
-        <div className="flex w-[7.25rem] shrink-0 items-center justify-end gap-1 self-center pl-0.5">
-          {valorNode(l, {
-            extratoMobile: true,
-            perspectivaTransferencia: perspectiva,
-            contaVisualizadaId,
-          })}
-          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#6b7280] dark:text-muted-foreground" aria-hidden />
+        <div className="flex shrink-0 items-center justify-end gap-0.5 self-center pl-0.5">
+          <div className="max-w-[4.75rem] min-w-0 truncate text-right">
+            {valorNode(l, {
+              extratoMobile: true,
+              perspectivaTransferencia: perspectiva,
+              contaVisualizadaId,
+            })}
+          </div>
+          {podeEditarExtrato ? (
+            <button
+              type="button"
+              className="-mr-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[#6b7280] hover:bg-black/5 hover:text-[#3d5a3d] dark:text-muted-foreground dark:hover:bg-white/10 dark:hover:text-[#a4ce33]"
+              aria-label="Editar lançamento"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onEdit?.(lancamentoEdicao);
+              }}
+            >
+              <Pencil className="h-3.5 w-3.5" strokeWidth={2} />
+            </button>
+          ) : null}
+          <ChevronRight
+            className="h-3.5 w-3.5 shrink-0 text-[#6b7280] dark:text-muted-foreground"
+            aria-hidden
+          />
         </div>
       </div>
     );
@@ -466,10 +521,17 @@ export default function FinanceiroLancRow({
       <P38MobileLine
         thinAccent={false}
         accent="none"
-        as="button"
-        type="button"
+        as="div"
+        role="button"
+        tabIndex={0}
         onClick={() => onClick?.(lancamentoClick)}
-        className={P38_EXTRATO_V8_ROW_LINE}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick?.(lancamentoClick);
+          }
+        }}
+        className={cn(P38_EXTRATO_V8_ROW_LINE, 'cursor-pointer')}
       >
         {extratoRow}
       </P38MobileLine>

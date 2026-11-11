@@ -1230,6 +1230,12 @@ export default function ExecucaoOrcamentaria() {
         if (l.origem === 'movimento') return;
         setDetalhe(l);
       }}
+      onEdit={(l) => {
+        if (l?.origem === 'movimento') return;
+        setDetalhe(null);
+        setEditando(l);
+        setShowNovoFluxo(true);
+      }}
     />
   );
 
