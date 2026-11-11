@@ -2,13 +2,14 @@ import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
-import { ChevronRight, ClipboardPenLine, Settings2 } from 'lucide-react';
+import { ChevronRight, Settings2 } from 'lucide-react';
 import P38Logo from '@/components/brand/P38Logo';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
   ALL_QUICK_ACTIONS,
   DEFAULT_QUICK_ACTIONS,
+  OUTROS_ATALHOS_HOME_IDS,
   quickActionsAtivos,
   normalizeQuickActionIds,
 } from '@/components/home/quickActions';
@@ -230,28 +231,12 @@ export default function HomePage() {
 
         {podeVerAvisosHome && <HomeAlertsPanelLazy allowedActionIds={allowedActionIds} />}
 
-        {(currentUser?.role === 'admin' || usuarioLegadoSemMatrizPerfil(currentUser) || permissoes?.consumo_interno?.registrar || permissoes?.consumo_interno?.acesso) && allowedActionIds.includes('consumo_interno') && (
-          <Link
-            to="/ConsumoInterno"
-            className="bg-card rounded-2xl p-4 shadow-sm border border-border/40 flex items-start gap-3 hover:shadow-md transition-shadow touch-manipulation active:scale-[0.99]"
-          >
-            <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
-              <ClipboardPenLine className="w-5 h-5 text-foreground/80" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground">Registrar Consumo Interno</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Saída rastreada com destinação, assinatura e anexos.
-              </p>
-            </div>
-            <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-          </Link>
-        )}
-
         {(() => {
-          const outrosAtalhos = quickActionsAtivos()
-            .filter((a) => allowedActionIds.includes(a.id) && !quickActionIds.includes(a.id))
-            .slice(0, 3);
+          const byId = Object.fromEntries(quickActionsAtivos().map((a) => [a.id, a]));
+          const outrosAtalhos = OUTROS_ATALHOS_HOME_IDS
+            .filter((id) => allowedActionIds.includes(id))
+            .map((id) => byId[id])
+            .filter(Boolean);
 
           if (outrosAtalhos.length === 0) return null;
 
