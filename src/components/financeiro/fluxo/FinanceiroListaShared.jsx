@@ -8,6 +8,7 @@ import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 import {
   P38_EXTRATO_V8_DATE_HEADER,
   P38_EXTRATO_V8_DAY_CARD,
+  P38_EXTRATO_V8_DAY_GROUP,
   P38_EXTRATO_V8_DAY_SALDO,
   P38_EXTRATO_V8_DAY_SALDO_VALUE,
   P38_FIELD_SURFACE,
@@ -68,7 +69,7 @@ export function FinanceiroGrupo({
     const dateLabel = grupoKey != null ? formatExtratoMobileGrupoLabel(grupoKey) : String(label || '').toUpperCase();
     const saldoDia = saldoAcumulado != null ? saldoAcumulado : liquido;
     return (
-      <div className="mb-3 w-full min-w-0">
+      <div className={P38_EXTRATO_V8_DAY_GROUP}>
         <p className={P38_EXTRATO_V8_DATE_HEADER}>{dateLabel}</p>
         <div className={P38_EXTRATO_V8_DAY_CARD}>
           <div className={P38_EXTRATO_V8_DAY_SALDO}>

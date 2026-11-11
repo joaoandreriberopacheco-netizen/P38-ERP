@@ -2,6 +2,7 @@ import React from 'react';
 import { Scale } from 'lucide-react';
 import FinanceiroLancRow from './FinanceiroLancRow';
 import { FinanceiroGrupo, FinanceiroListaEstado } from './FinanceiroListaShared';
+import { P38_EXTRATO_V8_DAY_LIST_GAP } from './financeiroP38';
 
 export default function ListaLancamentos({
   grupos,
@@ -19,7 +20,7 @@ export default function ListaLancamentos({
       vazio={!loading && grupos.length === 0}
       vazioMensagem="Nenhum lançamento encontrado"
       vazioIcon={Scale}
-      listClassName={extratoMobile ? 'space-y-0' : undefined}
+      listClassName={extratoMobile ? P38_EXTRATO_V8_DAY_LIST_GAP : undefined}
     >
       {grupos.map(({ k, label, items, totais = {} }) => (
         <FinanceiroGrupo

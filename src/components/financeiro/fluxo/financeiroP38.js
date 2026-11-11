@@ -16,8 +16,11 @@ export const P38_EXTRATO_V8_FONT_SCOPE = cn(P38_EXTRATO_V8_FONT_FAMILY, '[&_*]:f
 export const P38_EXTRATO_V8_LIST_BG = 'bg-[#f4f5f3] dark:bg-[#1f1d22]';
 export const P38_EXTRATO_V8_DAY_CARD =
   'overflow-hidden rounded-xl border border-[#e5e7eb] bg-white shadow-sm dark:border-white/10 dark:bg-[#26262e] dark:shadow-none';
+/** Bloco data + card — separação entre dias no extrato mobile. */
+export const P38_EXTRATO_V8_DAY_GROUP = 'w-full min-w-0';
+export const P38_EXTRATO_V8_DAY_LIST_GAP = 'flex flex-col gap-7';
 export const P38_EXTRATO_V8_DATE_HEADER =
-  'pb-2 pt-4 text-[11px] font-bold uppercase tracking-[0.04em] text-[#6b7280] dark:text-muted-foreground';
+  'pb-2.5 pt-1 text-[11px] font-bold uppercase tracking-[0.04em] text-[#6b7280] dark:text-muted-foreground';
 /** `.tx-title` */
 export const P38_EXTRATO_V8_ROW_TITLE =
   'text-sm font-semibold leading-[1.25] text-[#1a1a1a] normal-case dark:text-[#eceff1]';
