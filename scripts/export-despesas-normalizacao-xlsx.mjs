@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * Exporta despesas (saídas) para planilha de normalização em massa.
+ * Exporta despesas (saídas) para planilha enxuta de normalização em massa.
+ * Aba visível: 7 colunas (ref + id + descrições + plano + centro + budget).
  *
  * Uso:
  *   node scripts/export-despesas-normalizacao-xlsx.mjs --de=2026-11-06 --ate=2026-11-11
- *   node scripts/export-despesas-normalizacao-xlsx.mjs --de=2026-11-06 --ate=2026-11-11 --out=exports/foo.xlsx
  */
 import ExcelJS from 'exceljs';
 import { mkdirSync } from 'node:fs';
@@ -12,6 +12,19 @@ import { dirname, join } from 'node:path';
 import { requireP38SupabaseAdmin } from './p38-supabase-admin.mjs';
 
 const REPO_ROOT = join(import.meta.dirname, '..');
+
+/** Colunas visíveis na aba Despesas (máx. 7). */
+const COLS = [
+  { key: 'ref_codigo', header: 'ref (data-hora)', width: 16 },
+  { key: 'id_lancamento', header: 'id_lancamento (recepção)', width: 38 },
+  { key: 'descricao', header: 'descrição (como está)', width: 36 },
+  { key: 'descricao_corrigida', header: 'descrição corrigida', width: 36 },
+  { key: 'plano_conta', header: 'plano de conta', width: 28 },
+  { key: 'centro_custos', header: 'centro de custos', width: 22 },
+  { key: 'budget', header: 'budget (modelo)', width: 28 },
+];
+
+const DROPDOWN_COL_KEYS = ['plano_conta', 'centro_custos', 'budget'];
 
 function parseArgs(argv) {
   const get = (prefix) => argv.find((a) => a.startsWith(prefix))?.slice(prefix.length) ?? '';
@@ -44,47 +57,34 @@ function dataReferencia(l) {
   );
 }
 
-function tagsToString(tags) {
-  if (tags == null) return '';
-  if (Array.isArray(tags)) return tags.filter(Boolean).join(', ');
-  if (typeof tags === 'string') return tags;
-  try {
-    return JSON.stringify(tags);
-  } catch {
-    return String(tags);
+/**
+ * Referência legível a partir de codigo_lancamento AAAAMMDDHHMMSS.
+ * Formato: AAAAMMDD-HHMMSS (fácil de ordenar e localizar no fluxo).
+ */
+function refCodigoDataHora(lanc, seq = 0) {
+  const c = String(lanc?.codigo_lancamento || '').trim();
+  if (/^\d{14}$/.test(c)) {
+    return `${c.slice(0, 8)}-${c.slice(8, 14)}`;
   }
+  const instant =
+    lanc?.data_lancamento ||
+    (lanc?.data_pagamento ? `${lanc.data_pagamento}T12:00:00` : null) ||
+    (lanc?.data_vencimento ? `${lanc.data_vencimento}T00:00:00` : null);
+  if (instant) {
+    const d = new Date(instant);
+    if (!Number.isNaN(d.getTime())) {
+      const p = (n, len = 2) => String(n).padStart(len, '0');
+      const y = p(d.getFullYear(), 4);
+      const mo = p(d.getMonth() + 1);
+      const da = p(d.getDate());
+      const h = p(d.getHours());
+      const mi = p(d.getMinutes());
+      const s = p(d.getSeconds());
+      return `${y}${mo}${da}-${h}${mi}${s}`;
+    }
+  }
+  return `SEM-COD-${String(seq).padStart(4, '0')}`;
 }
-
-const COLS = [
-  { key: 'id', header: 'id_lancamento (não alterar)' },
-  { key: 'descricao', header: 'descrição (como está)' },
-  { key: 'descricao_normalizada', header: 'descrição normalizada (preencher)' },
-  { key: 'plano_conta', header: 'plano de conta / categoria (como está)' },
-  { key: 'plano_conta_normalizado', header: 'plano de conta normalizado (preencher)' },
-  { key: 'conta_movimentacao', header: 'conta bancária / conta movimentação' },
-  { key: 'centro_custos', header: 'centro de custos' },
-  { key: 'centro_custos_normalizado', header: 'centro de custos normalizado (preencher)' },
-  { key: 'valor', header: 'valor' },
-  { key: 'valor_liquido', header: 'valor líquido' },
-  { key: 'data_referencia', header: 'data (referência fluxo)' },
-  { key: 'data_lancamento', header: 'data lançamento' },
-  { key: 'data_pagamento', header: 'data pagamento' },
-  { key: 'data_vencimento', header: 'data vencimento' },
-  { key: 'status', header: 'status' },
-  { key: 'forma_pagamento', header: 'forma de pagamento' },
-  { key: 'forma_pagamento_tipo', header: 'tipo forma pagamento' },
-  { key: 'terceiro_nome', header: 'terceiro (fornecedor/cliente)' },
-  { key: 'observacoes', header: 'observações' },
-  { key: 'tags', header: 'tags' },
-  { key: 'referencia_tipo', header: 'referência tipo' },
-  { key: 'referencia_numero', header: 'referência número' },
-  { key: 'turno_caixa_id', header: 'turno caixa id' },
-  { key: 'codigo_lancamento', header: 'código lançamento' },
-  { key: 'categoria_id', header: 'categoria_id' },
-  { key: 'conta_financeira_id', header: 'conta_financeira_id' },
-  { key: 'centro_custo_id', header: 'centro_custo_id' },
-  { key: 'is_custo_mercadoria', header: 'custo mercadoria (CMV)' },
-];
 
 function colLetter(colIndex1Based) {
   let n = colIndex1Based;
@@ -124,10 +124,10 @@ async function fetchAllRows(supabase, table, select, orderBy) {
 }
 
 async function fetchLookupLists(supabase, rows) {
-  const [categorias, contas, centros] = await Promise.all([
+  const [categorias, centros, budgets] = await Promise.all([
     fetchAllRows(supabase, 'categoria_financeira', 'id,nome,tipo,ativa', 'nome'),
-    fetchAllRows(supabase, 'contas_financeiras', 'id,nome,ativo,tipo', 'nome'),
     fetchAllRows(supabase, 'folha_centro_custo', 'id,nome,ativo,ordem', 'nome'),
+    fetchAllRows(supabase, 'budget_modelo', 'id,nome,ativo,categoria_nome,centro_custo', 'nome'),
   ]);
 
   const planosDespesa = categorias
@@ -135,28 +135,27 @@ async function fetchLookupLists(supabase, rows) {
     .map((c) => String(c.nome || '').trim())
     .filter(Boolean);
 
-  const nomesContas = contas.map((c) => String(c.nome || '').trim()).filter(Boolean);
   const nomesCentros = centros.map((c) => String(c.nome || '').trim()).filter(Boolean);
+  const nomesBudget = budgets
+    .filter((b) => b.ativo !== false)
+    .map((b) => String(b.nome || '').trim())
+    .filter(Boolean);
 
   const planos = uniqueSorted([...planosDespesa, ...rows.map((r) => r.plano_conta)]);
-  const contasNomes = uniqueSorted([...nomesContas, ...rows.map((r) => r.conta_movimentacao)]);
   const centrosNomes = uniqueSorted([...nomesCentros, ...rows.map((r) => r.centro_custos)]);
+  const budgetsNomes = uniqueSorted([...nomesBudget, ...rows.map((r) => r.budget)]);
 
   return {
     planos,
-    contas: contasNomes,
     centros: centrosNomes,
+    budgets: budgetsNomes,
     meta: {
-      categorias_total: categorias.length,
       categorias_despesa: planosDespesa.length,
-      contas_total: contas.length,
       centros_total: centros.length,
+      budgets_total: budgets.length,
     },
   };
 }
-
-/** Índice 1-based das colunas com dropdown (só cadastro; normalizados ficam texto livre). */
-const DROPDOWN_COL_KEYS = ['plano_conta', 'conta_movimentacao', 'centro_custos'];
 
 function columnIndexByKey(key) {
   const idx = COLS.findIndex((c) => c.key === key);
@@ -168,27 +167,11 @@ const SELECT_FIELDS = [
   'tipo',
   'descricao',
   'categoria',
-  'categoria_id',
   'centro_custo',
-  'centro_custo_id',
-  'conta_financeira_id',
-  'conta_financeira_nome',
-  'valor',
-  'valor_liquido',
+  'codigo_lancamento',
   'data_lancamento',
   'data_pagamento',
   'data_vencimento',
-  'status',
-  'forma_pagamento',
-  'forma_pagamento_tipo',
-  'terceiro_nome',
-  'observacoes',
-  'tags',
-  'referencia_tipo',
-  'referencia_numero',
-  'turno_caixa_id',
-  'codigo_lancamento',
-  'is_custo_mercadoria',
 ].join(',');
 
 async function fetchDespesas(supabase, de, ate) {
@@ -202,7 +185,7 @@ async function fetchDespesas(supabase, de, ate) {
       .select(SELECT_FIELDS)
       .eq('tipo', 'Despesa')
       .neq('status', 'Cancelado')
-      .order('data_lancamento', { ascending: true, nullsFirst: false })
+      .order('codigo_lancamento', { ascending: true, nullsFirst: false })
       .range(offset, offset + pageSize - 1);
 
     if (error) throw new Error(`Supabase: ${error.message}`);
@@ -218,91 +201,95 @@ async function fetchDespesas(supabase, de, ate) {
   });
 }
 
-function mapRow(l) {
+function inferBudgetNome(lanc, modelosByCatCentro) {
+  const cat = String(lanc.categoria || '').trim();
+  const cc = String(lanc.centro_custo || '').trim();
+  if (!cat && !cc) return '';
+  const key = `${cat}||${cc}`;
+  return modelosByCatCentro.get(key) || '';
+}
+
+async function loadBudgetHints(supabase) {
+  const modelos = await fetchAllRows(
+    supabase,
+    'budget_modelo',
+    'nome,categoria_nome,centro_custo,ativo',
+    'nome',
+  );
+  const map = new Map();
+  for (const m of modelos) {
+    if (m.ativo === false) continue;
+    const k = `${String(m.categoria_nome || '').trim()}||${String(m.centro_custo || '').trim()}`;
+    if (!map.has(k) && m.nome) map.set(k, String(m.nome).trim());
+  }
+  return map;
+}
+
+function mapRow(lanc, seq, budgetHints) {
   return {
-    id: l.id,
-    descricao: l.descricao ?? '',
-    descricao_normalizada: '',
-    plano_conta: l.categoria ?? '',
-    plano_conta_normalizado: '',
-    conta_movimentacao: l.conta_financeira_nome ?? '',
-    centro_custos: l.centro_custo ?? '',
-    centro_custos_normalizado: '',
-    valor: l.valor != null ? Number(l.valor) : '',
-    valor_liquido: l.valor_liquido != null ? Number(l.valor_liquido) : '',
-    data_referencia: dataReferencia(l) ?? '',
-    data_lancamento: toDateKey(l.data_lancamento) ?? '',
-    data_pagamento: toDateKey(l.data_pagamento) ?? '',
-    data_vencimento: toDateKey(l.data_vencimento) ?? '',
-    status: l.status ?? '',
-    forma_pagamento: l.forma_pagamento ?? '',
-    forma_pagamento_tipo: l.forma_pagamento_tipo ?? '',
-    terceiro_nome: l.terceiro_nome ?? '',
-    observacoes: l.observacoes ?? '',
-    tags: tagsToString(l.tags),
-    referencia_tipo: l.referencia_tipo ?? '',
-    referencia_numero: l.referencia_numero ?? '',
-    turno_caixa_id: l.turno_caixa_id ?? '',
-    codigo_lancamento: l.codigo_lancamento ?? '',
-    categoria_id: l.categoria_id ?? '',
-    conta_financeira_id: l.conta_financeira_id ?? '',
-    centro_custo_id: l.centro_custo_id ?? '',
-    is_custo_mercadoria: l.is_custo_mercadoria === true ? 'sim' : l.is_custo_mercadoria === false ? 'não' : '',
+    ref_codigo: refCodigoDataHora(lanc, seq),
+    id_lancamento: lanc.id,
+    descricao: lanc.descricao ?? '',
+    descricao_corrigida: '',
+    plano_conta: lanc.categoria ?? '',
+    centro_custos: lanc.centro_custo ?? '',
+    budget: inferBudgetNome(lanc, budgetHints),
   };
 }
 
 function writeListasSheet(wb, lookups) {
-  const ws = wb.addWorksheet('Listas', {
-    state: 'veryHidden',
-  });
+  const ws = wb.addWorksheet('Listas', { state: 'veryHidden' });
   ws.getCell('A1').value = 'Plano de conta (Despesa)';
-  ws.getCell('C1').value = 'Conta bancária / movimentação';
-  ws.getCell('E1').value = 'Centro de custos';
+  ws.getCell('C1').value = 'Centro de custos';
+  ws.getCell('E1').value = 'Budget (modelo)';
   [1, 3, 5].forEach((c) => {
     ws.getCell(1, c).font = { bold: true };
   });
 
-  const maxLen = Math.max(lookups.planos.length, lookups.contas.length, lookups.centros.length, 1);
-  const pad = 50;
+  const maxLen = Math.max(
+    lookups.planos.length,
+    lookups.centros.length,
+    lookups.budgets.length,
+    1,
+  );
+  const pad = 30;
   for (let i = 0; i < maxLen + pad; i++) {
     const r = i + 2;
     if (lookups.planos[i]) ws.getCell(r, 1).value = lookups.planos[i];
-    if (lookups.contas[i]) ws.getCell(r, 3).value = lookups.contas[i];
-    if (lookups.centros[i]) ws.getCell(r, 5).value = lookups.centros[i];
+    if (lookups.centros[i]) ws.getCell(r, 3).value = lookups.centros[i];
+    if (lookups.budgets[i]) ws.getCell(r, 5).value = lookups.budgets[i];
   }
 
   const lastPlano = 1 + lookups.planos.length + pad;
-  const lastConta = 1 + lookups.contas.length + pad;
   const lastCentro = 1 + lookups.centros.length + pad;
+  const lastBudget = 1 + lookups.budgets.length + pad;
 
   return {
     planoRef: `'Listas'!$A$2:$A$${lastPlano}`,
-    contaRef: `'Listas'!$C$2:$C$${lastConta}`,
-    centroRef: `'Listas'!$E$2:$E$${lastCentro}`,
+    centroRef: `'Listas'!$C$2:$C$${lastCentro}`,
+    budgetRef: `'Listas'!$E$2:$E$${lastBudget}`,
   };
 }
 
 function applyDropdownValidations(ws, rows, listRefs) {
-  const lastDataRow = Math.max(rows.length + 1, 2);
-  const lastRow = Math.max(lastDataRow + 200, 500);
+  const lastRow = Math.max(rows.length + 1 + 200, 500);
   const refsByKey = {
     plano_conta: listRefs.planoRef,
-    conta_movimentacao: listRefs.contaRef,
     centro_custos: listRefs.centroRef,
+    budget: listRefs.budgetRef,
   };
 
   for (const key of DROPDOWN_COL_KEYS) {
     const col = columnIndexByKey(key);
     if (!col) continue;
     const letter = colLetter(col);
-    const range = `${letter}2:${letter}${lastRow}`;
-    ws.dataValidations.add(range, {
+    ws.dataValidations.add(`${letter}2:${letter}${lastRow}`, {
       type: 'list',
       allowBlank: true,
       showDropDown: false,
       showErrorMessage: true,
       errorTitle: 'Valor inválido',
-      error: 'Escolha um valor da lista (cadastro P38) ou copie um valor existente na coluna.',
+      error: 'Use um valor do cadastro P38 (lista suspensa).',
       formulae: [refsByKey[key]],
     });
   }
@@ -322,7 +309,7 @@ async function writeWorkbook(outPath, rows, meta, lookups) {
   ws.columns = COLS.map((c) => ({
     header: c.header,
     key: c.key,
-    width: Math.min(48, Math.max(14, c.header.length + 2)),
+    width: c.width,
   }));
 
   const headerRow = ws.getRow(1);
@@ -334,7 +321,8 @@ async function writeWorkbook(outPath, rows, meta, lookups) {
   };
 
   for (const row of rows) {
-    ws.addRow(row);
+    const r = ws.addRow(row);
+    r.getCell('id_lancamento').font = { color: { argb: 'FF6B7280' }, size: 9 };
   }
 
   applyDropdownValidations(ws, rows, listRefs);
@@ -345,23 +333,20 @@ async function writeWorkbook(outPath, rows, meta, lookups) {
   };
 
   const instr = wb.addWorksheet('Instruções');
-  instr.getColumn(1).width = 100;
+  instr.getColumn(1).width = 96;
   const lines = [
     `Exportado em: ${meta.exportedAt}`,
     `Período (data referência fluxo): ${meta.de} a ${meta.ate}`,
-    `Linhas de despesas: ${rows.length}`,
+    `Linhas: ${rows.length}`,
     '',
-    `Listas no sistema: ${lookups.meta.categorias_despesa} planos de conta (despesa), ${lookups.meta.contas_total} contas, ${lookups.meta.centros_total} centros de custo.`,
+    '7 colunas na aba Despesas:',
+    '• ref (data-hora): AAAAMMDD-HHMMSS do lançamento — só consulta.',
+    '• id_lancamento: chave para devolver correções ao P38 — não alterar.',
+    '• descrição (como está): referência; descrição corrigida: texto livre (deixe vazio se não mudar).',
+    '• plano de conta, centro de custos, budget: lista do cadastro (dropdown).',
     '',
-    'Como usar:',
-    '1. Filtre pela coluna "descrição (como está)" e preencha "descrição normalizada" em massa (texto livre).',
-    '2. Plano de conta, conta bancária e centro de custos (como está): só valores da lista (dropdown).',
-    '3. Colunas "… normalizado (preencher)": texto livre para o rótulo padronizado desejado.',
-    '4. Não altere id_lancamento — serve para aplicar correções de volta no sistema.',
-    '',
-    'Exemplo de normalização (aba Despesas — linhas só ilustrativas se não houver dados reais):',
-    '• "almoço de casa", "almoço", "ALMOCO" → "Alimentação — refeições"',
-    '• "combustivel", "gasolina" → "Combustível"',
+    `Listas: ${lookups.meta.categorias_despesa} planos · ${lookups.meta.centros_total} centros · ${lookups.meta.budgets_total} budgets no sistema.`,
+    'Budget na exportação: sugestão quando plano+centro batem com um modelo; pode alterar.',
   ];
   lines.forEach((t, i) => {
     instr.getCell(i + 1, 1).value = t;
@@ -374,28 +359,24 @@ const { de, ate, out } = parseArgs(process.argv.slice(2));
 const supabase = requireP38SupabaseAdmin();
 
 console.log(`[export] A buscar despesas ${de} … ${ate} …`);
-const lancs = await fetchDespesas(supabase, de, ate);
-const rows = lancs.map(mapRow).sort((a, b) => {
-  const da = a.data_referencia || '';
-  const db = b.data_referencia || '';
-  if (da !== db) return da.localeCompare(db);
-  return String(a.descricao).localeCompare(String(b.descricao), 'pt-BR');
-});
+const [lancs, budgetHints] = await Promise.all([
+  fetchDespesas(supabase, de, ate),
+  loadBudgetHints(supabase),
+]);
+
+const rows = lancs
+  .map((l, i) => mapRow(l, i + 1, budgetHints))
+  .sort((a, b) => {
+    const cmp = a.ref_codigo.localeCompare(b.ref_codigo);
+    if (cmp !== 0) return cmp;
+    return String(a.descricao).localeCompare(String(b.descricao), 'pt-BR');
+  });
 
 const lookups = await fetchLookupLists(supabase, rows);
 console.log(
-  `[export] listas: ${lookups.planos.length} planos · ${lookups.contas.length} contas · ${lookups.centros.length} centros`,
+  `[export] listas: ${lookups.planos.length} planos · ${lookups.centros.length} centros · ${lookups.budgets.length} budgets`,
 );
 
-await writeWorkbook(
-  out,
-  rows,
-  {
-    de,
-    ate,
-    exportedAt: new Date().toISOString(),
-  },
-  lookups,
-);
+await writeWorkbook(out, rows, { de, ate, exportedAt: new Date().toISOString() }, lookups);
 
-console.log(`[export] ${rows.length} despesas → ${out}`);
+console.log(`[export] ${rows.length} despesas · ${COLS.length} colunas → ${out}`);
