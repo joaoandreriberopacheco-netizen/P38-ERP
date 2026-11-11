@@ -4,12 +4,6 @@ import { cn } from '@/lib/utils';
 /** Layout extrato mobile (protótipo v8) — hero colapsável + barra verde claro. */
 export const FLUXO_EXTRATO_MOBILE_V8 = true;
 
-/**
- * Compensa só os 3rem “fantasma” do `Layout.jsx` mobile (`paddingTop: calc(3rem + safe-area)`).
- * A safe-area fica no Layout — não negar aqui (evita app bar sob a status bar).
- */
-export const P38_EXTRATO_V8_LAYOUT_TOP_BLEED = '-mt-12';
-
 /** Barra fixa do extrato — abas Contas/Fluxo à esquerda (paridade com tela Contas). */
 export const P38_EXTRATO_V8_APP_BAR = cn(
   'relative z-30 grid shrink-0 grid-cols-[auto_1fr_auto] items-center gap-2 px-4 py-2.5',

@@ -47,7 +47,6 @@ import ListaLancamentos from './fluxo/ListaLancamentos';
 import { formatFinanceiroGrupoLabel } from './fluxo/FinanceiroListaShared';
 import {
   FLUXO_EXTRATO_MOBILE_V8,
-  P38_EXTRATO_V8_LAYOUT_TOP_BLEED,
   P38_FINANCEIRO_FILTROS_BAR,
 } from './fluxo/financeiroP38';
 import FluxoExtratoMobileShell from './fluxo/FluxoExtratoMobileShell';
@@ -1305,7 +1304,7 @@ export default function ExecucaoOrcamentaria() {
 
       {fluxoExtratoMobile && (
         <>
-          <div className={cn(P38_EXTRATO_V8_LAYOUT_TOP_BLEED, 'flex min-h-0 flex-1 flex-col')}>
+          <div className="flex min-h-0 flex-1 flex-col">
           <FluxoExtratoMobileShell
             className="min-h-0 flex-1"
             scrollRef={scrollRef}
