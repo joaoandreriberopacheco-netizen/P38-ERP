@@ -13,7 +13,10 @@ import {
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import FinanceiroFiltrosShell from './FinanceiroFiltrosShell';
-import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
+import {
+  EXIBIR_FILTRO_HISTORICO_ANTERIOR_FLUXO,
+  EXIBIR_UI_CONCILIACAO_FINANCEIRO,
+} from '@/lib/financeiroConciliacaoUiFlags';
 import FinanceiroCorteHistoricoFiltro from './FinanceiroCorteHistoricoFiltro';
 import {
   P38_CHIP_ACTIVE,
@@ -363,13 +366,15 @@ function FiltrosFluxoPainel({
         )}
       </div>
 
-      <FinanceiroCorteHistoricoFiltro
-        mostrarHistoricoAnterior={mostrarHistoricoAnterior}
-        dataCorte={dataCorteHistorico}
-        onMostrarHistoricoAnterior={onMostrarHistoricoAnterior}
-        onDataCorte={onDataCorteHistorico}
-        contextoLista="lista"
-      />
+      {EXIBIR_FILTRO_HISTORICO_ANTERIOR_FLUXO ? (
+        <FinanceiroCorteHistoricoFiltro
+          mostrarHistoricoAnterior={mostrarHistoricoAnterior}
+          dataCorte={dataCorteHistorico}
+          onMostrarHistoricoAnterior={onMostrarHistoricoAnterior}
+          onDataCorte={onDataCorteHistorico}
+          contextoLista="lista"
+        />
+      ) : null}
     </div>
   );
 }
@@ -404,7 +409,7 @@ export default function FiltrosFluxoCaixa({
     periodo !== 'mes' ||
     statusSel.length > 0 ||
     cmvOnly ||
-    mostrarHistoricoAnterior ||
+    (EXIBIR_FILTRO_HISTORICO_ANTERIOR_FLUXO && mostrarHistoricoAnterior) ||
     !!customStart ||
     !!customEnd ||
     (contas.length > 0 && !contasSelEquivaleFiltroFluxoPadrao(contasSel, contas));
