@@ -19,6 +19,8 @@ import FiltrosContasFinanceiras, { TIPOS_CONTA } from './fluxo/FiltrosContasFina
 import ListaContasFinanceiras from './fluxo/ListaContasFinanceiras';
 import { marcarPadraoContasFluxo, marcarTodasContasFluxo } from './fluxo/contasFluxoSelecaoUi';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from './fluxo/FinanceiroListaMeta';
+import FluxoExtratoMobileShell from './fluxo/FluxoExtratoMobileShell';
+import FluxoContasUtilShortcuts from './fluxo/FluxoContasUtilShortcuts';
 import { P38_FINANCEIRO_FILTROS_BAR, P38_KPI_SHELL } from './fluxo/financeiroP38';
 import { useCompactShell } from '@/hooks/use-breakpoint';
 import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
@@ -535,11 +537,20 @@ export function GestaoContasKpis() {
 }
 
 /** Filtros + meta + lista + FAB + diálogos. */
-export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) {
+export function GestaoContasPane({
+  mobileShell = false,
+  extratoMobileV8 = false,
+  listScrollRef = null,
+  scrollEl = null,
+  aba,
+  onAbaChange,
+  abasItems,
+}) {
   const m = useContext(GestaoContasCtx);
   const compact = useCompactShell();
+  const [contasSearchVisible, setContasSearchVisible] = useState(false);
   if (!m) return null;
-  const listaEstiloPlanejamento = mobileShell || compact;
+  const listaEstiloPlanejamento = mobileShell || compact || extratoMobileV8;
 
   const {
     loading,
@@ -679,6 +690,7 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
       pendenciasMap={pendenciasConciliacao}
       saldosCalculados={saldosCalculados}
       saldosProntos={saldosProntos}
+      extratoMobile={extratoMobileV8}
       onExtrato={handleExtrato}
       onEdit={handleEdit}
       onAjuste={handleAjuste}
@@ -850,6 +862,46 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
       )}
     </>
   );
+
+  if (mobileShell && extratoMobileV8) {
+    return (
+      <>
+        <FluxoExtratoMobileShell
+          className="min-h-0 flex-1"
+          scrollRef={listScrollRef}
+          scrollEl={scrollEl}
+          aba={aba}
+          onAbaChange={onAbaChange}
+          abasItems={abasItems}
+          title="Contas"
+          appBarAriaLabel="Barra de contas"
+          saldoLabel="Saldo total"
+          saldo={m.kpis.saldoTotal}
+          saldoPronto={m.saldosProntos}
+          search={search}
+          onSearch={setSearch}
+          searchVisible={contasSearchVisible}
+          searchPlaceholder="Buscar conta, banco…"
+          searchPulseSensorId="contas-financeiras.busca"
+          onBusca={() => setContasSearchVisible((v) => !v)}
+          onFiltros={() => setFiltersOpen((v) => !v)}
+          loading={loading}
+          filtrosPanel={filtersOpen ? filtrosBlock : null}
+          shortcuts={
+            <FluxoContasUtilShortcuts
+              onBusca={() => setContasSearchVisible((v) => !v)}
+              onFiltros={() => setFiltersOpen((v) => !v)}
+              onNovaConta={handleNova}
+            />
+          }
+        >
+          {showMetaOnMobile ? <div className="pb-2">{metaBlock}</div> : null}
+          {listaBlock}
+        </FluxoExtratoMobileShell>
+        {fabAndDialogs}
+      </>
+    );
+  }
 
   if (mobileShell) {
     return (
