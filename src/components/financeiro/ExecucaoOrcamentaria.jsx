@@ -1016,6 +1016,14 @@ export default function ExecucaoOrcamentaria() {
   const financeiroHeaderInner = (
     <div className="flex flex-col gap-2">
       <div className="flex min-w-0 items-center gap-2">
+        {isCompactShell ? (
+          <FinanceiroAbaIconTabs
+            value={aba}
+            onChange={setAba}
+            items={abasPrincipais}
+            className="shrink-0"
+          />
+        ) : null}
         <h1
           className={cn(P38_PAGE_TITLE, 'min-w-0 flex-1 truncate text-lg md:text-2xl font-glacial leading-none')}
           data-pulse-sensor="fluxo-caixa.titulo"
@@ -1025,12 +1033,7 @@ export default function ExecucaoOrcamentaria() {
         {isCompactShell ? (
           <TooltipProvider delayDuration={300}>
             <div className="flex shrink-0 items-center gap-1.5">
-              <FinanceiroAbaIconTabs
-                value={aba}
-                onChange={setAba}
-                items={abasPrincipais}
-              />
-              {aba === 'fluxo' && (
+              {aba === 'fluxo' && !fluxoExtratoMobile && (
                 <div className="flex shrink-0 items-center gap-0.5 no-pdf-capture overflow-x-auto overscroll-x-contain touch-pan-x no-scrollbar">
                   <ContasSaldoPicker
                     variant="icon"
