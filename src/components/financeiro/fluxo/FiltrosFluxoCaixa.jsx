@@ -392,8 +392,13 @@ export default function FiltrosFluxoCaixa({
   dataCorteHistorico,
   onMostrarHistoricoAnterior,
   onDataCorteHistorico,
+  filtersOpen: filtersOpenProp,
+  onFiltersOpenChange,
+  hideBar = false,
 }) {
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filtersOpenInternal, setFiltersOpenInternal] = useState(false);
+  const filtersOpen = filtersOpenProp ?? filtersOpenInternal;
+  const setFiltersOpen = onFiltersOpenChange ?? setFiltersOpenInternal;
 
   const hasPanelFilters =
     periodo !== 'mes' ||
@@ -403,6 +408,32 @@ export default function FiltrosFluxoCaixa({
     !!customStart ||
     !!customEnd ||
     (contas.length > 0 && !contasSelEquivaleFiltroFluxoPadrao(contasSel, contas));
+
+  if (hideBar) {
+    return filtersOpen ? (
+      <FiltrosFluxoPainel
+        periodo={periodo}
+        onPeriodo={onPeriodo}
+        customStart={customStart}
+        customEnd={customEnd}
+        onCustom={onCustom}
+        contas={contas}
+        contasSel={contasSel}
+        onContasSel={onContasSel}
+        statusSel={statusSel}
+        onStatusSel={onStatusSel}
+        pendentes={pendentes}
+        onPendentes={onPendentes}
+        cmvOnly={cmvOnly}
+        onCmvOnly={onCmvOnly}
+        onOpenConciliacao={onOpenConciliacao}
+        mostrarHistoricoAnterior={mostrarHistoricoAnterior}
+        dataCorteHistorico={dataCorteHistorico}
+        onMostrarHistoricoAnterior={onMostrarHistoricoAnterior}
+        onDataCorteHistorico={onDataCorteHistorico}
+      />
+    ) : null;
+  }
 
   return (
     <FinanceiroFiltrosShell

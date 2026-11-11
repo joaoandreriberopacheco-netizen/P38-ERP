@@ -1,6 +1,6 @@
 import React from 'react';
 import { formatarDataCurta } from '@/components/utils/dateUtils';
-import { AlertCircle, ArrowDown, ArrowRightLeft, ArrowUp } from 'lucide-react';
+import { AlertCircle, ArrowDown, ArrowRightLeft, ArrowUp, ChevronRight } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   P38MobileLine,
@@ -11,6 +11,8 @@ import {
 } from '@/components/ui/p38-mobile-line';
 import { cn } from '@/lib/utils';
 import { formatFinanceiroValor } from './FinanceiroListaShared';
+import FluxoExtratoRowIcon from './FluxoExtratoRowIcon';
+import { rotuloFormaPagamentoExtrato } from '@/lib/fluxoExtratoIconKind';
 import { isTransferenciaEntreContas } from '@/lib/saldoContaFinanceira';
 import { isLancamentoPago, statusRotuloListaFinanceiro } from '@/lib/lancamentoFinanceiroStatus';
 import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
@@ -228,6 +230,7 @@ export default function FinanceiroLancRow({
   selecionado = false,
   onToggleSelecionado,
   contaVisualizadaId = null,
+  extratoMobile = false,
 }) {
   const cancelado = l.status === 'Cancelado';
   const isPago = isLancamentoPago(l);
@@ -258,10 +261,23 @@ export default function FinanceiroLancRow({
     </>
   );
 
+  const subtitleExtratoMeta = () => {
+    const parts = [
+      data ? formatarDataCurta(data) : null,
+      l.conta_financeira_nome,
+      rotuloFormaPagamentoExtrato(l) || null,
+    ].filter(Boolean);
+    return parts.join(' · ');
+  };
+
   const subtitle = isTransfConsolidada || perspectiva ? (
     <span className="line-clamp-2 break-words">
       {data ? formatarDataCurta(data) : '—'}
       {l.notaTransferencia ? ` · ${l.notaTransferencia}` : ''}
+    </span>
+  ) : extratoMobile ? (
+    <span className="line-clamp-2 break-words text-[11px] text-muted-foreground normal-case">
+      {subtitleExtratoMeta()}
     </span>
   ) : (
     <span className="line-clamp-2 break-words">
@@ -314,6 +330,46 @@ export default function FinanceiroLancRow({
     value: valorNode(l),
     trailing,
   };
+
+  if (extratoMobile) {
+    const extratoRow = (
+      <>
+        <FluxoExtratoRowIcon lancamento={l} />
+        <div className="min-w-0 flex-1">
+          <div className="text-[15px] font-semibold leading-snug text-foreground normal-case line-clamp-2">{title}</div>
+          {subtitle}
+        </div>
+        <div className="flex shrink-0 items-center gap-0.5">
+          <div className="text-[15px] font-semibold tabular-nums">{valorNode(l)}</div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground/70" aria-hidden />
+        </div>
+      </>
+    );
+    if (podeSelecionar) {
+      return (
+        <P38MobileLine
+          thinAccent={false}
+          accent="none"
+          onClick={() => onToggleSelecionado?.(l.id)}
+          className="w-full text-left [&]:border-l-0 max-md:!py-3.5"
+        >
+          {extratoRow}
+        </P38MobileLine>
+      );
+    }
+    return (
+      <P38MobileLine
+        thinAccent={false}
+        accent="none"
+        as="button"
+        type="button"
+        onClick={() => onClick?.(lancamentoClick)}
+        className="w-full text-left [&]:border-l-0 max-md:!py-3.5"
+      >
+        {extratoRow}
+      </P38MobileLine>
+    );
+  }
 
   if (podeSelecionar) {
     return (

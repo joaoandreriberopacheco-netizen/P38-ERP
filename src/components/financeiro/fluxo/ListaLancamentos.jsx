@@ -10,6 +10,7 @@ export default function ListaLancamentos({
   emSelecao = false,
   selecionados = [],
   onToggleSelecionado,
+  extratoMobile = false,
 }) {
   return (
     <FinanceiroListaEstado
@@ -39,6 +40,7 @@ export default function ListaLancamentos({
               emSelecao={emSelecao && !!l._isProgramada}
               selecionado={selecionados.includes(l.id)}
               onToggleSelecionado={onToggleSelecionado}
+              extratoMobile={extratoMobile}
             />
           ))}
         </FinanceiroGrupo>

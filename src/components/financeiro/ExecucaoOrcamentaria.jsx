@@ -45,7 +45,8 @@ import KpiFluxoBar from './fluxo/KpiFluxoBar';
 import ContasSaldoPicker from './fluxo/ContasSaldoPicker';
 import ListaLancamentos from './fluxo/ListaLancamentos';
 import { formatFinanceiroGrupoLabel } from './fluxo/FinanceiroListaShared';
-import { P38_FINANCEIRO_FILTROS_BAR } from './fluxo/financeiroP38';
+import { FLUXO_EXTRATO_MOBILE_V8, P38_FINANCEIRO_FILTROS_BAR } from './fluxo/financeiroP38';
+import FluxoExtratoMobileShell from './fluxo/FluxoExtratoMobileShell';
 import {
   GestaoContasEmbedded,
   GestaoContasKpis,
@@ -226,9 +227,16 @@ export default function ExecucaoOrcamentaria() {
   const { s: ds, e: de } = useMemo(() => dateRange(periodo, cs, ce), [periodo, cs, ce]);
 
   const isCompactShell = useCompactShell();
+  const fluxoExtratoMobile = isCompactShell && aba === 'fluxo' && FLUXO_EXTRATO_MOBILE_V8;
+  const [fluxoExtratoSearchVisible, setFluxoExtratoSearchVisible] = useState(false);
+  const [fluxoExtratoFiltrosOpen, setFluxoExtratoFiltrosOpen] = useState(false);
   /** Sempre true nesta rota — Layout usa overflow-hidden no desktop (DESKTOP_FULL_HEIGHT_PAGES). */
   const usesStageScroll = true;
-  const { chromeVisible, scrollRef, scrollEl } = useScrollChromeVisibility(isCompactShell, MOBILE_LIST_CHROME_OPTIONS);
+  const headerChromeCollapse = isCompactShell && !fluxoExtratoMobile;
+  const { chromeVisible, scrollRef, scrollEl } = useScrollChromeVisibility(
+    headerChromeCollapse,
+    MOBILE_LIST_CHROME_OPTIONS,
+  );
 
   useEffect(() => {
     if (!isCompactShell || !scrollEl) return;
@@ -1056,7 +1064,7 @@ export default function ExecucaoOrcamentaria() {
         )}
       </div>
 
-      {aba === 'fluxo' && (
+      {aba === 'fluxo' && !fluxoExtratoMobile && (
         <div className="relative min-w-0">
           <P38ModuleLoadingOverlay
             open={loading}
@@ -1198,6 +1206,7 @@ export default function ExecucaoOrcamentaria() {
     <ListaLancamentos
       grupos={gruposExibicao}
       loading={false}
+      extratoMobile={fluxoExtratoMobile}
       emSelecao={lote.modoSelecaoLote}
       selecionados={lote.selectedIds}
       onToggleSelecionado={lote.handleToggleSelecionado}
@@ -1255,18 +1264,109 @@ export default function ExecucaoOrcamentaria() {
     >
       {/* Header unificado — título, KPIs do fluxo, abas */}
       {isCompactShell ? (
-        <P38ScrollChromeCollapse visible={chromeVisible} enabled scrollEl={scrollEl} className="shrink-0">
-          <div className="min-w-0 max-w-full space-y-2 px-4 pb-2">
-            {financeiroHeaderInner}
-          </div>
-        </P38ScrollChromeCollapse>
+        headerChromeCollapse ? (
+          <P38ScrollChromeCollapse visible={chromeVisible} enabled scrollEl={scrollEl} className="shrink-0">
+            <div className="min-w-0 max-w-full space-y-2 px-4 pb-2">
+              {financeiroHeaderInner}
+            </div>
+          </P38ScrollChromeCollapse>
+        ) : !fluxoExtratoMobile ? (
+          <div className="min-w-0 max-w-full space-y-2 px-4 pb-2">{financeiroHeaderInner}</div>
+        ) : null
       ) : (
         <div className="min-w-0 max-w-full space-y-2">
           {financeiroHeaderInner}
         </div>
       )}
 
-      {aba === 'fluxo' && usesStageScroll && (
+      {fluxoExtratoMobile && (
+        <>
+          <FluxoExtratoMobileShell
+            scrollRef={scrollRef}
+            scrollEl={scrollEl}
+            aba={aba}
+            onAbaChange={setAba}
+            abasItems={abasPrincipais}
+            saldo={kpis.saldoContas}
+            saldoPronto={saldosCarteiraProntos}
+            contasResumoLabel={contasSelecionadasLabel}
+            search={search}
+            onSearch={setSearch}
+            searchVisible={fluxoExtratoSearchVisible}
+            onBusca={() => setFluxoExtratoSearchVisible((v) => !v)}
+            onRelatorios={abrirMenuRelatorios}
+            onExportar={() => setShowPrintDialog(true)}
+            onFiltros={() => setFluxoExtratoFiltrosOpen((v) => !v)}
+            periodo={periodo}
+            onPeriodo={setPeriodo}
+            customStart={cs}
+            customEnd={ce}
+            onCustom={(k, v) => (k === 'start' ? setCs(v) : setCe(v))}
+            contas={contasAtivas}
+            contasSel={contasSel}
+            onContasSel={atualizarSelecaoContasFluxo}
+            loading={loading}
+            filtrosPanel={(
+              <FiltrosFluxoCaixa
+                hideBar
+                filtersOpen={fluxoExtratoFiltrosOpen}
+                onFiltersOpenChange={setFluxoExtratoFiltrosOpen}
+                search={search}
+                onSearch={setSearch}
+                periodo={periodo}
+                onPeriodo={setPeriodo}
+                customStart={cs}
+                customEnd={ce}
+                onCustom={(k, v) => (k === 'start' ? setCs(v) : setCe(v))}
+                contas={contasAtivas}
+                contasSel={contasSel}
+                onContasSel={atualizarSelecaoContasFluxo}
+                statusSel={statusSel}
+                onStatusSel={setStatusSel}
+                pendentes={pendentes}
+                onPendentes={setPendentes}
+                cmvOnly={cmvOnly}
+                onCmvOnly={setCmvOnly}
+                onOpenConciliacao={abrirConciliacao}
+                conciliacaoPendente={totalPend}
+                ordemLancamentos={ordemLancamentos}
+                onOrdemLancamentosChange={setOrdemLancamentos}
+                mostrarHistoricoAnterior={mostrarHistoricoAnterior}
+                dataCorteHistorico={dataCorteHistorico}
+                onMostrarHistoricoAnterior={(v) => atualizarCorteHistorico(v, dataCorteHistorico)}
+                onDataCorteHistorico={(v) => atualizarCorteHistorico(mostrarHistoricoAnterior, v || DATA_CORTE_HISTORICO_PADRAO)}
+              />
+            )}
+          >
+            <P38ModuleLoadingOverlay
+              open={loading}
+              message="Carregando lançamentos e saldos…"
+            />
+            {fluxoLista}
+            {fluxoLoteBanner}
+            <FinanceiroListaMeta
+              total={contarItensGrupos(gruposExibicao)}
+              totalLabel={contarItensGrupos(gruposExibicao) === 1 ? 'lançamento' : 'lançamentos'}
+              hasActiveFilters={hasActiveFilters}
+              onLimparFiltros={() => {
+                setPeriodo('mes');
+                setCs('');
+                setCe('');
+                setTiposSel([]);
+                atualizarSelecaoContasFluxo([]);
+                setStatusSel([]);
+                setPendentes(false);
+                setCmvOnly(false);
+                setSearch('');
+              }}
+              summaryChips={fluxoMetaChips}
+            />
+          </FluxoExtratoMobileShell>
+          {fluxoDialogs}
+        </>
+      )}
+
+      {aba === 'fluxo' && usesStageScroll && !fluxoExtratoMobile && (
         <>
           <div className={cn('space-y-2 px-4 md:px-6', P38_FINANCEIRO_FILTROS_BAR)}>
             {fluxoFiltrosBar}
