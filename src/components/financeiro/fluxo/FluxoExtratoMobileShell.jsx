@@ -15,7 +15,6 @@ export default function FluxoExtratoMobileShell({
   abasItems,
   saldo,
   saldoPronto = true,
-  contasResumoLabel,
   onBusca,
   onRelatorios,
   onExportar,
@@ -70,17 +69,10 @@ export default function FluxoExtratoMobileShell({
         >
           <div className="min-h-0 overflow-hidden">
             <div className="bg-[#3d5a3d] px-4 pb-5 pt-3 text-white dark:bg-[#2d333b] dark:text-foreground">
-              <p className="text-center text-xs opacity-85">Saldo em conta</p>
+              <p className="text-center text-xs font-semibold uppercase tracking-wide opacity-85">Saldo</p>
               <p className="mt-1 text-center text-[2rem] font-bold tabular-nums leading-none tracking-tight text-white dark:text-[#a4ce33]">
                 {saldoPronto && saldo != null ? formatFinanceiroValor(saldo) : '—'}
               </p>
-              {contasResumoLabel ? (
-                <p className="mt-3 text-center">
-                  <span className="inline-block rounded-full border border-white/35 bg-white/10 px-4 py-1.5 text-xs">
-                    {contasResumoLabel}
-                  </span>
-                </p>
-              ) : null}
             </div>
           </div>
         </div>

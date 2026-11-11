@@ -1289,7 +1289,6 @@ export default function ExecucaoOrcamentaria() {
             abasItems={abasPrincipais}
             saldo={kpis.saldoContas}
             saldoPronto={saldosCarteiraProntos}
-            contasResumoLabel={contasSelecionadasLabel}
             search={search}
             onSearch={setSearch}
             searchVisible={fluxoExtratoSearchVisible}
