@@ -45,7 +45,11 @@ import KpiFluxoBar from './fluxo/KpiFluxoBar';
 import ContasSaldoPicker from './fluxo/ContasSaldoPicker';
 import ListaLancamentos from './fluxo/ListaLancamentos';
 import { formatFinanceiroGrupoLabel } from './fluxo/FinanceiroListaShared';
-import { FLUXO_EXTRATO_MOBILE_V8, P38_FINANCEIRO_FILTROS_BAR } from './fluxo/financeiroP38';
+import {
+  FLUXO_EXTRATO_MOBILE_V8,
+  P38_EXTRATO_V8_LAYOUT_TOP_BLEED,
+  P38_FINANCEIRO_FILTROS_BAR,
+} from './fluxo/financeiroP38';
 import FluxoExtratoMobileShell from './fluxo/FluxoExtratoMobileShell';
 import {
   GestaoContasEmbedded,
@@ -1301,6 +1305,7 @@ export default function ExecucaoOrcamentaria() {
 
       {fluxoExtratoMobile && (
         <>
+          <div className={cn(P38_EXTRATO_V8_LAYOUT_TOP_BLEED, 'flex min-h-0 flex-1 flex-col overflow-hidden')}>
           <FluxoExtratoMobileShell
             className="min-h-0 flex-1"
             scrollRef={scrollRef}
@@ -1376,6 +1381,7 @@ export default function ExecucaoOrcamentaria() {
               summaryChips={fluxoMetaChips}
             />
           </FluxoExtratoMobileShell>
+          </div>
           {fluxoDialogs}
         </>
       )}

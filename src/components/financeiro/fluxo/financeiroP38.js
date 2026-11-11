@@ -4,9 +4,14 @@ import { cn } from '@/lib/utils';
 /** Layout extrato mobile (protótipo v8) — hero colapsável + barra verde claro. */
 export const FLUXO_EXTRATO_MOBILE_V8 = true;
 
+/** Compensa `Layout.jsx` mobile: `paddingTop: calc(3rem + safe-area)`. */
+export const P38_EXTRATO_V8_LAYOUT_TOP_BLEED =
+  '-mt-[calc(3rem+env(safe-area-inset-top,0px))]';
+
 /** Barra fixa do extrato — abas Contas/Fluxo à esquerda (paridade com tela Contas). */
 export const P38_EXTRATO_V8_APP_BAR = cn(
-  'relative z-30 grid shrink-0 grid-cols-[auto_1fr_auto] items-center gap-2 px-4 py-2.5',
+  'relative z-30 grid shrink-0 grid-cols-[auto_1fr_auto] items-center gap-2 px-4 pb-2.5',
+  'pt-[max(0.625rem,env(safe-area-inset-top,0px))]',
   'bg-[#3d5a3d] text-white dark:bg-[#2d333b] dark:text-foreground',
 );
 
@@ -40,6 +45,11 @@ export const P38_EXTRATO_V8_ROW_META =
 /** `.tx-value` */
 export const P38_EXTRATO_V8_ROW_VALUE =
   'text-[13px] font-bold tabular-nums whitespace-nowrap';
+/** Grid da linha — texto ~58% da largura; valor e chevron em colunas fixas (ver protótipo 40px 1fr auto 20px). */
+export const P38_EXTRATO_V8_ROW_GRID =
+  'grid w-full min-w-0 grid-cols-[1rem_minmax(0,58%)_minmax(5.75rem,max-content)_0.875rem] items-center gap-x-2 gap-y-0';
+/** Coluna de valor na linha — protótipo `auto`, sem truncate (valores longos visíveis). */
+export const P38_EXTRATO_V8_ROW_VALUE_CELL = 'max-w-none shrink-0 justify-self-end text-right whitespace-nowrap';
 /** Transferência com origem e destino no filtro — valor e ícone esmaecidos (saldo agregado inalterado). */
 export const P38_EXTRATO_V8_TRANSFER_INTERNA_VALUE =
   'text-[#6b7280]/90 dark:text-[#9ca3af]/95';
@@ -53,7 +63,7 @@ export const P38_EXTRATO_V8_DAY_SALDO_VALUE = cn(
   '!font-[inherit] text-[#3d5a3d] dark:text-[#a4ce33]',
 );
 export const P38_EXTRATO_V8_ROW_LINE =
-  'w-full border-0 border-l-0 !border-b border-[#e5e7eb] !bg-transparent px-3 py-3.5 !font-[inherit] shadow-none last:!border-b-0 dark:!border-white/10';
+  'w-full border-0 border-l-0 !border-b border-[#e5e7eb] !bg-transparent pl-3 pr-3.5 py-3.5 !font-[inherit] shadow-none last:!border-b-0 dark:!border-white/10';
 
 /**
  * Tokens P38 partilhados — fluxo de caixa, contas abertas e Planejamento.

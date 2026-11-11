@@ -27,7 +27,9 @@ import {
   P38_EXTRATO_V8_ROW_LINE,
   P38_EXTRATO_V8_ROW_META,
   P38_EXTRATO_V8_ROW_TITLE,
+  P38_EXTRATO_V8_ROW_GRID,
   P38_EXTRATO_V8_ROW_VALUE,
+  P38_EXTRATO_V8_ROW_VALUE_CELL,
   extratoFornecedorNome,
   lancamentoExtratoEhCompraMercadoria,
 } from './financeiroP38';
@@ -144,7 +146,7 @@ function valorNode(
     const valorFmt = formatFinanceiroValor(Math.abs(l.valor || 0));
     if (extratoMobile) {
       const valorExtratoTransferencia = (sign, signClass) => (
-        <span className={cn(P38_EXTRATO_V8_ROW_VALUE, 'block w-full text-right', signClass)}>
+        <span className={cn(P38_EXTRATO_V8_ROW_VALUE, 'inline-block text-right', signClass)}>
           <span className="inline-block min-w-[0.65rem] text-right">{sign}</span>
           <span className="ml-px">{valorFmt}</span>
         </span>
@@ -160,7 +162,7 @@ function valorNode(
         <span
           className={cn(
             P38_EXTRATO_V8_ROW_VALUE,
-            'block w-full text-right',
+            'inline-block text-right',
             transferInterna
               ? P38_EXTRATO_V8_TRANSFER_INTERNA_VALUE
               : 'text-[#374151] dark:text-[#d1d5db]',
@@ -185,7 +187,7 @@ function valorNode(
   if (extratoMobile) {
     const sign = isR ? '+' : '−';
     return (
-      <span className={cn(P38_EXTRATO_V8_ROW_VALUE, 'block w-full text-right', signClass)}>
+      <span className={cn(P38_EXTRATO_V8_ROW_VALUE, 'inline-block text-right', signClass)}>
         <span className="inline-block min-w-[0.65rem] text-right">{sign}</span>
         <span className="ml-px">{valorFmt}</span>
       </span>
@@ -464,14 +466,12 @@ export default function FinanceiroLancRow({
     const metaExtra =
       (isTransfConsolidada || perspectiva) && l.notaTransferencia ? String(l.notaTransferencia).trim() : null;
 
-    const extratoGridClass =
-      'grid w-full grid-cols-[1rem_minmax(0,1fr)_auto] items-center gap-x-2 gap-y-0';
     const extratoRow = (
-      <div className={extratoGridClass}>
+      <div className={P38_EXTRATO_V8_ROW_GRID}>
         <div className="flex w-4 shrink-0 items-center justify-start self-center">
           <FluxoExtratoRowIcon lancamento={l} compact contasSel={contasSel} />
         </div>
-        <div className="min-w-0 text-left">
+        <div className="min-w-0 max-w-full overflow-hidden text-left">
           <div className={cn(P38_EXTRATO_V8_ROW_TITLE, 'line-clamp-2 break-words text-left')}>
             {extratoTitlePlain}
           </div>
@@ -485,20 +485,18 @@ export default function FinanceiroLancRow({
             ) : null}
           </div>
         </div>
-        <div className="flex shrink-0 items-center justify-end gap-0.5 self-center pl-0.5">
-          <div className="max-w-[4.75rem] min-w-0 truncate text-right">
-            {valorNode(l, {
-              extratoMobile: true,
-              perspectivaTransferencia: perspectiva,
-              contaVisualizadaId,
-              contasSel,
-            })}
-          </div>
-          <ChevronRight
-            className="h-3.5 w-3.5 shrink-0 text-[#6b7280] dark:text-muted-foreground"
-            aria-hidden
-          />
+        <div className={P38_EXTRATO_V8_ROW_VALUE_CELL}>
+          {valorNode(l, {
+            extratoMobile: true,
+            perspectivaTransferencia: perspectiva,
+            contaVisualizadaId,
+            contasSel,
+          })}
         </div>
+        <ChevronRight
+          className="h-3.5 w-3.5 shrink-0 justify-self-end text-[#6b7280] dark:text-muted-foreground"
+          aria-hidden
+        />
       </div>
     );
     if (podeSelecionar) {

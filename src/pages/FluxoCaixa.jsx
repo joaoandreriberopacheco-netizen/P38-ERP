@@ -8,7 +8,7 @@ export default function FluxoCaixaPage() {
     <div
       className={cn(
         'flex h-full min-h-0 w-full min-w-0 max-w-full flex-col overflow-hidden',
-        'font-din-1451 bg-background',
+        'font-din-1451 bg-transparent',
       )}
     >
       <ExecucaoOrcamentaria />
