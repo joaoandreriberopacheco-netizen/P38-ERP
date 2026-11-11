@@ -8,7 +8,8 @@ import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 import {
   P38_EXTRATO_V8_DATE_HEADER,
   P38_EXTRATO_V8_DAY_CARD,
-  P38_EXTRATO_V8_ROW_VALUE,
+  P38_EXTRATO_V8_DAY_SALDO,
+  P38_EXTRATO_V8_DAY_SALDO_VALUE,
   P38_FIELD_SURFACE,
 } from './financeiroP38';
 import FinanceiroResumoBar from './FinanceiroResumoBar';
@@ -70,11 +71,9 @@ export function FinanceiroGrupo({
       <div className="mb-3 w-full min-w-0">
         <p className={P38_EXTRATO_V8_DATE_HEADER}>{dateLabel}</p>
         <div className={P38_EXTRATO_V8_DAY_CARD}>
-          <div className="flex items-center justify-between border-b border-[#e5e7eb] px-3.5 py-3 text-[13px] text-[#1a1a1a] dark:border-white/10 dark:text-foreground">
-            <span>Saldo do dia</span>
-            <strong className={cn(P38_EXTRATO_V8_ROW_VALUE, 'text-[#3d5a3d] dark:text-[#a4ce33]')}>
-              {formatFinanceiroValor(saldoDia)}
-            </strong>
+          <div className={P38_EXTRATO_V8_DAY_SALDO}>
+            <span className="font-normal !font-[inherit]">Saldo do dia</span>
+            <strong className={P38_EXTRATO_V8_DAY_SALDO_VALUE}>{formatFinanceiroValor(saldoDia)}</strong>
           </div>
           <div className="min-w-0">{children}</div>
         </div>

@@ -27,6 +27,13 @@ export const P38_EXTRATO_V8_ROW_META =
 /** `.tx-value` */
 export const P38_EXTRATO_V8_ROW_VALUE =
   'text-[13px] font-bold tabular-nums whitespace-nowrap';
+/** `.day-saldo` — mesma família que `.tx-row` (herda `P38_EXTRATO_V8_FONT_SCOPE`). */
+export const P38_EXTRATO_V8_DAY_SALDO =
+  'flex items-center justify-between border-b border-[#e5e7eb] px-3.5 py-3 text-[13px] font-normal leading-none text-[#1a1a1a] !font-[inherit] dark:border-white/10 dark:text-foreground';
+export const P38_EXTRATO_V8_DAY_SALDO_VALUE = cn(
+  P38_EXTRATO_V8_ROW_VALUE,
+  '!font-[inherit] text-[#3d5a3d] dark:text-[#a4ce33]',
+);
 export const P38_EXTRATO_V8_ROW_LINE =
   'w-full border-0 border-l-0 !border-b border-[#e5e7eb] bg-transparent px-3 py-3.5 !font-[inherit] shadow-none last:!border-b-0 dark:!border-white/10';
 
@@ -109,13 +116,9 @@ export function extratoFornecedorNome(l) {
   return s || null;
 }
 
-/** Segmentos «pedido N» e nome do fornecedor — só o que existir. */
+/** Meta extrato compra mercadoria — fornecedor (pedido fica no título/descrição, não na legenda). */
 export function extratoCompraMercadoriaMetaExtras(l) {
   if (!lancamentoExtratoEhCompraMercadoria(l)) return [];
-  const extras = [];
-  const pedido = extratoNumeroPedidoCompra(l);
   const fornecedor = extratoFornecedorNome(l);
-  if (pedido) extras.push(`pedido ${pedido}`);
-  if (fornecedor) extras.push(fornecedor);
-  return extras;
+  return fornecedor ? [fornecedor] : [];
 }

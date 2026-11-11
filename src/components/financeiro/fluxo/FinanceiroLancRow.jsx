@@ -21,7 +21,8 @@ import {
   P38_EXTRATO_V8_ROW_META,
   P38_EXTRATO_V8_ROW_TITLE,
   P38_EXTRATO_V8_ROW_VALUE,
-  extratoCompraMercadoriaMetaExtras,
+  extratoFornecedorNome,
+  lancamentoExtratoEhCompraMercadoria,
 } from './financeiroP38';
 
 const LINE_TITLE_CLASS =
@@ -338,11 +339,15 @@ export default function FinanceiroLancRow({
   );
 
   const subtitleExtratoMeta = () => {
+    if (lancamentoExtratoEhCompraMercadoria(l)) {
+      return [data ? formatarDataCurta(data) : null, extratoFornecedorNome(l)]
+        .filter(Boolean)
+        .join(' · ');
+    }
     const categoria = String(l?.categoria || l?.dados?.categoria || '').trim();
     const parts = [
       data ? formatarDataCurta(data) : null,
       categoria || null,
-      ...extratoCompraMercadoriaMetaExtras(l),
       l.conta_financeira_nome,
       rotuloFormaPagamentoExtrato(l) || null,
     ].filter(Boolean);
