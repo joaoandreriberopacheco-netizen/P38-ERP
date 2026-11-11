@@ -468,7 +468,7 @@ export default function FinanceiroLancRow({
 
     const extratoRow = (
       <div className={P38_EXTRATO_V8_ROW_GRID}>
-        <div className="flex w-4 shrink-0 items-center justify-start self-center">
+        <div className="flex w-[18px] shrink-0 items-center justify-start self-center">
           <FluxoExtratoRowIcon lancamento={l} compact contasSel={contasSel} />
         </div>
         <div className="min-w-0 max-w-full overflow-hidden text-left">
