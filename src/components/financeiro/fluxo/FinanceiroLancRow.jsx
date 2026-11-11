@@ -396,15 +396,17 @@ export default function FinanceiroLancRow({
       (isTransfConsolidada || perspectiva) && l.notaTransferencia ? String(l.notaTransferencia).trim() : null;
 
     const extratoGridClass =
-      'grid w-full grid-cols-[1.5rem_minmax(0,1fr)_minmax(4.75rem,auto)] items-center gap-x-2.5 gap-y-0';
+      'grid w-full grid-cols-[1.5rem_minmax(0,1fr)_7.25rem] items-center gap-x-2.5 gap-y-0';
     const extratoRow = (
       <div className={extratoGridClass}>
         <div className="flex justify-center self-center">
           <FluxoExtratoRowIcon lancamento={l} compact />
         </div>
-        <div className="min-w-0 self-center">
-          <div className={cn(P38_EXTRATO_V8_ROW_TITLE, 'line-clamp-2 break-words')}>{extratoTitlePlain}</div>
-          <div className={P38_EXTRATO_V8_ROW_META}>
+        <div className="min-w-0 text-left">
+          <div className={cn(P38_EXTRATO_V8_ROW_TITLE, 'line-clamp-2 break-words text-left')}>
+            {extratoTitlePlain}
+          </div>
+          <div className={cn(P38_EXTRATO_V8_ROW_META, 'text-left')}>
             <span className="line-clamp-2 break-words">{metaLinha}</span>
             {metaExtra ? (
               <>
@@ -414,7 +416,7 @@ export default function FinanceiroLancRow({
             ) : null}
           </div>
         </div>
-        <div className="flex shrink-0 items-center justify-end gap-1 self-center pl-0.5">
+        <div className="flex w-[7.25rem] shrink-0 items-center justify-end gap-1 self-center pl-0.5">
           {valorNode(l, { extratoMobile: true })}
           <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#6b7280] dark:text-muted-foreground" aria-hidden />
         </div>
