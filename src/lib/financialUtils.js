@@ -1,5 +1,6 @@
 import {
   agora,
+  chaveDiaCampoData,
   codigoOrdenacaoDesdeDataSomente,
   codigoOrdenacaoDesdeInstante,
   toLocalDateKey,
@@ -116,14 +117,19 @@ export const parseFinancialValue = (value) => {
  * Prioriza `data_lancamento` (data/hora informada pelo utilizador).
  */
 export function getDataChaveLancamento(l) {
+  // Extrato / grupos: dia civil do pagamento manda (Tabatinga); data_lancamento só ordena na lista.
+  if (l?.data_pagamento && (l.status === 'Pago' || l.data_pagamento)) {
+    const kPag = chaveDiaCampoData(l.data_pagamento);
+    if (kPag) return kPag;
+  }
   const ordem = diaChaveOrdemLancamento(l);
   if (ordem) return ordem;
   if (l?.forma_pagamento_tipo === 'Cartão Crédito' && l?.status_conciliacao === 'Pendente') {
     const d = l.data_liquidacao_prevista || l.data_vencimento;
-    if (d) return toLocalDateKey(d);
+    if (d) return chaveDiaCampoData(d);
   }
   const dr = l?.data_pagamento || l?.data_vencimento;
-  return dr ? toLocalDateKey(dr) : null;
+  return dr ? chaveDiaCampoData(dr) : null;
 }
 
 /** Item base para ordenação (transferência consolidada herda do par). */

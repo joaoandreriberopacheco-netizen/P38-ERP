@@ -15,6 +15,7 @@ import FluxoExtratoRowIcon from './FluxoExtratoRowIcon';
 import { rotuloFormaPagamentoExtrato } from '@/lib/fluxoExtratoIconKind';
 import { isTransferenciaEntreContas } from '@/lib/saldoContaFinanceira';
 import { isLancamentoPago, statusRotuloListaFinanceiro } from '@/lib/lancamentoFinanceiroStatus';
+import { getDataChaveLancamento } from '@/lib/financialUtils';
 import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
 import {
   P38_EXTRATO_V8_ROW_LINE,
@@ -325,6 +326,8 @@ export default function FinanceiroLancRow({
       : dataField === 'pagamento'
         ? l.data_pagamento || l.data_vencimento
         : l.data_pagamento || l.data_vencimento;
+  const dataChaveLista = getDataChaveLancamento(l);
+  const dataExibicao = dataChaveLista || data;
 
   const trailing = (
     <>
@@ -340,13 +343,13 @@ export default function FinanceiroLancRow({
 
   const subtitleExtratoMeta = () => {
     if (lancamentoExtratoEhCompraMercadoria(l)) {
-      return [data ? formatarDataCurta(data) : null, extratoFornecedorNome(l)]
+      return [dataExibicao ? formatarDataCurta(dataExibicao) : null, extratoFornecedorNome(l)]
         .filter(Boolean)
         .join(' · ');
     }
     const categoria = String(l?.categoria || l?.dados?.categoria || '').trim();
     const parts = [
-      data ? formatarDataCurta(data) : null,
+      dataExibicao ? formatarDataCurta(dataExibicao) : null,
       categoria || null,
       l.conta_financeira_nome,
       rotuloFormaPagamentoExtrato(l) || null,
@@ -356,12 +359,12 @@ export default function FinanceiroLancRow({
 
   const subtitle = isTransfConsolidada || perspectiva ? (
     <span className="line-clamp-2 break-words">
-      {data ? formatarDataCurta(data) : '—'}
+      {dataExibicao ? formatarDataCurta(dataExibicao) : '—'}
       {l.notaTransferencia ? ` · ${l.notaTransferencia}` : ''}
     </span>
   ) : extratoMobile ? null : (
     <span className="line-clamp-2 break-words">
-      {data ? formatarDataCurta(data) : '—'}
+      {dataExibicao ? formatarDataCurta(dataExibicao) : '—'}
       {l.conta_financeira_nome ? ` · ${l.conta_financeira_nome}` : ''}
     </span>
   );
