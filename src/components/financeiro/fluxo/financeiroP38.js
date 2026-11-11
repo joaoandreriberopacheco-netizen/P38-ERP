@@ -14,8 +14,12 @@ export const P38_EXTRATO_V8_FONT_SCOPE = cn(P38_EXTRATO_V8_FONT_FAMILY, '[&_*]:f
 
 /** Paridade visual com `fluxo-caixa-extrato-prototype.html` (list-scroll / tx-row). */
 export const P38_EXTRATO_V8_LIST_BG = 'bg-[#f4f5f3] dark:bg-[#1f1d22]';
-export const P38_EXTRATO_V8_DAY_CARD =
-  'overflow-hidden rounded-xl border border-[#e5e7eb] bg-white shadow-sm dark:border-white/10 dark:bg-[#26262e] dark:shadow-none';
+/** Protótipo dark `--surface` / hero — contraste com `--bg` (#1f1d22). */
+export const P38_EXTRATO_V8_SURFACE_DARK = 'dark:bg-[#2d333b]';
+export const P38_EXTRATO_V8_DAY_CARD = cn(
+  'overflow-hidden rounded-xl border border-[#e5e7eb] bg-white shadow-sm dark:border-white/10 dark:shadow-none',
+  P38_EXTRATO_V8_SURFACE_DARK,
+);
 /** Bloco data + card — separação entre dias no extrato mobile. */
 export const P38_EXTRATO_V8_DAY_GROUP = 'w-full min-w-0';
 export const P38_EXTRATO_V8_DAY_LIST_GAP = 'flex flex-col gap-7';
@@ -38,7 +42,7 @@ export const P38_EXTRATO_V8_DAY_SALDO_VALUE = cn(
   '!font-[inherit] text-[#3d5a3d] dark:text-[#a4ce33]',
 );
 export const P38_EXTRATO_V8_ROW_LINE =
-  'w-full border-0 border-l-0 !border-b border-[#e5e7eb] bg-transparent px-3 py-3.5 !font-[inherit] shadow-none last:!border-b-0 dark:!border-white/10';
+  'w-full border-0 border-l-0 !border-b border-[#e5e7eb] !bg-transparent px-3 py-3.5 !font-[inherit] shadow-none last:!border-b-0 dark:!border-white/10';
 
 /**
  * Tokens P38 partilhados — fluxo de caixa, contas abertas e Planejamento.
