@@ -18,12 +18,15 @@ export default function ListaLancamentos({
       vazio={!loading && grupos.length === 0}
       vazioMensagem="Nenhum lançamento encontrado"
       vazioIcon={Scale}
+      listClassName={extratoMobile ? 'space-y-0' : undefined}
     >
       {grupos.map(({ k, label, items, totais = {} }) => (
         <FinanceiroGrupo
           key={k}
+          grupoKey={k}
           label={label}
-          balancoDia
+          balancoDia={!extratoMobile}
+          extratoV8={extratoMobile}
           receitas={totais.entrou ?? totais.r ?? 0}
           despesas={totais.saiu ?? totais.d ?? 0}
           liquido={totais.liquidoOperacional ?? totais.liquido ?? 0}

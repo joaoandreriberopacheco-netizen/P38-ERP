@@ -1297,46 +1297,40 @@ export default function ExecucaoOrcamentaria() {
             onRelatorios={abrirMenuRelatorios}
             onExportar={() => setShowPrintDialog(true)}
             onFiltros={() => setFluxoExtratoFiltrosOpen((v) => !v)}
-            periodo={periodo}
-            onPeriodo={setPeriodo}
-            customStart={cs}
-            customEnd={ce}
-            onCustom={(k, v) => (k === 'start' ? setCs(v) : setCe(v))}
-            contas={contasAtivas}
-            contasSel={contasSel}
-            onContasSel={atualizarSelecaoContasFluxo}
             loading={loading}
-            filtrosPanel={(
-              <FiltrosFluxoCaixa
-                hideBar
-                filtersOpen={fluxoExtratoFiltrosOpen}
-                onFiltersOpenChange={setFluxoExtratoFiltrosOpen}
-                search={search}
-                onSearch={setSearch}
-                periodo={periodo}
-                onPeriodo={setPeriodo}
-                customStart={cs}
-                customEnd={ce}
-                onCustom={(k, v) => (k === 'start' ? setCs(v) : setCe(v))}
-                contas={contasAtivas}
-                contasSel={contasSel}
-                onContasSel={atualizarSelecaoContasFluxo}
-                statusSel={statusSel}
-                onStatusSel={setStatusSel}
-                pendentes={pendentes}
-                onPendentes={setPendentes}
-                cmvOnly={cmvOnly}
-                onCmvOnly={setCmvOnly}
-                onOpenConciliacao={abrirConciliacao}
-                conciliacaoPendente={totalPend}
-                ordemLancamentos={ordemLancamentos}
-                onOrdemLancamentosChange={setOrdemLancamentos}
-                mostrarHistoricoAnterior={mostrarHistoricoAnterior}
-                dataCorteHistorico={dataCorteHistorico}
-                onMostrarHistoricoAnterior={(v) => atualizarCorteHistorico(v, dataCorteHistorico)}
-                onDataCorteHistorico={(v) => atualizarCorteHistorico(mostrarHistoricoAnterior, v || DATA_CORTE_HISTORICO_PADRAO)}
-              />
-            )}
+            filtrosPanel={
+              fluxoExtratoFiltrosOpen ? (
+                <FiltrosFluxoCaixa
+                  hideBar
+                  filtersOpen
+                  onFiltersOpenChange={setFluxoExtratoFiltrosOpen}
+                  search={search}
+                  onSearch={setSearch}
+                  periodo={periodo}
+                  onPeriodo={setPeriodo}
+                  customStart={cs}
+                  customEnd={ce}
+                  onCustom={(k, v) => (k === 'start' ? setCs(v) : setCe(v))}
+                  contas={contasAtivas}
+                  contasSel={contasSel}
+                  onContasSel={atualizarSelecaoContasFluxo}
+                  statusSel={statusSel}
+                  onStatusSel={setStatusSel}
+                  pendentes={pendentes}
+                  onPendentes={setPendentes}
+                  cmvOnly={cmvOnly}
+                  onCmvOnly={setCmvOnly}
+                  onOpenConciliacao={abrirConciliacao}
+                  conciliacaoPendente={totalPend}
+                  ordemLancamentos={ordemLancamentos}
+                  onOrdemLancamentosChange={setOrdemLancamentos}
+                  mostrarHistoricoAnterior={mostrarHistoricoAnterior}
+                  dataCorteHistorico={dataCorteHistorico}
+                  onMostrarHistoricoAnterior={(v) => atualizarCorteHistorico(v, dataCorteHistorico)}
+                  onDataCorteHistorico={(v) => atualizarCorteHistorico(mostrarHistoricoAnterior, v || DATA_CORTE_HISTORICO_PADRAO)}
+                />
+              ) : null
+            }
           >
             <P38ModuleLoadingOverlay
               open={loading}
