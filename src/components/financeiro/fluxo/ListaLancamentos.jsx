@@ -13,6 +13,7 @@ export default function ListaLancamentos({
   onToggleSelecionado,
   extratoMobile = false,
   onEdit,
+  contasSel = null,
 }) {
   return (
     <FinanceiroListaEstado
@@ -47,6 +48,7 @@ export default function ListaLancamentos({
               onToggleSelecionado={onToggleSelecionado}
               extratoMobile={extratoMobile}
               onEdit={onEdit}
+              contasSel={contasSel}
             />
           ))}
         </FinanceiroGrupo>
