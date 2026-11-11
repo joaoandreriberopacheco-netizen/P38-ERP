@@ -25,6 +25,7 @@ export default function FluxoExtratoMobileShell({
   filtrosPanel,
   children,
   loading = false,
+  className,
 }) {
   const collapsed = useFluxoExtratoScrollCollapse(scrollEl);
   const searchInputRef = useRef(null);
@@ -35,7 +36,7 @@ export default function FluxoExtratoMobileShell({
   };
 
   return (
-    <div className={cn('flex min-h-0 flex-1 flex-col overflow-hidden', P38_EXTRATO_V8_FONT_SCOPE)}>
+    <div className={cn('flex min-h-0 flex-1 flex-col overflow-hidden', P38_EXTRATO_V8_FONT_SCOPE, className)}>
       <header
         className={cn(
           'relative z-30 flex shrink-0 items-center justify-between px-3.5 py-2.5',
@@ -68,7 +69,12 @@ export default function FluxoExtratoMobileShell({
           )}
         >
           <div className="min-h-0 overflow-hidden">
-            <div className="bg-[#3d5a3d] px-4 pb-5 pt-3 text-white dark:bg-[#2d333b] dark:text-foreground">
+            <div
+              className={cn(
+                'bg-[#3d5a3d] px-4 pb-5 pt-3 text-white dark:bg-[#2d333b] dark:text-foreground',
+                !collapsed && 'pb-8',
+              )}
+            >
               <p className="text-center text-xs font-semibold uppercase tracking-wide opacity-85">Saldo</p>
               <p className="mt-1 text-center text-[2rem] font-bold tabular-nums leading-none tracking-tight text-white dark:text-[#a4ce33]">
                 {saldoPronto && saldo != null ? formatFinanceiroValor(saldo) : '—'}
@@ -79,16 +85,20 @@ export default function FluxoExtratoMobileShell({
 
         <div
           className={cn(
-            'sticky top-0 z-20 shrink-0 border-b border-border/40 bg-background/95 px-3 py-2 backdrop-blur-sm',
-            'dark:border-white/10 dark:bg-[#1f1d22]/95',
+            'grid z-10 shrink-0 transition-[grid-template-rows] duration-300 ease-out',
+            collapsed ? 'grid-rows-[0fr]' : 'grid-rows-[1fr]',
           )}
         >
-          <FluxoExtratoUtilShortcuts
-            onBusca={handleBusca}
-            onRelatorios={onRelatorios}
-            onExportar={onExportar}
-            onFiltros={onFiltros}
-          />
+          <div className="min-h-0 overflow-hidden">
+            <div className="px-3 pb-2 pt-0">
+              <FluxoExtratoUtilShortcuts
+                onBusca={handleBusca}
+                onRelatorios={onRelatorios}
+                onExportar={onExportar}
+                onFiltros={onFiltros}
+              />
+            </div>
+          </div>
         </div>
 
         {searchVisible ? (

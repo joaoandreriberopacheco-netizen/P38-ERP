@@ -1,6 +1,6 @@
 import React from 'react';
 import { formatarDataCurta } from '@/components/utils/dateUtils';
-import { AlertCircle, ArrowDown, ArrowRightLeft, ArrowUp, ChevronRight, Pencil } from 'lucide-react';
+import { AlertCircle, ArrowDown, ArrowRightLeft, ArrowUp, ChevronRight } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   P38MobileLine,
@@ -15,7 +15,13 @@ import FluxoExtratoRowIcon from './FluxoExtratoRowIcon';
 import { rotuloFormaPagamentoExtrato } from '@/lib/fluxoExtratoIconKind';
 import { isTransferenciaEntreContas } from '@/lib/saldoContaFinanceira';
 import { isLancamentoPago, statusRotuloListaFinanceiro } from '@/lib/lancamentoFinanceiroStatus';
-import { getDataChaveLancamento } from '@/lib/financialUtils';
+import {
+  getDataChaveLancamento,
+  extratoTransferenciaInternaCasa,
+  normalizarPerspectivaTransferencia,
+  resolverPerspectivaValorTransferenciaExtrato,
+} from '@/lib/financialUtils';
+import { P38_EXTRATO_V8_TRANSFER_INTERNA_VALUE } from './financeiroP38';
 import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
 import {
   P38_EXTRATO_V8_ROW_LINE,
@@ -85,11 +91,6 @@ function resolverLancamentoAcaoExtrato(l, { perspectiva, isTransfConsolidada }) 
   return l;
 }
 
-function idLancamentoEditavel(lanc) {
-  const id = String(lanc?.id || '');
-  return !!id && !id.startsWith('transfer-') && !id.startsWith('pdv-');
-}
-
 function descricaoComFormaPagamento(l) {
   const base = String(l?.descricao || '').trim();
   if (!isLancamentoVenda(l)) return base;
@@ -132,14 +133,14 @@ function valorNode(
   const pago = isLancamentoPago(l);
   const statusLista = statusRotuloListaFinanceiro(l);
 
-  const perspectivaTransf = resolverPerspectivaCorTransferencia(l, {
-    preferida: perspectivaTransferencia,
+  const perspectivaTransf = resolverPerspectivaValorTransferenciaExtrato(l, {
+    perspectivaPreferida: perspectivaTransferencia,
     contaVisualizadaId,
     contasSel,
   });
 
   if (cancelado) return '—';
-  if (isT) {
+  if (isT || (extratoMobile && perspectivaTransf)) {
     const valorFmt = formatFinanceiroValor(Math.abs(l.valor || 0));
     if (extratoMobile) {
       const valorExtratoTransferencia = (sign, signClass) => (
@@ -154,11 +155,15 @@ function valorNode(
       if (perspectivaTransf === 'saida') {
         return valorExtratoTransferencia('−', 'text-[#dc2626] dark:text-[#f87171]');
       }
+      const transferInterna = extratoTransferenciaInternaCasa(l, contasSel);
       return (
         <span
           className={cn(
             P38_EXTRATO_V8_ROW_VALUE,
-            'block w-full text-right text-[#374151] dark:text-[#d1d5db]',
+            'block w-full text-right',
+            transferInterna
+              ? P38_EXTRATO_V8_TRANSFER_INTERNA_VALUE
+              : 'text-[#374151] dark:text-[#d1d5db]',
           )}
         >
           {valorFmt}
@@ -193,53 +198,6 @@ function valorNode(
       <span>{valorFmt}</span>
     </span>
   );
-}
-
-/**
- * Cor do valor no extrato (+ verde / − vermelho). Ignora `neutra` e infere pelo filtro de contas.
- */
-export function resolverPerspectivaCorTransferencia(
-  l,
-  { preferida = null, contaVisualizadaId = null, contasSel = null } = {},
-) {
-  if (!l || l.status === 'Cancelado') return null;
-  const eTransfer = tipoLinha(l) === 'Transferência' || isTransferenciaEntreContas(l);
-  if (!eTransfer) return null;
-
-  if (preferida === 'entrada' || preferida === 'saida') return preferida;
-  if (l.perspectivaTransferencia === 'entrada' || l.perspectivaTransferencia === 'saida') {
-    return l.perspectivaTransferencia;
-  }
-
-  if (contaVisualizadaId) {
-    const destinoId = l.conta_destino_id || (l.tipo === 'Receita' ? l.conta_financeira_id : null);
-    const origemId =
-      l.conta_origem_id || (l.tipo === 'Despesa' ? l.conta_financeira_id : null) || l.conta_financeira_id;
-    if (destinoId === contaVisualizadaId && origemId !== contaVisualizadaId) return 'entrada';
-    if (origemId === contaVisualizadaId && destinoId && destinoId !== contaVisualizadaId) return 'saida';
-  }
-
-  const origemId = l.conta_origem_id || (l.tipo === 'Despesa' ? l.conta_financeira_id : null);
-  const destinoId =
-    l.conta_destino_id || (l.tipo === 'Receita' ? l.conta_financeira_id : null);
-  if (contasSel?.length && origemId && destinoId) {
-    const origemVisivel = contasSel.includes(origemId);
-    const destinoVisivel = contasSel.includes(destinoId);
-    if (origemVisivel && destinoVisivel) return null;
-    if (origemVisivel) return 'saida';
-    if (destinoVisivel) return 'entrada';
-  }
-
-  if (l.tipo === 'Receita' && isTransferenciaEntreContas(l)) return 'entrada';
-  if (l.tipo === 'Despesa' && isTransferenciaEntreContas(l)) return 'saida';
-  if (l.tipo === 'Transferência' && l.conta_financeira_id && l.conta_destino_id && contasSel?.length) {
-    const origemVisivel = contasSel.includes(l.conta_financeira_id);
-    const destinoVisivel = contasSel.includes(l.conta_destino_id);
-    if (origemVisivel && !destinoVisivel) return 'saida';
-    if (!origemVisivel && destinoVisivel) return 'entrada';
-  }
-
-  return null;
 }
 
 /** entrada = seta verde ↑ | saida = seta vermelha ↓ (extrato) | neutra = sem seta (fluxo multi-conta) */
@@ -358,7 +316,6 @@ export default function FinanceiroLancRow({
   contaVisualizadaId = null,
   contasSel = null,
   extratoMobile = false,
-  onEdit,
 }) {
   const cancelado = l.status === 'Cancelado';
   const isPago = isLancamentoPago(l);
@@ -366,7 +323,9 @@ export default function FinanceiroLancRow({
   const conc = l.status_conciliacao || 'N/A';
 
   const dirExtrato = contaVisualizadaId ? resolverDirecaoSetaTransferencia(l, contaVisualizadaId) : null;
-  const perspectiva = dirExtrato || l.perspectivaTransferencia;
+  const perspectiva =
+    normalizarPerspectivaTransferencia(dirExtrato)
+    || normalizarPerspectivaTransferencia(l.perspectivaTransferencia);
   const isTransfConsolidada =
     !contaVisualizadaId && (l.isTransferenciaConsolidada || l.perspectivaTransferencia === 'neutra');
 
@@ -449,12 +408,6 @@ export default function FinanceiroLancRow({
   );
 
   const lancamentoClick = resolverLancamentoAcaoExtrato(l, { perspectiva, isTransfConsolidada }) || l;
-  const lancamentoEdicao = resolverLancamentoAcaoExtrato(l, { perspectiva, isTransfConsolidada });
-  const podeEditarExtrato =
-    extratoMobile
-    && !!onEdit
-    && l.origem !== 'movimento'
-    && idLancamentoEditavel(lancamentoEdicao);
 
   const esmaecido = cancelado || (showPago && isPago) || dimProgramada || l._isProgramada;
 
@@ -511,14 +464,12 @@ export default function FinanceiroLancRow({
     const metaExtra =
       (isTransfConsolidada || perspectiva) && l.notaTransferencia ? String(l.notaTransferencia).trim() : null;
 
-    const extratoGridClass = cn(
-      'grid w-full grid-cols-[1rem_minmax(0,1fr)_auto] items-center gap-x-2 gap-y-0',
-      podeEditarExtrato ? 'pr-0.5' : '',
-    );
+    const extratoGridClass =
+      'grid w-full grid-cols-[1rem_minmax(0,1fr)_auto] items-center gap-x-2 gap-y-0';
     const extratoRow = (
       <div className={extratoGridClass}>
         <div className="flex w-4 shrink-0 items-center justify-start self-center">
-          <FluxoExtratoRowIcon lancamento={l} compact />
+          <FluxoExtratoRowIcon lancamento={l} compact contasSel={contasSel} />
         </div>
         <div className="min-w-0 text-left">
           <div className={cn(P38_EXTRATO_V8_ROW_TITLE, 'line-clamp-2 break-words text-left')}>
@@ -543,20 +494,6 @@ export default function FinanceiroLancRow({
               contasSel,
             })}
           </div>
-          {podeEditarExtrato ? (
-            <button
-              type="button"
-              className="-mr-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[#6b7280] hover:bg-black/5 hover:text-[#3d5a3d] dark:text-muted-foreground dark:hover:bg-white/10 dark:hover:text-[#a4ce33]"
-              aria-label="Editar lançamento"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onEdit?.(lancamentoEdicao);
-              }}
-            >
-              <Pencil className="h-3.5 w-3.5" strokeWidth={2} />
-            </button>
-          ) : null}
           <ChevronRight
             className="h-3.5 w-3.5 shrink-0 text-[#6b7280] dark:text-muted-foreground"
             aria-hidden

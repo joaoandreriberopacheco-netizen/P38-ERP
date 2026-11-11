@@ -34,6 +34,11 @@ export const P38_EXTRATO_V8_ROW_META =
 /** `.tx-value` */
 export const P38_EXTRATO_V8_ROW_VALUE =
   'text-[13px] font-bold tabular-nums whitespace-nowrap';
+/** Transferência com origem e destino no filtro — valor e ícone esmaecidos (saldo agregado inalterado). */
+export const P38_EXTRATO_V8_TRANSFER_INTERNA_VALUE =
+  'text-[#6b7280]/90 dark:text-[#9ca3af]/95';
+export const P38_EXTRATO_V8_TRANSFER_INTERNA_ICON_TILE =
+  'bg-[#eceeed] text-[#9ca3af] opacity-85 dark:bg-[#383e47]/55 dark:text-[#9ca3af]';
 /** `.day-saldo` — mesma família que `.tx-row` (herda `P38_EXTRATO_V8_FONT_SCOPE`). */
 export const P38_EXTRATO_V8_DAY_SALDO =
   'flex items-center justify-between border-b border-[#e5e7eb] px-3.5 py-3 text-[13px] font-normal leading-none text-[#1a1a1a] !font-[inherit] dark:border-white/10 dark:text-foreground';

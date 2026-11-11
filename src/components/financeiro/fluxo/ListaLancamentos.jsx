@@ -12,7 +12,6 @@ export default function ListaLancamentos({
   selecionados = [],
   onToggleSelecionado,
   extratoMobile = false,
-  onEdit,
   contasSel = null,
 }) {
   return (
@@ -47,7 +46,6 @@ export default function ListaLancamentos({
               selecionado={selecionados.includes(l.id)}
               onToggleSelecionado={onToggleSelecionado}
               extratoMobile={extratoMobile}
-              onEdit={onEdit}
               contasSel={contasSel}
             />
           ))}
