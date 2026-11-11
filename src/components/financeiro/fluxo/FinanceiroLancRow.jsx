@@ -98,7 +98,7 @@ function valorNode(l, { extratoMobile = false } = {}) {
     const valorFmt = formatFinanceiroValor(Math.abs(l.valor || 0));
     if (extratoMobile) {
       return (
-        <span className="text-[13px] font-bold tabular-nums text-[#4b5563] dark:text-[#eceff1]">
+        <span className="block w-full text-right font-mono text-[13px] font-bold tabular-nums tracking-tight text-[#4b5563] dark:text-[#eceff1]">
           {valorFmt}
         </span>
       );
@@ -115,10 +115,25 @@ function valorNode(l, { extratoMobile = false } = {}) {
         ? 'text-[#b32d2e] dark:text-red-400'
         : 'text-foreground/85';
 
+  if (extratoMobile) {
+    const sign = isR ? '+' : '−';
+    return (
+      <span
+        className={cn(
+          'block w-full text-right font-mono text-[13px] font-bold tabular-nums tracking-tight',
+          signClass,
+        )}
+      >
+        <span className="inline-block min-w-[0.65rem] text-right">{sign}</span>
+        <span className="ml-px">{valorFmt}</span>
+      </span>
+    );
+  }
+
   return (
-    <span className={cn('inline-flex items-center justify-end gap-0.5 tabular-nums', extratoMobile && 'text-[13px] font-bold')}>
+    <span className="inline-flex items-center justify-end gap-0.5 tabular-nums">
       <span className={signClass}>{isR ? '+' : '−'}</span>
-      <span className={extratoMobile ? signClass : undefined}>{valorFmt}</span>
+      <span>{valorFmt}</span>
     </span>
   );
 }
@@ -269,8 +284,10 @@ export default function FinanceiroLancRow({
   );
 
   const subtitleExtratoMeta = () => {
+    const categoria = String(l?.categoria || l?.dados?.categoria || '').trim();
     const parts = [
       data ? formatarDataCurta(data) : null,
+      categoria || null,
       l.conta_financeira_nome,
       rotuloFormaPagamentoExtrato(l) || null,
     ].filter(Boolean);
@@ -339,18 +356,26 @@ export default function FinanceiroLancRow({
   };
 
   if (extratoMobile) {
+    const extratoGridClass =
+      'grid w-full grid-cols-[1.5rem_minmax(0,1fr)_7.25rem] items-center gap-x-2.5 gap-y-0';
     const extratoRow = (
-      <>
-        <FluxoExtratoRowIcon lancamento={l} />
-        <div className="min-w-0 flex-1">
-          <div className="text-[15px] font-semibold leading-snug text-foreground normal-case line-clamp-2">{title}</div>
+      <div className={extratoGridClass}>
+        <div className="flex justify-center self-center">
+          <FluxoExtratoRowIcon lancamento={l} compact />
+        </div>
+        <div className="min-w-0 self-center">
+          <div className="text-[15px] font-semibold leading-snug text-foreground normal-case line-clamp-2">
+            {title}
+          </div>
           {subtitle}
         </div>
-        <div className="flex shrink-0 items-center gap-0.5">
-          {valorNode(l, { extratoMobile: true })}
-          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+        <div className="flex w-[7.25rem] shrink-0 items-center justify-end gap-0.5 self-center pl-0.5">
+          <div className="min-w-0 flex-1 text-right [font-variant-numeric:tabular-nums]">
+            {valorNode(l, { extratoMobile: true })}
+          </div>
+          <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground" aria-hidden />
         </div>
-      </>
+      </div>
     );
     if (podeSelecionar) {
       return (
@@ -358,7 +383,7 @@ export default function FinanceiroLancRow({
           thinAccent={false}
           accent="none"
           onClick={() => onToggleSelecionado?.(l.id)}
-          className="w-full border-0 border-l-0 bg-transparent px-3 py-3.5 text-left shadow-none [&]:border-l-0"
+          className="w-full border-0 border-l-0 bg-transparent px-3 py-3 text-left shadow-none [&]:border-l-0"
         >
           {extratoRow}
         </P38MobileLine>
@@ -371,7 +396,7 @@ export default function FinanceiroLancRow({
         as="button"
         type="button"
         onClick={() => onClick?.(lancamentoClick)}
-        className="w-full border-0 border-l-0 bg-transparent px-3 py-3.5 text-left shadow-none [&]:border-l-0"
+        className="w-full border-0 border-l-0 bg-transparent px-3 py-3 text-left shadow-none [&]:border-l-0"
       >
         {extratoRow}
       </P38MobileLine>
