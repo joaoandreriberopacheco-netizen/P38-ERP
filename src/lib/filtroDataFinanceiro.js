@@ -135,6 +135,11 @@ export function passaFiltroCorteHistorico(dataKey, { mostrarHistoricoAnterior, d
   return dataKey >= dataCorte;
 }
 
+/** Mesmas regras do extrato — para relatórios (balancete / PDF). */
+export function corteHistoricoAtivo({ mostrarHistoricoAnterior, dataCorte } = {}) {
+  return !mostrarHistoricoAnterior && !!dataCorte;
+}
+
 function normalizarTextoConta(s) {
   return String(s || '')
     .toLowerCase()

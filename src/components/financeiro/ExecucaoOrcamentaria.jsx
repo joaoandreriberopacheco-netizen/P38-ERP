@@ -638,8 +638,22 @@ export default function ExecucaoOrcamentaria() {
       contas,
       contasSel: contasFiltroIds,
       contasById,
+      mostrarHistoricoAnterior,
+      dataCorteHistorico,
     });
-  }, [filtrados, movimentosFiltrados, lancs, contas, contasFiltroIds, contasById, ordemLancamentos, kpis.saldoContas, movimentos]);
+  }, [
+    filtrados,
+    movimentosFiltrados,
+    lancs,
+    contas,
+    contasFiltroIds,
+    contasById,
+    ordemLancamentos,
+    kpis.saldoContas,
+    movimentos,
+    mostrarHistoricoAnterior,
+    dataCorteHistorico,
+  ]);
 
   const programadasFiltradas = useMemo(() => filtrarProgramadasFluxo(lancs, {
     contasSel: contasFiltroIds,
@@ -809,6 +823,8 @@ export default function ExecucaoOrcamentaria() {
       contas,
       contasSel: contasFiltroIdsF,
       contasById,
+      mostrarHistoricoAnterior,
+      dataCorteHistorico,
     });
 
     return { grupos: gruposF, kpis: kpisF, ds: dsF, de: deF, contasSelFiltro };
@@ -1518,6 +1534,8 @@ export default function ExecucaoOrcamentaria() {
         initialDia={corteDiarioInitial?.dia ?? dataHoje()}
         initialContasSel={corteDiarioInitial?.contasSel ?? contasSel}
         abrirDiretoNoMapa={!!corteDiarioInitial}
+        mostrarHistoricoAnterior={mostrarHistoricoAnterior}
+        dataCorteHistorico={dataCorteHistorico}
       />
     </div>
     </GestaoContasEmbedded>
