@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>P38 — Paleta de verdes (Tailwind) · Extrato mobile</title>
+  <title>P38 — Paleta completa Tailwind · Loja de cores</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -17,65 +17,105 @@
     };
   </script>
   <style>
-    .swatch {
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }
+    .swatch { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+    .family-section.is-hidden { display: none; }
+    html { scroll-padding-top: 5.5rem; }
   </style>
 </head>
 <body class="min-h-screen bg-stone-100 text-stone-900 antialiased">
   <header class="border-b border-stone-200 bg-white shadow-sm">
-    <div class="mx-auto max-w-6xl px-4 py-5 sm:px-6">
+    <div class="mx-auto max-w-7xl px-4 py-5 sm:px-6">
       <p class="text-xs font-semibold uppercase tracking-widest text-green-700">P38 · Protótipo visual</p>
-      <h1 class="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">Loja de verdes — Tailwind</h1>
-      <p class="mt-2 max-w-2xl text-sm text-stone-600">
-        Compare escalas <strong>green</strong>, <strong>emerald</strong>, <strong>lime</strong> e <strong>teal</strong>
-        (50 → 950). Toque numa amostra para <strong>escolher</strong> — o painel inferior mostra o token e um
-        exemplo de valor positivo (estilo extrato mobile).
+      <h1 class="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">Loja de cores — Tailwind completo</h1>
+      <p class="mt-2 max-w-3xl text-sm text-stone-600">
+        Todas as escalas padrão do Tailwind (50 → 950): neutros, verdes, azuis, roxos, vermelhos, quentes e mais.
+        Toque numa amostra para <strong>escolher</strong> e copiar a classe
+        (<code class="rounded bg-stone-200/80 px-1 text-xs">bg-*</code> / <code class="rounded bg-stone-200/80 px-1 text-xs">text-*</code>).
       </p>
     </div>
   </header>
 
-  <main class="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-  <!-- Referência extrato atual -->
+  <div id="toolbar" class="sticky top-0 z-40 border-b border-stone-200 bg-white/95 backdrop-blur-md">
+    <div class="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:px-6">
+      <label class="relative min-w-[12rem] flex-1">
+        <span class="sr-only">Buscar família ou classe</span>
+        <input
+          id="filter-search"
+          type="search"
+          placeholder="Buscar família (ex.: emerald, stone, blue-600)…"
+          class="w-full rounded-xl border border-stone-300 bg-stone-50 py-2.5 pl-10 pr-3 text-sm outline-none focus:border-green-600 focus:ring-2 focus:ring-green-600/25"
+        />
+        <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" aria-hidden="true">⌕</span>
+      </label>
+      <div id="filter-chips" class="flex flex-wrap gap-2" role="group" aria-label="Filtrar por grupo"></div>
+      <p id="filter-count" class="text-xs text-stone-500 sm:shrink-0"></p>
+    </div>
+  </div>
+
+  <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
     <section class="mb-10 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
-      <h2 class="text-sm font-bold uppercase tracking-wide text-stone-500">Referência no extrato (hoje)</h2>
+      <h2 class="text-sm font-bold uppercase tracking-wide text-stone-500">Referência extrato P38</h2>
       <div class="mt-4 grid gap-3 sm:grid-cols-3">
-        <div id="ref-p38-old" class="flex items-center gap-3 rounded-xl border border-stone-200 p-3" data-class="custom #3d5a3d" data-hex="#3d5a3d" data-label="Hero / receita claro (antigo)">
-          <div class="h-14 w-14 shrink-0 rounded-lg shadow-inner" style="background:#3d5a3d"></div>
-          <div class="min-w-0 text-xs">
-            <p class="font-semibold">#3d5a3d</p>
-            <p class="text-stone-500">Verde oliva — protótipo v8 anterior</p>
-          </div>
-        </div>
-        <div id="ref-p38-new" class="flex items-center gap-3 rounded-xl border border-stone-200 p-3" data-class="custom #459945" data-hex="#459945" data-label="Hero / proposta mais viva">
-          <div class="h-14 w-14 shrink-0 rounded-lg shadow-inner" style="background:#459945"></div>
-          <div class="min-w-0 text-xs">
-            <p class="font-semibold">#459945</p>
-            <p class="text-stone-500">Branch extrato — hero sugerido</p>
-          </div>
-        </div>
-        <div id="ref-p38-dark" class="flex items-center gap-3 rounded-xl border border-stone-200 p-3" data-class="custom #a4ce33" data-hex="#a4ce33" data-label="Acento escuro (limão P38)">
-          <div class="h-14 w-14 shrink-0 rounded-lg shadow-inner" style="background:#a4ce33"></div>
-          <div class="min-w-0 text-xs">
-            <p class="font-semibold">#a4ce33</p>
-            <p class="text-stone-500">Modo escuro — saldos / FAB</p>
-          </div>
-        </div>
+        <button
+          type="button"
+          id="ref-p38-old"
+          class="flex items-center gap-3 rounded-xl border border-stone-200 p-3 text-left hover:border-green-500"
+          data-class="custom #3d5a3d"
+          data-hex="#3d5a3d"
+          data-label="Hero / receita claro (antigo)"
+        >
+          <span class="h-14 w-14 shrink-0 rounded-lg shadow-inner" style="background:#3d5a3d"></span>
+          <span class="min-w-0 text-xs">
+            <span class="block font-semibold">#3d5a3d</span>
+            <span class="block text-stone-500">Verde oliva — v8 anterior</span>
+          </span>
+        </button>
+        <button
+          type="button"
+          id="ref-p38-dark"
+          class="flex items-center gap-3 rounded-xl border border-stone-200 p-3 text-left hover:border-green-500"
+          data-class="custom #a4ce33"
+          data-hex="#a4ce33"
+          data-label="Acento escuro (limão P38)"
+        >
+          <span class="h-14 w-14 shrink-0 rounded-lg shadow-inner" style="background:#a4ce33"></span>
+          <span class="min-w-0 text-xs">
+            <span class="block font-semibold">#a4ce33</span>
+            <span class="block text-stone-500">Modo escuro — saldos / FAB</span>
+          </span>
+        </button>
+        <button
+          type="button"
+          id="ref-p38-lime"
+          class="flex items-center gap-3 rounded-xl border border-stone-200 p-3 text-left hover:border-green-500"
+          data-class="text-lime-400"
+          data-kind="text"
+          data-family="lime"
+          data-step="400"
+          data-label="Tailwind lime-400 (comparar com limão)"
+        >
+          <span class="h-14 w-14 shrink-0 rounded-lg bg-lime-400 shadow-inner"></span>
+          <span class="min-w-0 text-xs">
+            <span class="block font-mono font-semibold">text-lime-400</span>
+            <span class="block text-stone-500">Escala lime — próximo do acento</span>
+          </span>
+        </button>
       </div>
     </section>
 
-    <div id="families" class="space-y-12"></div>
+    <nav id="jump-nav" class="mb-8 flex flex-wrap gap-2 rounded-2xl border border-dashed border-stone-300 bg-white/60 p-3" aria-label="Saltar para família"></nav>
+
+    <div id="families" class="space-y-10"></div>
   </main>
 
-  <!-- Pick panel (paint counter) -->
   <div
     id="pick-bar"
     class="fixed bottom-0 left-0 right-0 z-50 translate-y-full border-t border-stone-300 bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.12)] transition-transform duration-300"
     aria-live="polite"
   >
-    <div class="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+    <div class="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
       <div class="flex min-w-0 items-center gap-4">
-        <div id="pick-swatch" class="h-16 w-16 shrink-0 rounded-xl border border-stone-200 shadow-md" style="background:#e5e7eb"></div>
+        <div id="pick-swatch" class="h-16 w-16 shrink-0 rounded-xl border border-stone-200 bg-stone-200 shadow-md"></div>
         <div class="min-w-0">
           <p class="text-xs font-semibold uppercase tracking-wide text-stone-500">Sua escolha</p>
           <p id="pick-class" class="truncate font-mono text-sm font-bold text-green-800">—</p>
@@ -88,19 +128,10 @@
           <span id="pick-sample-val">R$ 2.056,66</span>
         </p>
         <div class="flex flex-wrap gap-2">
-          <button
-            type="button"
-            id="btn-copy"
-            disabled
-            class="rounded-lg bg-stone-800 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-40"
-          >
+          <button type="button" id="btn-copy" disabled class="rounded-lg bg-stone-800 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-40">
             Copiar classe Tailwind
           </button>
-          <button
-            type="button"
-            id="btn-clear"
-            class="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700"
-          >
+          <button type="button" id="btn-clear" class="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700">
             Limpar
           </button>
         </div>
@@ -112,12 +143,42 @@
 
   <script>
     const FAMILIES = [
-      { name: 'green', title: 'Green', note: 'Verde «natural» — boa base para hero e receitas no claro.' },
-      { name: 'emerald', title: 'Emerald', note: 'Mais frio e saturado; bom para ícones e valores +.' },
-      { name: 'lime', title: 'Lime', note: 'Limão forte — próximo do acento escuro P38 (#a4ce33).' },
-      { name: 'teal', title: 'Teal', note: 'Verde-azulado; contraste com vermelho de despesas.' },
+      { name: 'slate', title: 'Slate', group: 'neutro', note: 'Cinza azulado — UI neutra fria.' },
+      { name: 'gray', title: 'Gray', group: 'neutro', note: 'Cinza neutro clássico.' },
+      { name: 'zinc', title: 'Zinc', group: 'neutro', note: 'Cinza levemente frio.' },
+      { name: 'neutral', title: 'Neutral', group: 'neutro', note: 'Neutro puro — tipografia e fundos.' },
+      { name: 'stone', title: 'Stone', group: 'neutro', note: 'Neutro quente — próximo do fundo P38 claro.' },
+      { name: 'red', title: 'Red', group: 'quente', note: 'Despesas, alertas, erros.' },
+      { name: 'orange', title: 'Orange', group: 'quente', note: 'Destaques quentes, vencidos.' },
+      { name: 'amber', title: 'Amber', group: 'quente', note: 'Avisos suaves, ouro.' },
+      { name: 'yellow', title: 'Yellow', group: 'quente', note: 'Chamadas de atenção (usar com cuidado no texto).' },
+      { name: 'lime', title: 'Lime', group: 'verde', note: 'Limão — perto do acento escuro P38.' },
+      { name: 'green', title: 'Green', group: 'verde', note: 'Verde natural — hero e receitas (claro).' },
+      { name: 'emerald', title: 'Emerald', group: 'verde', note: 'Verde saturado — ícones e valores +.' },
+      { name: 'teal', title: 'Teal', group: 'verde', note: 'Verde-azulado — transferências.' },
+      { name: 'cyan', title: 'Cyan', group: 'azul', note: 'Ciano — dados e links secundários.' },
+      { name: 'sky', title: 'Sky', group: 'azul', note: 'Azul céu — informativo.' },
+      { name: 'blue', title: 'Blue', group: 'azul', note: 'Azul principal — links e CTAs frios.' },
+      { name: 'indigo', title: 'Indigo', group: 'roxo', note: 'Índigo — navegação e foco.' },
+      { name: 'violet', title: 'Violet', group: 'roxo', note: 'Violeta — destaque premium.' },
+      { name: 'purple', title: 'Purple', group: 'roxo', note: 'Roxo — categorias e tags.' },
+      { name: 'fuchsia', title: 'Fuchsia', group: 'rosa', note: 'Magenta vibrante.' },
+      { name: 'pink', title: 'Pink', group: 'rosa', note: 'Rosa — acentos suaves.' },
+      { name: 'rose', title: 'Rose', group: 'rosa', note: 'Rosa-avermelhado — tom mais humano.' },
     ];
+
+    const GROUPS = [
+      { id: 'todos', label: 'Todas' },
+      { id: 'neutro', label: 'Neutros' },
+      { id: 'verde', label: 'Verdes' },
+      { id: 'azul', label: 'Azuis' },
+      { id: 'roxo', label: 'Roxos' },
+      { id: 'rosa', label: 'Rosas' },
+      { id: 'quente', label: 'Quentes' },
+    ];
+
     const STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+    const TEXT_SAMPLE_STEPS = [400, 500, 600, 700, 800];
 
     const pickBar = document.getElementById('pick-bar');
     const pickSwatch = document.getElementById('pick-swatch');
@@ -127,79 +188,15 @@
     const pickSampleVal = document.getElementById('pick-sample-val');
     const btnCopy = document.getElementById('btn-copy');
     const btnClear = document.getElementById('btn-clear');
+    const filterSearch = document.getElementById('filter-search');
+    const filterChips = document.getElementById('filter-chips');
+    const filterCount = document.getElementById('filter-count');
+    const jumpNav = document.getElementById('jump-nav');
 
     let selectedEl = null;
     let selectedClass = '';
-
-    function isLightBg(step) {
-      return step <= 400;
-    }
-
-    function textClassFor(family, step) {
-      return isLightBg(step) ? `text-${family}-${Math.max(step, 700)}` : `text-${family}-50`;
-    }
-
-    function renderFamily({ name, title, note }) {
-      const section = document.createElement('section');
-      section.className = 'rounded-2xl border border-stone-200 bg-white p-5 shadow-sm';
-      section.innerHTML = `
-        <div class="mb-5 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-          <h2 class="text-xl font-bold capitalize">${title}</h2>
-          <p class="text-sm text-stone-500">${note}</p>
-        </div>
-        <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-stone-400">Fundos · bg-${name}-*</p>
-        <div class="grid grid-cols-2 gap-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-11" data-grid="${name}"></div>
-        <p class="mb-3 mt-8 text-xs font-semibold uppercase tracking-wide text-stone-400">Texto positivo · text-${name}-*</p>
-        <div class="flex flex-wrap gap-3" data-text-row="${name}"></div>
-      `;
-      document.getElementById('families').appendChild(section);
-
-      const grid = section.querySelector(`[data-grid="${name}"]`);
-      const textRow = section.querySelector(`[data-text-row="${name}"]`);
-
-      STEPS.forEach((step) => {
-        const bgClass = `bg-${name}-${step}`;
-        const card = document.createElement('button');
-        card.type = 'button';
-        card.className = `swatch group relative flex flex-col overflow-hidden rounded-xl border border-stone-200/80 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-green-600`;
-        card.dataset.class = bgClass;
-        card.dataset.kind = 'bg';
-        card.dataset.family = name;
-        card.dataset.step = String(step);
-        card.dataset.label = `${title} ${step} — fundo`;
-        card.innerHTML = `
-          <span class="${bgClass} flex h-20 w-full items-end p-2 sm:h-24">
-            <span class="rounded-md bg-black/25 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-white backdrop-blur-sm">${step}</span>
-          </span>
-          <span class="bg-white px-2 py-2">
-            <span class="block font-mono text-[11px] font-bold text-stone-800">${bgClass}</span>
-            <span class="block text-[10px] text-stone-500">Fundo / hero</span>
-          </span>
-          <span class="pointer-events-none absolute right-2 top-2 hidden rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-green-800 shadow group-[.is-picked]:block">✓</span>
-        `;
-        card.addEventListener('click', () => pick(card, bgClass));
-        grid.appendChild(card);
-
-        if ([500, 600, 700, 800].includes(step)) {
-          const textClass = `text-${name}-${step}`;
-          const textChip = document.createElement('button');
-          textChip.type = 'button';
-          textChip.className =
-            'swatch rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600';
-          textChip.dataset.class = textClass;
-          textChip.dataset.kind = 'text';
-          textChip.dataset.family = name;
-          textChip.dataset.step = String(step);
-          textChip.dataset.label = `${title} ${step} — texto receita`;
-          textChip.innerHTML = `
-            <span class="font-mono text-[10px] text-stone-500">${textClass}</span>
-            <span class="${textClass} mt-1 block text-lg font-bold tabular-nums">+ R$ 2.056,66</span>
-          `;
-          textChip.addEventListener('click', () => pick(textChip, textClass));
-          textRow.appendChild(textChip);
-        }
-      });
-    }
+    let activeGroup = 'todos';
+    const sectionByName = new Map();
 
     function pick(el, className) {
       if (selectedEl) selectedEl.classList.remove('is-picked', 'ring-2', 'ring-green-600', 'ring-offset-2');
@@ -215,14 +212,17 @@
       const family = el.dataset.family;
       const step = el.dataset.step;
 
+      pickSamplePlus.removeAttribute('style');
+      pickSampleVal.removeAttribute('style');
+
       if (kind === 'bg' && family && step) {
         pickSwatch.className = `h-16 w-16 shrink-0 rounded-xl border border-stone-200 shadow-md bg-${family}-${step}`;
         pickSwatch.removeAttribute('style');
-        pickSamplePlus.className = `text-${family}-${Math.min(Number(step) + 100, 700)}`;
-        pickSamplePlus.textContent = '+';
-        pickSampleVal.className = `font-bold tabular-nums text-${family}-${Math.min(Number(step) + 100, 700)}`;
+        const textStep = Math.min(Number(step) + 200, 800);
+        pickSamplePlus.className = `text-${family}-${textStep}`;
+        pickSampleVal.className = `font-bold tabular-nums text-${family}-${textStep}`;
       } else if (kind === 'text') {
-        pickSwatch.className = 'h-16 w-16 shrink-0 rounded-xl border border-stone-200 shadow-md bg-stone-100';
+        pickSwatch.className = `h-16 w-16 shrink-0 rounded-xl border border-stone-200 shadow-md bg-${family}-100`;
         pickSwatch.removeAttribute('style');
         pickSamplePlus.className = className;
         pickSampleVal.className = `font-bold tabular-nums ${className}`;
@@ -236,10 +236,131 @@
       btnCopy.disabled = false;
     }
 
-    FAMILIES.forEach(renderFamily);
+    function renderFamily(meta) {
+      const { name, title, note, group } = meta;
+      const section = document.createElement('section');
+      section.id = `family-${name}`;
+      section.className = 'family-section scroll-mt-24 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:p-5';
+      section.dataset.familyName = name;
+      section.dataset.group = group;
+      section.dataset.search = `${name} ${title} ${group} bg-${name} text-${name}`.toLowerCase();
 
-    document.querySelectorAll('#ref-p38-old, #ref-p38-new, #ref-p38-dark').forEach((ref) => {
-      ref.classList.add('cursor-pointer', 'hover:border-green-500');
+      section.innerHTML = `
+        <div class="mb-4 flex flex-col gap-2 border-b border-stone-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 class="text-xl font-bold capitalize text-stone-900">${title}</h2>
+            <p class="font-mono text-xs text-stone-400">${name}-50 … ${name}-950</p>
+          </div>
+          <p class="max-w-md text-sm text-stone-500">${note}</p>
+        </div>
+        <p class="mb-2 text-[10px] font-semibold uppercase tracking-wide text-stone-400">Fundos · bg-${name}-*</p>
+        <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-11" data-grid="${name}"></div>
+        <p class="mb-2 mt-6 text-[10px] font-semibold uppercase tracking-wide text-stone-400">Texto (amostra receita) · text-${name}-*</p>
+        <div class="flex flex-wrap gap-2 sm:gap-3" data-text-row="${name}"></div>
+      `;
+
+      document.getElementById('families').appendChild(section);
+      sectionByName.set(name, section);
+
+      const grid = section.querySelector(`[data-grid="${name}"]`);
+      const textRow = section.querySelector(`[data-text-row="${name}"]`);
+
+      STEPS.forEach((step) => {
+        const bgClass = `bg-${name}-${step}`;
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className =
+          'swatch group relative flex flex-col overflow-hidden rounded-lg border border-stone-200/80 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2';
+        card.dataset.class = bgClass;
+        card.dataset.kind = 'bg';
+        card.dataset.family = name;
+        card.dataset.step = String(step);
+        card.dataset.label = `${title} ${step} — fundo (${bgClass})`;
+        card.innerHTML = `
+          <span class="${bgClass} flex h-16 w-full items-end justify-between gap-1 p-1.5 sm:h-[4.5rem]">
+            <span class="rounded bg-black/20 px-1 py-0.5 font-mono text-[9px] font-bold text-white">${step}</span>
+            <span class="hidden rounded bg-white/90 px-1 py-0.5 font-mono text-[8px] font-medium text-stone-700 sm:inline">${name}</span>
+          </span>
+          <span class="bg-white px-1.5 py-1.5">
+            <span class="block truncate font-mono text-[10px] font-semibold text-stone-800">${bgClass}</span>
+          </span>
+          <span class="pointer-events-none absolute right-1 top-1 hidden rounded-full bg-white px-1.5 py-0.5 text-[9px] font-bold text-green-800 shadow group-[.is-picked]:block">✓</span>
+        `;
+        card.addEventListener('click', () => pick(card, bgClass));
+        grid.appendChild(card);
+      });
+
+      TEXT_SAMPLE_STEPS.forEach((step) => {
+        const textClass = `text-${name}-${step}`;
+        const textChip = document.createElement('button');
+        textChip.type = 'button';
+        textChip.className =
+          'swatch min-w-[8.5rem] flex-1 rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-left sm:max-w-[11rem] focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600';
+        textChip.dataset.class = textClass;
+        textChip.dataset.kind = 'text';
+        textChip.dataset.family = name;
+        textChip.dataset.step = String(step);
+        textChip.dataset.label = `${title} ${step} — texto (${textClass})`;
+        textChip.innerHTML = `
+          <span class="font-mono text-[9px] text-stone-500">${textClass}</span>
+          <span class="${textClass} mt-0.5 block text-base font-bold tabular-nums sm:text-lg">+ R$ 2.056,66</span>
+        `;
+        textChip.addEventListener('click', () => pick(textChip, textClass));
+        textRow.appendChild(textChip);
+      });
+    }
+
+    function applyFilter() {
+      const q = (filterSearch.value || '').trim().toLowerCase();
+      let visible = 0;
+      sectionByName.forEach((section) => {
+        const groupOk = activeGroup === 'todos' || section.dataset.group === activeGroup;
+        const searchBlob = section.dataset.search || '';
+        const qOk = !q || searchBlob.includes(q) || q.includes(section.dataset.familyName);
+        const show = groupOk && qOk;
+        section.classList.toggle('is-hidden', !show);
+        if (show) visible += 1;
+      });
+      filterCount.textContent = `${visible} de ${FAMILIES.length} famílias`;
+    }
+
+    GROUPS.forEach((g, idx) => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.dataset.group = g.id;
+      chip.className =
+        'rounded-full border px-3 py-1 text-xs font-semibold transition-colors ' +
+        (idx === 0
+          ? 'border-green-700 bg-green-700 text-white'
+          : 'border-stone-300 bg-white text-stone-700 hover:border-green-500');
+      chip.textContent = g.label;
+      chip.addEventListener('click', () => {
+        activeGroup = g.id;
+        filterChips.querySelectorAll('button').forEach((b) => {
+          const on = b.dataset.group === g.id;
+          b.className =
+            'rounded-full border px-3 py-1 text-xs font-semibold transition-colors ' +
+            (on ? 'border-green-700 bg-green-700 text-white' : 'border-stone-300 bg-white text-stone-700 hover:border-green-500');
+        });
+        applyFilter();
+      });
+      filterChips.appendChild(chip);
+    });
+
+    FAMILIES.forEach((f) => {
+      renderFamily(f);
+      const jump = document.createElement('a');
+      jump.href = `#family-${f.name}`;
+      jump.className =
+        'rounded-lg border border-stone-200 bg-white px-2.5 py-1 text-xs font-medium text-stone-700 hover:border-green-500 hover:text-green-800';
+      jump.textContent = f.title;
+      jumpNav.appendChild(jump);
+    });
+
+    filterSearch.addEventListener('input', applyFilter);
+    applyFilter();
+
+    document.querySelectorAll('#ref-p38-old, #ref-p38-dark, #ref-p38-lime').forEach((ref) => {
       ref.addEventListener('click', () => pick(ref, ref.dataset.class));
     });
 
