@@ -12,25 +12,25 @@
       --transition: 0.2s ease;
     }
 
-    /* ——— Light (extrato bancário) ——— */
+    /* ——— Light (extrato — oliva P38) ——— */
     [data-theme="light"] {
-      --bg: #f4f5f7;
+      --bg: #f4f5f3;
       --surface: #ffffff;
-      --hero: #1a4fd6;
-      --hero-muted: rgba(255, 255, 255, 0.85);
+      --hero: #4a5d23;
+      --hero-muted: rgba(255, 255, 255, 0.88);
       --text: #1a1a1a;
       --text-muted: #6b7280;
       --border: #e5e7eb;
-      --income: #1a4fd6;
+      --income: #4a5d23;
       --expense: #dc2626;
       --transfer: #374151;
-      --chip-bg: #f3f4f6;
-      --chip-active: #dbeafe;
-      --chip-active-border: #1a4fd6;
+      --chip-bg: #f3f4f0;
+      --chip-active: #e8efe0;
+      --chip-active-border: #4a5d23;
       --timeline: #d1d5db;
-      --fab-shadow: 0 4px 14px rgba(26, 79, 214, 0.35);
-      --cta: #facc15;
-      --cta-text: #1a4fd6;
+      --fab-shadow: 0 4px 14px rgba(74, 93, 35, 0.22);
+      --cta: #d4e89a;
+      --cta-text: #3d4f1c;
     }
 
     /* ——— Dark (P38 atual) ——— */
@@ -122,6 +122,7 @@
       display: flex;
       flex-direction: column;
       background: var(--bg);
+      color: var(--text);
       position: relative;
     }
 
@@ -210,7 +211,7 @@
       font-size: 18px;
       background: var(--chip-bg);
     }
-    [data-theme="light"] .shortcut-icon { background: #eff6ff; color: var(--income); }
+    [data-theme="light"] .shortcut-icon { background: #eef2e6; color: var(--income); }
 
     .filters {
       padding: 12px 16px 8px;
@@ -275,7 +276,7 @@
       width: 100%;
       text-align: left;
       cursor: pointer;
-      color: inherit;
+      color: var(--text);
       border-bottom: 1px solid var(--border);
       position: relative;
     }
@@ -290,9 +291,16 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-muted);
       position: relative;
       z-index: 1;
+    }
+    [data-theme="dark"] .tx-icon {
+      color: #b8bcc4;
+      background: #383e47;
     }
     .tx-row::before {
       content: '';
@@ -306,7 +314,8 @@
     }
     .tx-row:first-of-type::before { top: 50%; }
     .tx-row:last-of-type::before { bottom: 50%; }
-    .tx-title { font-size: 14px; font-weight: 600; line-height: 1.25; }
+    .tx-title { font-size: 14px; font-weight: 600; line-height: 1.25; color: var(--text); }
+    [data-theme="dark"] .tx-title { color: #eceff1; }
     .tx-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
     .tx-value {
       font-size: 13px;
@@ -329,7 +338,7 @@
       justify-content: space-between;
       flex-shrink: 0;
     }
-    [data-theme="light"] .detail-hero { background: #1a4fd6; }
+    [data-theme="light"] .detail-hero { background: #4a5d23; }
     .detail-hero button {
       background: none;
       border: none;
@@ -567,7 +576,7 @@
         data: '11 nov',
         dataFull: '11 NOVEMBRO DE 2026',
         saldoDia: 15920.67,
-        icon: '💳',
+        icon: 'Ct',
         title: 'Moderninha — venda PV-05139',
         meta: '11 nov · PagBank · Cartão',
         desc: 'Venda de produto CARTÃO Moderninha',
@@ -589,7 +598,7 @@
         data: '10 nov',
         dataFull: '10 NOVEMBRO DE 2026',
         saldoDia: 15802.44,
-        icon: '🍽',
+        icon: 'Dp',
         title: 'LANCHE DE CASA',
         meta: '10 nov · Banco do Brasil',
         valor: 12.48,
@@ -630,7 +639,7 @@
       {
         id: '4',
         data: '9 nov',
-        icon: '🍽',
+        icon: 'Dp',
         title: 'ALMOÇO',
         meta: '9 nov · Banco do Brasil',
         valor: 64.0,
