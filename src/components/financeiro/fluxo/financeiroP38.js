@@ -1,3 +1,5 @@
+import { lancamentoEhCompraMercadoriaPedido } from '@/lib/agefinConsultaFilters';
+
 /** Layout extrato mobile (protótipo v8) — hero colapsável + barra verde claro. */
 export const FLUXO_EXTRATO_MOBILE_V8 = true;
 
@@ -66,3 +68,45 @@ export const FINANCEIRO_ABA_TAB_BTN =
 export const FINANCEIRO_ABA_TAB_ACTIVE =
   'bg-[#4a5240] text-white dark:bg-[#636B2F] dark:text-[#A8B56E]';
 export const FINANCEIRO_ABA_TAB_IDLE = 'text-muted-foreground hover:text-foreground/90';
+
+/** Compra de mercadoria / CMV — enriquecer meta do extrato com pedido e fornecedor. */
+export function lancamentoExtratoEhCompraMercadoria(l) {
+  if (!l) return false;
+  if (lancamentoEhCompraMercadoriaPedido(l)) return true;
+  if (l.is_custo_mercadoria === true) return true;
+  const cat = String(l.categoria || l?.dados?.categoria || '').toLowerCase();
+  return cat.includes('compra de mercadoria') || cat.includes('compras de mercadoria');
+}
+
+export function extratoNumeroPedidoCompra(l) {
+  const fromVinculo =
+    l?.pedido_compra_vinculado_numero || l?.dados?.pedido_compra_vinculado_numero || '';
+  const fromRef =
+    l?.referencia_tipo === 'PedidoCompra'
+      ? l?.referencia_numero || l?.dados?.referencia_numero || ''
+      : '';
+  const n = String(fromVinculo || fromRef || '').trim();
+  return n || null;
+}
+
+export function extratoFornecedorNome(l) {
+  const n =
+    l?.terceiro_nome ||
+    l?.dados?.terceiro_nome ||
+    l?.dados?.fornecedor_nome ||
+    l?.fornecedor_nome ||
+    '';
+  const s = String(n).trim();
+  return s || null;
+}
+
+/** Segmentos «pedido N» e nome do fornecedor — só o que existir. */
+export function extratoCompraMercadoriaMetaExtras(l) {
+  if (!lancamentoExtratoEhCompraMercadoria(l)) return [];
+  const extras = [];
+  const pedido = extratoNumeroPedidoCompra(l);
+  const fornecedor = extratoFornecedorNome(l);
+  if (pedido) extras.push(`pedido ${pedido}`);
+  if (fornecedor) extras.push(fornecedor);
+  return extras;
+}

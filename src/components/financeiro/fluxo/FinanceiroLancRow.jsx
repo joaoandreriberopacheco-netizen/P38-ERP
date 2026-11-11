@@ -21,6 +21,7 @@ import {
   P38_EXTRATO_V8_ROW_META,
   P38_EXTRATO_V8_ROW_TITLE,
   P38_EXTRATO_V8_ROW_VALUE,
+  extratoCompraMercadoriaMetaExtras,
 } from './financeiroP38';
 
 const LINE_TITLE_CLASS =
@@ -294,6 +295,7 @@ export default function FinanceiroLancRow({
     const parts = [
       data ? formatarDataCurta(data) : null,
       categoria || null,
+      ...extratoCompraMercadoriaMetaExtras(l),
       l.conta_financeira_nome,
       rotuloFormaPagamentoExtrato(l) || null,
     ].filter(Boolean);
