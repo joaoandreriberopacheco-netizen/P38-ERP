@@ -20,6 +20,11 @@ export default function FluxoExtratoMobileShell({
   abasItems,
   saldo,
   saldoPronto = true,
+  saldoLabel = 'Saldo',
+  title = 'Extrato',
+  appBarAriaLabel = 'Barra do extrato',
+  searchPlaceholder = 'Buscar lançamento…',
+  searchPulseSensorId = 'fluxo-caixa.busca',
   onBusca,
   onRelatorios,
   onExportar,
@@ -28,6 +33,7 @@ export default function FluxoExtratoMobileShell({
   onSearch,
   searchVisible,
   filtrosPanel,
+  shortcuts,
   children,
   loading = false,
   className,
@@ -42,7 +48,7 @@ export default function FluxoExtratoMobileShell({
 
   return (
     <div className={cn('flex min-h-0 flex-1 flex-col overflow-hidden', P38_EXTRATO_V8_FONT_SCOPE, className)}>
-      <header className={P38_EXTRATO_V8_APP_BAR} aria-label="Barra do extrato">
+      <header className={P38_EXTRATO_V8_APP_BAR} aria-label={appBarAriaLabel}>
         <FinanceiroAbaIconTabs
           value={aba}
           onChange={onAbaChange}
@@ -50,7 +56,7 @@ export default function FluxoExtratoMobileShell({
           className="shrink-0 justify-self-start"
         />
         <span className="min-w-0 truncate text-center text-[15px] font-semibold tracking-tight">
-          Extrato
+          {title}
         </span>
         <div className="flex shrink-0 items-center justify-end gap-2 [&_button]:text-white dark:[&_button]:text-inherit">
           <button type="button" className="p-1 opacity-90" aria-label="Ocultar valores">
@@ -82,7 +88,7 @@ export default function FluxoExtratoMobileShell({
                 !collapsed && 'pb-8',
               )}
             >
-              <p className="text-center text-xs font-semibold uppercase tracking-wide opacity-85">Saldo</p>
+              <p className="text-center text-xs font-semibold uppercase tracking-wide opacity-85">{saldoLabel}</p>
               <p className="mt-1 text-center text-[2rem] font-bold tabular-nums leading-none tracking-tight text-white dark:text-[#a4ce33]">
                 {saldoPronto && saldo != null ? formatFinanceiroValor(saldo) : '—'}
               </p>
@@ -98,12 +104,14 @@ export default function FluxoExtratoMobileShell({
         >
           <div className="min-h-0 overflow-hidden">
             <div className="px-3 pb-2 pt-0">
-              <FluxoExtratoUtilShortcuts
-                onBusca={handleBusca}
-                onRelatorios={onRelatorios}
-                onExportar={onExportar}
-                onFiltros={onFiltros}
-              />
+              {shortcuts ?? (
+                <FluxoExtratoUtilShortcuts
+                  onBusca={handleBusca}
+                  onRelatorios={onRelatorios}
+                  onExportar={onExportar}
+                  onFiltros={onFiltros}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -122,8 +130,8 @@ export default function FluxoExtratoMobileShell({
                 autoComplete="off"
                 value={search}
                 onChange={(e) => onSearch(e.target.value)}
-                placeholder="Buscar lançamento…"
-                data-pulse-sensor="fluxo-caixa.busca"
+                placeholder={searchPlaceholder}
+                data-pulse-sensor={searchPulseSensorId}
                 className="min-w-0 flex-1 bg-transparent text-sm outline-none"
               />
             </div>

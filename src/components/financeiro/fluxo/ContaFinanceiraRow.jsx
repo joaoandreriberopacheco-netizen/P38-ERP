@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, Edit, MoreVertical, Scale, ArrowRightLeft } from 'lucide-react';
+import { Clock, Edit, Landmark, MoreVertical, Scale, ArrowRightLeft, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   P38MobileLine,
@@ -18,7 +18,15 @@ import { formatFinanceiroValor } from './FinanceiroListaShared';
 import ContaTipoChip from './ContaTipoChip';
 import { getSaldoExibicaoConta } from '@/lib/saldoContaFinanceira';
 import { p38Accent } from '@/lib/p38ThemeSurfaces';
-import { P38_ACCENT } from './financeiroP38';
+import {
+  P38_ACCENT,
+  P38_EXTRATO_V8_ROW_GRID,
+  P38_EXTRATO_V8_ROW_LINE,
+  P38_EXTRATO_V8_ROW_META,
+  P38_EXTRATO_V8_ROW_TITLE,
+  P38_EXTRATO_V8_ROW_VALUE,
+  P38_EXTRATO_V8_ROW_VALUE_CELL,
+} from './financeiroP38';
 import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
 
 const LINE_TITLE_CLASS =
@@ -80,6 +88,7 @@ export default function ContaFinanceiraRow({
   onConciliar,
   striped,
   listaUnificada = false,
+  extratoMobile = false,
 }) {
   const saldo = saldosProntos && saldosCalculados
     ? getSaldoExibicaoConta(conta, saldosCalculados)
@@ -99,6 +108,65 @@ export default function ContaFinanceiraRow({
   const saldoDisplay = saldosProntos && saldo != null
     ? formatFinanceiroValor(saldo)
     : null;
+
+  if (listaUnificada && extratoMobile) {
+    const metaParts = [
+      conta.tipo,
+      conta.banco,
+      valueSub,
+      !ativa ? 'Inativa' : null,
+      conta.is_caixa_pdv ? 'PDV' : null,
+    ].filter(Boolean);
+
+    const Icon = conta.tipo === 'Conta Bancária' ? Landmark : Wallet;
+
+    return (
+      <P38MobileLine
+        thinAccent={false}
+        accent="none"
+        as="button"
+        type="button"
+        onClick={() => onExtrato?.(conta)}
+        className={cn(P38_EXTRATO_V8_ROW_LINE, 'cursor-pointer text-left', !ativa && 'opacity-70')}
+      >
+        <div className={P38_EXTRATO_V8_ROW_GRID}>
+          <div className="flex w-[18px] shrink-0 items-center justify-center self-center text-[#3d5a3d] dark:text-[#a4ce33]">
+            <Icon className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
+          </div>
+          <div className="min-w-0 max-w-full overflow-hidden text-left">
+            <div className={cn(P38_EXTRATO_V8_ROW_TITLE, 'line-clamp-2 break-words')}>{conta.nome}</div>
+            <div className={cn(P38_EXTRATO_V8_ROW_META, 'line-clamp-2 break-words')}>
+              {metaParts.join(' · ')}
+            </div>
+          </div>
+          <div className={P38_EXTRATO_V8_ROW_VALUE_CELL}>
+            {saldoDisplay ? (
+              <span
+                className={cn(
+                  P38_EXTRATO_V8_ROW_VALUE,
+                  isNegativo ? 'text-red-600 dark:text-red-400' : 'text-[#3d5a3d] dark:text-[#a4ce33]',
+                )}
+              >
+                {saldoDisplay}
+              </span>
+            ) : (
+              <span className={cn(P38_EXTRATO_V8_ROW_VALUE, 'text-muted-foreground animate-pulse')}>…</span>
+            )}
+          </div>
+          <div className="flex items-center justify-end" onClick={stopClick} onKeyDown={stopClick}>
+            <ContaRowMenu
+              conta={conta}
+              pendencias={pendencias}
+              onConciliar={onConciliar}
+              onAjuste={onAjuste}
+              onEdit={onEdit}
+              className="flex shrink-0 items-center [&_button]:h-7 [&_button]:w-7"
+            />
+          </div>
+        </div>
+      </P38MobileLine>
+    );
+  }
 
   if (listaUnificada) {
     return (

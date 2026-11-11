@@ -70,7 +70,7 @@ import { CONCILIACAO_LOTE_TAMANHO } from '@/lib/conciliacaoEmLote';
 import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
 import { consumirArquivoLancamentoTorreDoBridge, temFluxoLancamentoTorreAtivo, concluirFluxoTorreCompartilhamento } from '@/lib/torreLancamentoBridge';
 import { uploadAnexoParaLancamentoFinanceiro } from '@/lib/uploadAnexoReferencia';
-import { resolveViewportLayout, useCompactShell } from '@/hooks/use-breakpoint';
+import { useCompactShell } from '@/hooks/use-breakpoint';
 import { MOBILE_LIST_CHROME_OPTIONS, useScrollChromeVisibility } from '@/hooks/useScrollChromeVisibility';
 import { P38ScrollChromeCollapse } from '@/components/layout/P38ScrollChromeCollapse';
 import {
@@ -142,11 +142,10 @@ const FAB_ITEMS = [
 ];
 
 function abaFinanceiroInicial() {
-  if (typeof window === 'undefined') return 'caixas';
+  if (typeof window === 'undefined') return 'fluxo';
   const abaUrl = new URLSearchParams(window.location.search).get('aba');
   if (abaUrl && ABAS_URL_VALIDAS.has(abaUrl)) return abaUrl;
-  const layout = resolveViewportLayout(window.innerWidth, window.innerHeight);
-  return layout === 'mobile' ? 'caixas' : 'fluxo';
+  return 'fluxo';
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -231,11 +230,13 @@ export default function ExecucaoOrcamentaria() {
 
   const isCompactShell = useCompactShell();
   const fluxoExtratoMobile = isCompactShell && aba === 'fluxo' && FLUXO_EXTRATO_MOBILE_V8;
+  const contasExtratoMobile = isCompactShell && aba === 'caixas' && FLUXO_EXTRATO_MOBILE_V8;
+  const financeiroMobileV8 = fluxoExtratoMobile || contasExtratoMobile;
   const [fluxoExtratoSearchVisible, setFluxoExtratoSearchVisible] = useState(false);
   const [fluxoExtratoFiltrosOpen, setFluxoExtratoFiltrosOpen] = useState(false);
   /** Sempre true nesta rota — Layout usa overflow-hidden no desktop (DESKTOP_FULL_HEIGHT_PAGES). */
   const usesStageScroll = true;
-  const headerChromeCollapse = isCompactShell && !fluxoExtratoMobile;
+  const headerChromeCollapse = isCompactShell && !financeiroMobileV8;
   const { chromeVisible, scrollRef, scrollEl } = useScrollChromeVisibility(
     headerChromeCollapse,
     MOBILE_LIST_CHROME_OPTIONS,
@@ -1119,7 +1120,7 @@ export default function ExecucaoOrcamentaria() {
         </div>
       )}
 
-      {caixasAtiva && <GestaoContasKpis />}
+      {caixasAtiva && !contasExtratoMobile && <GestaoContasKpis />}
     </div>
   );
 
@@ -1293,7 +1294,7 @@ export default function ExecucaoOrcamentaria() {
               {financeiroHeaderInner}
             </div>
           </P38ScrollChromeCollapse>
-        ) : !fluxoExtratoMobile ? (
+        ) : !financeiroMobileV8 ? (
           <div className="min-w-0 max-w-full space-y-2 px-4 pb-2">{financeiroHeaderInner}</div>
         ) : null
       ) : (
@@ -1515,11 +1516,21 @@ export default function ExecucaoOrcamentaria() {
       )}
 
       {caixasAtiva && (
-        <div className={cn(usesStageScroll && 'flex min-h-0 flex-1 flex-col overflow-hidden')}>
+        <div
+          className={cn(
+            contasExtratoMobile && P38_EXTRATO_V8_LAYOUT_TOP_BLEED,
+            usesStageScroll && 'flex min-h-0 flex-1 flex-col overflow-hidden',
+          )}
+        >
           <GestaoContasPane
             key={`caixas-scroll-${aba}`}
             mobileShell={usesStageScroll}
+            extratoMobileV8={contasExtratoMobile}
             listScrollRef={usesStageScroll ? scrollRef : null}
+            scrollEl={scrollEl}
+            aba={aba}
+            onAbaChange={setAba}
+            abasItems={abasPrincipais}
           />
         </div>
       )}
