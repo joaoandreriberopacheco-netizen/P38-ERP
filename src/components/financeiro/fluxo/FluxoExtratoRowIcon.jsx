@@ -3,6 +3,7 @@ import { ArrowLeftRight, Banknote, CreditCard, Landmark } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { fluxoExtratoIconKind } from '@/lib/fluxoExtratoIconKind';
 
+/** `cash` — cédula (Banknote) para Caixa Geral / dinheiro; `bank` — Landmark (colunas). */
 const ICONS = {
   card: CreditCard,
   bank: Landmark,
