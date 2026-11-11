@@ -120,20 +120,29 @@ export default function FluxoExtratoMobileShell({
               />
             </div>
           ) : null}
-          <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Contas</p>
-          <div className="mb-2 flex flex-wrap gap-1.5">
-            <ContasFiltro contas={contas} sel={contasSel} onSel={onContasSel} />
+          <div
+            className={cn(
+              'grid transition-[grid-template-rows] duration-300 ease-out',
+              collapsed ? 'grid-rows-[0fr]' : 'grid-rows-[1fr]',
+            )}
+          >
+            <div className="min-h-0 overflow-hidden">
+              <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Contas</p>
+              <div className="mb-2 flex flex-wrap gap-1.5">
+                <ContasFiltro contas={contas} sel={contasSel} onSel={onContasSel} />
+              </div>
+              <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Período</p>
+              <PeriodoPicker
+                periodo={periodo}
+                onPeriodo={onPeriodo}
+                customStart={customStart}
+                customEnd={customEnd}
+                onCustom={onCustom}
+                inline
+              />
+              {filtrosPanel}
+            </div>
           </div>
-          <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Período</p>
-          <PeriodoPicker
-            periodo={periodo}
-            onPeriodo={onPeriodo}
-            customStart={customStart}
-            customEnd={customEnd}
-            onCustom={onCustom}
-            inline
-          />
-          {filtrosPanel}
         </div>
 
         <div className={cn('relative min-w-0 px-2 pb-[var(--p38-scroll-pad-below-nav)]', loading && 'opacity-25')}>
