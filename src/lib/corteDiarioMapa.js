@@ -16,6 +16,7 @@ import {
   totaisEntradaSaidaMovimentos,
 } from '@/lib/saldoContaFinanceira';
 import { normalizarMovimentoCaixaParaLinha } from '@/lib/gruposMovimentacaoConta';
+import { isTransferenciaRegistroUnico } from '@/lib/projecaoTransferenciaFinanceira';
 
 function dataChaveMovimento(mov) {
   const data = mov.data_pagamento || mov.data_vencimento || getDataMovimentoCaixa(mov);
@@ -59,6 +60,19 @@ function rotuloTransferencia(mov, conta, contasById, parReceita = null) {
       const destino = nomeConta(contasById, conta.is_caixa_geral ? null : null);
       return mov.descricao || mov.observacao || `Recolhimento${destino ? ` → ${destino}` : ''}`;
     }
+  }
+
+  if (isTransferenciaRegistroUnico(mov)) {
+    const destinoNome = nomeConta(contasById, mov.conta_destino_id);
+    const origemNome = nomeConta(contasById, mov.conta_financeira_id);
+    const nota = mov.descricao || mov.observacoes;
+    if (conta?.id === mov.conta_financeira_id && destinoNome) {
+      return nota ? `${nota} → ${destinoNome}` : `→ ${destinoNome}`;
+    }
+    if (conta?.id === mov.conta_destino_id && origemNome) {
+      return nota ? `${nota} ← ${origemNome}` : `← ${origemNome}`;
+    }
+    return nota || 'Transferência';
   }
 
   if (isTransferenciaEntreContas(mov)) {
@@ -158,14 +172,24 @@ function montarLinhaCorte(mov, conta, contasById, paresTransferencia) {
     (mov.origem === 'movimento' && isMovimentoTransferenciaCaixaPDV(mov));
 
   let lado = 'entrada';
-  if (mov.tipo === 'Despesa' || (mov.origem === 'movimento' && isMovimentoTransferenciaCaixaPDV(mov))) {
+  if (mov.origem === 'movimento' && isMovimentoTransferenciaCaixaPDV(mov)) {
     lado = 'saida';
+  } else if (isTransferenciaRegistroUnico(mov)) {
+    if (conta?.id === mov.conta_financeira_id) lado = 'saida';
+    else if (conta?.id === mov.conta_destino_id) lado = 'entrada';
+  } else if (mov.tipo === 'Despesa') {
+    lado = 'saida';
+  } else if (mov.tipo === 'Receita') {
+    lado = 'entrada';
   }
 
   let transferenciaDestinoId = null;
   let transferenciaOrigemId = null;
   if (isTransf) {
-    if (lado === 'saida') {
+    if (isTransferenciaRegistroUnico(mov)) {
+      transferenciaOrigemId = mov.conta_financeira_id || null;
+      transferenciaDestinoId = mov.conta_destino_id || null;
+    } else if (lado === 'saida') {
       transferenciaDestinoId = par?.conta_financeira_id || mov.conta_destino_id || null;
       if (!transferenciaDestinoId && mov.origem === 'movimento' && isMovimentoTransferenciaCaixaPDV(mov)) {
         const caixaGeral = Object.values(contasById).find((c) => c.is_caixa_geral);
