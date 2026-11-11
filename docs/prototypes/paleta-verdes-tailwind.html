@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>P38 — Paleta de verdes (Tailwind) · Extrato mobile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    .swatch {
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-stone-100 text-stone-900 antialiased">
+  <header class="border-b border-stone-200 bg-white shadow-sm">
+    <div class="mx-auto max-w-6xl px-4 py-5 sm:px-6">
+      <p class="text-xs font-semibold uppercase tracking-widest text-green-700">P38 · Protótipo visual</p>
+      <h1 class="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">Loja de verdes — Tailwind</h1>
+      <p class="mt-2 max-w-2xl text-sm text-stone-600">
+        Compare escalas <strong>green</strong>, <strong>emerald</strong>, <strong>lime</strong> e <strong>teal</strong>
+        (50 → 950). Toque numa amostra para <strong>escolher</strong> — o painel inferior mostra o token e um
+        exemplo de valor positivo (estilo extrato mobile).
+      </p>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+  <!-- Referência extrato atual -->
+    <section class="mb-10 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
+      <h2 class="text-sm font-bold uppercase tracking-wide text-stone-500">Referência no extrato (hoje)</h2>
+      <div class="mt-4 grid gap-3 sm:grid-cols-3">
+        <div id="ref-p38-old" class="flex items-center gap-3 rounded-xl border border-stone-200 p-3" data-class="custom #3d5a3d" data-hex="#3d5a3d" data-label="Hero / receita claro (antigo)">
+          <div class="h-14 w-14 shrink-0 rounded-lg shadow-inner" style="background:#3d5a3d"></div>
+          <div class="min-w-0 text-xs">
+            <p class="font-semibold">#3d5a3d</p>
+            <p class="text-stone-500">Verde oliva — protótipo v8 anterior</p>
+          </div>
+        </div>
+        <div id="ref-p38-new" class="flex items-center gap-3 rounded-xl border border-stone-200 p-3" data-class="custom #459945" data-hex="#459945" data-label="Hero / proposta mais viva">
+          <div class="h-14 w-14 shrink-0 rounded-lg shadow-inner" style="background:#459945"></div>
+          <div class="min-w-0 text-xs">
+            <p class="font-semibold">#459945</p>
+            <p class="text-stone-500">Branch extrato — hero sugerido</p>
+          </div>
+        </div>
+        <div id="ref-p38-dark" class="flex items-center gap-3 rounded-xl border border-stone-200 p-3" data-class="custom #a4ce33" data-hex="#a4ce33" data-label="Acento escuro (limão P38)">
+          <div class="h-14 w-14 shrink-0 rounded-lg shadow-inner" style="background:#a4ce33"></div>
+          <div class="min-w-0 text-xs">
+            <p class="font-semibold">#a4ce33</p>
+            <p class="text-stone-500">Modo escuro — saldos / FAB</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div id="families" class="space-y-12"></div>
+  </main>
+
+  <!-- Pick panel (paint counter) -->
+  <div
+    id="pick-bar"
+    class="fixed bottom-0 left-0 right-0 z-50 translate-y-full border-t border-stone-300 bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.12)] transition-transform duration-300"
+    aria-live="polite"
+  >
+    <div class="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+      <div class="flex min-w-0 items-center gap-4">
+        <div id="pick-swatch" class="h-16 w-16 shrink-0 rounded-xl border border-stone-200 shadow-md" style="background:#e5e7eb"></div>
+        <div class="min-w-0">
+          <p class="text-xs font-semibold uppercase tracking-wide text-stone-500">Sua escolha</p>
+          <p id="pick-class" class="truncate font-mono text-sm font-bold text-green-800">—</p>
+          <p id="pick-label" class="text-sm text-stone-600">Clique numa amostra acima</p>
+        </div>
+      </div>
+      <div class="flex flex-col gap-2 sm:items-end">
+        <p class="text-lg font-bold tabular-nums" id="pick-sample">
+          <span id="pick-sample-plus" class="text-green-600">+</span>
+          <span id="pick-sample-val">R$ 2.056,66</span>
+        </p>
+        <div class="flex flex-wrap gap-2">
+          <button
+            type="button"
+            id="btn-copy"
+            disabled
+            class="rounded-lg bg-stone-800 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Copiar classe Tailwind
+          </button>
+          <button
+            type="button"
+            id="btn-clear"
+            class="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700"
+          >
+            Limpar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="h-32" aria-hidden="true"></div>
+
+  <script>
+    const FAMILIES = [
+      { name: 'green', title: 'Green', note: 'Verde «natural» — boa base para hero e receitas no claro.' },
+      { name: 'emerald', title: 'Emerald', note: 'Mais frio e saturado; bom para ícones e valores +.' },
+      { name: 'lime', title: 'Lime', note: 'Limão forte — próximo do acento escuro P38 (#a4ce33).' },
+      { name: 'teal', title: 'Teal', note: 'Verde-azulado; contraste com vermelho de despesas.' },
+    ];
+    const STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+
+    const pickBar = document.getElementById('pick-bar');
+    const pickSwatch = document.getElementById('pick-swatch');
+    const pickClass = document.getElementById('pick-class');
+    const pickLabel = document.getElementById('pick-label');
+    const pickSamplePlus = document.getElementById('pick-sample-plus');
+    const pickSampleVal = document.getElementById('pick-sample-val');
+    const btnCopy = document.getElementById('btn-copy');
+    const btnClear = document.getElementById('btn-clear');
+
+    let selectedEl = null;
+    let selectedClass = '';
+
+    function isLightBg(step) {
+      return step <= 400;
+    }
+
+    function textClassFor(family, step) {
+      return isLightBg(step) ? `text-${family}-${Math.max(step, 700)}` : `text-${family}-50`;
+    }
+
+    function renderFamily({ name, title, note }) {
+      const section = document.createElement('section');
+      section.className = 'rounded-2xl border border-stone-200 bg-white p-5 shadow-sm';
+      section.innerHTML = `
+        <div class="mb-5 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+          <h2 class="text-xl font-bold capitalize">${title}</h2>
+          <p class="text-sm text-stone-500">${note}</p>
+        </div>
+        <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-stone-400">Fundos · bg-${name}-*</p>
+        <div class="grid grid-cols-2 gap-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-11" data-grid="${name}"></div>
+        <p class="mb-3 mt-8 text-xs font-semibold uppercase tracking-wide text-stone-400">Texto positivo · text-${name}-*</p>
+        <div class="flex flex-wrap gap-3" data-text-row="${name}"></div>
+      `;
+      document.getElementById('families').appendChild(section);
+
+      const grid = section.querySelector(`[data-grid="${name}"]`);
+      const textRow = section.querySelector(`[data-text-row="${name}"]`);
+
+      STEPS.forEach((step) => {
+        const bgClass = `bg-${name}-${step}`;
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = `swatch group relative flex flex-col overflow-hidden rounded-xl border border-stone-200/80 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-green-600`;
+        card.dataset.class = bgClass;
+        card.dataset.kind = 'bg';
+        card.dataset.family = name;
+        card.dataset.step = String(step);
+        card.dataset.label = `${title} ${step} — fundo`;
+        card.innerHTML = `
+          <span class="${bgClass} flex h-20 w-full items-end p-2 sm:h-24">
+            <span class="rounded-md bg-black/25 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-white backdrop-blur-sm">${step}</span>
+          </span>
+          <span class="bg-white px-2 py-2">
+            <span class="block font-mono text-[11px] font-bold text-stone-800">${bgClass}</span>
+            <span class="block text-[10px] text-stone-500">Fundo / hero</span>
+          </span>
+          <span class="pointer-events-none absolute right-2 top-2 hidden rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-green-800 shadow group-[.is-picked]:block">✓</span>
+        `;
+        card.addEventListener('click', () => pick(card, bgClass));
+        grid.appendChild(card);
+
+        if ([500, 600, 700, 800].includes(step)) {
+          const textClass = `text-${name}-${step}`;
+          const textChip = document.createElement('button');
+          textChip.type = 'button';
+          textChip.className =
+            'swatch rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600';
+          textChip.dataset.class = textClass;
+          textChip.dataset.kind = 'text';
+          textChip.dataset.family = name;
+          textChip.dataset.step = String(step);
+          textChip.dataset.label = `${title} ${step} — texto receita`;
+          textChip.innerHTML = `
+            <span class="font-mono text-[10px] text-stone-500">${textClass}</span>
+            <span class="${textClass} mt-1 block text-lg font-bold tabular-nums">+ R$ 2.056,66</span>
+          `;
+          textChip.addEventListener('click', () => pick(textChip, textClass));
+          textRow.appendChild(textChip);
+        }
+      });
+    }
+
+    function pick(el, className) {
+      if (selectedEl) selectedEl.classList.remove('is-picked', 'ring-2', 'ring-green-600', 'ring-offset-2');
+      selectedEl = el;
+      selectedClass = className;
+      el.classList.add('is-picked', 'ring-2', 'ring-green-600', 'ring-offset-2');
+
+      pickBar.classList.remove('translate-y-full');
+      pickClass.textContent = className;
+      pickLabel.textContent = el.dataset.label || className;
+
+      const kind = el.dataset.kind;
+      const family = el.dataset.family;
+      const step = el.dataset.step;
+
+      if (kind === 'bg' && family && step) {
+        pickSwatch.className = `h-16 w-16 shrink-0 rounded-xl border border-stone-200 shadow-md bg-${family}-${step}`;
+        pickSwatch.removeAttribute('style');
+        pickSamplePlus.className = `text-${family}-${Math.min(Number(step) + 100, 700)}`;
+        pickSamplePlus.textContent = '+';
+        pickSampleVal.className = `font-bold tabular-nums text-${family}-${Math.min(Number(step) + 100, 700)}`;
+      } else if (kind === 'text') {
+        pickSwatch.className = 'h-16 w-16 shrink-0 rounded-xl border border-stone-200 shadow-md bg-stone-100';
+        pickSwatch.removeAttribute('style');
+        pickSamplePlus.className = className;
+        pickSampleVal.className = `font-bold tabular-nums ${className}`;
+      } else if (el.dataset.hex) {
+        pickSwatch.style.background = el.dataset.hex;
+        pickSwatch.className = 'h-16 w-16 shrink-0 rounded-xl border border-stone-200 shadow-md';
+        pickSamplePlus.style.color = el.dataset.hex;
+        pickSampleVal.style.color = el.dataset.hex;
+      }
+
+      btnCopy.disabled = false;
+    }
+
+    FAMILIES.forEach(renderFamily);
+
+    document.querySelectorAll('#ref-p38-old, #ref-p38-new, #ref-p38-dark').forEach((ref) => {
+      ref.classList.add('cursor-pointer', 'hover:border-green-500');
+      ref.addEventListener('click', () => pick(ref, ref.dataset.class));
+    });
+
+    btnCopy.addEventListener('click', async () => {
+      if (!selectedClass) return;
+      const toCopy = selectedClass.startsWith('custom') ? selectedClass.replace('custom ', '') : selectedClass;
+      try {
+        await navigator.clipboard.writeText(toCopy);
+        btnCopy.textContent = 'Copiado!';
+        setTimeout(() => {
+          btnCopy.textContent = 'Copiar classe Tailwind';
+        }, 1600);
+      } catch {
+        btnCopy.textContent = toCopy;
+      }
+    });
+
+    btnClear.addEventListener('click', () => {
+      if (selectedEl) selectedEl.classList.remove('is-picked', 'ring-2', 'ring-green-600', 'ring-offset-2');
+      selectedEl = null;
+      selectedClass = '';
+      pickBar.classList.add('translate-y-full');
+      pickClass.textContent = '—';
+      pickLabel.textContent = 'Clique numa amostra acima';
+      pickSwatch.style.background = '#e5e7eb';
+      pickSwatch.className = 'h-16 w-16 shrink-0 rounded-xl border border-stone-200 shadow-md';
+      pickSamplePlus.className = 'text-green-600';
+      pickSamplePlus.removeAttribute('style');
+      pickSampleVal.className = '';
+      pickSampleVal.removeAttribute('style');
+      btnCopy.disabled = true;
+    });
+  </script>
+</body>
+</html>
