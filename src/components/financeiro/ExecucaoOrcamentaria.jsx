@@ -1305,7 +1305,7 @@ export default function ExecucaoOrcamentaria() {
 
       {fluxoExtratoMobile && (
         <>
-          <div className={cn(P38_EXTRATO_V8_LAYOUT_TOP_BLEED, 'flex min-h-0 flex-1 flex-col overflow-hidden')}>
+          <div className={cn(P38_EXTRATO_V8_LAYOUT_TOP_BLEED, 'flex min-h-0 flex-1 flex-col')}>
           <FluxoExtratoMobileShell
             className="min-h-0 flex-1"
             scrollRef={scrollRef}
