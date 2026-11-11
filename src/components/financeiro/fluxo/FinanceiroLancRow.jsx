@@ -85,7 +85,7 @@ function rowAccent(l, { dimPago = false } = {}) {
   return 'danger';
 }
 
-function valorNode(l) {
+function valorNode(l, { extratoMobile = false } = {}) {
   const tipo = tipoLinha(l);
   const isR = tipo === 'Receita';
   const isT = tipo === 'Transferência';
@@ -94,24 +94,31 @@ function valorNode(l) {
   const statusLista = statusRotuloListaFinanceiro(l);
 
   if (cancelado) return '—';
-  if (isT) return formatFinanceiroValor(Math.abs(l.valor || 0));
+  if (isT) {
+    const valorFmt = formatFinanceiroValor(Math.abs(l.valor || 0));
+    if (extratoMobile) {
+      return (
+        <span className="text-[13px] font-bold tabular-nums text-[#4b5563] dark:text-[#eceff1]">
+          {valorFmt}
+        </span>
+      );
+    }
+    return valorFmt;
+  }
 
   const valorFmt = formatFinanceiroValor(Math.abs(l.valor || 0));
+  const signClass = isR
+    ? 'text-[#3d5a3d] dark:text-[#a4ce33]'
+    : !pago && statusLista === 'Vencido'
+      ? 'text-amber-600 dark:text-amber-400'
+      : extratoMobile
+        ? 'text-[#b32d2e] dark:text-red-400'
+        : 'text-foreground/85';
 
   return (
-    <span className="inline-flex items-center justify-end gap-0.5 tabular-nums">
-      <span
-        className={
-          isR
-            ? 'text-[#4A5D23] dark:text-[#a4ce33]'
-            : !pago && statusLista === 'Vencido'
-              ? 'text-amber-600 dark:text-amber-400'
-              : 'text-foreground/85'
-        }
-      >
-        {isR ? '+' : '−'}
-      </span>
-      {valorFmt}
+    <span className={cn('inline-flex items-center justify-end gap-0.5 tabular-nums', extratoMobile && 'text-[13px] font-bold')}>
+      <span className={signClass}>{isR ? '+' : '−'}</span>
+      <span className={extratoMobile ? signClass : undefined}>{valorFmt}</span>
     </span>
   );
 }
@@ -327,7 +334,7 @@ export default function FinanceiroLancRow({
     title,
     subtitle,
     meta: rowMeta(l, { showPago, dimProgramada: dimProgramada || l._isProgramada }),
-    value: valorNode(l),
+    value: valorNode(l, { extratoMobile }),
     trailing,
   };
 
@@ -340,8 +347,8 @@ export default function FinanceiroLancRow({
           {subtitle}
         </div>
         <div className="flex shrink-0 items-center gap-0.5">
-          <div className="text-[15px] font-semibold tabular-nums">{valorNode(l)}</div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground/70" aria-hidden />
+          {valorNode(l, { extratoMobile: true })}
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
         </div>
       </>
     );
@@ -351,7 +358,7 @@ export default function FinanceiroLancRow({
           thinAccent={false}
           accent="none"
           onClick={() => onToggleSelecionado?.(l.id)}
-          className="w-full text-left [&]:border-l-0 max-md:!py-3.5"
+          className="w-full border-0 border-l-0 bg-transparent px-3 py-3.5 text-left shadow-none [&]:border-l-0"
         >
           {extratoRow}
         </P38MobileLine>
@@ -364,7 +371,7 @@ export default function FinanceiroLancRow({
         as="button"
         type="button"
         onClick={() => onClick?.(lancamentoClick)}
-        className="w-full text-left [&]:border-l-0 max-md:!py-3.5"
+        className="w-full border-0 border-l-0 bg-transparent px-3 py-3.5 text-left shadow-none [&]:border-l-0"
       >
         {extratoRow}
       </P38MobileLine>

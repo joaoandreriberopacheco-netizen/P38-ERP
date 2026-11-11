@@ -3,7 +3,6 @@ import { Eye, MoreVertical, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatFinanceiroValor } from './FinanceiroListaShared';
 import FluxoExtratoUtilShortcuts from './FluxoExtratoUtilShortcuts';
-import { PeriodoPicker, ContasFiltro } from './FiltrosFluxoCaixa';
 import { useFluxoExtratoScrollCollapse } from '@/hooks/useFluxoExtratoScrollCollapse';
 import FinanceiroAbaIconTabs from './FinanceiroAbaIconTabs';
 import { P38_SEARCH } from './financeiroP38';
@@ -24,14 +23,6 @@ export default function FluxoExtratoMobileShell({
   search,
   onSearch,
   searchVisible,
-  periodo,
-  onPeriodo,
-  customStart,
-  customEnd,
-  onCustom,
-  contas,
-  contasSel,
-  onContasSel,
   filtrosPanel,
   children,
   loading = false,
@@ -48,12 +39,12 @@ export default function FluxoExtratoMobileShell({
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <header
         className={cn(
-          'relative z-30 flex shrink-0 items-center justify-between px-3.5 py-2.5 text-white',
-          'bg-[#3d5a3d] dark:bg-[#2d333b] dark:text-foreground',
+          'relative z-30 flex shrink-0 items-center justify-between px-3.5 py-2.5',
+          'bg-[#3d5a3d] text-white dark:bg-[#2d333b] dark:text-foreground',
         )}
       >
-        <span className="text-[15px] font-semibold">Extrato</span>
-        <div className="flex items-center gap-2">
+        <span className="text-[15px] font-semibold tracking-tight">Extrato</span>
+        <div className="flex items-center gap-2 [&_button]:text-white dark:[&_button]:text-inherit">
           <FinanceiroAbaIconTabs value={aba} onChange={onAbaChange} items={abasItems} />
           <button type="button" className="p-1 opacity-90" aria-label="Ocultar valores">
             <Eye className="h-[18px] w-[18px]" strokeWidth={2} />
@@ -91,23 +82,26 @@ export default function FluxoExtratoMobileShell({
                 </p>
               ) : null}
             </div>
-            <FluxoExtratoUtilShortcuts
-              onBusca={handleBusca}
-              onRelatorios={onRelatorios}
-              onExportar={onExportar}
-              onFiltros={onFiltros}
-            />
           </div>
         </div>
 
         <div
           className={cn(
-            'sticky top-0 z-20 shrink-0 border-b border-border/50 bg-background px-4 py-2',
-            'shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:border-white/10 dark:shadow-none',
+            'sticky top-0 z-20 shrink-0 border-b border-border/40 bg-background/95 px-3 py-2 backdrop-blur-sm',
+            'dark:border-white/10 dark:bg-[#1f1d22]/95',
           )}
         >
-          {searchVisible ? (
-            <div className={cn('mb-2 flex h-10 items-center gap-2 rounded-lg px-3', P38_SEARCH)}>
+          <FluxoExtratoUtilShortcuts
+            onBusca={handleBusca}
+            onRelatorios={onRelatorios}
+            onExportar={onExportar}
+            onFiltros={onFiltros}
+          />
+        </div>
+
+        {searchVisible ? (
+          <div className="shrink-0 border-b border-border/50 bg-background px-4 py-2 dark:border-white/10">
+            <div className={cn('flex h-10 items-center gap-2 rounded-lg px-3', P38_SEARCH)}>
               <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
               <input
                 ref={searchInputRef}
@@ -119,33 +113,16 @@ export default function FluxoExtratoMobileShell({
                 className="min-w-0 flex-1 bg-transparent text-sm outline-none"
               />
             </div>
-          ) : null}
-          <div
-            className={cn(
-              'grid transition-[grid-template-rows] duration-300 ease-out',
-              collapsed ? 'grid-rows-[0fr]' : 'grid-rows-[1fr]',
-            )}
-          >
-            <div className="min-h-0 overflow-hidden">
-              <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Contas</p>
-              <div className="mb-2 flex flex-wrap gap-1.5">
-                <ContasFiltro contas={contas} sel={contasSel} onSel={onContasSel} />
-              </div>
-              <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Período</p>
-              <PeriodoPicker
-                periodo={periodo}
-                onPeriodo={onPeriodo}
-                customStart={customStart}
-                customEnd={customEnd}
-                onCustom={onCustom}
-                inline
-              />
-              {filtrosPanel}
-            </div>
           </div>
-        </div>
+        ) : null}
 
-        <div className={cn('relative min-w-0 px-2 pb-[var(--p38-scroll-pad-below-nav)]', loading && 'opacity-25')}>
+        {filtrosPanel ? (
+          <div className="shrink-0 border-b border-border/50 bg-background px-4 py-3 dark:border-white/10">
+            {filtrosPanel}
+          </div>
+        ) : null}
+
+        <div className={cn('relative min-w-0 px-4 pb-[var(--p38-scroll-pad-below-nav)]', loading && 'opacity-25')}>
           {children}
         </div>
       </div>

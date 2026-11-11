@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { dataHoje } from '@/components/utils/dateUtils';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
@@ -19,12 +20,28 @@ export function formatFinanceiroGrupoLabel(k, hStr, oStr) {
   return format(d, "d 'de' MMMM", { locale: ptBR });
 }
 
+/** Rótulo de data do protótipo extrato v8 — «11 NOVEMBRO DE 2026». */
+export function formatExtratoMobileGrupoLabel(k) {
+  if (k === 'sem-data' || k === 'sem-vencimento') return 'SEM DATA';
+  const hStr = dataHoje();
+  const oStr = format(subDays(new Date(`${hStr}T12:00:00-05:00`), 1), 'yyyy-MM-dd');
+  if (k === hStr) return 'HOJE';
+  if (k === oStr) return 'ONTEM';
+  const d = new Date(`${k}T12:00:00-05:00`);
+  if (Number.isNaN(d.getTime())) return String(k).toUpperCase();
+  if (k > hStr) {
+    return `${format(d, "d 'DE' MMMM 'DE' yyyy", { locale: ptBR })} (PREVISTO)`.toUpperCase();
+  }
+  return format(d, "d 'DE' MMMM 'DE' yyyy", { locale: ptBR }).toUpperCase();
+}
+
 export const formatFinanceiroValor = (v) =>
   `R$ ${(Math.round((v || 0) * 100) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 /** Cabeçalho de grupo colapsável — Fluxo de Caixa e Contas Abertas. */
 export function FinanceiroGrupo({
   label,
+  grupoKey,
   labelClassName,
   receitas = 0,
   despesas = 0,
@@ -33,12 +50,38 @@ export function FinanceiroGrupo({
   variant = 'default',
   card = false,
   balancoDia = false,
+  extratoV8 = false,
   ocultarTotais = false,
   children,
   defaultOpen = true,
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const liquido = liquidoProp != null ? liquidoProp : receitas - despesas;
+
+  if (extratoV8) {
+    const dateLabel = grupoKey != null ? formatExtratoMobileGrupoLabel(grupoKey) : String(label || '').toUpperCase();
+    const saldoDia = saldoAcumulado != null ? saldoAcumulado : liquido;
+    return (
+      <div className="w-full min-w-0">
+        <p className="pb-2 pt-4 text-[11px] font-bold uppercase tracking-[0.04em] text-muted-foreground">{dateLabel}</p>
+        <div
+          className={cn(
+            'mb-3 overflow-hidden rounded-xl border border-border/40',
+            P38_FIELD_SURFACE,
+            'dark:border-white/10 dark:bg-[#26262e]',
+          )}
+        >
+          <div className="flex items-center justify-between border-b border-border/50 px-3.5 py-3 text-[13px] text-foreground dark:border-white/10">
+            <span>Saldo do dia</span>
+            <strong className="font-bold tabular-nums text-[#3d5a3d] dark:text-[#a4ce33]">
+              {formatFinanceiroValor(saldoDia)}
+            </strong>
+          </div>
+          <div className="divide-y divide-border/50 dark:divide-white/10">{children}</div>
+        </div>
+      </div>
+    );
+  }
   const showBreakdown = !balancoDia && receitas > 0 && despesas > 0;
   const overdue = variant === 'overdue';
 
@@ -178,6 +221,7 @@ export function FinanceiroListaEstado({
   vazioMensagem,
   vazioIcon: VazioIcon,
   flushBottom = false,
+  listClassName,
   children,
 }) {
   if (loading && loadingPresentation === 'skeleton') {
@@ -211,7 +255,8 @@ export function FinanceiroListaEstado({
       <P38ModuleLoadingOverlay open={showOverlay} message={loadingMessage} />
       <div
         className={cn(
-          'relative z-0 min-w-0 w-full max-w-full space-y-2 overflow-x-hidden',
+          'relative z-0 min-w-0 w-full max-w-full overflow-x-hidden',
+          listClassName ?? 'space-y-2',
           showOverlay && 'pointer-events-none select-none opacity-25',
         )}
       >
