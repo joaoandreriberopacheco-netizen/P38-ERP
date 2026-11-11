@@ -92,7 +92,14 @@ function rowAccent(l, { dimPago = false } = {}) {
   return 'danger';
 }
 
-function valorNode(l, { extratoMobile = false } = {}) {
+function valorNode(
+  l,
+  {
+    extratoMobile = false,
+    perspectivaTransferencia = null,
+    contaVisualizadaId = null,
+  } = {},
+) {
   const tipo = tipoLinha(l);
   const isR = tipo === 'Receita';
   const isT = tipo === 'Transferência';
@@ -100,10 +107,27 @@ function valorNode(l, { extratoMobile = false } = {}) {
   const pago = isLancamentoPago(l);
   const statusLista = statusRotuloListaFinanceiro(l);
 
+  const perspectivaTransf =
+    perspectivaTransferencia
+    || (contaVisualizadaId ? resolverDirecaoSetaTransferencia(l, contaVisualizadaId) : null)
+    || l.perspectivaTransferencia;
+
   if (cancelado) return '—';
   if (isT) {
     const valorFmt = formatFinanceiroValor(Math.abs(l.valor || 0));
     if (extratoMobile) {
+      const valorExtratoTransferencia = (sign, signClass) => (
+        <span className={cn(P38_EXTRATO_V8_ROW_VALUE, 'block w-full text-right', signClass)}>
+          <span className="inline-block min-w-[0.65rem] text-right">{sign}</span>
+          <span className="ml-px">{valorFmt}</span>
+        </span>
+      );
+      if (perspectivaTransf === 'entrada') {
+        return valorExtratoTransferencia('+', 'text-[#3d5a3d] dark:text-[#a4ce33]');
+      }
+      if (perspectivaTransf === 'saida') {
+        return valorExtratoTransferencia('−', 'text-[#dc2626] dark:text-[#f87171]');
+      }
       return (
         <span
           className={cn(
@@ -355,7 +379,7 @@ export default function FinanceiroLancRow({
     title,
     subtitle,
     meta: rowMeta(l, { showPago, dimProgramada: dimProgramada || l._isProgramada }),
-    value: valorNode(l, { extratoMobile }),
+    value: valorNode(l, { extratoMobile, perspectivaTransferencia: perspectiva, contaVisualizadaId }),
     trailing,
   };
 
@@ -417,7 +441,11 @@ export default function FinanceiroLancRow({
           </div>
         </div>
         <div className="flex w-[7.25rem] shrink-0 items-center justify-end gap-1 self-center pl-0.5">
-          {valorNode(l, { extratoMobile: true })}
+          {valorNode(l, {
+            extratoMobile: true,
+            perspectivaTransferencia: perspectiva,
+            contaVisualizadaId,
+          })}
           <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#6b7280] dark:text-muted-foreground" aria-hidden />
         </div>
       </div>
