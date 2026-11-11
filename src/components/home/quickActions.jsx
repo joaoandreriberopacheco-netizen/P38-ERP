@@ -72,6 +72,13 @@ export const ALL_QUICK_ACTIONS = [
     permissaoCheck: (p) => p?.dashboard?.acesso,
   },
   {
+    id: 'extrato',
+    icon: ReceiptText,
+    label: 'Extrato',
+    page: 'FluxoCaixa',
+    permissaoCheck: (p) => p?.financeiro?.acesso,
+  },
+  {
     id: 'tabelaprecos',
     icon: Tag,
     label: 'Tabela Preços',
@@ -161,6 +168,9 @@ export const ALL_QUICK_ACTIONS = [
 ];
 
 export const DEFAULT_QUICK_ACTIONS = ['pdv', 'vendas', 'logistica', 'compras', 'financeiro', 'caixas_ativos', 'agefin_consulta'];
+
+/** Bloco fixo «Outros Atalhos» na home (fora do grid personalizado). */
+export const OUTROS_ATALHOS_HOME_IDS = ['caixa', 'tabelaprecos', 'extrato'];
 
 /** Atalhos ativos (exclui descontinuados). */
 export function quickActionsAtivos() {
