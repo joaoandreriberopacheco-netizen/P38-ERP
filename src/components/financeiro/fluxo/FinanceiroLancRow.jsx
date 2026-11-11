@@ -17,9 +17,11 @@ import { isTransferenciaEntreContas } from '@/lib/saldoContaFinanceira';
 import { isLancamentoPago, statusRotuloListaFinanceiro } from '@/lib/lancamentoFinanceiroStatus';
 import {
   getDataChaveLancamento,
+  extratoTransferenciaInternaCasa,
   normalizarPerspectivaTransferencia,
   resolverPerspectivaValorTransferenciaExtrato,
 } from '@/lib/financialUtils';
+import { P38_EXTRATO_V8_TRANSFER_INTERNA_VALUE } from './financeiroP38';
 import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
 import {
   P38_EXTRATO_V8_ROW_LINE,
@@ -153,11 +155,15 @@ function valorNode(
       if (perspectivaTransf === 'saida') {
         return valorExtratoTransferencia('−', 'text-[#dc2626] dark:text-[#f87171]');
       }
+      const transferInterna = extratoTransferenciaInternaCasa(l, contasSel);
       return (
         <span
           className={cn(
             P38_EXTRATO_V8_ROW_VALUE,
-            'block w-full text-right text-[#374151] dark:text-[#d1d5db]',
+            'block w-full text-right',
+            transferInterna
+              ? P38_EXTRATO_V8_TRANSFER_INTERNA_VALUE
+              : 'text-[#374151] dark:text-[#d1d5db]',
           )}
         >
           {valorFmt}
@@ -463,7 +469,7 @@ export default function FinanceiroLancRow({
     const extratoRow = (
       <div className={extratoGridClass}>
         <div className="flex w-4 shrink-0 items-center justify-start self-center">
-          <FluxoExtratoRowIcon lancamento={l} compact />
+          <FluxoExtratoRowIcon lancamento={l} compact contasSel={contasSel} />
         </div>
         <div className="min-w-0 text-left">
           <div className={cn(P38_EXTRATO_V8_ROW_TITLE, 'line-clamp-2 break-words text-left')}>

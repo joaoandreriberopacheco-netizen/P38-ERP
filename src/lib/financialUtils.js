@@ -27,6 +27,28 @@ function lancamentoBaseTransferenciaExtrato(l) {
   return l?._lancamentoTransferencia || l?._lancamentoDespesa || l?._lancamentoReceita || l;
 }
 
+function idsOrigemDestinoTransferenciaExtrato(l) {
+  const base = lancamentoBaseTransferenciaExtrato(l);
+  const par = extrairParTransferencia(base);
+  const origemId =
+    l.conta_origem_id || par?.origemId || (base.tipo === 'Despesa' ? base.conta_financeira_id : null);
+  const destinoId =
+    l.conta_destino_id || par?.destinoId || (base.tipo === 'Receita' ? base.conta_financeira_id : null);
+  return { origemId, destinoId };
+}
+
+/** Transferência entre contas próprias visíveis no filtro (ficou em casa — ex. Geral ↔ Banco). */
+export function extratoTransferenciaInternaCasa(l, contasSel = null) {
+  if (!linhaEhTransferenciaExtrato(l)) return false;
+  if (l.perspectivaTransferencia === 'neutra' || l.isTransferenciaConsolidada) return true;
+  const { origemId, destinoId } = idsOrigemDestinoTransferenciaExtrato(l);
+  if (!origemId || !destinoId) return false;
+  if (!contasSel?.length) {
+    return !!(l.isTransferenciaConsolidada || l.perspectivaTransferencia === 'neutra');
+  }
+  return contasSel.includes(origemId) && contasSel.includes(destinoId);
+}
+
 /**
  * Perspectiva para cor/sinal do valor no extrato mobile.
  * Ignora `neutra` (truthy) e recalcula com filtro de contas quando preciso.
@@ -37,6 +59,8 @@ export function resolverPerspectivaValorTransferenciaExtrato(
 ) {
   if (!l || l.status === 'Cancelado') return null;
   if (!linhaEhTransferenciaExtrato(l)) return null;
+
+  if (extratoTransferenciaInternaCasa(l, contasSel)) return null;
 
   const pref = normalizarPerspectivaTransferencia(perspectivaPreferida);
   if (pref) return pref;
@@ -58,10 +82,7 @@ export function resolverPerspectivaValorTransferenciaExtrato(
     if (origemId === contaVisualizadaId && destinoId && destinoId !== contaVisualizadaId) return 'saida';
   }
 
-  const par = extrairParTransferencia(base);
-  const origemId = l.conta_origem_id || par?.origemId || (base.tipo === 'Despesa' ? base.conta_financeira_id : null);
-  const destinoId =
-    l.conta_destino_id || par?.destinoId || (base.tipo === 'Receita' ? base.conta_financeira_id : null);
+  const { origemId, destinoId } = idsOrigemDestinoTransferenciaExtrato(l);
 
   if (contasSel?.length && origemId && destinoId) {
     const origemVisivel = contasSel.includes(origemId);
