@@ -5,7 +5,7 @@ import { formatFinanceiroValor } from './FinanceiroListaShared';
 import FluxoExtratoUtilShortcuts from './FluxoExtratoUtilShortcuts';
 import { useFluxoExtratoScrollCollapse } from '@/hooks/useFluxoExtratoScrollCollapse';
 import FinanceiroAbaIconTabs from './FinanceiroAbaIconTabs';
-import { P38_SEARCH } from './financeiroP38';
+import { P38_EXTRATO_V8_LIST_BG, P38_SEARCH } from './financeiroP38';
 
 export default function FluxoExtratoMobileShell({
   scrollRef,
@@ -100,7 +100,12 @@ export default function FluxoExtratoMobileShell({
         </div>
 
         {searchVisible ? (
-          <div className="shrink-0 border-b border-border/50 bg-background px-4 py-2 dark:border-white/10">
+          <div
+            className={cn(
+              'shrink-0 border-b border-border/50 px-3 py-2 dark:border-white/10',
+              P38_EXTRATO_V8_LIST_BG,
+            )}
+          >
             <div className={cn('flex h-10 items-center gap-2 rounded-lg px-3', P38_SEARCH)}>
               <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
               <input
@@ -117,12 +122,23 @@ export default function FluxoExtratoMobileShell({
         ) : null}
 
         {filtrosPanel ? (
-          <div className="shrink-0 border-b border-border/50 bg-background px-4 py-3 dark:border-white/10">
+          <div
+            className={cn(
+              'shrink-0 border-b border-border/50 px-3 py-3 dark:border-white/10',
+              P38_EXTRATO_V8_LIST_BG,
+            )}
+          >
             {filtrosPanel}
           </div>
         ) : null}
 
-        <div className={cn('relative min-w-0 px-4 pb-[var(--p38-scroll-pad-below-nav)]', loading && 'opacity-25')}>
+        <div
+          className={cn(
+            'relative min-w-0 px-3 pb-[var(--p38-scroll-pad-below-nav)]',
+            P38_EXTRATO_V8_LIST_BG,
+            loading && 'opacity-25',
+          )}
+        >
           {children}
         </div>
       </div>

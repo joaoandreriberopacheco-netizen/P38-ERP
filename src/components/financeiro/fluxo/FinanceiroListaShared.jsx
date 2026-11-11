@@ -5,7 +5,12 @@ import { dataHoje } from '@/components/utils/dateUtils';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
-import { P38_FIELD_SURFACE } from './financeiroP38';
+import {
+  P38_EXTRATO_V8_DATE_HEADER,
+  P38_EXTRATO_V8_DAY_CARD,
+  P38_EXTRATO_V8_ROW_VALUE,
+  P38_FIELD_SURFACE,
+} from './financeiroP38';
 import FinanceiroResumoBar from './FinanceiroResumoBar';
 import P38ModuleLoadingOverlay from '@/components/ui/P38ModuleLoadingOverlay';
 
@@ -62,22 +67,16 @@ export function FinanceiroGrupo({
     const dateLabel = grupoKey != null ? formatExtratoMobileGrupoLabel(grupoKey) : String(label || '').toUpperCase();
     const saldoDia = saldoAcumulado != null ? saldoAcumulado : liquido;
     return (
-      <div className="w-full min-w-0">
-        <p className="pb-2 pt-4 text-[11px] font-bold uppercase tracking-[0.04em] text-muted-foreground">{dateLabel}</p>
-        <div
-          className={cn(
-            'mb-3 overflow-hidden rounded-xl border border-border/40',
-            P38_FIELD_SURFACE,
-            'dark:border-white/10 dark:bg-[#26262e]',
-          )}
-        >
-          <div className="flex items-center justify-between border-b border-border/50 px-3.5 py-3 text-[13px] text-foreground dark:border-white/10">
+      <div className="mb-3 w-full min-w-0">
+        <p className={P38_EXTRATO_V8_DATE_HEADER}>{dateLabel}</p>
+        <div className={P38_EXTRATO_V8_DAY_CARD}>
+          <div className="flex items-center justify-between border-b border-[#e5e7eb] px-3.5 py-3 text-[13px] text-[#1a1a1a] dark:border-white/10 dark:text-foreground">
             <span>Saldo do dia</span>
-            <strong className="font-bold tabular-nums text-[#3d5a3d] dark:text-[#a4ce33]">
+            <strong className={cn(P38_EXTRATO_V8_ROW_VALUE, 'text-[#3d5a3d] dark:text-[#a4ce33]')}>
               {formatFinanceiroValor(saldoDia)}
             </strong>
           </div>
-          <div className="divide-y divide-border/50 dark:divide-white/10">{children}</div>
+          <div className="min-w-0">{children}</div>
         </div>
       </div>
     );
