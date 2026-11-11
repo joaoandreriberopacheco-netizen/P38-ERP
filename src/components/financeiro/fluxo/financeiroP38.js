@@ -5,8 +5,8 @@ import { cn } from '@/lib/utils';
 export const FLUXO_EXTRATO_MOBILE_V8 = true;
 
 /**
- * Compensa só os 3rem “fantasma” do `Layout.jsx` mobile (`paddingTop: calc(3rem + var(--p38-safe-area-inset-top))`).
- * A safe-area ajustada fica no Layout (`index.css` −12px) — não negar aqui (evita app bar sob a status bar).
+ * Compensa só os 3rem “fantasma” do `Layout.jsx` mobile (`paddingTop: calc(3rem + safe-area)`).
+ * A safe-area fica no Layout — não negar aqui (evita app bar sob a status bar).
  */
 export const P38_EXTRATO_V8_LAYOUT_TOP_BLEED = '-mt-12';
 
