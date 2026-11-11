@@ -1236,6 +1236,7 @@ export default function ExecucaoOrcamentaria() {
         setEditando(l);
         setShowNovoFluxo(true);
       }}
+      contasSel={contasFiltroIds}
     />
   );
 

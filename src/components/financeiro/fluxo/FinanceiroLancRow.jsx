@@ -122,6 +122,7 @@ function valorNode(
     extratoMobile = false,
     perspectivaTransferencia = null,
     contaVisualizadaId = null,
+    contasSel = null,
   } = {},
 ) {
   const tipo = tipoLinha(l);
@@ -131,10 +132,11 @@ function valorNode(
   const pago = isLancamentoPago(l);
   const statusLista = statusRotuloListaFinanceiro(l);
 
-  const perspectivaTransf =
-    perspectivaTransferencia
-    || (contaVisualizadaId ? resolverDirecaoSetaTransferencia(l, contaVisualizadaId) : null)
-    || l.perspectivaTransferencia;
+  const perspectivaTransf = resolverPerspectivaCorTransferencia(l, {
+    preferida: perspectivaTransferencia,
+    contaVisualizadaId,
+    contasSel,
+  });
 
   if (cancelado) return '—';
   if (isT) {
@@ -191,6 +193,53 @@ function valorNode(
       <span>{valorFmt}</span>
     </span>
   );
+}
+
+/**
+ * Cor do valor no extrato (+ verde / − vermelho). Ignora `neutra` e infere pelo filtro de contas.
+ */
+export function resolverPerspectivaCorTransferencia(
+  l,
+  { preferida = null, contaVisualizadaId = null, contasSel = null } = {},
+) {
+  if (!l || l.status === 'Cancelado') return null;
+  const eTransfer = tipoLinha(l) === 'Transferência' || isTransferenciaEntreContas(l);
+  if (!eTransfer) return null;
+
+  if (preferida === 'entrada' || preferida === 'saida') return preferida;
+  if (l.perspectivaTransferencia === 'entrada' || l.perspectivaTransferencia === 'saida') {
+    return l.perspectivaTransferencia;
+  }
+
+  if (contaVisualizadaId) {
+    const destinoId = l.conta_destino_id || (l.tipo === 'Receita' ? l.conta_financeira_id : null);
+    const origemId =
+      l.conta_origem_id || (l.tipo === 'Despesa' ? l.conta_financeira_id : null) || l.conta_financeira_id;
+    if (destinoId === contaVisualizadaId && origemId !== contaVisualizadaId) return 'entrada';
+    if (origemId === contaVisualizadaId && destinoId && destinoId !== contaVisualizadaId) return 'saida';
+  }
+
+  const origemId = l.conta_origem_id || (l.tipo === 'Despesa' ? l.conta_financeira_id : null);
+  const destinoId =
+    l.conta_destino_id || (l.tipo === 'Receita' ? l.conta_financeira_id : null);
+  if (contasSel?.length && origemId && destinoId) {
+    const origemVisivel = contasSel.includes(origemId);
+    const destinoVisivel = contasSel.includes(destinoId);
+    if (origemVisivel && destinoVisivel) return null;
+    if (origemVisivel) return 'saida';
+    if (destinoVisivel) return 'entrada';
+  }
+
+  if (l.tipo === 'Receita' && isTransferenciaEntreContas(l)) return 'entrada';
+  if (l.tipo === 'Despesa' && isTransferenciaEntreContas(l)) return 'saida';
+  if (l.tipo === 'Transferência' && l.conta_financeira_id && l.conta_destino_id && contasSel?.length) {
+    const origemVisivel = contasSel.includes(l.conta_financeira_id);
+    const destinoVisivel = contasSel.includes(l.conta_destino_id);
+    if (origemVisivel && !destinoVisivel) return 'saida';
+    if (!origemVisivel && destinoVisivel) return 'entrada';
+  }
+
+  return null;
 }
 
 /** entrada = seta verde ↑ | saida = seta vermelha ↓ (extrato) | neutra = sem seta (fluxo multi-conta) */
@@ -307,6 +356,7 @@ export default function FinanceiroLancRow({
   selecionado = false,
   onToggleSelecionado,
   contaVisualizadaId = null,
+  contasSel = null,
   extratoMobile = false,
   onEdit,
 }) {
@@ -416,7 +466,12 @@ export default function FinanceiroLancRow({
     title,
     subtitle,
     meta: rowMeta(l, { showPago, dimProgramada: dimProgramada || l._isProgramada }),
-    value: valorNode(l, { extratoMobile, perspectivaTransferencia: perspectiva, contaVisualizadaId }),
+    value: valorNode(l, {
+      extratoMobile,
+      perspectivaTransferencia: perspectiva,
+      contaVisualizadaId,
+      contasSel,
+    }),
     trailing,
   };
 
@@ -485,6 +540,7 @@ export default function FinanceiroLancRow({
               extratoMobile: true,
               perspectivaTransferencia: perspectiva,
               contaVisualizadaId,
+              contasSel,
             })}
           </div>
           {podeEditarExtrato ? (
