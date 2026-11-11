@@ -15,7 +15,11 @@ import FluxoExtratoRowIcon from './FluxoExtratoRowIcon';
 import { rotuloFormaPagamentoExtrato } from '@/lib/fluxoExtratoIconKind';
 import { isTransferenciaEntreContas } from '@/lib/saldoContaFinanceira';
 import { isLancamentoPago, statusRotuloListaFinanceiro } from '@/lib/lancamentoFinanceiroStatus';
-import { getDataChaveLancamento } from '@/lib/financialUtils';
+import {
+  getDataChaveLancamento,
+  normalizarPerspectivaTransferencia,
+  resolverPerspectivaValorTransferenciaExtrato,
+} from '@/lib/financialUtils';
 import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
 import {
   P38_EXTRATO_V8_ROW_LINE,
@@ -127,14 +131,14 @@ function valorNode(
   const pago = isLancamentoPago(l);
   const statusLista = statusRotuloListaFinanceiro(l);
 
-  const perspectivaTransf = resolverPerspectivaCorTransferencia(l, {
-    preferida: perspectivaTransferencia,
+  const perspectivaTransf = resolverPerspectivaValorTransferenciaExtrato(l, {
+    perspectivaPreferida: perspectivaTransferencia,
     contaVisualizadaId,
     contasSel,
   });
 
   if (cancelado) return '—';
-  if (isT) {
+  if (isT || (extratoMobile && perspectivaTransf)) {
     const valorFmt = formatFinanceiroValor(Math.abs(l.valor || 0));
     if (extratoMobile) {
       const valorExtratoTransferencia = (sign, signClass) => (
@@ -188,53 +192,6 @@ function valorNode(
       <span>{valorFmt}</span>
     </span>
   );
-}
-
-/**
- * Cor do valor no extrato (+ verde / − vermelho). Ignora `neutra` e infere pelo filtro de contas.
- */
-export function resolverPerspectivaCorTransferencia(
-  l,
-  { preferida = null, contaVisualizadaId = null, contasSel = null } = {},
-) {
-  if (!l || l.status === 'Cancelado') return null;
-  const eTransfer = tipoLinha(l) === 'Transferência' || isTransferenciaEntreContas(l);
-  if (!eTransfer) return null;
-
-  if (preferida === 'entrada' || preferida === 'saida') return preferida;
-  if (l.perspectivaTransferencia === 'entrada' || l.perspectivaTransferencia === 'saida') {
-    return l.perspectivaTransferencia;
-  }
-
-  if (contaVisualizadaId) {
-    const destinoId = l.conta_destino_id || (l.tipo === 'Receita' ? l.conta_financeira_id : null);
-    const origemId =
-      l.conta_origem_id || (l.tipo === 'Despesa' ? l.conta_financeira_id : null) || l.conta_financeira_id;
-    if (destinoId === contaVisualizadaId && origemId !== contaVisualizadaId) return 'entrada';
-    if (origemId === contaVisualizadaId && destinoId && destinoId !== contaVisualizadaId) return 'saida';
-  }
-
-  const origemId = l.conta_origem_id || (l.tipo === 'Despesa' ? l.conta_financeira_id : null);
-  const destinoId =
-    l.conta_destino_id || (l.tipo === 'Receita' ? l.conta_financeira_id : null);
-  if (contasSel?.length && origemId && destinoId) {
-    const origemVisivel = contasSel.includes(origemId);
-    const destinoVisivel = contasSel.includes(destinoId);
-    if (origemVisivel && destinoVisivel) return null;
-    if (origemVisivel) return 'saida';
-    if (destinoVisivel) return 'entrada';
-  }
-
-  if (l.tipo === 'Receita' && isTransferenciaEntreContas(l)) return 'entrada';
-  if (l.tipo === 'Despesa' && isTransferenciaEntreContas(l)) return 'saida';
-  if (l.tipo === 'Transferência' && l.conta_financeira_id && l.conta_destino_id && contasSel?.length) {
-    const origemVisivel = contasSel.includes(l.conta_financeira_id);
-    const destinoVisivel = contasSel.includes(l.conta_destino_id);
-    if (origemVisivel && !destinoVisivel) return 'saida';
-    if (!origemVisivel && destinoVisivel) return 'entrada';
-  }
-
-  return null;
 }
 
 /** entrada = seta verde ↑ | saida = seta vermelha ↓ (extrato) | neutra = sem seta (fluxo multi-conta) */
@@ -360,7 +317,9 @@ export default function FinanceiroLancRow({
   const conc = l.status_conciliacao || 'N/A';
 
   const dirExtrato = contaVisualizadaId ? resolverDirecaoSetaTransferencia(l, contaVisualizadaId) : null;
-  const perspectiva = dirExtrato || l.perspectivaTransferencia;
+  const perspectiva =
+    normalizarPerspectivaTransferencia(dirExtrato)
+    || normalizarPerspectivaTransferencia(l.perspectivaTransferencia);
   const isTransfConsolidada =
     !contaVisualizadaId && (l.isTransferenciaConsolidada || l.perspectivaTransferencia === 'neutra');
 
