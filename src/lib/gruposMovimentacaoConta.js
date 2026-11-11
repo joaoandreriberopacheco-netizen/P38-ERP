@@ -24,6 +24,7 @@ import {
   isLancamentoCancelado,
   isLancamentoRealizadoFluxo,
 } from '@/lib/lancamentoFinanceiroStatus';
+import { passaFiltroCorteHistorico } from '@/lib/filtroDataFinanceiro';
 import {
   mapReforcosTransferenciaPorLancamentoId,
   statusReforcoTransferenciaPdv,
@@ -49,7 +50,10 @@ export function liquidoFluxoCaixaAposDia({
   contasSel = [],
   contasById = {},
   diaLimite,
+  mostrarHistoricoAnterior = false,
+  dataCorteHistorico = null,
 }) {
+  const corteOpts = { mostrarHistoricoAnterior, dataCorte: dataCorteHistorico };
   if (!diaLimite || diaLimite === 'sem-data') return 0;
 
   const aposDia = (dataKey) => dataKey && dataKey > diaLimite;
@@ -59,6 +63,7 @@ export function liquidoFluxoCaixaAposDia({
     if (!isLancamentoRealizadoFluxo(l)) return false;
     const dataKey = getDataAncoraFluxoKey(l);
     if (!aposDia(dataKey)) return false;
+    if (!passaFiltroCorteHistorico(dataKey, corteOpts)) return false;
     if (contasSel.length && !lancamentoPertenceContasSelecionadas(l, contasSel, contasById)) return false;
     return true;
   });
@@ -66,6 +71,7 @@ export function liquidoFluxoCaixaAposDia({
   const movsDepois = movimentos.filter((m) => {
     if (contasSel.length && !contasSel.includes(m.conta_id)) return false;
     const dataKey = m.created_date ? toLocalDateKey(m.created_date) : null;
+    if (!passaFiltroCorteHistorico(dataKey, corteOpts)) return false;
     return aposDia(dataKey);
   });
 
@@ -113,6 +119,8 @@ export function prepararGruposFluxoComSaldoAcumulado({
   contas = [],
   contasSel = [],
   contasById = {},
+  mostrarHistoricoAnterior = false,
+  dataCorteHistorico = null,
 }) {
   if (!grupos.length) return grupos;
   const diaRef = grupos[0].k;
@@ -124,6 +132,8 @@ export function prepararGruposFluxoComSaldoAcumulado({
     contasSel,
     contasById,
     diaLimite: diaRef,
+    mostrarHistoricoAnterior,
+    dataCorteHistorico,
   });
   const saldoNoFim = roundToTwoDecimals(saldoContasAtual - liquidoApos);
   return anexarSaldoAcumuladoAosGrupos(grupos, saldoNoFim);

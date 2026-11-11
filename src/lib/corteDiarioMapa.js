@@ -1,6 +1,8 @@
 import { toLocalDateKey } from '@/components/utils/dateUtils';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { corteHistoricoAtivo, passaFiltroCorteHistorico } from '@/lib/filtroDataFinanceiro';
 import {
+  calcularSaldoContaAposDataCorte,
   calcularSaldoContaFinanceira,
   contaUsaRegraCaixaPDV,
   filtrarLancamentosDaConta,
@@ -210,6 +212,8 @@ export function montarCorteDiarioConta({
   contasById = {},
   dataInicio,
   dataFim,
+  mostrarHistoricoAnterior = false,
+  dataCorteHistorico = null,
 }) {
   if (!conta) {
     return {
@@ -222,7 +226,11 @@ export function montarCorteDiarioConta({
     };
   }
 
-  const todas = coletarMovimentacoesConta(conta, lancamentos, movimentos, todosLancamentos);
+  const corteOpts = { mostrarHistoricoAnterior, dataCorte: dataCorteHistorico };
+  const todasBrutas = coletarMovimentacoesConta(conta, lancamentos, movimentos, todosLancamentos);
+  const todas = todasBrutas.filter((mov) =>
+    passaFiltroCorteHistorico(dataChaveMovimento(mov), corteOpts),
+  );
   const paresTransferencia = indexarParesTransferencia(todosLancamentos);
 
   const noPeriodoLista = todas.filter((mov) => noPeriodo(dataChaveMovimento(mov), dataInicio, dataFim));
@@ -231,7 +239,9 @@ export function montarCorteDiarioConta({
     return dataKey && dataFim && dataKey > dataFim;
   });
 
-  const saldoAtual = calcularSaldoContaFinanceira(conta, lancamentos, movimentos);
+  const saldoAtual = corteHistoricoAtivo(corteOpts)
+    ? calcularSaldoContaAposDataCorte(conta, lancamentos, movimentos, dataCorteHistorico)
+    : calcularSaldoContaFinanceira(conta, lancamentos, movimentos);
   const { entradas: entApos, saidas: saiApos } = totaisEntradaSaidaMovimentos(aposPeriodo, conta);
   const saldoFinal = roundToTwoDecimals(saldoAtual - entApos + saiApos);
 
@@ -275,6 +285,8 @@ export function montarCorteDiarioMapa({
   contasSel = [],
   dataInicio,
   dataFim,
+  mostrarHistoricoAnterior = false,
+  dataCorteHistorico = null,
 }) {
   const contasById = Object.fromEntries(contas.map((c) => [c.id, c]));
   const selecionadas = ordenarContasCorteDiario(
@@ -290,6 +302,8 @@ export function montarCorteDiarioMapa({
       contasById,
       dataInicio,
       dataFim,
+      mostrarHistoricoAnterior,
+      dataCorteHistorico,
     }),
   );
 
