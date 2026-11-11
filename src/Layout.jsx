@@ -481,7 +481,7 @@ export default function Layout({ children, currentPageName }) {
           style={{
             willChange: 'margin',
             paddingTop: isMobile
-              ? (forceLandscape ? '0.75rem' : `calc(3rem + env(safe-area-inset-top))`)
+              ? (forceLandscape ? '0.75rem' : 'calc(3rem + var(--p38-safe-area-inset-top, env(safe-area-inset-top, 0px)))')
               : undefined,
             // O bottom nav mobile é `docked` (já ocupa espaço no flex).
             // Na Home basta a folga visual; reservar novamente os 68px criava uma faixa vazia.
