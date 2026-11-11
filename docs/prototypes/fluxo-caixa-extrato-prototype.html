@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>P38 — Fluxo de Caixa · Protótipo Extrato</title>
+  <style>
+    :root {
+      --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      --radius: 12px;
+      --radius-lg: 16px;
+      --transition: 0.2s ease;
+    }
+
+    /* ——— Light (extrato bancário) ——— */
+    [data-theme="light"] {
+      --bg: #f4f5f7;
+      --surface: #ffffff;
+      --hero: #1a4fd6;
+      --hero-muted: rgba(255, 255, 255, 0.85);
+      --text: #1a1a1a;
+      --text-muted: #6b7280;
+      --border: #e5e7eb;
+      --income: #1a4fd6;
+      --expense: #dc2626;
+      --transfer: #374151;
+      --chip-bg: #f3f4f6;
+      --chip-active: #dbeafe;
+      --chip-active-border: #1a4fd6;
+      --timeline: #d1d5db;
+      --fab-shadow: 0 4px 14px rgba(26, 79, 214, 0.35);
+      --cta: #facc15;
+      --cta-text: #1a4fd6;
+    }
+
+    /* ——— Dark (P38 atual) ——— */
+    [data-theme="dark"] {
+      --bg: #1f1d22;
+      --surface: #2d333b;
+      --hero: #2d333b;
+      --hero-muted: #9ca3af;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --border: rgba(255, 255, 255, 0.1);
+      --income: #a4ce33;
+      --expense: #f87171;
+      --transfer: #d1d5db;
+      --chip-bg: #383e47;
+      --chip-active: rgba(164, 206, 51, 0.15);
+      --chip-active-border: #a4ce33;
+      --timeline: rgba(255, 255, 255, 0.15);
+      --fab-shadow: 0 4px 14px rgba(164, 206, 51, 0.25);
+      --cta: #a4ce33;
+      --cta-text: #1f1d22;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      background: #111;
+      color: var(--text);
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+  .shell {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding: 12px 16px;
+      background: #252525;
+      border-radius: var(--radius);
+      color: #eee;
+      font-size: 14px;
+    }
+    .toolbar h1 { font-size: 1rem; font-weight: 600; }
+    .toolbar-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+    .toolbar button {
+      border: 1px solid #444;
+      background: #333;
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .toolbar button.active { background: #a4ce33; color: #1f1d22; border-color: #a4ce33; }
+
+    .phones {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      align-items: start;
+    }
+    .phones.split .phone-wrap { display: block; }
+    .phones.single .phone-wrap[data-hidden] { display: none; }
+
+    .phone-label {
+      text-align: center;
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .phone {
+      width: 100%;
+      max-width: 390px;
+      margin: 0 auto;
+      height: min(780px, 85vh);
+      border-radius: 28px;
+      overflow: hidden;
+      border: 3px solid #333;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      position: relative;
+    }
+
+    .screen { display: none; flex-direction: column; flex: 1; min-height: 0; }
+    .screen.active { display: flex; }
+
+    /* ——— List ——— */
+    .hero {
+      background: var(--hero);
+      color: #fff;
+      padding: 12px 16px 20px;
+      flex-shrink: 0;
+    }
+    [data-theme="dark"] .hero { border-bottom: 1px solid var(--border); }
+    .hero-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .hero-nav span { opacity: 0.9; }
+    .hero-icons { display: flex; gap: 14px; font-size: 18px; opacity: 0.9; }
+    .balance-block { text-align: center; padding: 8px 0 12px; }
+    .balance-block .label { font-size: 12px; opacity: 0.85; margin-bottom: 4px; }
+    .balance-block .amount {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      tabular-nums: true;
+      font-variant-numeric: tabular-nums;
+    }
+  [data-theme="light"] .balance-block .amount { color: #fff; }
+    [data-theme="dark"] .balance-block .amount { color: var(--income); }
+    .hero-pill {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 6px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.35);
+      font-size: 12px;
+      background: rgba(255,255,255,0.08);
+    }
+
+    .shortcuts {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      padding: 12px 16px;
+      background: var(--bg);
+      margin-top: -12px;
+      position: relative;
+      z-index: 1;
+    }
+    [data-theme="light"] .shortcuts-wrap {
+      background: var(--surface);
+      margin: -20px 12px 0;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      padding: 12px;
+    }
+    [data-theme="dark"] .shortcuts-wrap { padding: 0 12px; }
+    .shortcut {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 4px;
+      border: none;
+      background: var(--surface);
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 10px;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    [data-theme="light"] .shortcut { border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .shortcut-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      background: var(--chip-bg);
+    }
+    [data-theme="light"] .shortcut-icon { background: #eff6ff; color: var(--income); }
+
+    .filters {
+      padding: 12px 16px 8px;
+      flex-shrink: 0;
+    }
+    .filters h3 { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; }
+    .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+    .chip {
+      flex-shrink: 0;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid var(--border);
+      background: var(--chip-bg);
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+    .chip.on {
+      background: var(--chip-active);
+      border-color: var(--chip-active-border);
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .list-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 16px 80px;
+    }
+    .date-header {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      padding: 16px 0 8px;
+      letter-spacing: 0.04em;
+    }
+    .day-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      margin-bottom: 12px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .day-saldo {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border);
+    }
+    .day-saldo strong { color: var(--income); font-variant-numeric: tabular-nums; }
+
+    .tx-row {
+      display: grid;
+      grid-template-columns: 40px 1fr auto 20px;
+      gap: 10px;
+      align-items: center;
+      padding: 14px 12px;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      color: inherit;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+    .tx-row:last-child { border-bottom: none; }
+    .tx-row:hover { background: rgba(0,0,0,0.03); }
+    [data-theme="dark"] .tx-row:hover { background: rgba(255,255,255,0.04); }
+    .tx-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: var(--chip-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      position: relative;
+      z-index: 1;
+    }
+    .tx-row::before {
+      content: '';
+      position: absolute;
+      left: 31px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--timeline);
+      z-index: 0;
+    }
+    .tx-row:first-of-type::before { top: 50%; }
+    .tx-row:last-of-type::before { bottom: 50%; }
+    .tx-title { font-size: 14px; font-weight: 600; line-height: 1.25; }
+    .tx-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .tx-value {
+      font-size: 13px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .tx-value.in { color: var(--income); }
+    .tx-value.out { color: var(--expense); }
+    .tx-value.neu { color: var(--transfer); }
+    .chevron { color: var(--text-muted); font-size: 14px; }
+
+    /* ——— Detail (BB-style) ——— */
+    .detail-hero {
+      background: var(--hero);
+      color: #fff;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    [data-theme="light"] .detail-hero { background: #1a4fd6; }
+    .detail-hero button {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+    .detail-body {
+      flex: 1;
+      overflow-y: auto;
+      background: var(--surface);
+      padding: 20px 16px 100px;
+    }
+    .detail-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: var(--text);
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .info-row span:first-child { color: var(--text-muted); flex-shrink: 0; }
+    .info-row span:last-child { font-weight: 600; text-align: right; }
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin: 24px 0 12px;
+      color: var(--text);
+    }
+    .option-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--text);
+      background: none;
+      border-left: none;
+      border-right: none;
+      border-top: none;
+      width: 100%;
+      text-align: left;
+    }
+    .annotation-box {
+      width: 100%;
+      min-height: 88px;
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+      resize: vertical;
+    }
+    .detail-cta {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 12px 16px 20px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+    }
+    .btn-comprovante {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 999px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--cta);
+      color: var(--cta-text);
+    }
+    .btn-edit {
+      width: 100%;
+      margin-top: 8px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--text);
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .note-proto {
+      max-width: 720px;
+      margin: 20px auto 0;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #aaa;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="toolbar">
+      <h1>P38 · Protótipo — Fluxo de Caixa (extrato)</h1>
+      <div class="toolbar-btns">
+        <button type="button" id="view-split" class="active">Lado a lado</button>
+        <button type="button" id="view-light">Só claro</button>
+        <button type="button" id="view-dark">Só escuro</button>
+      </div>
+    </div>
+
+    <div class="phones split" id="phones">
+      <div class="phone-wrap" data-theme-wrap="light">
+        <p class="phone-label">Modo claro — referência extrato bancário</p>
+        <div class="phone" data-theme="light" id="phone-light">
+          <!-- list -->
+          <div class="screen active" data-screen="list">
+            <div class="hero">
+              <div class="hero-nav">
+                <span>← Extrato</span>
+                <div class="hero-icons" aria-hidden="true">👁 🔍 ⋮</div>
+              </div>
+              <div class="balance-block">
+                <p class="label">Saldo em conta</p>
+                <p class="amount" id="bal-light">R$&nbsp;15.920,67</p>
+                <span class="hero-pill">Detalhar saldo</span>
+              </div>
+            </div>
+            <div class="shortcuts-wrap">
+              <div class="shortcuts">
+                <button type="button" class="shortcut" title="Protótipo"><span class="shortcut-icon">◆</span>Receita</button>
+                <button type="button" class="shortcut"><span class="shortcut-icon">↑</span>Despesa</button>
+                <button type="button" class="shortcut"><span class="shortcut-icon">⇄</span>Transf.</button>
+                <button type="button" class="shortcut"><span class="shortcut-icon">⎙</span>Exportar</button>
+              </div>
+            </div>
+            <div class="filters">
+              <h3>Contas</h3>
+              <div class="chips" data-chips="conta">
+                <span class="chip on">Tudo</span>
+                <span class="chip">BB</span>
+                <span class="chip">PagBank</span>
+              </div>
+              <h3 style="margin-top:10px">Período</h3>
+              <div class="chips">
+                <span class="chip">Set</span>
+                <span class="chip">Out</span>
+                <span class="chip on">Nov</span>
+                <span class="chip">Futuros</span>
+              </div>
+            </div>
+            <div class="list-scroll" id="list-light"></div>
+          </div>
+          <!-- detail -->
+          <div class="screen" data-screen="detail">
+            <div class="detail-hero">
+              <button type="button" data-back aria-label="Voltar">←</button>
+              <span>Informações do lançamento</span>
+              <button type="button" data-back aria-label="Fechar">×</button>
+            </div>
+            <div class="detail-body" id="detail-light"></div>
+            <div class="detail-cta">
+              <button type="button" class="btn-comprovante">Ver comprovante</button>
+              <button type="button" class="btn-edit">Editar lançamento</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone-wrap" data-theme-wrap="dark">
+        <p class="phone-label">Modo escuro — paleta P38</p>
+        <div class="phone" data-theme="dark" id="phone-dark">
+          <div class="screen active" data-screen="list">
+            <div class="hero">
+              <div class="hero-nav">
+                <span>Financeiro</span>
+                <div class="hero-icons">👛 📊</div>
+              </div>
+              <div class="balance-block">
+                <p class="label">Saldo em conta</p>
+                <p class="amount">R$&nbsp;15.920,67</p>
+                <span class="hero-pill">3 contas selecionadas</span>
+              </div>
+            </div>
+            <div class="shortcuts-wrap">
+              <div class="shortcuts">
+                <button type="button" class="shortcut"><span class="shortcut-icon">↓</span>Receita</button>
+                <button type="button" class="shortcut"><span class="shortcut-icon">↑</span>Despesa</button>
+                <button type="button" class="shortcut"><span class="shortcut-icon">⇄</span>Transf.</button>
+                <button type="button" class="shortcut"><span class="shortcut-icon">⎙</span>Filtros</button>
+              </div>
+            </div>
+            <div class="filters">
+              <div class="chips">
+                <span class="chip on">Tudo</span>
+                <span class="chip">3 contas</span>
+              </div>
+            </div>
+            <div class="list-scroll" id="list-dark"></div>
+          </div>
+          <div class="screen" data-screen="detail">
+            <div class="detail-hero" style="background:#2d333b">
+              <button type="button" data-back>←</button>
+              <span>Detalhe</span>
+              <button type="button" data-back>×</button>
+            </div>
+            <div class="detail-body" id="detail-dark"></div>
+            <div class="detail-cta">
+              <button type="button" class="btn-comprovante">Ver comprovante</button>
+              <button type="button" class="btn-edit">Editar lançamento</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="note-proto">
+      Protótipo estático para validação visual — não conectado ao P38.
+      Clique num lançamento para abrir o detalhe (estilo BB).
+      Referências: extrato Nubank/BB (claro), FluxoCaixa atual (escuro #1f1d22 + #a4ce33).
+    </p>
+  </div>
+
+  <script>
+    const LANCAMENTOS = [
+      {
+        id: '1',
+        data: '11 nov',
+        dataFull: '11 NOVEMBRO DE 2026',
+        saldoDia: 15920.67,
+        icon: '💳',
+        title: 'Moderninha — venda PV-05139',
+        meta: '11 nov · PagBank · Cartão',
+        desc: 'Venda de produto CARTÃO Moderninha',
+        valor: 118.23,
+        tipo: 'in',
+        detalhe: {
+          tipo: 'Receita',
+          valor: 'R$ 118,23',
+          pagamento: 'Cartão de crédito',
+          data: '11/11/2026',
+          conta: 'PagBank',
+          status: 'Pago',
+          ref: 'PV-05139',
+        },
+        anotacao: '',
+      },
+      {
+        id: '2',
+        data: '10 nov',
+        dataFull: '10 NOVEMBRO DE 2026',
+        saldoDia: 15802.44,
+        icon: '🍽',
+        title: 'LANCHE DE CASA',
+        meta: '10 nov · Banco do Brasil',
+        valor: 12.48,
+        tipo: 'out',
+        detalhe: {
+          tipo: 'Despesa',
+          valor: 'R$ 12,48',
+          pagamento: 'Conta-corrente',
+          data: '10/11/2026',
+          conta: 'Banco do Brasil',
+          status: 'Pago',
+          ref: '—',
+        },
+        anotacao: 'Almoço equipe loja',
+      },
+      {
+        id: '3',
+        data: '9 nov',
+        dataFull: '9 NOVEMBRO DE 2026',
+        saldoDia: 15814.92,
+        icon: '◆',
+        title: 'Pix — Recebido',
+        meta: '9 nov · BB · Cliente avulso',
+        desc: 'Venda produto PIX',
+        valor: 2056.66,
+        tipo: 'in',
+        detalhe: {
+          tipo: 'Receita',
+          valor: 'R$ 2.056,66',
+          pagamento: 'PIX',
+          data: '09/11/2026',
+          conta: 'Banco do Brasil',
+          status: 'Pago',
+          ref: 'PV-05128',
+        },
+        anotacao: '',
+      },
+      {
+        id: '4',
+        data: '9 nov',
+        icon: '🍽',
+        title: 'ALMOÇO',
+        meta: '9 nov · Banco do Brasil',
+        valor: 64.0,
+        tipo: 'out',
+        detalhe: { tipo: 'Despesa', valor: 'R$ 64,00', pagamento: 'Débito', data: '09/11/2026', conta: 'BB', status: 'Pago', ref: '—' },
+        anotacao: '',
+      },
+      {
+        id: '5',
+        data: '9 nov',
+        icon: '⇄',
+        title: 'Caixa PDV → Caixa Geral',
+        meta: '9 nov · Recolhimento 12:10',
+        desc: 'Transferência entre contas',
+        valor: 2300.0,
+        tipo: 'neu',
+        detalhe: {
+          tipo: 'Transferência',
+          valor: 'R$ 2.300,00',
+          pagamento: 'Interna',
+          data: '09/11/2026',
+          conta: 'Caixa PDV → Geral',
+          status: 'Pago',
+          ref: 'REC-1210',
+        },
+        anotacao: 'Recolhimento meio-dia',
+      },
+    ];
+
+    const fmt = (n) =>
+      n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    function groupByDate(items) {
+      const map = new Map();
+      items.forEach((item) => {
+        const key = item.dataFull || item.data;
+        if (!map.has(key)) map.set(key, { header: key, saldoDia: item.saldoDia, rows: [] });
+        map.get(key).rows.push(item);
+      });
+      return [...map.values()];
+    }
+
+    function renderList(container) {
+      const groups = groupByDate(LANCAMENTOS);
+      container.innerHTML = groups
+        .map(
+          (g) => `
+        <p class="date-header">${g.header}</p>
+        <div class="day-card">
+          ${
+            g.saldoDia != null
+              ? `<div class="day-saldo"><span>Saldo do dia</span><strong>${fmt(g.saldoDia)}</strong></div>`
+              : ''
+          }
+          ${g.rows.map((r) => rowHtml(r)).join('')}
+        </div>`
+        )
+        .join('');
+      container.querySelectorAll('.tx-row').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.id;
+          const phone = container.closest('.phone');
+          openDetail(phone, LANCAMENTOS.find((x) => x.id === id));
+        });
+      });
+    }
+
+    function rowHtml(r) {
+      const sign = r.tipo === 'in' ? '+' : r.tipo === 'out' ? '−' : '';
+      const cls = r.tipo === 'in' ? 'in' : r.tipo === 'out' ? 'out' : 'neu';
+      return `
+        <button type="button" class="tx-row" data-id="${r.id}">
+          <span class="tx-icon">${r.icon}</span>
+          <span>
+            <div class="tx-title">${r.title}</div>
+            <div class="tx-meta">${r.meta}${r.desc ? '<br>' + r.desc : ''}</div>
+          </span>
+          <span class="tx-value ${cls}">${sign}${fmt(r.valor)}</span>
+          <span class="chevron">›</span>
+        </button>`;
+    }
+
+    function openDetail(phone, item) {
+      if (!item) return;
+      const body = phone.querySelector('.detail-body');
+      const d = item.detalhe;
+      body.innerHTML = `
+        <h2 class="detail-title">${item.title}</h2>
+        ${Object.entries({
+          Valor: d.valor,
+          Tipo: d.tipo,
+          'Forma de pagamento': d.pagamento,
+          Data: d.data,
+          Conta: d.conta,
+          Status: d.status,
+          Referência: d.ref,
+        })
+          .map(([k, v]) => `<div class="info-row"><span>${k}</span><span>${v}</span></div>`)
+          .join('')}
+        <h3 class="section-title">Mais opções</h3>
+        <button type="button" class="option-row">↻ Repetir lançamento <span>›</span></button>
+        <p class="section-title" style="margin-top:16px;font-size:13px">Escrever anotação</p>
+        <textarea class="annotation-box" placeholder="Observações sobre este lançamento…">${item.anotacao || ''}</textarea>
+      `;
+      phone.querySelectorAll('.screen').forEach((s) => s.classList.remove('active'));
+      phone.querySelector('[data-screen="detail"]').classList.add('active');
+    }
+
+    function wireBack(phone) {
+      phone.querySelectorAll('[data-back]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          phone.querySelectorAll('.screen').forEach((s) => s.classList.remove('active'));
+          phone.querySelector('[data-screen="list"]').classList.add('active');
+        });
+      });
+    }
+
+    document.getElementById('list-light').innerHTML = '';
+    document.getElementById('list-dark').innerHTML = '';
+    renderList(document.getElementById('list-light'));
+    renderList(document.getElementById('list-dark'));
+    wireBack(document.getElementById('phone-light'));
+    wireBack(document.getElementById('phone-dark'));
+
+    const phonesEl = document.getElementById('phones');
+    const viewBtns = { split: 'view-split', light: 'view-light', dark: 'view-dark' };
+    Object.entries(viewBtns).forEach(([mode, id]) => {
+      document.getElementById(id).addEventListener('click', () => {
+        document.querySelectorAll('.toolbar-btns button').forEach((b) => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        phonesEl.classList.remove('split', 'single');
+        const wraps = phonesEl.querySelectorAll('.phone-wrap');
+        if (mode === 'split') {
+          phonesEl.classList.add('split');
+          wraps.forEach((w) => w.removeAttribute('data-hidden'));
+        } else {
+          phonesEl.classList.add('single');
+          wraps.forEach((w) => {
+            const t = w.getAttribute('data-theme-wrap');
+            w.toggleAttribute('data-hidden', t !== mode);
+          });
+        }
+      });
+    });
+
+    document.querySelectorAll('.chip').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        const parent = chip.parentElement;
+        parent.querySelectorAll('.chip').forEach((c) => c.classList.remove('on'));
+        chip.classList.add('on');
+      });
+    });
+  </script>
+</body>
+</html>
