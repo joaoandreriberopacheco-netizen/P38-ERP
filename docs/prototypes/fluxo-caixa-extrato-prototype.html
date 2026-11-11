@@ -210,8 +210,19 @@
       justify-content: center;
       font-size: 18px;
       background: var(--chip-bg);
+      color: var(--text-muted);
+    }
+    .shortcut-icon svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
     [data-theme="light"] .shortcut-icon { background: #e2ebe2; color: var(--income); }
+    [data-theme="dark"] .shortcut-icon { background: #383e47; color: var(--income); }
 
     /* ——— Modo claro: app bar fixa + collapse no scroll (BB) ——— */
     [data-theme="light"] .extrato-app-bar {
@@ -220,7 +231,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 10px 14px;
-      background: #1a4fd6;
+      background: var(--hero);
       color: #fff;
       font-size: 15px;
       font-weight: 600;
@@ -331,7 +342,7 @@
 
     [data-theme="light"] .hero-collapsible {
       overflow: hidden;
-      max-height: 380px;
+      max-height: 440px;
       opacity: 1;
       transition: max-height 0.38s ease, opacity 0.28s ease;
       will-change: max-height, opacity;
@@ -444,15 +455,22 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: -0.02em;
       color: var(--text-muted);
       position: relative;
       z-index: 1;
     }
+    .tx-icon svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    [data-theme="light"] .tx-icon { color: var(--income); background: #e8efe8; }
     [data-theme="dark"] .tx-icon {
-      color: #b8bcc4;
+      color: var(--income);
       background: #383e47;
     }
     .tx-row::before {
@@ -633,6 +651,34 @@
                     <span class="hero-pill">Detalhar saldo</span>
                   </div>
                 </div>
+                <div class="shortcuts-wrap">
+                  <div class="shortcuts util-shortcuts">
+                    <button type="button" class="shortcut" title="Buscar lançamentos">
+                      <span class="shortcut-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                      </span>
+                      Busca
+                    </button>
+                    <button type="button" class="shortcut" title="Relatórios — balancete e extrato">
+                      <span class="shortcut-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M6 18V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v14"/><path d="M6 18h12"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/></svg>
+                      </span>
+                      Relatórios
+                    </button>
+                    <button type="button" class="shortcut" title="Exportar extrato">
+                      <span class="shortcut-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M12 15V3"/><path d="m7 10 5 5 5-5"/><path d="M20 21H4"/></svg>
+                      </span>
+                      Exportar
+                    </button>
+                    <button type="button" class="shortcut" title="Filtros avançados">
+                      <span class="shortcut-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M10 5H3"/><path d="M12 19H3"/><path d="M14 3v4"/><path d="M16 17v4"/><path d="M21 12h-9"/><path d="M21 19h-5"/><path d="M21 5h-7"/><path d="M8 10v4"/><path d="M8 12H3"/></svg>
+                      </span>
+                      Filtros
+                    </button>
+                  </div>
+                </div>
                 <p class="hero-dica">Dica: Presença no Mercado — desbloqueie seu potencial com Open Finance ›</p>
               </div>
               <div class="filters filters--sticky">
@@ -697,6 +743,34 @@
                 <span class="hero-pill">3 contas selecionadas</span>
               </div>
             </div>
+            <div class="shortcuts-wrap">
+              <div class="shortcuts util-shortcuts">
+                <button type="button" class="shortcut" title="Buscar lançamentos">
+                  <span class="shortcut-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                  </span>
+                  Busca
+                </button>
+                <button type="button" class="shortcut" title="Relatórios">
+                  <span class="shortcut-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M6 18V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v14"/><path d="M6 18h12"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/></svg>
+                  </span>
+                  Relatórios
+                </button>
+                <button type="button" class="shortcut" title="Exportar">
+                  <span class="shortcut-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M12 15V3"/><path d="m7 10 5 5 5-5"/><path d="M20 21H4"/></svg>
+                  </span>
+                  Exportar
+                </button>
+                <button type="button" class="shortcut" title="Filtros">
+                  <span class="shortcut-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M10 5H3"/><path d="M12 19H3"/><path d="M14 3v4"/><path d="M16 17v4"/><path d="M21 12h-9"/><path d="M21 19h-5"/><path d="M21 5h-7"/><path d="M8 10v4"/><path d="M8 12H3"/></svg>
+                  </span>
+                  Filtros
+                </button>
+              </div>
+            </div>
             <div class="filters">
               <div class="chips">
                 <span class="chip on">Tudo</span>
@@ -743,7 +817,7 @@
         data: '11 nov',
         dataFull: '11 NOVEMBRO DE 2026',
         saldoDia: 15920.67,
-        icon: 'Ct',
+        iconKind: 'card',
         title: 'Moderninha — venda PV-05139',
         meta: '11 nov · PagBank · Cartão',
         desc: 'Venda de produto CARTÃO Moderninha',
@@ -765,7 +839,7 @@
         data: '10 nov',
         dataFull: '10 NOVEMBRO DE 2026',
         saldoDia: 15802.44,
-        icon: 'Dp',
+        iconKind: 'bank',
         title: 'LANCHE DE CASA',
         meta: '10 nov · Banco do Brasil',
         valor: 12.48,
@@ -786,7 +860,7 @@
         data: '9 nov',
         dataFull: '9 NOVEMBRO DE 2026',
         saldoDia: 15814.92,
-        icon: '◆',
+        iconKind: 'bank',
         title: 'Pix — Recebido',
         meta: '9 nov · BB · Cliente avulso',
         desc: 'Venda produto PIX',
@@ -806,7 +880,7 @@
       {
         id: '4',
         data: '9 nov',
-        icon: 'Dp',
+        iconKind: 'bank',
         title: 'ALMOÇO',
         meta: '9 nov · Banco do Brasil',
         valor: 64.0,
@@ -817,7 +891,7 @@
       {
         id: '5',
         data: '9 nov',
-        icon: '⇄',
+        iconKind: 'transfer',
         title: 'Caixa PDV → Caixa Geral',
         meta: '9 nov · Recolhimento 12:10',
         desc: 'Transferência entre contas',
@@ -838,6 +912,18 @@
 
     const fmt = (n) =>
       n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    const TX_ICON_SVG = {
+      card: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/></svg>',
+      bank: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10h18"/><path d="M5 10V7l7-4 7 4v3"/><path d="M6 10v10"/><path d="M10 10v10"/><path d="M14 10v10"/><path d="M18 10v10"/><path d="M4 20h16"/></svg>',
+      transfer: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>',
+      cash: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01"/><path d="M18 12h.01"/></svg>',
+    };
+
+    function txIconHtml(kind) {
+      const key = TX_ICON_SVG[kind] ? kind : 'bank';
+      return `<span class="tx-icon" aria-hidden="true">${TX_ICON_SVG[key]}</span>`;
+    }
 
     function groupByDate(items) {
       const map = new Map();
@@ -879,7 +965,7 @@
       const cls = r.tipo === 'in' ? 'in' : r.tipo === 'out' ? 'out' : 'neu';
       return `
         <button type="button" class="tx-row" data-id="${r.id}">
-          <span class="tx-icon">${r.icon}</span>
+          ${txIconHtml(r.iconKind)}
           <span>
             <div class="tx-title">${r.title}</div>
             <div class="tx-meta">${r.meta}${r.desc ? '<br>' + r.desc : ''}</div>
