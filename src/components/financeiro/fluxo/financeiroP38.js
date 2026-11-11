@@ -1,7 +1,16 @@
 import { lancamentoEhCompraMercadoriaPedido } from '@/lib/agefinConsultaFilters';
+import { cn } from '@/lib/utils';
 
 /** Layout extrato mobile (protótipo v8) — hero colapsável + barra verde claro. */
 export const FLUXO_EXTRATO_MOBILE_V8 = true;
+
+/**
+ * `--font` em `fluxo-caixa-extrato-prototype.html` (system stack; sem @font-face / Google Fonts).
+ * Aplica só na árvore `FluxoExtratoMobileShell`.
+ */
+export const P38_EXTRATO_V8_FONT_FAMILY =
+  "font-[system-ui,-apple-system,'Segoe_UI',Roboto,sans-serif]";
+export const P38_EXTRATO_V8_FONT_SCOPE = cn(P38_EXTRATO_V8_FONT_FAMILY, '[&_*]:font-[inherit]');
 
 /** Paridade visual com `fluxo-caixa-extrato-prototype.html` (list-scroll / tx-row). */
 export const P38_EXTRATO_V8_LIST_BG = 'bg-[#f4f5f3] dark:bg-[#1f1d22]';
@@ -19,7 +28,7 @@ export const P38_EXTRATO_V8_ROW_META =
 export const P38_EXTRATO_V8_ROW_VALUE =
   'text-[13px] font-bold tabular-nums whitespace-nowrap';
 export const P38_EXTRATO_V8_ROW_LINE =
-  'w-full border-0 border-l-0 !border-b border-[#e5e7eb] bg-transparent px-3 py-3.5 font-sans shadow-none last:!border-b-0 dark:!border-white/10';
+  'w-full border-0 border-l-0 !border-b border-[#e5e7eb] bg-transparent px-3 py-3.5 !font-[inherit] shadow-none last:!border-b-0 dark:!border-white/10';
 
 /**
  * Tokens P38 partilhados — fluxo de caixa, contas abertas e Planejamento.

@@ -5,7 +5,7 @@ import { formatFinanceiroValor } from './FinanceiroListaShared';
 import FluxoExtratoUtilShortcuts from './FluxoExtratoUtilShortcuts';
 import { useFluxoExtratoScrollCollapse } from '@/hooks/useFluxoExtratoScrollCollapse';
 import FinanceiroAbaIconTabs from './FinanceiroAbaIconTabs';
-import { P38_EXTRATO_V8_LIST_BG, P38_SEARCH } from './financeiroP38';
+import { P38_EXTRATO_V8_FONT_SCOPE, P38_EXTRATO_V8_LIST_BG, P38_SEARCH } from './financeiroP38';
 
 export default function FluxoExtratoMobileShell({
   scrollRef,
@@ -35,7 +35,7 @@ export default function FluxoExtratoMobileShell({
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+    <div className={cn('flex min-h-0 flex-1 flex-col overflow-hidden', P38_EXTRATO_V8_FONT_SCOPE)}>
       <header
         className={cn(
           'relative z-30 flex shrink-0 items-center justify-between px-3.5 py-2.5',
