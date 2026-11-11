@@ -1230,12 +1230,6 @@ export default function ExecucaoOrcamentaria() {
         if (l.origem === 'movimento') return;
         setDetalhe(l);
       }}
-      onEdit={(l) => {
-        if (l?.origem === 'movimento') return;
-        setDetalhe(null);
-        setEditando(l);
-        setShowNovoFluxo(true);
-      }}
       contasSel={contasFiltroIds}
     />
   );
@@ -1305,6 +1299,7 @@ export default function ExecucaoOrcamentaria() {
       {fluxoExtratoMobile && (
         <>
           <FluxoExtratoMobileShell
+            className="min-h-0 flex-1"
             scrollRef={scrollRef}
             scrollEl={scrollEl}
             aba={aba}

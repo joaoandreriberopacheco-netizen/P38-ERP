@@ -1,6 +1,6 @@
 import React from 'react';
 import { formatarDataCurta } from '@/components/utils/dateUtils';
-import { AlertCircle, ArrowDown, ArrowRightLeft, ArrowUp, ChevronRight, Pencil } from 'lucide-react';
+import { AlertCircle, ArrowDown, ArrowRightLeft, ArrowUp, ChevronRight } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   P38MobileLine,
@@ -83,11 +83,6 @@ function resolverLancamentoAcaoExtrato(l, { perspectiva, isTransfConsolidada }) 
   }
   if (l.tipo === 'Transferência' || isTransferenciaEntreContas(l)) return l;
   return l;
-}
-
-function idLancamentoEditavel(lanc) {
-  const id = String(lanc?.id || '');
-  return !!id && !id.startsWith('transfer-') && !id.startsWith('pdv-');
 }
 
 function descricaoComFormaPagamento(l) {
@@ -358,7 +353,6 @@ export default function FinanceiroLancRow({
   contaVisualizadaId = null,
   contasSel = null,
   extratoMobile = false,
-  onEdit,
 }) {
   const cancelado = l.status === 'Cancelado';
   const isPago = isLancamentoPago(l);
@@ -449,12 +443,6 @@ export default function FinanceiroLancRow({
   );
 
   const lancamentoClick = resolverLancamentoAcaoExtrato(l, { perspectiva, isTransfConsolidada }) || l;
-  const lancamentoEdicao = resolverLancamentoAcaoExtrato(l, { perspectiva, isTransfConsolidada });
-  const podeEditarExtrato =
-    extratoMobile
-    && !!onEdit
-    && l.origem !== 'movimento'
-    && idLancamentoEditavel(lancamentoEdicao);
 
   const esmaecido = cancelado || (showPago && isPago) || dimProgramada || l._isProgramada;
 
@@ -511,10 +499,8 @@ export default function FinanceiroLancRow({
     const metaExtra =
       (isTransfConsolidada || perspectiva) && l.notaTransferencia ? String(l.notaTransferencia).trim() : null;
 
-    const extratoGridClass = cn(
-      'grid w-full grid-cols-[1rem_minmax(0,1fr)_auto] items-center gap-x-2 gap-y-0',
-      podeEditarExtrato ? 'pr-0.5' : '',
-    );
+    const extratoGridClass =
+      'grid w-full grid-cols-[1rem_minmax(0,1fr)_auto] items-center gap-x-2 gap-y-0';
     const extratoRow = (
       <div className={extratoGridClass}>
         <div className="flex w-4 shrink-0 items-center justify-start self-center">
@@ -543,20 +529,6 @@ export default function FinanceiroLancRow({
               contasSel,
             })}
           </div>
-          {podeEditarExtrato ? (
-            <button
-              type="button"
-              className="-mr-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[#6b7280] hover:bg-black/5 hover:text-[#3d5a3d] dark:text-muted-foreground dark:hover:bg-white/10 dark:hover:text-[#a4ce33]"
-              aria-label="Editar lançamento"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onEdit?.(lancamentoEdicao);
-              }}
-            >
-              <Pencil className="h-3.5 w-3.5" strokeWidth={2} />
-            </button>
-          ) : null}
           <ChevronRight
             className="h-3.5 w-3.5 shrink-0 text-[#6b7280] dark:text-muted-foreground"
             aria-hidden
