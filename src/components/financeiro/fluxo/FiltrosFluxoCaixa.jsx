@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   X, Wallet, Clock, ChevronDown,
-  ChevronLeft, ChevronRight, Layers, RefreshCw
+  ChevronLeft, ChevronRight, Layers, RefreshCw, ArrowDownLeft, ArrowUpRight,
 } from 'lucide-react';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -30,6 +30,11 @@ import {
   selecaoContasFluxoEhTodas,
   toggleContaFluxoSelecao,
 } from './contasFluxoSelecaoUi';
+import {
+  DIRECAO_FLUXO_ENTRADAS,
+  DIRECAO_FLUXO_SAIDAS,
+  DIRECAO_FLUXO_TODAS,
+} from '@/lib/filtroDirecaoFluxoCaixa';
 
 const P38_CAL_SELECTED =
   'bg-[#4a5240] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22] font-bold';
@@ -298,6 +303,34 @@ function CmvFiltro({ cmvOnly, onToggle }) {
   );
 }
 
+function DirecaoFluxoFiltro({ value, onChange }) {
+  const opts = [
+    { v: DIRECAO_FLUXO_TODAS, l: 'Todos', icon: null },
+    { v: DIRECAO_FLUXO_ENTRADAS, l: 'Somente entradas', icon: ArrowDownLeft },
+    { v: DIRECAO_FLUXO_SAIDAS, l: 'Somente saídas', icon: ArrowUpRight },
+  ];
+  return (
+    <div>
+      <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Movimento</p>
+      <div className="flex flex-wrap gap-1.5">
+        {opts.map(({ v, l, icon: Icon }) => (
+          <button
+            key={v || 'todos'}
+            type="button"
+            onClick={() => onChange(v)}
+            className={`flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-medium transition-colors ${
+              (value || DIRECAO_FLUXO_TODAS) === v ? P38_CHIP_ACTIVE : P38_CHIP_INACTIVE
+            }`}
+          >
+            {Icon ? <Icon className="h-3 w-3 shrink-0" aria-hidden /> : null}
+            {l}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ConciliacaoLoteFiltro({ contas, onOpenConciliacao }) {
   return (
     <Popover>
@@ -337,6 +370,7 @@ function FiltrosFluxoPainel({
   statusSel, onStatusSel,
   pendentes, onPendentes,
   cmvOnly, onCmvOnly,
+  direcaoFluxo, onDirecaoFluxo,
   onOpenConciliacao,
   mostrarHistoricoAnterior, dataCorteHistorico, onMostrarHistoricoAnterior, onDataCorteHistorico,
 }) {
@@ -363,6 +397,8 @@ function FiltrosFluxoPainel({
         )}
       </div>
 
+      <DirecaoFluxoFiltro value={direcaoFluxo} onChange={onDirecaoFluxo} />
+
       <FinanceiroCorteHistoricoFiltro
         mostrarHistoricoAnterior={mostrarHistoricoAnterior}
         dataCorte={dataCorteHistorico}
@@ -384,6 +420,8 @@ export default function FiltrosFluxoCaixa({
   statusSel, onStatusSel,
   pendentes, onPendentes,
   cmvOnly, onCmvOnly,
+  direcaoFluxo,
+  onDirecaoFluxo,
   onOpenConciliacao,
   conciliacaoPendente = 0,
   ordemLancamentos = 'desc',
@@ -404,6 +442,7 @@ export default function FiltrosFluxoCaixa({
     periodo !== 'mes' ||
     statusSel.length > 0 ||
     cmvOnly ||
+    !!direcaoFluxo ||
     mostrarHistoricoAnterior ||
     !!customStart ||
     !!customEnd ||
@@ -426,6 +465,8 @@ export default function FiltrosFluxoCaixa({
         onPendentes={onPendentes}
         cmvOnly={cmvOnly}
         onCmvOnly={onCmvOnly}
+        direcaoFluxo={direcaoFluxo}
+        onDirecaoFluxo={onDirecaoFluxo}
         onOpenConciliacao={onOpenConciliacao}
         mostrarHistoricoAnterior={mostrarHistoricoAnterior}
         dataCorteHistorico={dataCorteHistorico}
@@ -465,6 +506,8 @@ export default function FiltrosFluxoCaixa({
         onPendentes={onPendentes}
         cmvOnly={cmvOnly}
         onCmvOnly={onCmvOnly}
+        direcaoFluxo={direcaoFluxo}
+        onDirecaoFluxo={onDirecaoFluxo}
         onOpenConciliacao={onOpenConciliacao}
         mostrarHistoricoAnterior={mostrarHistoricoAnterior}
         dataCorteHistorico={dataCorteHistorico}
