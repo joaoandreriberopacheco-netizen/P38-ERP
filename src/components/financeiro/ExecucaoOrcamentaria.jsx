@@ -66,6 +66,11 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { cn } from '@/components/utils';
 import { P38_PAGE_TITLE } from '@/lib/p38FormTypography';
 import { passaFiltroTiposLancamento, filtrarGruposPorTipo } from '@/lib/filtroTipoFinanceiro';
+import {
+  DIRECAO_FLUXO_TODAS,
+  filtrarGruposPorDirecao,
+  labelDirecaoFluxoSelecionada,
+} from '@/lib/filtroDirecaoFluxoCaixa';
 import usePagamentoLoteFluxo from './fluxo/usePagamentoLoteFluxo';
 import { CONCILIACAO_LOTE_TAMANHO } from '@/lib/conciliacaoEmLote';
 import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
@@ -173,6 +178,7 @@ export default function ExecucaoOrcamentaria() {
   const [statusSel, setStatusSel] = useState([]);
   const [pendentes, setPendentes] = useState(false);
   const [cmvOnly, setCmvOnly] = useState(false);
+  const [direcaoFluxo, setDirecaoFluxo] = useState(DIRECAO_FLUXO_TODAS);
   const [fabOpen, setFabOpen] = useState(false);
   const [novoTipo, setNovoTipo] = useState('Despesa');
   const [detalhe, setDetalhe] = useState(null);
@@ -686,18 +692,19 @@ export default function ExecucaoOrcamentaria() {
   );
 
   const gruposExibicao = useMemo(() => {
-    if (!mostrarProgramadas) return filtrarGruposPorTipo(grupos, tiposSel);
     const hStr = dataHoje();
     const oStr = format(subDays(parseDateKey(hStr), 1), 'yyyy-MM-dd');
-    const merged = mesclarProgramadasNosGrupos(grupos, programadasLista, ordemLancamentos, { movimentos });
-    return filtrarGruposPorTipo(
-      merged.map((g) => ({
+    const comProgramadas = !mostrarProgramadas
+      ? grupos
+      : mesclarProgramadasNosGrupos(grupos, programadasLista, ordemLancamentos, { movimentos }).map((g) => ({
         ...g,
         label: g.label || (g.k === 'sem-data' ? 'Sem data' : formatFinanceiroGrupoLabel(g.k, hStr, oStr)),
-      })),
-      tiposSel,
+      }));
+    return filtrarGruposPorDirecao(
+      filtrarGruposPorTipo(comProgramadas, tiposSel),
+      direcaoFluxo,
     );
-  }, [grupos, mostrarProgramadas, programadasLista, ordemLancamentos, movimentos, tiposSel]);
+  }, [grupos, mostrarProgramadas, programadasLista, ordemLancamentos, movimentos, tiposSel, direcaoFluxo]);
 
   const lote = usePagamentoLoteFluxo({
     programadas: programadasLista,
@@ -709,7 +716,7 @@ export default function ExecucaoOrcamentaria() {
   const totalPend = useMemo(() => lancs.filter(l => l.status_conciliacao === 'Pendente').length, [lancs]);
   const filtroContasDesviouPadrao = contasAtivas.length > 0
     && !contasSelEquivaleFiltroFluxoPadrao(contasSel, contasAtivas);
-  const hasActiveFilters = tiposSel.length > 0 || filtroContasDesviouPadrao || statusSel.length > 0 || pendentes || cmvOnly || mostrarHistoricoAnterior || !!search;
+  const hasActiveFilters = tiposSel.length > 0 || filtroContasDesviouPadrao || statusSel.length > 0 || pendentes || cmvOnly || !!direcaoFluxo || mostrarHistoricoAnterior || !!search;
 
   const abrirConciliacao = useCallback((conta) => {
     if (conta === null) {
@@ -982,6 +989,9 @@ export default function ExecucaoOrcamentaria() {
         <FinanceiroSummaryChip>Conciliação</FinanceiroSummaryChip>
       )}
       {cmvOnly && <FinanceiroSummaryChip>CMV</FinanceiroSummaryChip>}
+      {labelDirecaoFluxoSelecionada(direcaoFluxo) && (
+        <FinanceiroSummaryChip>{labelDirecaoFluxoSelecionada(direcaoFluxo)}</FinanceiroSummaryChip>
+      )}
       {mostrarHistoricoAnterior && (
         <FinanceiroSummaryChip>Histórico completo</FinanceiroSummaryChip>
       )}
@@ -1011,6 +1021,9 @@ export default function ExecucaoOrcamentaria() {
         <FinanceiroSummaryChip>Conciliação</FinanceiroSummaryChip>
       )}
       {cmvOnly && <FinanceiroSummaryChip>CMV</FinanceiroSummaryChip>}
+      {labelDirecaoFluxoSelecionada(direcaoFluxo) && (
+        <FinanceiroSummaryChip>{labelDirecaoFluxoSelecionada(direcaoFluxo)}</FinanceiroSummaryChip>
+      )}
       {mostrarHistoricoAnterior && (
         <FinanceiroSummaryChip>Histórico completo</FinanceiroSummaryChip>
       )}
@@ -1184,6 +1197,8 @@ export default function ExecucaoOrcamentaria() {
         onPendentes={setPendentes}
         cmvOnly={cmvOnly}
         onCmvOnly={setCmvOnly}
+        direcaoFluxo={direcaoFluxo}
+        onDirecaoFluxo={setDirecaoFluxo}
         onOpenConciliacao={abrirConciliacao}
         conciliacaoPendente={totalPend}
         ordemLancamentos={ordemLancamentos}
@@ -1207,6 +1222,7 @@ export default function ExecucaoOrcamentaria() {
           setStatusSel([]);
           setPendentes(false);
           setCmvOnly(false);
+          setDirecaoFluxo(DIRECAO_FLUXO_TODAS);
           setSearch('');
         }}
         summaryChips={fluxoMetaChips}
@@ -1345,6 +1361,8 @@ export default function ExecucaoOrcamentaria() {
                   onPendentes={setPendentes}
                   cmvOnly={cmvOnly}
                   onCmvOnly={setCmvOnly}
+                  direcaoFluxo={direcaoFluxo}
+                  onDirecaoFluxo={setDirecaoFluxo}
                   onOpenConciliacao={abrirConciliacao}
                   conciliacaoPendente={totalPend}
                   ordemLancamentos={ordemLancamentos}
@@ -1376,6 +1394,7 @@ export default function ExecucaoOrcamentaria() {
                 setStatusSel([]);
                 setPendentes(false);
                 setCmvOnly(false);
+                setDirecaoFluxo(DIRECAO_FLUXO_TODAS);
                 setSearch('');
               }}
               summaryChips={fluxoMetaChips}
