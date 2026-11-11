@@ -37,16 +37,19 @@ function idsOrigemDestinoTransferenciaExtrato(l) {
   return { origemId, destinoId };
 }
 
-/** Transferência entre contas próprias visíveis no filtro (ficou em casa — ex. Geral ↔ Banco). */
+/**
+ * Tom esmaecido no extrato: origem e destino da transferência estão no filtro de contas
+ * (saldo agregado não muda — «em casa»). Uma só conta no filtro → cores normais de entrada/saída.
+ */
 export function extratoTransferenciaInternaCasa(l, contasSel = null) {
   if (!linhaEhTransferenciaExtrato(l)) return false;
-  if (l.perspectivaTransferencia === 'neutra' || l.isTransferenciaConsolidada) return true;
   const { origemId, destinoId } = idsOrigemDestinoTransferenciaExtrato(l);
   if (!origemId || !destinoId) return false;
-  if (!contasSel?.length) {
-    return !!(l.isTransferenciaConsolidada || l.perspectivaTransferencia === 'neutra');
+  const sel = Array.isArray(contasSel) ? contasSel : [];
+  if (!sel.length) {
+    return calcularPerspectivaTransferencia(lancamentoBaseTransferenciaExtrato(l), sel, null) === 'neutra';
   }
-  return contasSel.includes(origemId) && contasSel.includes(destinoId);
+  return sel.includes(origemId) && sel.includes(destinoId);
 }
 
 /**

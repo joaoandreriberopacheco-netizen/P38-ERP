@@ -34,7 +34,7 @@ export const P38_EXTRATO_V8_ROW_META =
 /** `.tx-value` */
 export const P38_EXTRATO_V8_ROW_VALUE =
   'text-[13px] font-bold tabular-nums whitespace-nowrap';
-/** Transferência interna (contas da empresa no filtro) — valor e ícone esmaecidos. */
+/** Transferência com origem e destino no filtro — valor e ícone esmaecidos (saldo agregado inalterado). */
 export const P38_EXTRATO_V8_TRANSFER_INTERNA_VALUE =
   'text-[#6b7280]/90 dark:text-[#9ca3af]/95';
 export const P38_EXTRATO_V8_TRANSFER_INTERNA_ICON_TILE =
