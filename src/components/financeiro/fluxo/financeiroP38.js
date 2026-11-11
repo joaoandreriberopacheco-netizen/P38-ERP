@@ -1,6 +1,24 @@
 /** Layout extrato mobile (protótipo v8) — hero colapsável + barra verde claro. */
 export const FLUXO_EXTRATO_MOBILE_V8 = true;
 
+/** Paridade visual com `fluxo-caixa-extrato-prototype.html` (list-scroll / tx-row). */
+export const P38_EXTRATO_V8_LIST_BG = 'bg-[#f4f5f3] dark:bg-[#1f1d22]';
+export const P38_EXTRATO_V8_DAY_CARD =
+  'overflow-hidden rounded-xl border border-[#e5e7eb] bg-white shadow-sm dark:border-white/10 dark:bg-[#26262e] dark:shadow-none';
+export const P38_EXTRATO_V8_DATE_HEADER =
+  'pb-2 pt-4 text-[11px] font-bold uppercase tracking-[0.04em] text-[#6b7280] dark:text-muted-foreground';
+/** `.tx-title` */
+export const P38_EXTRATO_V8_ROW_TITLE =
+  'text-sm font-semibold leading-[1.25] text-[#1a1a1a] normal-case dark:text-[#eceff1]';
+/** `.tx-meta` */
+export const P38_EXTRATO_V8_ROW_META =
+  'mt-0.5 text-[11px] font-normal leading-snug text-[#6b7280] dark:text-muted-foreground normal-case';
+/** `.tx-value` */
+export const P38_EXTRATO_V8_ROW_VALUE =
+  'text-[13px] font-bold tabular-nums whitespace-nowrap';
+export const P38_EXTRATO_V8_ROW_LINE =
+  'w-full border-0 border-l-0 !border-b border-[#e5e7eb] bg-transparent px-3 py-3.5 font-sans shadow-none last:!border-b-0 dark:!border-white/10';
+
 /**
  * Tokens P38 partilhados — fluxo de caixa, contas abertas e Planejamento.
  *

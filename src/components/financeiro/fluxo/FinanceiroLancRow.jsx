@@ -16,6 +16,12 @@ import { rotuloFormaPagamentoExtrato } from '@/lib/fluxoExtratoIconKind';
 import { isTransferenciaEntreContas } from '@/lib/saldoContaFinanceira';
 import { isLancamentoPago, statusRotuloListaFinanceiro } from '@/lib/lancamentoFinanceiroStatus';
 import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
+import {
+  P38_EXTRATO_V8_ROW_LINE,
+  P38_EXTRATO_V8_ROW_META,
+  P38_EXTRATO_V8_ROW_TITLE,
+  P38_EXTRATO_V8_ROW_VALUE,
+} from './financeiroP38';
 
 const LINE_TITLE_CLASS =
   '[&>div>div:first-child]:text-[15px] [&>div>div:first-child]:font-semibold sm:[&>div>div:first-child]:text-base';
@@ -98,7 +104,12 @@ function valorNode(l, { extratoMobile = false } = {}) {
     const valorFmt = formatFinanceiroValor(Math.abs(l.valor || 0));
     if (extratoMobile) {
       return (
-        <span className="block w-full text-right font-mono text-[13px] font-bold tabular-nums tracking-tight text-[#4b5563] dark:text-[#eceff1]">
+        <span
+          className={cn(
+            P38_EXTRATO_V8_ROW_VALUE,
+            'block w-full text-right text-[#374151] dark:text-[#d1d5db]',
+          )}
+        >
           {valorFmt}
         </span>
       );
@@ -112,18 +123,13 @@ function valorNode(l, { extratoMobile = false } = {}) {
     : !pago && statusLista === 'Vencido'
       ? 'text-amber-600 dark:text-amber-400'
       : extratoMobile
-        ? 'text-[#b32d2e] dark:text-red-400'
+        ? 'text-[#dc2626] dark:text-[#f87171]'
         : 'text-foreground/85';
 
   if (extratoMobile) {
     const sign = isR ? '+' : '−';
     return (
-      <span
-        className={cn(
-          'block w-full text-right font-mono text-[13px] font-bold tabular-nums tracking-tight',
-          signClass,
-        )}
-      >
+      <span className={cn(P38_EXTRATO_V8_ROW_VALUE, 'block w-full text-right', signClass)}>
         <span className="inline-block min-w-[0.65rem] text-right">{sign}</span>
         <span className="ml-px">{valorFmt}</span>
       </span>
@@ -299,11 +305,7 @@ export default function FinanceiroLancRow({
       {data ? formatarDataCurta(data) : '—'}
       {l.notaTransferencia ? ` · ${l.notaTransferencia}` : ''}
     </span>
-  ) : extratoMobile ? (
-    <span className="line-clamp-2 break-words text-[11px] text-muted-foreground normal-case">
-      {subtitleExtratoMeta()}
-    </span>
-  ) : (
+  ) : extratoMobile ? null : (
     <span className="line-clamp-2 break-words">
       {data ? formatarDataCurta(data) : '—'}
       {l.conta_financeira_nome ? ` · ${l.conta_financeira_nome}` : ''}
@@ -356,24 +358,63 @@ export default function FinanceiroLancRow({
   };
 
   if (extratoMobile) {
+    const extratoTitlePlain = (() => {
+      if (isTransfConsolidada) {
+        return (
+          <span className={cn('line-clamp-2 break-words', cancelado && 'line-through')}>
+            {l.contaOrigemNome}
+            <span className="text-[#6b7280] dark:text-muted-foreground"> › </span>
+            {l.contaDestinoNome}
+          </span>
+        );
+      }
+      if (perspectiva === 'saida') {
+        return (
+          <span className={cn('line-clamp-2 break-words', cancelado && 'line-through')}>
+            Transferência → {l.contaDestinoNome || 'Destino'}
+          </span>
+        );
+      }
+      if (perspectiva === 'entrada') {
+        return (
+          <span className={cn('line-clamp-2 break-words', cancelado && 'line-through')}>
+            Transferência ← {l.contaOrigemNome || 'Origem'}
+          </span>
+        );
+      }
+      return (
+        <span className={cn('line-clamp-2 break-words', cancelado && 'line-through')}>
+          {descricaoComFormaPagamento(l)}
+        </span>
+      );
+    })();
+
+    const metaLinha = subtitleExtratoMeta();
+    const metaExtra =
+      (isTransfConsolidada || perspectiva) && l.notaTransferencia ? String(l.notaTransferencia).trim() : null;
+
     const extratoGridClass =
-      'grid w-full grid-cols-[1.5rem_minmax(0,1fr)_7.25rem] items-center gap-x-2.5 gap-y-0';
+      'grid w-full grid-cols-[2rem_minmax(0,1fr)_minmax(4.75rem,auto)] items-center gap-x-2.5 gap-y-0';
     const extratoRow = (
       <div className={extratoGridClass}>
         <div className="flex justify-center self-center">
           <FluxoExtratoRowIcon lancamento={l} compact />
         </div>
         <div className="min-w-0 self-center">
-          <div className="text-[15px] font-semibold leading-snug text-foreground normal-case line-clamp-2">
-            {title}
+          <div className={cn(P38_EXTRATO_V8_ROW_TITLE, 'line-clamp-2 break-words')}>{extratoTitlePlain}</div>
+          <div className={P38_EXTRATO_V8_ROW_META}>
+            <span className="line-clamp-2 break-words">{metaLinha}</span>
+            {metaExtra ? (
+              <>
+                <br />
+                <span className="line-clamp-2 break-words">{metaExtra}</span>
+              </>
+            ) : null}
           </div>
-          {subtitle}
         </div>
-        <div className="flex w-[7.25rem] shrink-0 items-center justify-end gap-0.5 self-center pl-0.5">
-          <div className="min-w-0 flex-1 text-right [font-variant-numeric:tabular-nums]">
-            {valorNode(l, { extratoMobile: true })}
-          </div>
-          <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground" aria-hidden />
+        <div className="flex shrink-0 items-center justify-end gap-1 self-center pl-0.5">
+          {valorNode(l, { extratoMobile: true })}
+          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#6b7280] dark:text-muted-foreground" aria-hidden />
         </div>
       </div>
     );
@@ -383,7 +424,7 @@ export default function FinanceiroLancRow({
           thinAccent={false}
           accent="none"
           onClick={() => onToggleSelecionado?.(l.id)}
-          className="w-full border-0 border-l-0 bg-transparent px-3 py-3 text-left shadow-none [&]:border-l-0"
+          className={P38_EXTRATO_V8_ROW_LINE}
         >
           {extratoRow}
         </P38MobileLine>
@@ -396,7 +437,7 @@ export default function FinanceiroLancRow({
         as="button"
         type="button"
         onClick={() => onClick?.(lancamentoClick)}
-        className="w-full border-0 border-l-0 bg-transparent px-3 py-3 text-left shadow-none [&]:border-l-0"
+        className={P38_EXTRATO_V8_ROW_LINE}
       >
         {extratoRow}
       </P38MobileLine>
