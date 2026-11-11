@@ -396,7 +396,7 @@ export default function FinanceiroLancRow({
       (isTransfConsolidada || perspectiva) && l.notaTransferencia ? String(l.notaTransferencia).trim() : null;
 
     const extratoGridClass =
-      'grid w-full grid-cols-[2rem_minmax(0,1fr)_minmax(4.75rem,auto)] items-center gap-x-2.5 gap-y-0';
+      'grid w-full grid-cols-[1.5rem_minmax(0,1fr)_minmax(4.75rem,auto)] items-center gap-x-2.5 gap-y-0';
     const extratoRow = (
       <div className={extratoGridClass}>
         <div className="flex justify-center self-center">
