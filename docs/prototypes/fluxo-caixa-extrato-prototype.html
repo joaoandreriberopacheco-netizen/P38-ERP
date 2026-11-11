@@ -213,6 +213,70 @@
     }
     [data-theme="light"] .shortcut-icon { background: #e2ebe2; color: var(--income); }
 
+    /* ——— Modo claro: app bar fixa + collapse no scroll (BB) ——— */
+    [data-theme="light"] .extrato-app-bar {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: #1a4fd6;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      z-index: 30;
+    }
+    [data-theme="light"] .extrato-app-bar-title { opacity: 0.95; }
+    [data-theme="light"] .extrato-app-bar-actions {
+      display: flex;
+      gap: 14px;
+      font-size: 17px;
+      opacity: 0.95;
+    }
+    [data-theme="light"] .extrato-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+    [data-theme="light"] .hero-collapsible {
+      overflow: hidden;
+      max-height: 520px;
+      opacity: 1;
+      transition: max-height 0.38s ease, opacity 0.28s ease;
+      will-change: max-height, opacity;
+    }
+    [data-theme="light"] .extrato-scroll.is-collapsed .hero-collapsible {
+      max-height: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+    [data-theme="light"] .hero--below-bar {
+      padding-top: 16px;
+    }
+    [data-theme="light"] .hero-dica {
+      margin: 0 12px 8px;
+      padding: 12px 14px;
+      border-radius: var(--radius);
+      background: rgba(0, 0, 0, 0.18);
+      font-size: 11px;
+      line-height: 1.4;
+      color: rgba(255, 255, 255, 0.92);
+    }
+    [data-theme="light"] .filters--sticky {
+      position: sticky;
+      top: 0;
+      z-index: 15;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+    [data-theme="light"] .extrato-scroll .list-scroll {
+      flex: none;
+      overflow: visible;
+    }
+
     .filters {
       padding: 12px 16px 8px;
       flex-shrink: 0;
@@ -463,41 +527,51 @@
         <div class="phone" data-theme="light" id="phone-light">
           <!-- list -->
           <div class="screen active" data-screen="list">
-            <div class="hero">
-              <div class="hero-nav">
-                <span>← Extrato</span>
-                <div class="hero-icons" aria-hidden="true">👁 🔍 ⋮</div>
+            <header class="extrato-app-bar" aria-label="Barra do extrato">
+              <span class="extrato-app-bar-title">← Extrato</span>
+              <div class="extrato-app-bar-actions" aria-hidden="true">
+                <span title="Ocultar valores">👁</span>
+                <span title="Buscar">🔍</span>
+                <span title="Menu">⋮</span>
               </div>
-              <div class="balance-block">
-                <p class="label">Saldo em conta</p>
-                <p class="amount" id="bal-light">R$&nbsp;15.920,67</p>
-                <span class="hero-pill">Detalhar saldo</span>
+            </header>
+            <div class="extrato-scroll" id="scroll-light">
+              <div class="hero-collapsible" id="hero-collapsible-light">
+                <div class="hero hero--below-bar">
+                  <div class="balance-block">
+                    <p class="label">Saldo em conta</p>
+                    <p class="amount" id="bal-light">R$&nbsp;15.920,67</p>
+                    <span class="hero-pill">Detalhar saldo</span>
+                  </div>
+                </div>
+                <div class="shortcuts-wrap">
+                  <div class="shortcuts">
+                    <button type="button" class="shortcut" title="Protótipo"><span class="shortcut-icon">◆</span>Receita</button>
+                    <button type="button" class="shortcut"><span class="shortcut-icon">↑</span>Despesa</button>
+                    <button type="button" class="shortcut"><span class="shortcut-icon">⇄</span>Transf.</button>
+                    <button type="button" class="shortcut"><span class="shortcut-icon">⎙</span>Exportar</button>
+                  </div>
+                </div>
+                <p class="hero-dica">Dica: Presença no Mercado — desbloqueie seu potencial com Open Finance ›</p>
               </div>
+              <div class="filters filters--sticky">
+                <h3>Contas</h3>
+                <div class="chips" data-chips="conta">
+                  <span class="chip on">Tudo</span>
+                  <span class="chip">BB</span>
+                  <span class="chip">PagBank</span>
+                </div>
+                <h3 style="margin-top:10px">Período</h3>
+                <div class="chips">
+                  <span class="chip">Set</span>
+                  <span class="chip">Out</span>
+                  <span class="chip on">Nov</span>
+                  <span class="chip">Futuros</span>
+                  <span class="chip" style="margin-left:4px" title="Calendário">📅</span>
+                </div>
+              </div>
+              <div class="list-scroll" id="list-light"></div>
             </div>
-            <div class="shortcuts-wrap">
-              <div class="shortcuts">
-                <button type="button" class="shortcut" title="Protótipo"><span class="shortcut-icon">◆</span>Receita</button>
-                <button type="button" class="shortcut"><span class="shortcut-icon">↑</span>Despesa</button>
-                <button type="button" class="shortcut"><span class="shortcut-icon">⇄</span>Transf.</button>
-                <button type="button" class="shortcut"><span class="shortcut-icon">⎙</span>Exportar</button>
-              </div>
-            </div>
-            <div class="filters">
-              <h3>Contas</h3>
-              <div class="chips" data-chips="conta">
-                <span class="chip on">Tudo</span>
-                <span class="chip">BB</span>
-                <span class="chip">PagBank</span>
-              </div>
-              <h3 style="margin-top:10px">Período</h3>
-              <div class="chips">
-                <span class="chip">Set</span>
-                <span class="chip">Out</span>
-                <span class="chip on">Nov</span>
-                <span class="chip">Futuros</span>
-              </div>
-            </div>
-            <div class="list-scroll" id="list-light"></div>
           </div>
           <!-- detail -->
           <div class="screen" data-screen="detail">
@@ -763,6 +837,16 @@
     renderList(document.getElementById('list-dark'));
     wireBack(document.getElementById('phone-light'));
     wireBack(document.getElementById('phone-dark'));
+
+    function wireExtratoCollapse(scrollEl, threshold = 20) {
+      if (!scrollEl) return;
+      const apply = () => {
+        scrollEl.classList.toggle('is-collapsed', scrollEl.scrollTop > threshold);
+      };
+      scrollEl.addEventListener('scroll', apply, { passive: true });
+      apply();
+    }
+    wireExtratoCollapse(document.getElementById('scroll-light'));
 
     const phonesEl = document.getElementById('phones');
     const viewBtns = { split: 'view-split', light: 'view-light', dark: 'view-dark' };
