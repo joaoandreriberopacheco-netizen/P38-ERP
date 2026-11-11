@@ -175,6 +175,9 @@ button:focus-visible {
     --sidebar-border: 0 0% 91%;
     --sidebar-ring: 43 74% 52%;
 
+    /* Topo mobile: safe-area nativo menos ~12px (João André — menos “ar” sob a status bar). */
+    --p38-safe-area-inset-top: max(0px, calc(env(safe-area-inset-top, 0px) - 12px));
+
     /* GlacialBottomNav: alinhar FAB + padding de scroll (mobile) */
     --p38-bottom-nav-bar: 68px;
     --p38-bottom-nav-total: calc(var(--p38-bottom-nav-bar) + env(safe-area-inset-bottom, 0px));
