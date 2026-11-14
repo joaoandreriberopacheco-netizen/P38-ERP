@@ -85,9 +85,12 @@ import {
   FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT,
   FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT,
   buildComprasGestaoFetchFilters,
-  filtroComprasStatusSelInicial,
   passaFiltroVisibilidadePedidosCompra,
 } from '@/lib/filtroVisibilidadePedidosCompra';
+import {
+  readComprasGestaoFiltrosNav,
+  writeComprasGestaoFiltrosNav,
+} from '@/lib/comprasGestaoFiltrosNav';
 const toLocalDate = (d) => toLocalDateKey(new Date(d));
 
 const etaMatchesFilter = (embarque, modo, dataRef, inicial, final) => {
@@ -284,9 +287,14 @@ export default function PedidosCompraPage() {
   const { chromeVisible, scrollRef, scrollEl } = useScrollChromeVisibility(isPhone, MOBILE_LIST_CHROME_OPTIONS);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [filtroUltimos30Dias, setFiltroUltimos30Dias] = useState(FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT);
-  const [filtroSomenteNaoConcluidos, setFiltroSomenteNaoConcluidos] = useState(FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT);
-  const [filtroEncomenda, setFiltroEncomenda] = useState(FILTRO_COMPRAS_ENCOMENDA_DEFAULT);
+  const filtrosNavInicialRef = useRef(null);
+  if (filtrosNavInicialRef.current === null) {
+    filtrosNavInicialRef.current = readComprasGestaoFiltrosNav();
+  }
+  const filtrosNavInicial = filtrosNavInicialRef.current;
+  const [filtroUltimos30Dias, setFiltroUltimos30Dias] = useState(filtrosNavInicial.filtroUltimos30Dias);
+  const [filtroSomenteNaoConcluidos, setFiltroSomenteNaoConcluidos] = useState(filtrosNavInicial.filtroSomenteNaoConcluidos);
+  const [filtroEncomenda, setFiltroEncomenda] = useState(filtrosNavInicial.filtroEncomenda);
   const comprasFetchFilters = useMemo(
     () => buildComprasGestaoFetchFilters({
       somenteNaoConcluidos: filtroSomenteNaoConcluidos,
@@ -298,17 +306,17 @@ export default function PedidosCompraPage() {
   const [pedidos, setPedidos] = useState([]);
   const [embarques, setEmbarques] = useState([]);
   const [produtosMap, setProdutosMap] = useState({});
-  const [search, setSearch] = useState('');
-  const [statusSel, setStatusSel] = useState(filtroComprasStatusSelInicial);
-  const [tagsSel, setTagsSel] = useState([]);
-  const [dataInicial, setDataInicial] = useState('');
-  const [dataFinal, setDataFinal] = useState('');
-  const [etaFiltroModo, setEtaFiltroModo] = useState('');
-  const [etaData, setEtaData] = useState('');
-  const [etaInicial, setEtaInicial] = useState('');
-  const [etaFinal, setEtaFinal] = useState('');
-  const [recebimentoInicial, setRecebimentoInicial] = useState('');
-  const [recebimentoFinal, setRecebimentoFinal] = useState('');
+  const [search, setSearch] = useState(filtrosNavInicial.search);
+  const [statusSel, setStatusSel] = useState(filtrosNavInicial.statusSel);
+  const [tagsSel, setTagsSel] = useState(filtrosNavInicial.tagsSel);
+  const [dataInicial, setDataInicial] = useState(filtrosNavInicial.dataInicial);
+  const [dataFinal, setDataFinal] = useState(filtrosNavInicial.dataFinal);
+  const [etaFiltroModo, setEtaFiltroModo] = useState(filtrosNavInicial.etaFiltroModo);
+  const [etaData, setEtaData] = useState(filtrosNavInicial.etaData);
+  const [etaInicial, setEtaInicial] = useState(filtrosNavInicial.etaInicial);
+  const [etaFinal, setEtaFinal] = useState(filtrosNavInicial.etaFinal);
+  const [recebimentoInicial, setRecebimentoInicial] = useState(filtrosNavInicial.recebimentoInicial);
+  const [recebimentoFinal, setRecebimentoFinal] = useState(filtrosNavInicial.recebimentoFinal);
   const [showImportador, setShowImportador] = useState(false);
   const [selecionadosIds, setSelecionadosIds] = useState([]);
   const [enviandoLote, setEnviandoLote] = useState(false);
@@ -316,12 +324,52 @@ export default function PedidosCompraPage() {
   const [showEnvioDialog, setShowEnvioDialog] = useState(false);
   const [formaPagamentoLote, setFormaPagamentoLote] = useState('Parcelado');
   const [dataPrimeiroVencimentoLote, setDataPrimeiroVencimentoLote] = useState('');
-  const [groupBy, setGroupBy] = useState('eta_transportadora');
-  const [sortOrder, setSortOrder] = useState('asc');
-  const [activeView, setActiveView] = useState('embarques');
+  const [groupBy, setGroupBy] = useState(filtrosNavInicial.groupBy);
+  const [sortOrder, setSortOrder] = useState(filtrosNavInicial.sortOrder);
+  const [activeView, setActiveView] = useState(filtrosNavInicial.activeView);
   const [showAtualizarPrecosFiltrados, setShowAtualizarPrecosFiltrados] = useState(false);
 
   /** Aba Saldo = mesma lista Embarques, filtro fixo Pendente (regra única pós-desmembramento). */
+  useEffect(() => {
+    writeComprasGestaoFiltrosNav({
+      filtroUltimos30Dias,
+      filtroSomenteNaoConcluidos,
+      filtroEncomenda,
+      search,
+      statusSel,
+      tagsSel,
+      dataInicial,
+      dataFinal,
+      etaFiltroModo,
+      etaData,
+      etaInicial,
+      etaFinal,
+      recebimentoInicial,
+      recebimentoFinal,
+      groupBy,
+      sortOrder,
+      activeView,
+    });
+  }, [
+    filtroUltimos30Dias,
+    filtroSomenteNaoConcluidos,
+    filtroEncomenda,
+    search,
+    statusSel,
+    tagsSel,
+    dataInicial,
+    dataFinal,
+    etaFiltroModo,
+    etaData,
+    etaInicial,
+    etaFinal,
+    recebimentoInicial,
+    recebimentoFinal,
+    groupBy,
+    sortOrder,
+    activeView,
+  ]);
+
   const handleSelectView = (view) => {
     setActiveView(view);
     if (view === 'saldo') {
