@@ -1537,7 +1537,6 @@ export default function ExecucaoOrcamentaria() {
       {caixasAtiva && (
         <div
           className={cn(
-            contasExtratoMobile && P38_EXTRATO_V8_LAYOUT_TOP_BLEED,
             usesStageScroll && 'flex min-h-0 flex-1 flex-col overflow-hidden',
           )}
         >
