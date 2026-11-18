@@ -609,7 +609,10 @@ function pdfLotesExtrasStyles() {
     ${pdfResumoGlobalTableCss('table.lotes-table', 'spacious')}
     table.lotes-table tr.group-row td {
       padding-top: 9px;
-      padding-bottom: 7px;
+      padding-bottom: 10px;
+    }
+    table.lotes-table tr.group-row + tr.sub-lotes td {
+      padding-top: 8px;
     }
     table.lotes-table tr.group-block-end td {
       border: ${PDF_TABLE_BORDER_WIDTH} solid ${PDF_TABLE_LINE};
@@ -623,15 +626,43 @@ function pdfLotesExtrasStyles() {
     table.lotes-table tr.sub-lotes td {
       font-size: 10.5pt;
       color: ${PDF_MUTED};
-      padding-top: 3px;
-      padding-bottom: 14px;
-      line-height: 1.5;
+      padding-top: 4px;
+      padding-bottom: 18px;
+      line-height: 1.45;
       vertical-align: top;
       background-color: #ffffff;
     }
-    table.lotes-table tr.sub-lotes td.sub-lot-val {
-      color: ${PDF_ACCENT};
+    table.lotes-table tr.sub-lotes td.sub-lot-col {
+      padding-left: 10px;
+      padding-right: 10px;
+    }
+    table.lotes-table .sub-lote-row {
+      display: table;
+      width: 100%;
+      table-layout: fixed;
+      margin: 0 0 6px;
+    }
+    table.lotes-table .sub-lote-row:last-child {
+      margin-bottom: 0;
+    }
+    table.lotes-table .sub-lote-n,
+    table.lotes-table .sub-lote-v {
+      display: table-cell;
+      vertical-align: baseline;
+    }
+    table.lotes-table .sub-lote-n {
+      width: 42%;
+      text-align: left;
+      color: ${PDF_MUTED};
       font-weight: 600;
+      padding-right: 14px;
+    }
+    table.lotes-table .sub-lote-v {
+      width: 58%;
+      text-align: right;
+      color: ${PDF_ACCENT};
+      font-weight: 700;
+      padding-left: 8px;
     }
     table.lotes-table tr.section-small-header td {
       font-size: 10.5pt;
@@ -683,25 +714,31 @@ function pdfEscalonamentoExtrasStyles() {
   `;
 }
 
-function subLinhasValorLote({ n, alocTotal, isCimento, isForroPvc, smallPoolLead }) {
-  if (n == null || n <= 0) return '—';
-  if (isCimento) {
-    return Array.from(
-      { length: n },
-      (_, i) => `Lote ${i + 1}: R$ ${brl(LOTE_CIMENTO_RS)}`,
-    ).join('<br />');
-  }
-  if (isForroPvc) {
-    return `Lote 1: R$ ${brl(LOTE_FORRO_PVC_RS)}`;
-  }
-  if (smallPoolLead) {
-    return Array.from(
-      { length: n },
-      (_, i) => `Lote ${i + 1}: R$ ${brl(LOTE_PADRAO_RS)}`,
-    ).join('<br />');
-  }
-  const valorPorLote = Math.round((alocTotal / n) * 100) / 100;
-  return Array.from({ length: n }, (_, i) => `Lote ${i + 1}: R$ ${brl(valorPorLote)}`).join('<br />');
+function valorRsSubLinhaUnico({ n, alocTotal, isCimento, isForroPvc, smallPoolLead }) {
+  if (smallPoolLead) return LOTE_PADRAO_RS;
+  if (isForroPvc) return LOTE_FORRO_PVC_RS;
+  if (isCimento) return LOTE_CIMENTO_RS;
+  return Math.round((alocTotal / n) * 100) / 100;
+}
+
+/** Sublinha: apenas rótulo "Lote N" + valor R$ (sem sacos, notas ou qualificadores). */
+function itensSubLinhaLote({ n, alocTotal, isCimento, isForroPvc, smallPoolLead }) {
+  if (n == null || n <= 0) return [];
+  const unit = valorRsSubLinhaUnico({ n, alocTotal, isCimento, isForroPvc, smallPoolLead });
+  return Array.from({ length: n }, (_, i) => ({
+    label: `Lote ${i + 1}`,
+    valor: `R$ ${brl(unit)}`,
+  }));
+}
+
+function subLinhasLoteColunaHtml(itens) {
+  if (!itens.length) return '—';
+  return itens
+    .map(
+      (it) =>
+        `<div class="sub-lote-row"><span class="sub-lote-n">${esc(it.label)}</span><span class="sub-lote-v val-rs">${esc(it.valor)}</span></div>`,
+    )
+    .join('');
 }
 
 function buildHtmlLotes(lotes, prep) {
@@ -735,23 +772,20 @@ function buildHtmlLotes(lotes, prep) {
     if (mostraSub) {
       const nCons = r.comprasCons ?? 0;
       const nAgr = r.comprasAgr ?? 0;
-      const consSub = subLinhasValorLote({
-        n: r.comprasCons,
-        alocTotal: r.alocCons,
+      const optsSub = {
         isCimento,
         isForroPvc,
         smallPoolLead: Boolean(r.smallPoolLead),
-      });
-      const agrSub = subLinhasValorLote({
-        n: r.comprasAgr,
-        alocTotal: r.alocAgr,
-        isCimento,
-        isForroPvc,
-        smallPoolLead: Boolean(r.smallPoolLead),
-      });
+      };
+      const consSub = subLinhasLoteColunaHtml(
+        itensSubLinhaLote({ n: r.comprasCons, alocTotal: r.alocCons, ...optsSub }),
+      );
+      const agrSub = subLinhasLoteColunaHtml(
+        itensSubLinhaLote({ n: r.comprasAgr, alocTotal: r.alocAgr, ...optsSub }),
+      );
       if (nCons > 0 || nAgr > 0) {
         rows.push(
-          `<tr class="sub-lotes group-block-end"><td></td><td></td><td class="num sub-lot-val">${consSub}</td><td class="num sub-lot-val">${agrSub}</td></tr>`,
+          `<tr class="sub-lotes group-block-end"><td></td><td></td><td class="sub-lot-col">${consSub}</td><td class="sub-lot-col">${agrSub}</td></tr>`,
         );
       }
     }
@@ -784,7 +818,7 @@ function buildHtmlLotes(lotes, prep) {
     Alocação R$ ${brl(cimento?.alocCons ?? 0)} → ${cimento?.comprasCons ?? 0} compra(s) = ${cimento?.sacosCons ?? 0} sacos (≈ R$ ${brl(cimento?.valorPedidoCons ?? 0)} em pedidos).
     Alocação R$ ${brl(cimento?.alocAgr ?? 0)} → ${cimento?.comprasAgr ?? 0} compra(s) = ${cimento?.sacosAgr ?? 0} sacos (≈ R$ ${brl(cimento?.valorPedidoAgr ?? 0)}).
   </div>
-  <p class="note">Sublinhas sob cada grupo: divisão da alocação pelo nº de compras (ex.: argamassa 92k → 2 lotes com o mesmo valor). Cimento: lotes de ${LOTE_CIMENTO_SACOS} sacos. Itens menores: sublinha só na 1ª linha da secção (lote conjunto R$ ${brl(LOTE_PADRAO_RS)}).</p>
+  <p class="note">Sublinhas: só <strong>Lote N</strong> e o valor em R$ (colunas 92k e 120k), com rótulo à esquerda e valor à direita. Itens menores: sublinha na 1ª linha da secção.</p>
   <table class="study-table lotes-table">
     <colgroup>
       <col class="c-g" /><col class="c-p" /><col class="c-a" /><col class="c-a" />
