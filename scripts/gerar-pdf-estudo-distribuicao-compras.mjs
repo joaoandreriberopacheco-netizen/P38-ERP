@@ -592,12 +592,50 @@ function pdfLotesExtrasStyles() {
       color: ${PDF_MUTED};
       font-weight: 400;
     }
+    table.lotes-table tr.sub-lotes td {
+      font-size: 8pt;
+      color: ${PDF_MUTED};
+      padding-top: 2px;
+      padding-bottom: 7px;
+      line-height: 1.45;
+      vertical-align: top;
+      background-color: #ffffff;
+    }
+    table.lotes-table tr.sub-lotes td.sub-lot-val {
+      color: ${PDF_ACCENT};
+      font-weight: 600;
+    }
     col.c-g { width: 22%; }
     col.c-p { width: 7%; }
     col.c-a { width: 12%; }
     col.c-l { width: 21%; }
     col.c-n { width: 8%; }
   `;
+}
+
+function subLinhasValorLote({ n, alocTotal, isCimento, smallPoolLead, smallPoolSize }) {
+  if (n == null || n <= 0) return '—';
+  if (isCimento) {
+    return Array.from(
+      { length: n },
+      (_, i) => `Lote ${i + 1}: ${LOTE_CIMENTO_SACOS} sacos · R$ ${brl(LOTE_CIMENTO_RS)}`,
+    ).join('<br />');
+  }
+  if (smallPoolLead) {
+    const sufixo =
+      smallPoolSize > 0
+        ? ` <span class="lot-hint">(conjunto · ${smallPoolSize} grupos)</span>`
+        : '';
+    if (n === 1) {
+      return `Lote 1: R$ ${brl(LOTE_PADRAO_RS)}${sufixo}`;
+    }
+    return Array.from(
+      { length: n },
+      (_, i) => `Lote ${i + 1}: R$ ${brl(LOTE_PADRAO_RS)}`,
+    ).join('<br />') + sufixo;
+  }
+  const valorPorLote = Math.round((alocTotal / n) * 100) / 100;
+  return Array.from({ length: n }, (_, i) => `Lote ${i + 1}: R$ ${brl(valorPorLote)}`).join('<br />');
 }
 
 function buildHtmlLotes(lotes, prep) {
@@ -632,6 +670,32 @@ function buildHtmlLotes(lotes, prep) {
     rows.push(
       `<tr${trClass}><td>${esc(r.grupo)}</td><td class="num">${pctStr(r.pct)}</td><td class="num val-rs">${brl(r.alocCons)}</td><td class="num val-rs">${brl(r.alocAgr)}</td><td>${loteCell}</td><td class="num">${fmtComprasCell(r.comprasCons)}</td><td class="num">${fmtComprasCell(r.comprasAgr)}</td></tr>`,
     );
+
+    const mostraSub =
+      r.section !== 'small' || r.smallPoolLead;
+    if (mostraSub) {
+      const nCons = r.comprasCons ?? 0;
+      const nAgr = r.comprasAgr ?? 0;
+      const consSub = subLinhasValorLote({
+        n: r.comprasCons,
+        alocTotal: r.alocCons,
+        isCimento,
+        smallPoolLead: Boolean(r.smallPoolLead),
+        smallPoolSize: r.smallPoolSize ?? 0,
+      });
+      const agrSub = subLinhasValorLote({
+        n: r.comprasAgr,
+        alocTotal: r.alocAgr,
+        isCimento,
+        smallPoolLead: Boolean(r.smallPoolLead),
+        smallPoolSize: r.smallPoolSize ?? 0,
+      });
+      if (nCons > 0 || nAgr > 0) {
+        rows.push(
+          `<tr class="sub-lotes group-block-end"><td></td><td></td><td class="num sub-lot-val">${consSub}</td><td class="num sub-lot-val">${agrSub}</td><td colspan="3"></td></tr>`,
+        );
+      }
+    }
   }
   rows.push(
     `<tr class="total"><td><strong>TOTAL</strong></td><td class="num">—</td><td class="num val-rs"><strong>${brl(Math.round(somaAlocCons * 100) / 100)}</strong></td><td class="num val-rs"><strong>${brl(Math.round(somaAlocAgr * 100) / 100)}</strong></td><td>—</td><td class="num"><strong>${somaComprasCons}</strong></td><td class="num"><strong>${somaComprasAgr}</strong></td></tr>`,
@@ -661,7 +725,7 @@ function buildHtmlLotes(lotes, prep) {
     Alocação R$ ${brl(cimento?.alocCons ?? 0)} → ${cimento?.comprasCons ?? 0} compra(s) = ${cimento?.sacosCons ?? 0} sacos (≈ R$ ${brl(cimento?.valorPedidoCons ?? 0)} em pedidos).
     Alocação R$ ${brl(cimento?.alocAgr ?? 0)} → ${cimento?.comprasAgr ?? 0} compra(s) = ${cimento?.sacosAgr ?? 0} sacos (≈ R$ ${brl(cimento?.valorPedidoAgr ?? 0)}).
   </div>
-  <p class="note">Grupos principais (≥ ${LIMITE_ITENS_PEQUENOS_PCT}%): lote <strong>R$ ${brl(LOTE_PADRAO_RS)}</strong> por grupo (compras = teto da alocação ÷ 5.000). <strong>Itens menores</strong>: uma linha por grupo, mas <strong>um único lote conjunto</strong> de R$ ${brl(LOTE_PADRAO_RS)} por cenário (92k / 120k), contando a soma das alocações da secção.</p>
+  <p class="note">Sublinhas sob cada grupo: divisão da alocação pelo nº de compras (ex.: argamassa 92k → 2 lotes com o mesmo valor). Cimento: lotes de ${LOTE_CIMENTO_SACOS} sacos. Itens menores: sublinha só na 1ª linha da secção (lote conjunto R$ ${brl(LOTE_PADRAO_RS)}).</p>
   <table class="study-table lotes-table">
     <colgroup>
       <col class="c-g" /><col class="c-p" /><col class="c-a" /><col class="c-a" /><col class="c-l" /><col class="c-n" /><col class="c-n" />
