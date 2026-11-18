@@ -28,6 +28,8 @@ const AGRESSIVO = 120000;
 const LOTE_CIMENTO_RS = 13800;
 const LOTE_CIMENTO_SACOS = 320;
 const LOTE_PADRAO_RS = 5000;
+/** Diferença máxima aceitável antes de ajustar o último lote ao teto do cenário (R$ 92k / R$ 120k). */
+const TOLERANCIA_LOTE_RS = 1;
 /** Forro PVC — pedido único (não escala em rodadas extra). */
 const LOTE_FORRO_PVC_RS = 10000;
 const GRUPO_PISO = 'Piso e porcelanato';
@@ -679,14 +681,14 @@ function pdfEscalonamentoExtrasStyles() {
   return `
     body.escala-doc {
       font-family: ${pdfBarlowStack()};
-      font-size: 11.5pt;
-      line-height: 1.5;
+      font-size: 9pt;
+      line-height: 1.25;
       color: ${PDF_INK};
     }
-    body.escala-doc h1 { font-size: 14pt; margin: 0 0 10px; font-weight: 700; }
-    body.escala-doc .meta { font-size: 10.5pt; margin-bottom: 12px; }
-    body.escala-doc .note { font-size: 10pt; margin-bottom: 14px; color: ${PDF_MUTED}; }
-    body.escala-doc .foot { font-size: 9.5pt; margin-top: 14px; padding-top: 10px; }
+    body.escala-doc h1 { font-size: 11.5pt; margin: 0 0 4px; font-weight: 700; }
+    body.escala-doc .meta { font-size: 8pt; margin-bottom: 5px; line-height: 1.3; }
+    body.escala-doc .note { font-size: 7.5pt; margin-bottom: 6px; color: ${PDF_MUTED}; line-height: 1.3; }
+    body.escala-doc .foot { font-size: 7pt; margin-top: 6px; padding-top: 5px; }
     body.escala-doc .escala-title {
       font-size: 12pt;
       margin: 16px 0 8px;
@@ -694,14 +696,15 @@ function pdfEscalonamentoExtrasStyles() {
       font-weight: 700;
     }
   body.escala-doc .escala-title:first-of-type { margin-top: 8px; }
-    ${pdfResumoGlobalTableCss('table.escalonamento-table', 'spacious')}
+    ${pdfResumoGlobalTableCss('table.escalonamento-table', 'compact')}
+    table.escalonamento-table { margin: 4px 0 6px; }
     table.escalonamento-table tr.escala-row td {
-      padding-top: 7px;
-      padding-bottom: 7px;
+      padding-top: 2px;
+      padding-bottom: 2px;
     }
     table.escalonamento-table tr.escala-row td[rowspan] {
       vertical-align: top;
-      padding-top: 10px;
+      padding-top: 3px;
     }
     table.escalonamento-table col.c-r { width: 8%; }
     table.escalonamento-table col.c-g { width: 34%; }
@@ -714,20 +717,12 @@ function pdfEscalonamentoExtrasStyles() {
   `;
 }
 
-function valorRsSubLinhaUnico({ n, alocTotal, isCimento, isForroPvc, smallPoolLead }) {
-  if (smallPoolLead) return LOTE_PADRAO_RS;
-  if (isForroPvc) return LOTE_FORRO_PVC_RS;
-  if (isCimento) return LOTE_CIMENTO_RS;
-  return Math.round((alocTotal / n) * 100) / 100;
-}
-
 /** Sublinha: apenas rótulo "Lote N" + valor R$ (sem sacos, notas ou qualificadores). */
-function itensSubLinhaLote({ n, alocTotal, isCimento, isForroPvc, smallPoolLead }) {
-  if (n == null || n <= 0) return [];
-  const unit = valorRsSubLinhaUnico({ n, alocTotal, isCimento, isForroPvc, smallPoolLead });
-  return Array.from({ length: n }, (_, i) => ({
+function itensSubLinhaDeValores(lotesRs) {
+  if (!lotesRs?.length) return [];
+  return lotesRs.map((v, i) => ({
     label: `Lote ${i + 1}`,
-    valor: `R$ ${brl(unit)}`,
+    valor: `R$ ${brl(v)}`,
   }));
 }
 
@@ -767,27 +762,12 @@ function buildHtmlLotes(lotes, prep) {
       `<tr${trClass}><td>${grupoLabel}</td><td class="num">${pctStr(r.pct)}</td><td class="num val-rs">${brl(r.alocCons)}</td><td class="num val-rs">${brl(r.alocAgr)}</td></tr>`,
     );
 
-    const mostraSub =
-      r.section !== 'small' || r.smallPoolLead;
-    if (mostraSub) {
-      const nCons = r.comprasCons ?? 0;
-      const nAgr = r.comprasAgr ?? 0;
-      const optsSub = {
-        isCimento,
-        isForroPvc,
-        smallPoolLead: Boolean(r.smallPoolLead),
-      };
-      const consSub = subLinhasLoteColunaHtml(
-        itensSubLinhaLote({ n: r.comprasCons, alocTotal: r.alocCons, ...optsSub }),
+    const consSub = subLinhasLoteColunaHtml(itensSubLinhaDeValores(r.lotesCons));
+    const agrSub = subLinhasLoteColunaHtml(itensSubLinhaDeValores(r.lotesAgr));
+    if ((r.lotesCons?.length ?? 0) > 0 || (r.lotesAgr?.length ?? 0) > 0) {
+      rows.push(
+        `<tr class="sub-lotes group-block-end"><td></td><td></td><td class="sub-lot-col">${consSub}</td><td class="sub-lot-col">${agrSub}</td></tr>`,
       );
-      const agrSub = subLinhasLoteColunaHtml(
-        itensSubLinhaLote({ n: r.comprasAgr, alocTotal: r.alocAgr, ...optsSub }),
-      );
-      if (nCons > 0 || nAgr > 0) {
-        rows.push(
-          `<tr class="sub-lotes group-block-end"><td></td><td></td><td class="sub-lot-col">${consSub}</td><td class="sub-lot-col">${agrSub}</td></tr>`,
-        );
-      }
     }
   }
   rows.push(
@@ -879,15 +859,19 @@ async function renderPdfFromHtml(html, outPath, opts = {}) {
       }
       await (document.fonts?.ready ?? Promise.resolve());
     }, spaciousFonts);
-    const margin = spaciousFonts
-      ? { top: '10mm', bottom: '10mm', left: '8mm', right: '8mm' }
-      : { top: '8mm', bottom: '8mm', left: '6mm', right: '6mm' };
+    const compactOnePage = Boolean(opts.compactOnePage);
+    const margin = compactOnePage
+      ? { top: '5mm', bottom: '5mm', left: '5mm', right: '5mm' }
+      : spaciousFonts
+        ? { top: '10mm', bottom: '10mm', left: '8mm', right: '8mm' }
+        : { top: '8mm', bottom: '8mm', left: '6mm', right: '6mm' };
+  const scale = compactOnePage ? 0.88 : 1;
     await page.pdf({
       path: outPath,
       format: 'A4',
       printBackground: true,
       preferCSSPageSize: false,
-      scale: 1,
+      scale,
       margin,
       tagged: false,
     });
@@ -897,119 +881,123 @@ async function renderPdfFromHtml(html, outPath, opts = {}) {
   return outPath;
 }
 
-const LOTE_CONJUNTO_ITENS_PEQUENOS = `R$ ${brl(LOTE_PADRAO_RS)} (lote conjunto — itens menores)`;
+function roundMoney(v) {
+  return Math.round(v * 100) / 100;
+}
+
+function somaLotesRows(rows, field) {
+  let s = 0;
+  for (const r of rows) {
+    for (const v of r[field] ?? []) s += v;
+  }
+  return roundMoney(s);
+}
+
+/**
+ * Alocação &lt; tamanho do lote → um único lote com o valor total.
+ * Acima disso → lotes de ~tamanho fixo + resto no último.
+ */
+function dividirLotesAlocacao(aloc, modo) {
+  const alocR = roundMoney(aloc);
+  if (alocR <= 0) return [];
+  const tam =
+    modo === 'cimento' ? LOTE_CIMENTO_RS : modo === 'forro' ? LOTE_PADRAO_RS : LOTE_PADRAO_RS;
+  if (modo === 'forro' || alocR < tam - 1e-9) {
+    return [alocR];
+  }
+  const nFull = Math.floor(alocR / tam);
+  const rest = roundMoney(alocR - nFull * tam);
+  const lotes = Array.from({ length: nFull }, () => tam);
+  if (rest > 0.004) lotes.push(rest);
+  return lotes.map(roundMoney);
+}
+
+function modoLoteGrupo(nomeGrupo) {
+  if (nomeGrupo === 'Cimento Portland') return 'cimento';
+  if (nomeGrupo === GRUPO_FORRO_PVC) return 'forro';
+  return 'padrao';
+}
+
+/** Soma dos lotes deve bater o teto do cenário; ajusta o último lote do último grupo. */
+function validarEFecharTotaisLotes(rows, field, alvoRs) {
+  const soma = somaLotesRows(rows, field);
+  const diff = roundMoney(alvoRs - soma);
+  if (Math.abs(diff) <= 0.004) return { soma, alvo: alvoRs, ajuste: 0 };
+  if (Math.abs(diff) > TOLERANCIA_LOTE_RS) {
+    console.warn(
+      `[lotes] ${field}: soma R$ ${brl(soma)} vs alvo R$ ${brl(alvoRs)} (dif R$ ${brl(diff)}); ajustando último lote.`,
+    );
+  }
+  for (let i = rows.length - 1; i >= 0; i -= 1) {
+    const arr = rows[i][field];
+    if (arr?.length) {
+      arr[arr.length - 1] = roundMoney(arr[arr.length - 1] + diff);
+      break;
+    }
+  }
+  const somaFinal = somaLotesRows(rows, field);
+  return { soma: somaFinal, alvo: alvoRs, ajuste: diff };
+}
+
+function sincronizarMetaLotes(r) {
+  r.comprasCons = r.lotesCons?.length ?? 0;
+  r.comprasAgr = r.lotesAgr?.length ?? 0;
+  r.valorPedidoCons = somaLotesRows([r], 'lotesCons');
+  r.valorPedidoAgr = somaLotesRows([r], 'lotesAgr');
+  const isCimento = r.grupo === 'Cimento Portland';
+  r.sacosCons = isCimento ? r.comprasCons * LOTE_CIMENTO_SACOS : null;
+  r.sacosAgr = isCimento ? r.comprasAgr * LOTE_CIMENTO_SACOS : null;
+}
 
 function comprasPorLote(linhas) {
-  const ceilDiv = (valor, lote) => (valor <= 0 ? 0 : Math.ceil(valor / lote - 1e-9));
-
-  const smallLinhas = linhas.filter((r) => r.section === 'small');
-  const somaSmallCons = smallLinhas.reduce(
-    (s, r) => s + Math.round(((r.pctAloc ?? r.pct) / 100) * CONSERVADOR * 100) / 100,
-    0,
-  );
-  const somaSmallAgr = smallLinhas.reduce(
-    (s, r) => s + Math.round(((r.pctAloc ?? r.pct) / 100) * AGRESSIVO * 100) / 100,
-    0,
-  );
-  const poolComprasCons = smallLinhas.length > 0 ? ceilDiv(somaSmallCons, LOTE_PADRAO_RS) : 0;
-  const poolComprasAgr = smallLinhas.length > 0 ? ceilDiv(somaSmallAgr, LOTE_PADRAO_RS) : 0;
-
-  let primeroPequeno = true;
-
-  return linhas.map((row) => {
+  const rows = linhas.map((row) => {
     const pctAloc = row.pctAloc ?? row.pct;
-    const cons = Math.round((pctAloc / 100) * CONSERVADOR * 100) / 100;
-    const agr = Math.round((pctAloc / 100) * AGRESSIVO * 100) / 100;
+    const cons = roundMoney((pctAloc / 100) * CONSERVADOR);
+    const agr = roundMoney((pctAloc / 100) * AGRESSIVO);
     const isCimento = row.nome === 'Cimento Portland';
-
-    if (row.section === 'small') {
-      const exibeCompras = primeroPequeno;
-      primeroPequeno = false;
-      return {
-        grupo: row.nome,
-        pct: pctAloc,
-        section: 'small',
-        alocCons: cons,
-        alocAgr: agr,
-        lote: LOTE_CONJUNTO_ITENS_PEQUENOS,
-        comprasCons: exibeCompras ? poolComprasCons : null,
-        comprasAgr: exibeCompras ? poolComprasAgr : null,
-        smallPoolLead: exibeCompras,
-        smallPoolSize: smallLinhas.length,
-        valorPedidoCons: null,
-        valorPedidoAgr: null,
-        sacosCons: null,
-        sacosAgr: null,
-      };
-    }
-
-    const isForroPvc = row.nome === GRUPO_FORRO_PVC;
+    const modo = modoLoteGrupo(row.nome);
     const loteLabel = isCimento
       ? `${LOTE_CIMENTO_SACOS} sacos / R$ ${brl(LOTE_CIMENTO_RS)}`
-      : isForroPvc
-        ? `R$ ${brl(LOTE_FORRO_PVC_RS)} (pedido único)`
-        : `R$ ${brl(LOTE_PADRAO_RS)}`;
-    const loteRs = isCimento ? LOTE_CIMENTO_RS : isForroPvc ? LOTE_FORRO_PVC_RS : LOTE_PADRAO_RS;
-    let nCons = isForroPvc ? (cons > 0 ? 1 : 0) : ceilDiv(cons, loteRs);
-    let nAgr = isForroPvc ? (agr > 0 ? 1 : 0) : ceilDiv(agr, loteRs);
-    return {
+      : `R$ ${brl(LOTE_PADRAO_RS)} (lote único se alocação &lt; teto)`;
+
+    const rec = {
       grupo: row.nome,
       pct: pctAloc,
       section: row.section ?? 'main',
       alocCons: cons,
       alocAgr: agr,
       lote: loteLabel,
-      comprasCons: nCons,
-      comprasAgr: nAgr,
-      smallPoolLead: false,
-      valorPedidoCons: nCons * loteRs,
-      valorPedidoAgr: nAgr * loteRs,
-      sacosCons: isCimento ? nCons * LOTE_CIMENTO_SACOS : null,
-      sacosAgr: isCimento ? nAgr * LOTE_CIMENTO_SACOS : null,
+      lotesCons: dividirLotesAlocacao(cons, modo),
+      lotesAgr: dividirLotesAlocacao(agr, modo),
     };
+    sincronizarMetaLotes(rec);
+    return rec;
   });
+
+  const chkCons = validarEFecharTotaisLotes(rows, 'lotesCons', CONSERVADOR);
+  const chkAgr = validarEFecharTotaisLotes(rows, 'lotesAgr', AGRESSIVO);
+  rows.forEach(sincronizarMetaLotes);
+  if (Math.abs(chkCons.soma - CONSERVADOR) > 0.01 || Math.abs(chkAgr.soma - AGRESSIVO) > 0.01) {
+    console.warn('[lotes] Totais após ajuste ainda divergentes do cenário.');
+  }
+  return rows;
 }
 
 function fmtComprasCell(n) {
   return n == null ? '—' : String(n);
 }
 
-function comprasEfetivasGrupo(r, cenario) {
-  const isCons = cenario === 'cons';
-  let n = isCons ? (r.comprasCons ?? 0) : (r.comprasAgr ?? 0);
-  if (r.grupo === GRUPO_FORRO_PVC && n > 0) n = 1;
-  return n;
-}
-
-function valorRsLoteEscalonamento(r, cenario, nTotal) {
-  if (r.smallPoolLead) return `R$ ${brl(LOTE_PADRAO_RS)}`;
-  if (r.grupo === 'Cimento Portland') return `R$ ${brl(LOTE_CIMENTO_RS)}`;
-  if (r.grupo === GRUPO_FORRO_PVC) return `R$ ${brl(LOTE_FORRO_PVC_RS)}`;
-  if (nTotal <= 0) return null;
-  const aloc = cenario === 'cons' ? r.alocCons : r.alocAgr;
-  const v = Math.round((aloc / nTotal) * 100) / 100;
-  return `R$ ${brl(v)}`;
-}
-
-function labelGrupoEscalonamento(r) {
-  if (r.smallPoolLead) return LABEL_ITENS_PEQUENOS;
-  return r.grupo;
-}
-
 /** Rodada 1 = 1 lote de cada grupo (A–Z); depois só quem ainda tem lote; piso por último. */
 function montarEscalonamentoRodadas(lotes, cenario) {
+  const field = cenario === 'cons' ? 'lotesCons' : 'lotesAgr';
   const fila = [];
   for (const r of lotes) {
-    if (r.section === 'small' && !r.smallPoolLead) continue;
-    const n = comprasEfetivasGrupo(r, cenario);
-    if (n <= 0) continue;
-    const label = labelGrupoEscalonamento(r);
-    const isPiso = r.grupo === GRUPO_PISO;
-    const valorRs = valorRsLoteEscalonamento(r, cenario, n);
+    const valores = (r[field] ?? []).map((v) => `R$ ${brl(v)}`);
+    if (!valores.length) continue;
     fila.push({
-      label,
-      isPiso,
-      restantes: Array.from({ length: n }, () => valorRs),
+      label: r.grupo,
+      isPiso: r.grupo === GRUPO_PISO,
+      restantes: [...valores],
     });
   }
 
@@ -1135,18 +1123,29 @@ async function main() {
   async function writeEscalonamentoPdf() {
     const htmlEsc = buildHtmlEscalonamento(lotes, prep);
     writeFileSync(path.join(OUT_DIR, '_tmp-estudo-escalonamento-compras.html'), htmlEsc, 'utf8');
-    await renderPdfFromHtml(htmlEsc, OUT_PDF_ESCALONAMENTO, { spaciousFonts: true });
+    await renderPdfFromHtml(htmlEsc, OUT_PDF_ESCALONAMENTO, { compactOnePage: true });
     console.log(`[pdf] Escalonamento: ${OUT_PDF_ESCALONAMENTO}`);
-  }
-
-  if (onlyEscalonamento) {
-    await writeEscalonamentoPdf();
-    return;
+    try {
+      const { execFileSync } = await import('node:child_process');
+      const info = execFileSync('pdfinfo', [OUT_PDF_ESCALONAMENTO], { encoding: 'utf8' });
+      const m = info.match(/Pages:\s+(\d+)/);
+      if (m && Number(m[1]) > 1) {
+        console.warn(`[pdf] AVISO: escalonamento tem ${m[1]} página(s); esperado 1.`);
+      }
+    } catch {
+      /* pdfinfo opcional */
+    }
   }
 
   if (onlyLotes) {
     await writeLotesPdf();
-    return;
+    if (!onlyEscalonamento) return;
+  }
+
+  if (onlyEscalonamento) {
+    await writeEscalonamentoPdf();
+    if (onlyLotes) return;
+    if (onlyEscalonamento && !onlyLotes) return;
   }
 
   console.log(`[pdf] ${linhasCons.length} grupos + total = ${linhasCons.length + 1} linhas na tabela`);
