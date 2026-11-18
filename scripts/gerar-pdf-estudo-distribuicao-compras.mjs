@@ -418,32 +418,29 @@ function buildHtml(categorias) {
   const tintaCons = tintaRow ? alocacaoPar(tintaRow).c : Math.round((TINTA_DESTAQUE.pct / 100) * CONSERVADOR * 100) / 100;
   const tintaAgr = tintaRow ? alocacaoPar(tintaRow).a : Math.round((TINTA_DESTAQUE.pct / 100) * AGRESSIVO * 100) / 100;
 
-  const linhasAloc = [];
-  let somaCons = 0;
-  let somaAgr = 0;
+  const linhasTabela = [];
   let somaPct = 0;
+  let somaValor = 0;
 
   const pushDataRow = (row) => {
-    const { c, a } = alocacaoPar(row);
-    somaCons += c;
-    somaAgr += a;
-    somaPct += row.pctAloc;
+    somaPct += row.pctVendas;
+    somaValor += row.valor;
     const trClass = row.nome === 'Tinta' ? ' class="row-emphasis"' : '';
-    linhasAloc.push(
-      `<tr${trClass}><td>${esc(row.nome)}</td><td class="num">${pctStr(row.pctAloc)}</td><td class="num val-rs">${brl(c)}</td><td class="num val-rs">${brl(a)}</td></tr>`,
+    linhasTabela.push(
+      `<tr${trClass}><td>${esc(row.nome)}</td><td class="num">${pctStr(row.pctVendas)}</td><td class="num val-rs">${brl(row.valor)}</td></tr>`,
     );
   };
 
   for (const row of main) pushDataRow(row);
   if (small.length) {
-    linhasAloc.push(
-      `<tr class="section-small-header"><td colspan="4">Itens menores (&lt; ${LIMITE_ITENS_PEQUENOS_PCT}% vendas e satélites temáticos)</td></tr>`,
+    linhasTabela.push(
+      `<tr class="section-small-header"><td colspan="3">Itens menores (&lt; ${LIMITE_ITENS_PEQUENOS_PCT}% vendas e satélites temáticos)</td></tr>`,
     );
     for (const row of small) pushDataRow(row);
   }
 
-  linhasAloc.push(
-    `<tr class="total"><td><strong>TOTAL</strong></td><td class="num"><strong>${pctStr(Math.round(somaPct * 10) / 10)}</strong></td><td class="num val-rs"><strong>${brl(Math.round(somaCons * 100) / 100)}</strong></td><td class="num val-rs"><strong>${brl(Math.round(somaAgr * 100) / 100)}</strong></td></tr>`,
+  linhasTabela.push(
+    `<tr class="total"><td><strong>TOTAL</strong></td><td class="num"><strong>${pctStr(Math.round(somaPct * 10) / 10)}</strong></td><td class="num val-rs"><strong>${brl(Math.round(somaValor * 100) / 100)}</strong></td></tr>`,
   );
 
   return `<!DOCTYPE html>
@@ -473,13 +470,13 @@ function buildHtml(categorias) {
     compra sugerida <strong>R$ ${brl(tintaCons)}</strong> (92k) / <strong>R$ ${brl(tintaAgr)}</strong> (120k).
   <em>Sazonalidade:</em> reservar folga no orçamento; esmaltes/spray entram em &quot;Pintura — complementos&quot;.
   </div>
-  <p class="note">Alocação proporcional às vendas, com <strong>${esc(GRUPO_EXCLUIDO_ALOC)}</strong> excluído (${pctStr(blocoPct)} redistribuído). Blocos principais: ${main.length} linhas; itens menores: ${small.length} linhas (lote de compra conjunto no PDF de lotes). <strong>Ferramentas</strong> inclui linha de pedreiro e espátula.</p>
+  <p class="note">Vendas do período por grupo (${esc(GRUPO_EXCLUIDO_ALOC)} omitido da tabela e da alocação de compras — ${pctStr(blocoPct)} redistribuído no PDF de lotes). Blocos principais: ${main.length}; itens menores: ${small.length}. Alocação 92k/120k e contagem de lotes: ver PDF de lotes. <strong>Ferramentas</strong> inclui linha de pedreiro e espátula.</p>
   <table class="study-table distrib-table">
     <colgroup>
-      <col class="col-grupo" /><col class="col-pct" /><col class="col-val" /><col class="col-val" />
+      <col class="col-grupo" /><col class="col-pct" /><col class="col-val" />
     </colgroup>
-    <thead><tr><th>Grupo / categoria</th><th>% vendas</th><th>Compra R$ 92.000</th><th>Compra R$ 120.000</th></tr></thead>
-    <tbody>${linhasAloc.join('\n')}</tbody>
+    <thead><tr><th>Grupo / categoria</th><th>% vendas</th><th>Vendas (R$)</th></tr></thead>
+    <tbody>${linhasTabela.join('\n')}</tbody>
   </table>
   <p class="foot">
     Estudo apenas — não altera o sistema P38-ERP. Fonte: Supabase <code>pedido_venda_item</code> (sem cancelados/orçamentos).
@@ -573,9 +570,9 @@ function pdfDistribExtrasStyles() {
     }
     body.distrib-doc .foot { font-size: 8pt; margin-top: 10px; padding-top: 8px; }
     ${pdfResumoGlobalTableCss('table.distrib-table')}
-    col.col-grupo { width: 44%; }
-    col.col-pct { width: 14%; }
-    col.col-val { width: 21%; }
+    col.col-grupo { width: 52%; }
+    col.col-pct { width: 16%; }
+    col.col-val { width: 32%; }
   `;
 }
 
