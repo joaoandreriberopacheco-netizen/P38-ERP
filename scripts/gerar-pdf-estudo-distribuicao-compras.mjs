@@ -1137,16 +1137,11 @@ async function main() {
     }
   }
 
-  if (onlyLotes) {
-    await writeLotesPdf();
-    if (!onlyEscalonamento) return;
-  }
-
-  if (onlyEscalonamento) {
-    await writeEscalonamentoPdf();
-    if (onlyLotes) return;
-    if (onlyEscalonamento && !onlyLotes) return;
-  }
+  if (onlyLotes) await writeLotesPdf();
+  if (onlyEscalonamento) await writeEscalonamentoPdf();
+  if (onlyLotes && onlyEscalonamento) return;
+  if (onlyEscalonamento) return;
+  if (onlyLotes) return;
 
   console.log(`[pdf] ${linhasCons.length} grupos + total = ${linhasCons.length + 1} linhas na tabela`);
 
