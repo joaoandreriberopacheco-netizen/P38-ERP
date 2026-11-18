@@ -286,19 +286,26 @@ function EmbarqueListaCard({
 
               <p className={cn(
                 EMBARQUE_SUBTITLE,
-                'normal-case',
+                'normal-case !line-clamp-none',
                 displayStatus === 'Aprovado' && 'font-normal text-foreground/75',
               )}>
-                <span>{pedido._display_fornecedor || pedido.fornecedor_nome || '—'}</span>
+                <span className="line-clamp-2 block break-words">
+                  {pedido._display_fornecedor || pedido.fornecedor_nome || '—'}
+                </span>
                 {valorExibido != null && Number(valorExibido) !== 0 ? (
-                  <span className="text-foreground/80 tabular-nums whitespace-nowrap font-normal">
+                  <span className="text-foreground/80 tabular-nums whitespace-nowrap font-normal block mt-0.5 sm:hidden">
+                    {formatCaixaR(valorExibido)}
+                  </span>
+                ) : null}
+                {valorExibido != null && Number(valorExibido) !== 0 ? (
+                  <span className="hidden sm:inline text-foreground/80 tabular-nums whitespace-nowrap font-normal">
                     {' · '}
                     {formatCaixaR(valorExibido)}
                   </span>
                 ) : null}
               </p>
 
-              <div className="flex items-end justify-between gap-3 min-w-0">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between min-w-0">
               <div className="min-w-0 flex-1 space-y-1">
                 <div className="flex flex-wrap items-start gap-x-1.5 gap-y-1">
                   <div className="flex flex-col items-start gap-0.5 shrink-0">
@@ -329,7 +336,7 @@ function EmbarqueListaCard({
                 tone="neutral"
                 signed={false}
                 size="sm"
-                className="shrink-0"
+                className="shrink-0 hidden sm:inline-flex self-end"
               />
               </div>
             </div>
