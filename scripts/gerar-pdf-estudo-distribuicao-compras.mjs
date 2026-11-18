@@ -32,7 +32,7 @@ const LOTE_PADRAO_RS = 5000;
 const LOTE_FORRO_PVC_RS = 10000;
 const GRUPO_PISO = 'Piso e porcelanato';
 const GRUPO_FORRO_PVC = 'Forro PVC';
-const LABEL_ITENS_PEQUENOS = 'Itens menores (conjunto)';
+const LABEL_ITENS_PEQUENOS = 'Itens menores';
 /** Grupo fora da alocação de compra (partilha redistribuída nos demais). */
 const GRUPO_EXCLUIDO_ALOC = 'Bloco de concreto';
 /** Grupos com linha própria na secção de itens menores (&lt; 2% vendas ou lista fixa). */
@@ -672,9 +672,10 @@ function pdfEscalonamentoExtrasStyles() {
       vertical-align: top;
       padding-top: 10px;
     }
-    table.escalonamento-table col.c-r { width: 10%; }
-    table.escalonamento-table col.c-g { width: 44%; }
-    table.escalonamento-table col.c-v { width: 46%; }
+    table.escalonamento-table col.c-r { width: 8%; }
+    table.escalonamento-table col.c-g { width: 34%; }
+    table.escalonamento-table col.c-92 { width: 29%; }
+    table.escalonamento-table col.c-120 { width: 29%; }
     table.escalonamento-table td.sub-lot-val {
       font-weight: 600;
       color: ${PDF_ACCENT};
@@ -682,29 +683,22 @@ function pdfEscalonamentoExtrasStyles() {
   `;
 }
 
-function subLinhasValorLote({ n, alocTotal, isCimento, isForroPvc, smallPoolLead, smallPoolSize }) {
+function subLinhasValorLote({ n, alocTotal, isCimento, isForroPvc, smallPoolLead }) {
   if (n == null || n <= 0) return '—';
   if (isCimento) {
     return Array.from(
       { length: n },
-      (_, i) => `Lote ${i + 1}: ${LOTE_CIMENTO_SACOS} sacos · R$ ${brl(LOTE_CIMENTO_RS)}`,
+      (_, i) => `Lote ${i + 1}: R$ ${brl(LOTE_CIMENTO_RS)}`,
     ).join('<br />');
   }
   if (isForroPvc) {
-    return `Lote 1: R$ ${brl(LOTE_FORRO_PVC_RS)} (pedido único)`;
+    return `Lote 1: R$ ${brl(LOTE_FORRO_PVC_RS)}`;
   }
   if (smallPoolLead) {
-    const sufixo =
-      smallPoolSize > 0
-        ? ` <span class="lot-hint">(conjunto · ${smallPoolSize} grupos)</span>`
-        : '';
-    if (n === 1) {
-      return `Lote 1: R$ ${brl(LOTE_PADRAO_RS)}${sufixo}`;
-    }
     return Array.from(
       { length: n },
       (_, i) => `Lote ${i + 1}: R$ ${brl(LOTE_PADRAO_RS)}`,
-    ).join('<br />') + sufixo;
+    ).join('<br />');
   }
   const valorPorLote = Math.round((alocTotal / n) * 100) / 100;
   return Array.from({ length: n }, (_, i) => `Lote ${i + 1}: R$ ${brl(valorPorLote)}`).join('<br />');
@@ -730,10 +724,7 @@ function buildHtmlLotes(lotes, prep) {
     let trClass = ' class="group-row"';
     if (isCimento || r.grupo === 'Tinta') trClass = ' class="group-row row-emphasis"';
 
-    const grupoLabel =
-      r.smallPoolLead && r.smallPoolSize
-        ? `${esc(r.grupo)} <span class="lot-hint">(lote conjunto · ${r.smallPoolSize} grupos)</span>`
-        : esc(r.grupo);
+    const grupoLabel = esc(r.grupo);
 
     rows.push(
       `<tr${trClass}><td>${grupoLabel}</td><td class="num">${pctStr(r.pct)}</td><td class="num val-rs">${brl(r.alocCons)}</td><td class="num val-rs">${brl(r.alocAgr)}</td></tr>`,
@@ -750,7 +741,6 @@ function buildHtmlLotes(lotes, prep) {
         isCimento,
         isForroPvc,
         smallPoolLead: Boolean(r.smallPoolLead),
-        smallPoolSize: r.smallPoolSize ?? 0,
       });
       const agrSub = subLinhasValorLote({
         n: r.comprasAgr,
@@ -758,7 +748,6 @@ function buildHtmlLotes(lotes, prep) {
         isCimento,
         isForroPvc,
         smallPoolLead: Boolean(r.smallPoolLead),
-        smallPoolSize: r.smallPoolSize ?? 0,
       });
       if (nCons > 0 || nAgr > 0) {
         rows.push(
@@ -813,8 +802,6 @@ function buildHtmlLotes(lotes, prep) {
 }
 
 function buildHtmlEscalonamento(lotes, prep) {
-  const r92 = montarEscalonamentoRodadas(lotes, 'cons');
-  const r120 = montarEscalonamentoRodadas(lotes, 'agr');
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -832,9 +819,8 @@ function buildHtmlEscalonamento(lotes, prep) {
     <strong>Período de vendas:</strong> ${formatDateBr(DATA_INICIO)} a ${formatDateBr(DATA_FIM)} ·
     tetos <strong>R$ ${brl(CONSERVADOR)}</strong> (conservador) e <strong>R$ ${brl(AGRESSIVO)}</strong> (agressivo). <strong>${esc(GRUPO_EXCLUIDO_ALOC)}</strong> fora da alocação (${pctStr(prep?.blocoPct ?? 0)} redistribuído).
   </p>
-  <p class="note">Rodada 1: um lote de cada grupo (ordem alfabética). Rodadas seguintes: próximo lote dos grupos que ainda têm saldo. <strong>${esc(GRUPO_PISO)}</strong> só nas rodadas finais. <strong>${esc(GRUPO_FORRO_PVC)}</strong>: único lote R$ ${brl(LOTE_FORRO_PVC_RS)}. Itens menores: lote conjunto R$ ${brl(LOTE_PADRAO_RS)} por rodada enquanto houver saldo no pool.</p>
-  ${htmlTabelaEscalonamento(r92, `Cenário conservador — teto R$ ${brl(CONSERVADOR)}`)}
-  ${htmlTabelaEscalonamento(r120, `Cenário agressivo — teto R$ ${brl(AGRESSIVO)}`)}
+  <p class="note">Rodada 1: um lote de cada grupo (A–Z). Rodadas seguintes: próximo lote dos grupos com saldo. <strong>${esc(GRUPO_PISO)}</strong> só no final. Valores na grelha são só o montante em R$ do lote naquela rodada.</p>
+  ${htmlTabelaEscalonamentoUnificada(lotes)}
   <p class="foot">Estudo apenas — não altera o sistema P38-ERP. Gerado ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Rio_Branco' })}.</p>
 </body>
 </html>`;
@@ -961,17 +947,11 @@ function comprasEfetivasGrupo(r, cenario) {
   return n;
 }
 
-function textoLoteEscalonamento(r, cenario, nTotal) {
-  if (r.smallPoolLead) {
-    return `R$ ${brl(LOTE_PADRAO_RS)} (conjunto)`;
-  }
-  if (r.grupo === 'Cimento Portland') {
-    return `${LOTE_CIMENTO_SACOS} sacos · R$ ${brl(LOTE_CIMENTO_RS)}`;
-  }
-  if (r.grupo === GRUPO_FORRO_PVC) {
-    return `R$ ${brl(LOTE_FORRO_PVC_RS)} (pedido único)`;
-  }
-  if (nTotal <= 0) return '—';
+function valorRsLoteEscalonamento(r, cenario, nTotal) {
+  if (r.smallPoolLead) return `R$ ${brl(LOTE_PADRAO_RS)}`;
+  if (r.grupo === 'Cimento Portland') return `R$ ${brl(LOTE_CIMENTO_RS)}`;
+  if (r.grupo === GRUPO_FORRO_PVC) return `R$ ${brl(LOTE_FORRO_PVC_RS)}`;
+  if (nTotal <= 0) return null;
   const aloc = cenario === 'cons' ? r.alocCons : r.alocAgr;
   const v = Math.round((aloc / nTotal) * 100) / 100;
   return `R$ ${brl(v)}`;
@@ -989,13 +969,13 @@ function montarEscalonamentoRodadas(lotes, cenario) {
     if (r.section === 'small' && !r.smallPoolLead) continue;
     const n = comprasEfetivasGrupo(r, cenario);
     if (n <= 0) continue;
-    const texto = textoLoteEscalonamento(r, cenario, n);
     const label = labelGrupoEscalonamento(r);
     const isPiso = r.grupo === GRUPO_PISO;
+    const valorRs = valorRsLoteEscalonamento(r, cenario, n);
     fila.push({
       label,
       isPiso,
-      restantes: Array.from({ length: n }, () => texto),
+      restantes: Array.from({ length: n }, () => valorRs),
     });
   }
 
@@ -1012,7 +992,7 @@ function montarEscalonamentoRodadas(lotes, cenario) {
     const entradas = ativos.map((g) => ({
       grupo: g.label,
       valor: g.restantes.shift(),
-    }));
+    })).filter((e) => e.valor);
     rodadas.push({ numRodada, entradas });
     numRodada += 1;
   }
@@ -1030,28 +1010,58 @@ function montarEscalonamentoRodadas(lotes, cenario) {
   return rodadas;
 }
 
-function htmlTabelaEscalonamento(rodadas, tituloCenario) {
-  if (!rodadas.length) {
-    return `<p class="note">${esc(tituloCenario)}: sem compras previstas.</p>`;
-  }
-  const body = [];
-  for (const rod of rodadas) {
-    const n = rod.entradas.length;
-    rod.entradas.forEach((e, idx) => {
-      const rodadaCell =
-        idx === 0
-          ? `<td class="num" rowspan="${n}"><strong>${rod.numRodada}</strong></td>`
-          : '';
-      body.push(
-        `<tr class="escala-row">${rodadaCell}<td>${esc(e.grupo)}</td><td class="num sub-lot-val">${esc(e.valor)}</td></tr>`,
-      );
+function mesclarRodadasCenarios(rodadasCons, rodadasAgr) {
+  const maxRound = Math.max(
+    rodadasCons.at(-1)?.numRodada ?? 0,
+    rodadasAgr.at(-1)?.numRodada ?? 0,
+  );
+  const linhas = [];
+  for (let r = 1; r <= maxRound; r += 1) {
+    const entCons = rodadasCons.find((x) => x.numRodada === r)?.entradas ?? [];
+    const entAgr = rodadasAgr.find((x) => x.numRodada === r)?.entradas ?? [];
+    const grupos = [
+      ...new Set([...entCons.map((e) => e.grupo), ...entAgr.map((e) => e.grupo)]),
+    ].sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+    const mapCons = Object.fromEntries(entCons.map((e) => [e.grupo, e.valor]));
+    const mapAgr = Object.fromEntries(entAgr.map((e) => [e.grupo, e.valor]));
+    grupos.forEach((grupo, idx) => {
+      linhas.push({
+        numRodada: r,
+        rodadaRowspan: idx === 0 ? grupos.length : 0,
+        grupo,
+        valCons: mapCons[grupo] ?? null,
+        valAgr: mapAgr[grupo] ?? null,
+      });
     });
   }
+  return linhas;
+}
+
+function celulaValorLote(v) {
+  return v == null ? '—' : v;
+}
+
+function htmlTabelaEscalonamentoUnificada(lotes) {
+  const r92 = montarEscalonamentoRodadas(lotes, 'cons');
+  const r120 = montarEscalonamentoRodadas(lotes, 'agr');
+  const linhas = mesclarRodadasCenarios(r92, r120);
+  if (!linhas.length) {
+    return '<p class="note">Sem compras previstas para escalonamento.</p>';
+  }
+  const body = linhas.map((row) => {
+    const rodadaCell =
+      row.rodadaRowspan > 0
+        ? `<td class="num" rowspan="${row.rodadaRowspan}"><strong>${row.numRodada}</strong></td>`
+        : '';
+    return `<tr class="escala-row">${rodadaCell}<td>${esc(row.grupo)}</td><td class="num val-rs">${celulaValorLote(row.valCons)}</td><td class="num val-rs">${celulaValorLote(row.valAgr)}</td></tr>`;
+  });
   return `
-  <h3 class="escala-title">${esc(tituloCenario)}</h3>
   <table class="study-table escalonamento-table">
-    <colgroup><col class="c-r" /><col class="c-g" /><col class="c-v" /></colgroup>
-    <thead><tr><th>Rodada</th><th>Grupo</th><th>Lote desta rodada</th></tr></thead>
+    <colgroup><col class="c-r" /><col class="c-g" /><col class="c-92" /><col class="c-120" /></colgroup>
+    <thead><tr>
+      <th>Rodada</th><th>Grupo</th>
+      <th>Cenário A (R$ 92.000)</th><th>Cenário B (R$ 120.000)</th>
+    </tr></thead>
     <tbody>${body.join('\n')}</tbody>
   </table>`;
 }
