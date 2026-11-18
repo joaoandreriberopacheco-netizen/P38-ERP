@@ -21,7 +21,7 @@ import { cn } from '@/components/utils';
 import { comprasStatusBorderClass, getComprasDisplayStatusLabel, resolveComprasStatusConfig } from '@/lib/comprasEmbarquesPalette';
 import { ComprasRecebimentoDateChip } from '@/components/compras/ComprasStatusChip';
 import PedidoCompraCardMenu from '@/components/compras/PedidoCompraCardMenu';
-import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
+import CaixaValorDisplay, { formatCaixaR } from '@/components/vendas/caixa/CaixaValorDisplay';
 import { caixaTypo } from '@/lib/caixaP38Theme';
 
 import { COMPRAS_HIER_L1, COMPRAS_SEP } from '@/lib/comprasP38Theme';
@@ -252,7 +252,13 @@ function EmbarqueListaCard({
                 'normal-case',
                 displayStatus === 'Aprovado' && 'font-normal text-foreground/75',
               )}>
-                {pedido._display_fornecedor || pedido.fornecedor_nome || '—'}
+                <span>{pedido._display_fornecedor || pedido.fornecedor_nome || '—'}</span>
+                {valorExibido != null && Number(valorExibido) !== 0 ? (
+                  <span className="text-foreground/80 tabular-nums whitespace-nowrap font-normal">
+                    {' · '}
+                    {formatCaixaR(valorExibido)}
+                  </span>
+                ) : null}
               </p>
 
               <div className="flex items-end justify-between gap-3 min-w-0">
