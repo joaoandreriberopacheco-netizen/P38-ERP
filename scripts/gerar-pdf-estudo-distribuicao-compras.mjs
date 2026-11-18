@@ -605,11 +605,10 @@ function pdfLotesExtrasStyles() {
       color: ${PDF_ACCENT};
       font-weight: 600;
     }
-    col.c-g { width: 22%; }
-    col.c-p { width: 7%; }
-    col.c-a { width: 12%; }
-    col.c-l { width: 21%; }
-    col.c-n { width: 8%; }
+    col.c-g { width: 28%; }
+    col.c-p { width: 9%; }
+    col.c-a { width: 14%; }
+    col.c-n { width: 9%; }
   `;
 }
 
@@ -649,7 +648,7 @@ function buildHtmlLotes(lotes, prep) {
     const section = r.section ?? 'main';
     if (section === 'small' && prevSection !== 'small') {
       rows.push(
-        `<tr class="section-small-header"><td colspan="7">Itens menores (&lt; ${LIMITE_ITENS_PEQUENOS_PCT}% vendas e satélites temáticos)</td></tr>`,
+        `<tr class="section-small-header"><td colspan="6">Itens menores (&lt; ${LIMITE_ITENS_PEQUENOS_PCT}% vendas e satélites temáticos)</td></tr>`,
       );
     }
     prevSection = section;
@@ -661,14 +660,13 @@ function buildHtmlLotes(lotes, prep) {
     let trClass = ' class="group-row"';
     if (isCimento || r.grupo === 'Tinta') trClass = ' class="group-row row-emphasis"';
 
-    const obsLote =
+    const grupoLabel =
       r.smallPoolLead && r.smallPoolSize
-        ? ` <span class="lot-hint">(lote conjunto ×${r.smallPoolSize} grupos)</span>`
-        : '';
-    const loteCell = `${esc(r.lote)}${obsLote}`;
+        ? `${esc(r.grupo)} <span class="lot-hint">(lote conjunto · ${r.smallPoolSize} grupos)</span>`
+        : esc(r.grupo);
 
     rows.push(
-      `<tr${trClass}><td>${esc(r.grupo)}</td><td class="num">${pctStr(r.pct)}</td><td class="num val-rs">${brl(r.alocCons)}</td><td class="num val-rs">${brl(r.alocAgr)}</td><td>${loteCell}</td><td class="num">${fmtComprasCell(r.comprasCons)}</td><td class="num">${fmtComprasCell(r.comprasAgr)}</td></tr>`,
+      `<tr${trClass}><td>${grupoLabel}</td><td class="num">${pctStr(r.pct)}</td><td class="num val-rs">${brl(r.alocCons)}</td><td class="num val-rs">${brl(r.alocAgr)}</td><td class="num">${fmtComprasCell(r.comprasCons)}</td><td class="num">${fmtComprasCell(r.comprasAgr)}</td></tr>`,
     );
 
     const mostraSub =
@@ -692,13 +690,13 @@ function buildHtmlLotes(lotes, prep) {
       });
       if (nCons > 0 || nAgr > 0) {
         rows.push(
-          `<tr class="sub-lotes group-block-end"><td></td><td></td><td class="num sub-lot-val">${consSub}</td><td class="num sub-lot-val">${agrSub}</td><td colspan="3"></td></tr>`,
+          `<tr class="sub-lotes group-block-end"><td></td><td></td><td class="num sub-lot-val">${consSub}</td><td class="num sub-lot-val">${agrSub}</td><td colspan="2"></td></tr>`,
         );
       }
     }
   }
   rows.push(
-    `<tr class="total"><td><strong>TOTAL</strong></td><td class="num">—</td><td class="num val-rs"><strong>${brl(Math.round(somaAlocCons * 100) / 100)}</strong></td><td class="num val-rs"><strong>${brl(Math.round(somaAlocAgr * 100) / 100)}</strong></td><td>—</td><td class="num"><strong>${somaComprasCons}</strong></td><td class="num"><strong>${somaComprasAgr}</strong></td></tr>`,
+    `<tr class="total"><td><strong>TOTAL</strong></td><td class="num">—</td><td class="num val-rs"><strong>${brl(Math.round(somaAlocCons * 100) / 100)}</strong></td><td class="num val-rs"><strong>${brl(Math.round(somaAlocAgr * 100) / 100)}</strong></td><td class="num"><strong>${somaComprasCons}</strong></td><td class="num"><strong>${somaComprasAgr}</strong></td></tr>`,
   );
 
   const cimento = lotes.find((r) => r.grupo === 'Cimento Portland');
@@ -728,11 +726,11 @@ function buildHtmlLotes(lotes, prep) {
   <p class="note">Sublinhas sob cada grupo: divisão da alocação pelo nº de compras (ex.: argamassa 92k → 2 lotes com o mesmo valor). Cimento: lotes de ${LOTE_CIMENTO_SACOS} sacos. Itens menores: sublinha só na 1ª linha da secção (lote conjunto R$ ${brl(LOTE_PADRAO_RS)}).</p>
   <table class="study-table lotes-table">
     <colgroup>
-      <col class="c-g" /><col class="c-p" /><col class="c-a" /><col class="c-a" /><col class="c-l" /><col class="c-n" /><col class="c-n" />
+      <col class="c-g" /><col class="c-p" /><col class="c-a" /><col class="c-a" /><col class="c-n" /><col class="c-n" />
     </colgroup>
     <thead>
       <tr>
-        <th>Grupo</th><th>% aloc.</th><th>Alocação R$ 92.000</th><th>Alocação R$ 120.000</th><th>Tamanho do lote</th><th>Nº compras 92k</th><th>Nº compras 120k</th>
+        <th>Grupo</th><th>% aloc.</th><th>Alocação R$ 92.000</th><th>Alocação R$ 120.000</th><th>Nº compras 92k</th><th>Nº compras 120k</th>
       </tr>
     </thead>
     <tbody>${rows.join('\n')}</tbody>
