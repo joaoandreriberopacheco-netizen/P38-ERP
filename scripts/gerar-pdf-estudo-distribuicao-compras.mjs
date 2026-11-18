@@ -2,6 +2,9 @@
 /**
  * Gera PDF do estudo de distribuição de compras (one-off / relatório).
  * Uso: node scripts/gerar-pdf-estudo-distribuicao-compras.mjs
+ *       node scripts/gerar-pdf-estudo-distribuicao-compras.mjs --lotes-pdf
+ *       node scripts/gerar-pdf-estudo-distribuicao-compras.mjs --escalonamento-pdf
+ *       node scripts/gerar-pdf-estudo-distribuicao-compras.mjs --distrib-pdf
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -14,6 +17,7 @@ const ROOT = path.resolve(__dirname, '..');
 const OUT_DIR = path.join(ROOT, 'docs/exports');
 const OUT_PDF = path.join(OUT_DIR, 'P38-estudo-distribuicao-compras-2026-10-11.pdf');
 const OUT_PDF_LOTES = path.join(OUT_DIR, 'P38-estudo-lotes-compras-2026-10-11.pdf');
+const OUT_PDF_ESCALONAMENTO = path.join(OUT_DIR, 'P38-estudo-escalonamento-compras-2026-10-11.pdf');
 
 const DATA_INICIO = '2026-10-01';
 const DATA_FIM = '2026-11-18';
@@ -508,33 +512,38 @@ function formatDateBr(iso) {
 }
 
 /** Grade completa estilo Resumo global de estoque (distrib + lotes). */
-function pdfResumoGlobalTableCss(tableSelector) {
+function pdfResumoGlobalTableCss(tableSelector, density = 'compact') {
   const font = pdfBarlowStack();
+  const spacious = density === 'spacious';
+  const bodyPt = spacious ? 11.5 : 9;
+  const headPt = spacious ? 12.5 : 9;
+  const padCell = spacious ? '8px 8px' : '4px 6px';
+  const padHead = spacious ? '9px 8px' : '5px 6px';
+  const lineHeight = spacious ? 1.45 : 1.25;
   return `
     ${tableSelector} {
       border-collapse: collapse;
-      margin: 8px 0 12px;
+      margin: ${spacious ? '10px 0 16px' : '8px 0 12px'};
       font-family: ${font};
     }
     ${tableSelector} th,
     ${tableSelector} td {
       border: ${PDF_TABLE_BORDER_WIDTH} solid ${PDF_TABLE_LINE};
-      padding: 4px 6px;
-      font-size: 9pt;
+      padding: ${padCell};
+      font-size: ${bodyPt}pt;
       vertical-align: middle;
       background-color: #ffffff;
       color: ${PDF_INK};
       word-wrap: break-word;
-      line-height: 1.25;
+      line-height: ${lineHeight};
     }
     ${tableSelector} thead th {
-      font-size: 9pt;
+      font-size: ${headPt}pt;
       font-weight: 700;
       color: ${PDF_MUTED};
       text-transform: uppercase;
       letter-spacing: 0.02em;
-      padding-top: 5px;
-      padding-bottom: 5px;
+      padding: ${padHead};
     }
     ${tableSelector} td.val-rs {
       color: ${PDF_ACCENT};
@@ -586,26 +595,37 @@ function pdfDistribExtrasStyles() {
 
 function pdfLotesExtrasStyles() {
   return `
-    body.lotes-doc { font-size: 10pt; line-height: 1.4; }
-    body.lotes-doc .meta { font-size: 9pt; margin-bottom: 10px; }
-    body.lotes-doc .note { font-size: 8.5pt; margin-bottom: 10px; }
-    body.lotes-doc .callout { padding: 8px 10px; font-size: 8.5pt; margin-bottom: 10px; }
-    ${pdfResumoGlobalTableCss('table.lotes-table')}
+    body.lotes-doc {
+      font-family: ${pdfBarlowStack()};
+      font-size: 11.5pt;
+      line-height: 1.5;
+      color: ${PDF_INK};
+    }
+    body.lotes-doc h1 { font-size: 14pt; margin: 0 0 10px; font-weight: 700; color: ${PDF_INK}; }
+    body.lotes-doc .meta { font-size: 10.5pt; margin-bottom: 12px; color: ${PDF_INK}; }
+    body.lotes-doc .note { font-size: 10pt; margin-bottom: 12px; color: ${PDF_MUTED}; }
+    body.lotes-doc .callout { padding: 10px 12px; font-size: 10pt; margin-bottom: 12px; line-height: 1.45; }
+    body.lotes-doc .foot { font-size: 9.5pt; margin-top: 14px; padding-top: 10px; }
+    ${pdfResumoGlobalTableCss('table.lotes-table', 'spacious')}
+    table.lotes-table tr.group-row td {
+      padding-top: 9px;
+      padding-bottom: 7px;
+    }
     table.lotes-table tr.group-block-end td {
       border: ${PDF_TABLE_BORDER_WIDTH} solid ${PDF_TABLE_LINE};
-      padding-bottom: 8px;
+      padding-bottom: 10px;
     }
     table.lotes-table .lot-hint {
-      font-size: 8pt;
+      font-size: 9.5pt;
       color: ${PDF_MUTED};
       font-weight: 400;
     }
     table.lotes-table tr.sub-lotes td {
-      font-size: 8pt;
+      font-size: 10.5pt;
       color: ${PDF_MUTED};
-      padding-top: 2px;
-      padding-bottom: 7px;
-      line-height: 1.45;
+      padding-top: 3px;
+      padding-bottom: 14px;
+      line-height: 1.5;
       vertical-align: top;
       background-color: #ffffff;
     }
@@ -613,17 +633,52 @@ function pdfLotesExtrasStyles() {
       color: ${PDF_ACCENT};
       font-weight: 600;
     }
+    table.lotes-table tr.section-small-header td {
+      font-size: 10.5pt;
+      padding-top: 10px;
+      padding-bottom: 8px;
+    }
     col.c-g { width: 34%; }
     col.c-p { width: 12%; }
     col.c-a { width: 27%; }
-    body.lotes-doc .escalonamento-block { margin-top: 14px; page-break-before: auto; }
-    body.lotes-doc .escala-h2 { font-size: 11.5pt; margin: 12px 0 6px; color: ${PDF_INK}; }
-    body.lotes-doc .escala-title { font-size: 10pt; margin: 10px 0 4px; color: ${PDF_INK}; font-weight: 700; }
-    ${pdfResumoGlobalTableCss('table.escalonamento-table')}
+  `;
+}
+
+function pdfEscalonamentoExtrasStyles() {
+  return `
+    body.escala-doc {
+      font-family: ${pdfBarlowStack()};
+      font-size: 11.5pt;
+      line-height: 1.5;
+      color: ${PDF_INK};
+    }
+    body.escala-doc h1 { font-size: 14pt; margin: 0 0 10px; font-weight: 700; }
+    body.escala-doc .meta { font-size: 10.5pt; margin-bottom: 12px; }
+    body.escala-doc .note { font-size: 10pt; margin-bottom: 14px; color: ${PDF_MUTED}; }
+    body.escala-doc .foot { font-size: 9.5pt; margin-top: 14px; padding-top: 10px; }
+    body.escala-doc .escala-title {
+      font-size: 12pt;
+      margin: 16px 0 8px;
+      color: ${PDF_INK};
+      font-weight: 700;
+    }
+  body.escala-doc .escala-title:first-of-type { margin-top: 8px; }
+    ${pdfResumoGlobalTableCss('table.escalonamento-table', 'spacious')}
+    table.escalonamento-table tr.escala-row td {
+      padding-top: 7px;
+      padding-bottom: 7px;
+    }
+    table.escalonamento-table tr.escala-row td[rowspan] {
+      vertical-align: top;
+      padding-top: 10px;
+    }
     table.escalonamento-table col.c-r { width: 10%; }
     table.escalonamento-table col.c-g { width: 44%; }
     table.escalonamento-table col.c-v { width: 46%; }
-    table.escalonamento-table td.sub-lot-val { font-weight: 600; color: ${PDF_ACCENT}; }
+    table.escalonamento-table td.sub-lot-val {
+      font-weight: 600;
+      color: ${PDF_ACCENT};
+    }
   `;
 }
 
@@ -752,36 +807,68 @@ function buildHtmlLotes(lotes, prep) {
     </thead>
     <tbody>${rows.join('\n')}</tbody>
   </table>
-  ${htmlApendiceEscalonamento(lotes)}
+  <p class="foot">Estudo apenas — não altera o sistema P38-ERP. Escalonamento por rodada: PDF <code>P38-estudo-escalonamento-compras-2026-10-11.pdf</code>. Gerado ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Rio_Branco' })}.</p>
+</body>
+</html>`;
+}
+
+function buildHtmlEscalonamento(lotes, prep) {
+  const r92 = montarEscalonamentoRodadas(lotes, 'cons');
+  const r120 = montarEscalonamentoRodadas(lotes, 'agr');
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Estudo — Escalonamento de Compras</title>
+  ${pdfBarlowFontLink()}
+  <style>
+    ${pdfStudyStyles()}
+    ${pdfEscalonamentoExtrasStyles()}
+  </style>
+</head>
+<body class="escala-doc">
+  <h1>Escalonamento por rodada</h1>
+  <p class="meta">
+    <strong>Período de vendas:</strong> ${formatDateBr(DATA_INICIO)} a ${formatDateBr(DATA_FIM)} ·
+    tetos <strong>R$ ${brl(CONSERVADOR)}</strong> (conservador) e <strong>R$ ${brl(AGRESSIVO)}</strong> (agressivo). <strong>${esc(GRUPO_EXCLUIDO_ALOC)}</strong> fora da alocação (${pctStr(prep?.blocoPct ?? 0)} redistribuído).
+  </p>
+  <p class="note">Rodada 1: um lote de cada grupo (ordem alfabética). Rodadas seguintes: próximo lote dos grupos que ainda têm saldo. <strong>${esc(GRUPO_PISO)}</strong> só nas rodadas finais. <strong>${esc(GRUPO_FORRO_PVC)}</strong>: único lote R$ ${brl(LOTE_FORRO_PVC_RS)}. Itens menores: lote conjunto R$ ${brl(LOTE_PADRAO_RS)} por rodada enquanto houver saldo no pool.</p>
+  ${htmlTabelaEscalonamento(r92, `Cenário conservador — teto R$ ${brl(CONSERVADOR)}`)}
+  ${htmlTabelaEscalonamento(r120, `Cenário agressivo — teto R$ ${brl(AGRESSIVO)}`)}
   <p class="foot">Estudo apenas — não altera o sistema P38-ERP. Gerado ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Rio_Branco' })}.</p>
 </body>
 </html>`;
 }
 
-async function renderPdfFromHtml(html, outPath) {
+async function renderPdfFromHtml(html, outPath, opts = {}) {
   mkdirSync(OUT_DIR, { recursive: true });
   const browser = await chromium.launch({ headless: true });
   try {
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'load', timeout: 30_000 });
     await page.emulateMedia({ media: 'print' });
-    await page.evaluate(async () => {
+    const spaciousFonts = Boolean(opts.spaciousFonts);
+    await page.evaluate(async (spacious) => {
       const stack = 'Barlow, sans-serif';
       try {
-        await document.fonts.load(`400 9pt ${stack}`);
-        await document.fonts.load(`700 9pt ${stack}`);
+        const pt = spacious ? 11.5 : 9;
+        await document.fonts.load(`400 ${pt}pt ${stack}`);
+        await document.fonts.load(`700 ${spacious ? 12.5 : 9}pt ${stack}`);
       } catch {
         /* fallback */
       }
       await (document.fonts?.ready ?? Promise.resolve());
-    });
+    }, spaciousFonts);
+    const margin = spaciousFonts
+      ? { top: '10mm', bottom: '10mm', left: '8mm', right: '8mm' }
+      : { top: '8mm', bottom: '8mm', left: '6mm', right: '6mm' };
     await page.pdf({
       path: outPath,
       format: 'A4',
       printBackground: true,
       preferCSSPageSize: false,
       scale: 1,
-      margin: { top: '8mm', bottom: '8mm', left: '6mm', right: '6mm' },
+      margin,
       tagged: false,
     });
   } finally {
@@ -969,18 +1056,6 @@ function htmlTabelaEscalonamento(rodadas, tituloCenario) {
   </table>`;
 }
 
-function htmlApendiceEscalonamento(lotes) {
-  const r92 = montarEscalonamentoRodadas(lotes, 'cons');
-  const r120 = montarEscalonamentoRodadas(lotes, 'agr');
-  return `
-  <div class="escalonamento-block">
-    <h2 class="escala-h2">Apêndice — Escalonamento por rodada</h2>
-    <p class="note">Rodada 1: um lote de cada grupo (ordem alfabética). Rodadas seguintes: próximo lote dos grupos que ainda têm saldo. <strong>${esc(GRUPO_PISO)}</strong> só nas rodadas finais. <strong>${esc(GRUPO_FORRO_PVC)}</strong>: único lote R$ ${brl(LOTE_FORRO_PVC_RS)}. Itens menores: um lote conjunto R$ ${brl(LOTE_PADRAO_RS)} por rodada em que o pool ainda tiver saldo.</p>
-    ${htmlTabelaEscalonamento(r92, `Cenário conservador — teto R$ ${brl(CONSERVADOR)}`)}
-    ${htmlTabelaEscalonamento(r120, `Cenário agressivo — teto R$ ${brl(AGRESSIVO)}`)}
-  </div>`;
-}
-
 function linhasParaEstudo(categorias) {
   return prepararLinhasAlocacao(consolidarParaTabela(categorias));
 }
@@ -995,6 +1070,7 @@ async function main() {
   }
 
   const onlyLotes = process.argv.includes('--lotes-pdf');
+  const onlyEscalonamento = process.argv.includes('--escalonamento-pdf');
   const onlyDistrib = process.argv.includes('--distrib-pdf');
 
   console.log('[pdf] Carregando vendas Supabase…');
@@ -1005,11 +1081,27 @@ async function main() {
   const linhasCons = prep.ordered;
   const lotes = comprasPorLote(linhasCons);
 
-  if (onlyLotes) {
+  async function writeLotesPdf() {
     const htmlLotes = buildHtmlLotes(lotes, prep);
     writeFileSync(path.join(OUT_DIR, '_tmp-estudo-lotes-compras.html'), htmlLotes, 'utf8');
-    await renderPdfFromHtml(htmlLotes, OUT_PDF_LOTES);
-    console.log(`[pdf] Salvo: ${OUT_PDF_LOTES} (${lotes.length} grupos + total pedidos)`);
+    await renderPdfFromHtml(htmlLotes, OUT_PDF_LOTES, { spaciousFonts: true });
+    console.log(`[pdf] Lotes: ${OUT_PDF_LOTES} (${lotes.length} grupos)`);
+  }
+
+  async function writeEscalonamentoPdf() {
+    const htmlEsc = buildHtmlEscalonamento(lotes, prep);
+    writeFileSync(path.join(OUT_DIR, '_tmp-estudo-escalonamento-compras.html'), htmlEsc, 'utf8');
+    await renderPdfFromHtml(htmlEsc, OUT_PDF_ESCALONAMENTO, { spaciousFonts: true });
+    console.log(`[pdf] Escalonamento: ${OUT_PDF_ESCALONAMENTO}`);
+  }
+
+  if (onlyEscalonamento) {
+    await writeEscalonamentoPdf();
+    return;
+  }
+
+  if (onlyLotes) {
+    await writeLotesPdf();
     return;
   }
 
@@ -1023,10 +1115,8 @@ async function main() {
 
   if (onlyDistrib) return;
 
-  const htmlLotes = buildHtmlLotes(lotes, prep);
-  writeFileSync(path.join(OUT_DIR, '_tmp-estudo-lotes-compras.html'), htmlLotes, 'utf8');
-  await renderPdfFromHtml(htmlLotes, OUT_PDF_LOTES);
-  console.log(`[pdf] Lotes: ${OUT_PDF_LOTES}`);
+  await writeLotesPdf();
+  await writeEscalonamentoPdf();
 
   let pages = null;
   try {
