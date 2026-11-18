@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { formatarDataCurta } from '@/components/utils/dateUtils';
-import { ChevronDown, Trash2, Check, Package2, CalendarClock } from 'lucide-react';
+import { ChevronDown, Trash2, Check, Package2, CalendarClock, Copy, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { formatQuantity } from '@/lib/financialUtils';
 import { formatCommercialQuantity } from '@/lib/productUnits';
@@ -23,6 +23,8 @@ import { ComprasRecebimentoDateChip } from '@/components/compras/ComprasStatusCh
 import PedidoCompraCardMenu from '@/components/compras/PedidoCompraCardMenu';
 import CaixaValorDisplay, { formatCaixaR } from '@/components/vendas/caixa/CaixaValorDisplay';
 import { caixaTypo } from '@/lib/caixaP38Theme';
+import { duplicarPedidoCompra } from '@/lib/duplicarPedidoCompra';
+import { toast } from 'sonner';
 
 import { COMPRAS_HIER_L1, COMPRAS_SEP } from '@/lib/comprasP38Theme';
 
@@ -149,6 +151,7 @@ function EmbarqueListaCard({
   pedido,
   onEdit,
   onDelete,
+  onDuplicated,
   selecionado,
   desabilitadoSelecao,
   onToggleSelecao,
@@ -157,6 +160,7 @@ function EmbarqueListaCard({
 }) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [duplicando, setDuplicando] = useState(false);
   const {
     displayStatus,
     displayStatusLabel,
@@ -180,6 +184,25 @@ function EmbarqueListaCard({
       return;
     }
     onEdit(pedido);
+  };
+
+  const handleDuplicar = async (event) => {
+    event.stopPropagation();
+    if (duplicando || !pedido?.id) return;
+    setDuplicando(true);
+    try {
+      const novo = await duplicarPedidoCompra(base44, pedido.id);
+      toast.success('Pedido duplicado', {
+        description: `${novo.numero} criado em rascunho.`,
+      });
+      onDuplicated?.(novo);
+    } catch (error) {
+      toast.error('Não foi possível duplicar', {
+        description: error?.message || 'Tente novamente.',
+      });
+    } finally {
+      setDuplicando(false);
+    }
   };
 
   return (
@@ -229,6 +252,20 @@ function EmbarqueListaCard({
                 )}>{codigo}</p>
                 {!modoSelecao ? (
                   <div className="flex items-center shrink-0 -mr-0.5">
+                    <button
+                      type="button"
+                      onClick={handleDuplicar}
+                      disabled={duplicando}
+                      className="h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/40 shrink-0 touch-manipulation"
+                      aria-label="Duplicar pedido"
+                      title="Duplicar pedido (rascunho)"
+                    >
+                      {duplicando ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5" />
+                      )}
+                    </button>
                     <PedidoCompraCardMenu
                       pedidoId={pedido.id}
                       pedidoNumero={pedido.numero}
@@ -320,7 +357,7 @@ function EmbarqueListaCard({
   );
 }
 
-function GrupoDia({ label, groupDate, groupCarrier, pedidos, onEdit, onDelete, selecionadosIds, onToggleSelecao, modoSelecao, className = '', _total_eta = 0 }) {
+function GrupoDia({ label, groupDate, groupCarrier, pedidos, onEdit, onDelete, onDuplicated, selecionadosIds, onToggleSelecao, modoSelecao, className = '', _total_eta = 0 }) {
   const [open, setOpen] = useState(true);
   const hasStructuredHeader = groupDate != null && groupCarrier != null;
   const headerTextClass = 'text-sm font-light text-foreground/85 leading-relaxed';
@@ -382,6 +419,7 @@ function GrupoDia({ label, groupDate, groupCarrier, pedidos, onEdit, onDelete, s
               pedido={p}
               onEdit={onEdit}
               onDelete={onDelete}
+              onDuplicated={onDuplicated}
               modoSelecao={modoSelecao}
               selecionado={selecionadosIds.includes(p.id)}
               desabilitadoSelecao={!pedidoSelecionavelEnvioFinanceiroLote(p)}
@@ -395,7 +433,7 @@ function GrupoDia({ label, groupDate, groupCarrier, pedidos, onEdit, onDelete, s
   );
 }
 
-export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete, selecionadosIds = [], onToggleSelecao, modoSelecao = false }) {
+export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete, onDuplicated, selecionadosIds = [], onToggleSelecao, modoSelecao = false }) {
   if (loading) {
     return (
       <div className="space-y-3 font-din-1451" aria-busy="true" aria-label="A carregar embarques">
@@ -435,15 +473,16 @@ export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete, 
         );
 
         return (
-          <GrupoDia
-            key={key}
-            label={label}
-            groupDate={groupDate}
-            groupCarrier={groupCarrier}
-            pedidos={pedidos}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            selecionadosIds={selecionadosIds}
+        <GrupoDia
+          key={key}
+          label={label}
+          groupDate={groupDate}
+          groupCarrier={groupCarrier}
+          pedidos={pedidos}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onDuplicated={onDuplicated}
+          selecionadosIds={selecionadosIds}
             onToggleSelecao={onToggleSelecao}
             modoSelecao={modoSelecao}
             className={index > 0 ? (isSpecialTransition ? 'pt-3' : 'pt-2') : ''}

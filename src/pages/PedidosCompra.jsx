@@ -938,6 +938,7 @@ export default function PedidosCompraPage() {
                   loading={loading}
                   onEdit={handleOpenPedido}
                   onDelete={loadData}
+                  onDuplicated={loadData}
                   selecionadosIds={selecionadosIds}
                   onToggleSelecao={handleToggleSelecao}
                   modoSelecao={modoSelecao}
@@ -1108,6 +1109,7 @@ export default function PedidosCompraPage() {
           loading={loading}
           onEdit={handleOpenPedido}
           onDelete={loadData}
+          onDuplicated={loadData}
           selecionadosIds={selecionadosIds}
           onToggleSelecao={handleToggleSelecao}
           modoSelecao={modoSelecao}
