@@ -587,18 +587,10 @@ function pdfLotesExtrasStyles() {
       border: 1px solid ${PDF_LINE};
       padding-bottom: 8px;
     }
-    table.lotes-table tr.sub-lotes td {
-      padding: 3px 6px 8px 10px;
-      font-size: 8.5pt;
+    table.lotes-table .lot-hint {
+      font-size: 8pt;
       color: ${PDF_MUTED};
-      line-height: 1.45;
-      background-color: #ffffff;
-    }
-    table.lotes-table tr.sub-lotes .lbl {
-      font-weight: 700;
-      color: ${PDF_INK};
-      display: inline-block;
-      min-width: 2.8em;
+      font-weight: 400;
     }
     col.c-g { width: 22%; }
     col.c-p { width: 7%; }
@@ -608,20 +600,11 @@ function pdfLotesExtrasStyles() {
   `;
 }
 
-function htmlListaLotes(n, isCimento) {
-  if (n <= 0) return [];
-  if (isCimento) {
-    return Array.from(
-      { length: n },
-      (_, i) => `Lote ${i + 1}: ${LOTE_CIMENTO_SACOS} sacos · R$ ${brl(LOTE_CIMENTO_RS)}`,
-    );
-  }
-  return Array.from({ length: n }, (_, i) => `Lote ${i + 1}: R$ ${brl(LOTE_PADRAO_RS)}`);
-}
-
 function buildHtmlLotes(lotes, prep) {
   let somaComprasCons = 0;
   let somaComprasAgr = 0;
+  let somaAlocCons = 0;
+  let somaAlocAgr = 0;
   const rows = [];
   let prevSection = 'main';
   for (const r of lotes) {
@@ -632,62 +615,26 @@ function buildHtmlLotes(lotes, prep) {
       );
     }
     prevSection = section;
+    somaAlocCons += r.alocCons;
+    somaAlocAgr += r.alocAgr;
     if (r.comprasCons != null) somaComprasCons += r.comprasCons;
     if (r.comprasAgr != null) somaComprasAgr += r.comprasAgr;
     const isCimento = r.grupo === 'Cimento Portland';
     let trClass = ' class="group-row"';
     if (isCimento || r.grupo === 'Tinta') trClass = ' class="group-row row-emphasis"';
 
-    rows.push(
-      `<tr${trClass}><td>${esc(r.grupo)}</td><td class="num">${pctStr(r.pct)}</td><td class="num val-rs">${brl(r.alocCons)}</td><td class="num val-rs">${brl(r.alocAgr)}</td><td>${esc(r.lote)}</td><td class="num">${fmtComprasCell(r.comprasCons)}</td><td class="num">${fmtComprasCell(r.comprasAgr)}</td></tr>`,
-    );
+    const obsLote =
+      r.smallPoolLead && r.smallPoolSize
+        ? ` <span class="lot-hint">(lote conjunto ×${r.smallPoolSize} grupos)</span>`
+        : '';
+    const loteCell = `${esc(r.lote)}${obsLote}`;
 
-    if (r.smallPoolLead) {
-      const lines = [];
-      const nGrupos = r.smallPoolSize ?? 0;
-      if (r.comprasCons > 0) {
-        lines.push(
-          `<span class="lbl">92k:</span> ${r.comprasCons} compra(s) de R$ ${brl(LOTE_PADRAO_RS)} cobrindo ${nGrupos} grupos (alocação somada R$ ${brl(
-            (prep?.small ?? []).reduce((s, x) => s + alocacaoPar(x).c, 0),
-          )})`,
-        );
-      }
-      if (r.comprasAgr > 0) {
-        lines.push(
-          `<span class="lbl">120k:</span> ${r.comprasAgr} compra(s) de R$ ${brl(LOTE_PADRAO_RS)} cobrindo ${nGrupos} grupos (alocação somada R$ ${brl(
-            (prep?.small ?? []).reduce((s, x) => s + alocacaoPar(x).a, 0),
-          )})`,
-        );
-      }
-      rows.push(
-        `<tr class="sub-lotes group-block-end"><td colspan="7">${lines.join('<br />')}</td></tr>`,
-      );
-    } else if (isCimento || (r.comprasCons != null && r.comprasCons >= 2) || (r.comprasAgr != null && r.comprasAgr >= 2)) {
-      const lines = [];
-      if (r.comprasCons > 0) {
-        const lotesCons = htmlListaLotes(r.comprasCons, isCimento);
-        lines.push(
-          `<span class="lbl">92k:</span> ${lotesCons.map((l) => esc(l)).join(' &nbsp;·&nbsp; ')}`,
-        );
-      }
-      if (r.comprasAgr > 0) {
-        const lotesAgr = htmlListaLotes(r.comprasAgr, isCimento);
-        lines.push(
-          `<span class="lbl">120k:</span> ${lotesAgr.map((l) => esc(l)).join(' &nbsp;·&nbsp; ')}`,
-        );
-      }
-      rows.push(`<tr class="sub-lotes group-block-end"><td colspan="7">${lines.join('<br />')}</td></tr>`);
-    } else if (
-      (r.comprasCons != null && r.comprasCons > 0) ||
-      (r.comprasAgr != null && r.comprasAgr > 0)
-    ) {
-      rows.push(
-        `<tr class="group-block-end"><td colspan="7" style="padding:0;height:4px;background:#fff;border:1px solid ${PDF_LINE}"></td></tr>`,
-      );
-    }
+    rows.push(
+      `<tr${trClass}><td>${esc(r.grupo)}</td><td class="num">${pctStr(r.pct)}</td><td class="num val-rs">${brl(r.alocCons)}</td><td class="num val-rs">${brl(r.alocAgr)}</td><td>${loteCell}</td><td class="num">${fmtComprasCell(r.comprasCons)}</td><td class="num">${fmtComprasCell(r.comprasAgr)}</td></tr>`,
+    );
   }
   rows.push(
-    `<tr class="total"><td><strong>TOTAL pedidos</strong></td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td>—</td><td class="num"><strong>${somaComprasCons}</strong></td><td class="num"><strong>${somaComprasAgr}</strong></td></tr>`,
+    `<tr class="total"><td><strong>TOTAL</strong></td><td class="num">—</td><td class="num val-rs"><strong>${brl(Math.round(somaAlocCons * 100) / 100)}</strong></td><td class="num val-rs"><strong>${brl(Math.round(somaAlocAgr * 100) / 100)}</strong></td><td>—</td><td class="num"><strong>${somaComprasCons}</strong></td><td class="num"><strong>${somaComprasAgr}</strong></td></tr>`,
   );
 
   const cimento = lotes.find((r) => r.grupo === 'Cimento Portland');
@@ -721,7 +668,7 @@ function buildHtmlLotes(lotes, prep) {
     </colgroup>
     <thead>
       <tr>
-        <th>Grupo</th><th>% vendas</th><th>Aloc. 92k</th><th>Aloc. 120k</th><th>Tamanho do lote</th><th>Compras 92k</th><th>Compras 120k</th>
+        <th>Grupo</th><th>% aloc.</th><th>Alocação R$ 92.000</th><th>Alocação R$ 120.000</th><th>Tamanho do lote</th><th>Nº compras 92k</th><th>Nº compras 120k</th>
       </tr>
     </thead>
     <tbody>${rows.join('\n')}</tbody>
