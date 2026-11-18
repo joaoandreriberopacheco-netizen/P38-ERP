@@ -1,0 +1,805 @@
+#!/usr/bin/env node
+/**
+ * Gera PDF do estudo de distribuição de compras (one-off / relatório).
+ * Uso: node scripts/gerar-pdf-estudo-distribuicao-compras.mjs
+ */
+import { mkdirSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { chromium } from 'playwright';
+import { requireP38SupabaseAdmin } from './p38-supabase-admin.mjs';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(__dirname, '..');
+const OUT_DIR = path.join(ROOT, 'docs/exports');
+const OUT_PDF = path.join(OUT_DIR, 'P38-estudo-distribuicao-compras-2026-10-11.pdf');
+const OUT_PDF_LOTES = path.join(OUT_DIR, 'P38-estudo-lotes-compras-2026-10-11.pdf');
+
+const DATA_INICIO = '2026-10-01';
+const DATA_FIM = '2026-11-18';
+const TOTAL_VENDAS = 342139.86;
+const PEDIDOS = 1066;
+const LIMITE_PCT = 0.5;
+const CONSERVADOR = 92000;
+const AGRESSIVO = 120000;
+const LOTE_CIMENTO_RS = 13800;
+const LOTE_CIMENTO_SACOS = 320;
+const LOTE_PADRAO_RS = 5000;
+/** Linhas na tabela (inclui TOTAL) — uma página A4. */
+const MAX_LINHAS_TABELA = 20;
+const MAX_LINHAS_DADOS = MAX_LINHAS_TABELA - 1;
+
+/** Destaque fim de ano — categoria h1 TINTA (período do estudo). */
+const TINTA_DESTAQUE = {
+  categoria: 'TINTA',
+  valorVendas: 4844.64,
+  pct: 1.42,
+};
+
+function brl(n) {
+  return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function pctStr(p) {
+  return `${p.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
+}
+
+/** Paleta alinhada a `generateRelatorioEstoqueGlobalPdf.js` (zinc). */
+const PDF_INK = 'rgb(24, 24, 27)';
+const PDF_MUTED = 'rgb(113, 113, 122)';
+const PDF_LINE = 'rgb(220, 220, 224)';
+const PDF_ACCENT = 'rgb(39, 39, 42)';
+
+function pdfBarlowFontLink() {
+  return `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,600;0,700;0,800;1,400&amp;display=swap" />`;
+}
+
+function pdfBarlowStack() {
+  return "'Barlow', 'Liberation Sans', 'DejaVu Sans', Arial, Helvetica, sans-serif";
+}
+
+function pdfStudyStyles() {
+  return `
+    @page { size: A4 portrait; margin: 0; }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+      color: #000000;
+      font-family: 'Liberation Sans', 'DejaVu Sans', Arial, Helvetica, sans-serif;
+      font-size: 9pt;
+      line-height: 1.35;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+      text-rendering: geometricPrecision;
+    }
+    h1 { font-size: 13pt; margin: 0 0 6px; font-weight: 700; color: #000; }
+    .meta { margin: 0 0 8px; font-size: 8.5pt; color: #222; }
+    .note { font-size: 8pt; color: #333; margin: 0 0 6px; }
+    table.study-table {
+      width: 100%;
+      table-layout: fixed;
+    }
+    table.study-table td.num { text-align: right; }
+    .callout {
+      border: 1px solid #3b5ccc;
+      background-color: #f5f8ff;
+      padding: 6px 8px;
+      margin: 0 0 8px;
+      font-size: 7.5pt;
+      line-height: 1.35;
+      color: #000;
+    }
+    .foot {
+      margin-top: 8px;
+      font-size: 7.5pt;
+      color: #444;
+      border-top: 1px solid #999;
+      padding-top: 6px;
+    }
+    code { font-family: 'Liberation Mono', 'DejaVu Sans Mono', monospace; font-size: 0.95em; }
+  `;
+}
+
+function saleDate(pv) {
+  const d = pv.dados || {};
+  for (const k of ['data_venda', 'data_emissao', 'data_fechamento']) {
+    const v = d[k];
+    if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)) return v.slice(0, 10);
+  }
+  return pv.created_at
+    ? new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Rio_Branco',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(new Date(pv.created_at))
+    : null;
+}
+
+function st(s) {
+  return String(s ?? '')
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .toUpperCase()
+    .trim();
+}
+
+function elegivel(pv) {
+  if (st(pv.status ?? pv.dados?.status) === 'CANCELADO') return false;
+  const tp = st(pv.tipo ?? pv.dados?.tipo);
+  if (tp === 'ORCAMENTO' || tp === 'ORÇAMENTO') return false;
+  return !!saleDate(pv);
+}
+
+async function loadCategorias() {
+  const supabase = requireP38SupabaseAdmin();
+  const pedidoIds = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await supabase
+      .from('pedido_venda')
+      .select('id, status, tipo, dados, created_at')
+      .range(from, from + 999);
+    if (error) throw error;
+    if (!data?.length) break;
+    for (const pv of data) {
+      if (!elegivel(pv)) continue;
+      const sd = saleDate(pv);
+      if (sd >= DATA_INICIO && sd <= DATA_FIM) pedidoIds.push(pv.id);
+    }
+    if (data.length < 1000) break;
+  }
+
+  const itemRows = [];
+  for (let i = 0; i < pedidoIds.length; i += 80) {
+    const batch = pedidoIds.slice(i, i + 80);
+    for (let off = 0; ; off += 1000) {
+      const { data, error } = await supabase
+        .from('pedido_venda_item')
+        .select('produto_id, total, dados')
+        .in('pedido_venda_id', batch)
+        .range(off, off + 999);
+      if (error) throw error;
+      if (!data?.length) break;
+      itemRows.push(...data);
+      if (data.length < 1000) break;
+    }
+  }
+
+  const produtoIds = [...new Set(itemRows.map((r) => r.produto_id).filter(Boolean))];
+  const produtoH1 = new Map();
+  for (let i = 0; i < produtoIds.length; i += 200) {
+    const { data, error } = await supabase
+      .from('produto')
+      .select('id, campo_hierarquico_1, dados')
+      .in('id', produtoIds.slice(i, i + 200));
+    if (error) throw error;
+    for (const p of data || []) {
+      produtoH1.set(p.id, (p.campo_hierarquico_1 || p.dados?.campo_hierarquico_1 || '').trim());
+    }
+  }
+
+  const byH1 = {};
+  for (const row of itemRows) {
+    const val = Number(row.total) || Number(row.dados?.total) || 0;
+    if (!val) continue;
+    const label = produtoH1.get(row.produto_id) || '(sem campo_hierarquico_1)';
+    byH1[label] = (byH1[label] || 0) + val;
+  }
+
+  const sorted = Object.entries(byH1)
+    .sort((a, b) => b[1] - a[1])
+    .map(([categoria, valor]) => ({
+      categoria,
+      valor: Math.round(valor * 100) / 100,
+      pct: Math.round((100 * valor) / TOTAL_VENDAS * 100) / 100,
+    }));
+
+  return sorted;
+}
+
+/** Agrupa categorias &lt; 0,5% em blocos temáticos para leitura do PDF. */
+function grupoDemaisCategoria(categoria) {
+  const n = st(categoria);
+
+  if (
+    n.includes('LINHA DE PEDREIRO') ||
+    n.includes('ESPATULA') ||
+    n.includes('DESEMPENADEIRA') ||
+    n.includes('SERRA MANUAL') ||
+    n.includes('DISCO DE CORTE') ||
+    n.includes('LAPIS DE CARPINTEIRO') ||
+    n === 'LIXA'
+  ) {
+    return 'FERRAMENTAS';
+  }
+
+  if (
+    n.includes('LAMPADA') ||
+    n.includes('DISJUNTOR') ||
+    n.includes('INTERRUPTOR') ||
+    n.includes('SPOT LED') ||
+    n.includes('PLAFON') ||
+    n.includes('FIO PARALELO')
+  ) {
+    return 'Elétrica e iluminação';
+  }
+
+  if (
+    n.includes('FITA CREPE') ||
+    n.includes('FITA ISOLANTE') ||
+    n.includes('FITA VEDA') ||
+    n.includes('FITA AUTOADERENTE')
+  ) {
+    return 'Fitas e vedantes';
+  }
+
+  if (
+    n === 'JOELHO' ||
+    n === 'TE' ||
+    n.startsWith('TE ESGOTO') ||
+    n === 'LUVA' ||
+    n === 'UNIAO' ||
+    n === 'CAP' ||
+    n === 'BOCAL' ||
+    n.includes('JUNCAO') ||
+    n.includes('JUNÇÃO') ||
+    n.includes('VALVULA') ||
+    n === 'VÁLVULA' ||
+    n.includes('SIFAO') ||
+    n.includes('ENGATE FLEX') ||
+    n.startsWith('REGISTRO') ||
+    n.startsWith('NIPEL') ||
+    n.startsWith('ADAPTADOR') ||
+    n.startsWith('BUCHA') ||
+    n.includes('RALO') ||
+    n.includes('ADESIVO PLASTICO P/ TUBOS') ||
+    n.includes('ADESIVO PLÁSTICO P/ TUBOS') ||
+    n.includes('CONDUITE')
+  ) {
+    return 'Hidráulica — conexões e acessórios';
+  }
+
+  if (
+    n.includes('VASO SANITARIO') ||
+    n.includes('TORNEIRA') ||
+    n.includes('CHUVEIRO') ||
+    n.includes('PIA BANHEIRO') ||
+    n.includes('CUBA DE APOIO') ||
+    n === 'FECHADURA' ||
+    n.includes('MECANISMO UNIVERSAL') ||
+    n.includes('CAIXA DE DESCARGA') ||
+    n.includes('CAIXA SIFONADA') ||
+    n.includes('BOIA P/ CX') ||
+    n.includes("ADAPTADOR P/ CX")
+  ) {
+    return 'Louças, metais e banheiro';
+  }
+
+  if (
+    n === 'SEIXO' ||
+    n === 'AREIA' ||
+    n.includes('CAL SUPERCAL') ||
+    n === 'REVESTIMENTO' ||
+    n.includes('JUNTA PISO') ||
+    n === 'REJUNTE' ||
+    n === 'COMPENSADO' ||
+    n.includes('CIMENTO BRANCO') ||
+    n.includes('TELHA') ||
+    n === 'PREGO' ||
+    n.includes('PREGO TELHEIRO') ||
+    n.includes('ARAME RECOZIDO') ||
+    n.includes('XADREZ')
+  ) {
+    return 'Material de obra e agregados';
+  }
+
+  if (
+    n.includes('THINNER') ||
+    n.includes('MASSA CORRIDA') ||
+    n.includes('MASSA ACRILICA') ||
+    n.includes('TINTA ESMALTE') ||
+    n.includes('TINTA SPRAY') ||
+    n.includes('TINTA ANTICORROSIVA') ||
+    n === 'VERNIZ' ||
+    n.includes('CORANTE') ||
+    n.startsWith('PINCEL') ||
+    n.includes('ROLO DE') ||
+    n.includes('BANDEJA P/PINTURA') ||
+    n.includes('GARFO P/ ROLO')
+  ) {
+    return 'Pintura — complementos';
+  }
+
+  if (n.includes('PERFIL DE PVC')) {
+    return 'Perfis PVC';
+  }
+
+  if (n === 'FRETE') {
+    return 'Transporte';
+  }
+
+  return 'Diversos (cadastro / SKU avulso)';
+}
+
+/** Mapeia cada h1 do Supabase para uma das ~19 linhas do PDF (ordem alfabética). */
+function linhaConsolidadaFinal(categoria) {
+  const n = st(categoria);
+
+  if (n === 'PISO' || n === 'PORCELANATO' || n === 'REVESTIMENTO' || n.includes('JUNTA PISO')) {
+    return 'Piso e porcelanato';
+  }
+  if (n === 'CIMENTO PORTLAND') return 'Cimento Portland';
+  if (n === 'ARGAMASSA') return 'Argamassa';
+  if (n === 'FORRO PVC') return 'Forro PVC';
+  if (n === 'VERGALHAO DE FERRO' || n === 'ESTRIBO') return 'Ferro — vergalhão e estribos';
+  if (n === 'BLOCO DE CONCRETO') return 'Bloco de concreto';
+  if (n === "CAIXA D'AGUA" || n === 'CAIXA D AGUA') return "Caixa d'água";
+  if (n === 'TINTA') return 'Tinta';
+  if (n === 'TUBO') return 'Tubo';
+
+  const g = grupoDemaisCategoria(categoria);
+  if (g === 'FERRAMENTAS') return 'Ferramentas';
+  return g;
+}
+
+function consolidarParaTabela(categorias) {
+  const map = new Map();
+  for (const row of categorias) {
+    const nome = linhaConsolidadaFinal(row.categoria);
+    if (!map.has(nome)) map.set(nome, { nome, valor: 0, pct: 0 });
+    const b = map.get(nome);
+    b.valor += row.valor;
+    b.pct += row.pct;
+  }
+
+  let rows = [...map.values()].map((b) => ({
+    nome: b.nome,
+    valor: Math.round(b.valor * 100) / 100,
+    pct: Math.round(b.pct * 100) / 100,
+  }));
+
+  rows.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
+
+  const diversosNome = 'Diversos (cadastro / SKU avulso)';
+  while (rows.length > MAX_LINHAS_DADOS) {
+    const smallest = rows
+      .filter((r) => r.nome !== diversosNome)
+      .sort((a, b) => a.valor - b.valor)[0];
+    if (!smallest) break;
+    rows = rows.filter((r) => r.nome !== smallest.nome);
+    const div = rows.find((r) => r.nome === diversosNome) || {
+      nome: diversosNome,
+      valor: 0,
+      pct: 0,
+    };
+    if (!rows.find((r) => r.nome === diversosNome)) rows.push(div);
+    div.valor = Math.round((div.valor + smallest.valor) * 100) / 100;
+    div.pct = Math.round((div.pct + smallest.pct) * 100) / 100;
+    rows.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
+  }
+
+  return rows;
+}
+
+function buildHtml(categorias) {
+  const linhas = consolidarParaTabela(categorias);
+  if (linhas.length > MAX_LINHAS_DADOS) {
+    throw new Error(`Consolidação gerou ${linhas.length} linhas; máximo ${MAX_LINHAS_DADOS}.`);
+  }
+
+  const tintaCons = Math.round((TINTA_DESTAQUE.pct / 100) * CONSERVADOR * 100) / 100;
+  const tintaAgr = Math.round((TINTA_DESTAQUE.pct / 100) * AGRESSIVO * 100) / 100;
+
+  const linhasAloc = [];
+  let somaCons = 0;
+  let somaAgr = 0;
+  let somaPct = 0;
+
+  for (const row of linhas) {
+    const c = Math.round((row.pct / 100) * CONSERVADOR * 100) / 100;
+    const a = Math.round((row.pct / 100) * AGRESSIVO * 100) / 100;
+    somaCons += c;
+    somaAgr += a;
+    somaPct += row.pct;
+    const trClass = row.nome === 'Tinta' ? ' class="row-emphasis"' : '';
+    linhasAloc.push(
+      `<tr${trClass}><td>${esc(row.nome)}</td><td class="num">${pctStr(row.pct)}</td><td class="num val-rs">${brl(c)}</td><td class="num val-rs">${brl(a)}</td></tr>`,
+    );
+  }
+  linhasAloc.push(
+    `<tr class="total"><td><strong>TOTAL</strong></td><td class="num"><strong>${pctStr(Math.round(somaPct * 10) / 10)}</strong></td><td class="num val-rs"><strong>${brl(Math.round(somaCons * 100) / 100)}</strong></td><td class="num val-rs"><strong>${brl(Math.round(somaAgr * 100) / 100)}</strong></td></tr>`,
+  );
+
+  const linhasTabela = linhas.length + 1;
+  if (linhasTabela > MAX_LINHAS_TABELA) {
+    throw new Error(`Tabela com ${linhasTabela} linhas excede ${MAX_LINHAS_TABELA}.`);
+  }
+
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Estudo de Distribuição de Compras</title>
+  ${pdfBarlowFontLink()}
+  <style>
+    ${pdfStudyStyles()}
+    ${pdfDistribExtrasStyles()}
+    .tinta-callout {
+      border: 1px solid #c88a00;
+      background-color: #fff8eb;
+      color: #000;
+    }
+  </style>
+</head>
+<body class="distrib-doc">
+  <h1>Estudo de Distribuição de Compras</h1>
+  <p class="meta">
+    <strong>Período:</strong> ${formatDateBr(DATA_INICIO)} a ${formatDateBr(DATA_FIM)} · Tabatinga ·
+    <strong>Vendas:</strong> R$ ${brl(TOTAL_VENDAS)} (${PEDIDOS.toLocaleString('pt-BR')} pedidos, ${categorias.length} categorias h1 consolidadas em ${linhas.length} grupos)
+  </p>
+  <div class="tinta-callout">
+    <strong>Tinta (fim de ano):</strong> ${pctStr(TINTA_DESTAQUE.pct)} das vendas (R$ ${brl(TINTA_DESTAQUE.valorVendas)}) →
+    compra sugerida <strong>R$ ${brl(tintaCons)}</strong> (92k) / <strong>R$ ${brl(tintaAgr)}</strong> (120k).
+  <em>Sazonalidade:</em> reservar folga no orçamento; esmaltes/spray entram em &quot;Pintura — complementos&quot;.
+  </div>
+  <p class="note">Alocação proporcional às vendas do período. Grupos temáticos (${linhas.length} linhas + total): itens &lt; 0,5% e hidráulica leve (união, engate flex., etc.) consolidados; <strong>Ferramentas</strong> inclui linha de pedreiro e espátula.</p>
+  <table class="study-table distrib-table">
+    <colgroup>
+      <col class="col-grupo" /><col class="col-pct" /><col class="col-val" /><col class="col-val" />
+    </colgroup>
+    <thead><tr><th>Grupo / categoria</th><th>% vendas</th><th>Compra R$ 92.000</th><th>Compra R$ 120.000</th></tr></thead>
+    <tbody>${linhasAloc.join('\n')}</tbody>
+  </table>
+  <p class="foot">
+    Estudo apenas — não altera o sistema P38-ERP. Fonte: Supabase <code>pedido_venda_item</code> (sem cancelados/orçamentos).
+    Gerado ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Rio_Branco' })}.
+  </p>
+</body>
+</html>`;
+}
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function formatDateBr(iso) {
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+/** Grade completa estilo Resumo global de estoque (distrib + lotes). */
+function pdfResumoGlobalTableCss(tableSelector) {
+  const font = pdfBarlowStack();
+  return `
+    ${tableSelector} {
+      border-collapse: collapse;
+      margin: 8px 0 12px;
+      font-family: ${font};
+    }
+    ${tableSelector} th,
+    ${tableSelector} td {
+      border: 1px solid ${PDF_LINE};
+      padding: 4px 6px;
+      font-size: 9pt;
+      vertical-align: middle;
+      background-color: #ffffff;
+      color: ${PDF_INK};
+      word-wrap: break-word;
+      line-height: 1.25;
+    }
+    ${tableSelector} thead th {
+      font-size: 9pt;
+      font-weight: 700;
+      color: ${PDF_MUTED};
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      padding-top: 5px;
+      padding-bottom: 5px;
+    }
+    ${tableSelector} td.val-rs {
+      color: ${PDF_ACCENT};
+      font-weight: 700;
+      text-align: right;
+    }
+    ${tableSelector} tr.row-emphasis td:first-child {
+      font-weight: 700;
+    }
+    ${tableSelector} tr.total td {
+      font-weight: 700;
+      color: ${PDF_INK};
+    }
+    ${tableSelector} tr.total td.val-rs {
+      color: ${PDF_ACCENT};
+    }
+  `;
+}
+
+function pdfDistribExtrasStyles() {
+  return `
+    body.distrib-doc { font-size: 10pt; line-height: 1.4; }
+    body.distrib-doc .meta { font-size: 9pt; margin-bottom: 10px; }
+    body.distrib-doc .note { font-size: 8.5pt; margin-bottom: 10px; }
+    body.distrib-doc .tinta-callout {
+      padding: 8px 10px;
+      font-size: 8.5pt;
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+    body.distrib-doc .foot { font-size: 8pt; margin-top: 10px; padding-top: 8px; }
+    ${pdfResumoGlobalTableCss('table.distrib-table')}
+    col.col-grupo { width: 44%; }
+    col.col-pct { width: 14%; }
+    col.col-val { width: 21%; }
+  `;
+}
+
+function pdfLotesExtrasStyles() {
+  return `
+    body.lotes-doc { font-size: 10pt; line-height: 1.4; }
+    body.lotes-doc .meta { font-size: 9pt; margin-bottom: 10px; }
+    body.lotes-doc .note { font-size: 8.5pt; margin-bottom: 10px; }
+    body.lotes-doc .callout { padding: 8px 10px; font-size: 8.5pt; margin-bottom: 10px; }
+    ${pdfResumoGlobalTableCss('table.lotes-table')}
+    table.lotes-table tr.group-block-end td {
+      border: 1px solid ${PDF_LINE};
+      padding-bottom: 8px;
+    }
+    table.lotes-table tr.sub-lotes td {
+      padding: 3px 6px 8px 10px;
+      font-size: 8.5pt;
+      color: ${PDF_MUTED};
+      line-height: 1.45;
+      background-color: #ffffff;
+    }
+    table.lotes-table tr.sub-lotes .lbl {
+      font-weight: 700;
+      color: ${PDF_INK};
+      display: inline-block;
+      min-width: 2.8em;
+    }
+    col.c-g { width: 22%; }
+    col.c-p { width: 7%; }
+    col.c-a { width: 12%; }
+    col.c-l { width: 21%; }
+    col.c-n { width: 8%; }
+  `;
+}
+
+function htmlListaLotes(n, isCimento) {
+  if (n <= 0) return [];
+  if (isCimento) {
+    return Array.from(
+      { length: n },
+      (_, i) => `Lote ${i + 1}: ${LOTE_CIMENTO_SACOS} sacos · R$ ${brl(LOTE_CIMENTO_RS)}`,
+    );
+  }
+  return Array.from({ length: n }, (_, i) => `Lote ${i + 1}: R$ ${brl(LOTE_PADRAO_RS)}`);
+}
+
+function buildHtmlLotes(lotes) {
+  let somaComprasCons = 0;
+  let somaComprasAgr = 0;
+  const rows = [];
+  for (const r of lotes) {
+    somaComprasCons += r.comprasCons;
+    somaComprasAgr += r.comprasAgr;
+    const isCimento = r.grupo === 'Cimento Portland';
+    let trClass = ' class="group-row"';
+    if (isCimento || r.grupo === 'Tinta') trClass = ' class="group-row row-emphasis"';
+
+    rows.push(
+      `<tr${trClass}><td>${esc(r.grupo)}</td><td class="num">${pctStr(r.pct)}</td><td class="num val-rs">${brl(r.alocCons)}</td><td class="num val-rs">${brl(r.alocAgr)}</td><td>${esc(r.lote)}</td><td class="num">${r.comprasCons}</td><td class="num">${r.comprasAgr}</td></tr>`,
+    );
+
+    const showDetalhe =
+      isCimento || r.comprasCons >= 2 || r.comprasAgr >= 2;
+    if (showDetalhe) {
+      const lines = [];
+      if (r.comprasCons > 0) {
+        const lotesCons = htmlListaLotes(r.comprasCons, isCimento);
+        lines.push(
+          `<span class="lbl">92k:</span> ${lotesCons.map((l) => esc(l)).join(' &nbsp;·&nbsp; ')}`,
+        );
+      }
+      if (r.comprasAgr > 0) {
+        const lotesAgr = htmlListaLotes(r.comprasAgr, isCimento);
+        lines.push(
+          `<span class="lbl">120k:</span> ${lotesAgr.map((l) => esc(l)).join(' &nbsp;·&nbsp; ')}`,
+        );
+      }
+      const endClass = ' class="sub-lotes group-block-end"';
+      rows.push(`<tr${endClass}><td colspan="7">${lines.join('<br />')}</td></tr>`);
+    } else if (r.comprasCons > 0 || r.comprasAgr > 0) {
+      rows.push(
+        `<tr class="group-block-end"><td colspan="7" style="padding:0;height:4px;background:#fff;border:1px solid ${PDF_LINE}"></td></tr>`,
+      );
+    }
+  }
+  rows.push(
+    `<tr class="total"><td><strong>TOTAL pedidos</strong></td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td>—</td><td class="num"><strong>${somaComprasCons}</strong></td><td class="num"><strong>${somaComprasAgr}</strong></td></tr>`,
+  );
+
+  const cimento = lotes.find((r) => r.grupo === 'Cimento Portland');
+
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Estudo — Lotes de Compra</title>
+  ${pdfBarlowFontLink()}
+  <style>
+    ${pdfStudyStyles()}
+    ${pdfLotesExtrasStyles()}
+  </style>
+</head>
+<body class="lotes-doc">
+  <h1>Estudo — Lotes e número de compras</h1>
+  <p class="meta">
+    <strong>Período de vendas:</strong> ${formatDateBr(DATA_INICIO)} a ${formatDateBr(DATA_FIM)} ·
+    tetos <strong>R$ ${brl(CONSERVADOR)}</strong> (conservador) e <strong>R$ ${brl(AGRESSIVO)}</strong> (agressivo), proporcionais ao % de cada grupo.
+  </p>
+  <div class="callout">
+    <strong>Cimento Portland:</strong> lote fixo ${LOTE_CIMENTO_SACOS} sacos ≈ R$ ${brl(LOTE_CIMENTO_RS)}.
+    Alocação R$ ${brl(cimento?.alocCons ?? 0)} → ${cimento?.comprasCons ?? 0} compra(s) = ${cimento?.sacosCons ?? 0} sacos (≈ R$ ${brl(cimento?.valorPedidoCons ?? 0)} em pedidos).
+    Alocação R$ ${brl(cimento?.alocAgr ?? 0)} → ${cimento?.comprasAgr ?? 0} compra(s) = ${cimento?.sacosAgr ?? 0} sacos (≈ R$ ${brl(cimento?.valorPedidoAgr ?? 0)}).
+  </div>
+  <p class="note">Demais grupos: lote referência <strong>R$ ${brl(LOTE_PADRAO_RS)}</strong>; nº de compras = arredondar para cima (alocação ÷ 5.000). Arredondar pode elevar o valor real do pedido acima da fatia proporcional.</p>
+  <table class="study-table lotes-table">
+    <colgroup>
+      <col class="c-g" /><col class="c-p" /><col class="c-a" /><col class="c-a" /><col class="c-l" /><col class="c-n" /><col class="c-n" />
+    </colgroup>
+    <thead>
+      <tr>
+        <th>Grupo</th><th>% vendas</th><th>Aloc. 92k</th><th>Aloc. 120k</th><th>Tamanho do lote</th><th>Compras 92k</th><th>Compras 120k</th>
+      </tr>
+    </thead>
+    <tbody>${rows.join('\n')}</tbody>
+  </table>
+  <p class="foot">Estudo apenas — não altera o sistema P38-ERP. Gerado ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Rio_Branco' })}.</p>
+</body>
+</html>`;
+}
+
+async function renderPdfFromHtml(html, outPath) {
+  mkdirSync(OUT_DIR, { recursive: true });
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'load', timeout: 30_000 });
+    await page.emulateMedia({ media: 'print' });
+    await page.evaluate(async () => {
+      const stack = 'Barlow, sans-serif';
+      try {
+        await document.fonts.load(`400 9pt ${stack}`);
+        await document.fonts.load(`700 9pt ${stack}`);
+      } catch {
+        /* fallback */
+      }
+      await (document.fonts?.ready ?? Promise.resolve());
+    });
+    await page.pdf({
+      path: outPath,
+      format: 'A4',
+      printBackground: true,
+      preferCSSPageSize: false,
+      scale: 1,
+      margin: { top: '8mm', bottom: '8mm', left: '6mm', right: '6mm' },
+      tagged: false,
+    });
+  } finally {
+    await browser.close();
+  }
+  return outPath;
+}
+
+function comprasPorLote(linhas) {
+  const ceilDiv = (valor, lote) => (valor <= 0 ? 0 : Math.ceil(valor / lote - 1e-9));
+  return linhas.map((row) => {
+    const cons = Math.round((row.pct / 100) * CONSERVADOR * 100) / 100;
+    const agr = Math.round((row.pct / 100) * AGRESSIVO * 100) / 100;
+    const isCimento = row.nome === 'Cimento Portland';
+    const loteLabel = isCimento
+      ? `${LOTE_CIMENTO_SACOS} sacos / R$ ${brl(LOTE_CIMENTO_RS)}`
+      : `R$ ${brl(LOTE_PADRAO_RS)}`;
+    const loteRs = isCimento ? LOTE_CIMENTO_RS : LOTE_PADRAO_RS;
+    return {
+      grupo: row.nome,
+      pct: row.pct,
+      alocCons: cons,
+      alocAgr: agr,
+      lote: loteLabel,
+      comprasCons: ceilDiv(cons, loteRs),
+      comprasAgr: ceilDiv(agr, loteRs),
+      valorPedidoCons: ceilDiv(cons, loteRs) * loteRs,
+      valorPedidoAgr: ceilDiv(agr, loteRs) * loteRs,
+      sacosCons: isCimento ? ceilDiv(cons, loteRs) * LOTE_CIMENTO_SACOS : null,
+      sacosAgr: isCimento ? ceilDiv(agr, loteRs) * LOTE_CIMENTO_SACOS : null,
+    };
+  });
+}
+
+async function main() {
+  if (process.argv.includes('--lotes-compras')) {
+    const categorias = await loadCategorias();
+    const linhas = consolidarParaTabela(categorias);
+    const out = comprasPorLote(linhas);
+    console.log(JSON.stringify(out, null, 2));
+    return;
+  }
+
+  const onlyLotes = process.argv.includes('--lotes-pdf');
+  const onlyDistrib = process.argv.includes('--distrib-pdf');
+
+  console.log('[pdf] Carregando vendas Supabase…');
+  const categorias = await loadCategorias();
+  console.log(`[pdf] ${categorias.length} categorias`);
+
+  const linhasCons = consolidarParaTabela(categorias);
+  const lotes = comprasPorLote(linhasCons);
+
+  if (onlyLotes) {
+    const htmlLotes = buildHtmlLotes(lotes);
+    writeFileSync(path.join(OUT_DIR, '_tmp-estudo-lotes-compras.html'), htmlLotes, 'utf8');
+    await renderPdfFromHtml(htmlLotes, OUT_PDF_LOTES);
+    console.log(`[pdf] Salvo: ${OUT_PDF_LOTES} (${lotes.length} grupos + total pedidos)`);
+    return;
+  }
+
+  console.log(`[pdf] ${linhasCons.length} grupos + total = ${linhasCons.length + 1} linhas na tabela`);
+
+  const html = buildHtml(categorias);
+  const htmlPath = path.join(OUT_DIR, '_tmp-estudo-distribuicao-compras.html');
+  writeFileSync(htmlPath, html, 'utf8');
+  await renderPdfFromHtml(html, OUT_PDF);
+  console.log(`[pdf] Distribuição: ${OUT_PDF}`);
+
+  if (onlyDistrib) return;
+
+  const htmlLotes = buildHtmlLotes(lotes);
+  writeFileSync(path.join(OUT_DIR, '_tmp-estudo-lotes-compras.html'), htmlLotes, 'utf8');
+  await renderPdfFromHtml(htmlLotes, OUT_PDF_LOTES);
+  console.log(`[pdf] Lotes: ${OUT_PDF_LOTES}`);
+
+  let pages = null;
+  try {
+    const { stdout } = await import('node:child_process').then(({ execFile }) =>
+      new Promise((resolve, reject) => {
+        execFile('pdfinfo', [OUT_PDF], (err, out) => (err ? reject(err) : resolve({ stdout: out })));
+      }),
+    );
+    const m = stdout.match(/Pages:\s+(\d+)/);
+    if (m) pages = Number(m[1]);
+  } catch {
+    /* pdfinfo opcional */
+  }
+
+  console.log(`[pdf] Salvo: ${OUT_PDF}${pages != null ? ` (${pages} página(s))` : ''}`);
+  if (pages != null && pages > 1) {
+    console.warn(`[pdf] AVISO: esperado 1 página, obteve ${pages}.`);
+  }
+
+  try {
+    const { execFileSync } = await import('node:child_process');
+    const text = execFileSync('pdftotext', [OUT_PDF, '-'], { encoding: 'utf8', maxBuffer: 2_000_000 });
+    const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
+    const hasTotal = lines.some((l) => l.includes('TOTAL'));
+    const hasTinta = lines.some((l) => /tinta/i.test(l));
+    console.log(`[pdf] Texto extraível: ${lines.length} linhas; TOTAL=${hasTotal}; Tinta=${hasTinta}`);
+    if (!hasTotal || !hasTinta || lines.length < 15) {
+      console.warn('[pdf] AVISO: camada de texto pode estar incompleta.');
+    }
+  } catch {
+  /* pdftotext opcional */
+  }
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
