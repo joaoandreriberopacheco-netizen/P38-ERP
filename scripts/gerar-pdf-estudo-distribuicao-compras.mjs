@@ -24,6 +24,11 @@ const AGRESSIVO = 120000;
 const LOTE_CIMENTO_RS = 13800;
 const LOTE_CIMENTO_SACOS = 320;
 const LOTE_PADRAO_RS = 5000;
+/** Forro PVC — pedido único (não escala em rodadas extra). */
+const LOTE_FORRO_PVC_RS = 10000;
+const GRUPO_PISO = 'Piso e porcelanato';
+const GRUPO_FORRO_PVC = 'Forro PVC';
+const LABEL_ITENS_PEQUENOS = 'Itens menores (conjunto)';
 /** Grupo fora da alocação de compra (partilha redistribuída nos demais). */
 const GRUPO_EXCLUIDO_ALOC = 'Bloco de concreto';
 /** Grupos com linha própria na secção de itens menores (&lt; 2% vendas ou lista fixa). */
@@ -611,16 +616,27 @@ function pdfLotesExtrasStyles() {
     col.c-g { width: 34%; }
     col.c-p { width: 12%; }
     col.c-a { width: 27%; }
+    body.lotes-doc .escalonamento-block { margin-top: 14px; page-break-before: auto; }
+    body.lotes-doc .escala-h2 { font-size: 11.5pt; margin: 12px 0 6px; color: ${PDF_INK}; }
+    body.lotes-doc .escala-title { font-size: 10pt; margin: 10px 0 4px; color: ${PDF_INK}; font-weight: 700; }
+    ${pdfResumoGlobalTableCss('table.escalonamento-table')}
+    table.escalonamento-table col.c-r { width: 10%; }
+    table.escalonamento-table col.c-g { width: 44%; }
+    table.escalonamento-table col.c-v { width: 46%; }
+    table.escalonamento-table td.sub-lot-val { font-weight: 600; color: ${PDF_ACCENT}; }
   `;
 }
 
-function subLinhasValorLote({ n, alocTotal, isCimento, smallPoolLead, smallPoolSize }) {
+function subLinhasValorLote({ n, alocTotal, isCimento, isForroPvc, smallPoolLead, smallPoolSize }) {
   if (n == null || n <= 0) return '—';
   if (isCimento) {
     return Array.from(
       { length: n },
       (_, i) => `Lote ${i + 1}: ${LOTE_CIMENTO_SACOS} sacos · R$ ${brl(LOTE_CIMENTO_RS)}`,
     ).join('<br />');
+  }
+  if (isForroPvc) {
+    return `Lote 1: R$ ${brl(LOTE_FORRO_PVC_RS)} (pedido único)`;
   }
   if (smallPoolLead) {
     const sufixo =
@@ -655,6 +671,7 @@ function buildHtmlLotes(lotes, prep) {
     somaAlocCons += r.alocCons;
     somaAlocAgr += r.alocAgr;
     const isCimento = r.grupo === 'Cimento Portland';
+    const isForroPvc = r.grupo === GRUPO_FORRO_PVC;
     let trClass = ' class="group-row"';
     if (isCimento || r.grupo === 'Tinta') trClass = ' class="group-row row-emphasis"';
 
@@ -676,6 +693,7 @@ function buildHtmlLotes(lotes, prep) {
         n: r.comprasCons,
         alocTotal: r.alocCons,
         isCimento,
+        isForroPvc,
         smallPoolLead: Boolean(r.smallPoolLead),
         smallPoolSize: r.smallPoolSize ?? 0,
       });
@@ -683,6 +701,7 @@ function buildHtmlLotes(lotes, prep) {
         n: r.comprasAgr,
         alocTotal: r.alocAgr,
         isCimento,
+        isForroPvc,
         smallPoolLead: Boolean(r.smallPoolLead),
         smallPoolSize: r.smallPoolSize ?? 0,
       });
@@ -733,6 +752,7 @@ function buildHtmlLotes(lotes, prep) {
     </thead>
     <tbody>${rows.join('\n')}</tbody>
   </table>
+  ${htmlApendiceEscalonamento(lotes)}
   <p class="foot">Estudo apenas — não altera o sistema P38-ERP. Gerado ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Rio_Branco' })}.</p>
 </body>
 </html>`;
@@ -816,12 +836,15 @@ function comprasPorLote(linhas) {
       };
     }
 
+    const isForroPvc = row.nome === GRUPO_FORRO_PVC;
     const loteLabel = isCimento
       ? `${LOTE_CIMENTO_SACOS} sacos / R$ ${brl(LOTE_CIMENTO_RS)}`
-      : `R$ ${brl(LOTE_PADRAO_RS)}`;
-    const loteRs = isCimento ? LOTE_CIMENTO_RS : LOTE_PADRAO_RS;
-    const nCons = ceilDiv(cons, loteRs);
-    const nAgr = ceilDiv(agr, loteRs);
+      : isForroPvc
+        ? `R$ ${brl(LOTE_FORRO_PVC_RS)} (pedido único)`
+        : `R$ ${brl(LOTE_PADRAO_RS)}`;
+    const loteRs = isCimento ? LOTE_CIMENTO_RS : isForroPvc ? LOTE_FORRO_PVC_RS : LOTE_PADRAO_RS;
+    let nCons = isForroPvc ? (cons > 0 ? 1 : 0) : ceilDiv(cons, loteRs);
+    let nAgr = isForroPvc ? (agr > 0 ? 1 : 0) : ceilDiv(agr, loteRs);
     return {
       grupo: row.nome,
       pct: pctAloc,
@@ -842,6 +865,120 @@ function comprasPorLote(linhas) {
 
 function fmtComprasCell(n) {
   return n == null ? '—' : String(n);
+}
+
+function comprasEfetivasGrupo(r, cenario) {
+  const isCons = cenario === 'cons';
+  let n = isCons ? (r.comprasCons ?? 0) : (r.comprasAgr ?? 0);
+  if (r.grupo === GRUPO_FORRO_PVC && n > 0) n = 1;
+  return n;
+}
+
+function textoLoteEscalonamento(r, cenario, nTotal) {
+  if (r.smallPoolLead) {
+    return `R$ ${brl(LOTE_PADRAO_RS)} (conjunto)`;
+  }
+  if (r.grupo === 'Cimento Portland') {
+    return `${LOTE_CIMENTO_SACOS} sacos · R$ ${brl(LOTE_CIMENTO_RS)}`;
+  }
+  if (r.grupo === GRUPO_FORRO_PVC) {
+    return `R$ ${brl(LOTE_FORRO_PVC_RS)} (pedido único)`;
+  }
+  if (nTotal <= 0) return '—';
+  const aloc = cenario === 'cons' ? r.alocCons : r.alocAgr;
+  const v = Math.round((aloc / nTotal) * 100) / 100;
+  return `R$ ${brl(v)}`;
+}
+
+function labelGrupoEscalonamento(r) {
+  if (r.smallPoolLead) return LABEL_ITENS_PEQUENOS;
+  return r.grupo;
+}
+
+/** Rodada 1 = 1 lote de cada grupo (A–Z); depois só quem ainda tem lote; piso por último. */
+function montarEscalonamentoRodadas(lotes, cenario) {
+  const fila = [];
+  for (const r of lotes) {
+    if (r.section === 'small' && !r.smallPoolLead) continue;
+    const n = comprasEfetivasGrupo(r, cenario);
+    if (n <= 0) continue;
+    const texto = textoLoteEscalonamento(r, cenario, n);
+    const label = labelGrupoEscalonamento(r);
+    const isPiso = r.grupo === GRUPO_PISO;
+    fila.push({
+      label,
+      isPiso,
+      restantes: Array.from({ length: n }, () => texto),
+    });
+  }
+
+  const piso = fila.find((f) => f.isPiso);
+  const outros = fila.filter((f) => !f.isPiso);
+  const rodadas = [];
+  let numRodada = 1;
+
+  for (;;) {
+    const ativos = outros
+      .filter((g) => g.restantes.length > 0)
+      .sort((a, b) => a.label.localeCompare(b.label, 'pt-BR', { sensitivity: 'base' }));
+    if (ativos.length === 0) break;
+    const entradas = ativos.map((g) => ({
+      grupo: g.label,
+      valor: g.restantes.shift(),
+    }));
+    rodadas.push({ numRodada, entradas });
+    numRodada += 1;
+  }
+
+  if (piso) {
+    while (piso.restantes.length > 0) {
+      rodadas.push({
+        numRodada,
+        entradas: [{ grupo: piso.label, valor: piso.restantes.shift() }],
+      });
+      numRodada += 1;
+    }
+  }
+
+  return rodadas;
+}
+
+function htmlTabelaEscalonamento(rodadas, tituloCenario) {
+  if (!rodadas.length) {
+    return `<p class="note">${esc(tituloCenario)}: sem compras previstas.</p>`;
+  }
+  const body = [];
+  for (const rod of rodadas) {
+    const n = rod.entradas.length;
+    rod.entradas.forEach((e, idx) => {
+      const rodadaCell =
+        idx === 0
+          ? `<td class="num" rowspan="${n}"><strong>${rod.numRodada}</strong></td>`
+          : '';
+      body.push(
+        `<tr class="escala-row">${rodadaCell}<td>${esc(e.grupo)}</td><td class="num sub-lot-val">${esc(e.valor)}</td></tr>`,
+      );
+    });
+  }
+  return `
+  <h3 class="escala-title">${esc(tituloCenario)}</h3>
+  <table class="study-table escalonamento-table">
+    <colgroup><col class="c-r" /><col class="c-g" /><col class="c-v" /></colgroup>
+    <thead><tr><th>Rodada</th><th>Grupo</th><th>Lote desta rodada</th></tr></thead>
+    <tbody>${body.join('\n')}</tbody>
+  </table>`;
+}
+
+function htmlApendiceEscalonamento(lotes) {
+  const r92 = montarEscalonamentoRodadas(lotes, 'cons');
+  const r120 = montarEscalonamentoRodadas(lotes, 'agr');
+  return `
+  <div class="escalonamento-block">
+    <h2 class="escala-h2">Apêndice — Escalonamento por rodada</h2>
+    <p class="note">Rodada 1: um lote de cada grupo (ordem alfabética). Rodadas seguintes: próximo lote dos grupos que ainda têm saldo. <strong>${esc(GRUPO_PISO)}</strong> só nas rodadas finais. <strong>${esc(GRUPO_FORRO_PVC)}</strong>: único lote R$ ${brl(LOTE_FORRO_PVC_RS)}. Itens menores: um lote conjunto R$ ${brl(LOTE_PADRAO_RS)} por rodada em que o pool ainda tiver saldo.</p>
+    ${htmlTabelaEscalonamento(r92, `Cenário conservador — teto R$ ${brl(CONSERVADOR)}`)}
+    ${htmlTabelaEscalonamento(r120, `Cenário agressivo — teto R$ ${brl(AGRESSIVO)}`)}
+  </div>`;
 }
 
 function linhasParaEstudo(categorias) {
