@@ -55,6 +55,9 @@ function pctStr(p) {
 const PDF_INK = 'rgb(24, 24, 27)';
 const PDF_MUTED = 'rgb(113, 113, 122)';
 const PDF_LINE = 'rgb(220, 220, 224)';
+/** Grade das tabelas de estudo (hairline, subordinada ao texto). */
+const PDF_TABLE_LINE = 'rgb(235, 235, 238)';
+const PDF_TABLE_BORDER_WIDTH = '0.35px';
 const PDF_ACCENT = 'rgb(39, 39, 42)';
 
 function pdfBarlowFontLink() {
@@ -510,7 +513,7 @@ function pdfResumoGlobalTableCss(tableSelector) {
     }
     ${tableSelector} th,
     ${tableSelector} td {
-      border: 1px solid ${PDF_LINE};
+      border: ${PDF_TABLE_BORDER_WIDTH} solid ${PDF_TABLE_LINE};
       padding: 4px 6px;
       font-size: 9pt;
       vertical-align: middle;
@@ -550,8 +553,8 @@ function pdfResumoGlobalTableCss(tableSelector) {
       text-transform: uppercase;
       letter-spacing: 0.03em;
       background-color: #ffffff;
-      border: 1px solid ${PDF_LINE};
-      border-top-width: 2px;
+      border: ${PDF_TABLE_BORDER_WIDTH} solid ${PDF_TABLE_LINE};
+      border-top: 0.5px solid ${PDF_LINE};
       padding: 6px 6px 4px;
     }
   `;
@@ -584,7 +587,7 @@ function pdfLotesExtrasStyles() {
     body.lotes-doc .callout { padding: 8px 10px; font-size: 8.5pt; margin-bottom: 10px; }
     ${pdfResumoGlobalTableCss('table.lotes-table')}
     table.lotes-table tr.group-block-end td {
-      border: 1px solid ${PDF_LINE};
+      border: ${PDF_TABLE_BORDER_WIDTH} solid ${PDF_TABLE_LINE};
       padding-bottom: 8px;
     }
     table.lotes-table .lot-hint {
@@ -605,10 +608,9 @@ function pdfLotesExtrasStyles() {
       color: ${PDF_ACCENT};
       font-weight: 600;
     }
-    col.c-g { width: 28%; }
-    col.c-p { width: 9%; }
-    col.c-a { width: 14%; }
-    col.c-n { width: 9%; }
+    col.c-g { width: 34%; }
+    col.c-p { width: 12%; }
+    col.c-a { width: 27%; }
   `;
 }
 
@@ -638,8 +640,6 @@ function subLinhasValorLote({ n, alocTotal, isCimento, smallPoolLead, smallPoolS
 }
 
 function buildHtmlLotes(lotes, prep) {
-  let somaComprasCons = 0;
-  let somaComprasAgr = 0;
   let somaAlocCons = 0;
   let somaAlocAgr = 0;
   const rows = [];
@@ -648,14 +648,12 @@ function buildHtmlLotes(lotes, prep) {
     const section = r.section ?? 'main';
     if (section === 'small' && prevSection !== 'small') {
       rows.push(
-        `<tr class="section-small-header"><td colspan="6">Itens menores (&lt; ${LIMITE_ITENS_PEQUENOS_PCT}% vendas e satélites temáticos)</td></tr>`,
+        `<tr class="section-small-header"><td colspan="4">Itens menores (&lt; ${LIMITE_ITENS_PEQUENOS_PCT}% vendas e satélites temáticos)</td></tr>`,
       );
     }
     prevSection = section;
     somaAlocCons += r.alocCons;
     somaAlocAgr += r.alocAgr;
-    if (r.comprasCons != null) somaComprasCons += r.comprasCons;
-    if (r.comprasAgr != null) somaComprasAgr += r.comprasAgr;
     const isCimento = r.grupo === 'Cimento Portland';
     let trClass = ' class="group-row"';
     if (isCimento || r.grupo === 'Tinta') trClass = ' class="group-row row-emphasis"';
@@ -666,7 +664,7 @@ function buildHtmlLotes(lotes, prep) {
         : esc(r.grupo);
 
     rows.push(
-      `<tr${trClass}><td>${grupoLabel}</td><td class="num">${pctStr(r.pct)}</td><td class="num val-rs">${brl(r.alocCons)}</td><td class="num val-rs">${brl(r.alocAgr)}</td><td class="num">${fmtComprasCell(r.comprasCons)}</td><td class="num">${fmtComprasCell(r.comprasAgr)}</td></tr>`,
+      `<tr${trClass}><td>${grupoLabel}</td><td class="num">${pctStr(r.pct)}</td><td class="num val-rs">${brl(r.alocCons)}</td><td class="num val-rs">${brl(r.alocAgr)}</td></tr>`,
     );
 
     const mostraSub =
@@ -690,13 +688,13 @@ function buildHtmlLotes(lotes, prep) {
       });
       if (nCons > 0 || nAgr > 0) {
         rows.push(
-          `<tr class="sub-lotes group-block-end"><td></td><td></td><td class="num sub-lot-val">${consSub}</td><td class="num sub-lot-val">${agrSub}</td><td colspan="2"></td></tr>`,
+          `<tr class="sub-lotes group-block-end"><td></td><td></td><td class="num sub-lot-val">${consSub}</td><td class="num sub-lot-val">${agrSub}</td></tr>`,
         );
       }
     }
   }
   rows.push(
-    `<tr class="total"><td><strong>TOTAL</strong></td><td class="num">—</td><td class="num val-rs"><strong>${brl(Math.round(somaAlocCons * 100) / 100)}</strong></td><td class="num val-rs"><strong>${brl(Math.round(somaAlocAgr * 100) / 100)}</strong></td><td class="num"><strong>${somaComprasCons}</strong></td><td class="num"><strong>${somaComprasAgr}</strong></td></tr>`,
+    `<tr class="total"><td><strong>TOTAL</strong></td><td class="num">—</td><td class="num val-rs"><strong>${brl(Math.round(somaAlocCons * 100) / 100)}</strong></td><td class="num val-rs"><strong>${brl(Math.round(somaAlocAgr * 100) / 100)}</strong></td></tr>`,
   );
 
   const cimento = lotes.find((r) => r.grupo === 'Cimento Portland');
@@ -726,11 +724,11 @@ function buildHtmlLotes(lotes, prep) {
   <p class="note">Sublinhas sob cada grupo: divisão da alocação pelo nº de compras (ex.: argamassa 92k → 2 lotes com o mesmo valor). Cimento: lotes de ${LOTE_CIMENTO_SACOS} sacos. Itens menores: sublinha só na 1ª linha da secção (lote conjunto R$ ${brl(LOTE_PADRAO_RS)}).</p>
   <table class="study-table lotes-table">
     <colgroup>
-      <col class="c-g" /><col class="c-p" /><col class="c-a" /><col class="c-a" /><col class="c-n" /><col class="c-n" />
+      <col class="c-g" /><col class="c-p" /><col class="c-a" /><col class="c-a" />
     </colgroup>
     <thead>
       <tr>
-        <th>Grupo</th><th>% aloc.</th><th>Alocação R$ 92.000</th><th>Alocação R$ 120.000</th><th>Nº compras 92k</th><th>Nº compras 120k</th>
+        <th>Grupo</th><th>% aloc.</th><th>Alocação R$ 92.000</th><th>Alocação R$ 120.000</th>
       </tr>
     </thead>
     <tbody>${rows.join('\n')}</tbody>
