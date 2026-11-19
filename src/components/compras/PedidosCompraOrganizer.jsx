@@ -1,5 +1,5 @@
 import React from 'react';
-import { CalendarDays, Building2, Truck, Clock3, ArrowDownUp } from 'lucide-react';
+import { CalendarDays, Building2, Truck, Clock3, ArrowDownUp, Wallet } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +12,7 @@ const OPTIONS = [
   { value: 'data_pedido', label: 'Data base', icon: CalendarDays },
   { value: 'fornecedor', label: 'Fornecedor', icon: Building2 },
   { value: 'status', label: 'Status', icon: Clock3 },
+  { value: 'data_pagamento', label: 'Data pagamento', icon: Wallet },
 ];
 
 export default function PedidosCompraOrganizer({ groupBy, sortOrder, onGroupByChange, onSortOrderToggle }) {

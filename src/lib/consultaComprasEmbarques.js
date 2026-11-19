@@ -14,6 +14,16 @@ import {
 } from '@/lib/embarqueLogisticaHelpers';
 import { isNecessidadeRenderizada } from '@/lib/pedidoCompraNecessidade';
 import { comparePedidosNoMesmoGrupoEmbarque } from '@/lib/comprasEmbarquesPalette';
+import {
+  comparePedidosPorDataBase,
+  getPedidoCompraDataBaseChave,
+  metaGrupoDataBasePedidoCompra,
+} from '@/lib/pedidoCompraDataBase';
+import {
+  comparePedidosPorDataPagamento,
+  getPedidoCompraDataPagamentoChave,
+  metaGrupoDataPagamentoPedidoCompra,
+} from '@/lib/pedidoCompraDataPagamento';
 import { embarqueExcluidoOperacional } from '@/lib/embarqueCodigosExcluidos';
 import { calculateBaseQuantity, commercialQuantityFromBase, getItemCompraExibicaoVitrine } from '@/lib/productUnits';
 
@@ -260,7 +270,11 @@ export function getConsultaEmbarqueSortMeta(card, groupBy) {
     return { value: (card._display_status || card.status || '').toLowerCase(), missing: false };
   }
   if (groupBy === 'data_pedido') {
-    const data = card.data_emissao || (card.created_date ? toLocalDateKey(new Date(card.created_date)) : '');
+    const data = getPedidoCompraDataBaseChave(card);
+    return { value: data || '0000-00-00', missing: !data };
+  }
+  if (groupBy === 'data_pagamento') {
+    const data = getPedidoCompraDataPagamentoChave(card);
     return { value: data || '0000-00-00', missing: !data };
   }
 
@@ -277,8 +291,8 @@ export function compareEmbarquesConsulta(a, b, sortOrder, groupBy) {
   if (metaA.missing && metaB.missing) {
     return String(a._display_code || a.numero || '').localeCompare(String(b._display_code || b.numero || ''), 'pt-BR');
   }
-  if (metaA.missing) return groupBy === 'eta_transportadora' ? -1 : 1;
-  if (metaB.missing) return groupBy === 'eta_transportadora' ? 1 : -1;
+  if (metaA.missing) return groupBy === 'eta_transportadora' || groupBy === 'data_pagamento' ? -1 : 1;
+  if (metaB.missing) return groupBy === 'eta_transportadora' || groupBy === 'data_pagamento' ? 1 : -1;
 
   const cmp = sortOrder === 'asc'
     ? String(metaA.value).localeCompare(String(metaB.value), 'pt-BR')
@@ -311,6 +325,12 @@ function compareGruposConsulta(a, b, sortOrder, groupBy) {
     return String(a.orderValue).localeCompare(String(b.orderValue), 'pt-BR');
   }
 
+  if (groupBy === 'data_pagamento') {
+    const aMissing = a.orderValue === 'sem-data';
+    const bMissing = b.orderValue === 'sem-data';
+    if (aMissing !== bMissing) return aMissing ? -1 : 1;
+  }
+
   if (sortOrder === 'asc') return String(a.orderValue).localeCompare(String(b.orderValue), 'pt-BR');
   return String(b.orderValue).localeCompare(String(a.orderValue), 'pt-BR');
 }
@@ -328,27 +348,24 @@ function getGrupoConsultaMeta(card, groupBy) {
     return { key: `status:${status}`, label: status, orderValue: status.toLowerCase() };
   }
 
-  if (groupBy === 'eta_transportadora') {
-    const eta = embarque?.eta ? toLocalDateKey(new Date(embarque.eta)) : 'sem-eta';
-    const transportadora = embarque?.transportadora_nome?.trim() || 'Sem transportadora';
-    const semDados = eta === 'sem-eta' && transportadora === 'Sem transportadora';
-    return {
-      key: semDados ? 'eta_transportadora:sem-dados' : `eta_transportadora:${eta}:${transportadora}`,
-      label: semDados ? 'Sem ETA / Sem transportadora' : `${eta === 'sem-eta' ? 'Sem ETA' : formatarSoData(eta)} · ${transportadora}`,
-      orderValue: `${eta}|${transportadora.toLowerCase()}`,
-      groupDate: semDados || eta === 'sem-eta' ? 'Sem ETA' : formatarSoData(eta),
-      groupCarrier: semDados ? 'Sem transportadora' : transportadora,
-    };
+  if (groupBy === 'data_pagamento') {
+    return metaGrupoDataPagamentoPedidoCompra(card);
   }
 
-  const dataKey = card.data_emissao || (card.created_date ? toLocalDateKey(new Date(card.created_date)) : null);
-  const key = dataKey || 'sem-data';
-  const hoje = dataHoje();
-  let label = 'Sem data';
-  if (key !== 'sem-data') {
-    label = key === hoje ? 'Hoje' : formatarSoData(key);
+  if (groupBy === 'data_pedido') {
+    return metaGrupoDataBasePedidoCompra(card);
   }
-  return { key: `data_pedido:${key}`, label, orderValue: key };
+
+  const eta = embarque?.eta ? toLocalDateKey(new Date(embarque.eta)) : 'sem-eta';
+  const transportadora = embarque?.transportadora_nome?.trim() || 'Sem transportadora';
+  const semDados = eta === 'sem-eta' && transportadora === 'Sem transportadora';
+  return {
+    key: semDados ? 'eta_transportadora:sem-dados' : `eta_transportadora:${eta}:${transportadora}`,
+    label: semDados ? 'Sem ETA / Sem transportadora' : `${eta === 'sem-eta' ? 'Sem ETA' : formatarSoData(eta)} · ${transportadora}`,
+    orderValue: `${eta}|${transportadora.toLowerCase()}`,
+    groupDate: semDados || eta === 'sem-eta' ? 'Sem ETA' : formatarSoData(eta),
+    groupCarrier: semDados ? 'Sem transportadora' : transportadora,
+  };
 }
 
 /** Agrupa cards da consulta por embarque (mesma lógica da lista Embarques). */
@@ -374,7 +391,11 @@ export function buildGruposConsultaEmbarques(cards = [], groupBy = 'eta_transpor
     .sort((a, b) => compareGruposConsulta(a, b, sortOrder, groupBy))
     .map((grupo) => ({
       ...grupo,
-      cards: grupo.cards.sort(comparePedidosNoMesmoGrupoEmbarque),
+      cards: grupo.cards.sort((a, b) => {
+        if (groupBy === 'data_pagamento') return comparePedidosPorDataPagamento(a, b, sortOrder);
+        if (groupBy === 'data_pedido') return comparePedidosPorDataBase(a, b, sortOrder);
+        return comparePedidosNoMesmoGrupoEmbarque(a, b);
+      }),
       totalConsulta: roundToTwoDecimals(
         grupo.cards.reduce((acc, c) => acc + (Number(c._consulta_valor) || 0), 0),
       ),

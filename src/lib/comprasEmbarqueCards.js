@@ -22,6 +22,8 @@ import {
   quantidadePendenteNecessidadePedido,
 } from '@/lib/pedidoCompraNecessidade';
 import { isEmbarqueSaldoPendente } from '@/lib/embarqueTipoSaldoPendente';
+import { getPedidoCompraDataBaseChave } from '@/lib/pedidoCompraDataBase';
+import { getPedidoCompraDataPagamentoChave } from '@/lib/pedidoCompraDataPagamento';
 import {
   SALDO_EMBARQUE_DISPLAY_STATUS,
   buildDisplayItensSaldoEmbarque,
@@ -417,6 +419,8 @@ export function materializePedidosCompraView(pcs, embarquesDb, produtosMap = {})
             : calcValorTotalPedidoCompra(pedido),
         _display_itens: itensDoCard,
         _display_date: getEmbarqueDisplayDate(pedido),
+        _display_data_base: getPedidoCompraDataBaseChave(pedido),
+        _display_data_pagamento: getPedidoCompraDataPagamentoChave(pedido),
         _display_fornecedor: pedido.fornecedor_nome || '—',
         _quantidade_pendente: quantidadePendente,
         _is_original: !!embarqueOriginal && embarque.id === embarqueOriginal.id,
@@ -515,6 +519,8 @@ export function materializeSaldoEmbarqueCards(pedidos = [], produtosMap = {}) {
       _display_valor: displayValor,
       _display_itens: displayItens,
       _display_date: getEmbarqueDisplayDate(pedido),
+      _display_data_base: getPedidoCompraDataBaseChave(pedido),
+      _display_data_pagamento: getPedidoCompraDataPagamentoChave(pedido),
       _display_fornecedor: pedido.fornecedor_nome || '—',
       _quantidade_pendente: resumo.soma_falta_operacional,
       _quantidade_falta_operacional: resumo.soma_falta_operacional,

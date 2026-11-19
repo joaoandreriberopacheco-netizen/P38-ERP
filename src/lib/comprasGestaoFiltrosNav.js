@@ -1,4 +1,5 @@
 import { FILTRO_COMPRAS_ENCOMENDA_DEFAULT } from '@/lib/pedidoCompraEncomenda';
+import { FILTRO_COMPRAS_PAGAMENTO_APROV_DEFAULT } from '@/lib/pedidoCompraFiltroPagamentoAprovado';
 import {
   FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT,
   FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT,
@@ -27,6 +28,9 @@ export function buildComprasGestaoFiltrosDefault() {
     etaFinal: '',
     recebimentoInicial: '',
     recebimentoFinal: '',
+    pagamentoInicial: '',
+    pagamentoFinal: '',
+    filtroPagamentoAprovado: FILTRO_COMPRAS_PAGAMENTO_APROV_DEFAULT,
     groupBy: 'eta_transportadora',
     sortOrder: 'asc',
     activeView: 'embarques',

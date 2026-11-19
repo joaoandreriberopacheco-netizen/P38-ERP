@@ -10,6 +10,7 @@ import {
   Layers,
   ChevronDown,
   Package,
+  DollarSign,
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -49,6 +50,12 @@ import {
   FILTRO_COMPRAS_ENCOMENDA_SOMENTE,
   FILTRO_COMPRAS_ENCOMENDA_TODOS,
 } from '@/lib/pedidoCompraEncomenda';
+import {
+  FILTRO_COMPRAS_PAGAMENTO_APROV_DEFAULT,
+  FILTRO_COMPRAS_PAGAMENTO_APROV_OCULTAR,
+  FILTRO_COMPRAS_PAGAMENTO_APROV_SOMENTE,
+  FILTRO_COMPRAS_PAGAMENTO_APROV_TODOS,
+} from '@/lib/pedidoCompraFiltroPagamentoAprovado';
 
 const ETA_FILTRO_MODOS = [
   { value: 'antes', label: 'Antes de' },
@@ -72,6 +79,56 @@ function encomendaFiltroLabel(value) {
   if (value === FILTRO_COMPRAS_ENCOMENDA_OCULTAR) return 'Encomendas: não mostrar';
   if (value === FILTRO_COMPRAS_ENCOMENDA_SOMENTE) return 'Encomendas: mostrar apenas';
   return 'Encomendas: mostrar (normal)';
+}
+
+/** Pagamento aprovado: normal → só aprovados → só não aprovados. */
+const PAGAMENTO_APROV_FILTRO_CYCLE = [
+  FILTRO_COMPRAS_PAGAMENTO_APROV_TODOS,
+  FILTRO_COMPRAS_PAGAMENTO_APROV_SOMENTE,
+  FILTRO_COMPRAS_PAGAMENTO_APROV_OCULTAR,
+];
+
+function pagamentoAprovadoFiltroLabel(value) {
+  if (value === FILTRO_COMPRAS_PAGAMENTO_APROV_SOMENTE) return 'Pagamento: só aprovados';
+  if (value === FILTRO_COMPRAS_PAGAMENTO_APROV_OCULTAR) return 'Pagamento: só não aprovados';
+  return 'Pagamento: todos';
+}
+
+/** Ícone $ — 1.º clique só aprovados; 2.º só não aprovados; 3.º todos. */
+function PagamentoAprovadoFiltroIcon({ value = FILTRO_COMPRAS_PAGAMENTO_APROV_DEFAULT, onChange }) {
+  const label = pagamentoAprovadoFiltroLabel(value);
+
+  const cycle = () => {
+    const idx = PAGAMENTO_APROV_FILTRO_CYCLE.indexOf(value);
+    const safeIdx = idx >= 0 ? idx : 0;
+    const next = PAGAMENTO_APROV_FILTRO_CYCLE[(safeIdx + 1) % PAGAMENTO_APROV_FILTRO_CYCLE.length];
+    onChange?.(next);
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={cycle}
+      title={label}
+      aria-label={label}
+      className={cn(
+        COMPRAS_MOBILE_ICON_BTN,
+        'h-8 w-8 rounded-full',
+        value === FILTRO_COMPRAS_PAGAMENTO_APROV_SOMENTE && COMPRAS_CHIP_ACTIVE_OLIVE,
+        value === FILTRO_COMPRAS_PAGAMENTO_APROV_OCULTAR && 'text-muted-foreground/55',
+      )}
+    >
+      <DollarSign className="h-4 w-4 shrink-0" aria-hidden />
+      {value === FILTRO_COMPRAS_PAGAMENTO_APROV_OCULTAR ? (
+        <span
+          className="pointer-events-none absolute inset-0 flex items-center justify-center"
+          aria-hidden
+        >
+          <span className="h-[1.5px] w-[1.125rem] rotate-45 rounded-full bg-muted-foreground/75 dark:bg-muted-foreground/60" />
+        </span>
+      ) : null}
+    </button>
+  );
 }
 
 /** Um ícone — toque alterna: normal → ocultar → só encomendas. */
@@ -452,6 +509,8 @@ export default function FiltrosCompras({
   onFiltroSomenteNaoConcluidos,
   filtroEncomenda = FILTRO_COMPRAS_ENCOMENDA_DEFAULT,
   onFiltroEncomenda,
+  filtroPagamentoAprovado = FILTRO_COMPRAS_PAGAMENTO_APROV_DEFAULT,
+  onFiltroPagamentoAprovado,
   statusSel,
   onStatusSel,
   todasTags,
@@ -495,8 +554,9 @@ export default function FiltrosCompras({
     count += statusPedidoCompraExplicitos(statusSel).length;
     count += tagsSel.length;
     if (filtroEncomenda && filtroEncomenda !== FILTRO_COMPRAS_ENCOMENDA_TODOS) count += 1;
+    if (filtroPagamentoAprovado && filtroPagamentoAprovado !== FILTRO_COMPRAS_PAGAMENTO_APROV_TODOS) count += 1;
     return count;
-  }, [dataInicial, dataFinal, recebimentoInicial, recebimentoFinal, etaFiltroModo, etaData, etaInicial, etaFinal, statusSel, tagsSel, filtroEncomenda]);
+  }, [dataInicial, dataFinal, recebimentoInicial, recebimentoFinal, etaFiltroModo, etaData, etaInicial, etaFinal, statusSel, tagsSel, filtroEncomenda, filtroPagamentoAprovado]);
 
   const activeChips = useMemo(() => {
     const chips = [];
@@ -610,6 +670,23 @@ export default function FiltrosCompras({
       });
     }
 
+    if (filtroPagamentoAprovado === FILTRO_COMPRAS_PAGAMENTO_APROV_SOMENTE) {
+      chips.push({
+        key: 'pagamento-aprov-somente',
+        label: 'Só pagamento aprovado',
+        tone: 'accent',
+        onRemove: () => onFiltroPagamentoAprovado?.(FILTRO_COMPRAS_PAGAMENTO_APROV_TODOS),
+      });
+    }
+    if (filtroPagamentoAprovado === FILTRO_COMPRAS_PAGAMENTO_APROV_OCULTAR) {
+      chips.push({
+        key: 'pagamento-aprov-ocultar',
+        label: 'Só pagamento não aprovado',
+        tone: 'neutral',
+        onRemove: () => onFiltroPagamentoAprovado?.(FILTRO_COMPRAS_PAGAMENTO_APROV_TODOS),
+      });
+    }
+
     return chips;
   }, [
     dataInicial,
@@ -634,6 +711,8 @@ export default function FiltrosCompras({
     onTagsSel,
     filtroEncomenda,
     onFiltroEncomenda,
+    filtroPagamentoAprovado,
+    onFiltroPagamentoAprovado,
   ]);
 
   const painelProps = {
@@ -692,6 +771,7 @@ export default function FiltrosCompras({
         }}
       />
       <EncomendaFiltroIcon value={filtroEncomenda} onChange={onFiltroEncomenda} />
+      <PagamentoAprovadoFiltroIcon value={filtroPagamentoAprovado} onChange={onFiltroPagamentoAprovado} />
     </div>
   );
 
