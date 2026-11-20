@@ -1,25 +1,66 @@
-import { dataHoje, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
+import { chaveDiaCampoData, dataHoje, formatarSoData } from '@/components/utils/dateUtils';
 import { comparePedidosNoMesmoGrupoEmbarque } from '@/lib/comprasEmbarquesPalette';
+import { isLancamentoCancelado } from '@/lib/lancamentoFinanceiroStatus';
+
+function lancamentosCompraPedido(pedido = {}, lancamentos = []) {
+  const pedidoId = pedido?.id;
+  if (!pedidoId) return [];
+  return (lancamentos || []).filter(
+    (l) =>
+      !isLancamentoCancelado(l) &&
+      (l.referencia_tipo === 'PedidoCompra' ||
+        l.pedido_compra_vinculado_id === pedidoId ||
+        l.is_custo_mercadoria),
+  );
+}
+
+function normalizarChaveDataPagamento(raw) {
+  if (raw == null || raw === '') return '';
+  const k = chaveDiaCampoData(raw);
+  return k && k !== 'Invalid Date' ? k : '';
+}
+
+/**
+ * 1.º vencimento / data efetiva de pagamento a partir dos lançamentos CMV do pedido.
+ * (Pedidos aprovados sem `data_primeiro_vencimento` gravado costumam ter só as parcelas.)
+ */
+export function chaveDataPagamentoFromLancamentosPedidoCompra(pedido = {}, lancamentos = []) {
+  const compraLancs = lancamentosCompraPedido(pedido, lancamentos);
+  if (!compraLancs.length) return '';
+
+  const chaves = compraLancs
+    .map((l) => normalizarChaveDataPagamento(l.data_pagamento || l.data_vencimento))
+    .filter(Boolean);
+  if (!chaves.length) return '';
+  chaves.sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  return chaves[0];
+}
 
 /**
  * Data financeira do pedido de compra (à vista = pagamento; parcelado = 1.º vencimento).
- * Coluna/dado: `data_primeiro_vencimento` (PedidoCompra / pedido_compra).
+ * Fontes: `data_primeiro_vencimento` (dados/campo) → lançamentos vinculados.
+ * Não usa `data_aprovacao_financeira` (essa é «data base»).
  */
 export function getPedidoCompraDataPagamentoChave(pedido = {}) {
-  const raw =
-    pedido.data_primeiro_vencimento
-    || pedido._display_data_pagamento
-    || pedido?.dados?.data_primeiro_vencimento
-    || '';
-  const s = String(raw || '').trim();
-  if (!s) return '';
-  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
-  try {
-    const k = toLocalDateKey(new Date(s));
-    return k && k !== 'Invalid Date' ? k : '';
-  } catch {
-    return '';
+  const direto = [
+    pedido.data_primeiro_vencimento,
+    pedido?.dados?.data_primeiro_vencimento,
+    pedido._data_pagamento_resolvida,
+  ];
+  for (const raw of direto) {
+    const k = normalizarChaveDataPagamento(raw);
+    if (k) return k;
   }
+
+  const cached = normalizarChaveDataPagamento(pedido._display_data_pagamento);
+  if (cached) return cached;
+
+  const lancs = pedido._lancamentos_compra;
+  if (Array.isArray(lancs) && lancs.length) {
+    return chaveDataPagamentoFromLancamentosPedidoCompra(pedido, lancs);
+  }
+
+  return '';
 }
 
 export function pedidoPassaFiltroDataPagamento(pedido, pagamentoInicial = '', pagamentoFinal = '') {
