@@ -30,6 +30,8 @@ export function buildComprasGestaoFiltrosDefault() {
     recebimentoFinal: '',
     pagamentoInicial: '',
     pagamentoFinal: '',
+    aprovacaoFinanceiraInicial: '',
+    aprovacaoFinanceiraFinal: '',
     filtroPagamentoAprovado: FILTRO_COMPRAS_PAGAMENTO_APROV_DEFAULT,
     groupBy: 'eta_transportadora',
     sortOrder: 'asc',

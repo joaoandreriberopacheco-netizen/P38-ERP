@@ -11,7 +11,9 @@ import {
   ChevronDown,
   Package,
   DollarSign,
+  BadgeCheck,
 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
@@ -95,6 +97,45 @@ function pagamentoAprovadoFiltroLabel(value) {
 }
 
 /** Ícone $ — 1.º clique só aprovados; 2.º só não aprovados; 3.º todos. */
+/** Ícone com popover de período (aprovação financeira / data pagamento). */
+function PeriodoDateRangeFiltroIcon({
+  icon: Icon,
+  title,
+  startDate,
+  endDate,
+  onApply,
+  onClear,
+}) {
+  const ativo = !!(startDate || endDate);
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          title={title}
+          aria-label={title}
+          className={cn(
+            COMPRAS_MOBILE_ICON_BTN,
+            'h-8 w-8 rounded-full',
+            ativo && COMPRAS_CHIP_ACTIVE_OLIVE,
+          )}
+        >
+          <Icon className="h-4 w-4 shrink-0" aria-hidden />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-[min(100vw-2rem,22rem)] border-0 shadow-lg rounded-xl p-3">
+        <p className="text-[11px] font-light uppercase tracking-wide text-muted-foreground mb-2">{title}</p>
+        <MobileDateRangePicker
+          startDate={startDate}
+          endDate={endDate}
+          onApply={onApply}
+          onClear={onClear}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function PagamentoAprovadoFiltroIcon({ value = FILTRO_COMPRAS_PAGAMENTO_APROV_DEFAULT, onChange }) {
   const label = pagamentoAprovadoFiltroLabel(value);
 
@@ -268,6 +309,14 @@ function FiltrosComprasPainel({
   onRecebimentoInicial,
   recebimentoFinal,
   onRecebimentoFinal,
+  aprovacaoFinanceiraInicial,
+  onAprovacaoFinanceiraInicial,
+  aprovacaoFinanceiraFinal,
+  onAprovacaoFinanceiraFinal,
+  pagamentoInicial,
+  onPagamentoInicial,
+  pagamentoFinal,
+  onPagamentoFinal,
   onFiltroSomenteNaoConcluidos,
   searchTag,
   onSearchTag,
@@ -436,6 +485,42 @@ function FiltrosComprasPainel({
         />
       </FilterSection>
 
+      <FilterSection title="Aprovação financeira" icon={BadgeCheck} className={layout === 'desktop' ? 'h-full' : undefined}>
+        <p className="text-[10px] font-light text-muted-foreground leading-snug">
+          Filtra pela data em que o financeiro aprovou o pedido (coluna data_aprovacao_financeira).
+        </p>
+        <MobileDateRangePicker
+          startDate={aprovacaoFinanceiraInicial}
+          endDate={aprovacaoFinanceiraFinal}
+          onApply={(inicio, fim) => {
+            onAprovacaoFinanceiraInicial(inicio);
+            onAprovacaoFinanceiraFinal(fim);
+          }}
+          onClear={() => {
+            onAprovacaoFinanceiraInicial('');
+            onAprovacaoFinanceiraFinal('');
+          }}
+        />
+      </FilterSection>
+
+      <FilterSection title="Data de pagamento" icon={Wallet} className={layout === 'desktop' ? 'h-full' : undefined}>
+        <p className="text-[10px] font-light text-muted-foreground leading-snug">
+          Filtra pelo 1.º vencimento ou pagamento das parcelas vinculadas ao pedido.
+        </p>
+        <MobileDateRangePicker
+          startDate={pagamentoInicial}
+          endDate={pagamentoFinal}
+          onApply={(inicio, fim) => {
+            onPagamentoInicial(inicio);
+            onPagamentoFinal(fim);
+          }}
+          onClear={() => {
+            onPagamentoInicial('');
+            onPagamentoFinal('');
+          }}
+        />
+      </FilterSection>
+
       <FilterSection
         title="Status do pedido"
         icon={Layers}
@@ -532,6 +617,14 @@ export default function FiltrosCompras({
   onRecebimentoInicial,
   recebimentoFinal,
   onRecebimentoFinal,
+  aprovacaoFinanceiraInicial,
+  onAprovacaoFinanceiraInicial,
+  aprovacaoFinanceiraFinal,
+  onAprovacaoFinanceiraFinal,
+  pagamentoInicial,
+  onPagamentoInicial,
+  pagamentoFinal,
+  onPagamentoFinal,
   hasActiveFilters,
   onLimparFiltros,
   mobileLeading = null,
@@ -544,6 +637,8 @@ export default function FiltrosCompras({
     let count = 0;
     if (dataInicial || dataFinal) count += 1;
     if (recebimentoInicial || recebimentoFinal) count += 1;
+    if (aprovacaoFinanceiraInicial || aprovacaoFinanceiraFinal) count += 1;
+    if (pagamentoInicial || pagamentoFinal) count += 1;
     if (
       etaFiltroModo &&
       ((['antes', 'depois'].includes(etaFiltroModo) && etaData) ||
@@ -556,7 +651,24 @@ export default function FiltrosCompras({
     if (filtroEncomenda && filtroEncomenda !== FILTRO_COMPRAS_ENCOMENDA_TODOS) count += 1;
     if (filtroPagamentoAprovado && filtroPagamentoAprovado !== FILTRO_COMPRAS_PAGAMENTO_APROV_TODOS) count += 1;
     return count;
-  }, [dataInicial, dataFinal, recebimentoInicial, recebimentoFinal, etaFiltroModo, etaData, etaInicial, etaFinal, statusSel, tagsSel, filtroEncomenda, filtroPagamentoAprovado]);
+  }, [
+    dataInicial,
+    dataFinal,
+    recebimentoInicial,
+    recebimentoFinal,
+    aprovacaoFinanceiraInicial,
+    aprovacaoFinanceiraFinal,
+    pagamentoInicial,
+    pagamentoFinal,
+    etaFiltroModo,
+    etaData,
+    etaInicial,
+    etaFinal,
+    statusSel,
+    tagsSel,
+    filtroEncomenda,
+    filtroPagamentoAprovado,
+  ]);
 
   const activeChips = useMemo(() => {
     const chips = [];
@@ -591,6 +703,40 @@ export default function FiltrosCompras({
         onRemove: () => {
           onRecebimentoInicial('');
           onRecebimentoFinal('');
+        },
+      });
+    }
+
+    if (aprovacaoFinanceiraInicial || aprovacaoFinanceiraFinal) {
+      const label = aprovacaoFinanceiraInicial && aprovacaoFinanceiraFinal
+        ? `Aprovação: ${formatDateLabel(aprovacaoFinanceiraInicial)} – ${formatDateLabel(aprovacaoFinanceiraFinal)}`
+        : aprovacaoFinanceiraInicial
+          ? `Aprovação desde ${formatDateLabel(aprovacaoFinanceiraInicial)}`
+          : `Aprovação até ${formatDateLabel(aprovacaoFinanceiraFinal)}`;
+      chips.push({
+        key: 'periodo-aprovacao-financeira',
+        label,
+        tone: 'accent',
+        onRemove: () => {
+          onAprovacaoFinanceiraInicial('');
+          onAprovacaoFinanceiraFinal('');
+        },
+      });
+    }
+
+    if (pagamentoInicial || pagamentoFinal) {
+      const label = pagamentoInicial && pagamentoFinal
+        ? `Pagamento: ${formatDateLabel(pagamentoInicial)} – ${formatDateLabel(pagamentoFinal)}`
+        : pagamentoInicial
+          ? `Pagamento desde ${formatDateLabel(pagamentoInicial)}`
+          : `Pagamento até ${formatDateLabel(pagamentoFinal)}`;
+      chips.push({
+        key: 'periodo-pagamento',
+        label,
+        tone: 'neutral',
+        onRemove: () => {
+          onPagamentoInicial('');
+          onPagamentoFinal('');
         },
       });
     }
@@ -693,6 +839,10 @@ export default function FiltrosCompras({
     dataFinal,
     recebimentoInicial,
     recebimentoFinal,
+    aprovacaoFinanceiraInicial,
+    aprovacaoFinanceiraFinal,
+    pagamentoInicial,
+    pagamentoFinal,
     etaFiltroModo,
     etaData,
     etaInicial,
@@ -703,6 +853,10 @@ export default function FiltrosCompras({
     onDataFinal,
     onRecebimentoInicial,
     onRecebimentoFinal,
+    onAprovacaoFinanceiraInicial,
+    onAprovacaoFinanceiraFinal,
+    onPagamentoInicial,
+    onPagamentoFinal,
     onEtaFiltroModo,
     onEtaData,
     onEtaInicial,
@@ -737,6 +891,14 @@ export default function FiltrosCompras({
     onRecebimentoInicial,
     recebimentoFinal,
     onRecebimentoFinal,
+    aprovacaoFinanceiraInicial,
+    onAprovacaoFinanceiraInicial,
+    aprovacaoFinanceiraFinal,
+    onAprovacaoFinanceiraFinal,
+    pagamentoInicial,
+    onPagamentoInicial,
+    pagamentoFinal,
+    onPagamentoFinal,
     onFiltroSomenteNaoConcluidos,
     searchTag,
     onSearchTag: setSearchTag,
@@ -771,7 +933,35 @@ export default function FiltrosCompras({
         }}
       />
       <EncomendaFiltroIcon value={filtroEncomenda} onChange={onFiltroEncomenda} />
+      <PeriodoDateRangeFiltroIcon
+        icon={BadgeCheck}
+        title="Período da aprovação financeira"
+        startDate={aprovacaoFinanceiraInicial}
+        endDate={aprovacaoFinanceiraFinal}
+        onApply={(inicio, fim) => {
+          onAprovacaoFinanceiraInicial?.(inicio);
+          onAprovacaoFinanceiraFinal?.(fim);
+        }}
+        onClear={() => {
+          onAprovacaoFinanceiraInicial?.('');
+          onAprovacaoFinanceiraFinal?.('');
+        }}
+      />
       <PagamentoAprovadoFiltroIcon value={filtroPagamentoAprovado} onChange={onFiltroPagamentoAprovado} />
+      <PeriodoDateRangeFiltroIcon
+        icon={Wallet}
+        title="Período da data de pagamento"
+        startDate={pagamentoInicial}
+        endDate={pagamentoFinal}
+        onApply={(inicio, fim) => {
+          onPagamentoInicial?.(inicio);
+          onPagamentoFinal?.(fim);
+        }}
+        onClear={() => {
+          onPagamentoInicial?.('');
+          onPagamentoFinal?.('');
+        }}
+      />
     </div>
   );
 

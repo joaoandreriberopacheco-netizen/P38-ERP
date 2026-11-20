@@ -20,6 +20,11 @@ import {
   metaGrupoDataBasePedidoCompra,
 } from '@/lib/pedidoCompraDataBase';
 import {
+  comparePedidosPorDataAprovacaoFinanceira,
+  getPedidoCompraDataAprovacaoFinanceiraChave,
+  metaGrupoDataAprovacaoFinanceiraPedidoCompra,
+} from '@/lib/pedidoCompraDataAprovacaoFinanceira';
+import {
   comparePedidosPorDataPagamento,
   getPedidoCompraDataPagamentoChave,
   metaGrupoDataPagamentoPedidoCompra,
@@ -277,6 +282,10 @@ export function getConsultaEmbarqueSortMeta(card, groupBy) {
     const data = getPedidoCompraDataPagamentoChave(card);
     return { value: data || '0000-00-00', missing: !data };
   }
+  if (groupBy === 'data_aprovacao_financeira') {
+    const data = getPedidoCompraDataAprovacaoFinanceiraChave(card);
+    return { value: data || '0000-00-00', missing: !data };
+  }
 
   const eta = card._embarque?.eta
     ? toLocalDateKey(new Date(card._embarque.eta))
@@ -291,8 +300,11 @@ export function compareEmbarquesConsulta(a, b, sortOrder, groupBy) {
   if (metaA.missing && metaB.missing) {
     return String(a._display_code || a.numero || '').localeCompare(String(b._display_code || b.numero || ''), 'pt-BR');
   }
-  if (metaA.missing) return groupBy === 'eta_transportadora' || groupBy === 'data_pagamento' ? -1 : 1;
-  if (metaB.missing) return groupBy === 'eta_transportadora' || groupBy === 'data_pagamento' ? 1 : -1;
+  const missingFirst = groupBy === 'eta_transportadora'
+    || groupBy === 'data_pagamento'
+    || groupBy === 'data_aprovacao_financeira';
+  if (metaA.missing) return missingFirst ? -1 : 1;
+  if (metaB.missing) return missingFirst ? 1 : -1;
 
   const cmp = sortOrder === 'asc'
     ? String(metaA.value).localeCompare(String(metaB.value), 'pt-BR')
@@ -325,7 +337,7 @@ function compareGruposConsulta(a, b, sortOrder, groupBy) {
     return String(a.orderValue).localeCompare(String(b.orderValue), 'pt-BR');
   }
 
-  if (groupBy === 'data_pagamento') {
+  if (groupBy === 'data_pagamento' || groupBy === 'data_aprovacao_financeira') {
     const aMissing = a.orderValue === 'sem-data';
     const bMissing = b.orderValue === 'sem-data';
     if (aMissing !== bMissing) return aMissing ? -1 : 1;
@@ -350,6 +362,10 @@ function getGrupoConsultaMeta(card, groupBy) {
 
   if (groupBy === 'data_pagamento') {
     return metaGrupoDataPagamentoPedidoCompra(card);
+  }
+
+  if (groupBy === 'data_aprovacao_financeira') {
+    return metaGrupoDataAprovacaoFinanceiraPedidoCompra(card);
   }
 
   if (groupBy === 'data_pedido') {
@@ -393,6 +409,9 @@ export function buildGruposConsultaEmbarques(cards = [], groupBy = 'eta_transpor
       ...grupo,
       cards: grupo.cards.sort((a, b) => {
         if (groupBy === 'data_pagamento') return comparePedidosPorDataPagamento(a, b, sortOrder);
+        if (groupBy === 'data_aprovacao_financeira') {
+          return comparePedidosPorDataAprovacaoFinanceira(a, b, sortOrder);
+        }
         if (groupBy === 'data_pedido') return comparePedidosPorDataBase(a, b, sortOrder);
         return comparePedidosNoMesmoGrupoEmbarque(a, b);
       }),

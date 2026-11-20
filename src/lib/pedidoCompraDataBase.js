@@ -2,13 +2,12 @@ import { dataHoje, formatarSoData, toLocalDateKey } from '@/components/utils/dat
 import { comparePedidosNoMesmoGrupoEmbarque } from '@/lib/comprasEmbarquesPalette';
 
 /**
- * «Data base» do pedido (organizador «Data base») — distinta da data de pagamento.
- * Prioridade: aprovação financeira → data de emissão → created_date (mesma regra do cartão em embarques).
+ * «Data base» do pedido (`groupBy === 'data_pedido'`) — emissão/recebimento do fluxo, não aprovação financeira.
+ * Use `pedidoCompraDataAprovacaoFinanceira.js` para `data_aprovacao_financeira`.
  */
 export function getPedidoCompraDataBaseChave(pedido = {}) {
   const raw =
-    pedido.data_aprovacao_financeira
-    || pedido._display_date
+    pedido._display_date
     || pedido.data_emissao
     || pedido.created_date
     || '';

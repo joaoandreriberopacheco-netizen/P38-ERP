@@ -55,6 +55,11 @@ import {
   metaGrupoDataBasePedidoCompra,
 } from '@/lib/pedidoCompraDataBase';
 import {
+  comparePedidosPorDataAprovacaoFinanceira,
+  metaGrupoDataAprovacaoFinanceiraPedidoCompra,
+  pedidoPassaFiltroDataAprovacaoFinanceira,
+} from '@/lib/pedidoCompraDataAprovacaoFinanceira';
+import {
   comparePedidosPorDataPagamento,
   metaGrupoDataPagamentoPedidoCompra,
   pedidoPassaFiltroDataPagamento,
@@ -173,6 +178,8 @@ const passaFiltrosEmbarqueCard = (
     recebimentoFinal,
     pagamentoInicial,
     pagamentoFinal,
+    aprovacaoFinanceiraInicial,
+    aprovacaoFinanceiraFinal,
     filtroEncomenda = FILTRO_COMPRAS_ENCOMENDA_DEFAULT,
     filtroPagamentoAprovado = FILTRO_COMPRAS_PAGAMENTO_APROV_DEFAULT,
     skipSearch = false,
@@ -228,6 +235,9 @@ const passaFiltrosEmbarqueCard = (
   if (!etaMatchesFilter(embarque, etaFiltroModo, etaData, etaInicial, etaFinal)) return false;
   if (!recebimentoMatchesFilter(card, recebimentoInicial, recebimentoFinal)) return false;
   if (!pedidoPassaFiltroDataPagamento(card, pagamentoInicial, pagamentoFinal)) return false;
+  if (!pedidoPassaFiltroDataAprovacaoFinanceira(card, aprovacaoFinanceiraInicial, aprovacaoFinanceiraFinal)) {
+    return false;
+  }
   if (!passaFiltroEncomendaPedidoCompra(card, filtroEncomenda)) return false;
   if (!passaFiltroPagamentoAprovadoPedidoCompra(card, filtroPagamentoAprovado)) return false;
   return true;
@@ -257,7 +267,7 @@ const compareGruposPedidosCompra = (a, b, sortOrder, groupBy) => {
     return String(a.orderValue).localeCompare(String(b.orderValue), 'pt-BR');
   }
 
-  if (groupBy === 'data_pagamento') {
+  if (groupBy === 'data_pagamento' || groupBy === 'data_aprovacao_financeira') {
     const aMissing = a.orderValue === 'sem-data';
     const bMissing = b.orderValue === 'sem-data';
     if (aMissing !== bMissing) return aMissing ? -1 : 1;
@@ -346,6 +356,12 @@ export default function PedidosCompraPage() {
   const [recebimentoFinal, setRecebimentoFinal] = useState(filtrosNavInicial.recebimentoFinal);
   const [pagamentoInicial, setPagamentoInicial] = useState(filtrosNavInicial.pagamentoInicial);
   const [pagamentoFinal, setPagamentoFinal] = useState(filtrosNavInicial.pagamentoFinal);
+  const [aprovacaoFinanceiraInicial, setAprovacaoFinanceiraInicial] = useState(
+    filtrosNavInicial.aprovacaoFinanceiraInicial,
+  );
+  const [aprovacaoFinanceiraFinal, setAprovacaoFinanceiraFinal] = useState(
+    filtrosNavInicial.aprovacaoFinanceiraFinal,
+  );
   const [showImportador, setShowImportador] = useState(false);
   const [selecionadosIds, setSelecionadosIds] = useState([]);
   const [enviandoLote, setEnviandoLote] = useState(false);
@@ -378,6 +394,8 @@ export default function PedidosCompraPage() {
       recebimentoFinal,
       pagamentoInicial,
       pagamentoFinal,
+      aprovacaoFinanceiraInicial,
+      aprovacaoFinanceiraFinal,
       groupBy,
       sortOrder,
       activeView,
@@ -400,6 +418,8 @@ export default function PedidosCompraPage() {
     recebimentoFinal,
     pagamentoInicial,
     pagamentoFinal,
+    aprovacaoFinanceiraInicial,
+    aprovacaoFinanceiraFinal,
     groupBy,
     sortOrder,
     activeView,
@@ -596,6 +616,8 @@ export default function PedidosCompraPage() {
       recebimentoFinal,
       pagamentoInicial,
       pagamentoFinal,
+      aprovacaoFinanceiraInicial,
+      aprovacaoFinanceiraFinal,
       filtroEncomenda,
       filtroPagamentoAprovado,
     }),
@@ -617,6 +639,8 @@ export default function PedidosCompraPage() {
       recebimentoFinal,
       pagamentoInicial,
       pagamentoFinal,
+      aprovacaoFinanceiraInicial,
+      aprovacaoFinanceiraFinal,
     ],
   );
 
@@ -720,6 +744,10 @@ export default function PedidosCompraPage() {
         return metaGrupoDataPagamentoPedidoCompra(pedido);
       }
 
+      if (groupBy === 'data_aprovacao_financeira') {
+        return metaGrupoDataAprovacaoFinanceiraPedidoCompra(pedido);
+      }
+
       if (groupBy === 'data_pedido') {
         return metaGrupoDataBasePedidoCompra(pedido);
       }
@@ -765,6 +793,9 @@ export default function PedidosCompraPage() {
       .map((grupo) => {
         const pedidosSort = grupo.pedidos.sort((a, b) => {
           if (groupBy === 'data_pagamento') return comparePedidosPorDataPagamento(a, b, sortOrder);
+          if (groupBy === 'data_aprovacao_financeira') {
+            return comparePedidosPorDataAprovacaoFinanceira(a, b, sortOrder);
+          }
           if (groupBy === 'data_pedido') return comparePedidosPorDataBase(a, b, sortOrder);
           return comparePedidosNoMesmoGrupoEmbarque(a, b);
         });
@@ -787,6 +818,7 @@ export default function PedidosCompraPage() {
   );
   const hasActiveFilters = search || tagsSel.length > 0 || dataInicial || dataFinal || hasEtaFilter
     || recebimentoInicial || recebimentoFinal || pagamentoInicial || pagamentoFinal
+    || aprovacaoFinanceiraInicial || aprovacaoFinanceiraFinal
     || statusPedidoCompraExplicitos(statusSel).length > 0
     || filtroUltimos30Dias !== FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT
     || filtroSomenteNaoConcluidos !== FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT
@@ -957,6 +989,12 @@ export default function PedidosCompraPage() {
                 etaFinal={etaFinal} onEtaFinal={setEtaFinal}
                 recebimentoInicial={recebimentoInicial} onRecebimentoInicial={setRecebimentoInicial}
                 recebimentoFinal={recebimentoFinal} onRecebimentoFinal={setRecebimentoFinal}
+                pagamentoInicial={pagamentoInicial} onPagamentoInicial={setPagamentoInicial}
+                pagamentoFinal={pagamentoFinal} onPagamentoFinal={setPagamentoFinal}
+                aprovacaoFinanceiraInicial={aprovacaoFinanceiraInicial}
+                onAprovacaoFinanceiraInicial={setAprovacaoFinanceiraInicial}
+                aprovacaoFinanceiraFinal={aprovacaoFinanceiraFinal}
+                onAprovacaoFinanceiraFinal={setAprovacaoFinanceiraFinal}
                 hasActiveFilters={hasActiveFilters}
                 onLimparFiltros={() => {
                   setSearch('');
@@ -974,6 +1012,10 @@ export default function PedidosCompraPage() {
                   setEtaFinal('');
                   setRecebimentoInicial('');
                   setRecebimentoFinal('');
+                  setPagamentoInicial('');
+                  setPagamentoFinal('');
+                  setAprovacaoFinanceiraInicial('');
+                  setAprovacaoFinanceiraFinal('');
                 }}
               />
             </div>
@@ -1128,6 +1170,12 @@ export default function PedidosCompraPage() {
         etaFinal={etaFinal} onEtaFinal={setEtaFinal}
         recebimentoInicial={recebimentoInicial} onRecebimentoInicial={setRecebimentoInicial}
         recebimentoFinal={recebimentoFinal} onRecebimentoFinal={setRecebimentoFinal}
+        pagamentoInicial={pagamentoInicial} onPagamentoInicial={setPagamentoInicial}
+        pagamentoFinal={pagamentoFinal} onPagamentoFinal={setPagamentoFinal}
+        aprovacaoFinanceiraInicial={aprovacaoFinanceiraInicial}
+        onAprovacaoFinanceiraInicial={setAprovacaoFinanceiraInicial}
+        aprovacaoFinanceiraFinal={aprovacaoFinanceiraFinal}
+        onAprovacaoFinanceiraFinal={setAprovacaoFinanceiraFinal}
         hasActiveFilters={hasActiveFilters}
         onLimparFiltros={() => {
           setSearch('');
@@ -1145,6 +1193,10 @@ export default function PedidosCompraPage() {
           setEtaFinal('');
           setRecebimentoInicial('');
           setRecebimentoFinal('');
+          setPagamentoInicial('');
+          setPagamentoFinal('');
+          setAprovacaoFinanceiraInicial('');
+          setAprovacaoFinanceiraFinal('');
         }}
       />
       </div>

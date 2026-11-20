@@ -1,5 +1,5 @@
 import React from 'react';
-import { CalendarDays, Building2, Truck, Clock3, ArrowDownUp, Wallet } from 'lucide-react';
+import { CalendarDays, Building2, Truck, Clock3, ArrowDownUp, Wallet, BadgeCheck } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +10,7 @@ import {
 const OPTIONS = [
   { value: 'eta_transportadora', label: 'ETA/Transportadora', icon: Truck },
   { value: 'data_pedido', label: 'Data base', icon: CalendarDays },
+  { value: 'data_aprovacao_financeira', label: 'Aprovação financeira', icon: BadgeCheck },
   { value: 'fornecedor', label: 'Fornecedor', icon: Building2 },
   { value: 'status', label: 'Status', icon: Clock3 },
   { value: 'data_pagamento', label: 'Data pagamento', icon: Wallet },
