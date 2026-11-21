@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-11-21T21:57:56.327Z",
+  "geradoEm": "2026-11-21T21:59:41.413Z",
   "fonte": "/agent/repos/varejosync/files/pagleve/pagleve-base-cruzada.csv",
   "resumo": {
     "porRotulo": {
@@ -109,6 +109,10 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/marcela/napolehd60.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/marcela/amb-napolehd60.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 34.5,
@@ -148,6 +152,10 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/marcela/cambridjebghd61.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/produtos/marcela/amb-cambridjebgachd61.jpg",
           "tipo": "principal"
         }
       ],
@@ -189,6 +197,10 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/marcela/cambridjeczhd61.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/marcela/amb-cambridjeczmate-61.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 34.5,
@@ -229,6 +241,10 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/stargolden/priscohd.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/stargolden/amb-priscohd.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 34.5,
@@ -268,6 +284,10 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/formigres/cataventobrancohd57.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/produtos/formigres/amb-cataventobrancohd57.jpg",
           "tipo": "principal"
         }
       ],
@@ -349,6 +369,10 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/jg/pandoraes.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/jg/amb-pandora34x60.webp",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 34.5,
@@ -429,6 +453,10 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/marcela/friggahd57.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/marcela/amb-friggahd57.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 34.5,
@@ -468,6 +496,10 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/formigres/alamedabghd61.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/produtos/formigres/amb-alamedabghd61.jpg",
           "tipo": "principal"
         }
       ],
@@ -509,6 +541,10 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/marcela/calcadahd50.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/marcela/amb-calcadahd50.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 32.9,
@@ -548,6 +584,10 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/marcela/ducalehd50.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/marcela/amb-ducalehd50.jpg",
           "tipo": "principal"
         }
       ],
@@ -589,6 +629,10 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/marcela/muranohd50.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/marcela/amb-muranohd50.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 32.9,
@@ -628,6 +672,10 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/jg/niagarabghd.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/jg/amb-niagarabghd.jpg",
           "tipo": "principal"
         }
       ],
@@ -669,6 +717,10 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/formigres/valemrhd45.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/amb-vallemrhd45.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 33.45,
@@ -708,6 +760,10 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/formigres/giardinoclhd50.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/LEGADO:formigres/img/productos/ambientes/giardinoclshd50.jpg",
           "tipo": "principal"
         }
       ],
@@ -824,6 +880,10 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/formigres/branco57.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/produtos/formigres/amb-branco32.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 33.9,
@@ -863,6 +923,10 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/premium/avela60x120.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/produtos/premium/amb-avela60x120big.jpg",
           "tipo": "principal"
         }
       ],
@@ -944,6 +1008,10 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/marcela/cambridjebghd61.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/marcela/amb-cambridjebgachd61.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 34.5,
@@ -983,6 +1051,10 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/marcela/stone45.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/marcela/amb-stone45.jpg",
           "tipo": "principal"
         }
       ],
@@ -1024,6 +1096,22 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/marcela/andorrahd50-brilhantes-f1.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/marcela/amb-andorrahd50-1.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/marcela/andorrahd50-brilhantes-f2.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/marcela/andorrahd50-brilhantes-f3.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/marcela/andorrahd50-brilhantes-f4.webp",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 32.9,
@@ -1064,6 +1152,10 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/marcela/javaverde45.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/marcela/amb-javavd45.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 33.45,
@@ -1103,6 +1195,10 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/marcela/articohd50.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/marcela/amb-articohd50.jpg",
           "tipo": "principal"
         }
       ],
@@ -1228,6 +1324,10 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/formigres/lakabrhd50.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/amb-laka.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 32.9,
@@ -1267,6 +1367,10 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/formigres/madeirohd50.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/amb-madeirohd50.jpg",
           "tipo": "principal"
         }
       ],
@@ -1308,6 +1412,10 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/formigres/rochedohd45.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/produtos/formigres/amb-rochedohd45.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 32.9,
@@ -1347,6 +1455,10 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/marcela/trafegobg45.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/marcela/amb-trafego45.jpg",
           "tipo": "principal"
         }
       ],
@@ -1428,6 +1540,10 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/formigres/troia45.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/amb-troia45.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 33.45,
@@ -1506,7 +1622,59 @@
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/premium/calacatablue66polido.jpg",
       "imagens": [
         {
-          "url": "https://www.formigres.com.br/uploads/produtos/premium/calacatablue66polido.jpg",
+          "url": "https://api.portalgruporocha.com.br/storage/images/calacata-f1-1787927877.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/calacata-f2-1787927885.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/calacata-f3-1787927892.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/5757506-f1-1787860346.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/5757739-f1-1787919043.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/5757740-f1-1787919392.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/alvorada-f1-1787919887.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/aspen-f1-1787855104.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/aurora-f1-1791729186.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/bariloche-f1-1787856103.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/bianchi-f1-1787856530.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/canjiquinha-f1-1787941057.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/acetinado-1787838521.webp",
           "tipo": "principal"
         }
       ],
@@ -1548,6 +1716,14 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/premium/statuario66polido.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/amb-statuariopolido66.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/statuario66-faces.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 55.9,
@@ -1587,6 +1763,14 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/premium/grafite.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/amb-grafite.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/grafite-faces.jpg",
           "tipo": "principal"
         }
       ],
@@ -1668,6 +1852,10 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/formigres/branco59r.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/produtos/formigres/amb-brancoretificado.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 37.5,
@@ -1748,6 +1936,10 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/formigres/bege50.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/amb-bege61.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 34.5,
@@ -1787,6 +1979,10 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/formigres/bege50.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/amb-bege50.jpg",
           "tipo": "principal"
         }
       ],
@@ -1906,7 +2102,59 @@
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/carraraczhd60.jpg",
       "imagens": [
         {
-          "url": "https://www.formigres.com.br/uploads/produtos/formigres/carraraczhd60.jpg",
+          "url": "https://api.portalgruporocha.com.br/storage/images/carrara-f1-1787940730.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/carrara-f2-1787940737.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/carrara-f3-1787940744.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/5757506-f1-1787860346.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/5757739-f1-1787919043.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/5757740-f1-1787919392.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/alvorada-f1-1787919887.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/aspen-f1-1787855104.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/aurora-f1-1791729186.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/bariloche-f1-1787856103.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/bianchi-f1-1787856530.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/canjiquinha-f1-1787941057.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/acetinado-1787838521.webp",
           "tipo": "principal"
         }
       ],
@@ -1948,6 +2196,10 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/marcela/oreonhd.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/marcela/amb-oreonhd.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 34.5,
@@ -1987,6 +2239,10 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/premium/peroba-granilhado-rt-hd-20x120-p1532-imgprincipal.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/produtos/premium/peroba-granilhado-rt-hd-20x120-p1532-imgamb.webp",
           "tipo": "principal"
         }
       ],
@@ -2068,6 +2324,14 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/premium/timbo60x120.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/amb-timbo60x120.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/timbo60x120faces.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 64.7,
@@ -2107,6 +2371,10 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/formigres/taboeirohd50.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/produtos/formigres/amb-taboeirohd50.jpg",
           "tipo": "principal"
         }
       ],
@@ -2188,6 +2456,10 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/formigres/luccahd.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/amb-luccahd.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 34.5,
@@ -2268,6 +2540,10 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/jg/villarealhd61.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/jg/amb-villarealhd61.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 34.5,
@@ -2346,7 +2622,51 @@
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/imbuiam45.jpg",
       "imagens": [
         {
-          "url": "https://www.formigres.com.br/uploads/produtos/formigres/imbuiam45.jpg",
+          "url": "https://api.portalgruporocha.com.br/storage/images/imbuia-f1-1788180559.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/5757528-f1-1787862369.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/5757556-f1-1787863411.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/5757558-f1-1787863856.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/5757722-f1-1787916328.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/5757724-f1-1787918712.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/carvalho-f1-1787941378.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/cedro-f1-1787942091.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/cerejeira-f1-1787942552.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/canjiquinha-f1-1787941057.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/acetinado-1787838521.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
           "tipo": "principal"
         }
       ],
@@ -2388,6 +2708,10 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/marcela/trafegobg45.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/marcela/amb-trafego45.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 33.45,
@@ -2428,6 +2752,26 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/premium/granconcretomr-f1.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/piso-granconcretomr-mate.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/granconcretomr-f2.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/granconcretomr-f3.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/granconcretomr-f4.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/granconcretomr-f5.webp",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 47.9,
@@ -2467,6 +2811,18 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/premium/neroelevato66.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/amb-neroelevato66.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/neroelevato66-faces.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/neroelevato66-faces2.jpg",
           "tipo": "principal"
         }
       ],
@@ -2636,6 +2992,10 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/stargolden/amazonasmrhd50.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/stargolden/amb-amazonasmrhd50.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 32.9,
@@ -2675,6 +3035,10 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/stargolden/gantemr50.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/stargolden/amb-gantemr.jpg",
           "tipo": "principal"
         }
       ],
@@ -2856,6 +3220,14 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/premium/gold.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/amb-gold.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/gold-faces.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 55.9,
@@ -3023,6 +3395,14 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/premium/milanobg.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/amb-milanobg.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/milanobg-faces.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 43.5,
@@ -3063,6 +3443,14 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/premium/statuario66.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/amb-statuariomate66.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/statuario66-faces.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 43.5,
@@ -3102,6 +3490,18 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/prime/goldenoro81-polido.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/amb-goldenoropolido81.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/piso-goldenoro-polido81.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/goldenoro81polido-faces.jpg",
           "tipo": "principal"
         }
       ],
@@ -3183,6 +3583,18 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/premium/fresnocl-20x120.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/fresno-cl-granilhado-rt-hd-20x120-p1067-imgamb.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/fresnocl20x120-faces-1.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/fresnocl20x120-faces2.webp",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 49.9,
@@ -3222,6 +3634,14 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/premium/araucariart20x120.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/araucariart20x120faces1.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/araucariart20x120faces2.jpg",
           "tipo": "principal"
         }
       ],
@@ -3263,6 +3683,26 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/premium/granmarmideluxe-polido.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/amb-granmarmidelux-polido.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/piso-granmarmideluxe-polido.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/granmarmideluxe-polido-f1.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/granmarmideluxe-polido-f2.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/granmarmideluxe-polido-f3.webp",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 65.9,
@@ -3303,6 +3743,18 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/premium/solocinzagranilha66.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/amb-solocinza66.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/piso-solocz-granilha66.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/soloczgranilha66-faces.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 43.5,
@@ -3341,7 +3793,63 @@
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/premium/granstatuariopolido.jpg",
       "imagens": [
         {
-          "url": "https://www.formigres.com.br/uploads/produtos/premium/granstatuariopolido.jpg",
+          "url": "https://api.portalgruporocha.com.br/storage/images/statuario-f1-1787943057.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/statuario-f2-1787943066.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/statuario-f3-1787943075.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/statuario-1787943109.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/5757506-f1-1787860346.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/5757739-f1-1787919043.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/5757740-f1-1787919392.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/alvorada-f1-1787919887.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/aspen-f1-1787855104.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/aurora-f1-1791729186.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/bariloche-f1-1787856103.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/bianchi-f1-1787856530.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/canjiquinha-f1-1787941057.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://api.portalgruporocha.com.br/storage/images/acetinado-1787838521.webp",
           "tipo": "principal"
         }
       ],
@@ -3423,6 +3931,18 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/prime/lombardiacz81-gotejado.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/amb-lombardiacinzartgotejado81.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/piso-lombardiacz-gotejado81.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/lombardiaczgotejado-faces.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 46.5,
@@ -3463,6 +3983,18 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/prime/placebr81-mate.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/amb-placebrpolido81.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/piso-placebr-polido81.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/placebr81-faces.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 46.5,
@@ -3502,6 +4034,18 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/prime/cleantecgrey81-granilhado.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/amb-cleantecgreygranilha81.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/piso-cleantecgrey-granilhado81.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/cleantecgreygranilha81-faces.jpg",
           "tipo": "principal"
         }
       ],
@@ -3679,6 +4223,18 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/prime/marmoblue81-mate.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/amb-marmobluepolido81.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/piso-marmoblue-polido81.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/marmoblue81-faces.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 61.5,
@@ -3719,6 +4275,18 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/prime/cleantecsilver81-granilhado.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/amb-cleantecsilvergranilha81.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/piso-cleantecsilver-granilhado81.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/cleantecsilvergranilha81-faces.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 46.5,
@@ -3758,6 +4326,10 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/marcela/woodhd50.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/marcela/amb-woodhd50.jpg",
           "tipo": "principal"
         }
       ],
@@ -3919,6 +4491,18 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/prime/placebr81-mate.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/amb-placebrpolido81.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/piso-placebr-polido81.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/placebr81-faces.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 61.9,
@@ -3958,6 +4542,18 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/premium/marmidelux66polido.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/amb-marmidelux66polido.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/marmidelux66-faces.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/marmidelux66-faces2.jpg",
           "tipo": "principal"
         }
       ],
@@ -4147,6 +4743,18 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/prime/cleantecgrey81-granilhado.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/amb-cleantecgreygranilha81.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/piso-cleantecgrey-granilhado81.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/cleantecgreygranilha81-faces.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 46.5,
@@ -4186,6 +4794,10 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/marcela/cairohd50.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/marcela/amb-cairohd50.jpg",
           "tipo": "principal"
         }
       ],
@@ -4323,6 +4935,10 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/jg/calendulahd50.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/jg/amb-calendulahd50.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 32.9,
@@ -4458,6 +5074,18 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/prime/goldenlux81-polido.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/amb-goldenluxpolido81.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/piso-goldenlux-polido81.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/goldenlux81polido-faces.jpg",
           "tipo": "principal"
         }
       ],
@@ -4670,6 +5298,14 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/premium/granfreijoripa.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/amb-granfreijoripa-mate60x120.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/granfreijoripa60x120-mate-faces.jpg",
           "tipo": "principal"
         }
       ],
@@ -4899,6 +5535,10 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/formigres/cimentcolorczhd61.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/amb-cimentcolorczhd61.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 34.5,
@@ -5059,6 +5699,14 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/formigres/taikobghd34x60-acetinado.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/amb-taikobghd34x59.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/taikobghd34x60-faces.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 37.9,
@@ -5098,6 +5746,14 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/formigres/taikocafehd34x60-acetinado.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/amb-taikocafehd34x59.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/taikocafehd34x60-faces.jpg",
           "tipo": "principal"
         }
       ],
@@ -5139,6 +5795,18 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/prime/cleantecwhite81-granilhado.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/amb-cleantecwhitegranilha81.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/piso-cleantecwhite-granilhado81.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/cleantecwhite81granilhado-faces.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 59.5,
@@ -5178,6 +5846,30 @@
       "imagens": [
         {
           "url": "https://www.carmelofior.com.br/public/images/product/e7c191d78ae78bfcd314935364db4889.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/ca199a714d09839b3c1589ca449a197c.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/af807389d15bc861de2d8c4b3aab295a.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/cf65175da321fe9a7a4c5a96d07ac640.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/701bf38a5fd69fc6d0997640604132d0.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/58a9bf3be8c0f04e059ff83f73185645.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/9f33628135eb480a14446074a146c5b2.webp",
           "tipo": "principal"
         }
       ],
@@ -5219,6 +5911,22 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/08aaa1cc156102dbf44a49757ed7a507.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/fdc699267b8d381e1a302ed9182f4ce6.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/655b5614093ccaa209cfdeed6edde83d.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/dd8dc9b8526b3f1393c4894b873033d9.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/5079d69df0c43c5bafa9eabb01cd552a.webp",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 45.9,
@@ -5258,6 +5966,22 @@
       "imagens": [
         {
           "url": "https://www.carmelofior.com.br/public/images/product/6fd109c7e6766e888f06106fab1afb7a.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/592b896d00fa5f7876acfd9389eeb26c.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/1df48fce9534c3a1451ec064d8d7a017.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/d8863dd2fceb3c6118aebb097994378d.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/53149404bf0331ba43df183b740b0123.webp",
           "tipo": "principal"
         }
       ],
@@ -5299,6 +6023,22 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/9121d3dc6a375778f68642e06e39e3d7.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/346b56613eec408cd5708184afcf9b76.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/6dba6a1f512443fd86d033291db03f1d.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/51440f476b8d4c5313cb7285a8679aa0.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/279de15e9d7e28e6af6cb81e35dfd84c.webp",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 45.9,
@@ -5338,6 +6078,22 @@
       "imagens": [
         {
           "url": "https://www.carmelofior.com.br/public/images/product/85a2fed91e7f75c60c6f0051646fdc90.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/a1e86df843a507f57b22a5a48c6cb60e.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/9c408160fd4c5b15928b5373d45b2c65.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/17866fd6b0a09fa4f2a72eff7b809540.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/4da97d66d24ccba5d34a450d8897166a.webp",
           "tipo": "principal"
         }
       ],
@@ -5459,6 +6215,14 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/formigres/streethd50.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/amb-streethd50.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/streethd50-faces.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 32.9,
@@ -5498,6 +6262,18 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/premium/fresnocl-20x120.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/fresno-cl-granilhado-rt-hd-20x120-p1067-imgamb.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/fresnocl20x120-faces-1.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/fresnocl20x120-faces2.webp",
           "tipo": "principal"
         }
       ],
@@ -5539,6 +6315,18 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/prime/acapulcosilver81-granilhado.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/amb-acapulcosilver81mate.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/piso-acapulcosilver81-mate.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/acapulcosilver81granilhado-faces.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 46.5,
@@ -5579,6 +6367,18 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/premium/tarumart20x120.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/amb-taruma20x120big.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/tarumart20x120faces1.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/tarumart20x120faces2.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 49.9,
@@ -5617,15 +6417,35 @@
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/premium/cementgrigio87.jpg",
       "imagens": [
         {
-          "url": "https://www.formigres.com.br/uploads/produtos/premium/cementgrigio87.jpg",
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/cement-grigio-granilha-rt-88x88-p1534-imgprincipal.webp",
           "tipo": "principal"
         },
         {
-          "url": "https://www.formigres.com.br/uploads/produtos/premium/amb-cementgrigiort88mate.webp",
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/cement-grigio-granilha-rt-88x88-p1534-imgamb.webp",
           "tipo": "principal"
         },
         {
-          "url": "https://www.formigres.com.br/uploads/produtos/premium/cementgrigio87-faces.jpg",
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/cement-grigio-granilha-rt-88x88-p1534-imgpiso.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/cement-grigio-granilha-rt-88x88-p1534-imgf1.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/cement-grigio-granilha-rt-88x88-p1534-imgf2.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/cement-grigio-granilha-rt-88x88-p1534-imgf3.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/cement-grigio-granilha-rt-88x88-p1534-imgf4.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/cement-grigio-granilha-rt-88x88-p1534-imgf5.webp",
           "tipo": "principal"
         }
       ],
@@ -5666,6 +6486,18 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/premium/ardosia87-polido.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/amb-ardosiapolido87.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/piso-ardosia-polido87.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/ardosiart87-polido-faces.jpg",
           "tipo": "principal"
         }
       ],
@@ -5815,6 +6647,18 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/prime/marmoblue81-mate.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/amb-marmobluepolido81.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/piso-marmoblue-polido81.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/marmoblue81-faces.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 46.5,
@@ -5951,6 +6795,30 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/premium/granbalticwhitegreenpolido60x120.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/gran-baltic-white-green-rt-polido-60x120-p854-imgamb.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/piso-granbalticwhitegreen-polido.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/granbalticwhitegreenpolido60x120-f1.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/granbalticwhitegreenpolido60x120-f2.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/granbalticwhitegreenpolido60x120-f3.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/granbalticwhitegreenpolido60x120-f4.webp",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 64.9,
@@ -5990,6 +6858,10 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/formigres/bilbaobghd57.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/amb-bilbaobghd50.jpg",
           "tipo": "principal"
         }
       ],
@@ -6111,6 +6983,10 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/premium/arenitocz87-mate.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/arenitocz87-mate-faces.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 51,
@@ -6150,6 +7026,22 @@
       "imagens": [
         {
           "url": "https://www.carmelofior.com.br/public/images/product/b17eb5e41f91954372ce33a9b7fdeb76.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/7ba268bae35f8f52c428ad1b82e3593a.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/39f1e0cf51f62ec19c12048f6d86bb3d.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/e80cc75749b61eb89e8df6c5188c12ad.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/10fc8670d9221a95b0e56a8b4009c5ec.webp",
           "tipo": "principal"
         }
       ],
@@ -6230,6 +7122,22 @@
       "imagens": [
         {
           "url": "https://www.carmelofior.com.br/public/images/product/4101346e7c34fc3de0008687ba9d8db9.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/55198d1db4e395cb4441b0a98557e1ee.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/142adcfc232c95dace046df2f492854c.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/81b4435d4d9d3f0e02fc95484d3c68fd.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/64c5495a7fc62cace83b37854e172c76.webp",
           "tipo": "principal"
         }
       ],
@@ -6362,6 +7270,10 @@
       "imagens": [
         {
           "url": "https://www.carmelofior.com.br/public/images/product/b6b0522dd57e8938f4181cf150ecefef.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/71be8d1753b394813693ec8bfa08e605.webp",
           "tipo": "principal"
         }
       ],
@@ -6703,6 +7615,26 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/premium/granbalticwhitebluepolido60x120.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/amb-granbalticwhiteblue-polido.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/piso-granbalticwihteblue-polido.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/granbalticwhitebluepolido60x120-f1.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/granbalticwhitebluepolido60x120-f2.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/granbalticwhitebluepolido60x120-f3.webp",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 64.9,
@@ -6742,6 +7674,34 @@
       "imagens": [
         {
           "url": "https://www.carmelofior.com.br/public/images/product/81893e526aefef3555936a0c8f021b68.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/8d01c5e4e9c0117a45476c9cd9828e22.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/362d0a0dc2e94e0b941f76ea43734c28.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/3a44c71745492339ee719b93922b7d4a.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/bbd81670dca4759830f6db17f526fc68.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/fb9dc6ab21dbe584ff38640761069587.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/17a07e665af4073fbe4baca311247590.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/8c7212897975724b61358295fc7b488c.webp",
           "tipo": "principal"
         }
       ],
@@ -6783,6 +7743,10 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/formigres/sienahd50.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/amb-sienahd50.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 32.9,
@@ -6823,6 +7787,30 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/1b07e7907613648f29c6d2877537b77f.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/dfc90eede9698bb502fbf585e91faf76.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/0472c4f46d2077f724d93114365543e4.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/f8e18dcb1b5b7acb4367ad1f6d8621cc.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/1cfbd215dc92d226d346e7a3aca7e4b5.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/37cfc4acb2a7d49b11e5e31d9868c00d.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/c012292c59e0be49b1f5d315c7a6c40e.webp",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 54.9,
@@ -6862,6 +7850,30 @@
       "imagens": [
         {
           "url": "https://www.carmelofior.com.br/public/images/product/7affd6031a67432bef9510f48f9c8785.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/da4a52a0ed2c9f875c631f2b3b03105c.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/48577d6eaa8a959cf29c5b5a59df8ba9.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/aceb12edb2747c2cd0dd17cb0f97849c.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/70411272889347dcb0e197ff2aeb0691.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/5710b431e9b50fd525f9509cb26d5612.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/e19fc8c6d27ba0df4ee57dae0135f8df.webp",
           "tipo": "principal"
         }
       ],
@@ -7169,6 +8181,22 @@
       "imagens": [
         {
           "url": "https://www.carmelofior.com.br/public/images/product/833ebe6d3b9a31877683c1282db40f4a.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/f43ab2e48d9aeea87f2fc997cd033f49.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/3253c80e1ac0caff7c7460aa315e68cd.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/2cf8ad487d5f8edf1edaac8d2f09f9dc.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/72daa6cc5758e7adad7d6e8d280a9132.webp",
           "tipo": "principal"
         }
       ],
@@ -7486,6 +8514,30 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/e7c191d78ae78bfcd314935364db4889.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/ca199a714d09839b3c1589ca449a197c.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/af807389d15bc861de2d8c4b3aab295a.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/cf65175da321fe9a7a4c5a96d07ac640.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/701bf38a5fd69fc6d0997640604132d0.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/58a9bf3be8c0f04e059ff83f73185645.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/9f33628135eb480a14446074a146c5b2.webp",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 45.9,
@@ -7526,6 +8578,30 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/68ec9eee8e59db0ec57a74e5c9a17c66.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/88f3244e636907139c05d7395720a650.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/ac73cdc88800eb652b01070f9d318a78.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/4520b4cbd3b32346a14da5315c3a34f2.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/17a452dc9f4785a44e6194ab80fa523c.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/b4e9a0110b635424845e7bbb19d6a1ee.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/faa010f7149c4b5a8179ab9cdb608d88.webp",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 45.9,
@@ -7565,6 +8641,22 @@
       "imagens": [
         {
           "url": "https://www.carmelofior.com.br/public/images/product/4f3de85a813166331d3452ee385721c4.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/926822ad32850c8be28e9020490d5c35.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/7d0d7a71fe9d2bc45fdb4d50392e4fd4.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/4db1fa6febf349f917a6bc4c020e27a4.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/424fd244c6991b3cbdae5eb94baf4e70.webp",
           "tipo": "principal"
         }
       ],
@@ -7710,6 +8802,10 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/efc69e060c018ab783d01807080fb12a.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/2d00dd650a7bdd2c9b8a47c74c318eaa.webp",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 32,
@@ -7750,6 +8846,26 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/premium/gran-venato-cz-mate-rt-60x120-p1500-imgprincipal.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/gran-venato-cz-mate-rt-60x120-p1500-imgpiso.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/gran-venato-cz-mate-rt-60x120-p1500-imgf1.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/gran-venato-cz-mate-rt-60x120-p1500-imgf2.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/gran-venato-cz-mate-rt-60x120-p1500-imgf3.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/gran-venato-cz-mate-rt-60x120-p1500-imgf4.webp",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 64.9,
@@ -7789,6 +8905,14 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/premium/articomate87.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/amb-articomate87.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/articomate87-faces.jpg",
           "tipo": "principal"
         }
       ],
@@ -8162,6 +9286,30 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/5b8ea38868539b727ebc9d2b0c8f01db.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/fb63bb17b9fca64b9128cc292a44ec65.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/104d7b2a1dae4c79611c692f4adadf23.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/ef4baa9eb5e25fbea2dae3492b55eb10.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/0b2796ee393053e846c7e9abc1ad1f16.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/ab146b0cc079b21c17c8fd24af19088a.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/12f269e32e13c912138a5d045ba81b7d.webp",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 45.9,
@@ -8202,6 +9350,22 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/6950f89300bd0179f334c33c8388bce5.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/cbc497d3f6e39a4b784225e5f34c6bf5.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/ad70dfa87f5438ae52856b5a7e558d55.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/e06cc3ed3ce1c1cf4974ee72a17fe018.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/910b88c8403d4f08a98b180ccbc84f61.webp",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 45.9,
@@ -8241,6 +9405,30 @@
       "imagens": [
         {
           "url": "https://www.carmelofior.com.br/public/images/product/c4a08cda0acaa45f07a22b81e4024057.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/6a672a1cbd4738446e1fc026e99633a7.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/4d97a4d8806ae0e8e70233f5a844601e.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/56048083d42caef0c0fad5138e35d6e6.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/9e74ca5806c66604c5ea14c7ed0366e2.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/107aa5630e937112c073179d63f141a5.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/f9530107d5eba564baf2ca4337e162ca.webp",
           "tipo": "principal"
         }
       ],
@@ -8322,6 +9510,22 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/bd5103bf5fbbb13c5a3c3dc6b0332735.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/1b4cc36ea2c71ebec97ff26783d50d3b.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/ebc9f0d52065183457be1abf45fabc18.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/f5771d44db2d5e8ad5a0176f9fce8160.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/8388e47da8b40e77ab249c6c4b9b6071.webp",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 32,
@@ -8361,6 +9565,30 @@
       "imagens": [
         {
           "url": "https://www.carmelofior.com.br/public/images/product/db9621fda57189cc0a03521887537214.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/2329b7e43d422befdab781e10dab3d68.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/9d6b85b605178940c076766aba382ec5.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/262006febaf0f18dd8efd62a00790884.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/bd49c9acf9faf296d05a73f3798b043a.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/99c94b69e5a1b7f2ca624b9a12b95792.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/2e49001060bc36872cc98608eda27f4b.webp",
           "tipo": "principal"
         }
       ],
@@ -8442,6 +9670,10 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/73393396fa48fcd6aaa2c1a0a2cddcc3.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/4decc387489c174f714595532f0da1c1.webp",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 33.5,
@@ -8482,6 +9714,18 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/prime/goldenoro81-polido.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/amb-goldenoropolido81.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/piso-goldenoro-polido81.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/prime/goldenoro81polido-faces.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 59.5,
@@ -8521,6 +9765,30 @@
       "imagens": [
         {
           "url": "https://www.carmelofior.com.br/public/images/product/984649fe8bf265f646405787b4558a95.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/c3b0e10b92ec4681d93219688dc15da6.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/3e6c5fb0750f658feb412d3be1806c57.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/0f9fd3c273076a4851f9d1432efd443a.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/9968706347a20f0ced0bc3ebe9f32eee.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/8706c0159d5f83f0d940f53ebbf11853.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/6f740e22ee723134c406053384c9a27f.webp",
           "tipo": "principal"
         }
       ],
@@ -9607,6 +10875,14 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/jg/milano-cinza-rt-granilhado-60x60-p1494-imgprincipal.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/jg/milano-cinza-rt-granilhado-60x60-p1494-imgpiso.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/jg/milano-cinza-rt-granilhado-60x60-p1494-imgf1.webp",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 37.5,
@@ -9647,6 +10923,14 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/jg/cement-clear-mate-rt-60x60-p1493-imgprincipal.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/jg/cement-clear-mate-rt-60x60-p1493-imgpiso.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/jg/cement-clear-mate-rt-60x60-p1493-imgf1.webp",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 37.5,
@@ -9685,7 +10969,15 @@
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/coronhamrrt60.jpg",
       "imagens": [
         {
-          "url": "https://www.formigres.com.br/uploads/produtos/formigres/coronhamrrt60.jpg",
+          "url": "https://www.formigres.com.br/uploads/produtos/jg/cement-clear-mate-rt-60x60-p1493-imgprincipal.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/jg/cement-clear-mate-rt-60x60-p1493-imgpiso.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/jg/cement-clear-mate-rt-60x60-p1493-imgf1.webp",
           "tipo": "principal"
         }
       ],
@@ -9726,6 +11018,10 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/formigres/darwinczextrt60.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/darwinczextrt60-faces.jpg",
           "tipo": "principal"
         }
       ],
@@ -9806,6 +11102,10 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/formigres/mozartgrayhd50-mate.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/mozartgraythd50-faces.webp",
           "tipo": "principal"
         }
       ],
@@ -9982,6 +11282,10 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/formigres/centauromrhd45.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/amb-centauromrhd45.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 32.9,
@@ -10021,6 +11325,10 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/formigres/tozetohd50.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/amb-tozetohd50.jpg",
           "tipo": "principal"
         }
       ],
@@ -10062,6 +11370,34 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/premium/gran-colorado-rt-polido-60x120-p1547-imgprincipal.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/gran-colorado-rt-polido-60x120-p1547-imgpiso.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/gran-colorado-rt-polido-60x120-p1547-imgf1.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/gran-colorado-rt-polido-60x120-p1547-imgf2.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/gran-colorado-rt-polido-60x120-p1547-imgf3.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/gran-colorado-rt-polido-60x120-p1547-imgf4.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/gran-colorado-rt-polido-60x120-p1547-imgf5.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/gran-colorado-rt-polido-60x120-p1547-imgf6.webp",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 67.39,
@@ -10102,6 +11438,10 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/jg/planalto45.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/jg/amb-planalto45.jpg",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 32.9,
@@ -10141,6 +11481,30 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/premium/grancarbonaragrafite-polido.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/amb-grancarbonara-grafite.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/piso-grancarbonaragrafite-polido.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/grancarbonaragrafite-f1.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/grancarbonaragrafite-f2.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/grancarbonaragrafite-f3.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/grancarbonaragrafite-f4.webp",
           "tipo": "principal"
         }
       ],
@@ -10221,6 +11585,10 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/stargolden/mercurybghd50.jpg",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/stargolden/amb-mercurybghd50.jpg",
           "tipo": "principal"
         }
       ],
@@ -10694,6 +12062,26 @@
         {
           "url": "https://www.formigres.com.br/uploads/produtos/premium/piemont-granilhado-rt-hd-20x120-p1533-imgprincipal.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/piemont-granilhado-rt-hd-20x120-p1533-imgamb.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/piemont-granilhado-rt-hd-20x120-p1533-imgf1.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/piemont-granilhado-rt-hd-20x120-p1533-imgf2.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/piemont-granilhado-rt-hd-20x120-p1533-imgf3.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/piemont-granilhado-rt-hd-20x120-p1533-imgf4.webp",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 49.9,
@@ -11146,6 +12534,22 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/44073bf5d09003fa76db157332541b39.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/b07798e1d878041b69b39ad288bfa6f8.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/8777328f5b4974b7efafe3917f8c6c60.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/36b5eac14055782a28bf8f8bfcad8f6e.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/a015ffd33d4414ead9eefbf8a80eaf85.webp",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 45.9,
@@ -11185,6 +12589,30 @@
       "imagens": [
         {
           "url": "https://www.carmelofior.com.br/public/images/product/d8f7e9893ae64d923340a3511c87db60.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/dd7a97f47b7517aa2f1a1b76e5718b92.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/5246a265108d9d46f9a377934fb48945.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/734ccf45f28110e819c463589c785d28.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/68f526a3f02508160b311088404993fe.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/c90c5912ae6f1a79f6205bcaa66ee973.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/906688f9c34f5f48dbbd4cb7ad59ca94.webp",
           "tipo": "principal"
         }
       ],
@@ -11226,6 +12654,30 @@
         {
           "url": "https://www.carmelofior.com.br/public/images/product/6cb88b9956587749950e60ca86f4e22d.webp",
           "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/5599db8ad14ba025ef05d33685b3b204.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/22acbf46ffb636084cee5e15345727de.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/7f41b18c47cf361ba95c00223a87461e.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/69da4a3787a62b7f206aa3d2f3fddb61.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/8c3da44535e3ba7bc076284e4de05b2b.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/3ca4d3593926e1207f9293cd59787b27.webp",
+          "tipo": "principal"
         }
       ],
       "preco_m2": 45.9,
@@ -11265,6 +12717,22 @@
       "imagens": [
         {
           "url": "https://www.carmelofior.com.br/public/images/product/7b9dd619eb1345c43e45d173de813ebf.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/6d50431cf3961d2b5cd9ae764c46b8ba.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/c0a45c47fd4a3a19eacaf563174c85cf.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/21323788d479a5f2d7e6cd3a89c18352.webp",
+          "tipo": "principal"
+        },
+        {
+          "url": "https://www.carmelofior.com.br/public/images/product/8711deb86ca61718e028dac8751a5583.webp",
           "tipo": "principal"
         }
       ],

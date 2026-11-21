@@ -42,12 +42,15 @@ function loadRaioXImagemOverlay() {
 function overlayImagensRaioX(row, imagemOverlay) {
   if (!imagemOverlay) return row;
   const next = { ...row };
-  if (!String(next.imagem_url || '').trim() && imagemOverlay.imagem_url) {
-    next.imagem_url = imagemOverlay.imagem_url;
-  }
-  if (!String(next.imagens_json || '').trim() && imagemOverlay.imagens_json) {
-    next.imagens_json = imagemOverlay.imagens_json;
-  }
+  const baseImg = String(next.imagem_url || '').trim();
+  const overlayImg = String(imagemOverlay.imagem_url || '').trim();
+  const baseGal = String(next.imagens_json || '').trim();
+  const overlayGal = String(imagemOverlay.imagens_json || '').trim();
+  const baseCount = parseImagensJson(baseGal, baseImg).length;
+  const overlayCount = parseImagensJson(overlayGal, overlayImg).length;
+  if (!baseImg && overlayImg) next.imagem_url = overlayImg;
+  if (overlayCount > baseCount && overlayGal) next.imagens_json = overlayGal;
+  else if (!baseGal && overlayGal) next.imagens_json = overlayGal;
   return next;
 }
 
@@ -186,15 +189,26 @@ function inferAcabamentoLabel(descErp, descSite, classif, row = {}) {
 
 function parseImagensJson(raw, imagemUrl) {
   const out = [];
-  try {
-    const arr = JSON.parse(raw || '[]');
-    if (Array.isArray(arr)) {
-      for (const url of arr) {
-        if (url) out.push({ url: String(url), tipo: 'principal' });
+  const s = String(raw || '').trim();
+  if (s) {
+    try {
+      const arr = JSON.parse(s);
+      if (Array.isArray(arr)) {
+        for (const url of arr) {
+          if (url) out.push({ url: String(url), tipo: 'principal' });
+        }
+      }
+    } catch {
+      // Base cruzada (ex. Carmelo Fior): [https://…,https://…] sem aspas — não é JSON válido.
+      const inner = s.replace(/^\[|\]$/g, '').trim();
+      if (inner) {
+        const urls = inner
+          .split(/,(?=https?:\/\/)/i)
+          .map((u) => u.trim().replace(/^["']|["']$/g, ''))
+          .filter((u) => /^https?:\/\//i.test(u));
+        for (const url of urls) out.push({ url, tipo: 'principal' });
       }
     }
-  } catch {
-    /* ignore */
   }
   if (!out.length && imagemUrl) out.push({ url: imagemUrl, tipo: 'principal' });
   return out;
