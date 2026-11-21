@@ -117,6 +117,13 @@ export function modeloComercialCatalogo(codigo, descricao = '', modeloField = ''
   if (modeloFieldPareceErroDigitacao(campo)) campo = '';
   campo = limparPontuacaoModelo(campo);
 
+  const fromSiteCheck = nomeFromDescricaoNoSite(descricaoNoSite);
+  if (fromSiteCheck && campo) {
+    const lead = stripAccents(fromSiteCheck).toLowerCase().split(/\s+/).filter(Boolean)[0] || '';
+    const campoNorm = stripAccents(campo).toLowerCase().replace(/^\.\s*/, '');
+    if (lead.length >= 4 && !campoNorm.includes(lead)) return fromSiteCheck;
+  }
+
   const rx = raioXProdutoDescricao(codigo, desc || campo);
   let modelo = rx.modelo || campo;
   modelo = normalizarPeiColonNoTexto(modelo);
@@ -145,9 +152,23 @@ export function modeloComercialCatalogo(codigo, descricao = '', modeloField = ''
     if (words.length <= 2) result = `${result} Mate`;
   }
 
-  if (!modeloSoPontuacao(result) && !nomePareceCodigoFabricante(result)) return result;
-
   const fromSite = nomeFromDescricaoNoSite(descricaoNoSite);
+  const erpLead = stripAccents(modelo).toLowerCase().split(/\s+/).filter(Boolean)[0] || '';
+  const siteLead =
+    stripAccents(fromSite).toLowerCase().split(/\s+/).filter(Boolean)[0] ||
+    stripAccents(campo).toLowerCase().split(/\s+/).filter(Boolean)[0] ||
+    '';
+  if (
+    fromSite &&
+    siteLead.length >= 4 &&
+    erpLead &&
+    erpLead !== siteLead &&
+    !stripAccents(result).toLowerCase().includes(siteLead)
+  ) {
+    return fromSite;
+  }
+
+  if (!modeloSoPontuacao(result) && !nomePareceCodigoFabricante(result)) return result;
   if (fromSite) return fromSite;
 
   const fromRocha = extractTextBetweenFormatoAndRochaprime(desc);

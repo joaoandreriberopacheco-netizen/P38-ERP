@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-11-21T21:59:41.413Z",
+  "geradoEm": "2026-11-21T22:05:16.674Z",
   "fonte": "/agent/repos/varejosync/files/pagleve/pagleve-base-cruzada.csv",
   "resumo": {
     "porRotulo": {
@@ -385,10 +385,10 @@
     },
     {
       "codigo_tintao": "26623",
-      "modelo": "Bianco 45 (2)",
-      "catalogo_nome_modelo": "Bianco 45 (2)",
+      "modelo": "Marmo Bianco 45",
+      "catalogo_nome_modelo": "Marmo Bianco 45",
       "descricao_erp": "PISO 45X45 ACETINADO BIANCO-45 A (2) PEI LD JUNTA 5MM",
-      "descricao": "Bianco 45 (2)",
+      "descricao": "Marmo Bianco 45",
       "formato": "45x45",
       "linha": "bold",
       "subtipo": "lisa",
@@ -399,7 +399,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "376",
-      "formigres_titulo": "Bianco 45 (2) · 45x45 · BOLD · Acetinado",
+      "formigres_titulo": "Marmo Bianco 45 · 45x45 · BOLD · Acetinado",
       "formigres_tipo": "BOLD",
       "formigres_acabamento": "BRILHANTE",
       "acabamento_label": "Acetinado",
@@ -1296,10 +1296,10 @@
     },
     {
       "codigo_tintao": "27530",
-      "modelo": "Branco 50",
-      "catalogo_nome_modelo": "Branco 50",
+      "modelo": "Laka Br Hd50",
+      "catalogo_nome_modelo": "Laka Br Hd50",
       "descricao_erp": "PISO 50X50 BRANCO-50 A (2,5) PEI LD JUNTA 5MM",
-      "descricao": "Branco 50",
+      "descricao": "Laka Br Hd50",
       "formato": "50x50",
       "linha": "bold",
       "subtipo": "lisa",
@@ -1310,7 +1310,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "142",
-      "formigres_titulo": "Branco 50 · 50x50 · BOLD · Brilhante",
+      "formigres_titulo": "Laka Br Hd50 · 50x50 · BOLD · Brilhante",
       "formigres_tipo": "BOLD",
       "formigres_acabamento": "BRILHANTE",
       "acabamento_label": "Brilhante",
@@ -1622,59 +1622,15 @@
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/premium/calacatablue66polido.jpg",
       "imagens": [
         {
-          "url": "https://api.portalgruporocha.com.br/storage/images/calacata-f1-1787927877.webp",
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/calacatablue66polido.jpg",
           "tipo": "principal"
         },
         {
-          "url": "https://api.portalgruporocha.com.br/storage/images/calacata-f2-1787927885.webp",
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/calacata-blue-rt-polido-66x66-p1106-imgamb.webp",
           "tipo": "principal"
         },
         {
-          "url": "https://api.portalgruporocha.com.br/storage/images/calacata-f3-1787927892.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757506-f1-1787860346.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757739-f1-1787919043.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757740-f1-1787919392.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/alvorada-f1-1787919887.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aspen-f1-1787855104.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aurora-f1-1791729186.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bariloche-f1-1787856103.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bianchi-f1-1787856530.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/canjiquinha-f1-1787941057.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/acetinado-1787838521.webp",
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/calacatablue66-faces.jpg",
           "tipo": "principal"
         }
       ],
@@ -2102,59 +2058,11 @@
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/carraraczhd60.jpg",
       "imagens": [
         {
-          "url": "https://api.portalgruporocha.com.br/storage/images/carrara-f1-1787940730.webp",
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/carraraczhd60.jpg",
           "tipo": "principal"
         },
         {
-          "url": "https://api.portalgruporocha.com.br/storage/images/carrara-f2-1787940737.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/carrara-f3-1787940744.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757506-f1-1787860346.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757739-f1-1787919043.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757740-f1-1787919392.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/alvorada-f1-1787919887.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aspen-f1-1787855104.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aurora-f1-1791729186.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bariloche-f1-1787856103.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bianchi-f1-1787856530.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/canjiquinha-f1-1787941057.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/acetinado-1787838521.webp",
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/amb-carraraczhd60.jpg",
           "tipo": "principal"
         }
       ],
@@ -2296,10 +2204,10 @@
     },
     {
       "codigo_tintao": "28262",
-      "modelo": "Gran Venato Cz Extra 60x120 60x120 Timbo",
-      "catalogo_nome_modelo": "Gran Venato Cz Extra 60x120 60x120 Timbo",
+      "modelo": "Timbó Mate Rt 60x120",
+      "catalogo_nome_modelo": "Timbó Mate Rt 60x120",
       "descricao_erp": "PISO 60X120 GRAN VENATO CZ RT POLIDO A(2,16) PEI LB EXTRA 60X120 PISO 60X120 TIMBO MATE A(2,16) RT PEI LD JUNTA 2MM",
-      "descricao": "Gran Venato Cz Extra 60x120 60x120 Timbo",
+      "descricao": "Timbó Mate Rt 60x120",
       "formato": "60x120",
       "linha": "retificada",
       "subtipo": "polida",
@@ -2310,7 +2218,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "1211",
-      "formigres_titulo": "Gran Venato Cz Extra 60x120 60x120 Timbo · 60x120 · RET · Polido",
+      "formigres_titulo": "Timbó Mate Rt 60x120 · 60x120 · RET · Polido",
       "formigres_tipo": "RETIFICADO",
       "formigres_acabamento": "MATE",
       "acabamento_label": "Polido",
@@ -2388,10 +2296,10 @@
     },
     {
       "codigo_tintao": "28473",
-      "modelo": "Bege",
-      "catalogo_nome_modelo": "Bege",
+      "modelo": "Carrara Bege 34x60",
+      "catalogo_nome_modelo": "Carrara Bege 34x60",
       "descricao_erp": "REV. 34X60 BEGE HD A (2,1) PEI LC JUNTA 5MM",
-      "descricao": "Bege",
+      "descricao": "Carrara Bege 34x60",
       "formato": "34x60",
       "linha": "bold",
       "subtipo": "lisa",
@@ -2402,7 +2310,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "662",
-      "formigres_titulo": "Bege · 34x60 · BOLD · Brilhante",
+      "formigres_titulo": "Carrara Bege 34x60 · 34x60 · BOLD · Brilhante",
       "formigres_tipo": "BOLD",
       "formigres_acabamento": "BRILHANTE",
       "acabamento_label": "Brilhante",
@@ -2622,51 +2530,7 @@
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/imbuiam45.jpg",
       "imagens": [
         {
-          "url": "https://api.portalgruporocha.com.br/storage/images/imbuia-f1-1788180559.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757528-f1-1787862369.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757556-f1-1787863411.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757558-f1-1787863856.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757722-f1-1787916328.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757724-f1-1787918712.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/carvalho-f1-1787941378.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/cedro-f1-1787942091.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/cerejeira-f1-1787942552.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/canjiquinha-f1-1787941057.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/acetinado-1787838521.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/imbuiam45.jpg",
           "tipo": "principal"
         }
       ],
@@ -2724,10 +2588,10 @@
     },
     {
       "codigo_tintao": "28812",
-      "modelo": "Concreto Mate",
-      "catalogo_nome_modelo": "Concreto Mate",
+      "modelo": "Gran Concreto Mr Mate Rt 60x120",
+      "catalogo_nome_modelo": "Gran Concreto Mr Mate Rt 60x120",
       "descricao_erp": "PISO 60X120 CONCRETO MATE A (2,16) RT PEI LD JUNTA 2MM",
-      "descricao": "Concreto Mate",
+      "descricao": "Gran Concreto Mr Mate Rt 60x120",
       "formato": "60x120",
       "linha": "retificada",
       "subtipo": "lisa",
@@ -2738,7 +2602,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "865",
-      "formigres_titulo": "Concreto Mate · 60x120 · RET · Mate",
+      "formigres_titulo": "Gran Concreto Mr Mate Rt 60x120 · 60x120 · RET · Mate",
       "formigres_tipo": "RETIFICADO",
       "formigres_acabamento": "MATE",
       "acabamento_label": "Mate",
@@ -3079,62 +2943,6 @@
       "imagens": [
         {
           "url": "https://api.portalgruporocha.com.br/storage/images/olimpo-f1-1788202469.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/olimpo-f2-1788202477.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/olimpo-f3-1788202484.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/olimpo-1788202586.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757506-f1-1787860346.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757739-f1-1787919043.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757740-f1-1787919392.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/alvorada-f1-1787919887.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aspen-f1-1787855104.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aurora-f1-1791729186.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bariloche-f1-1787856103.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bianchi-f1-1787856530.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/canjiquinha-f1-1787941057.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/acetinado-1787838521.webp",
           "tipo": "principal"
         }
       ],
@@ -3793,63 +3601,19 @@
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/premium/granstatuariopolido.jpg",
       "imagens": [
         {
-          "url": "https://api.portalgruporocha.com.br/storage/images/statuario-f1-1787943057.webp",
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/granstatuariopolido.jpg",
           "tipo": "principal"
         },
         {
-          "url": "https://api.portalgruporocha.com.br/storage/images/statuario-f2-1787943066.webp",
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/amb-granstatuariopolido.jpg",
           "tipo": "principal"
         },
         {
-          "url": "https://api.portalgruporocha.com.br/storage/images/statuario-f3-1787943075.webp",
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/piso-granstatuario-polido.jpg",
           "tipo": "principal"
         },
         {
-          "url": "https://api.portalgruporocha.com.br/storage/images/statuario-1787943109.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757506-f1-1787860346.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757739-f1-1787919043.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757740-f1-1787919392.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/alvorada-f1-1787919887.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aspen-f1-1787855104.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aurora-f1-1791729186.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bariloche-f1-1787856103.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bianchi-f1-1787856530.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/canjiquinha-f1-1787941057.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/acetinado-1787838521.webp",
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/granstatuariofaces.jpg",
           "tipo": "principal"
         }
       ],
@@ -4126,62 +3890,6 @@
       "imagens": [
         {
           "url": "https://api.portalgruporocha.com.br/storage/images/marmo-oro-f1-1788185645.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/marmo-oro-f2-1788185653.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/marmo-oro-f3-1788185660.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/marmo-oro-1788185633.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757506-f1-1787860346.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757739-f1-1787919043.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757740-f1-1787919392.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/alvorada-f1-1787919887.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aspen-f1-1787855104.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aurora-f1-1791729186.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bariloche-f1-1787856103.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bianchi-f1-1787856530.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/canjiquinha-f1-1787941057.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/acetinado-1787838521.webp",
           "tipo": "principal"
         }
       ],
@@ -4595,74 +4303,6 @@
         {
           "url": "https://api.portalgruporocha.com.br/storage/images/oro-realle-f1-1788205002.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/oro-realle-f2-1788205009.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/oro-realle-f3-1788205017.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/oro-realle-1793985954.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757506-f1-1787860346.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757739-f1-1787919043.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757740-f1-1787919392.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/alvorada-f1-1787919887.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aspen-f1-1787855104.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aurora-f1-1791729186.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bariloche-f1-1787856103.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bianchi-f1-1787856530.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/oro-realle-f1-1788205520.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/oro-realle-f2-1788205536.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/oro-realle-f3-1788205544.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/canjiquinha-f1-1787941057.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/acetinado-1787838521.webp",
-          "tipo": "principal"
         }
       ],
       "preco_m2": 59.5,
@@ -4837,63 +4477,7 @@
       "imagem_url": "https://api.portalgruporocha.com.br/storage/images/oro-realle-f1-1788205002.webp",
       "imagens": [
         {
-          "url": "https://api.portalgruporocha.com.br/storage/images/hd-organic-blue-f1-1788204350.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/hd-organic-blue-f2-1788204358.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/hd-organic-blue-f3-1788204366.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/organic-blue-1788204329.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757506-f1-1787860346.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757739-f1-1787919043.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757740-f1-1787919392.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/alvorada-f1-1787919887.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aspen-f1-1787855104.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aurora-f1-1791729186.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bariloche-f1-1787856103.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bianchi-f1-1787856530.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/canjiquinha-f1-1787941057.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/acetinado-1787838521.webp",
+          "url": "https://api.portalgruporocha.com.br/storage/images/oro-realle-f1-1788205002.webp",
           "tipo": "principal"
         }
       ],
@@ -5439,62 +5023,6 @@
         {
           "url": "https://api.portalgruporocha.com.br/storage/images/bianco-supreme-f1-1787924410.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bianco-supreme-f2-1787924488.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bianco-supreme-f3-1787924496.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bianco-supreme-1787924725.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757506-f1-1787860346.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757739-f1-1787919043.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757740-f1-1787919392.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/alvorada-f1-1787919887.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aspen-f1-1787855104.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aurora-f1-1791729186.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bariloche-f1-1787856103.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bianchi-f1-1787856530.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/canjiquinha-f1-1787941057.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/acetinado-1787838521.webp",
-          "tipo": "principal"
         }
       ],
       "preco_m2": 59.5,
@@ -5507,10 +5035,10 @@
     },
     {
       "codigo_tintao": "31923",
-      "modelo": "Cimentocolor Cz 61",
-      "catalogo_nome_modelo": "Cimentocolor Cz 61",
+      "modelo": "Cimentcolor Cz Hd61",
+      "catalogo_nome_modelo": "Cimentcolor Cz Hd61",
       "descricao_erp": "PISO 61X61 CIMENTOCOLOR CZ EXT HD-61 A (2,23) PEI LD",
-      "descricao": "Cimentocolor Cz 61",
+      "descricao": "Cimentcolor Cz Hd61",
       "formato": "61x61",
       "linha": "bold",
       "subtipo": "lisa",
@@ -5521,7 +5049,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "129",
-      "formigres_titulo": "Cimentocolor Cz 61 · 61x61 · BOLD · Mate",
+      "formigres_titulo": "Cimentcolor Cz Hd61 · 61x61 · BOLD · Mate",
       "formigres_tipo": "BOLD",
       "formigres_acabamento": "MATE",
       "acabamento_label": "Mate",
@@ -5551,10 +5079,10 @@
     },
     {
       "codigo_tintao": "31929",
-      "modelo": "Branco Neve",
-      "catalogo_nome_modelo": "Branco Neve",
+      "modelo": "Ladrillo Red",
+      "catalogo_nome_modelo": "Ladrillo Red",
       "descricao_erp": "REV. 38X75 BRANCO NEVE PLUS A(2,0) ESM BOLD PEI: LA",
-      "descricao": "Branco Neve",
+      "descricao": "Ladrillo Red",
       "formato": "38x75",
       "linha": "bold",
       "subtipo": null,
@@ -5565,7 +5093,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Branco Neve · 38x75 · BOLD",
+      "formigres_titulo": "Ladrillo Red · 38x75 · BOLD",
       "formigres_tipo": "",
       "formigres_acabamento": "MARMOCERÂMICA",
       "acabamento_label": "",
@@ -6147,10 +5675,10 @@
     },
     {
       "codigo_tintao": "32183",
-      "modelo": "Naturale Mr 50",
-      "catalogo_nome_modelo": "Naturale Mr 50",
+      "modelo": "Naturalle Mr Hd50",
+      "catalogo_nome_modelo": "Naturalle Mr Hd50",
       "descricao_erp": "PISO 50X50 NATURALE MR HD 50 (2,5) PEI LC JUNTA 5MM",
-      "descricao": "Naturale Mr 50",
+      "descricao": "Naturalle Mr Hd50",
       "formato": "50x50",
       "linha": "bold",
       "subtipo": "lisa",
@@ -6161,7 +5689,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "259",
-      "formigres_titulo": "Naturale Mr 50 · 50x50 · BOLD · Brilhante",
+      "formigres_titulo": "Naturalle Mr Hd50 · 50x50 · BOLD · Brilhante",
       "formigres_tipo": "BOLD",
       "formigres_acabamento": "BRILHANTE",
       "acabamento_label": "Brilhante",
@@ -6417,35 +5945,15 @@
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/premium/cementgrigio87.jpg",
       "imagens": [
         {
-          "url": "https://www.formigres.com.br/uploads/produtos/premium/cement-grigio-granilha-rt-88x88-p1534-imgprincipal.webp",
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/cementgrigio87.jpg",
           "tipo": "principal"
         },
         {
-          "url": "https://www.formigres.com.br/uploads/produtos/premium/cement-grigio-granilha-rt-88x88-p1534-imgamb.webp",
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/amb-cementgrigiort88mate.webp",
           "tipo": "principal"
         },
         {
-          "url": "https://www.formigres.com.br/uploads/produtos/premium/cement-grigio-granilha-rt-88x88-p1534-imgpiso.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.formigres.com.br/uploads/produtos/premium/cement-grigio-granilha-rt-88x88-p1534-imgf1.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.formigres.com.br/uploads/produtos/premium/cement-grigio-granilha-rt-88x88-p1534-imgf2.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.formigres.com.br/uploads/produtos/premium/cement-grigio-granilha-rt-88x88-p1534-imgf3.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.formigres.com.br/uploads/produtos/premium/cement-grigio-granilha-rt-88x88-p1534-imgf4.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.formigres.com.br/uploads/produtos/premium/cement-grigio-granilha-rt-88x88-p1534-imgf5.webp",
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/cementgrigio87-faces.jpg",
           "tipo": "principal"
         }
       ],
@@ -6539,74 +6047,6 @@
         {
           "url": "https://api.portalgruporocha.com.br/storage/images/damasco-f1-1787947187.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/damasco-f2-1787947198.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/damasco-f3-1787947206.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/damasco-1787947161.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757506-f1-1787860346.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757739-f1-1787919043.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757740-f1-1787919392.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/alvorada-f1-1787919887.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aspen-f1-1787855104.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aurora-f1-1791729186.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bariloche-f1-1787856103.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bianchi-f1-1787856530.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/hd-damasco-f1-1787947454.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/hd-damasco-f2-1787947468.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/hd-damasco-f3-1787947479.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/canjiquinha-f1-1787941057.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/acetinado-1787838521.webp",
-          "tipo": "principal"
         }
       ],
       "preco_m2": 59.5,
@@ -6698,62 +6138,6 @@
       "imagens": [
         {
           "url": "https://api.portalgruporocha.com.br/storage/images/statuario-f1-1787943057.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/statuario-f2-1787943066.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/statuario-f3-1787943075.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/statuario-1787943109.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757506-f1-1787860346.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757739-f1-1787919043.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757740-f1-1787919392.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/alvorada-f1-1787919887.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aspen-f1-1787855104.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aurora-f1-1791729186.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bariloche-f1-1787856103.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bianchi-f1-1787856530.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/canjiquinha-f1-1787941057.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/acetinado-1787838521.webp",
           "tipo": "principal"
         }
       ],
@@ -7411,74 +6795,6 @@
         {
           "url": "https://api.portalgruporocha.com.br/storage/images/damasco-f1-1787947187.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/damasco-f2-1787947198.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/damasco-f3-1787947206.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/damasco-1787947161.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757506-f1-1787860346.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757739-f1-1787919043.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757740-f1-1787919392.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/alvorada-f1-1787919887.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aspen-f1-1787855104.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aurora-f1-1791729186.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bariloche-f1-1787856103.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bianchi-f1-1787856530.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/hd-damasco-f1-1787947454.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/hd-damasco-f2-1787947468.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/hd-damasco-f3-1787947479.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/canjiquinha-f1-1787941057.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/acetinado-1787838521.webp",
-          "tipo": "principal"
         }
       ],
       "preco_m2": 62.9,
@@ -8086,62 +7402,6 @@
         {
           "url": "https://api.portalgruporocha.com.br/storage/images/olimpo-f1-1788202469.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/olimpo-f2-1788202477.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/olimpo-f3-1788202484.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/olimpo-1788202586.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757506-f1-1787860346.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757739-f1-1787919043.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757740-f1-1787919392.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/alvorada-f1-1787919887.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aspen-f1-1787855104.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aurora-f1-1791729186.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bariloche-f1-1787856103.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bianchi-f1-1787856530.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/canjiquinha-f1-1787941057.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/acetinado-1787838521.webp",
-          "tipo": "principal"
         }
       ],
       "preco_m2": 59.5,
@@ -8278,66 +7538,6 @@
         {
           "url": "https://api.portalgruporocha.com.br/storage/images/cinza-urbano-f1-1787943066.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/cinza-urbano-f2-1787943078.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/cinza-urbano-f3-1787943087.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/cinza-urbano-f4-1787943096.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/cinza-urbano-1787943038.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757322-f1-1787857322.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757518-f1-1787860896.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aurora-marrom-f1-1787855791.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bali-f1-1787920560.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/canjiquinha-f1-1787941057.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/gran-vision-f1-1788179101.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/granite-1788179351.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/granito-gray-f1-1788179590.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/antiderrapantes-1787838331.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/revestimentos-1787838262.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
-          "tipo": "principal"
         }
       ],
       "preco_m2": 41,
@@ -8390,10 +7590,10 @@
     },
     {
       "codigo_tintao": "33995",
-      "modelo": "Metrople Mate",
-      "catalogo_nome_modelo": "Metrople Mate",
+      "modelo": "Metropole",
+      "catalogo_nome_modelo": "Metropole",
       "descricao_erp": "PISO 70X70 METROPLE ROCHAPRIME A (3,43)RT MATE PEI LD",
-      "descricao": "Metrople Mate",
+      "descricao": "Metropole",
       "formato": "70x70",
       "linha": "retificada",
       "subtipo": "lisa",
@@ -8404,7 +7604,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Metrople Mate · 70x70 · RET · Mate",
+      "formigres_titulo": "Metropole · 70x70 · RET · Mate",
       "formigres_tipo": "",
       "formigres_acabamento": "MATE",
       "acabamento_label": "Mate",
@@ -8417,62 +7617,6 @@
       "imagens": [
         {
           "url": "https://api.portalgruporocha.com.br/storage/images/metropole-f1-1788201254.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/metropole-f2-1788201262.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/metropole-f3-1788201269.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/metropole-1788201233.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/matte-apollo-f1-1787852689.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/carbon-f1-1789150050.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/coppan-f1-1787943405.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/eclipse-f2-1790700661.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/eclipse-f1-1790700613.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/eclipse-f6-1790700702.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/mate-cimento-f1-1788186122.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/hd-matte-apollo-f1-1788186554.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/antiderrapantes-1787838331.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/acetinado-1787838521.webp",
           "tipo": "principal"
         }
       ],
@@ -8994,66 +8138,6 @@
         {
           "url": "https://api.portalgruporocha.com.br/storage/images/terra-firme-f1-1787938970.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/terra-firme-f2-1787938984.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/terra-firme-f3-1787938997.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/terra-firme-f4-1787939009.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/terra-firme-1794407844.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757322-f1-1787857322.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757518-f1-1787860896.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aurora-marrom-f1-1787855791.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bali-f1-1787920560.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/canjiquinha-f1-1787941057.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/cinza-urbano-f1-1787943066.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/gran-vision-f1-1788179101.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/granite-1788179351.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/antiderrapantes-1787838331.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/revestimentos-1787838262.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
-          "tipo": "principal"
         }
       ],
       "preco_m2": 39.9,
@@ -9094,66 +8178,6 @@
         {
           "url": "https://api.portalgruporocha.com.br/storage/images/pedra-nobre-f1-1788208409.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/pedra-nobre-f2-1788208426.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/pedra-nobre-f3-1788208440.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/pedra-nobre-f4-1788208447.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/pedra-nobre-1788208366.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757322-f1-1787857322.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757518-f1-1787860896.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aurora-marrom-f1-1787855791.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bali-f1-1787920560.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/canjiquinha-f1-1787941057.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/cinza-urbano-f1-1787943066.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/gran-vision-f1-1788179101.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/granite-1788179351.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/antiderrapantes-1787838331.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/revestimentos-1787838262.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
-          "tipo": "principal"
         }
       ],
       "preco_m2": 41,
@@ -9193,58 +8217,6 @@
       "imagens": [
         {
           "url": "https://api.portalgruporocha.com.br/storage/images/crema-f1-1787944460.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/crema-f2-1787944479.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/crema-f3-1787944488.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757506-f1-1787860346.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757739-f1-1787919043.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757740-f1-1787919392.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/alvorada-f1-1787919887.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aspen-f1-1787855104.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aurora-f1-1791729186.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bariloche-f1-1787856103.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bianchi-f1-1787856530.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/canjiquinha-f1-1787941057.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/acetinado-1787838521.webp",
           "tipo": "principal"
         }
       ],
@@ -9686,10 +8658,10 @@
     },
     {
       "codigo_tintao": "34616",
-      "modelo": "Marmo Duro",
-      "catalogo_nome_modelo": "Marmo Duro",
+      "modelo": "Golden Oro Rt Polido 81",
+      "catalogo_nome_modelo": "Golden Oro Rt Polido 81",
       "descricao_erp": "PISO 82X82 MARMO DURO HD ROCHAMAXX (2,70) RT POLIDO PEI LC",
-      "descricao": "Marmo Duro",
+      "descricao": "Golden Oro Rt Polido 81",
       "formato": "82x82",
       "linha": "retificada",
       "subtipo": "polida",
@@ -9700,7 +8672,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "1287",
-      "formigres_titulo": "Marmo Duro · 82x82 · RET · Polido",
+      "formigres_titulo": "Golden Oro Rt Polido 81 · 82x82 · RET · Polido",
       "formigres_tipo": "",
       "formigres_acabamento": "POLIDO",
       "acabamento_label": "Polido",
@@ -9917,10 +8889,10 @@
     },
     {
       "codigo_tintao": "35040",
-      "modelo": "Breccia",
-      "catalogo_nome_modelo": "Breccia",
+      "modelo": "Calacata Gold",
+      "catalogo_nome_modelo": "Calacata Gold",
       "descricao_erp": "PISO 61X116 BRECCIA LUX HD ROCHAMAXX (2,83) RET PLD PEI LC",
-      "descricao": "Breccia",
+      "descricao": "Calacata Gold",
       "formato": "61x116",
       "linha": "retificada",
       "subtipo": "polida",
@@ -9931,7 +8903,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Breccia · 61x116 · RET · Polido",
+      "formigres_titulo": "Calacata Gold · 61x116 · RET · Polido",
       "formigres_tipo": "",
       "formigres_acabamento": "POLIDO",
       "acabamento_label": "Polido",
@@ -10261,58 +9233,6 @@
         {
           "url": "https://api.portalgruporocha.com.br/storage/images/bariloche-f1-1787856103.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bariloche-f2-1787856148.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bariloche-f3-1787856155.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757506-f1-1787860346.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757739-f1-1787919043.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757740-f1-1787919392.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/alvorada-f1-1787919887.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aspen-f1-1787855104.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aurora-f1-1791729186.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bianchi-f1-1787856530.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bianco-supreme-f1-1787924410.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/canjiquinha-f1-1787941057.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/acetinado-1787838521.webp",
-          "tipo": "principal"
         }
       ],
       "preco_m2": 59.9,
@@ -10352,42 +9272,6 @@
       "imagens": [
         {
           "url": "https://api.portalgruporocha.com.br/storage/images/gran-cotton-1788177412.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/areia-branca-f1-1787920405.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/matte-cotton-1789067058.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/branco-mate-f1-1787925044.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/cotton-1787944140.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/gran-onyx-1788177576.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/gran-onyx-cinza-f1-1788177974.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/canjiquinha-f1-1787941057.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/acetinado-1787838521.webp",
           "tipo": "principal"
         }
       ],
@@ -10539,74 +9423,6 @@
         {
           "url": "https://api.portalgruporocha.com.br/storage/images/dommus-f1-1787947961.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/dommus-f2-1787947968.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/dommus-f3-1787947975.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/dommus-urban-1787947921.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757506-f1-1787860346.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757739-f1-1787919043.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757740-f1-1787919392.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/alvorada-f1-1787919887.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aspen-f1-1787855104.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aurora-f1-1791729186.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bariloche-f1-1787856103.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bianchi-f1-1787856530.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/dommus-f1-1787948155.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/dommus-f2-1787948167.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/dommus-f3-1787948177.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/canjiquinha-f1-1787941057.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/acetinado-1787838521.webp",
-          "tipo": "principal"
         }
       ],
       "preco_m2": 62.9,
@@ -10645,59 +9461,7 @@
       "imagem_url": "https://gruporocha.com.br/_og/d/c_Produto,title_Organic+Black,category_~Q2Vyw6JtaWNh,q_eyJjIjoiODIzMTcyIn0,p_Ii9wcm9kdXRvcy9vcmdhbmljLWJsYWNrIg,s_WvowpcW25sN-X2w9.png?_query=%7B%22c%22:%22823172%22%7D",
       "imagens": [
         {
-          "url": "https://api.portalgruporocha.com.br/storage/images/hd-organic-black-f1-1788203992.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/hd-organic-black-f2-1788204000.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/hd-organic-black-f3-1788204007.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757506-f1-1787860346.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757739-f1-1787919043.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757740-f1-1787919392.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/alvorada-f1-1787919887.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aspen-f1-1787855104.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aurora-f1-1791729186.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bariloche-f1-1787856103.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bianchi-f1-1787856530.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/canjiquinha-f1-1787941057.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/acetinado-1787838521.webp",
+          "url": "https://gruporocha.com.br/_og/d/c_Produto,title_Organic+Black,category_~Q2Vyw6JtaWNh,q_eyJjIjoiODIzMTcyIn0,p_Ii9wcm9kdXRvcy9vcmdhbmljLWJsYWNrIg,s_WvowpcW25sN-X2w9.png?_query=%7B%22c%22:%22823172%22%7D",
           "tipo": "principal"
         }
       ],
@@ -10777,63 +9541,7 @@
       "imagem_url": "https://api.portalgruporocha.com.br/storage/images/marmo-nero-f1-1788185372.webp",
       "imagens": [
         {
-          "url": "https://api.portalgruporocha.com.br/storage/images/marmo-allure-f1-1788183890.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/marmo-allure-f2-1788183897.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/marmo-allure-f3-1788183931.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/marmo-allure-1788183868.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757506-f1-1787860346.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757739-f1-1787919043.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/5757740-f1-1787919392.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/alvorada-f1-1787919887.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aspen-f1-1787855104.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/aurora-f1-1791729186.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bariloche-f1-1787856103.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/bianchi-f1-1787856530.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/canjiquinha-f1-1787941057.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/acetinado-1787838521.webp",
+          "url": "https://api.portalgruporocha.com.br/storage/images/marmo-nero-f1-1788185372.webp",
           "tipo": "principal"
         }
       ],
@@ -10943,10 +9651,10 @@
     },
     {
       "codigo_tintao": "35456",
-      "modelo": "Cement Clear 60x60 60x60 Coronha",
-      "catalogo_nome_modelo": "Cement Clear 60x60 60x60 Coronha",
+      "modelo": "Coronha Mr Rt 60",
+      "catalogo_nome_modelo": "Coronha Mr Rt 60",
       "descricao_erp": "PISO 60X60 CEMENT CLEAR A (2,15) RET MATE PEI: LD LD 60X60 PISO 60X60 CORONHA A (2,15) RET MATE PEI: LD",
-      "descricao": "Cement Clear 60x60 60x60 Coronha",
+      "descricao": "Coronha Mr Rt 60",
       "formato": "60x60",
       "linha": "retificada",
       "subtipo": "lisa",
@@ -10957,7 +9665,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "37",
-      "formigres_titulo": "Cement Clear 60x60 60x60 Coronha · 60x60 · RET · Mate",
+      "formigres_titulo": "Coronha Mr Rt 60 · 60x60 · RET · Mate",
       "formigres_tipo": "RETIFICADO",
       "formigres_acabamento": "MATE",
       "acabamento_label": "Mate",
@@ -10969,15 +9677,11 @@
       "imagem_url": "https://www.formigres.com.br/uploads/produtos/formigres/coronhamrrt60.jpg",
       "imagens": [
         {
-          "url": "https://www.formigres.com.br/uploads/produtos/jg/cement-clear-mate-rt-60x60-p1493-imgprincipal.webp",
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/coronhamrrt60.jpg",
           "tipo": "principal"
         },
         {
-          "url": "https://www.formigres.com.br/uploads/produtos/jg/cement-clear-mate-rt-60x60-p1493-imgpiso.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.formigres.com.br/uploads/produtos/jg/cement-clear-mate-rt-60x60-p1493-imgf1.webp",
+          "url": "https://www.formigres.com.br/uploads/produtos/formigres/coronhamrrt60-faces.jpg",
           "tipo": "principal"
         }
       ],
@@ -11706,10 +10410,10 @@
     },
     {
       "codigo_tintao": "35603",
-      "modelo": "Delta Silver Brilhant 3mm",
-      "catalogo_nome_modelo": "Delta Silver Brilhant 3mm",
+      "modelo": "Florence",
+      "catalogo_nome_modelo": "Florence",
       "descricao_erp": "REV. 37X59 DELTA SILVER HD A(2,43)BOLD BRILHANT PEI:LA 3MM",
-      "descricao": "Delta Silver Brilhant 3mm",
+      "descricao": "Florence",
       "formato": "37x59",
       "linha": "bold",
       "subtipo": "lisa",
@@ -11720,7 +10424,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Delta Silver Brilhant 3mm · 37x59 · BOLD · Brilhante",
+      "formigres_titulo": "Florence · 37x59 · BOLD · Brilhante",
       "formigres_tipo": "BOLD",
       "formigres_acabamento": "BOLD",
       "acabamento_label": "Brilhante",
@@ -11732,23 +10436,23 @@
       "imagem_url": "https://www.carmelofior.com.br/public/images/product/fbd98c6d86e27e71f700725c967ac684.webp",
       "imagens": [
         {
-          "url": "https://www.carmelofior.com.br/public/images/product/a988da4e538ea4111ac75b3b2efa2f5e.webp",
+          "url": "https://www.carmelofior.com.br/public/images/product/fbd98c6d86e27e71f700725c967ac684.webp",
           "tipo": "principal"
         },
         {
-          "url": "https://www.carmelofior.com.br/public/images/product/9d5de38646dc3e3ab81e996b66081f0e.webp",
+          "url": "https://www.carmelofior.com.br/public/images/product/4f55d04ab53c86c59857eff5d27d3f4d.webp",
           "tipo": "principal"
         },
         {
-          "url": "https://www.carmelofior.com.br/public/images/product/fa03d21ed1a076410128d69be839c83e.webp",
+          "url": "https://www.carmelofior.com.br/public/images/product/5c43eb3389d55e3176ca7ce661861302.webp",
           "tipo": "principal"
         },
         {
-          "url": "https://www.carmelofior.com.br/public/images/product/e62e6b4f7407fd9761b4e238c7cb894f.webp",
+          "url": "https://www.carmelofior.com.br/public/images/product/a9fe57b37bbf8a5bee40c9b88257e98c.webp",
           "tipo": "principal"
         },
         {
-          "url": "https://www.carmelofior.com.br/public/images/product/b1d708f20f9adaf15b2b9a99923bf77d.webp",
+          "url": "https://www.carmelofior.com.br/public/images/product/ff390bceae1bcb3134d8f9df06878284.webp",
           "tipo": "principal"
         }
       ],
@@ -11758,7 +10462,7 @@
       "m2_por_caixa": 2.43,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "lista fábrica (ARIELLE) + PRE_OS"
+      "observacao": "correção João: SIAH delta → ficha Florence 37x59"
     },
     {
       "codigo_tintao": "35604",
@@ -11818,10 +10522,10 @@
     },
     {
       "codigo_tintao": "35616",
-      "modelo": "Lírio 2mm",
-      "catalogo_nome_modelo": "Lírio 2mm",
+      "modelo": "Retif Lírio Lux",
+      "catalogo_nome_modelo": "Retif Lírio Lux",
       "descricao_erp": "PISO 67X67 LÍRIO LUX HD A(2,71) RET BRILHANTE PEI:LC 2MM",
-      "descricao": "Lírio 2mm",
+      "descricao": "Retif Lírio Lux",
       "formato": "67x67",
       "linha": "retificada",
       "subtipo": "lisa",
@@ -11832,7 +10536,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Lírio 2mm · 67x67 · RET · Brilhante",
+      "formigres_titulo": "Retif Lírio Lux · 67x67 · RET · Brilhante",
       "formigres_tipo": "RETIFICADO",
       "formigres_acabamento": "RETIFICADO",
       "acabamento_label": "Brilhante",
@@ -11938,10 +10642,10 @@
     },
     {
       "codigo_tintao": "35618",
-      "modelo": "Axis Gray Bril",
-      "catalogo_nome_modelo": "Axis Gray Bril",
+      "modelo": "Delta Bone",
+      "catalogo_nome_modelo": "Delta Bone",
       "descricao_erp": "REV. 37X59 AXIS GRAY HD A(2,43) BOLD BRIL PEI: LA JUNTA3MM",
-      "descricao": "Axis Gray Bril",
+      "descricao": "Delta Bone",
       "formato": "37x59",
       "linha": "bold",
       "subtipo": null,
@@ -11952,7 +10656,7 @@
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Axis Gray Bril · 37x59 · BOLD",
+      "formigres_titulo": "Delta Bone · 37x59 · BOLD",
       "formigres_tipo": "BOLD",
       "formigres_acabamento": "BOLD",
       "acabamento_label": "",
@@ -11964,23 +10668,7 @@
       "imagem_url": "https://www.carmelofior.com.br/public/images/product/cf6626c25af08b9db08cd6b12fe74419.webp",
       "imagens": [
         {
-          "url": "https://www.carmelofior.com.br/public/images/product/4769a0ec99d996d6036c12be3b9571e8.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/b40ebb79e490beee08ad6d73badb8bb9.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/502d742bbf6b5c453948c96fce7d7409.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/167ac857a8bd9c53664cffb4a040360d.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.carmelofior.com.br/public/images/product/f9eb69e31bc7e417db3d69efb5ae975d.webp",
+          "url": "https://www.carmelofior.com.br/public/images/product/cf6626c25af08b9db08cd6b12fe74419.webp",
           "tipo": "principal"
         }
       ],
@@ -12298,62 +10986,6 @@
         {
           "url": "https://api.portalgruporocha.com.br/storage/images/strato-grigio-f1-1787941685.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/strato-grigio-f2-1787941695.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/strato-grigio-f3-1787941707.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/strato-grigio-f4-1787941719.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/strato-grigio-1787941840.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/matte-apollo-f1-1787852689.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/carbon-f1-1789150050.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/coppan-f1-1787943405.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/eclipse-f2-1790700661.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/eclipse-f1-1790700613.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/eclipse-f6-1790700702.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/mate-cimento-f1-1788186122.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/hd-matte-apollo-f1-1788186554.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/acetinado-1787838521.webp",
-          "tipo": "principal"
         }
       ],
       "preco_m2": 59.5,
@@ -12394,62 +11026,6 @@
         {
           "url": "https://api.portalgruporocha.com.br/storage/images/strato-grigio-f1-1787941685.webp",
           "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/strato-grigio-f2-1787941695.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/strato-grigio-f3-1787941707.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/strato-grigio-f4-1787941719.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/strato-grigio-1787941840.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/matte-apollo-f1-1787852689.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/carbon-f1-1789150050.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/coppan-f1-1787943405.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/eclipse-f2-1790700661.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/eclipse-f1-1790700613.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/eclipse-f6-1790700702.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/mate-cimento-f1-1788186122.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/hd-matte-apollo-f1-1788186554.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/polido-1787838610.webp",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://api.portalgruporocha.com.br/storage/images/acetinado-1787838521.webp",
-          "tipo": "principal"
         }
       ],
       "preco_m2": 45.9,
@@ -12488,11 +11064,7 @@
       "imagem_url": "https://api.portalgruporocha.com.br/storage/images/strato-grigio-f1-1787941685.webp",
       "imagens": [
         {
-          "url": "https://www.formigres.com.br/uploads/produtos/prime/goldenoro81-polido.jpg",
-          "tipo": "principal"
-        },
-        {
-          "url": "https://www.formigres.com.br/produtos/prime/amb-goldenoropolido81.jpg",
+          "url": "https://api.portalgruporocha.com.br/storage/images/strato-grigio-f1-1787941685.webp",
           "tipo": "principal"
         }
       ],

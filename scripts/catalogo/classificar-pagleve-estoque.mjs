@@ -34,14 +34,24 @@ function loadRaioXImagemOverlay() {
     byCodigo.set(codigo, {
       imagem_url: String(r.imagem_url || '').trim(),
       imagens_json: String(r.imagens_json || '').trim(),
+      evidencia_url: String(r.evidencia_url || '').trim(),
     });
   }
   return byCodigo;
 }
 
+function normProdutoUrl(u) {
+  return String(u || '').trim().replace(/\/$/, '').toLowerCase();
+}
+
 function overlayImagensRaioX(row, imagemOverlay) {
   if (!imagemOverlay) return row;
   const next = { ...row };
+  const baseUrl = normProdutoUrl(next.evidencia_url);
+  const overlayUrl = normProdutoUrl(imagemOverlay.evidencia_url);
+  if (baseUrl && overlayUrl && baseUrl !== overlayUrl) {
+    return next;
+  }
   const baseImg = String(next.imagem_url || '').trim();
   const overlayImg = String(imagemOverlay.imagem_url || '').trim();
   const baseGal = String(next.imagens_json || '').trim();
