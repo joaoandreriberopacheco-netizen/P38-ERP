@@ -9,6 +9,7 @@ import {
 } from '@/lib/fetchPedidoVendaItens';
 import {
   buildPendenteAprovadoFinanceiroPorProduto,
+  CATALOG_ESTOQUE_VIRTUAL_PENDENTE_OPTIONS,
   buildRecebidosPorPedidoProdutoFromEmbarques,
   pedidoCompraAprovadoNaoConcluido as pedidoCompraAprovadoNaoConcluidoCanonico,
   pedidoCompraTotalmenteRecebido,
@@ -176,6 +177,7 @@ function buildPendenteLocalizacaoNoFimDoMes(monthEnd, pedidosCompra = [], embarq
     {
       embarques: embarquesCompra.filter((embarque) => embarqueEmTransitoNoFimDoMes(embarque, monthEnd)),
       pedidosParaEmbarque: pedidosAteMes,
+      ...CATALOG_ESTOQUE_VIRTUAL_PENDENTE_OPTIONS,
     },
   );
 }
@@ -457,6 +459,7 @@ async function fetchTransitOverlayFromCompras(queryClient) {
     {
       embarques: sugestaoEstoqueData.embarques,
       pedidosParaEmbarque: sugestaoEstoqueData.pedidosTodos,
+      ...CATALOG_ESTOQUE_VIRTUAL_PENDENTE_OPTIONS,
     },
   );
 
@@ -506,6 +509,7 @@ export async function fetchDashboardEstoqueResumo(queryClient) {
       {
         embarques: sugestaoEstoqueData.embarques,
         pedidosParaEmbarque: sugestaoEstoqueData.pedidosTodos,
+        ...CATALOG_ESTOQUE_VIRTUAL_PENDENTE_OPTIONS,
       },
     )
     : {};
@@ -565,6 +569,7 @@ export async function fetchDashboardEstoqueHistorico(queryClient) {
       {
         embarques: sugestaoEstoqueData.embarques,
         pedidosParaEmbarque: sugestaoEstoqueData.pedidosTodos,
+        ...CATALOG_ESTOQUE_VIRTUAL_PENDENTE_OPTIONS,
       },
     )
     : {};
