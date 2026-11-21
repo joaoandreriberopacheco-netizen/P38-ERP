@@ -37,9 +37,9 @@ Lê `files/pagleve/raio-x-pagleve-site-verificado.csv` e grava `deploy/catalogo-
 4. **Build Command:** deixar vazio
 5. **Output Directory:** `.` (raiz da pasta)
 6. Nome sugerido: `catalogo-pague-leve`
-7. Copiar **Project ID** → GitHub Secret `VERCEL_CATALOGO_PAGLEVE_PROJECT_ID`
+7. Copiar **Project ID** → GitHub Secret `VERCEL_CATALOGO_PAGLEVE_PROJECT_ID` (opcional se existir `vercel.project-id` no repo)
    - Projecto criado: `catalogo-pague-leve`
-   - ID: `prj_503sAOxx6FvbOxgRue0cKmeTYpXx`
+   - ID canónico: `deploy/catalogo-pagleve/vercel.project-id` (`prj_503sAOxx6FvbOxgRue0cKmeTYpXx`)
 8. `VERCEL_TOKEN` e `VERCEL_ORG_ID` são os **mesmos** do deploy principal P38
 
 Push na `main` que altere `deploy/catalogo-pagleve/**` dispara o workflow **Vercel Deploy — Catálogo PagLeve** (ou **Run workflow** manual em Actions).
