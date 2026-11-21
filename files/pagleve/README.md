@@ -7,6 +7,7 @@ Está no PRE_OS mas **não** está em Incopisos / Formigres / Carmelo Fior / Ari
 |--------|----------------------|--------|
 | **PDF fábrica (510)** | `formigres_*.pdf`, `rochaprime_*.pdf`, `carmelo_fior_*.pdf`, `arielle_*.pdf`, `incopisos_*.pdf` | **Quem entra** — código loja + origem + descrição |
 | **PRE_OS** | `PRE_OS_0973.pdf` | **Preço/m²** (e confirma venda); estoque ignorado → disponível |
+| **Estoque Casa Israel** | `docs/ESTOQUE PARA CASA ISRAEL*.XLSX` | **Descrição/referência SIAH** usada na classificação (ex. Florence vs texto errado no cruzamento) |
 
 Gerar / atualizar base:
 

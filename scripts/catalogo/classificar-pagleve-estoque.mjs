@@ -14,6 +14,10 @@ import {
 import { modeloComercialCatalogo, raioXProdutoDescricao } from '../lib/raioXProdutoDescricao.mjs';
 import { resolveFormatoPagLeve } from '../lib/pagleveFormatoOcr.mjs';
 import { loadPrecosSiah, resolvePrecoSiah } from '../lib/paglevePrecosSiah.mjs';
+import {
+  loadEstoqueCasaIsrael,
+  resolveEstoqueCasaIsraelPath,
+} from '../lib/pagleveEstoqueCasaIsrael.mjs';
 
 const ROOT = process.cwd();
 const IN_CSV =
@@ -282,11 +286,13 @@ function normalizarLinhaPagLeve(classif, acabLabel) {
   };
 }
 
-function main() {
+async function main() {
   if (!fs.existsSync(IN_CSV)) {
     console.error('CSV não encontrado:', IN_CSV);
     process.exit(1);
   }
+  const estoqueCasaIsraelPath = resolveEstoqueCasaIsraelPath();
+  const estoqueCasaIsrael = await loadEstoqueCasaIsrael(estoqueCasaIsraelPath);
   const rows = loadCsv(IN_CSV);
   const usarOverlayImagens = String(IN_CSV).includes('pagleve-base-cruzada');
   const imagemOverlayPorCodigo = usarOverlayImagens ? loadRaioXImagemOverlay() : new Map();
@@ -294,7 +300,13 @@ function main() {
   const items = rows.map((rowIn) => {
     const codigo = String(rowIn.codigo || '').trim();
     const row = overlayImagensRaioX(rowIn, imagemOverlayPorCodigo.get(codigo));
-    const descricao = row.descricao_erp || row.modelo || row.codigo;
+    const casaIsrael = estoqueCasaIsrael.get(codigo);
+    const descricao =
+      casaIsrael?.descricao || row.descricao_erp || row.modelo || row.codigo;
+    if (casaIsrael?.formato) {
+      row.formato =
+        resolveFormatoPagLeve(descricao, casaIsrael.formato.replace(/×/g, 'x')) || row.formato;
+    }
     row.formato = resolveFormatoPagLeve(descricao, row.formato) || row.formato;
     const siteHints = parseTipoAcabFromSite(row.descricao_no_site);
     const classif = classificarFormigres({
@@ -378,6 +390,9 @@ function main() {
   const payload = {
     geradoEm: new Date().toISOString(),
     fonte: IN_CSV,
+    ...(estoqueCasaIsraelPath
+      ? { fonte_descricao_estoque: path.basename(estoqueCasaIsraelPath) }
+      : {}),
     resumo,
     itens: items,
   };
@@ -385,9 +400,13 @@ function main() {
   console.log(JSON.stringify({
     ok: true,
     itens: items.length,
+  ...(estoqueCasaIsraelPath ? { estoqueCasaIsrael: path.basename(estoqueCasaIsraelPath) } : {}),
     resumo: resumo.porRotulo,
     json: jsonPath,
   }, null, 2));
 }
 
-main();
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
