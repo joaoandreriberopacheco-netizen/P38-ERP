@@ -140,6 +140,11 @@ export function modeloComercialCatalogo(codigo, descricao = '', modeloField = ''
 
   if (refCat && ROCHA_SIAH_CODE_RE.test(String(result).replace(/\s/g, ''))) return refCat;
 
+  if (rx.superficie === 'mate' && result && !/\bmate\b/i.test(stripAccents(result))) {
+    const words = result.trim().split(/\s+/).filter(Boolean);
+    if (words.length <= 2) result = `${result} Mate`;
+  }
+
   if (!modeloSoPontuacao(result) && !nomePareceCodigoFabricante(result)) return result;
 
   const fromSite = nomeFromDescricaoNoSite(descricaoNoSite);
@@ -164,6 +169,8 @@ export function raioXProdutoDescricao(codigo, descricao) {
   const codeFromLine = raw.match(/^(\d{4,5})\s+/);
   const codigoFinal = String(codigo || codeFromLine?.[1] || '').trim();
   if (codeFromLine) raw = raw.replace(/^\d{4,5}\s+/, '');
+  // SIAH costuma gravar MATE""A"/MATEA em vez de MATE (ex.: 30108 Statuário mate).
+  raw = raw.replace(/\bMATEA\b/gi, 'MATE');
 
   const formato = resolveFormatoPagLeve(raw, normFmt(raw));
   const m2Match = raw.match(/\((\d+[,.]?\d*)\)/);
