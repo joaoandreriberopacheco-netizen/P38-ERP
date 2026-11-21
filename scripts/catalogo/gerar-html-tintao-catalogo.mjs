@@ -22,6 +22,7 @@ import {
   buildCatalogTourHtml,
 } from '../lib/catalogoTour.mjs';
 import { buildPublicUrl, readAccessSlug } from '../lib/catalogoFormigresAcesso.mjs';
+import { PEI_USO_CLASSES } from '../lib/paglevePeiResistencia.mjs';
 
 const ROOT = process.cwd();
 const args = process.argv.slice(2);
@@ -472,6 +473,7 @@ function slimItem(item) {
     marca_nome: item.marca_nome || '',
     fabricante_grupo: item.fabricante_grupo || '',
     referencia: item.referencia || '',
+    pei_uso: item.pei_uso || '',
     gemeas: (item.gemeas || []).map((g) => ({
       codigo: String(g.codigo),
       marca: g.marca || '—',
@@ -1089,16 +1091,33 @@ const PAGLEVE_SKIN_CSS = `
       background: linear-gradient(90deg, #3d1a52 0%, #2a1038 100%);
       border-bottom-color: var(--pl-green);
     }
+    html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) {
+      table-layout: fixed;
+      width: 100%;
+    }
+    html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) .col-foto { width: 58px; }
+    html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) .col-modelo { width: 28%; }
+    html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) .col-marca { width: 12%; }
+    html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) .col-grupo { width: 14%; }
+    html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) .col-pack { width: 18%; }
+    html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) .col-preco { width: 10%; }
+    html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) .col-qty { width: 72px; }
     html[data-skin="pagleve"] .col-marca,
     html[data-skin="pagleve"] .col-grupo {
       font-size: .74rem;
       color: var(--muted);
-      white-space: nowrap;
-      max-width: 120px;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: unset;
+      word-break: break-word;
+      line-height: 1.35;
+      vertical-align: top;
     }
-    html[data-skin="pagleve"] .col-grupo { max-width: 140px; }
+    html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) .col-modelo {
+      word-break: break-word;
+      line-height: 1.3;
+      white-space: normal;
+    }
     html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th {
       text-align: center;
       vertical-align: middle;
@@ -1277,16 +1296,26 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
   const loadSquaresHtml = Array.from({ length: 20 }, () => '<span class="load-square"></span>').join('');
   const isB2bSkin = isB2bCatalogSkin(cfg.skin);
   const isPagleveSkin = cfg.skin === 'pagleve';
+  const pagleveGroupDefault = isPagleveSkin ? 'acabamento-formato' : 'formato-acabamento';
+  const pagleveGroupFmtSel = pagleveGroupDefault === 'formato-acabamento' ? ' selected' : '';
+  const pagleveGroupAcabSel = pagleveGroupDefault === 'acabamento-formato' ? ' selected' : '';
   const pagleveCatalogFiltersHtml = isPagleveSkin
-    ? '<select id="filter-textura" class="select-group pagleve-catalog-filter" title="Filtrar por textura"><option value="">Textura: todas</option></select>'
-      + '<div class="pagleve-marca-filter" id="filter-marca-wrap">'
-      + '<button type="button" class="btn pagleve-marca-filter-btn" id="filter-marca-btn" aria-expanded="false" aria-haspopup="listbox">'
-      + 'Marcas <span class="pagleve-filter-badge" id="filter-marca-badge" hidden></span></button>'
-      + '<div class="pagleve-marca-panel" id="filter-marca-panel" hidden role="listbox" aria-multiselectable="true" aria-label="Filtrar por marca">'
+    ? '<div class="pagleve-marca-filter" id="filter-superficie-wrap">'
+      + '<button type="button" class="btn pagleve-marca-filter-btn" id="filter-superficie-btn" aria-expanded="false" aria-haspopup="listbox">'
+      + 'Superfície <span class="pagleve-filter-badge" id="filter-superficie-badge" hidden></span></button>'
+      + '<div class="pagleve-marca-panel" id="filter-superficie-panel" hidden role="listbox" aria-multiselectable="true" aria-label="Filtrar por superfície">'
       + '<div class="pagleve-marca-panel-head">'
-      + '<button type="button" class="btn" id="filter-marca-clear">Limpar</button>'
-      + '<button type="button" class="btn" id="filter-marca-all">Todas</button>'
-      + '</div><div class="pagleve-marca-options" id="filter-marca-options"></div></div></div>'
+      + '<button type="button" class="btn" id="filter-superficie-clear">Limpar</button>'
+      + '<button type="button" class="btn" id="filter-superficie-all">Todas</button>'
+      + '</div><div class="pagleve-marca-options" id="filter-superficie-options"></div></div></div>'
+      + '<div class="pagleve-marca-filter" id="filter-uso-wrap">'
+      + '<button type="button" class="btn pagleve-marca-filter-btn" id="filter-uso-btn" aria-expanded="false" aria-haspopup="listbox">'
+      + 'Local de uso <span class="pagleve-filter-badge" id="filter-uso-badge" hidden></span></button>'
+      + '<div class="pagleve-marca-panel" id="filter-uso-panel" hidden role="listbox" aria-multiselectable="true" aria-label="Filtrar por local de uso PEI">'
+      + '<div class="pagleve-marca-panel-head">'
+      + '<button type="button" class="btn" id="filter-uso-clear">Limpar</button>'
+      + '<button type="button" class="btn" id="filter-uso-all">Todos</button>'
+      + '</div><div class="pagleve-marca-options" id="filter-uso-options"></div></div></div>'
     : '';
   const qtyLabel = cfg.qtyLabel || (isB2bSkin ? 'Paletes' : 'Caixas');
   const qtyLabelPl = cfg.qtyLabelPl || (isB2bSkin ? 'paletes' : 'caixas');
@@ -2973,8 +3002,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       </div>
       <div class="toolbar-extra toolbar-mobile-only" id="toolbar-extra" hidden>
         <select id="group-by" class="select-group" title="Agrupar">
-          <option value="formato-acabamento" selected>Formato › acabamento</option>
-          <option value="acabamento-formato">Acabamento › formato</option>
+          <option value="formato-acabamento"${pagleveGroupFmtSel}>Formato › acabamento</option>
+          <option value="acabamento-formato"${pagleveGroupAcabSel}>Acabamento › formato</option>
         </select>
         <button type="button" class="btn btn-primary" id="start-qty">${escTpl(qtyLabel)}</button>
         <button type="button" class="btn" id="filter-qty">Na seleção</button>
@@ -2984,8 +3013,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       </div>
       <div class="toolbar-extra toolbar-desktop-only">
         <select id="group-by-desktop" class="select-group">
-          <option value="formato-acabamento" selected>Agrupar: formato › acabamento</option>
-          <option value="acabamento-formato">Agrupar: acabamento › formato</option>
+          <option value="formato-acabamento"${pagleveGroupFmtSel}>Agrupar: formato › acabamento</option>
+          <option value="acabamento-formato"${pagleveGroupAcabSel}>Agrupar: acabamento › formato</option>
         </select>
         <button type="button" class="btn" id="filter-qty-d">Só na seleção</button>
         <button type="button" class="btn" id="clear-qty-d">Limpar seleção</button>
@@ -3110,6 +3139,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     const PDF_TITLE = '${escTpl(cfg.h1)}';
     const CATALOG_SKIN = '${escTpl(cfg.skin || 'default')}';
     const PAGLEVE_TEXTURA_GRUPO_ORDER = ${JSON.stringify(PAGLEVE_TEXTURA_GRUPO_ORDER)};
+    const PAGLEVE_PEI_USO_ORDER = ${JSON.stringify(PEI_USO_CLASSES)};
     const QTY_UNIT = CFG.qtyUnit || 'caixa';
     const QTY_LABEL = CFG.qtyLabel || 'Caixas';
     const QTY_LABEL_PL = CFG.qtyLabelPl || 'caixas';
@@ -3344,7 +3374,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       destinoEl?.addEventListener('change', syncRegimeDialogPreview);
       tributarioEl?.addEventListener('change', syncRegimeDialogPreview);
     }
-    let groupBy = 'formato-acabamento';
+    let groupBy = CATALOG_SKIN === 'pagleve' ? 'acabamento-formato' : 'formato-acabamento';
     try {
       const savedGroup = localStorage.getItem(GROUP_KEY);
       groupBy = normalizeGroupBy(savedGroup);
@@ -3352,12 +3382,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function normalizeGroupBy(val) {
       if (val === 'formato-acabamento' || val === 'acabamento-formato') return val;
       if (val === 'acabamento') return 'acabamento-formato';
-      return 'formato-acabamento';
+      return CATALOG_SKIN === 'pagleve' ? 'acabamento-formato' : 'formato-acabamento';
     }
     let filterQtyOnly = false;
-    let filterTexturaGrupo = '';
-    let filterMarcasSelected = new Set();
-    let pagLeveMarcaCatalog = [];
+    let filterSuperficiesSelected = new Set();
+    let filterPeiUsoSelected = new Set();
+    let pagLeveSuperficieCatalog = [];
+    let pagLevePeiUsoCatalog = [];
     let pedidoOpen = false;
     let pedidoPdfSheetOpen = false;
     let dom = {};
@@ -3857,14 +3888,32 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function grupoLabelFormato(key) {
       return 'Formato ' + key;
     }
+    function pagLeveAgrupamentoPlano() {
+      return CATALOG_SKIN === 'pagleve' && groupBy === 'acabamento-formato';
+    }
     function sortGruposNivel1(keys) {
-      if (groupBy === 'formato-acabamento') {
+      if (groupBy === 'formato-acabamento' || pagLeveAgrupamentoPlano()) {
         return [...keys].sort(compareFormato);
       }
       return sortAcabKeys(keys);
     }
     function buildTree(itens) {
       const tree = {};
+      if (pagLeveAgrupamentoPlano()) {
+        for (const item of itens) {
+          const linha = catalogLinhaKey(item);
+          const fmt = item.formato || '—';
+          tree[linha] ??= {};
+          tree[linha][fmt] ??= [];
+          tree[linha][fmt].push(item);
+        }
+        for (const linha of Object.keys(tree)) {
+          for (const fmt of Object.keys(tree[linha])) {
+            tree[linha][fmt] = sortItemList(tree[linha][fmt]);
+          }
+        }
+        return tree;
+      }
       if (groupBy === 'formato-acabamento') {
         for (const item of itens) {
           const linha = catalogLinhaKey(item);
@@ -3960,7 +4009,18 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       if (!item.gemeas || !item.gemeas.length) return '';
       return item.gemeas.map((g) => [g.marca, g.referencia, g.codigo].join(' ')).join(' ');
     }
+    function catalogPeiUso(item) {
+      const p = String(item.pei_uso || '').trim().toUpperCase();
+      if (p) return p;
+      const ref = String(item.referencia || '').trim().toUpperCase();
+      const m = ref.match(/PEI\\s+(LEI|LCI|LA|LB|LC|LD|LE)\\b/) || ref.match(/^\\b(LEI|LCI|LA|LB|LC|LD|LE)\\b$/);
+      return m ? m[1] : '';
+    }
     function modelResistencia(item) {
+      if (CATALOG_SKIN === 'pagleve') {
+        const u = catalogPeiUso(item);
+        return u ? ('PEI ' + u) : '';
+      }
       const r = String(item.referencia || '').trim();
       return r && r !== '—' ? r : '';
     }
@@ -4100,7 +4160,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const metaMobile = '<div class="model-meta-mobile">' + marcaGrupoMobile + esc(pack) + ' · ' + fmtPrecoHtml(item.preco_m2) + '</div>';
       const searchBlob = (titulo + ' ' + pagLeveBuscaExtra(item) + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack + ' ' + (item.marca_nome || '') + ' ' + (item.fabricante_grupo || '')).toLowerCase();
       const pagLeveAttrs = CATALOG_SKIN === 'pagleve'
-        ? ' data-textura="' + esc(catalogTexturaGrupo(item)) + '" data-marca="' + esc(pagLeveMarcaKey(item)) + '"'
+        ? ' data-textura="' + esc(catalogTexturaGrupo(item)) + '" data-pei-uso="' + esc(catalogPeiUso(item)) + '"'
         : '';
       return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(searchBlob) + '" data-qty="' + qty + '"' + pagLeveAttrs + '>' +
         '<td class="col-foto">' + foto + '</td>' +
@@ -4224,7 +4284,10 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const retailHead = CATALOG_SKIN === 'pagleve'
         ? '<th class="col-foto">Foto</th><th class="col-modelo">Modelo</th>' + retailExtraHead + '<th class="col-pack">Embalagem</th><th class="col-preco">Preço/m²</th><th class="col-qty">' + esc(QTY_LABEL) + '</th>'
         : '<th>Foto</th><th>Modelo</th>' + retailExtraHead + '<th>Embalagem</th><th>Preço/m²</th><th>' + esc(QTY_LABEL) + '</th>';
-      return '<div class="table-wrap"><table class="model-table"><thead><tr>' + retailHead + '</tr></thead><tbody>' +
+      const colgroup = CATALOG_SKIN === 'pagleve'
+        ? '<colgroup><col class="col-foto"><col class="col-modelo"><col class="col-marca"><col class="col-grupo"><col class="col-pack"><col class="col-preco"><col class="col-qty"></colgroup>'
+        : '';
+      return '<div class="table-wrap"><table class="model-table">' + colgroup + '<thead><tr>' + retailHead + '</tr></thead><tbody>' +
         items.map(renderTableRow).join('') + '</tbody></table></div>';
     }
     function renderAcabamentoLeaf(acab, items) {
@@ -4255,6 +4318,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '<div class="acc-inner">' + formatos.map((f) => renderFormato(f, formatosMap[f])).join('') + '</div></details>';
     }
     function countLinhaMap(gruposMap) {
+      if (pagLeveAgrupamentoPlano()) {
+        return Object.keys(gruposMap).reduce((s, f) => s + gruposMap[f].length, 0);
+      }
       if (groupBy === 'formato-acabamento') {
         return Object.keys(gruposMap).reduce((s, fmt) =>
           s + Object.keys(gruposMap[fmt]).reduce((a, ac) => a + gruposMap[fmt][ac].length, 0), 0);
@@ -4267,7 +4333,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const n = countLinhaMap(gruposMap);
       const label = CFG.linhaLabel[linha] || linha;
       let inner;
-      if (groupBy === 'formato-acabamento') {
+      if (pagLeveAgrupamentoPlano()) {
+        inner = keys.map((f) => renderFormato(f, gruposMap[f])).join('');
+      } else if (groupBy === 'formato-acabamento') {
         inner = keys.map((k) => renderFormatoComAcab(k, gruposMap[k], linha)).join('');
       } else if (linha === 'polida') {
         inner = keys.flatMap((acab) => {
@@ -4317,9 +4385,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const qty = Number(row.dataset.qty || 0);
         const showQty = !filterQtyOnly || qty > 0;
         const showTerm = rowMatchesSearch(row, terms);
-        const showTextura = !filterTexturaGrupo || (row.dataset.textura || '') === filterTexturaGrupo;
-        const showMarca = !filterMarcasSelected.size || filterMarcasSelected.has(row.dataset.marca || '');
-        const show = showQty && showTerm && showTextura && showMarca;
+        const showSuperficie = !filterSuperficiesSelected.size || filterSuperficiesSelected.has(row.dataset.textura || '');
+        const showPei = !filterPeiUsoSelected.size || filterPeiUsoSelected.has(row.dataset.peiUso || '');
+        const show = showQty && showTerm && showSuperficie && showPei;
         row.classList.toggle('hidden', !show);
         const cod = row.dataset.cod;
         if (cod && !show) {
@@ -5059,10 +5127,10 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       try { localStorage.setItem(GROUP_KEY, groupBy); } catch { /* ignore */ }
       renderCatalogo();
     }
-    function syncMarcaFilterUi() {
-      const btn = document.getElementById('filter-marca-btn');
-      const badge = document.getElementById('filter-marca-badge');
-      const n = filterMarcasSelected.size;
+    function syncPagleveFilterBadge(btnId, badgeId, selected) {
+      const btn = document.getElementById(btnId);
+      const badge = document.getElementById(badgeId);
+      const n = selected.size;
       const active = n > 0;
       if (btn) btn.classList.toggle('active', active);
       if (badge) {
@@ -5070,91 +5138,103 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         badge.textContent = String(n);
       }
     }
-    function closeMarcaFilterPanel() {
-      const panel = document.getElementById('filter-marca-panel');
-      const btn = document.getElementById('filter-marca-btn');
-      if (panel) panel.hidden = true;
-      if (btn) btn.setAttribute('aria-expanded', 'false');
-    }
-    function toggleMarcaFilterPanel() {
-      const panel = document.getElementById('filter-marca-panel');
-      const btn = document.getElementById('filter-marca-btn');
-      if (!panel || !btn) return;
-      const open = panel.hidden;
-      panel.hidden = !open;
-      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    }
-    function initTexturaFilter() {
+    function initPagleveMultiFilter(opts) {
       if (CATALOG_SKIN !== 'pagleve') return;
-      const sel = document.getElementById('filter-textura');
-      if (!sel) return;
-      const set = new Set();
-      for (const item of CATALOGO.itens) {
-        const g = catalogTexturaGrupo(item);
-        if (g) set.add(g);
-      }
-      const order = PAGLEVE_TEXTURA_GRUPO_ORDER.slice();
-      const extras = [...set].filter((g) => order.indexOf(g) < 0).sort((a, b) => a.localeCompare(b, 'pt-BR'));
-      const groups = order.filter((g) => set.has(g)).concat(extras);
-      for (const g of groups) {
-        const opt = document.createElement('option');
-        opt.value = g;
-        opt.textContent = g;
-        sel.appendChild(opt);
-      }
-      sel.addEventListener('change', () => {
-        filterTexturaGrupo = sel.value || '';
-        applySearch(q?.value || '');
-      });
-    }
-    function initMarcaFilter() {
-      if (CATALOG_SKIN !== 'pagleve') return;
-      const wrap = document.getElementById('filter-marca-options');
+      const wrap = document.getElementById(opts.optionsId);
       if (!wrap) return;
-      const keys = new Set();
-      for (const item of CATALOGO.itens) keys.add(pagLeveMarcaKey(item));
-      pagLeveMarcaCatalog = [...keys].sort((a, b) => pagLeveMarcaLabel(a).localeCompare(pagLeveMarcaLabel(b), 'pt-BR'));
-      wrap.innerHTML = pagLeveMarcaCatalog.map((key) =>
+      const values = new Set();
+      for (const item of CATALOGO.itens) {
+        const v = opts.valueFromItem(item);
+        if (v) values.add(v);
+      }
+      const order = opts.order || [];
+      const extras = [...values].filter((g) => order.indexOf(g) < 0).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+      const groups = order.filter((g) => values.has(g)).concat(extras);
+      opts.catalogRef.length = 0;
+      opts.catalogRef.push(...groups);
+      wrap.innerHTML = groups.map((key) =>
         '<label class="pagleve-marca-option"><input type="checkbox" value="' + esc(key) + '" />'
-        + '<span>' + esc(pagLeveMarcaLabel(key)) + '</span></label>',
+        + '<span>' + esc(opts.label(key)) + '</span></label>',
       ).join('');
       wrap.addEventListener('change', (e) => {
         const input = e.target.closest('input[type="checkbox"]');
         if (!input) return;
-        if (input.checked) filterMarcasSelected.add(input.value);
-        else filterMarcasSelected.delete(input.value);
-        syncMarcaFilterUi();
+        if (input.checked) opts.selected.add(input.value);
+        else opts.selected.delete(input.value);
+        syncPagleveFilterBadge(opts.btnId, opts.badgeId, opts.selected);
         applySearch(q?.value || '');
       });
-      bindClick('filter-marca-btn', (e) => {
+      bindClick(opts.btnId, (e) => {
         e.stopPropagation();
-        toggleMarcaFilterPanel();
+        const panel = document.getElementById(opts.panelId);
+        const btn = document.getElementById(opts.btnId);
+        if (!panel || !btn) return;
+        document.querySelectorAll('.pagleve-marca-panel').forEach((p) => {
+          if (p.id !== opts.panelId) p.hidden = true;
+        });
+        document.querySelectorAll('.pagleve-marca-filter-btn').forEach((b) => {
+          if (b.id !== opts.btnId) b.setAttribute('aria-expanded', 'false');
+        });
+        const open = panel.hidden;
+        panel.hidden = !open;
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
       });
-      bindClick('filter-marca-clear', () => {
-        filterMarcasSelected.clear();
+      bindClick(opts.clearId, () => {
+        opts.selected.clear();
         wrap.querySelectorAll('input[type="checkbox"]').forEach((el) => { el.checked = false; });
-        syncMarcaFilterUi();
+        syncPagleveFilterBadge(opts.btnId, opts.badgeId, opts.selected);
         applySearch(q?.value || '');
       });
-      bindClick('filter-marca-all', () => {
-        filterMarcasSelected = new Set(pagLeveMarcaCatalog);
+      bindClick(opts.allId, () => {
+        opts.selected.clear();
+        for (const v of opts.catalogRef) opts.selected.add(v);
         wrap.querySelectorAll('input[type="checkbox"]').forEach((el) => { el.checked = true; });
-        syncMarcaFilterUi();
+        syncPagleveFilterBadge(opts.btnId, opts.badgeId, opts.selected);
         applySearch(q?.value || '');
       });
-      document.addEventListener('click', (e) => {
-        const panel = document.getElementById('filter-marca-panel');
-        const btn = document.getElementById('filter-marca-btn');
-        if (!panel || panel.hidden) return;
-        if (panel.contains(e.target) || btn?.contains(e.target)) return;
-        closeMarcaFilterPanel();
+    }
+    function initSuperficieFilter() {
+      initPagleveMultiFilter({
+        optionsId: 'filter-superficie-options',
+        panelId: 'filter-superficie-panel',
+        btnId: 'filter-superficie-btn',
+        badgeId: 'filter-superficie-badge',
+        clearId: 'filter-superficie-clear',
+        allId: 'filter-superficie-all',
+        selected: filterSuperficiesSelected,
+        catalogRef: pagLeveSuperficieCatalog,
+        order: PAGLEVE_TEXTURA_GRUPO_ORDER,
+        valueFromItem: (item) => catalogTexturaGrupo(item),
+        label: (k) => k,
+      });
+    }
+    function initPeiUsoFilter() {
+      initPagleveMultiFilter({
+        optionsId: 'filter-uso-options',
+        panelId: 'filter-uso-panel',
+        btnId: 'filter-uso-btn',
+        badgeId: 'filter-uso-badge',
+        clearId: 'filter-uso-clear',
+        allId: 'filter-uso-all',
+        selected: filterPeiUsoSelected,
+        catalogRef: pagLevePeiUsoCatalog,
+        order: PAGLEVE_PEI_USO_ORDER,
+        valueFromItem: (item) => catalogPeiUso(item),
+        label: (k) => 'PEI ' + k,
       });
     }
     function initCatalogControls() {
       if (groupSel) groupSel.value = groupBy;
       if (groupSelD) groupSelD.value = groupBy;
-      initTexturaFilter();
-      initMarcaFilter();
+      initSuperficieFilter();
+      initPeiUsoFilter();
+      if (CATALOG_SKIN === 'pagleve') {
+        document.addEventListener('click', (e) => {
+          if (e.target.closest('.pagleve-marca-filter')) return;
+          document.querySelectorAll('.pagleve-marca-panel').forEach((p) => { p.hidden = true; });
+          document.querySelectorAll('.pagleve-marca-filter-btn').forEach((b) => b.setAttribute('aria-expanded', 'false'));
+        });
+      }
     }
     function toggleFilterQty(btn) {
       filterQtyOnly = !filterQtyOnly;
