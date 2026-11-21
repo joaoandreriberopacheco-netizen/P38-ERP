@@ -145,6 +145,8 @@ export function modeloComercialCatalogo(codigo, descricao = '', modeloField = ''
 
   let result = titleCaseModelo(modelo);
   if (/^Albury Lux Plus$/i.test(result)) result = 'Albury Lux';
+  if (/^Coronha\b/i.test(result)) result = 'Coronha';
+  if (/^Cement Clear Mate$/i.test(result)) result = 'Cement Clear';
   const refCat = referenciaRochaprimeCatalogo(desc);
 
   if (refCat && ROCHA_SIAH_CODE_RE.test(String(result).replace(/\s/g, ''))) return refCat;
@@ -153,6 +155,8 @@ export function modeloComercialCatalogo(codigo, descricao = '', modeloField = ''
     const words = result.trim().split(/\s+/).filter(Boolean);
     if (words.length <= 2) result = `${result} Mate`;
   }
+  if (/^Coronha\b/i.test(result)) result = 'Coronha';
+  if (/^Cement Clear\b/i.test(result)) result = 'Cement Clear';
 
   const fromSite = nomeFromDescricaoNoSite(descricaoNoSite);
   const erpLead = stripAccents(modelo).toLowerCase().split(/\s+/).filter(Boolean)[0] || '';
