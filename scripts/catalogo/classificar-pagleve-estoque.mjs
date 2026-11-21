@@ -5,6 +5,8 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { execSync } from 'node:child_process';
+import { pickRochaImagesFromHtml } from '../lib/rochaPortalPagina.mjs';
 import { classificarFormigres, resumirClassificacoes } from '../lib/formigresClassificar.mjs';
 import {
   extrairClassificacaoPei,
@@ -46,6 +48,40 @@ function loadRaioXImagemOverlay() {
 
 function normProdutoUrl(u) {
   return String(u || '').trim().replace(/\/$/, '').toLowerCase();
+}
+
+const rochaPortalHtmlCache = new Map();
+
+function curlRochaPortal(url) {
+  try {
+    return execSync(`curl -sL --max-time 22 -A P38 ${JSON.stringify(url)}`, {
+      encoding: 'utf8',
+      maxBuffer: 6 * 1024 * 1024,
+    });
+  } catch {
+    return '';
+  }
+}
+
+/** Portal Rocha: base cruzada costuma ter URL sem imagens (ex. R7007 / irmãs Rochaprime). */
+function fillRochaPortalImagens(row) {
+  if (String(row.imagem_url || '').trim()) return row;
+  const url = String(row.evidencia_url || '').trim().split('?')[0];
+  if (!url.includes('portalgruporocha.com.br/produtos/')) return row;
+  const slug = url.match(/\/produtos\/([^/?#]+)/i)?.[1]?.toLowerCase() || '';
+  if (!slug) return row;
+  let html = rochaPortalHtmlCache.get(slug);
+  if (html === undefined) {
+    html = curlRochaPortal(url);
+    rochaPortalHtmlCache.set(slug, html);
+  }
+  if (!html) return row;
+  const picks = pickRochaImagesFromHtml(html, slug);
+  if (!picks.length) return row;
+  const next = { ...row };
+  next.imagem_url = picks[0];
+  next.imagens_json = JSON.stringify(picks.slice(0, 8));
+  return next;
 }
 
 function overlayImagensRaioX(row, imagemOverlay) {
@@ -299,7 +335,9 @@ async function main() {
   const precosSiah = loadPrecosSiah();
   const items = rows.map((rowIn) => {
     const codigo = String(rowIn.codigo || '').trim();
-    const row = overlayImagensRaioX(rowIn, imagemOverlayPorCodigo.get(codigo));
+    const row = fillRochaPortalImagens(
+      overlayImagensRaioX(rowIn, imagemOverlayPorCodigo.get(codigo)),
+    );
     const casaIsrael = estoqueCasaIsrael.get(codigo);
     const descricao =
       casaIsrael?.descricao || row.descricao_erp || row.modelo || row.codigo;
