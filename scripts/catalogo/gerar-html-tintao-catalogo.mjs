@@ -1266,17 +1266,61 @@ const PAGLEVE_SKIN_CSS = `
       border-color: var(--pl-purple);
       background: var(--accent-muted);
     }
-    html[data-skin="pagleve"] .pagleve-preco-panel {
-      left: 0;
-      right: auto;
-      width: min(280px, calc(100vw - 28px));
-      padding: 12px 14px 10px;
+    html[data-skin="pagleve"] .pagleve-preco-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(0, 0, 0, .42);
+    }
+    html[data-skin="pagleve"] .pagleve-preco-overlay.open { display: flex; }
+    html[data-skin="pagleve"] .pagleve-preco-dialog {
+      width: min(320px, 100%);
+      max-height: min(90vh, 420px);
+      overflow: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px 16px 12px;
+    }
+    html[data-skin="pagleve"] .pagleve-preco-dialog-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
     }
     html[data-skin="pagleve"] .pagleve-preco-panel-title {
-      margin: 0 0 10px;
-      font-size: .8rem;
+      margin: 0;
+      font-size: .88rem;
       font-weight: 600;
       color: var(--text-strong);
+    }
+    html[data-skin="pagleve"] .pagleve-preco-panel-sub {
+      margin: 4px 0 0;
+      font-size: .72rem;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+    html[data-skin="pagleve"] .pagleve-preco-dialog-close {
+      flex-shrink: 0;
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: transparent;
+      color: var(--text);
+      font-size: 1.1rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+    html[data-skin="pagleve"] .pagleve-preco-dialog-close:hover {
+      background: var(--accent-muted);
+      border-color: var(--accent-dim);
     }
     html[data-skin="pagleve"] .pagleve-preco-dual {
       position: relative;
@@ -1422,13 +1466,20 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       + '<button type="button" class="btn btn-icon pagleve-preco-filter-btn" id="filter-preco-btn" aria-expanded="false" aria-haspopup="dialog" aria-label="Faixa de preço por m²" title="Faixa de preço (R$/m²)">'
       + '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
       + '<line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>'
-      + '<span class="pagleve-filter-badge" id="filter-preco-badge" hidden></span></button>'
-      + '<div class="pagleve-marca-panel pagleve-preco-panel" id="filter-preco-panel" hidden role="dialog" aria-label="Faixa de preço">'
-      + '<p class="pagleve-preco-panel-title">Faixa de preço (R$/m²)</p>'
+      + '<span class="pagleve-filter-badge" id="filter-preco-badge" hidden></span></button></div>'
+    : '';
+  const paglevePrecoDialogHtml = isPagleveSkin
+    ? '<div class="pagleve-preco-overlay" id="filter-preco-overlay" role="dialog" aria-modal="true" aria-label="Faixa de preço" aria-hidden="true">'
+      + '<div class="pagleve-preco-dialog" id="filter-preco-dialog">'
+      + '<div class="pagleve-preco-dialog-head">'
+      + '<div><p class="pagleve-preco-panel-title">Faixa de preço (R$/m²)</p>'
+      + '<p class="pagleve-preco-panel-sub" id="filter-preco-sub">Valores com desconto da barra superior, quando houver.</p></div>'
+      + '<button type="button" class="pagleve-preco-dialog-close" id="filter-preco-close" aria-label="Fechar">×</button>'
+      + '</div>'
       + '<div class="pagleve-preco-dual">'
       + '<div class="pagleve-preco-track" aria-hidden="true"><div class="pagleve-preco-track-fill" id="filter-preco-fill"></div></div>'
-      + '<input type="range" id="filter-preco-min-range" min="0" max="200" step="1" value="0" aria-label="Preço mínimo" />'
-      + '<input type="range" id="filter-preco-max-range" min="0" max="200" step="1" value="200" aria-label="Preço máximo" />'
+      + '<input type="range" id="filter-preco-min-range" min="0" max="200" step="0.1" value="0" aria-label="Preço mínimo" />'
+      + '<input type="range" id="filter-preco-max-range" min="0" max="200" step="0.1" value="200" aria-label="Preço máximo" />'
       + '</div>'
       + '<div class="pagleve-preco-labels"><span id="filter-preco-min-label">R$ 0</span><span id="filter-preco-max-label">R$ 200</span></div>'
       + '<div class="pagleve-preco-panel-foot">'
@@ -3225,6 +3276,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
   </div>
 
   ${regimeDialogHtml}
+  ${paglevePrecoDialogHtml}
   ${catalogTourEnabled ? buildCatalogTourHtml() : ''}
 
   <div id="pedido-print"></div>
@@ -3543,6 +3595,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     let filterPrecoMin = 0;
     let filterPrecoMax = 0;
     let filterPrecoActive = false;
+    let pagLeveRefreshPrecoBounds = null;
     let pagLeveSuperficieCatalog = [];
     let pagLevePeiUsoCatalog = [];
     let pedidoOpen = false;
@@ -3693,6 +3746,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       descontoComercialPct = Math.round(n * 10) / 10;
       localStorage.setItem(DESCONTO_KEY, String(descontoComercialPct));
       refreshDescontoUi();
+      if (pagLeveRefreshPrecoBounds) pagLeveRefreshPrecoBounds();
       renderCatalogo();
       renderPedido();
     }
@@ -3837,7 +3891,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function syncBodyScrollLock() {
       const locked = pedidoOpen
         || pedidoPdfSheetOpen
-        || document.getElementById('lightbox')?.classList.contains('open');
+        || document.getElementById('lightbox')?.classList.contains('open')
+        || document.getElementById('filter-preco-overlay')?.classList.contains('open');
       document.body.style.overflow = locked ? 'hidden' : '';
     }
     function fmtKg(v) {
@@ -4315,11 +4370,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         : '';
       const metaMobile = '<div class="model-meta-mobile">' + marcaGrupoMobile + esc(pack) + ' · ' + fmtPrecoHtml(item.preco_m2) + '</div>';
       const searchBlob = (titulo + ' ' + pagLeveBuscaExtra(item) + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack + ' ' + (item.marca_nome || '') + ' ' + (item.fabricante_grupo || '')).toLowerCase();
-      const precoAttr = CATALOG_SKIN === 'pagleve' && item.preco_m2 != null && Number(item.preco_m2) > 0
-        ? ' data-preco-m2="' + esc(String(item.preco_m2)) + '"'
-        : '';
       const pagLeveAttrs = CATALOG_SKIN === 'pagleve'
-        ? ' data-textura="' + esc(catalogTexturaGrupo(item)) + '" data-pei-uso="' + esc(catalogPeiUso(item)) + '"' + precoAttr
+        ? ' data-textura="' + esc(catalogTexturaGrupo(item)) + '" data-pei-uso="' + esc(catalogPeiUso(item)) + '"'
         : '';
       return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(searchBlob) + '" data-qty="' + qty + '"' + pagLeveAttrs + '>' +
         '<td class="col-foto">' + foto + '</td>' +
@@ -4548,8 +4600,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const showPei = !filterPeiUsoSelected.size || filterPeiUsoSelected.has(row.dataset.peiUso || '');
         let showPreco = true;
         if (CATALOG_SKIN === 'pagleve' && filterPrecoActive) {
-          const p = Number(row.dataset.precoM2);
-          showPreco = Number.isFinite(p) && p >= filterPrecoMin && p <= filterPrecoMax;
+          const item = itemsByCode.get(String(row.dataset.cod || ''));
+          const eff = item ? precoEfetivo(item.preco_m2) : null;
+          showPreco = eff != null && eff >= filterPrecoMin && eff <= filterPrecoMax;
         }
         const show = showQty && showTerm && showSuperficie && showPei && showPreco;
         row.classList.toggle('hidden', !show);
@@ -5387,8 +5440,83 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         label: (k) => 'PEI ' + k,
       });
     }
+    function itemPrecoEfetivoCatalogo(item) {
+      return precoEfetivo(item?.preco_m2);
+    }
     function fmtPrecoRangeLabel(v) {
-      return 'R$ ' + fmtDecimal(v, v >= 100 ? 0 : 1);
+      return 'R$ ' + fmtDecimal(v, v >= 100 ? 0 : 2);
+    }
+    function syncPrecoRangeSubtitle() {
+      const sub = document.getElementById('filter-preco-sub');
+      if (!sub) return;
+      if (hasDescontoAtivo()) {
+        const parts = [];
+        if (descontoComercialPct > 0) parts.push('desc. ' + fmtDecimal(descontoComercialPct, 1) + '%');
+        const inc = descontoIncentivoPct();
+        if (inc > 0) parts.push('incentivo ' + fmtDecimal(inc, 1) + '%');
+        sub.textContent = 'Sliders com preço líquido (' + parts.join(' + ') + ').';
+      } else {
+        sub.textContent = 'Tabela cheia — sem desconto na barra superior.';
+      }
+    }
+    function openPrecoRangeDialog() {
+      const overlay = document.getElementById('filter-preco-overlay');
+      const btn = document.getElementById('filter-preco-btn');
+      if (!overlay) return;
+      syncPrecoRangeSubtitle();
+      if (pagLeveRefreshPrecoBounds) pagLeveRefreshPrecoBounds({ keepFilter: true });
+      overlay.classList.add('open');
+      overlay.setAttribute('aria-hidden', 'false');
+      if (btn) btn.setAttribute('aria-expanded', 'true');
+      document.body.style.overflow = 'hidden';
+    }
+    function closePrecoRangeDialog() {
+      const overlay = document.getElementById('filter-preco-overlay');
+      const btn = document.getElementById('filter-preco-btn');
+      if (!overlay) return;
+      overlay.classList.remove('open');
+      overlay.setAttribute('aria-hidden', 'true');
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+      syncBodyScrollLock();
+    }
+    function refreshPrecoCatalogBounds(opts) {
+      if (CATALOG_SKIN !== 'pagleve') return;
+      const effs = CATALOGO.itens.map((i) => itemPrecoEfetivoCatalogo(i)).filter((n) => n != null && n > 0);
+      if (!effs.length) return;
+      const prev = precoCatalogBounds;
+      const rawMin = Math.floor(Math.min(...effs) * 10) / 10;
+      const rawMax = Math.ceil(Math.max(...effs) * 10) / 10;
+      const wasFull = !filterPrecoActive
+        || (filterPrecoMin <= (prev.min ?? rawMin) && filterPrecoMax >= (prev.max ?? rawMax));
+      precoCatalogBounds = { min: rawMin, max: rawMax, step: rawMax > 80 ? 0.5 : 0.1 };
+      const minR = document.getElementById('filter-preco-min-range');
+      const maxR = document.getElementById('filter-preco-max-range');
+      if (minR && maxR) {
+        for (const el of [minR, maxR]) {
+          el.min = String(rawMin);
+          el.max = String(rawMax);
+          el.step = String(precoCatalogBounds.step);
+        }
+        if (wasFull && !(opts && opts.keepFilter && filterPrecoActive)) {
+          filterPrecoActive = false;
+          filterPrecoMin = rawMin;
+          filterPrecoMax = rawMax;
+          minR.value = String(rawMin);
+          maxR.value = String(rawMax);
+        } else if (filterPrecoActive) {
+          filterPrecoMin = Math.max(rawMin, Math.min(filterPrecoMin, rawMax));
+          filterPrecoMax = Math.min(rawMax, Math.max(filterPrecoMax, rawMin));
+          minR.value = String(filterPrecoMin);
+          maxR.value = String(filterPrecoMax);
+        } else {
+          filterPrecoMin = rawMin;
+          filterPrecoMax = rawMax;
+          minR.value = String(rawMin);
+          maxR.value = String(rawMax);
+        }
+      }
+      syncPrecoRangeUi();
+      if (filterPrecoActive) applySearch(q?.value || '');
     }
     function syncPrecoRangeUi() {
       const minR = document.getElementById('filter-preco-min-range');
@@ -5433,56 +5561,41 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       filterPrecoActive = true;
       syncPrecoRangeUi();
       applySearch(q?.value || '');
-      const panel = document.getElementById('filter-preco-panel');
-      if (panel) panel.hidden = true;
-      document.getElementById('filter-preco-btn')?.setAttribute('aria-expanded', 'false');
+      closePrecoRangeDialog();
     }
     function initPrecoRangeFilter() {
       if (CATALOG_SKIN !== 'pagleve') return;
-      const precos = CATALOGO.itens.map((i) => Number(i.preco_m2)).filter((n) => Number.isFinite(n) && n > 0);
-      if (!precos.length) return;
-      const rawMin = Math.floor(Math.min(...precos));
-      const rawMax = Math.ceil(Math.max(...precos));
-      precoCatalogBounds = { min: rawMin, max: rawMax, step: rawMax > 80 ? 1 : 0.5 };
-      filterPrecoMin = rawMin;
-      filterPrecoMax = rawMax;
       const minR = document.getElementById('filter-preco-min-range');
       const maxR = document.getElementById('filter-preco-max-range');
       if (!minR || !maxR) return;
-      for (const el of [minR, maxR]) {
-        el.min = String(rawMin);
-        el.max = String(rawMax);
-        el.step = String(precoCatalogBounds.step);
-      }
-      minR.value = String(rawMin);
-      maxR.value = String(rawMax);
+      pagLeveRefreshPrecoBounds = refreshPrecoCatalogBounds;
+      refreshPrecoCatalogBounds();
       const onSlide = () => syncPrecoRangeUi();
       minR.addEventListener('input', onSlide);
       maxR.addEventListener('input', onSlide);
       bindClick('filter-preco-btn', (e) => {
         e.stopPropagation();
-        const panel = document.getElementById('filter-preco-panel');
-        const btn = document.getElementById('filter-preco-btn');
-        if (!panel || !btn) return;
-        document.querySelectorAll('.pagleve-marca-panel').forEach((p) => { if (p !== panel) p.hidden = true; });
-        const open = panel.hidden;
-        panel.hidden = !open;
-        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        const overlay = document.getElementById('filter-preco-overlay');
+        if (overlay?.classList.contains('open')) closePrecoRangeDialog();
+        else openPrecoRangeDialog();
+      });
+      bindClick('filter-preco-close', closePrecoRangeDialog);
+      const overlay = document.getElementById('filter-preco-overlay');
+      overlay?.addEventListener('click', (e) => {
+        if (e.target === overlay) closePrecoRangeDialog();
       });
       bindClick('filter-preco-apply', applyPrecoRangeFilter);
       bindClick('filter-preco-clear', () => {
         filterPrecoActive = false;
-        minR.value = String(rawMin);
-        maxR.value = String(rawMax);
-        filterPrecoMin = rawMin;
-        filterPrecoMax = rawMax;
+        filterPrecoMin = precoCatalogBounds.min;
+        filterPrecoMax = precoCatalogBounds.max;
+        minR.value = String(precoCatalogBounds.min);
+        maxR.value = String(precoCatalogBounds.max);
         syncPrecoRangeUi();
         applySearch(q?.value || '');
-        const panel = document.getElementById('filter-preco-panel');
-        if (panel) panel.hidden = true;
-        document.getElementById('filter-preco-btn')?.setAttribute('aria-expanded', 'false');
+        closePrecoRangeDialog();
       });
-      syncPrecoRangeUi();
+      syncPrecoRangeSubtitle();
     }
     function initCatalogControls() {
       if (groupSel) groupSel.value = groupBy;
@@ -5492,9 +5605,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       initPrecoRangeFilter();
       if (CATALOG_SKIN === 'pagleve') {
         document.addEventListener('click', (e) => {
-          if (e.target.closest('.pagleve-marca-filter') || e.target.closest('.pagleve-preco-filter')) return;
+          if (e.target.closest('.pagleve-marca-filter')) return;
           document.querySelectorAll('.pagleve-marca-panel').forEach((p) => { p.hidden = true; });
-          document.querySelectorAll('.pagleve-marca-filter-btn, .pagleve-preco-filter-btn').forEach((b) => b.setAttribute('aria-expanded', 'false'));
+          document.querySelectorAll('.pagleve-marca-filter-btn').forEach((b) => b.setAttribute('aria-expanded', 'false'));
         });
       }
     }
@@ -5704,7 +5817,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     lb.addEventListener('click', (e) => { if (e.target === lb) closeLightbox(); });
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
-        if (lb.classList.contains('open')) closeLightbox();
+        if (document.getElementById('filter-preco-overlay')?.classList.contains('open')) closePrecoRangeDialog();
+        else if (lb.classList.contains('open')) closeLightbox();
         else if (pedidoPdfSheetOpen) closePedidoPdfSheet();
         else if (pedidoOpen) closePedidoPanel();
       }
