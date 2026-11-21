@@ -29,6 +29,8 @@ Lê `files/pagleve/raio-x-pagleve-site-verificado.csv` e grava `deploy/catalogo-
 
 Push na `main` que altere `deploy/catalogo-pagleve/**` dispara o workflow **Vercel Deploy — Catálogo PagLeve** (ou **Run workflow** manual em Actions).
 
+_Conteúdo publicado no repositório: 228 referências (commit de catálogo 2026-11-21)._
+
 ## Porquê isolado
 
 O link partilhado (WhatsApp / Instagram) **não** deve expor `p-38erp.vercel.app`. Este projecto serve só o HTML do catálogo de estoque.
