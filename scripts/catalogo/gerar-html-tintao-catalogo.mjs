@@ -1247,6 +1247,107 @@ const PAGLEVE_SKIN_CSS = `
       min-width: 0;
       word-break: break-word;
     }
+    html[data-skin="pagleve"] .pagleve-preco-filter { position: relative; flex: 0 0 auto; }
+    html[data-skin="pagleve"] .pagleve-preco-filter-btn {
+      position: relative;
+      min-width: 44px;
+      justify-content: center;
+      color: var(--pl-purple-deep);
+    }
+    html[data-skin="pagleve"] .pagleve-preco-filter-btn .pagleve-filter-badge {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      min-width: 8px;
+      padding: 0 4px;
+    }
+    html[data-skin="pagleve"] .pagleve-preco-filter-btn.active {
+      border-color: var(--pl-purple);
+      background: var(--accent-muted);
+    }
+    html[data-skin="pagleve"] .pagleve-preco-panel {
+      left: 0;
+      right: auto;
+      width: min(280px, calc(100vw - 28px));
+      padding: 12px 14px 10px;
+    }
+    html[data-skin="pagleve"] .pagleve-preco-panel-title {
+      margin: 0 0 10px;
+      font-size: .8rem;
+      font-weight: 600;
+      color: var(--text-strong);
+    }
+    html[data-skin="pagleve"] .pagleve-preco-dual {
+      position: relative;
+      height: 32px;
+      margin: 8px 0 4px;
+    }
+    html[data-skin="pagleve"] .pagleve-preco-dual input[type="range"] {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      margin: 0;
+      pointer-events: none;
+      height: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+    }
+    html[data-skin="pagleve"] .pagleve-preco-dual input[type="range"]::-webkit-slider-thumb {
+      pointer-events: auto;
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid var(--pl-purple);
+      box-shadow: 0 1px 4px rgba(0,0,0,.15);
+      cursor: pointer;
+    }
+    html[data-skin="pagleve"] .pagleve-preco-dual input[type="range"]::-moz-range-thumb {
+      pointer-events: auto;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid var(--pl-purple);
+      box-shadow: 0 1px 4px rgba(0,0,0,.15);
+      cursor: pointer;
+    }
+    html[data-skin="pagleve"] .pagleve-preco-track {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 6px;
+      transform: translateY(-50%);
+      border-radius: 999px;
+      background: var(--surface-3);
+      pointer-events: none;
+    }
+    html[data-skin="pagleve"] .pagleve-preco-track-fill {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      border-radius: 999px;
+      background: var(--pl-purple);
+    }
+    html[data-skin="pagleve"] .pagleve-preco-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: .76rem;
+      font-weight: 600;
+      color: var(--text-strong);
+      font-variant-numeric: tabular-nums;
+      margin-bottom: 10px;
+    }
+    html[data-skin="pagleve"] .pagleve-preco-panel-foot {
+      display: flex;
+      gap: 8px;
+    }
+    html[data-skin="pagleve"] .pagleve-preco-panel-foot .btn { flex: 1; font-size: .72rem; padding: 6px 8px; }
     @media (max-width: 720px) {
       html[data-skin="pagleve"] .toolbar-main {
         flex-wrap: wrap;
@@ -1316,6 +1417,23 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       + '<button type="button" class="btn" id="filter-uso-clear">Limpar</button>'
       + '<button type="button" class="btn" id="filter-uso-all">Todos</button>'
       + '</div><div class="pagleve-marca-options" id="filter-uso-options"></div></div></div>'
+      + '<div class="pagleve-preco-filter" id="filter-preco-wrap">'
+      + '<button type="button" class="btn btn-icon pagleve-preco-filter-btn" id="filter-preco-btn" aria-expanded="false" aria-haspopup="dialog" aria-label="Faixa de preço por m²" title="Faixa de preço (R$/m²)">'
+      + '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+      + '<line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>'
+      + '<span class="pagleve-filter-badge" id="filter-preco-badge" hidden></span></button>'
+      + '<div class="pagleve-marca-panel pagleve-preco-panel" id="filter-preco-panel" hidden role="dialog" aria-label="Faixa de preço">'
+      + '<p class="pagleve-preco-panel-title">Faixa de preço (R$/m²)</p>'
+      + '<div class="pagleve-preco-dual">'
+      + '<div class="pagleve-preco-track" aria-hidden="true"><div class="pagleve-preco-track-fill" id="filter-preco-fill"></div></div>'
+      + '<input type="range" id="filter-preco-min-range" min="0" max="200" step="1" value="0" aria-label="Preço mínimo" />'
+      + '<input type="range" id="filter-preco-max-range" min="0" max="200" step="1" value="200" aria-label="Preço máximo" />'
+      + '</div>'
+      + '<div class="pagleve-preco-labels"><span id="filter-preco-min-label">R$ 0</span><span id="filter-preco-max-label">R$ 200</span></div>'
+      + '<div class="pagleve-preco-panel-foot">'
+      + '<button type="button" class="btn" id="filter-preco-clear">Limpar</button>'
+      + '<button type="button" class="btn btn-primary" id="filter-preco-apply">Aplicar</button>'
+      + '</div></div></div>'
     : '';
   const qtyLabel = cfg.qtyLabel || (isB2bSkin ? 'Paletes' : 'Caixas');
   const qtyLabelPl = cfg.qtyLabelPl || (isB2bSkin ? 'paletes' : 'caixas');
@@ -3387,6 +3505,10 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     let filterQtyOnly = false;
     let filterSuperficiesSelected = new Set();
     let filterPeiUsoSelected = new Set();
+    let precoCatalogBounds = { min: 0, max: 0, step: 1 };
+    let filterPrecoMin = 0;
+    let filterPrecoMax = 0;
+    let filterPrecoActive = false;
     let pagLeveSuperficieCatalog = [];
     let pagLevePeiUsoCatalog = [];
     let pedidoOpen = false;
@@ -4159,8 +4281,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         : '';
       const metaMobile = '<div class="model-meta-mobile">' + marcaGrupoMobile + esc(pack) + ' · ' + fmtPrecoHtml(item.preco_m2) + '</div>';
       const searchBlob = (titulo + ' ' + pagLeveBuscaExtra(item) + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack + ' ' + (item.marca_nome || '') + ' ' + (item.fabricante_grupo || '')).toLowerCase();
+      const precoAttr = CATALOG_SKIN === 'pagleve' && item.preco_m2 != null && Number(item.preco_m2) > 0
+        ? ' data-preco-m2="' + esc(String(item.preco_m2)) + '"'
+        : '';
       const pagLeveAttrs = CATALOG_SKIN === 'pagleve'
-        ? ' data-textura="' + esc(catalogTexturaGrupo(item)) + '" data-pei-uso="' + esc(catalogPeiUso(item)) + '"'
+        ? ' data-textura="' + esc(catalogTexturaGrupo(item)) + '" data-pei-uso="' + esc(catalogPeiUso(item)) + '"' + precoAttr
         : '';
       return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(searchBlob) + '" data-qty="' + qty + '"' + pagLeveAttrs + '>' +
         '<td class="col-foto">' + foto + '</td>' +
@@ -4387,7 +4512,12 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const showTerm = rowMatchesSearch(row, terms);
         const showSuperficie = !filterSuperficiesSelected.size || filterSuperficiesSelected.has(row.dataset.textura || '');
         const showPei = !filterPeiUsoSelected.size || filterPeiUsoSelected.has(row.dataset.peiUso || '');
-        const show = showQty && showTerm && showSuperficie && showPei;
+        let showPreco = true;
+        if (CATALOG_SKIN === 'pagleve' && filterPrecoActive) {
+          const p = Number(row.dataset.precoM2);
+          showPreco = Number.isFinite(p) && p >= filterPrecoMin && p <= filterPrecoMax;
+        }
+        const show = showQty && showTerm && showSuperficie && showPei && showPreco;
         row.classList.toggle('hidden', !show);
         const cod = row.dataset.cod;
         if (cod && !show) {
@@ -5223,16 +5353,114 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         label: (k) => 'PEI ' + k,
       });
     }
+    function fmtPrecoRangeLabel(v) {
+      return 'R$ ' + fmtDecimal(v, v >= 100 ? 0 : 1);
+    }
+    function syncPrecoRangeUi() {
+      const minR = document.getElementById('filter-preco-min-range');
+      const maxR = document.getElementById('filter-preco-max-range');
+      const fill = document.getElementById('filter-preco-fill');
+      const minL = document.getElementById('filter-preco-min-label');
+      const maxL = document.getElementById('filter-preco-max-label');
+      if (!minR || !maxR) return;
+      let lo = Number(minR.value);
+      let hi = Number(maxR.value);
+      if (lo > hi) {
+        [lo, hi] = [hi, lo];
+        minR.value = String(lo);
+        maxR.value = String(hi);
+      }
+      if (minL) minL.textContent = fmtPrecoRangeLabel(lo);
+      if (maxL) maxL.textContent = fmtPrecoRangeLabel(hi);
+      if (fill && precoCatalogBounds.max > precoCatalogBounds.min) {
+        const span = precoCatalogBounds.max - precoCatalogBounds.min;
+        const left = ((lo - precoCatalogBounds.min) / span) * 100;
+        const width = ((hi - lo) / span) * 100;
+        fill.style.left = left + '%';
+        fill.style.width = width + '%';
+      }
+      const btn = document.getElementById('filter-preco-btn');
+      const badge = document.getElementById('filter-preco-badge');
+      const narrowed = filterPrecoActive && (
+        filterPrecoMin > precoCatalogBounds.min || filterPrecoMax < precoCatalogBounds.max
+      );
+      if (btn) btn.classList.toggle('active', narrowed);
+      if (badge) {
+        badge.hidden = !narrowed;
+        badge.textContent = '·';
+      }
+    }
+    function applyPrecoRangeFilter() {
+      const minR = document.getElementById('filter-preco-min-range');
+      const maxR = document.getElementById('filter-preco-max-range');
+      if (!minR || !maxR) return;
+      filterPrecoMin = Number(minR.value);
+      filterPrecoMax = Number(maxR.value);
+      filterPrecoActive = true;
+      syncPrecoRangeUi();
+      applySearch(q?.value || '');
+      const panel = document.getElementById('filter-preco-panel');
+      if (panel) panel.hidden = true;
+      document.getElementById('filter-preco-btn')?.setAttribute('aria-expanded', 'false');
+    }
+    function initPrecoRangeFilter() {
+      if (CATALOG_SKIN !== 'pagleve') return;
+      const precos = CATALOGO.itens.map((i) => Number(i.preco_m2)).filter((n) => Number.isFinite(n) && n > 0);
+      if (!precos.length) return;
+      const rawMin = Math.floor(Math.min(...precos));
+      const rawMax = Math.ceil(Math.max(...precos));
+      precoCatalogBounds = { min: rawMin, max: rawMax, step: rawMax > 80 ? 1 : 0.5 };
+      filterPrecoMin = rawMin;
+      filterPrecoMax = rawMax;
+      const minR = document.getElementById('filter-preco-min-range');
+      const maxR = document.getElementById('filter-preco-max-range');
+      if (!minR || !maxR) return;
+      for (const el of [minR, maxR]) {
+        el.min = String(rawMin);
+        el.max = String(rawMax);
+        el.step = String(precoCatalogBounds.step);
+      }
+      minR.value = String(rawMin);
+      maxR.value = String(rawMax);
+      const onSlide = () => syncPrecoRangeUi();
+      minR.addEventListener('input', onSlide);
+      maxR.addEventListener('input', onSlide);
+      bindClick('filter-preco-btn', (e) => {
+        e.stopPropagation();
+        const panel = document.getElementById('filter-preco-panel');
+        const btn = document.getElementById('filter-preco-btn');
+        if (!panel || !btn) return;
+        document.querySelectorAll('.pagleve-marca-panel').forEach((p) => { if (p !== panel) p.hidden = true; });
+        const open = panel.hidden;
+        panel.hidden = !open;
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      bindClick('filter-preco-apply', applyPrecoRangeFilter);
+      bindClick('filter-preco-clear', () => {
+        filterPrecoActive = false;
+        minR.value = String(rawMin);
+        maxR.value = String(rawMax);
+        filterPrecoMin = rawMin;
+        filterPrecoMax = rawMax;
+        syncPrecoRangeUi();
+        applySearch(q?.value || '');
+        const panel = document.getElementById('filter-preco-panel');
+        if (panel) panel.hidden = true;
+        document.getElementById('filter-preco-btn')?.setAttribute('aria-expanded', 'false');
+      });
+      syncPrecoRangeUi();
+    }
     function initCatalogControls() {
       if (groupSel) groupSel.value = groupBy;
       if (groupSelD) groupSelD.value = groupBy;
       initSuperficieFilter();
       initPeiUsoFilter();
+      initPrecoRangeFilter();
       if (CATALOG_SKIN === 'pagleve') {
         document.addEventListener('click', (e) => {
-          if (e.target.closest('.pagleve-marca-filter')) return;
+          if (e.target.closest('.pagleve-marca-filter') || e.target.closest('.pagleve-preco-filter')) return;
           document.querySelectorAll('.pagleve-marca-panel').forEach((p) => { p.hidden = true; });
-          document.querySelectorAll('.pagleve-marca-filter-btn').forEach((b) => b.setAttribute('aria-expanded', 'false'));
+          document.querySelectorAll('.pagleve-marca-filter-btn, .pagleve-preco-filter-btn').forEach((b) => b.setAttribute('aria-expanded', 'false'));
         });
       }
     }

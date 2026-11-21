@@ -33,6 +33,7 @@ import { resolveEmbalagemFormigres } from '../lib/formigresEmbalagem.mjs';
 import { resolvePrecoPagLeve, produtoPrecoFromItem } from '../lib/pagleveTabelaPrecos.mjs';
 import { loadPrecosSiah, resolvePrecoSiah } from '../lib/paglevePrecosSiah.mjs';
 import { parseLumePortfolioHtml } from '../lib/lumePaginaProduto.mjs';
+import { parseIncopisosImagensFromHtml } from '../lib/incopisosPaginaProduto.mjs';
 import {
   fetchRochaProductPage,
   isRochaProductHtmlValid,
@@ -340,6 +341,20 @@ async function enrichImagens(item, ctx, { refreshImagens = false, refreshGaleria
   if (!imagem_url && url.includes('portalgruporocha.com.br')) {
     const html = pageHtml || curlGet(url);
     ({ imagem_url, imagens } = applyRochaPortalImages(html, url, imagem_url, imagens));
+  }
+
+  const isIncopisos =
+    url.includes('grupoincopisos.com.br') || /incopisos/i.test(String(item.fabricante_grupo || ''));
+  const needsIncopisosGallery =
+    isIncopisos && url && (refreshImagens || refreshGalerias || galeriaCurta || (imagens?.length || 0) < 2);
+  if (needsIncopisosGallery) {
+    const html = pageHtml || curlGet(url);
+    pageHtml = html;
+    const gallery = parseIncopisosImagensFromHtml(html);
+    if (gallery.length) {
+      imagens = mapImagens(gallery.slice(0, 8));
+      imagem_url = gallery[0] || imagem_url;
+    }
   }
 
   if (isLumeItem(item) && url.includes('lumeceramica.com.br/portfolio-item')) {

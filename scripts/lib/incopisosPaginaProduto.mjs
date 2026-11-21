@@ -99,6 +99,48 @@ export function incopisosSlugCandidates(row, modeloRaw = '') {
   return [...slugs].filter(Boolean);
 }
 
+const INCOPISOS_IMG_SKIP =
+  /\/(logo|icon|banner|avatar|cookie|placeholder|spinner|svg|grupo-incopisos)\b/i;
+
+/**
+ * Galeria Woo/swiper do site Incopisos — faces (rel=faces) e ambientes (rel=ambientes).
+ * @returns {string[]}
+ */
+export function parseIncopisosImagensFromHtml(html = '') {
+  const raw = String(html || '');
+  if (!raw) return [];
+  const faces = [];
+  const ambientes = [];
+  const seen = new Set();
+  const push = (list, url) => {
+    const u = String(url || '').trim();
+    if (!u || seen.has(u) || INCOPISOS_IMG_SKIP.test(u)) return;
+    if (!/\/wp-content\/uploads\//i.test(u)) return;
+    seen.add(u);
+    list.push(u);
+  };
+  for (const m of raw.matchAll(
+    /<a\s+href="(https:\/\/grupoincopisos\.com\.br\/wp-content\/uploads\/[^"]+)"\s+rel="faces"/gi,
+  )) {
+    push(faces, m[1]);
+  }
+  for (const m of raw.matchAll(
+    /<a\s+href="(https:\/\/grupoincopisos\.com\.br\/wp-content\/uploads\/[^"]+)"\s+rel="ambientes"/gi,
+  )) {
+    push(ambientes, m[1]);
+  }
+  if (!faces.length) {
+    for (const m of raw.matchAll(
+      /href="(https:\/\/grupoincopisos\.com\.br\/wp-content\/uploads\/[^"]+\.(?:jpe?g|png|webp))"\s+rel="faces"/gi,
+    )) {
+      push(faces, m[1]);
+    }
+  }
+  const og = raw.match(/property="og:image"\s+content="([^"]+)"/i)?.[1]?.trim() || '';
+  if (og) push(faces, og);
+  return [...faces, ...ambientes];
+}
+
 export function parseIncopisosProdutoHtml(html) {
   const raw = String(html || '');
   if (raw.length < 800) return null;
@@ -115,12 +157,15 @@ export function parseIncopisosProdutoHtml(html) {
   if (!titulo || titulo.length < 1) return null;
   if (/^home$/i.test(titulo)) return null;
 
-  const imagem_url = raw.match(/property="og:image"\s+content="([^"]+)"/i)?.[1]?.trim() || '';
+  const galeria = parseIncopisosImagensFromHtml(raw);
+  const imagem_url =
+    galeria[0] || raw.match(/property="og:image"\s+content="([^"]+)"/i)?.[1]?.trim() || '';
 
   return {
     titulo,
     marca_site: marca_site || 'Incopisos',
     descricao_no_site: `${titulo} · ${marca_site || 'Incopisos'}`,
     imagem_url,
+    imagens: galeria,
   };
 }

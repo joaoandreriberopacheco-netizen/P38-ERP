@@ -5375,7 +5375,15 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/jg/calendulahd50.jpg",
-          "tipo": "principal"
+          "tipo": "principal",
+          "ordem": 0,
+          "principal": true
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/jg/amb-calendulahd50.jpg",
+          "tipo": "ambiente",
+          "ordem": 10,
+          "principal": false
         }
       ],
       "preco_m2": 32.9,
@@ -5898,6 +5906,34 @@
         {
           "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/06/ladrilho-red-fc-01-ef13d0.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/06/ladrilho-red-fc-02-e416e6.jpg",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/06/ladrilho-red-fc-03-e416e6.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/06/ladrilho-red-fc-04-e416e6.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/07/marmogres-jantar-ru539004-ladrilho-red-grande-dfb922.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/06/painel-ladrillo-reb-e416e6.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/06/painel-ladrillo-red-p2-e416e6.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/06/painel-ladrillo-red-p3-e416e6.jpg",
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 33.5,
@@ -5942,6 +5978,22 @@
         {
           "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/06/hd160105-f1-3e48fe.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/06/hd160105-f2-0d3501.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/06/hd160105-f3-0d3501.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/07/89481861-hd160105-89484710-hd170049-2b7718.png",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/06/painel-hd-160105-f220ac-9cdfb3.jpg",
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 32.9,
@@ -5986,6 +6038,26 @@
         {
           "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/06/hd160131-fc-1-5f0738.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/06/hd160131-fc-2-70314b.jpg",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/06/hd160131-fc-3-106de1.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/06/hd160131-fc-4-106de1.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/07/89471256-hd160131-89488924-hd170063-a8030d.png",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/06/painel-parede-hd-160131-f02220-427843.jpg",
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 32.9,
@@ -6513,7 +6585,9 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/marcela/trafego50.jpg",
-          "tipo": "principal"
+          "tipo": "principal",
+          "ordem": 0,
+          "principal": true
         }
       ],
       "preco_m2": 32.9,
@@ -7318,6 +7392,22 @@
         {
           "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/11/Studio-Cotto-F1.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/11/Studio-Cotto-F2.jpg",
+          "tipo": "ambiente"
+        },
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/11/Studio-Cotto-F3.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/11/Studio-Cotto-F4.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2024/11/Studio-Cotto-e1755793519772.jpg",
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 39.9,
@@ -7859,7 +7949,45 @@
       "imagens": [
         {
           "url": "https://www.formigres.com.br/uploads/produtos/premium/granbalticwhitebluepolido60x120.webp",
-          "tipo": "principal"
+          "tipo": "principal",
+          "ordem": 0,
+          "principal": true
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/amb-granbalticwhiteblue-polido.webp",
+          "tipo": "ambiente",
+          "ordem": 10,
+          "principal": false
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/piso-granbalticwihteblue-polido.webp",
+          "tipo": "piso",
+          "ordem": 20,
+          "principal": false
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/granbalticwhitebluepolido60x120-f1.webp",
+          "tipo": "face",
+          "ordem": 30,
+          "principal": false
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/granbalticwhitebluepolido60x120-f2.webp",
+          "tipo": "face",
+          "ordem": 31,
+          "principal": false
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/granbalticwhitebluepolido60x120-f3.webp",
+          "tipo": "face",
+          "ordem": 32,
+          "principal": false
+        },
+        {
+          "url": "https://www.formigres.com.br/uploads/produtos/premium/granbalticwhitebluepolido60x120-f4.webp",
+          "tipo": "face",
+          "ordem": 33,
+          "principal": false
         }
       ],
       "preco_m2": 64.9,
@@ -9636,6 +9764,22 @@
         {
           "url": "https://grupoincopisos.com.br/wp-content/uploads/2025/02/PUGLIA-GRIGIO-F1-1-scaled-e1755705885412.jpg",
           "tipo": "principal"
+        },
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2025/02/PUGLIA-GRIGIO-F2-1-scaled.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2025/02/PUGLIA-GRIGIO-F3-1-scaled.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2025/02/PUGLIA-GRIGIO-F4-1-scaled.jpg",
+          "tipo": "detalhe"
+        },
+        {
+          "url": "https://grupoincopisos.com.br/wp-content/uploads/2025/02/Puglia-Grigio-90x90-Acetinado-scaled.jpg",
+          "tipo": "detalhe"
         }
       ],
       "preco_m2": 48.9,
@@ -12604,5 +12748,5 @@
       "peso_kg_palete": null
     }
   ],
-  "enriquecidoEm": "2026-11-21T21:13:08.697Z"
+  "enriquecidoEm": "2026-11-21T21:25:42.841Z"
 }
