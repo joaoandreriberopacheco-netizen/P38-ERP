@@ -31,3 +31,8 @@ const out = {
   vercelSecret: 'CATALOGO_PAGLEVE_CONVITE_SECRET',
 };
 console.log(JSON.stringify(out, null, 2));
+console.log('');
+console.log('── Link para enviar (WhatsApp, etc.) ──');
+console.log(url);
+console.log(`Válido por ${hours} h · expira ${out.expiraEmLegivel}`);
+console.log('────────────────────────────────────');
