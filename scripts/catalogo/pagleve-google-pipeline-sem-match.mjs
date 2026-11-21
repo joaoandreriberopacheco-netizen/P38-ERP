@@ -1,19 +1,20 @@
 #!/usr/bin/env node
 /**
- * PagLeve diagnóstico: Excel verbatim → DuckDuckGo Lite (Playwright/Chromium) → site oficial → foto.
- * Não altera CSV/catálogo. Sem cache SERP / sem Google.
+ * PagLeve diagnóstico: Excel verbatim → busca (Serper Google API ou DDG Lite) → site oficial → foto.
+ * Não altera CSV/catálogo.
+ *
+ * Serper: SERPER_API_KEY + POST https://google.serper.dev/search (organic[]).
+ * DDG legacy: PAGLEVE_SEARCH_PROVIDER=ddg (Playwright).
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
 import { setTimeout as sleepP } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
-import { chromium } from 'playwright';
 import { extractFichaFromOfficialSite } from '../lib/pagleveFichaFromSite.mjs';
 import { stripAccents } from '../lib/formigresCatalog.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.join(__dirname, '../..');
 const ART = process.env.PAGLEVE_ARTIFACTS_DIR || '/opt/cursor/artifacts';
 const LISTA =
   process.env.PAGLEVE_SEM_MATCH_LISTA ||
@@ -24,10 +25,14 @@ const OUT_JSON =
 const OUT_MD =
   process.env.PAGLEVE_GOOGLE_MD ||
   path.join(ART, 'pagleve-sem-match-30-referencia-google.md');
+const SWEEP_PATH =
+  process.env.PAGLEVE_SWEEP_JSON || path.join(ART, 'pagleve-official-sweep-2026-11-21.json');
 const EXCEL = 'docs/ESTOQUE PARA CASA ISRAEL ATE 19112026.XLSX';
-const SLEEP_MS = Number(process.env.PAGLEVE_DDG_SLEEP_MS || process.env.PAGLEVE_GOOGLE_SLEEP_MS || 4000);
-const CAPTCHA_BACKOFF_MS = Number(process.env.PAGLEVE_DDG_CAPTCHA_BACKOFF_MS || 45000);
-const DDG_HEADLESS = process.env.PAGLEVE_DDG_HEADLESS === '1';
+const SEARCH_PROVIDER = (process.env.PAGLEVE_SEARCH_PROVIDER || 'serper').toLowerCase();
+const SERPER_API_KEY = process.env.SERPER_API_KEY || '';
+const SERPER_URL = process.env.PAGLEVE_SERPER_URL || 'https://google.serper.dev/search';
+const SERPER_NUM = Number(process.env.PAGLEVE_SERPER_NUM || 10);
+const SLEEP_MS = Number(process.env.PAGLEVE_SERPER_SLEEP_MS || process.env.PAGLEVE_DDG_SLEEP_MS || 800);
 
 const OFFICIAL = [
   { host: 'grupoincopisos.com.br', grupo: 'Grupo Incopisos', siteKey: 'incopisos' },
@@ -51,7 +56,6 @@ function curl(url) {
   }
 }
 
-/** Query de relatório: medida com "por" + descrição verbatim do Excel. */
 function excelQuery(medida, desc) {
   const m = String(medida || '')
     .replace(/x/gi, ' por ')
@@ -59,8 +63,7 @@ function excelQuery(medida, desc) {
   return `${m} ${desc || ''}`.replace(/\s+/g, ' ').trim();
 }
 
-/** Query curta para o motor DDG (medida + tokens modelo). */
-function ddgCompactQuery(medida, desc) {
+function compactQuery(medida, desc) {
   const fmt = String(medida || '').trim();
   const tokens = modeloTokens(desc);
   return `${fmt} ${tokens.join(' ')}`.replace(/\s+/g, ' ').trim();
@@ -81,7 +84,88 @@ function modeloTokens(desc) {
     .slice(0, 6);
 }
 
-async function launchDdgBrowser() {
+function parseOrganicHits(organic) {
+  const out = [];
+  const seen = new Set();
+  for (const row of organic || []) {
+    const url = row?.link || row?.url;
+    if (!url || !url.startsWith('http')) continue;
+    try {
+      const u = new URL(url);
+      const key = u.origin + u.pathname;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({
+        url: url.split('#')[0],
+        title: String(row.title || '').slice(0, 120),
+        snippet: String(row.snippet || '').slice(0, 200),
+      });
+    } catch {
+      /* */
+    }
+  }
+  return out.slice(0, 25);
+}
+
+async function searchSerperOnce(query) {
+  if (!SERPER_API_KEY) {
+    return { query, hits: [], error: true, motivo: 'serper_sem_api_key' };
+  }
+  const res = await fetch(SERPER_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-API-KEY': SERPER_API_KEY,
+    },
+    body: JSON.stringify({
+      q: query,
+      num: SERPER_NUM,
+      gl: 'br',
+      hl: 'pt-br',
+    }),
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    return { query, hits: [], error: true, motivo: `serper_http_${res.status}`, raw: text.slice(0, 200) };
+  }
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    return { query, hits: [], error: true, motivo: 'serper_json_invalido' };
+  }
+  const hits = parseOrganicHits(data.organic);
+  return { query, hits, error: false, motivo: hits.length ? '' : 'serper_sem_resultados' };
+}
+
+async function searchSerper(queryExcel, queryCompact) {
+  const attempts = [queryCompact, queryExcel].filter((q, i, arr) => q && arr.indexOf(q) === i);
+  let last = {
+    query: queryCompact,
+    hits: [],
+    error: false,
+    motivo: 'serper_sem_resultados',
+    fonte: 'serper_google',
+  };
+  for (const query of attempts) {
+    const res = await searchSerperOnce(query);
+    last = {
+      ...res,
+      fonte: 'serper_google',
+      query_usada: query,
+      query_excel: queryExcel,
+      query_compact: queryCompact,
+    };
+    if (res.error && res.motivo === 'serper_sem_api_key') break;
+    if (res.hits.length) break;
+    await sleepP(300);
+  }
+  return last;
+}
+
+async function loadDdgSearch() {
+  const { chromium } = await import('playwright');
+  const DDG_HEADLESS = process.env.PAGLEVE_DDG_HEADLESS === '1';
   const browser = await chromium.launch({
     headless: DDG_HEADLESS,
     args: ['--disable-blink-features=AutomationControlled', '--no-sandbox'],
@@ -90,101 +174,47 @@ async function launchDdgBrowser() {
     locale: 'pt-BR',
     userAgent:
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-    extraHTTPHeaders: { 'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8' },
   });
   await context.addInitScript(() => {
     Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
   });
   const page = await context.newPage();
-  return { browser, page };
-}
-
-async function parseDdgHits(page) {
-  return page.$$eval('a', (anchors) => {
-    const out = [];
-    const seen = new Set();
-    for (const a of anchors) {
-      let href = a.href || '';
-      if (!href.startsWith('http')) continue;
-      try {
-        const u = new URL(href);
-        if (/duckduckgo\.com/i.test(u.hostname)) continue;
-        const key = u.origin + u.pathname;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        const title = (a.innerText || '').trim().replace(/\s+/g, ' ').slice(0, 120);
-        if (title.length < 2) continue;
-        out.push({ url: href.split('#')[0], title });
-      } catch {
-        /* */
+  return {
+    browser,
+    search: async (queryExcel, queryCompact) => {
+      const attempts = [queryCompact, queryExcel].filter((q, i, arr) => q && arr.indexOf(q) === i);
+      let last = { hits: [], motivo: 'ddg_sem_resultados', fonte: 'ddg_lite_playwright' };
+      for (const query of attempts) {
+        await page.goto('https://lite.duckduckgo.com/lite/', { waitUntil: 'domcontentloaded' });
+        await page.locator('input[name="q"]').first().fill(query);
+        await Promise.all([page.waitForNavigation({ timeout: 45000 }).catch(() => null), page.keyboard.press('Enter')]);
+        await sleepP(800);
+        const hits = await page.$$eval('a', (anchors) => {
+          const out = [];
+          const seen = new Set();
+          for (const a of anchors) {
+            const href = a.href || '';
+            if (!href.startsWith('http') || /duckduckgo/i.test(href)) continue;
+            try {
+              const u = new URL(href);
+              const key = u.origin + u.pathname;
+              if (seen.has(key)) continue;
+              seen.add(key);
+              const title = (a.innerText || '').trim().slice(0, 120);
+              if (title.length < 2) continue;
+              out.push({ url: href.split('#')[0], title });
+            } catch {
+              /* */
+            }
+          }
+          return out.slice(0, 25);
+        });
+        last = { query, hits, motivo: hits.length ? '' : 'ddg_sem_resultados', fonte: 'ddg_lite_playwright', query_usada: query, query_excel: queryExcel, query_compact: queryCompact };
+        if (hits.length) break;
       }
-    }
-    return out.slice(0, 25);
-  });
-}
-
-function bodyIsCaptcha(bodyText) {
-  return /anomaly-modal|Select all squares containing a duck|challenge-form/i.test(bodyText);
-}
-
-async function ensureDdgHome(page) {
-  const hasQ = (await page.locator('input[name="q"]').count()) > 0;
-  if (page.url().includes('lite.duckduckgo.com/lite') && hasQ && !bodyIsCaptcha(await page.locator('body').innerText().catch(() => ''))) {
-    return;
-  }
-  await page.goto('https://lite.duckduckgo.com/lite/', { waitUntil: 'domcontentloaded', timeout: 60000 });
-}
-
-async function ddgSearchOnce(page, query) {
-  await ensureDdgHome(page);
-  const body0 = await page.locator('body').innerText().catch(() => '');
-  if (bodyIsCaptcha(body0)) {
-    return { query, hits: [], captcha: true, motivo: 'ddg_captcha_bot' };
-  }
-  const qLoc = page.locator('input[name="q"]').first();
-  if (!(await qLoc.count())) {
-    return { query, hits: [], captcha: true, motivo: 'ddg_captcha_sem_campo_busca' };
-  }
-  await qLoc.fill(query);
-  await Promise.all([page.waitForNavigation({ timeout: 45000 }).catch(() => null), page.keyboard.press('Enter')]);
-  await sleepP(800);
-  const bodyText = await page.locator('body').innerText().catch(() => '');
-  const hits = await parseDdgHits(page);
-  const captcha = bodyIsCaptcha(bodyText) && !hits.length;
-  if (captcha) {
-    return { query, hits: [], captcha: true, motivo: 'ddg_captcha_bot' };
-  }
-  return { query, hits, captcha: false, motivo: hits.length ? '' : 'ddg_sem_resultados' };
-}
-
-async function searchDuckDuckGo(page, queryExcel, queryCompact) {
-  const attempts = [queryCompact, queryExcel].filter((q, i, arr) => q && arr.indexOf(q) === i);
-  let last = {
-    query: queryCompact,
-    hits: [],
-    captcha: false,
-    motivo: 'ddg_sem_resultados',
-    fonte: 'ddg_lite_playwright',
+      return last;
+    },
   };
-  for (const query of attempts) {
-    let res = await ddgSearchOnce(page, query);
-    if (res.captcha) {
-      await sleepP(CAPTCHA_BACKOFF_MS);
-      await page.goto('https://lite.duckduckgo.com/lite/', { waitUntil: 'domcontentloaded', timeout: 60000 });
-      res = await ddgSearchOnce(page, query);
-    }
-    last = {
-      ...res,
-      fonte: 'ddg_lite_playwright',
-      query_usada: query,
-      query_excel: queryExcel,
-      query_compact: queryCompact,
-    };
-    if (res.hits.length) break;
-    if (res.captcha) break;
-    await sleepP(500);
-  }
-  return last;
 }
 
 function hostOf(url) {
@@ -336,12 +366,42 @@ function erpDiverge(item) {
   };
 }
 
+function motiFinal(serp, inf, confirm) {
+  if (confirm.status === 'confirmado_site') return confirm.motivo || '';
+  if (serp.error && serp.motivo) return serp.motivo;
+  if (confirm.motivo && confirm.motivo !== 'ddg_sem_url_oficial' && confirm.motivo !== 'serper_sem_url_oficial') {
+    return confirm.motivo;
+  }
+  if (!inf.fabricante_inferido) {
+    return serp.hits?.length ? 'serp_sem_fabricante_claro' : serp.motivo || 'serper_sem_resultados';
+  }
+  if (!inf.urls_oficiais.length) return 'serp_sem_url_oficial_no_fabricante';
+  return confirm.motivo || 'nao_confirmado';
+}
+
+function loadSweepMap() {
+  if (!fs.existsSync(SWEEP_PATH)) return new Map();
+  const j = JSON.parse(fs.readFileSync(SWEEP_PATH, 'utf8'));
+  return new Map((j.itens || []).map((i) => [String(i.codigo), i]));
+}
+
+async function trySweepOfficialUrl(item, sweepRow) {
+  const url = sweepRow?.url_oficial?.trim();
+  if (!url) return null;
+  const off = matchOfficial(hostOf(url));
+  if (!off) return null;
+  const res = await confirmarSite(url, off, item);
+  if (res.status === 'confirmado_site') {
+    return { ...res, match_metodo: 'sweep_url_oficial_revalidado' };
+  }
+  return res;
+}
+
 function mdReport(summary) {
-  let md = `# PagLeve — 30 sem match (lotes 8–17) — pipeline DuckDuckGo\n\n`;
-  md += `Metodologia: Excel Casa Israel verbatim → **DuckDuckGo Lite (Playwright/Chromium)** → fabricante → site oficial + foto.\n\n`;
+  const buscador = summary.buscador || SEARCH_PROVIDER;
+  let md = `# PagLeve — pipeline ${buscador}\n\n`;
+  md += `Metodologia: Excel Casa Israel verbatim → **${buscador}** → fabricante → site oficial + foto.\n\n`;
   md += `**Excel:** \`${EXCEL}\`  \n**Entrada:** \`${LISTA}\`  \n**JSON:** \`${OUT_JSON}\`  \n\n`;
-  md += `## Causa raiz (cascata v3 / lotes 8–17)\n\n`;
-  md += `A cascata antiga lia \`descricao_erp\` / \`modelo\` do CSV, não o Excel. Ex.: **31929** — Excel *Ladrilho Red MRU 39×75* vs ERP *Branco Neve 38×75* → \`nenhum_fabricante_confirmou\`. Com ERP alinhado, ainda falha por limitações de slug/snapshot (Fioranno 57×57 em PDF, Carmelo Plus 90×90, Rocha 61×116 por ID).\n\n`;
   md += `**Resumo:** ${summary.confirmados_site}/${summary.total} confirmados · ${summary.com_foto} com foto · ${summary.sem_match} sem match\n\n`;
   md += `| Código | Lote | Fabricante | Status | URL | Fotos | Motivo |\n`;
   md += `|--------|------|------------|--------|-----|-------|--------|\n`;
@@ -352,8 +412,17 @@ function mdReport(summary) {
 }
 
 async function main() {
+  if (SEARCH_PROVIDER === 'serper' && !SERPER_API_KEY) {
+    console.error('SERPER_API_KEY em falta. Defina no ambiente do agente ou PAGLEVE_SEARCH_PROVIDER=ddg.');
+    process.exit(2);
+  }
+
   const items = JSON.parse(fs.readFileSync(LISTA, 'utf8'));
-  const { browser, page } = await launchDdgBrowser();
+  const sweepMap = loadSweepMap();
+  let ddg;
+  if (SEARCH_PROVIDER === 'ddg') {
+    ddg = await loadDdgSearch();
+  }
 
   const report = [];
   let n = 0;
@@ -361,20 +430,21 @@ async function main() {
     for (const item of items) {
       n++;
       const queryExcel = excelQuery(item.medida, item.desc_excel);
-      const queryCompact = ddgCompactQuery(item.medida, item.desc_excel);
-      const ddg = await searchDuckDuckGo(page, queryExcel, queryCompact);
-      const inf = inferFromHits(ddg, item);
+      const queryCompact = compactQuery(item.medida, item.desc_excel);
+      const serp =
+        SEARCH_PROVIDER === 'ddg' ? await ddg.search(queryExcel, queryCompact) : await searchSerper(queryExcel, queryCompact);
+      const inf = inferFromHits(serp, item);
       const erp_audit = erpDiverge(item);
 
       let confirm = {
         status: 'nao_encontrado',
-        motivo: ddg.captcha ? ddg.motivo : 'ddg_sem_url_oficial',
+        motivo: serp.motivo || 'serp_sem_url_oficial',
         produto_url: '',
         imagens_count: 0,
         imagens: [],
       };
 
-      for (const cand of inf.urls_oficiais.slice(0, 4)) {
+      for (const cand of inf.urls_oficiais.slice(0, 6)) {
         const tryConfirm = await confirmarSite(cand.url, cand, item);
         if (tryConfirm.status === 'confirmado_site') {
           confirm = tryConfirm;
@@ -382,14 +452,14 @@ async function main() {
         }
         if (!confirm.produto_url) confirm = { ...tryConfirm, motivo: tryConfirm.motivo };
       }
+
       if (confirm.status !== 'confirmado_site') {
-        if (ddg.captcha) confirm.motivo = ddg.motivo;
-        else if (!inf.fabricante_inferido) {
-          confirm.motivo = ddg.hits.length ? 'ddg_sem_fabricante_claro' : ddg.motivo || 'ddg_sem_resultados';
-        } else if (!inf.urls_oficiais.length) {
-          confirm.motivo = 'ddg_sem_url_oficial_no_fabricante';
-        }
+        const sweepTry = await trySweepOfficialUrl(item, sweepMap.get(String(item.codigo)));
+        if (sweepTry?.status === 'confirmado_site') confirm = sweepTry;
+        else if (sweepTry?.produto_url && !confirm.produto_url) confirm = { ...sweepTry, motivo: sweepTry.motivo };
       }
+
+      const motivo = motiFinal(serp, inf, confirm);
 
       report.push({
         codigo: item.codigo,
@@ -398,26 +468,29 @@ async function main() {
         desc_excel: item.desc_excel,
         desc_erp: item.desc_erp,
         erp_audit,
-        ddg: {
+        serp: {
           query_excel: queryExcel,
           query_compact: queryCompact,
-          query_usada: ddg.query_usada || ddg.query,
-          fonte: ddg.fonte,
-          captcha: !!ddg.captcha,
-          hits: (ddg.hits || []).slice(0, 10).map((h) => (typeof h === 'string' ? h : h.url)),
-          hits_count: ddg.hits?.length || 0,
+          query_usada: serp.query_usada || serp.query,
+          fonte: serp.fonte,
+          error: !!serp.error,
+          hits: (serp.hits || []).slice(0, 10).map((h) => ({
+            url: typeof h === 'string' ? h : h.url,
+            title: h.title,
+          })),
+          hits_count: serp.hits?.length || 0,
           fabricante_votes: inf.fabricante_votes,
         },
         fabricante_inferido: inf.fabricante_inferido,
         status: confirm.status,
-        motivo: confirm.motivo || (confirm.status === 'confirmado_site' ? '' : 'nao_confirmado'),
+        motivo,
         produto_url: confirm.produto_url || '',
         nome_no_site: confirm.nome_no_site || '',
         fabricante_grupo: confirm.fabricante_grupo || inf.fabricante_inferido || '',
         imagens_count: confirm.imagens_count ?? 0,
         imagens: (confirm.imagens || []).slice(0, 6).map((i) => i.url || i),
         ficha: confirm.ficha || {},
-        pipeline: 'excel_ddg_oficial_v1',
+        pipeline: SEARCH_PROVIDER === 'serper' ? 'excel_serper_oficial_v1' : 'excel_ddg_oficial_v1',
       });
 
       console.log(
@@ -426,18 +499,17 @@ async function main() {
         confirm.status,
         inf.fabricante_inferido || '—',
         confirm.imagens_count ?? 0,
-        ddg.captcha ? 'CAPTCHA' : '',
       );
       await sleepP(SLEEP_MS);
     }
   } finally {
-    await browser.close();
+    if (ddg?.browser) await ddg.browser.close();
   }
 
   const summary = {
     geradoEm: new Date().toISOString(),
-    metodologia: 'excel_verbatim → duckduckgo_lite_playwright → site_oficial',
-    buscador: 'lite.duckduckgo.com (playwright/chromium, headless=' + DDG_HEADLESS + ')',
+    metodologia: `excel_verbatim → ${SEARCH_PROVIDER} → site_oficial`,
+    buscador: SEARCH_PROVIDER === 'serper' ? 'serper.dev (google organic)' : 'lite.duckduckgo.com (playwright)',
     excel_arquivo: EXCEL,
     lista_entrada: LISTA,
     total: report.length,
@@ -445,11 +517,6 @@ async function main() {
     com_foto: report.filter((r) => r.status === 'confirmado_site' && r.imagens_count > 0).length,
     sem_match: report.filter((r) => r.status !== 'confirmado_site').length,
     erp_diverge_count: report.filter((r) => r.erp_audit?.diverge).length,
-    ddg_captcha_count: report.filter((r) => r.ddg?.captcha).length,
-    causa_raiz: {
-      titulo: 'Cascata antiga usava ERP/CSV, não Excel verbatim',
-      exemplos: report.filter((r) => r.erp_audit?.diverge).map((r) => ({ codigo: r.codigo, excel: r.desc_excel, erp: r.desc_erp })),
-    },
     itens: report,
   };
 
@@ -460,7 +527,6 @@ async function main() {
     confirmados: summary.confirmados_site,
     com_foto: summary.com_foto,
     sem_match: summary.sem_match,
-    ddg_captcha: summary.ddg_captcha_count,
     out: OUT_JSON,
   });
 }
