@@ -187,6 +187,8 @@ function carmeloSlugFromName(name) {
 }
 
 const CF_SLUG_BY_CODE = {
+  32102: 'albury-plus-rt-90x90',
+  33999: 'albury-lux-plus-rt-90x90',
   'INDF-117': 'alaska-plus-32-75',
   'INDF-119': 'alvor',
   'INDF-035': 'solaria-plus-rt-90x90',
@@ -488,6 +490,7 @@ async function main() {
     const n = stripAccents(r.descricao_erp).toLowerCase();
     let slug = '';
     if (n.includes('narbona')) slug = 'narbona-plus-rt-90x90';
+    else if (n.includes('albury') && n.includes('lux')) slug = 'albury-lux-plus-rt-90x90';
     else if (n.includes('albury')) slug = 'albury-plus-rt-90x90';
     else if (n.includes('sidney')) slug = 'sidney-plus-rt-90x90';
     else if (n.includes('vinci')) slug = 'vinci-plus-rt-90x90';

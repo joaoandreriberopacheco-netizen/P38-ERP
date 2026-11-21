@@ -1,5 +1,5 @@
 {
-  "geradoEm": "2026-11-21T22:18:51.554Z",
+  "geradoEm": "2026-11-21T22:41:20.119Z",
   "fonte": "/agent/repos/varejosync/files/pagleve/pagleve-base-cruzada.csv",
   "fonte_descricao_estoque": "ESTOQUE PARA CASA ISRAEL ATE 19112026.XLSX",
   "resumo": {
@@ -10,11 +10,11 @@
       "Retificada — lisa mate": 23,
       "Retificada — polido": 53,
       "Retificada — mate": 4,
-      "Retificada — lisa brilhante": 4,
+      "Retificada — lisa brilhante": 5,
       "Retificada — antiderrapante": 12,
       "Retificada — granilhado": 1,
       "Retificada — semiderrapante": 7,
-      "Retificada — ?": 21,
+      "Retificada — ?": 20,
       "Bold — semiderrapante": 1
     },
     "porLinha": {
@@ -31,7 +31,7 @@
         "antiderrapante": 12,
         "semiderrapante": 7,
         "lisa_mate": 23,
-        "lisa_brilhante": 4,
+        "lisa_brilhante": 5,
         "lisa": 0
       },
       "polida": 0,
@@ -7667,51 +7667,51 @@
       "descricao": "Albury Lux",
       "formato": "90x90",
       "linha": "retificada",
-      "subtipo": null,
-      "variante_lisa": null,
-      "rotulo": "Retificada — ?",
-      "confianca": "media",
-      "motivo": "linha inferida; superfície não identificada",
+      "subtipo": "lisa",
+      "variante_lisa": "brilhante",
+      "rotulo": "Retificada — lisa brilhante",
+      "confianca": "alta",
+      "motivo": "acabamento BRILHANTE",
       "match_status": "encontrado",
       "match_score": 100,
       "formigres_id": "",
-      "formigres_titulo": "Albury Lux · 90x90 · RET",
+      "formigres_titulo": "Albury Lux · 90x90 · RET · Brilhante",
       "formigres_tipo": "RETIFICADO",
-      "formigres_acabamento": "RETIFICADO",
-      "acabamento_label": "",
+      "formigres_acabamento": "BRILHANTE",
+      "acabamento_label": "Brilhante",
       "marca_nome": "Cecafi",
       "fabricante_grupo": "Carmelo Fior",
       "pei_uso": "LB",
       "referencia": "PEI LB",
-      "produto_url": "https://www.carmelofior.com.br/produto/albury-lux-rt-90x90",
-      "imagem_url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
+      "produto_url": "https://www.carmelofior.com.br/produto/albury-lux-plus-rt-90x90",
+      "imagem_url": "https://www.carmelofior.com.br/public/images/product/41f50591b2f4bc084ff5218c750ae811.webp",
       "imagens": [
         {
-          "url": "https://www.carmelofior.com.br/public/images/product/5c8d90ad1779a3cbeede4bfab44ffa82.webp",
+          "url": "https://www.carmelofior.com.br/public/images/product/41f50591b2f4bc084ff5218c750ae811.webp",
           "tipo": "principal"
         },
         {
-          "url": "https://www.carmelofior.com.br/public/images/product/1df7baac1138af1ed29dd0f010ac17fa.webp",
+          "url": "https://www.carmelofior.com.br/public/images/product/1d42c253cd51c753bf2c730532932e05.webp",
           "tipo": "principal"
         },
         {
-          "url": "https://www.carmelofior.com.br/public/images/product/83349ad6133adab0eb5f0807e95dfbda.webp",
+          "url": "https://www.carmelofior.com.br/public/images/product/e64dae6d8807729d36ba0fc083faeb2c.webp",
           "tipo": "principal"
         },
         {
-          "url": "https://www.carmelofior.com.br/public/images/product/633168f1d410c7312809bcf9b138c35e.webp",
+          "url": "https://www.carmelofior.com.br/public/images/product/c75cd98c24a6621c34bc11e95ef76064.webp",
           "tipo": "principal"
         },
         {
-          "url": "https://www.carmelofior.com.br/public/images/product/b2e6d34f545b1f19cbaee4b96f39481e.webp",
+          "url": "https://www.carmelofior.com.br/public/images/product/d7b8e117a5161afbf13439892c01edc0.webp",
           "tipo": "principal"
         },
         {
-          "url": "https://www.carmelofior.com.br/public/images/product/791c9add5095ab0325bcf4ca3b081700.webp",
+          "url": "https://www.carmelofior.com.br/public/images/product/17b6e047fe92be676f3d26ac2a37bba0.webp",
           "tipo": "principal"
         },
         {
-          "url": "https://www.carmelofior.com.br/public/images/product/442d25449ff66afc22122e4301e463f5.webp",
+          "url": "https://www.carmelofior.com.br/public/images/product/1d889e39fb4f7f11bf66cbe2b09a3434.webp",
           "tipo": "principal"
         }
       ],
@@ -7721,7 +7721,7 @@
       "m2_por_caixa": 2.41,
       "unidade": "",
       "status_site": "confirmado_site",
-      "observacao": "correção João: Lux ≠ Plus (ficha e fotos)"
+      "observacao": "correção João: Lux brilhante — slug albury-lux-plus-rt-90x90"
     },
     {
       "codigo_tintao": "34002",
