@@ -22,6 +22,11 @@ import {
   normalizeFromUrl,
 } from '../lib/cerbrasSnapshot.mjs';
 import { stripAccents } from '../lib/formigresCatalog.mjs';
+import {
+  CARMELO_FIOR_BASE,
+  normalizeProdutoFromHtml,
+  parseCarmeloProductModelHtml,
+} from '../lib/carmeloFiorCatalog.mjs';
 import { raioXProdutoDescricao } from '../lib/raioXProdutoDescricao.mjs';
 import { extractFichaFromOfficialSite } from '../lib/pagleveFichaFromSite.mjs';
 
@@ -332,22 +337,72 @@ async function tryFormigres(row, snap) {
   };
 }
 
+const CARMELO_90_SLUGS = [
+  ['fortunata', 'fortunata-plus-mre-rt-90x90'],
+  ['dream', 'dream-plus-rt-90x90'],
+  ['cronos', 'cronos-plus-mre-rt-90x90'],
+  ['solaria', 'solaria-plus-rt-90x90'],
+  ['alaska', 'alaska-soft-rt-90x90'],
+  ['pissis', 'pissis-plus-rt-90x90'],
+  ['narbona', 'narbona-plus-rt-90x90'],
+  ['albury', 'albury-plus-rt-90x90'],
+  ['sidney', 'sidney-plus-rt-90x90'],
+  ['vinci', 'vinci-plus-rt-90x90'],
+  ['amon', 'amon-plus-rt-90x90'],
+  ['elemento', 'elemento-plus-mre-rt-90x90'],
+  ['dacito', 'dacito-plus-rt-90x90'],
+  ['verne', 'verne-plus-rt-90x90'],
+  ['panis', 'panis-plus-rt-90x90'],
+];
+
+function guessCarmeloSlug(row) {
+  const n = stripAccents(`${row.descricao_erp || ''} ${modeloParaBusca(row)}`).toLowerCase();
+  if (normFmtKey(row.formato) !== '90x90') return '';
+  for (const [needle, slug] of CARMELO_90_SLUGS) {
+    if (n.includes(needle)) return slug;
+  }
+  return '';
+}
+
+function tryCarmeloSlug(slug) {
+  const url = `${CARMELO_FIOR_BASE}/produto/${slug}`;
+  const html = curl(url);
+  if (pageIs404(html) || !parseCarmeloProductModelHtml(html)) return null;
+  const prod = normalizeProdutoFromHtml(html);
+  if (!prod) return null;
+  return {
+    siteKey: 'carmelo',
+    fabricante_grupo: 'Carmelo Fior',
+    marca_no_site: prod.marca_nome || 'Carmelo Fior',
+    descricao_no_site: [prod.titulo, prod.formato, prod.tipo].filter(Boolean).join(' · '),
+    evidencia_url: url,
+    carmelo_prod: prod,
+    html,
+    status: 'confirmado_site',
+    match_metodo: `carmelo_slug:${slug}`,
+  };
+}
+
 function tryCarmelo(row, snap) {
   if (!temNomeComercial(row)) return null;
   const desc = `${row.formato} ${modeloParaBusca(row)}`;
   const { match, score } = findInFormigresSnapshot(snap, desc, { minScore: 32, requireFormato: true });
-  if (!match) return null;
-  return {
-    siteKey: 'carmelo',
-    fabricante_grupo: 'Carmelo Fior',
-    marca_no_site: match.marca_nome || 'Arielle',
-    descricao_no_site: [match.titulo, match.formato, match.tipo].filter(Boolean).join(' · '),
-    evidencia_url: match.produto_url,
-    carmelo_prod: match,
-    status: 'confirmado_site',
-    match_metodo: `carmelo_snapshot:${score}`,
-    match_score: String(score),
-  };
+  if (match) {
+    return {
+      siteKey: 'carmelo',
+      fabricante_grupo: 'Carmelo Fior',
+      marca_no_site: match.marca_nome || 'Arielle',
+      descricao_no_site: [match.titulo, match.formato, match.tipo].filter(Boolean).join(' · '),
+      evidencia_url: match.produto_url,
+      carmelo_prod: match,
+      status: 'confirmado_site',
+      match_metodo: `carmelo_snapshot:${score}`,
+      match_score: String(score),
+    };
+  }
+  const slug = guessCarmeloSlug(row);
+  if (!slug) return null;
+  return tryCarmeloSlug(slug);
 }
 
 function tryLume(row) {
@@ -481,7 +536,7 @@ async function discoverAndEnrich(row, ctx) {
 
   const url = canonicalProductUrl(hit.evidencia_url);
   let html = hit.html || '';
-  if (!html && hit.siteKey !== 'formigres' && hit.siteKey !== 'carmelo') {
+  if (!html && hit.siteKey !== 'formigres') {
     html = curl(url);
   }
   if (html && pageIs404(html)) {

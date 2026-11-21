@@ -5,7 +5,10 @@ import {
   extractImagensFromDetalhe,
   fetchProdutoDetalhe,
 } from './formigresCatalog.mjs';
-import { extractImagensFromProduto } from './carmeloFiorCatalog.mjs';
+import {
+  extractImagensFromProduto,
+  normalizeProdutoFromHtml,
+} from './carmeloFiorCatalog.mjs';
 import { normalizeLocalUsoNbr, fabricanteKeyFromGrupo } from './pagleveLocalUsoNbr.mjs';
 
 function metaOg(html, prop) {
@@ -232,7 +235,8 @@ export async function extractFichaFromOfficialSite(opts) {
 
     if (siteKey === 'carmelo' || url.includes('carmelofior')) {
       const slug = url.match(/produto\/([^/]+)/i)?.[1]?.toLowerCase();
-      const prod = hit.carmelo_prod || (slug && carmeloBySlug?.get(slug));
+      let prod = hit.carmelo_prod || (slug && carmeloBySlug?.get(slug));
+      if (!prod && html) prod = normalizeProdutoFromHtml(html);
       if (prod) {
         ficha.tipo_borda = prod.tipo || '';
         ficha.textura = carmeloSuperficie(prod) || prod.acabamento || '';
@@ -246,7 +250,8 @@ export async function extractFichaFromOfficialSite(opts) {
           tipo: i.tipo || 'principal',
         }));
       }
-      return { ficha, imagens, extracao: 'carmelo_snapshot' };
+      const extracao = prod?.images?.length && !hit.carmelo_prod && html ? 'carmelo_html' : 'carmelo_snapshot';
+      return { ficha, imagens, extracao };
     }
 
     if (siteKey === 'lume' || url.includes('lumeceramica')) {

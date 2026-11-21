@@ -182,6 +182,30 @@ export function extractImagensFromProduto(prod) {
   return out;
 }
 
+/** JSON embutido em páginas /produto/{slug} (ProductModel). */
+export function parseCarmeloProductModelHtml(html = '') {
+  const m = String(html).match(/new ProductModel\((\{[\s\S]*?\})\)\s*;/);
+  if (!m) return null;
+  try {
+    return JSON.parse(m[1]);
+  } catch {
+    return null;
+  }
+}
+
+export function normalizeProdutoFromHtml(html = '') {
+  const raw = parseCarmeloProductModelHtml(html);
+  if (!raw?.id) return null;
+  const prod = normalizeProduto(raw);
+  if (!prod) return null;
+  const cat = raw.category?.[0]?.title;
+  if (cat) {
+    prod.marca_nome = cat.trim();
+    prod.categoria = cat.trim();
+  }
+  return prod;
+}
+
 export function normalizeProduto(raw) {
   if (!raw?.id) return null;
   const tamanho = attrById(raw.attributes, ATTR.tamanho);
