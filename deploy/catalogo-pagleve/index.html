@@ -185,6 +185,84 @@
     html[data-skin="pagleve"] .model-row.has-mark:not(.has-qty) {
       box-shadow: inset 3px 0 0 #fda4af;
     }
+    html[data-skin="pagleve"] .catalog-card-pagleve {
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 10px 0;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+    html[data-skin="pagleve"] .catalog-card-pagleve:last-child { border-bottom: 0; }
+    html[data-skin="pagleve"] .pagleve-card-grid {
+      display: grid;
+      grid-template-columns: 52px minmax(0, 1fr) 56px 40px;
+      column-gap: 8px;
+      align-items: start;
+    }
+    html[data-skin="pagleve"] .pagleve-card-slot-foto { grid-column: 1; width: 52px; }
+    html[data-skin="pagleve"] .pagleve-card-slot-body { grid-column: 2; min-width: 0; }
+    html[data-skin="pagleve"] .pagleve-card-slot-qty { grid-column: 3; width: 56px; }
+    html[data-skin="pagleve"] .pagleve-card-slot-heart { grid-column: 4; width: 40px; display: flex; justify-content: center; }
+    html[data-skin="pagleve"] .pagleve-card-slot-foto .thumb-btn,
+    html[data-skin="pagleve"] .pagleve-card-slot-foto .thumb-empty {
+      width: 52px;
+      height: 52px;
+    }
+    html[data-skin="pagleve"] .pagleve-card-title {
+      font-size: .82rem;
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--text-strong);
+      word-break: break-word;
+    }
+    html[data-skin="pagleve"] .pagleve-card-code {
+      margin-top: 2px;
+      font-size: .68rem;
+      color: var(--muted);
+      line-height: 1.25;
+    }
+    html[data-skin="pagleve"] .pagleve-card-meta {
+      margin-top: 6px;
+      font-size: .72rem;
+      color: var(--muted);
+      line-height: 1.35;
+      word-break: break-word;
+    }
+    html[data-skin="pagleve"] .pagleve-card-meta .pagleve-card-preco { margin-top: 4px; color: var(--text); font-weight: 600; }
+    html[data-skin="pagleve"] .pagleve-card-qty-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      width: 100%;
+    }
+    html[data-skin="pagleve"] .pagleve-card-qty-label {
+      font-size: .58rem;
+      font-weight: 600;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      color: var(--muted);
+      line-height: 1;
+    }
+    html[data-skin="pagleve"] .pagleve-card-qty-stack .qty-input {
+      width: 52px;
+      min-width: 0;
+      min-height: 40px;
+      text-align: center;
+      font-size: .92rem;
+      font-weight: 700;
+      padding: 4px 2px;
+    }
+    html[data-skin="pagleve"] .pagleve-card-m2hint {
+      font-size: .58rem;
+      line-height: 1.2;
+      color: var(--muted);
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+    html[data-skin="pagleve"] .pagleve-card-slot-heart .mark-btn {
+      width: 36px;
+      height: 36px;
+    }
     html[data-skin="pagleve"] .qty-cell-stack {
       display: flex;
       flex-direction: column;
@@ -1929,7 +2007,9 @@
       .pedido-cards { overflow-x: hidden; max-width: 100%; }
       .pedido-card { max-width: 100%; overflow: hidden; box-sizing: border-box; }
       html[data-skin="formigres"] .catalog-table-wrap { display: none !important; }
-      html[data-skin="formigres"] .catalog-cards-wrap {
+      html[data-skin="pagleve"] .catalog-table-wrap { display: none !important; }
+      html[data-skin="formigres"] .catalog-cards-wrap,
+      html[data-skin="pagleve"] .catalog-cards-wrap {
         display: block;
         padding: 0 0 10px;
         overflow-x: hidden;
@@ -3232,7 +3312,7 @@
       return parts.length ? parts.join(' · ') : '—';
     }
     function updateModelRowCalcs(cod) {
-      if (!IS_B2B_CATALOG) return;
+      if (!IS_B2B_CATALOG && CATALOG_SKIN !== 'pagleve') return;
       const item = itemsByCode.get(String(cod));
       if (!item) return;
       const qty = getQty(cod);
@@ -3247,6 +3327,7 @@
         };
         if (row.classList.contains('catalog-card')) {
           setCell('.catalog-card-qty-m2', m2tot ? fmtDecimal(m2tot) + ' m²' : '—');
+          setCell('.pagleve-card-m2hint', m2tot ? fmtDecimal(m2tot) + ' m²' : '—');
           setCell('.model-col-sub', sub ? fmtMoney(sub) : '—');
           setCell('.model-col-cx', cxTot ? fmtDecimal(cxTot, 0) : '—');
           setCell('.model-col-peso', pesoTot ? fmtKg(pesoTot) : '—');
@@ -3494,6 +3575,39 @@
         '<span class="pedido-card-qty-sub catalog-card-qty-m2">' + esc(m2tot ? fmtDecimal(m2tot) + ' m²' : '—') + '</span>' +
       '</div>';
     }
+    function renderCatalogCardPagLeve(item) {
+      const imgs = getGaleria(item);
+      const img = imgs[0]?.url || item.imagem_url || '';
+      const titulo = itemTitulo(item);
+      const cod = item.codigo_tintao;
+      const qty = getQty(cod);
+      const pack = fmtEmbalagemText(item);
+      const marked = isMarked(cod);
+      const m2tot = qty ? itemM2Total(item, qty) : null;
+      const warn = item.match_status !== 'encontrado' ? ' <span class="badge warn">sem match</span>' : '';
+      const thumb = renderCatalogCardThumb(item, cod, titulo, imgs, img);
+      const searchBlob = (titulo + ' ' + pagLeveBuscaExtra(item) + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack + ' ' + (item.marca_nome || '') + ' ' + (item.fabricante_grupo || '')).toLowerCase();
+      const pagLeveAttrs = ' data-textura="' + esc(catalogTexturaGrupo(item)) + '" data-pei-uso="' + esc(catalogPeiUso(item)) + '"';
+      const metaLines = esc(item.marca_nome || '—') + ' · ' + esc(item.fabricante_grupo || '—') + '<br>' + esc(pack);
+      const precoHtml = '<div class="pagleve-card-preco">' + fmtPrecoHtml(item.preco_m2) + '</div>';
+      return '<article class="catalog-card catalog-card-pagleve model-row' + (qty > 0 ? ' has-qty' : '') + (marked ? ' has-mark' : '') + ((qty > 0 || marked) ? ' has-selection' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(searchBlob) + '" data-qty="' + qty + '" data-marked="' + (marked ? '1' : '0') + '"' + pagLeveAttrs + '>' +
+        '<div class="pagleve-card-grid">' +
+          '<div class="pagleve-card-slot-foto">' + thumb + '</div>' +
+          '<div class="pagleve-card-slot-body">' +
+            '<div class="pagleve-card-title">' + esc(titulo) + warn + '</div>' +
+            '<div class="pagleve-card-code">#' + esc(cod) + '</div>' +
+            '<div class="pagleve-card-meta">' + metaLines + precoHtml + '</div>' +
+          '</div>' +
+          '<div class="pagleve-card-slot-qty">' +
+            '<div class="pagleve-card-qty-stack">' +
+              '<span class="pagleve-card-qty-label">' + esc(QTY_LABEL) + '</span>' +
+              '<input type="number" class="qty-input" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" tabindex="0" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="' + esc(QTY_LABEL) + '" placeholder="0" />' +
+              '<span class="pagleve-card-m2hint catalog-card-qty-m2">' + esc(m2tot ? fmtDecimal(m2tot) + ' m²' : '—') + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="pagleve-card-slot-heart">' + renderMarkButtonHtml(cod, marked) + '</div>' +
+        '</div></article>';
+    }
     function renderCatalogCardFormigres(item) {
       const imgs = getGaleria(item);
       const img = imgs[0]?.url || item.imagem_url || '';
@@ -3565,6 +3679,15 @@
       const colgroup = CATALOG_SKIN === 'pagleve'
         ? '<colgroup><col class="col-foto"><col class="col-modelo"><col class="col-marca"><col class="col-grupo"><col class="col-pack"><col class="col-preco"><col class="col-sel"><col class="col-qty"></colgroup>'
         : '';
+      if (CATALOG_SKIN === 'pagleve') {
+        const body = items.map(renderTableRow).join('');
+        const cards = items.map(renderCatalogCardPagLeve).join('');
+        return '<div class="catalog-items">' +
+          '<div class="catalog-table-wrap table-wrap"><table class="model-table">' + colgroup + '<thead><tr>' + retailHead + '</tr></thead><tbody>' +
+          body + '</tbody></table></div>' +
+          '<div class="catalog-cards-wrap"><div class="catalog-cards">' + cards + '</div></div>' +
+          '</div>';
+      }
       return '<div class="table-wrap"><table class="model-table">' + colgroup + '<thead><tr>' + retailHead + '</tr></thead><tbody>' +
         items.map(renderTableRow).join('') + '</tbody></table></div>';
     }
@@ -3634,7 +3757,7 @@
       applySearch(document.getElementById('search').value);
     }
     function catalogRowSelector() {
-      if (IS_B2B_CATALOG) {
+      if (IS_B2B_CATALOG || CATALOG_SKIN === 'pagleve') {
         return window.matchMedia('(max-width: 720px)').matches
           ? '.catalog-cards-wrap .model-row'
           : '.catalog-table-wrap .model-row';
