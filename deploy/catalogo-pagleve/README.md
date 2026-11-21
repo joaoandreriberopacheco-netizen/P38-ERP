@@ -6,6 +6,21 @@ Site estático **separado do P38 ERP**. Estoque Novo Aleixo (raio-x verificado) 
 
 **https://catalogo-pague-leve.vercel.app/**
 
+## Acesso temporário (sem login) — 24 horas
+
+Para partilhar o catálogo com alguém por **24 h** (ou outra duração), sem senha nem cadastro:
+
+```bash
+npm run catalogo:link-temporario-pagleve
+# ou: npm run catalogo:link-temporario-pagleve -- --hours 48
+```
+
+O comando imprime um **URL completo** (`…/acesso/…`). Envie só esse link. Passado o prazo, o link deixa de abrir sozinho.
+
+**Uma vez por ambiente:** o segredo `CATALOGO_PAGLEVE_CONVITE_SECRET` tem de estar no projecto Vercel (o script grava uma cópia local em `files/pagleve/catalogo-convite-secret.local` — não commitar). Na primeira geração, copie o valor para o painel Vercel → Settings → Environment Variables.
+
+O link fixo da raiz (`/`) continua disponível para uso interno; o acesso temporário é um caminho à parte.
+
 Regenerar conteúdo:
 
 ```bash
