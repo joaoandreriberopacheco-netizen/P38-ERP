@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Varredura oficial PagLeve (228) — URL + contagem de imagens no domínio do fabricante.
- * Saída JSON em /opt/cursor/artifacts (não altera CSV nem preços).
+ * Pipeline unificado PagLeve (228):
+ * formato + descrição ERP → busca no fabricante → página do produto → ficha + imagens + LU NBR.
+ * Saída JSON consolidado em /opt/cursor/artifacts (não altera CSV nem preços).
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -20,23 +21,29 @@ import {
   fetchSitemapUrls,
   normalizeFromUrl,
 } from '../lib/cerbrasSnapshot.mjs';
-import {
-  extractImagensFromDetalhe,
-  fetchProdutoDetalhe,
-  stripAccents,
-} from '../lib/formigresCatalog.mjs';
-import { extractImagensFromProduto } from '../lib/carmeloFiorCatalog.mjs';
+import { stripAccents } from '../lib/formigresCatalog.mjs';
 import { raioXProdutoDescricao } from '../lib/raioXProdutoDescricao.mjs';
+import { extractFichaFromOfficialSite } from '../lib/pagleveFichaFromSite.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const CSV = path.join(ROOT, 'files/pagleve/raio-x-pagleve-site-verificado.csv');
-const CLS = path.join(ROOT, 'files/pagleve/classificacao/pagleve-estoque-2026-11-21.json');
+const PILOT_MODE = process.env.PAGLEVE_PIPELINE_PILOTO === '1';
+/** Um item por formato — ordem embaralhada a cada corrida */
+const PILOT_FORMATOS = ['90x90', '22x90', '82x82', '88x88', '62x62'];
+const PILOT_FORMATO_FALLBACK = { '62x62': '62x119' };
+const LIMIT = Number(process.env.PAGLEVE_PIPELINE_LIMIT || 0) || 0;
+const PILOT_CODIGOS = (process.env.PAGLEVE_PIPELINE_CODIGOS || '')
+  .split(',')
+  .map((c) => c.trim())
+  .filter(Boolean);
 const OUT =
   process.env.PAGLEVE_SWEEP_OUT ||
-  '/opt/cursor/artifacts/pagleve-official-sweep-2026-11-21.json';
+  (PILOT_MODE || PILOT_CODIGOS.length
+    ? '/opt/cursor/artifacts/pagleve-pipeline-piloto-5-2026-11-21.json'
+    : '/opt/cursor/artifacts/pagleve-pipeline-228-consolidado-2026-11-21.json');
 const ROCHA_BASE = 'https://www.portalgruporocha.com.br';
 const LUME_BASE = 'https://lumeceramica.com.br';
-const UA = 'P38-PagLeve-official-sweep/2.0';
+const UA = 'P38-PagLeve-pipeline/3.0';
 
 const OFFICIAL = new Set([
   'formigres.com.br',
@@ -136,188 +143,6 @@ function pageIs404(html) {
   const title = metaOg(html, 'og:title');
   if (title && /not found/i.test(title)) return true;
   return false;
-}
-
-function rochaSlugFromUrl(url) {
-  const m = String(url).match(/portalgruporocha\.com\.br\/produtos\/([a-z0-9-]+)/i);
-  return m?.[1]?.toLowerCase() || '';
-}
-
-/** Galeria Rocha: imagens do produto (api.storage), sem duplicar miniaturas nem ícones do layout. */
-function extractRochaImages(html, url) {
-  if (pageIs404(html)) {
-    return { count: 0, urls: [], method: '404', motivo: 'pagina_404' };
-  }
-  const slug = rochaSlugFromUrl(url);
-  const title = metaOg(html, 'og:title').replace(/\s*\|\s*Grupo Rocha\s*$/i, '').trim();
-  const urls = new Set();
-
-  if (title) {
-    const esc = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const altRe = new RegExp(`alt="${esc} - Imagem \\d+"`, 'gi');
-    if (altRe.test(html)) {
-      const imgRe = new RegExp(
-        `https://api\\.portalgruporocha\\.com\\.br/storage/images/[^"'\\s]+\\.(webp|jpg|jpeg|png)`,
-        'gi',
-      );
-      const section = html.slice(
-        Math.max(0, html.search(altRe)),
-        html.search(altRe) + 120_000,
-      );
-      let m;
-      while ((m = imgRe.exec(section))) {
-        const u = m[0].split('?')[0];
-        if (!/\.svg$/i.test(u)) urls.add(u);
-      }
-    }
-  }
-
-  if (!urls.size && slug) {
-    const slugParts = slug.split('-').filter((p) => p.length >= 3);
-    const imgRe =
-      /https:\/\/api\.portalgruporocha\.com\.br\/storage\/images\/([^"'\\\s]+)\.(webp|jpg|jpeg|png)/gi;
-    let m;
-    while ((m = imgRe.exec(html))) {
-      const fname = m[1].toLowerCase();
-      if (/\.svg$/i.test(fname)) continue;
-      const hitsSlug =
-        fname.includes(slug) ||
-        slugParts.filter((p) => p.length >= 4).every((p) => {
-          const token = p === 'beg' ? 'bege' : p;
-          return fname.includes(token);
-        });
-      if (!hitsSlug) continue;
-      if (slug.startsWith('loft') && !/loft/.test(fname)) continue;
-      urls.add(m[0].split('?')[0]);
-    }
-  }
-
-  const list = [...urls];
-  const og = metaOg(html, 'og:image');
-  if (!list.length && og && !og.includes('_og/')) {
-    return {
-      count: 1,
-      urls: [og],
-      method: 'rocha_og_only',
-      motivo: '',
-    };
-  }
-  return {
-    count: list.length,
-    urls: list,
-    method: list.length ? 'rocha_storage_galeria' : 'rocha_sem_imagem',
-    motivo: list.length ? '' : 'galeria_vazia_no_html',
-  };
-}
-
-function extractLumeImages(html) {
-  if (pageIs404(html)) return { count: 0, urls: [], method: '404', motivo: 'pagina_404' };
-  const urls = new Set();
-  const re =
-    /https:\/\/lumeceramica\.com\.br\/wp-content\/uploads\/[^"'\s]+\.(jpg|jpeg|png|webp)/gi;
-  let m;
-  while ((m = re.exec(html))) {
-    const u = m[0].split('?')[0];
-    if (!/logo|icon|favicon|placeholder/i.test(u)) urls.add(u);
-  }
-  const list = [...urls];
-  return {
-    count: list.length || (metaOg(html, 'og:image') ? 1 : 0),
-    urls: list.length ? list : metaOg(html, 'og:image') ? [metaOg(html, 'og:image')] : [],
-    method: list.length ? 'lume_uploads' : 'lume_og_only',
-    motivo: list.length ? '' : 'sem_uploads_wp',
-  };
-}
-
-function extractIncopisosImages(html) {
-  if (pageIs404(html)) return { count: 0, urls: [], method: '404', motivo: 'pagina_404' };
-  const urls = new Set();
-  const re = /https:\/\/grupoincopisos\.com\.br\/wp-content\/uploads\/[^"'\s]+\.(jpg|jpeg|png|webp)/gi;
-  let m;
-  while ((m = re.exec(html))) {
-    const u = m[0].split('?')[0];
-    if (!/logo|icon|cookie|banner/i.test(u)) urls.add(u);
-  }
-  const list = [...urls];
-  return {
-    count: list.length || (metaOg(html, 'og:image') ? 1 : 0),
-    urls: list.length ? list : metaOg(html, 'og:image') ? [metaOg(html, 'og:image')] : [],
-    method: list.length ? 'incopisos_uploads' : 'incopisos_og_only',
-    motivo: list.length ? '' : 'sem_uploads_wp',
-  };
-}
-
-async function resolveOfficialImages(url, ctx) {
-  const canonical = canonicalProductUrl(url);
-  const html = curl(canonical);
-  const host = hostOf(canonical);
-
-  if (pageIs404(html)) {
-    return { count: 0, urls: [], method: '404', motivo: 'pagina_404_ou_vazia' };
-  }
-
-  if (host.includes('formigres')) {
-    const id = canonical.match(/produto\/(\d+)/i)?.[1];
-    if (id) {
-      try {
-        const det = await fetchProdutoDetalhe(id);
-        const imgs = extractImagensFromDetalhe(det);
-        return {
-          count: imgs.length,
-          urls: imgs.map((i) => i.url),
-          method: 'formigres_api_detalhe',
-          motivo: imgs.length ? '' : 'formigres_api_sem_imagens',
-        };
-      } catch (e) {
-        return { count: 0, urls: [], method: 'formigres_api_erro', motivo: e.message };
-      }
-    }
-  }
-
-  if (host.includes('portalgruporocha')) {
-    return extractRochaImages(html, canonical);
-  }
-
-  if (host.includes('carmelofior')) {
-    const slug = canonical.match(/produto\/([^/]+)/i)?.[1]?.toLowerCase();
-    const prod = slug ? ctx.carmeloBySlug.get(slug) : null;
-    if (prod) {
-      const imgs = extractImagensFromProduto(prod);
-      return {
-        count: imgs.length,
-        urls: imgs.map((i) => i.url),
-        method: 'carmelo_api_snapshot',
-        motivo: imgs.length ? '' : 'carmelo_api_sem_imagens',
-      };
-    }
-    const urls = new Set();
-    const re =
-      /https:\/\/www\.carmelofior\.com\.br\/public\/images\/product\/[^"'\s]+\.(jpg|jpeg|png|webp)/gi;
-    let m;
-    while ((m = re.exec(html))) urls.add(m[0].split('?')[0]);
-    const list = [...urls];
-    return {
-      count: list.length,
-      urls: list,
-      method: 'carmelo_html_product',
-      motivo: list.length ? '' : 'carmelo_sem_imagem_html',
-    };
-  }
-
-  if (host.includes('lumeceramica')) return extractLumeImages(html);
-  if (host.includes('incopisos')) return extractIncopisosImages(html);
-
-  const generic = new Set();
-  const re2 = /https:\/\/[^"'\s]+\/uploads\/[^"'\s]+\.(jpg|jpeg|png|webp)/gi;
-  let m2;
-  while ((m2 = re2.exec(html))) generic.add(m2[0].split('?')[0]);
-  const list = [...generic];
-  return {
-    count: list.length || (metaOg(html, 'og:image') ? 1 : 0),
-    urls: list,
-    method: 'generic_uploads',
-    motivo: list.length ? '' : 'sem_imagens_genericas',
-  };
 }
 
 function nameSlug(text) {
@@ -452,15 +277,15 @@ function tryRocha(row, rochaSlugs) {
     if (pageIs404(html)) continue;
     const title = metaOg(html, 'og:title').replace(/\s*\|\s*Grupo Rocha\s*$/i, '').trim();
     if (!title) continue;
-    const imgs = extractRochaImages(html, url);
     return {
+      siteKey: 'rocha',
       fabricante_grupo: 'Grupo Rocha',
       marca_no_site: desc.includes('rochamaxx') ? 'Rochamaxx' : 'Rochaforte / portal',
       descricao_no_site: title,
       evidencia_url: url,
+      html,
       status: 'confirmado_site',
       match_metodo: `rocha_slug:${c}`,
-      imagens_count_hint: imgs.count,
     };
   }
   return null;
@@ -471,23 +296,14 @@ async function tryFormigres(row, snap) {
   const desc = `${row.formato} ${modeloParaBusca(row)}`;
   const { match, score } = findInFormigresSnapshot(snap, desc, { minScore: 45, requireFormato: true });
   if (!match) return null;
-  let imagens_json = '';
-  let imgCount = 0;
-  try {
-    const det = await fetchProdutoDetalhe(match.id);
-    const imgs = extractImagensFromDetalhe(det);
-    imgCount = imgs.length;
-    if (imgs.length) imagens_json = JSON.stringify(imgs.map((i) => i.url));
-  } catch {
-    /* ignore */
-  }
   return {
+    siteKey: 'formigres',
     fabricante_grupo: 'Grupo Formigres',
     marca_no_site: match.marca_nome || 'Formigres',
     descricao_no_site: [match.titulo, match.formato, match.tipo].filter(Boolean).join(' · '),
     evidencia_url: match.produto_url,
-    imagens_json,
-    imagens_count_hint: imgCount,
+    formigres_id: String(match.id),
+    match_formigres: match,
     status: 'confirmado_site',
     match_metodo: `formigres_snapshot:${score}`,
     match_score: String(score),
@@ -499,14 +315,13 @@ function tryCarmelo(row, snap) {
   const desc = `${row.formato} ${modeloParaBusca(row)}`;
   const { match, score } = findInFormigresSnapshot(snap, desc, { minScore: 32, requireFormato: true });
   if (!match) return null;
-  const imgs = extractImagensFromProduto(match);
   return {
+    siteKey: 'carmelo',
     fabricante_grupo: 'Carmelo Fior',
     marca_no_site: match.marca_nome || 'Arielle',
     descricao_no_site: [match.titulo, match.formato, match.tipo].filter(Boolean).join(' · '),
     evidencia_url: match.produto_url,
-    imagem_url: match.imagem_url || '',
-    imagens_count_hint: imgs.length,
+    carmelo_prod: match,
     status: 'confirmado_site',
     match_metodo: `carmelo_snapshot:${score}`,
     match_score: String(score),
@@ -529,11 +344,14 @@ function tryLume(row) {
     break;
   }
   if (!best) return null;
+  const pageHtml = curl(best);
   return {
+    siteKey: 'lume',
     fabricante_grupo: 'Lume Cerâmica',
     marca_no_site: 'Lume',
     descricao_no_site: nome,
     evidencia_url: best,
+    html: pageHtml,
     status: 'confirmado_site',
     match_metodo: `lume_busca:${q}`,
   };
@@ -556,11 +374,14 @@ function tryIncopisos(row) {
     break;
   }
   if (!best) return null;
+  const pageHtml = curl(best);
   return {
+    siteKey: 'incopisos',
     fabricante_grupo: 'Grupo Incopisos',
     marca_no_site: 'Incopisos',
     descricao_no_site: nome,
     evidencia_url: best,
+    html: pageHtml,
     status: 'confirmado_site',
     match_metodo: 'incopisos_busca',
   };
@@ -580,6 +401,95 @@ async function tryMatchersForRow(row, ctx) {
   return null;
 }
 
+/** Passo único: descoberta + ficha + imagens na mesma corrida. */
+async function discoverAndEnrich(row, ctx) {
+  const consulta = {
+    formato: row.formato,
+    modelo: modeloParaBusca(row),
+    descricao_erp: row.descricao_erp,
+  };
+
+  if (URL_OVERRIDES[row.codigo]) {
+    const url = canonicalProductUrl(URL_OVERRIDES[row.codigo]);
+    const html = curl(url);
+    if (!pageIs404(html)) {
+      const { ficha, imagens, extracao } = await extractFichaFromOfficialSite({
+        url,
+        fabricante_grupo: 'Grupo Rocha',
+        siteKey: 'rocha',
+        html,
+        carmeloBySlug: ctx.carmeloBySlug,
+      });
+      return {
+        status: 'confirmado_site',
+        consulta,
+        fabricante_grupo: 'Grupo Rocha',
+        marca_no_site: 'Rochamaxx',
+        descricao_no_site: metaOg(html, 'og:title').replace(/\s*\|\s*Grupo Rocha\s*$/i, '').trim(),
+        produto_url: url,
+        match_metodo: `override_url:${row.codigo}`,
+        ficha,
+        imagens,
+        extracao,
+      };
+    }
+  }
+
+  const hit = await tryMatchersForRow(row, ctx);
+  if (!hit) {
+    return {
+      status: 'nao_encontrado',
+      consulta,
+      produto_url: '',
+      motivo: 'nenhum_fabricante_confirmou',
+      ficha: {},
+      imagens: [],
+    };
+  }
+
+  const url = canonicalProductUrl(hit.evidencia_url);
+  let html = hit.html || '';
+  if (!html && hit.siteKey !== 'formigres' && hit.siteKey !== 'carmelo') {
+    html = curl(url);
+  }
+  if (html && pageIs404(html)) {
+    return {
+      status: 'nao_encontrado',
+      consulta,
+      produto_url: url,
+      motivo: 'pagina_404_apos_match',
+      ficha: {},
+      imagens: [],
+      match_metodo: hit.match_metodo,
+    };
+  }
+
+  const { ficha, imagens, extracao, erro } = await extractFichaFromOfficialSite({
+    url,
+    fabricante_grupo: hit.fabricante_grupo,
+    siteKey: hit.siteKey,
+    hit,
+    html,
+    carmeloBySlug: ctx.carmeloBySlug,
+  });
+
+  return {
+    status: 'confirmado_site',
+    consulta,
+    fabricante_grupo: hit.fabricante_grupo,
+    marca_no_site: hit.marca_no_site || '',
+    descricao_no_site: hit.descricao_no_site || '',
+    produto_url: url,
+    match_metodo: hit.match_metodo || '',
+    match_score: hit.match_score || '',
+    ficha,
+    imagens,
+    extracao,
+    extracao_erro: erro || '',
+    motivo: imagens.length ? '' : 'galeria_vazia',
+  };
+}
+
 function buildCarmeloSlugIndex(snap) {
   const map = new Map();
   for (const p of snap?.produtos || []) {
@@ -589,10 +499,84 @@ function buildCarmeloSlugIndex(snap) {
   return map;
 }
 
+function normFmtKey(fmt) {
+  return String(fmt || '')
+    .toLowerCase()
+    .replace(/×/g, 'x')
+    .trim();
+}
+
+function shuffleInPlace(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/**
+ * Piloto: 1 código por formato (90x90, 22x90, 82x82, 88x88, 62x62), ordem aleatória.
+ * 62x62 não existe no CSV atual → fallback 62x119 (documentado).
+ */
+function selectPilotRowsByFormat(allRows) {
+  const byFmt = new Map();
+  for (const row of allRows) {
+    const k = normFmtKey(row.formato);
+    if (!byFmt.has(k)) byFmt.set(k, []);
+    byFmt.get(k).push(row);
+  }
+  const formatOrder = shuffleInPlace([...PILOT_FORMATOS]);
+  const selecao = [];
+  for (const alvo of formatOrder) {
+    let fmtUsado = alvo;
+    let pool = byFmt.get(alvo);
+    let fallback = false;
+    if (!pool?.length && PILOT_FORMATO_FALLBACK[alvo]) {
+      fmtUsado = PILOT_FORMATO_FALLBACK[alvo];
+      pool = byFmt.get(fmtUsado);
+      fallback = true;
+    }
+    if (!pool?.length) {
+      selecao.push({ formato_alvo: alvo, codigo: null, motivo: 'formato_ausente_no_csv' });
+      continue;
+    }
+    const row = pool[Math.floor(Math.random() * pool.length)];
+    selecao.push({
+      formato_alvo: alvo,
+      formato_csv: row.formato,
+      formato_resolvido: fmtUsado,
+      fallback,
+      codigo: row.codigo,
+      modelo: row.modelo,
+    });
+  }
+  const rows = shuffleInPlace(
+    selecao.filter((s) => s.codigo).map((s) => allRows.find((r) => r.codigo === s.codigo)).filter(Boolean),
+  );
+  return { rows, selecao, ordem_formatos_sorteada: formatOrder };
+}
+
 async function main() {
-  const rows = parseCsv(fs.readFileSync(CSV, 'utf8'));
-  const cls = JSON.parse(fs.readFileSync(CLS, 'utf8'));
-  const clsBy = new Map(cls.itens.map((i) => [String(i.codigo_tintao), i]));
+  let rows = parseCsv(fs.readFileSync(CSV, 'utf8'));
+  let pilotoMeta = null;
+
+  if (PILOT_CODIGOS.length) {
+    const set = new Set(PILOT_CODIGOS);
+    rows = rows.filter((r) => set.has(String(r.codigo)));
+    pilotoMeta = { modo: 'codigos_fixos', codigos: PILOT_CODIGOS };
+  } else if (PILOT_MODE) {
+    const picked = selectPilotRowsByFormat(rows);
+    rows = picked.rows;
+    pilotoMeta = {
+      modo: 'um_por_formato',
+      formatos_alvo: PILOT_FORMATOS,
+      ordem_formatos_sorteada: picked.ordem_formatos_sorteada,
+      selecao: picked.selecao,
+    };
+    console.log('Piloto formatos:', pilotoMeta.selecao.map((s) => `${s.formato_alvo}→${s.codigo || '—'}`).join(' | '));
+  } else if (LIMIT > 0) {
+    rows = rows.slice(0, LIMIT);
+  }
 
   console.log('Loading catalogs...');
   const snapFg = buildFormigresSnapshot(await fetchFormigresProdutos());
@@ -612,92 +596,60 @@ async function main() {
   let n = 0;
   for (const row of rows) {
     n++;
-    const code = row.codigo;
-    const clsRow = clsBy.get(code) || {};
-    let url = URL_OVERRIDES[code] || row.evidencia_url || clsRow.produto_url || '';
-    url = canonicalProductUrl(url);
-    let commercial = row.descricao_no_site || clsRow.catalogo_nome_modelo || modeloParaBusca(row);
-    let fabricante = row.fabricante_grupo || clsRow.fabricante_grupo || '';
-    let matchMetodo = row.match_metodo || '';
-
-    if (url && pageIs404(curl(url))) {
-      url = '';
-    }
-
-    if (!url || !isOfficial(url) || row.status === 'nao_encontrado') {
-      const hit = await tryMatchersForRow(row, ctx);
-      if (hit) {
-        url = canonicalProductUrl(URL_OVERRIDES[code] || hit.evidencia_url);
-        commercial = hit.descricao_no_site || commercial;
-        fabricante = hit.fabricante_grupo || fabricante;
-        matchMetodo = hit.match_metodo || matchMetodo;
-      }
-    }
-
-    if (URL_OVERRIDES[code]) {
-      url = canonicalProductUrl(URL_OVERRIDES[code]);
-    }
-
-    let imgCount = 0;
-    let imgUrls = [];
-    let imgSource = '';
-    let semFotoMotivo = '';
-
-    if (url && isOfficial(url)) {
-      const live = await resolveOfficialImages(url, ctx);
-      imgCount = live.count;
-      imgUrls = live.urls || [];
-      imgSource = live.method;
-      semFotoMotivo = live.motivo || (imgCount ? '' : 'extracao_zero');
-    } else {
-      semFotoMotivo = url ? 'url_nao_oficial' : 'sem_url_oficial';
-    }
-
+    const enriched = await discoverAndEnrich(row, ctx);
+    const imagens = enriched.imagens || [];
     report.push({
-      codigo: code,
+      codigo: row.codigo,
       formato: row.formato,
-      nome_comercial: commercial,
-      fabricante: fabricante || '—',
-      url_oficial: url || '',
-      url_e_oficial: isOfficial(url),
-      imagens_oficial_count: imgCount,
-      imagens_urls: imgUrls,
-      imagens_fonte: imgSource,
-      sem_foto_motivo: semFotoMotivo,
-      match_metodo: matchMetodo,
+      descricao_erp: row.descricao_erp,
+      consulta: enriched.consulta,
+      status: enriched.status,
+      fabricante_grupo: enriched.fabricante_grupo || '—',
+      marca_no_site: enriched.marca_no_site || '',
+      nome_comercial: enriched.descricao_no_site || enriched.consulta?.modelo || '',
+      produto_url: enriched.produto_url || '',
+      url_e_oficial: isOfficial(enriched.produto_url),
+      match_metodo: enriched.match_metodo || '',
+      match_score: enriched.match_score || '',
+      ficha: enriched.ficha || {},
+      imagens,
+      imagens_count: imagens.length,
+      extracao: enriched.extracao || '',
+      sem_foto_motivo: enriched.motivo || (imagens.length ? '' : enriched.status === 'confirmado_site' ? 'galeria_vazia' : enriched.motivo),
+      pipeline: 'unificado_v3',
       csv_status_anterior: row.status,
     });
     if (n % 25 === 0) console.log(`... ${n}/${rows.length}`);
   }
 
+  const comFoto = report.filter((r) => r.status === 'confirmado_site' && r.imagens_count > 0);
+  const semFoto = report.filter(
+    (r) => r.status !== 'confirmado_site' || !r.imagens_count,
+  );
+
   const summary = {
     geradoEm: new Date().toISOString(),
-    versao_script: '2.0',
+    pipeline: 'unificado_v3',
+    piloto: pilotoMeta,
     total: report.length,
-    com_foto: report.filter((r) => r.url_e_oficial && r.imagens_oficial_count > 0).length,
-    sem_foto: report.filter((r) => !r.imagens_oficial_count || !r.url_e_oficial).length,
-    sem_url_oficial: report.filter((r) => !r.url_e_oficial).length,
+    confirmados_site: report.filter((r) => r.status === 'confirmado_site').length,
+    com_foto: comFoto.length,
+    sem_foto: semFoto.length,
+    sem_foto_detalhe: semFoto.map((r) => ({
+      codigo: r.codigo,
+      motivo: r.sem_foto_motivo || r.status,
+      produto_url: r.produto_url,
+    })),
     itens: report,
   };
 
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   fs.writeFileSync(OUT, JSON.stringify(summary, null, 2));
 
-  const prevPath = '/opt/cursor/artifacts/pagleve-official-sweep-pre-v2-stats.json';
-  if (fs.existsSync('/opt/cursor/artifacts/pagleve-official-sweep-2026-11-21.json')) {
-    try {
-      const prev = JSON.parse(fs.readFileSync('/opt/cursor/artifacts/pagleve-official-sweep-2026-11-21.json', 'utf8'));
-      const prevWith = (prev.itens || prev).filter?.((r) => r.imagens_oficial_count > 0)?.length;
-      fs.writeFileSync(prevPath, JSON.stringify({ prev_com_foto: prevWith }, null, 2));
-    } catch {
-      /* ignore */
-    }
-  }
-
   console.log('Done.', {
+    confirmados: summary.confirmados_site,
     com_foto: summary.com_foto,
     sem_foto: summary.sem_foto,
-    sem_url: summary.sem_url_oficial,
     out: OUT,
   });
 }
