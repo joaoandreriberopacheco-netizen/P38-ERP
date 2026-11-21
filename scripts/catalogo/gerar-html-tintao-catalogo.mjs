@@ -142,13 +142,14 @@ const CONFIGS = {
     skipGemeasDedup: true,
     title: 'Pague Leve — Catálogo de estoque',
     h1: 'Pisos e porcelanatos',
-    hint: 'Marque caixas na tabela · revise no carrinho',
+    hint: 'Marque com ♥ (sem caixas) ou informe caixas · revise no carrinho',
     qtyUnit: 'caixa',
     qtyLabel: 'Caixas',
     qtyLabelPl: 'caixas',
     demoBanner: '',
     themeKey: 'pagleve-catalog-theme-v1',
     qtyKey: 'pagleve-catalog-qty-v1',
+    markKey: 'pagleve-catalog-mark-v1',
     descontoKey: 'pagleve-catalog-desconto-v1',
     groupKey: 'pagleve-catalog-group-v1',
     tourKey: 'pagleve-catalog-tour-v2',
@@ -1102,7 +1103,40 @@ const PAGLEVE_SKIN_CSS = `
     html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) .col-grupo { width: 14%; }
     html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) .col-pack { width: 18%; }
     html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) .col-preco { width: 10%; }
-    html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) .col-qty { width: 72px; }
+    html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) .col-sel { width: 40px; text-align: center; }
+    html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) .col-qty { width: 64px; }
+    html[data-skin="pagleve"] .mark-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--muted);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    html[data-skin="pagleve"] .mark-btn:hover { border-color: var(--accent-dim); color: var(--accent); }
+    html[data-skin="pagleve"] .mark-btn.is-marked,
+    html[data-skin="pagleve"] .mark-btn[aria-pressed="true"] {
+      color: #e11d48;
+      border-color: #fda4af;
+      background: #fff1f2;
+    }
+    html[data-skin="pagleve"] .mark-btn svg { width: 18px; height: 18px; pointer-events: none; }
+    html[data-skin="pagleve"] .pedido-qty-fav { color: #e11d48; font-weight: 700; }
+    html[data-skin="pagleve"] .model-row.has-mark:not(.has-qty) {
+      box-shadow: inset 3px 0 0 #fda4af;
+    }
+    html[data-skin="pagleve"] .qty-cell-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
     html[data-skin="pagleve"] .col-marca,
     html[data-skin="pagleve"] .col-grupo {
       font-size: .74rem;
@@ -1144,19 +1178,33 @@ const PAGLEVE_SKIN_CSS = `
       html[data-skin="pagleve"] .col-grupo,
       html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(3),
       html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(4) { display: none; }
+      html[data-skin="pagleve"] .col-sel,
       html[data-skin="pagleve"] .col-qty,
-      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(7) {
+      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(7),
+      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(8) {
         position: sticky;
-        right: 0;
         background: var(--surface);
         z-index: 1;
+        box-shadow: -4px 0 6px rgba(0,0,0,.05);
+      }
+      html[data-skin="pagleve"] .col-sel,
+      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(7) {
+        right: 58px;
+        width: 40px;
+        min-width: 40px;
+        padding-left: 2px;
+        padding-right: 2px;
+      }
+      html[data-skin="pagleve"] .col-qty,
+      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(8) {
+        right: 0;
         width: 58px;
         min-width: 58px;
         padding-left: 4px;
         padding-right: 4px;
-        box-shadow: -4px 0 6px rgba(0,0,0,.05);
       }
-      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(7) {
+      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(7),
+      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(8) {
         background: var(--surface-2);
         z-index: 2;
       }
@@ -2198,13 +2246,15 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       border-color: var(--accent);
       background: var(--surface-2);
     }
+    .model-row.has-mark,
+    .model-row.has-selection,
     .model-row.has-qty {
       background: var(--accent-muted);
     }
-    body.has-selection .model-row:not(.has-qty) {
+    body.has-selection .model-row:not(.has-qty):not(.has-mark) {
       opacity: .78;
     }
-    body.has-selection .model-row:not(.has-qty):hover {
+    body.has-selection .model-row:not(.has-qty):not(.has-mark):hover {
       opacity: .95;
     }
     .fab-stack {
@@ -3349,6 +3399,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     const QTY_LABEL_PL = CFG.qtyLabelPl || 'caixas';
     const TIPO_LABEL_GAL = { principal: 'Cerâmica', ambiente: 'Ambiente', piso: 'Piso', face: 'Face', outro: 'Imagem' };
     const QTY_KEY = '${cfg.qtyKey}';
+    const MARK_KEY = '${cfg.markKey || ''}';
+    const MARKS_ENABLED = CATALOG_SKIN === 'pagleve' && !!MARK_KEY;
     const THEME_KEY = '${cfg.themeKey}';
     const DESCONTO_KEY = '${cfg.descontoKey}';
     const REGIME_KEY = '${cfg.regimeKey || ''}';
@@ -3360,6 +3412,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     const CATALOG_TABLE_HEAD_HTML = PEDIDO_TABLE_HEAD_HTML;
     let qtyMap = {};
     try { qtyMap = JSON.parse(localStorage.getItem(QTY_KEY) || '{}'); } catch { qtyMap = {}; }
+    let markSet = new Set();
+    if (MARKS_ENABLED) {
+      try {
+        const rawMarks = JSON.parse(localStorage.getItem(MARK_KEY) || '[]');
+        if (Array.isArray(rawMarks)) markSet = new Set(rawMarks.map((c) => String(c)));
+      } catch { markSet = new Set(); }
+    }
     let descontoComercialPct = 0;
     try {
       const d = Number(localStorage.getItem(DESCONTO_KEY));
@@ -3780,15 +3839,58 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const n = Number(qtyMap[String(cod)] || 0);
       return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
     }
+    function isMarked(cod) {
+      return MARKS_ENABLED && markSet.has(String(cod));
+    }
+    function inSelection(cod) {
+      return getQty(cod) > 0 || isMarked(cod);
+    }
+    function saveMarks() {
+      if (!MARKS_ENABLED) return;
+      localStorage.setItem(MARK_KEY, JSON.stringify([...markSet]));
+    }
+    function syncSelectionRowUi(cod) {
+      const qty = getQty(cod);
+      const marked = isMarked(cod);
+      const on = qty > 0 || marked;
+      document.querySelectorAll('.model-row[data-cod="' + cod + '"]').forEach((row) => {
+        row.dataset.qty = String(qty);
+        row.dataset.marked = marked ? '1' : '0';
+        row.classList.toggle('has-qty', qty > 0);
+        row.classList.toggle('has-mark', marked);
+        row.classList.toggle('has-selection', on);
+      });
+      document.querySelectorAll('.mark-btn[data-cod="' + cod + '"]').forEach((btn) => {
+        btn.classList.toggle('is-marked', marked);
+        btn.setAttribute('aria-pressed', marked ? 'true' : 'false');
+        btn.setAttribute('aria-label', marked ? 'Remover favorito da seleção' : 'Marcar favorito sem informar caixas');
+      });
+    }
+    function setMarked(cod, on) {
+      if (!MARKS_ENABLED) return;
+      const c = String(cod);
+      if (on) markSet.add(c);
+      else markSet.delete(c);
+      saveMarks();
+      syncSelectionRowUi(c);
+      renderPedido();
+      updateCartFab();
+      if (filterQtyOnly) applySearch(document.getElementById('search').value);
+    }
+    function toggleMark(cod) {
+      setMarked(cod, !isMarked(cod));
+    }
+    function renderMarkButtonHtml(cod, marked) {
+      const fill = marked ? 'currentColor' : 'none';
+      return '<button type="button" class="mark-btn' + (marked ? ' is-marked' : '') + '" data-cod="' + esc(String(cod)) + '" aria-pressed="' + (marked ? 'true' : 'false') + '" aria-label="' + (marked ? 'Remover favorito da seleção' : 'Marcar favorito sem informar caixas') + '" title="Favorito (sem caixas)">' +
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="' + fill + '" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg></button>';
+    }
     function setQty(cod, val) {
       const n = Math.max(0, Math.floor(Number(val) || 0));
       if (n > 0) qtyMap[String(cod)] = n;
       else delete qtyMap[String(cod)];
       localStorage.setItem(QTY_KEY, JSON.stringify(qtyMap));
-      document.querySelectorAll('.model-row[data-cod="' + cod + '"]').forEach((row) => {
-        row.dataset.qty = String(n);
-        row.classList.toggle('has-qty', n > 0);
-      });
+      syncSelectionRowUi(cod);
       document.querySelectorAll('.qty-input[data-cod="' + cod + '"]').forEach((input) => {
         if (document.activeElement !== input) input.value = n || '';
       });
@@ -3798,17 +3900,24 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       if (filterQtyOnly) applySearch(document.getElementById('search').value);
     }
     function clearAllQty() {
-      const hasQty = Object.keys(qtyMap).length > 0 || [...document.querySelectorAll('.qty-input')].some((el) => Number(el.value) > 0);
+      const hasQty = Object.keys(qtyMap).length > 0
+        || [...document.querySelectorAll('.qty-input')].some((el) => Number(el.value) > 0)
+        || (MARKS_ENABLED && markSet.size > 0);
       if (!hasQty) return;
-      if (!confirm('Limpar toda a seleção?\\n\\nAs ' + QTY_LABEL_PL + ' marcadas serão apagadas.')) return;
+      if (!confirm('Limpar toda a seleção?\\n\\nFavoritos ♥ e ' + QTY_LABEL_PL + ' serão apagados.')) return;
       qtyMap = {};
       localStorage.removeItem(QTY_KEY);
+      if (MARKS_ENABLED) {
+        markSet = new Set();
+        localStorage.removeItem(MARK_KEY);
+      }
       document.querySelectorAll('.qty-input').forEach((input) => {
         input.value = '';
       });
       document.querySelectorAll('.model-row').forEach((row) => {
         row.dataset.qty = '0';
-        row.classList.remove('has-qty');
+        row.dataset.marked = '0';
+        row.classList.remove('has-qty', 'has-mark', 'has-selection');
         row.querySelector('.model-col-m2') && (row.querySelector('.model-col-m2').textContent = '');
         row.querySelector('.model-col-cx') && (row.querySelector('.model-col-cx').textContent = '');
         row.querySelector('.model-col-peso') && (row.querySelector('.model-col-peso').textContent = '');
@@ -4009,9 +4118,18 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     function pedidoItens() {
       return CATALOGO.itens
-        .map((item) => ({ item, qty: getQty(item.codigo_tintao) }))
-        .filter((x) => x.qty > 0)
+        .map((item) => ({
+          item,
+          qty: getQty(item.codigo_tintao),
+          marked: isMarked(item.codigo_tintao),
+        }))
+        .filter((x) => x.qty > 0 || x.marked)
         .sort((a, b) => compareItensFormatoNome(a.item, b.item));
+    }
+    function fmtPedidoQtyCell(qty, marked) {
+      if (qty > 0) return String(qty);
+      if (marked) return '<span class="pedido-qty-fav" title="Só favorito — informe caixas depois">—</span>';
+      return '—';
     }
     function tipoKey(item) {
       if (item.linha === 'polida') return 'polida';
@@ -4370,15 +4488,21 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         : '';
       const metaMobile = '<div class="model-meta-mobile">' + marcaGrupoMobile + esc(pack) + ' · ' + fmtPrecoHtml(item.preco_m2) + '</div>';
       const searchBlob = (titulo + ' ' + pagLeveBuscaExtra(item) + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack + ' ' + (item.marca_nome || '') + ' ' + (item.fabricante_grupo || '')).toLowerCase();
+      const marked = isMarked(cod);
+      const selected = qty > 0 || marked;
       const pagLeveAttrs = CATALOG_SKIN === 'pagleve'
         ? ' data-textura="' + esc(catalogTexturaGrupo(item)) + '" data-pei-uso="' + esc(catalogPeiUso(item)) + '"'
         : '';
-      return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(searchBlob) + '" data-qty="' + qty + '"' + pagLeveAttrs + '>' +
+      const heartCol = CATALOG_SKIN === 'pagleve'
+        ? '<td class="col-sel">' + renderMarkButtonHtml(cod, marked) + '</td>'
+        : '';
+      return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + (marked ? ' has-mark' : '') + (selected ? ' has-selection' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(searchBlob) + '" data-qty="' + qty + '" data-marked="' + (marked ? '1' : '0') + '"' + pagLeveAttrs + '>' +
         '<td class="col-foto">' + foto + '</td>' +
         '<td class="col-modelo"><strong>' + esc(titulo) + '</strong>' + warn + '<br><small style="color:var(--muted)">#' + esc(cod) + '</small>' + metaMobile + '</td>' +
         marcaGrupoCols +
         '<td class="col-pack">' + esc(pack) + '</td>' +
         '<td class="col-preco' + (hasDescontoAtivo() ? ' has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
+        heartCol +
         '<td class="col-qty">' +
         '<input type="number" class="qty-input" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" tabindex="0" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="' + esc(QTY_LABEL) + '" placeholder="0" />' +
         '</td></tr>';
@@ -4493,10 +4617,10 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       }
       const retailExtraHead = CATALOG_SKIN === 'pagleve' ? '<th class="col-marca">Marca</th><th class="col-grupo">Grupo</th>' : '';
       const retailHead = CATALOG_SKIN === 'pagleve'
-        ? '<th class="col-foto">Foto</th><th class="col-modelo">Modelo</th>' + retailExtraHead + '<th class="col-pack">Embalagem</th><th class="col-preco">Preço/m²</th><th class="col-qty">' + esc(QTY_LABEL) + '</th>'
+        ? '<th class="col-foto">Foto</th><th class="col-modelo">Modelo</th>' + retailExtraHead + '<th class="col-pack">Embalagem</th><th class="col-preco">Preço/m²</th><th class="col-sel" title="Favorito sem caixas">♥</th><th class="col-qty">' + esc(QTY_LABEL) + '</th>'
         : '<th>Foto</th><th>Modelo</th>' + retailExtraHead + '<th>Embalagem</th><th>Preço/m²</th><th>' + esc(QTY_LABEL) + '</th>';
       const colgroup = CATALOG_SKIN === 'pagleve'
-        ? '<colgroup><col class="col-foto"><col class="col-modelo"><col class="col-marca"><col class="col-grupo"><col class="col-pack"><col class="col-preco"><col class="col-qty"></colgroup>'
+        ? '<colgroup><col class="col-foto"><col class="col-modelo"><col class="col-marca"><col class="col-grupo"><col class="col-pack"><col class="col-preco"><col class="col-sel"><col class="col-qty"></colgroup>'
         : '';
       return '<div class="table-wrap"><table class="model-table">' + colgroup + '<thead><tr>' + retailHead + '</tr></thead><tbody>' +
         items.map(renderTableRow).join('') + '</tbody></table></div>';
@@ -4593,8 +4717,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function applySearch(termRaw) {
       const terms = searchTermsFromQuery(termRaw);
       for (const row of document.querySelectorAll('#catalogo .model-row')) {
-        const qty = Number(row.dataset.qty || 0);
-        const showQty = !filterQtyOnly || qty > 0;
+        const cod = row.dataset.cod || '';
+        const showQty = !filterQtyOnly || inSelection(cod);
         const showTerm = rowMatchesSearch(row, terms);
         const showSuperficie = !filterSuperficiesSelected.size || filterSuperficiesSelected.has(row.dataset.textura || '');
         const showPei = !filterPeiUsoSelected.size || filterPeiUsoSelected.has(row.dataset.peiUso || '');
@@ -4606,7 +4730,6 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         }
         const show = showQty && showTerm && showSuperficie && showPei && showPreco;
         row.classList.toggle('hidden', !show);
-        const cod = row.dataset.cod;
         if (cod && !show) {
           document.querySelectorAll('.model-gemeas-detail[data-gemeas-for="' + cod + '"]').forEach((el) => el.classList.add('hidden'));
           document.querySelector('.model-gemeas-trigger[data-cod="' + cod + '"]')?.setAttribute('aria-expanded', 'false');
@@ -4666,8 +4789,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         }).join('') +
       '</tr></table>';
     }
-    function renderPedidoCardRow1({ thumb, titulo, item, qty, m2tot, sub }) {
+    function renderPedidoCardRow1({ thumb, titulo, item, qty, marked, m2tot, sub }) {
       const qtyShort = QTY_UNIT === 'palete' ? 'pl' : 'cx';
+      const qtyMain = qty > 0
+        ? (qty + ' <span>' + esc(qtyShort) + '</span>')
+        : (marked ? '<span class="pedido-qty-fav">♥</span> <span title="Sem caixas">fav</span>' : '—');
       return '<div class="pedido-card-head">' + thumb +
         '<div class="pedido-card-head-main">' +
           '<div class="pedido-card-desc">' +
@@ -4676,7 +4802,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
             '<div class="pedido-card-meta">' + renderItemMetaHtml(item) + '</div>' +
           '</div>' +
           '<div class="pedido-card-qty">' +
-            '<span class="pedido-card-qty-main pedido-card-hero">' + qty + ' <span>' + esc(qtyShort) + '</span></span>' +
+            '<span class="pedido-card-qty-main pedido-card-hero">' + qtyMain + '</span>' +
             '<span class="pedido-card-qty-sub">' + esc(m2tot ? fmtDecimal(m2tot) + ' m²' : '—') + '</span>' +
           '</div>' +
           '<div class="pedido-card-total">' +
@@ -4686,7 +4812,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '</div>' +
       '</div>';
     }
-    function renderPedidoTableRow({ item, qty, img, titulo, m2unit, m2tot, pesoTot, cxTot, cxpl, sub }, thumbs, opts) {
+    function renderPedidoTableRow({ item, qty, marked, img, titulo, m2unit, m2tot, pesoTot, cxTot, cxpl, sub }, thumbs, opts) {
+      const qtyCell = MARKS_ENABLED ? fmtPedidoQtyCell(qty, marked) : String(qty);
       const forPdf = opts && opts.pdf;
       const emb = itemEmbalagem(item);
       const rowMeta = renderItemMetaHtml(item);
@@ -4703,7 +4830,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         return '<tr>' +
           '<td class="pedido-col-foto">' + thumbCell + '</td>' +
           '<td class="pedido-col-modelo"><span class="pedido-row-title">' + esc(titulo) + '</span><div class="pedido-row-meta">' + rowMeta + '</div></td>' +
-          '<td class="pedido-col-qty">' + qty + '</td>' +
+          '<td class="pedido-col-qty">' + qtyCell + '</td>' +
           '<td class="pedido-col-num">' + (m2tot ? fmtDecimal(m2tot) : '—') + '</td>' +
           '<td class="pedido-col-num">' + (cxTot ? fmtDecimal(cxTot, 0) : '—') + '</td>' +
           '<td class="pedido-col-num pedido-col-peso">' + (pesoTot ? fmtKg(pesoTot) : '—') + '</td>' +
@@ -4714,20 +4841,20 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return '<tr>' +
         '<td class="pedido-col-foto">' + thumbCell + '</td>' +
         '<td class="pedido-col-modelo"><span class="pedido-row-title">' + esc(titulo) + '</span><div class="pedido-row-meta">' + rowMeta + '</div></td>' +
-        '<td class="pedido-col-qty">' + qty + '</td>' +
+        '<td class="pedido-col-qty">' + qtyCell + '</td>' +
         '<td class="pedido-col-num">' + (m2unit ? fmtDecimal(m2unit) : '—') + '</td>' +
         '<td class="pedido-col-num">' + (m2tot ? fmtDecimal(m2tot) : '—') + '</td>' +
         '<td class="pedido-col-num pedido-col-preco ' + (hasDescontoAtivo() ? 'has-desc' : '') + '">' + precoCell + '</td>' +
         '<td class="pedido-col-num col-subtotal">' + esc(sub != null ? fmtMoney(sub) : '—') + '</td></tr>';
     }
-    function renderPedidoCard({ item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl, sub }, opts) {
+    function renderPedidoCard({ item, qty, marked, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl, sub }, opts) {
       const forPdf = opts && opts.pdf;
       const thumbs = opts && opts.thumbs;
       const imgSrc = forPdf ? (pdfImgSrcForPrint(img, thumbs, item) || '') : img;
       const thumb = imgSrc
         ? '<img class="pedido-card-thumb" src="' + esc(imgSrc) + '" alt=""' + (forPdf ? ' width="48" height="48"' : ' loading="lazy"') + ' />'
         : '<span class="pedido-card-thumb pedido-card-thumb-empty" aria-hidden="true">—</span>';
-      const row1 = renderPedidoCardRow1({ thumb, titulo, item, qty, m2tot, sub });
+      const row1 = renderPedidoCardRow1({ thumb, titulo, item, qty, marked, m2tot, sub });
       const precoOpts = forPdf ? { pdf: true } : null;
       const cardClass = 'pedido-card' + (forPdf ? ' pedido-card-pdf' : '');
 
@@ -4761,7 +4888,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       let totalValor = 0;
       const bodyRows = [];
       const cardRows = [];
-      for (const { item, qty } of rows) {
+      for (const { item, qty, marked } of rows) {
         const emb = itemEmbalagem(item);
         const m2unit = itemM2Unit(item);
         const m2tot = itemM2Total(item, qty);
@@ -4777,7 +4904,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const imgs = getGaleria(item);
         const img = imgs[0]?.url || '';
         const titulo = itemTitulo(item);
-        const rowData = { item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl: emb.cxpl, sub };
+        const rowData = { item, qty, marked, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl: emb.cxpl, sub };
         bodyRows.push(renderPedidoTableRow(rowData, null, null));
         cardRows.push(renderPedidoCard(rowData));
       }
@@ -4815,6 +4942,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       let totalQty = 0;
       for (const { qty } of rows) totalQty += qty;
       const count = rows.length;
+      const favOnly = rows.filter((r) => r.marked && r.qty <= 0).length;
       const badge = document.getElementById('cart-fab-badge');
       const fab = document.getElementById('cart-fab');
       if (badge) {
@@ -4823,9 +4951,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       }
       if (fab) {
         fab.classList.toggle('has-items', count > 0);
-        fab.setAttribute('aria-label', count
-          ? 'Minha seleção — ' + count + ' modelos, ' + totalQty + ' ' + QTY_LABEL_PL
-          : 'Minha seleção vazia');
+        let label = 'Minha seleção vazia';
+        if (count) {
+          label = 'Minha seleção — ' + count + ' modelos';
+          if (totalQty) label += ', ' + totalQty + ' ' + QTY_LABEL_PL;
+          else if (favOnly) label += ', só favoritos ♥';
+        }
+        fab.setAttribute('aria-label', label);
       }
       document.body.classList.toggle('has-selection', count > 0);
     }
@@ -4913,7 +5045,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const rows = pedidoItens();
       let totalQty = 0, totalM2 = 0, totalPeso = 0, totalCaixas = 0, totalValor = 0;
       const cards = [];
-      for (const { item, qty } of rows) {
+      for (const { item, qty, marked } of rows) {
         const emb = itemEmbalagem(item);
         const m2unit = itemM2Unit(item);
         const m2tot = itemM2Total(item, qty);
@@ -4929,7 +5061,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const imgs = getGaleria(item);
         const img = imgs[0]?.url || '';
         const titulo = itemTitulo(item);
-        const rowData = { item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl: emb.cxpl, sub };
+        const rowData = { item, qty, marked, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl: emb.cxpl, sub };
         cards.push(renderPedidoCard(rowData, { pdf: true, thumbs }));
       }
       const descNote = hasDescontoAtivo() ? '<p class="print-note">' + esc(descontoNoteText()) + ' sobre a tabela.</p>' : '';
@@ -5720,6 +5852,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const btn = e.target.closest('.thumb-btn');
       if (btn) {
         onThumbClick(btn);
+        return;
+      }
+      const markBtn = e.target.closest('.mark-btn');
+      if (markBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleMark(markBtn.dataset.cod);
         return;
       }
       if (e.target.closest('.qty-input')) return;
