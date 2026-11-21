@@ -55,9 +55,30 @@ const OFFICIAL = new Set([
   'cedasa.com.br',
 ]);
 
+/** Match assistido / slug conhecido (VRU=Rochassy, VRU=RU Incopisos, etc.) */
 const URL_OVERRIDES = {
-  '35486': 'https://www.portalgruporocha.com.br/produtos/loft-beg-ext',
-  '35487': 'https://www.portalgruporocha.com.br/produtos/loft-cinza-ext',
+  '35486': {
+    url: 'https://www.portalgruporocha.com.br/produtos/loft-beg-ext',
+    fabricante_grupo: 'Grupo Rocha',
+    siteKey: 'rocha',
+    marca_no_site: 'Rochamaxx',
+    match_metodo: 'override_url:35486',
+  },
+  '35487': {
+    url: 'https://www.portalgruporocha.com.br/produtos/loft-cinza-ext',
+    fabricante_grupo: 'Grupo Rocha',
+    siteKey: 'rocha',
+    marca_no_site: 'Rochamaxx',
+    match_metodo: 'override_url:35487',
+  },
+  '32885': {
+    url: 'https://grupoincopisos.com.br/produto/studio-cotto/',
+    fabricante_grupo: 'Grupo Incopisos',
+    siteKey: 'incopisos',
+    marca_no_site: 'Vivence',
+    descricao_no_site: 'STUDIO COTTO · RU 339019',
+    match_metodo: 'assistido_vru=ru:RU339019',
+  },
 };
 
 function parseCsv(text) {
@@ -267,7 +288,8 @@ function tryRocha(row, rochaSlugs) {
   const candidates = rochaSlugCandidates(row);
   const codeSlug = rochaSlugFromSiahDesc(row.descricao_erp);
   if (codeSlug) candidates.unshift(codeSlug);
-  if (URL_OVERRIDES[row.codigo]) candidates.unshift(URL_OVERRIDES[row.codigo].split('/').pop());
+  const rochaOverride = URL_OVERRIDES[row.codigo];
+  if (rochaOverride?.url) candidates.unshift(rochaOverride.url.split('/').pop());
 
   const desc = stripAccents(row.descricao_erp || '').toLowerCase();
   for (let c of [...new Set(candidates)]) {
@@ -359,7 +381,12 @@ function tryLume(row) {
 
 function tryIncopisos(row) {
   if (!temNomeComercial(row)) return null;
-  const nome = modeloParaBusca(row);
+  const desc = stripAccents(row.descricao_erp || '').toLowerCase();
+  let nome = modeloParaBusca(row);
+  /** VRU no ERP = prefixo RU no site (ex.: Studio Cotto RU 339019) */
+  if (/studio\s*cotto/.test(desc) && /\bvru\b/.test(desc)) {
+    nome = 'studio cotto';
+  }
   const q = [row.formato, nome].filter(Boolean).join(' ').trim();
   const html = curl(`https://grupoincopisos.com.br/?s=${encodeURIComponent(q.split(/\s+/).slice(0, 4).join(' '))}`);
   if (!html) return null;
@@ -409,28 +436,33 @@ async function discoverAndEnrich(row, ctx) {
     descricao_erp: row.descricao_erp,
   };
 
-  if (URL_OVERRIDES[row.codigo]) {
-    const url = canonicalProductUrl(URL_OVERRIDES[row.codigo]);
+  const override = URL_OVERRIDES[row.codigo];
+  if (override?.url) {
+    const url = canonicalProductUrl(override.url);
     const html = curl(url);
     if (!pageIs404(html)) {
       const { ficha, imagens, extracao } = await extractFichaFromOfficialSite({
         url,
-        fabricante_grupo: 'Grupo Rocha',
-        siteKey: 'rocha',
+        fabricante_grupo: override.fabricante_grupo,
+        siteKey: override.siteKey,
         html,
         carmeloBySlug: ctx.carmeloBySlug,
       });
+      const title =
+        override.descricao_no_site ||
+        metaOg(html, 'og:title').replace(/\s*\|\s*Grupo Rocha\s*$/i, '').trim();
       return {
         status: 'confirmado_site',
         consulta,
-        fabricante_grupo: 'Grupo Rocha',
-        marca_no_site: 'Rochamaxx',
-        descricao_no_site: metaOg(html, 'og:title').replace(/\s*\|\s*Grupo Rocha\s*$/i, '').trim(),
+        fabricante_grupo: override.fabricante_grupo,
+        marca_no_site: override.marca_no_site || '',
+        descricao_no_site: title,
         produto_url: url,
-        match_metodo: `override_url:${row.codigo}`,
+        match_metodo: override.match_metodo || `override_url:${row.codigo}`,
         ficha,
         imagens,
         extracao,
+        motivo: imagens.length ? '' : 'galeria_vazia',
       };
     }
   }
