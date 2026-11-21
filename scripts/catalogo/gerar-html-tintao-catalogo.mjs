@@ -487,6 +487,7 @@ function slimItem(item) {
     peso_kg_caixa: item.peso_kg_caixa ?? null,
     peso_kg_palete: item.peso_kg_palete ?? null,
     unidade: item.unidade || '',
+    produto_url: item.produto_url || '',
     imagem_url: item.imagem_url || '',
     imagens: (item.imagens || []).map((img) => ({ url: img.url, tipo: img.tipo || 'principal' })),
   };
@@ -2778,6 +2779,30 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     .lightbox-head h3 { margin: 0; font-size: .95rem; }
     .lightbox-meta { margin: 4px 0 0; font-size: .78rem; color: var(--muted); }
     .lightbox-meta.loading { color: var(--accent); }
+    .lightbox-head-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .lightbox-fabricante-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--accent-bright);
+      background: transparent;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+    .lightbox-fabricante-link:hover {
+      background: var(--accent-muted);
+      border-color: var(--accent-dim);
+    }
+    .lightbox-fabricante-link[hidden] { display: none !important; }
     .lightbox-close {
       background: transparent; border: 1px solid var(--border); color: var(--text);
       border-radius: var(--radius); width: 34px; height: 34px; cursor: pointer; font-size: 1.1rem;
@@ -3224,7 +3249,16 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           <h3 id="lightbox-title">Modelo</h3>
           <p class="lightbox-meta" id="lightbox-meta">Cerâmica</p>
         </div>
-        <button type="button" class="lightbox-close" id="lightbox-close" aria-label="Fechar">×</button>
+        <div class="lightbox-head-actions">
+          <a class="lightbox-fabricante-link" id="lightbox-fabricante-link" href="#" target="_blank" rel="noopener noreferrer" aria-label="Abrir ficha no site do fabricante" title="Ficha no fabricante" hidden>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+              <path d="M2 12h20"/>
+            </svg>
+          </a>
+          <button type="button" class="lightbox-close" id="lightbox-close" aria-label="Fechar">×</button>
+        </div>
       </div>
       <div class="lightbox-stage">
         <button type="button" class="gallery-nav prev" id="gallery-prev" aria-label="Foto anterior">‹</button>
@@ -5597,6 +5631,19 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     const btnNext = document.getElementById('gallery-next');
     let galeriaAtual = [];
     let galeriaIdx = 0;
+    const lbFabricanteLink = document.getElementById('lightbox-fabricante-link');
+
+    function syncLightboxFabricanteLink(url) {
+      if (!lbFabricanteLink) return;
+      const u = String(url || '').trim();
+      if (u && /^https?:\\/\\//i.test(u)) {
+        lbFabricanteLink.href = u;
+        lbFabricanteLink.hidden = false;
+      } else {
+        lbFabricanteLink.hidden = true;
+        lbFabricanteLink.removeAttribute('href');
+      }
+    }
 
     function renderGaleriaIdx(idx) {
       if (!galeriaAtual.length) return;
@@ -5613,7 +5660,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       ).join('');
     }
 
-    function openGaleria(imagens, title, loadingMore) {
+    function openGaleria(imagens, title, loadingMore, produtoUrl) {
       galeriaAtual = imagens.length ? imagens : [];
       galeriaIdx = 0;
       lbTitle.textContent = title || 'Modelo';
@@ -5621,6 +5668,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         lbMeta.textContent = 'A carregar mais fotos…';
         lbMeta.classList.add('loading');
       }
+      syncLightboxFabricanteLink(produtoUrl);
       renderGaleriaIdx(0);
       lb.classList.add('open');
       syncBodyScrollLock();
@@ -5630,6 +5678,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       lb.classList.remove('open', 'has-multi');
       lbImg.src = '';
       galeriaAtual = [];
+      syncLightboxFabricanteLink('');
       syncBodyScrollLock();
     }
 
@@ -5637,7 +5686,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const title = btn.dataset.title || 'Modelo';
       const item = itemsByCode.get(String(btn.dataset.cod || ''));
       const imagens = item ? getGaleria(item) : [];
-      openGaleria(imagens, title, false);
+      let produtoUrl = item?.produto_url || '';
+      if (!produtoUrl && item?.formigres_id) {
+        produtoUrl = 'https://www.formigres.com.br/produto/' + item.formigres_id;
+      }
+      openGaleria(imagens, title, false, produtoUrl);
     }
 
     btnPrev.addEventListener('click', () => renderGaleriaIdx(galeriaIdx - 1));
