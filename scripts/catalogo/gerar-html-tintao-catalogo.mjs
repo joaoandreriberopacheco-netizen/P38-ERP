@@ -138,7 +138,8 @@ const CONFIGS = {
     publicUrl: (process.env.CATALOGO_PAGLEVE_PUBLIC_URL || 'https://catalogo-pague-leve.vercel.app/').replace(/\/?$/, '/'),
     skipSnapshot: true,
     skipApiEnrich: true,
-    skipPdfThumbs: true,
+    skipPdfThumbs: false,
+    pdfThumbsExternal: true,
     skipGemeasDedup: true,
     title: 'Pague Leve — Catálogo de estoque',
     h1: 'Pisos e porcelanatos',
@@ -373,8 +374,8 @@ async function fetchPdfThumbDataUri(url) {
     const buf = Buffer.from(await res.arrayBuffer());
     const thumb = await sharp(buf)
       .rotate()
-      .resize(80, 80, { fit: 'cover' })
-      .jpeg({ quality: 48, mozjpeg: true })
+      .resize(160, 160, { fit: 'cover' })
+      .jpeg({ quality: 82, mozjpeg: true })
       .toBuffer();
     return `data:image/jpeg;base64,${thumb.toString('base64')}`;
   } catch {
@@ -1557,6 +1558,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       qtyUnit,
       qtyLabel,
       qtyLabelPl,
+      pdfThumbsUrl: cfg.pdfThumbsExternal ? 'pdf-thumbs.json' : '',
     },
   }).replace(/</g, '\\u003c');
   const pdfThumbsJson = JSON.stringify(pdfThumbs).replace(/</g, '\\u003c');
@@ -3670,6 +3672,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return (el && el.textContent) || '';
     }
     let pdfThumbsCache = null;
+    let pdfThumbsFetchPromise = null;
     function loadPdfThumbs() {
       if (pdfThumbsCache) return pdfThumbsCache;
       try {
@@ -3678,6 +3681,36 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       } catch { /* ignore */ }
       if (!pdfThumbsCache) pdfThumbsCache = {};
       return pdfThumbsCache;
+    }
+    function pdfThumbsReadyCount(thumbs) {
+      return Object.values(thumbs || {}).filter(isPdfDataUri).length;
+    }
+    async function ensurePdfThumbsCatalogLoaded() {
+      const base = loadPdfThumbs();
+      if (pdfThumbsReadyCount(base) >= 8) return base;
+      const rel = CFG && CFG.pdfThumbsUrl;
+      if (!rel) return base;
+      if (!pdfThumbsFetchPromise) {
+        pdfThumbsFetchPromise = fetch(rel, { cache: 'force-cache' })
+          .then((res) => (res.ok ? res.json() : {}))
+          .catch(() => ({}));
+      }
+      const remote = await pdfThumbsFetchPromise;
+      pdfThumbsCache = { ...base, ...remote };
+      return pdfThumbsCache;
+    }
+    function pdfThumbFromDom(url) {
+      if (!url) return '';
+      const norm = String(url).split('?')[0];
+      const imgs = document.querySelectorAll('.thumb-btn img, .pedido-col-foto img, .pedido-card-thumb, .col-foto img');
+      for (const el of imgs) {
+        const src = el.currentSrc || el.src || '';
+        if (!src || src.startsWith('data:')) continue;
+        if (src === url || src.split('?')[0] === norm) {
+          if (el.complete && el.naturalWidth > 0) return rasterizePdfThumb(el, PDF_THUMB_PX);
+        }
+      }
+      return '';
     }
     function pdfImgSrc(url, thumbs, item) {
       if (!url && item?.imagem_url) url = item.imagem_url;
@@ -3693,9 +3726,12 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const src = pdfImgSrc(url, thumbs, item);
       return isPdfDataUri(src) ? src : '';
     }
-    const PDF_THUMB_PX = 112;
-    const PDF_PRINT_THUMB_PX = 48;
-    const PDF_CANVAS_SCALE = 2;
+    const PDF_THUMB_PX = 160;
+    const PDF_PRINT_THUMB_PX = 64;
+    function pdfCanvasScale() {
+      const w = window.innerWidth || 390;
+      return w >= 900 ? 3 : 2;
+    }
     const PDF_PAGE_WIDTH_PX = 390;
     function pedidoPdfImageUrls() {
       const urls = new Set();
@@ -3717,13 +3753,15 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const h = img.naturalHeight * scale;
       ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
       try {
-        return canvas.toDataURL('image/jpeg', 0.82);
+        return canvas.toDataURL('image/jpeg', 0.9);
       } catch {
         return '';
       }
     }
     async function loadPdfThumbFromUrlAsync(url) {
       if (!url) return '';
+      const fromDom = pdfThumbFromDom(url);
+      if (fromDom) return fromDom;
       const viaImage = () => new Promise((resolve) => {
         const img = new Image();
         img.crossOrigin = 'anonymous';
@@ -4852,7 +4890,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const thumbs = opts && opts.thumbs;
       const imgSrc = forPdf ? (pdfImgSrcForPrint(img, thumbs, item) || '') : img;
       const thumb = imgSrc
-        ? '<img class="pedido-card-thumb" src="' + esc(imgSrc) + '" alt=""' + (forPdf ? ' width="48" height="48"' : ' loading="lazy"') + ' />'
+        ? '<img class="pedido-card-thumb" src="' + esc(imgSrc) + '" alt=""' + (forPdf ? ' width="64" height="64"' : ' loading="lazy"') + ' />'
         : '<span class="pedido-card-thumb pedido-card-thumb-empty" aria-hidden="true">—</span>';
       const row1 = renderPedidoCardRow1({ thumb, titulo, item, qty, marked, m2tot, sub });
       const precoOpts = forPdf ? { pdf: true } : null;
@@ -5133,7 +5171,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '.pedido-card-pdf .pedido-card-total { text-align: right; min-width: 0; }' +
         '.pedido-card-pdf .pedido-card-total .pedido-card-hero { display: block; font-size: 12px; font-weight: 700; color: #b01219; white-space: nowrap; font-variant-numeric: tabular-nums; }' +
         '.pedido-card-pdf .pedido-card-total-label { display: block; font-size: 8px; text-transform: uppercase; letter-spacing: .05em; color: #767676; margin-top: 2px; }' +
-        '.pedido-card-pdf .pedido-card-thumb { width: 48px; height: 48px; border-radius: 6px; object-fit: cover; flex-shrink: 0; background: #fafafa; display: block; }' +
+        '.pedido-card-pdf .pedido-card-thumb { width: 64px; height: 64px; border-radius: 6px; object-fit: cover; flex-shrink: 0; background: #fafafa; display: block; }' +
         '.pedido-card-pdf .pedido-card-thumb-empty { display: flex; align-items: center; justify-content: center; color: #767676; font-size: 11px; }' +
         '.pedido-card-pdf .pedido-card-spec { width: 100%; max-width: 100%; box-sizing: border-box; border-collapse: collapse; margin-top: 10px; padding-top: 10px; border-top: 1px solid ' + rowLine + '; table-layout: fixed; }' +
         '.pedido-card-pdf .pedido-card-spec td { width: 25%; padding: 6px 3px; vertical-align: top; text-align: left; border: 0; overflow: hidden; word-break: break-word; }' +
@@ -5262,16 +5300,17 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           280,
         ) + 48);
         let pageHmm = Math.max(100, pxToMm(heightPx) + 12);
-        if (pageHmm > 1400) pageHmm = 297;
+        const useA4Pages = pageHmm > 320;
         const pageStyle = doc.createElement('style');
-        pageStyle.textContent = printPedidoPrintCss(pageWmm, pageHmm);
+        pageStyle.textContent = printPedidoPrintCss(pageWmm, useA4Pages ? null : pageHmm);
         doc.head.appendChild(pageStyle);
+        const canvasScale = pdfCanvasScale();
         const blob = await win.html2pdf().set({
           margin: 3,
           filename: pedidoPdfFilename(),
-          image: { type: 'jpeg', quality: 0.94 },
+          image: { type: 'jpeg', quality: 0.96 },
           html2canvas: {
-            scale: PDF_CANVAS_SCALE,
+            scale: canvasScale,
             useCORS: true,
             allowTaint: false,
             logging: false,
@@ -5282,7 +5321,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
             backgroundColor: pdfCanvasBackground(PDF_THEME),
             onclone: injectPdfFontClone,
           },
-          jsPDF: { unit: 'mm', format: [pageWmm, pageHmm], orientation: 'portrait' },
+          jsPDF: {
+            unit: 'mm',
+            format: useA4Pages ? 'a4' : [pageWmm, Math.min(pageHmm, 1200)],
+            orientation: 'portrait',
+          },
           pagebreak: { mode: ['css', 'legacy'], avoid: ['.pedido-card-pdf', '.print-footer', '.print-fmt-resumo-wrap'] },
         }).from(measureEl).outputPdf('blob');
         if (!blob || blob.size < 12000) throw new Error('PDF gerado vazio');
@@ -5317,7 +5360,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const prevLabel = btn?.textContent || 'PDF do pedido';
       if (btn) { btn.disabled = true; btn.textContent = 'Gerando PDF…'; }
       try {
-        let thumbs = loadPdfThumbs();
+        let thumbs = await ensurePdfThumbsCatalogLoaded();
         if (btn) btn.textContent = 'A preparar fotos…';
         thumbs = await ensurePedidoPdfThumbs(thumbs);
         const readyUrls = pedidoPdfImageUrls().filter((url) => isPdfDataUri(thumbs[url])).length;
@@ -6001,6 +6044,16 @@ async function mainAsync() {
         produto_url: item.produto_url || '',
       };
     });
+    let pdfThumbs = {};
+    let pdfThumbsInline = {};
+    if (!CFG.skipPdfThumbs) {
+      console.error('A gerar miniaturas leves para PDF…');
+      pdfThumbs = await buildPdfThumbMap(itens);
+      pdfThumbsInline = CFG.pdfThumbsExternal ? {} : pdfThumbs;
+    } else {
+      console.error('A saltar miniaturas PDF embutidas (catálogo grande).');
+    }
+    const thumbsCount = Object.values(pdfThumbs).filter(Boolean).length;
     const antLogoDataUri = loadAntLogoDataUri();
     const brandLogoDataUri = loadBrandLogoDataUri(CFG);
     const pdfFontCss = loadPdfFontFaceCss();
@@ -6009,7 +6062,7 @@ async function mainAsync() {
       itens,
       antLogoDataUri,
       brandLogoDataUri,
-      pdfThumbs: {},
+      pdfThumbs: pdfThumbsInline,
       pdfFontCss,
       cfg: CFG,
     });
@@ -6017,17 +6070,26 @@ async function mainAsync() {
     fs.mkdirSync(path.dirname(OUT_DEPLOY_HTML), { recursive: true });
     fs.writeFileSync(OUT_HTML, html);
     fs.writeFileSync(OUT_DEPLOY_HTML, html);
+    if (!CFG.skipPdfThumbs) {
+      fs.writeFileSync(OUT_PDF_THUMBS, `${JSON.stringify(pdfThumbs)}\n`);
+      if (CFG.pdfThumbsExternal) {
+        const deployThumbs = path.join(path.dirname(OUT_DEPLOY_HTML), 'pdf-thumbs.json');
+        fs.writeFileSync(deployThumbs, `${JSON.stringify(pdfThumbs)}\n`);
+      }
+    }
     const htmlKb = Math.round(fs.statSync(OUT_DEPLOY_HTML).size / 1024);
     console.log(JSON.stringify({
       ok: true,
       modo: MODO,
       itens: itens.length,
       comFoto: itens.filter((i) => i.imagem_url).length,
+      pdfThumbs: thumbsCount,
       htmlKb,
       fonte: jsonPath,
       html: OUT_HTML,
       deployHtml: OUT_DEPLOY_HTML,
       publicUrl: PUBLIC_URL,
+      pdfThumbsFile: OUT_PDF_THUMBS,
     }, null, 2));
     return;
   }
