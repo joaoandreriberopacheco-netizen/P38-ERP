@@ -40,11 +40,11 @@ jobs:
           org=$(trim "$RAW_VERCEL_ORG_ID")
           project=$(trim "$RAW_VERCEL_PROJECT_ID")
           if [ -z "$token" ] || [ -z "$org" ] || [ -z "$project" ]; then
-            echo "::warning::Secrets Vercel do catálogo PagLeve em falta — deploy ignorado."
+            echo "::error::Secrets Vercel do catálogo PagLeve em falta — deploy NÃO publicou o site."
             echo "Configure VERCEL_TOKEN, VERCEL_ORG_ID e VERCEL_CATALOGO_PAGLEVE_PROJECT_ID."
-            echo "Ver deploy/catalogo-pagleve/README.md"
+            echo "Ver deploy/catalogo-pagleve/README.md (secção secrets Vercel)."
             echo "ready=false" >> "$GITHUB_OUTPUT"
-            exit 0
+            exit 1
           fi
           {
             echo "VERCEL_TOKEN=$token"
