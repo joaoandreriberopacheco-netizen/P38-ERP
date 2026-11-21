@@ -37,6 +37,21 @@
           "id": "compras.tab-sugestoes",
           "type": "presence",
           "label": "Aba sugestões"
+        },
+        {
+          "id": "compras.tab-cotacoes",
+          "type": "click",
+          "label": "Aba cotações"
+        },
+        {
+          "id": "cotacoes.hub-scroll",
+          "type": "presence",
+          "label": "Lista cotações (scroll)"
+        },
+        {
+          "id": "cotacoes.busca",
+          "type": "presence",
+          "label": "Busca cotações"
         }
       ]
     },
