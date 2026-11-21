@@ -7,8 +7,9 @@ import { resolveFormatoPagLeve } from './pagleveFormatoOcr.mjs';
 
 const TIPO_RE = /^(PISO|REV\.?|REVESTIMENTO|PORCELANATO)\b/i;
 
+/** Não incluir PLUS/LUX — fazem parte do nome (ex. Albury Plus vs Albury Lux). */
 const MODELO_NOISE_RE =
-  /\b(A|PEI\s*\w*|LD|LC|JU|LA|LB|LE|LU|ESM|HD|MRE|MRU|EXT|AD|PE|PLUS|LUX|PRIME|ROCHAPRIME|ROCHAMAXX?|G\d+)\b/gi;
+  /\b(A|PEI\s*\w*|LD|LC|JU|LA|LB|LE|LU|ESM|HD|MRE|MRU|EXT|AD|PE|PRIME|ROCHAPRIME|ROCHAMAXX?|G\d+)\b/gi;
 
 const FABRICA_PREFIX_RE = /\b(PISO|REV\.?|REVESTIMENTO|PORCELANATO|SEMI\s*GRES?|GRES)\b/gi;
 
@@ -143,6 +144,7 @@ export function modeloComercialCatalogo(codigo, descricao = '', modeloField = ''
   if (/^asphalt\b/.test(low)) return 'Asphalt';
 
   let result = titleCaseModelo(modelo);
+  if (/^Albury Lux Plus$/i.test(result)) result = 'Albury Lux';
   const refCat = referenciaRochaprimeCatalogo(desc);
 
   if (refCat && ROCHA_SIAH_CODE_RE.test(String(result).replace(/\s/g, ''))) return refCat;
