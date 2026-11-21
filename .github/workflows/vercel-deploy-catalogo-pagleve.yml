@@ -39,10 +39,19 @@ jobs:
           token=$(trim "$RAW_VERCEL_TOKEN")
           org=$(trim "$RAW_VERCEL_ORG_ID")
           project=$(trim "$RAW_VERCEL_PROJECT_ID")
-          if [ -z "$token" ] || [ -z "$org" ] || [ -z "$project" ]; then
-            echo "::error::Secrets Vercel do catálogo PagLeve em falta — deploy NÃO publicou o site."
-            echo "Configure VERCEL_TOKEN, VERCEL_ORG_ID e VERCEL_CATALOGO_PAGLEVE_PROJECT_ID."
+          if [ -z "$project" ] && [ -f deploy/catalogo-pagleve/vercel.project-id ]; then
+            project=$(trim "$(cat deploy/catalogo-pagleve/vercel.project-id")")
+            echo "::notice::VERCEL_CATALOGO_PAGLEVE_PROJECT_ID em falta — a usar deploy/catalogo-pagleve/vercel.project-id"
+          fi
+          if [ -z "$token" ] || [ -z "$org" ]; then
+            echo "::error::VERCEL_TOKEN ou VERCEL_ORG_ID em falta — deploy NÃO publicou o site."
             echo "Ver deploy/catalogo-pagleve/README.md (secção secrets Vercel)."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+          if [ -z "$project" ]; then
+            echo "::error::Project ID do catálogo PagLeve em falta (secret ou vercel.project-id)."
+            echo "Configure VERCEL_CATALOGO_PAGLEVE_PROJECT_ID ou atualize deploy/catalogo-pagleve/vercel.project-id"
             echo "ready=false" >> "$GITHUB_OUTPUT"
             exit 1
           fi
@@ -71,5 +80,5 @@ jobs:
         if: steps.vercel_secrets.outputs.ready == 'true'
         working-directory: deploy/catalogo-pagleve
         run: |
-          url=$(npx --yes vercel@latest deploy --prod --yes --token "$VERCEL_TOKEN")
+          url=$(npx --yes vercel@latest deploy --prod --yes --token "$VERCEL_TOKEN" --project "$VERCEL_PROJECT_ID")
           echo "Deploy URL: $url"
