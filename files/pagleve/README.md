@@ -7,6 +7,7 @@ Arquivos gerados na análise **formato a formato**, com fabricante só quando h�
 | `raio-x-pagleve-site-verificado.xlsx` | Planilha principal (328 itens) — abrir no Excel |
 | `raio-x-pagleve-site-verificado.csv` | Mesma planilha em CSV |
 | `pagleve-fabricantes-sites-oficiais.md` | Sites oficiais e regras de busca |
+| `pagleve-precos-sibling-match.md` | **Planejado:** preços por “irmão” (formato → acabamento → linha) quando o Excel não tem preço |
 | `pagleve-orfaos-descricao-por-formato.md` | Órfãos com descrição ERP para pesquisa |
 
 Atualizar match no site (ordem por fabricante que o João indicou):
