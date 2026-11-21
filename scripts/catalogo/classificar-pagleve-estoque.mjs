@@ -22,6 +22,34 @@ const IN_CSV =
     ? path.join(ROOT, 'files', 'pagleve', 'pagleve-base-cruzada.csv')
     : path.join(ROOT, 'files', 'pagleve', 'raio-x-pagleve-site-verificado.csv'));
 const OUT_DIR = path.join(ROOT, 'files', 'pagleve', 'classificacao');
+const RAIO_X_VERIFICADO_CSV = path.join(ROOT, 'files', 'pagleve', 'raio-x-pagleve-site-verificado.csv');
+
+/** Base cruzada muitas vezes não replica imagens do portal Rocha — usa raio-x verificado. */
+function loadRaioXImagemOverlay() {
+  if (!fs.existsSync(RAIO_X_VERIFICADO_CSV)) return new Map();
+  const byCodigo = new Map();
+  for (const r of loadCsv(RAIO_X_VERIFICADO_CSV)) {
+    const codigo = String(r.codigo || '').trim();
+    if (!codigo) continue;
+    byCodigo.set(codigo, {
+      imagem_url: String(r.imagem_url || '').trim(),
+      imagens_json: String(r.imagens_json || '').trim(),
+    });
+  }
+  return byCodigo;
+}
+
+function overlayImagensRaioX(row, imagemOverlay) {
+  if (!imagemOverlay) return row;
+  const next = { ...row };
+  if (!String(next.imagem_url || '').trim() && imagemOverlay.imagem_url) {
+    next.imagem_url = imagemOverlay.imagem_url;
+  }
+  if (!String(next.imagens_json || '').trim() && imagemOverlay.imagens_json) {
+    next.imagens_json = imagemOverlay.imagens_json;
+  }
+  return next;
+}
 
 function parseCsvLine(line) {
   const out = [];
@@ -236,8 +264,12 @@ function main() {
     process.exit(1);
   }
   const rows = loadCsv(IN_CSV);
+  const usarOverlayImagens = String(IN_CSV).includes('pagleve-base-cruzada');
+  const imagemOverlayPorCodigo = usarOverlayImagens ? loadRaioXImagemOverlay() : new Map();
   const precosSiah = loadPrecosSiah();
-  const items = rows.map((row) => {
+  const items = rows.map((rowIn) => {
+    const codigo = String(rowIn.codigo || '').trim();
+    const row = overlayImagensRaioX(rowIn, imagemOverlayPorCodigo.get(codigo));
     const descricao = row.descricao_erp || row.modelo || row.codigo;
     row.formato = resolveFormatoPagLeve(descricao, row.formato) || row.formato;
     const siteHints = parseTipoAcabFromSite(row.descricao_no_site);
