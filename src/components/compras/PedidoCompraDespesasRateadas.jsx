@@ -4,12 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { COMPRAS_FIELD_H12, COMPRAS_SEP } from '@/lib/comprasP38Theme';
-import {
-  newDespesaRateadaRow,
-  normalizeDespesasRateadas,
-  somaDespesasRateadas,
-} from '@/lib/pedidoCompraDespesasRateadas';
+import { COMPRAS_FIELD_H12 } from '@/lib/comprasP38Theme';
+import { newDespesaRateadaRow, normalizeDespesasRateadas } from '@/lib/pedidoCompraDespesasRateadas';
 
 const parseValorInput = (raw) => {
   const s = String(raw ?? '').trim().replace(/\./g, '').replace(',', '.');
@@ -20,13 +16,10 @@ const parseValorInput = (raw) => {
 export default function PedidoCompraDespesasRateadas({
   despesas = [],
   onChange,
-  formatCurrency,
-  valorItensFinanceiro = 0,
   isLocked = false,
   className,
 }) {
   const rows = useMemo(() => normalizeDespesasRateadas(despesas), [despesas]);
-  const totalDespesas = somaDespesasRateadas(rows);
 
   const emit = (nextRows) => {
     onChange?.(normalizeDespesasRateadas(nextRows));
@@ -38,34 +31,11 @@ export default function PedidoCompraDespesasRateadas({
 
   return (
     <section
-      className={cn('bg-card px-4 py-4 desktop-layout:px-6', COMPRAS_SEP, className)}
+      className={cn('bg-card px-4 py-4 desktop-layout:px-6', className)}
       data-pulse-sensor="pedido-compra-despesas-rateadas"
     >
-      <div className="flex flex-wrap items-end justify-between gap-3 mb-3">
-        <div>
-          <h3 className="text-sm font-medium text-foreground">Despesas rateadas</h3>
-          <p className="text-xs text-muted-foreground mt-0.5 max-w-xl">
-            Frete ou outras cobranças do fornecedor sobre os produtos. O valor é dividido entre
-            os itens na proporção do valor financeiro de cada linha.
-          </p>
-        </div>
-        <div className="text-right text-xs text-muted-foreground tabular-nums">
-          <span className="block">
-            Base produtos:{' '}
-            <span className="text-foreground font-medium">{formatCurrency(valorItensFinanceiro)}</span>
-          </span>
-          <span className="block">
-            Total despesas:{' '}
-            <span className="text-foreground font-medium">{formatCurrency(totalDespesas)}</span>
-          </span>
-        </div>
-      </div>
-
       <div className="space-y-2">
-        {rows.length === 0 ? (
-          <p className="text-xs text-muted-foreground py-2">Nenhuma despesa adicional cadastrada.</p>
-        ) : (
-          rows.map((row) => (
+        {rows.map((row) => (
             <div
               key={row.id}
               className="grid grid-cols-12 gap-2 items-center rounded-xl border border-border/50 bg-muted/20 px-3 py-2"
@@ -109,8 +79,7 @@ export default function PedidoCompraDespesasRateadas({
                 </Button>
               </div>
             </div>
-          ))
-        )}
+          ))}
       </div>
 
       {!isLocked && (

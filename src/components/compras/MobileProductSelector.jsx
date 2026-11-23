@@ -98,6 +98,7 @@ export default function MobileProductSelector({
   onOpenImporter,
   onAddItemsBatch,
   despesasRateadasPanel = null,
+  onSelectorViewChange,
 }) {
   const [view, setView] = useState('menu'); // 'menu' | 'discount-entry' | 'catalog' | 'cart' | 'edit' | 'despesas-rateadas'
   const [search, setSearch] = useState('');
@@ -111,6 +112,11 @@ export default function MobileProductSelector({
   const [showNovoProduto, setShowNovoProduto] = useState(false);
   const [unitSelector, setUnitSelector] = useState({ open: false, product: null });
   const [editUnitSelector, setEditUnitSelector] = useState({ open: false });
+
+  useEffect(() => {
+    onSelectorViewChange?.(view);
+  }, [view, onSelectorViewChange]);
+
   // Desconto global sobre preços de compra
   const [descontoGlobalPct, setDescontoGlobalPct] = useState(0);
   const [descontoGlobalPctInput, setDescontoGlobalPctInput] = useState('');
@@ -630,15 +636,16 @@ export default function MobileProductSelector({
   }
 
   if (view === 'despesas-rateadas') {
+    // Painel in-flow (sem fixed): evita ficar atrás do FAB do formulário (z-[999]).
     return (
-      <div className={SELECTOR_PANEL_CLASS}>
+      <div className="relative z-[1] flex h-full min-h-0 flex-col bg-card isolate">
         <div className="flex items-center p-4 border-b border-border/15 dark:border-white/10 flex-shrink-0 gap-2">
           <Button variant="ghost" size="icon" onClick={() => setView('menu')} className="h-10 w-10">
             <ChevronLeft className="w-5 h-5" />
           </Button>
           <div className="ml-2 font-medium flex-1 text-foreground">Despesas rateadas</div>
         </div>
-        <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="relative z-[1] flex-1 min-h-0 overflow-y-auto overscroll-y-contain pb-4">
           {despesasRateadasPanel || (
             <p className="p-4 text-sm text-muted-foreground">Nenhum painel de despesas configurado.</p>
           )}

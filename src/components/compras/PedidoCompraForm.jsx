@@ -213,6 +213,10 @@ export default function PedidoCompraForm({
   const [diferencaDialogCtx, setDiferencaDialogCtx] = useState(null);
   const [pedidoLogistica, setPedidoLogistica] = useState(pedido);
   const [abaPedidoDesktop, setAbaPedidoDesktop] = useState(abaInicial);
+  /** Sub-tela do seletor de itens (menu, despesas-rateadas, …) — FAB fica oculto fora do menu. */
+  const [itensSelectorView, setItensSelectorView] = useState('menu');
+  const mostrarFabPedidoCompra =
+    abaPedidoDesktop !== 'itens' || itensSelectorView === 'menu';
 
   const pedidoCompraTourSteps = useMemo(
     () => buildPedidoCompraFormTour({ setAba: setAbaPedidoDesktop }),
@@ -1867,7 +1871,7 @@ export default function PedidoCompraForm({
             </TabsContent>
 
             {/* ABA: ITENS — usa o mesmo seletor estilo PDV */}
-            <TabsContent value="itens" className="mt-0 h-full -mx-6 -mt-0 flex flex-col min-h-0" data-tour="pedido-tab-itens">
+            <TabsContent value="itens" className="mt-0 h-full -mx-6 -mt-0 flex flex-col min-h-0 relative" data-tour="pedido-tab-itens">
               <div className="flex-1 min-h-0">
                 <MobileProductSelector
                   items={formData.itens}
@@ -1884,12 +1888,11 @@ export default function PedidoCompraForm({
                     setProdutos(prev => [...prev, novoProduto]);
                   }}
                   onOpenImporter={() => setIsImportadorPedidoOpen(true)}
+                  onSelectorViewChange={setItensSelectorView}
                   despesasRateadasPanel={
                     <PedidoCompraDespesasRateadas
                       despesas={formData.despesas_rateadas}
                       onChange={handleDespesasRateadasChange}
-                      formatCurrency={formatCurrency}
-                      valorItensFinanceiro={valorItensFinanceiroRateio}
                       isLocked={isItensLocked}
                       className="border-0"
                     />
@@ -2119,8 +2122,8 @@ export default function PedidoCompraForm({
 
 
 
-       {/* FAB multi-role com Bússola */}
-       {!isLocked && (
+       {/* FAB multi-role com Bússola — oculto na sub-tela despesas rateadas (itens) */}
+       {!isLocked && mostrarFabPedidoCompra && (
          <PedidoCompraFAB 
            pedido={{ ...formData, id: pedido?.id, numero: pedido?.numero, valor_itens: valorItens, valor_total: valorTotal }}
            onSave={handleInitiateSave}
@@ -2133,15 +2136,15 @@ export default function PedidoCompraForm({
            onSolicitarEdicao={() => setIsSolicitarEdicaoOpen(true)}
          />
        )}
-       {isLocked && (
+       {isLocked && mostrarFabPedidoCompra && (
          <PedidoCompraFAB 
            pedido={{ ...formData, id: pedido?.id, numero: pedido?.numero, valor_itens: valorItens, valor_total: valorTotal }}
            onSave={handleInitiateSave}
            isSaving={isSaving}
            mostrarSolicitarEdicao={podeSolicitarCorrecao}
            onSolicitarEdicao={() => setIsSolicitarEdicaoOpen(true)}
-           />
-           )}
+         />
+       )}
 
            <AnexosPedidoCompra
          pedidoId={pedido?.id}
