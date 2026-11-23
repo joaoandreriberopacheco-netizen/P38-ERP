@@ -2,6 +2,7 @@ import React, { useMemo, useRef, useEffect, useState, useCallback } from 'react'
 import { Plus, Trash2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
@@ -21,6 +22,40 @@ const parseValorInput = (raw) => {
 
 const valorToDisplay = (valor) =>
   valor > 0 ? String(valor).replace('.', ',') : '';
+
+function DespesaDescricaoInput({ value, disabled, onChange }) {
+  const ref = useRef(null);
+
+  const syncHeight = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, []);
+
+  useEffect(() => {
+    syncHeight();
+  }, [value, syncHeight]);
+
+  return (
+    <Textarea
+      ref={ref}
+      rows={1}
+      value={value}
+      onChange={(e) => {
+        onChange(e.target.value);
+        syncHeight();
+      }}
+      disabled={disabled}
+      placeholder="Ex.: Frete, taxa..."
+      className={cn(
+        COMPRAS_FIELD_H12,
+        'min-h-10 max-h-40 w-full min-w-0 resize-none overflow-hidden py-2 leading-snug',
+        '!min-h-10',
+      )}
+    />
+  );
+}
 
 function DespesaValorInput({ rowId, valor, disabled, onCommit }) {
   const [text, setText] = useState(() => valorToDisplay(valor));
@@ -138,23 +173,21 @@ export default function PedidoCompraDespesasRateadas({
               key={row.id}
               ref={index === rows.length - 1 ? lastRowRef : null}
               className={cn(
-                'relative z-10 flex items-center gap-2 rounded-xl border px-3 py-2',
+                'relative z-10 flex w-full min-w-0 items-start gap-2 rounded-xl border px-3 py-2',
                 pronta
                   ? 'border-emerald-500/35 bg-emerald-500/5'
                   : 'border-border/50 bg-muted/20',
               )}
             >
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 self-stretch">
                 <Label className="sr-only">Descrição</Label>
-                <Input
-                  className={cn(COMPRAS_FIELD_H12, 'h-10 w-full min-w-0')}
-                  placeholder="Ex.: Frete, taxa..."
+                <DespesaDescricaoInput
                   value={row.descricao}
-                  onChange={(e) => handleField(row.id, { descricao: e.target.value })}
                   disabled={isLocked}
+                  onChange={(descricao) => handleField(row.id, { descricao })}
                 />
               </div>
-              <div className="w-[5.75rem] shrink-0 sm:w-28">
+              <div className="flex w-[5.75rem] shrink-0 flex-col gap-1 sm:w-28">
                 <Label className="sr-only">Valor</Label>
                 <DespesaValorInput
                   rowId={row.id}
@@ -163,7 +196,7 @@ export default function PedidoCompraDespesasRateadas({
                   onCommit={(valor) => handleField(row.id, { valor })}
                 />
               </div>
-              <div className="flex shrink-0 items-center gap-0.5">
+              <div className="flex shrink-0 items-start gap-0.5 pt-0.5">
                 {!isLocked && (
                   <Button
                     type="button"
