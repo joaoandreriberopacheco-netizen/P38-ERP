@@ -1,14 +1,16 @@
-import React, { useMemo, useRef, useEffect } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import React, { useMemo, useRef, useEffect, useState, useCallback } from 'react';
+import { Plus, Trash2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { COMPRAS_FIELD_H12 } from '@/lib/comprasP38Theme';
 import {
   newDespesaRateadaRow,
   normalizeDespesasRateadasForEdit,
   somaDespesasRateadas,
+  despesaRateadaProntaParaPersistir,
 } from '@/lib/pedidoCompraDespesasRateadas';
 
 const parseValorInput = (raw) => {
@@ -16,6 +18,41 @@ const parseValorInput = (raw) => {
   const n = Number(s);
   return Number.isFinite(n) ? Math.max(0, n) : 0;
 };
+
+const valorToDisplay = (valor) =>
+  valor > 0 ? String(valor).replace('.', ',') : '';
+
+function DespesaValorInput({ rowId, valor, disabled, onCommit }) {
+  const [text, setText] = useState(() => valorToDisplay(valor));
+
+  useEffect(() => {
+    setText(valorToDisplay(valor));
+  }, [rowId]);
+
+  const flush = useCallback(
+    (nextText) => {
+      onCommit(parseValorInput(nextText));
+    },
+    [onCommit],
+  );
+
+  return (
+    <Input
+      type="text"
+      inputMode="decimal"
+      className={cn(COMPRAS_FIELD_H12, 'h-10 w-full tabular-nums text-right')}
+      placeholder="0,00"
+      value={text}
+      onChange={(e) => {
+        const next = e.target.value;
+        setText(next);
+        flush(next);
+      }}
+      onBlur={() => flush(text)}
+      disabled={disabled}
+    />
+  );
+}
 
 export default function PedidoCompraDespesasRateadas({
   despesas = [],
@@ -26,6 +63,7 @@ export default function PedidoCompraDespesasRateadas({
   isLocked = false,
   className,
 }) {
+  const { toast } = useToast();
   const rows = useMemo(() => normalizeDespesasRateadasForEdit(despesas), [despesas]);
   const totalDespesas = somaDespesasRateadas(rows);
   const fmt = (n) => (typeof formatCurrency === 'function' ? formatCurrency(n) : String(n ?? 0));
@@ -45,6 +83,23 @@ export default function PedidoCompraDespesasRateadas({
 
   const handleField = (id, patch) => {
     emit(rows.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+  };
+
+  const handleConfirmRow = (row) => {
+    if (!despesaRateadaProntaParaPersistir(row)) {
+      toast({
+        title: 'Preencha a despesa',
+        description: 'Informe a descrição ou o valor antes de guardar a linha.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    emit(rows);
+    toast({
+      title: 'Despesa guardada',
+      description: 'A linha ficará no pedido quando você salvar o pedido.',
+      className: 'bg-emerald-50 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100',
+    });
   };
 
   return (
@@ -76,38 +131,57 @@ export default function PedidoCompraDespesasRateadas({
       </div>
 
       <div className="relative z-10 space-y-2">
-        {rows.map((row, index) => (
+        {rows.map((row, index) => {
+          const pronta = despesaRateadaProntaParaPersistir(row);
+          return (
             <div
               key={row.id}
               ref={index === rows.length - 1 ? lastRowRef : null}
-              className="relative z-10 grid grid-cols-12 gap-2 items-center rounded-xl border border-border/50 bg-muted/20 px-3 py-2"
+              className={cn(
+                'relative z-10 flex items-center gap-2 rounded-xl border px-3 py-2',
+                pronta
+                  ? 'border-emerald-500/35 bg-emerald-500/5'
+                  : 'border-border/50 bg-muted/20',
+              )}
             >
-              <div className="col-span-12 sm:col-span-7">
+              <div className="min-w-0 flex-1">
                 <Label className="sr-only">Descrição</Label>
                 <Input
-                  className={cn(COMPRAS_FIELD_H12, 'h-10')}
-                  placeholder="Ex.: Frete, taxa, seguro..."
+                  className={cn(COMPRAS_FIELD_H12, 'h-10 w-full min-w-0')}
+                  placeholder="Ex.: Frete, taxa..."
                   value={row.descricao}
                   onChange={(e) => handleField(row.id, { descricao: e.target.value })}
                   disabled={isLocked}
                 />
               </div>
-              <div className="col-span-10 sm:col-span-4">
+              <div className="w-[5.75rem] shrink-0 sm:w-28">
                 <Label className="sr-only">Valor</Label>
-                <Input
-                  type="text"
-                  inputMode="decimal"
-                  className={cn(COMPRAS_FIELD_H12, 'h-10 tabular-nums text-right')}
-                  placeholder="0,00"
-                  value={row.valor > 0 ? String(row.valor).replace('.', ',') : ''}
-                  onChange={(e) => {
-                    const valor = parseValorInput(e.target.value);
-                    handleField(row.id, { valor });
-                  }}
+                <DespesaValorInput
+                  rowId={row.id}
+                  valor={row.valor}
                   disabled={isLocked}
+                  onCommit={(valor) => handleField(row.id, { valor })}
                 />
               </div>
-              <div className="col-span-2 sm:col-span-1 flex justify-end">
+              <div className="flex shrink-0 items-center gap-0.5">
+                {!isLocked && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      'h-9 w-9',
+                      pronta
+                        ? 'text-emerald-600 hover:text-emerald-800'
+                        : 'text-muted-foreground',
+                    )}
+                    onClick={() => handleConfirmRow(row)}
+                    aria-label="Guardar despesa na lista"
+                    title="Guardar linha"
+                  >
+                    <Check className="w-4 h-4" />
+                  </Button>
+                )}
                 <Button
                   type="button"
                   variant="ghost"
@@ -121,7 +195,8 @@ export default function PedidoCompraDespesasRateadas({
                 </Button>
               </div>
             </div>
-          ))}
+          );
+        })}
       </div>
 
       {!isLocked && (

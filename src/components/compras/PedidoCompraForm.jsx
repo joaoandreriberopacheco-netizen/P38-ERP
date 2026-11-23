@@ -301,7 +301,15 @@ export default function PedidoCompraForm({
       if (!cancelled && synced) {
         const [atualizado] = await base44.entities.PedidoCompra.filter({ id: pedido.id });
         if (atualizado) {
-          setFormData((prev) => ({ ...prev, ...atualizado }));
+          setFormData((prev) => ({
+            ...prev,
+            ...atualizado,
+            despesas_rateadas: normalizeDespesasRateadasForEdit(
+              prev.despesas_rateadas?.length
+                ? prev.despesas_rateadas
+                : atualizado.despesas_rateadas ?? atualizado?.dados?.despesas_rateadas,
+            ),
+          }));
           setPedidoLogistica((prev) => ({ ...(prev || {}), ...atualizado }));
         }
       }
@@ -487,20 +495,22 @@ export default function PedidoCompraForm({
   }, [produtos]);
 
   const aplicarDespesasItens = useCallback(
-    (itens, despesas = formData.despesas_rateadas) =>
-      aplicarRateioDespesasNosItens(itens, despesas, produtosById),
-    [formData.despesas_rateadas, produtosById],
+    (itens, despesas) =>
+      aplicarRateioDespesasNosItens(itens, despesas ?? [], produtosById),
+    [produtosById],
   );
 
   const handleDespesasRateadasChange = useCallback(
     (despesas) => {
-      const norm = normalizeDespesasRateadasForEdit(despesas);
-      const itens = aplicarDespesasItens(formData.itens, normalizeDespesasRateadas(norm));
-      const newData = { ...formData, despesas_rateadas: norm, itens };
-      saveToHistory(newData);
-      setFormData(newData);
+      setFormData((prev) => {
+        const norm = normalizeDespesasRateadasForEdit(despesas);
+        const itens = aplicarDespesasItens(prev.itens, normalizeDespesasRateadas(norm));
+        const newData = { ...prev, despesas_rateadas: norm, itens };
+        saveToHistory(newData);
+        return newData;
+      });
     },
-    [aplicarDespesasItens, formData],
+    [aplicarDespesasItens],
   );
 
   const valorItensFinanceiroRateio = useMemo(() => {
@@ -713,8 +723,8 @@ export default function PedidoCompraForm({
     item.total = calcTotalItemCompraPedido(item);
     Object.assign(item, normalizeItemToCanonicalFactorOne(item, 'custo'));
 
-    const itens = aplicarDespesasItens(newItems);
-    const newData = { ...formData, itens };
+    const itens = aplicarDespesasItens(newItems, formData.despesas_rateadas);
+    const newData = { ...formData, itens, despesas_rateadas: formData.despesas_rateadas ?? [] };
     saveToHistory(newData);
     setFormData(newData);
   };
@@ -772,8 +782,8 @@ export default function PedidoCompraForm({
         newItem = calculateItemTotals(newItem);
     }
 
-    const itens = aplicarDespesasItens([...formData.itens, newItem]);
-    const newData = { ...formData, itens };
+    const itens = aplicarDespesasItens([...formData.itens, newItem], formData.despesas_rateadas);
+    const newData = { ...formData, itens, despesas_rateadas: formData.despesas_rateadas ?? [] };
     saveToHistory(newData);
     setFormData(newData);
   };
@@ -829,8 +839,8 @@ export default function PedidoCompraForm({
 
     const merged = mergeLoteIntoItems(formData.itens, incoming, buildFromProduct, catalog);
     const recalc = merged.map((item) => calculateItemTotals(item));
-    const itens = aplicarDespesasItens(recalc);
-    const newData = { ...formData, itens };
+    const itens = aplicarDespesasItens(recalc, formData.despesas_rateadas);
+    const newData = { ...formData, itens, despesas_rateadas: formData.despesas_rateadas ?? [] };
     saveToHistory(newData);
     setFormData(newData);
   };
@@ -978,8 +988,8 @@ export default function PedidoCompraForm({
   const handleRemoveItem = (index) => {
     const newItems = [...formData.itens];
     newItems.splice(index, 1);
-    const itens = aplicarDespesasItens(newItems);
-    const newData = { ...formData, itens };
+    const itens = aplicarDespesasItens(newItems, formData.despesas_rateadas);
+    const newData = { ...formData, itens, despesas_rateadas: formData.despesas_rateadas ?? [] };
     saveToHistory(newData);
     setFormData(newData);
   };

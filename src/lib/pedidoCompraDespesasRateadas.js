@@ -31,11 +31,16 @@ export function normalizeDespesasRateadasForEdit(raw) {
   }));
 }
 
+/** Linha com dados mínimos para entrar no pedido (gravar ou ratear). */
+export function despesaRateadaProntaParaPersistir(row) {
+  const descricao = String(row?.descricao || '').trim();
+  const valor = roundToTwoDecimals(Math.max(0, Number(row?.valor) || 0));
+  return Boolean(descricao || valor > 0);
+}
+
 /** Lista para gravar no pedido — omite linhas sem descrição nem valor. */
 export function normalizeDespesasRateadas(raw) {
-  return normalizeDespesasRateadasForEdit(raw).filter(
-    (row) => row.descricao || row.valor > 0,
-  );
+  return normalizeDespesasRateadasForEdit(raw).filter(despesaRateadaProntaParaPersistir);
 }
 
 export function somaDespesasRateadas(despesas) {
