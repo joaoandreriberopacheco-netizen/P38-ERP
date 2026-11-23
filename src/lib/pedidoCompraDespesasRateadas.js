@@ -62,6 +62,27 @@ function resolveQuantidadeBase(item = {}) {
   return q * f;
 }
 
+/**
+ * Antes de gravar em `pedido_compra_item`: incorpora o rateio de despesas no custo
+ * da mercadoria (`custo_unitario_fator1` líquido), em vez de deixar só em `outros`.
+ * Ex.: R$ 10 + 5% rateado → custo líquido persistido R$ 10,50 na unidade fator-1.
+ */
+export function incorporarDespesasRateadasNoCustoMercadoriaParaPersist(item = {}) {
+  const rateado = Math.max(0, Number(item?.despesa_rateada_outros_fator1) || 0);
+  if (rateado <= 0) return item;
+
+  const manualOutros = resolveOutrosUnitarioManual(item);
+  const custoBruto = Number(item?.custo_unitario) || 0;
+
+  return {
+    ...item,
+    custo_unitario: roundToTwoDecimals(custoBruto + rateado),
+    outros_unitario_fator1: round6(manualOutros),
+    custo_outros_unitario: round6(manualOutros),
+    despesa_rateada_outros_fator1: 0,
+  };
+}
+
 /** Outros por unidade fator-1 sem a parte rateada (manual). */
 export function resolveOutrosUnitarioManual(item = {}) {
   if (item.outros_unitario_fator1_manual != null) {

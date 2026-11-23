@@ -92,6 +92,7 @@ import {
   normalizeDespesasRateadas,
   normalizeDespesasRateadasForEdit,
   acrescimoDespesasRateadasNoTotalPedido,
+  incorporarDespesasRateadasNoCustoMercadoriaParaPersist,
 } from '@/lib/pedidoCompraDespesasRateadas';
 import {
   COMPRAS_BTN_CITRUS,
@@ -1319,34 +1320,37 @@ export default function PedidoCompraForm({
             const synced = syncItemDescontoApresentacao(
               produtoLinha ? prepareLinhaPedidoCompraParaTotais(it, produtoLinha) : it,
             );
-            const totalLinha = calcTotalItemCompraPedido(synced);
+            const syncedPersist = incorporarDespesasRateadasNoCustoMercadoriaParaPersist(synced);
+            const totalLinha = calcTotalItemCompraPedido(syncedPersist);
             const normalizado = normalizePedidoCompraItemCustoLiquidoParaPersist({
-              ...synced,
-              custo_unitario_fator1: Number(synced?.custo_unitario) || 0,
-              quantidade_comercial: Number(synced?.quantidade) || 0,
-              quantidade_base: Number(synced?.quantidade_base) || 0,
-              fator_aplicado: Number(synced?.fator_conversao) || 1,
-              frete_unitario_fator1: Number(synced?.custo_frete_unitario) || 0,
-              outros_unitario_fator1: Number(synced?.custo_outros_unitario) || 0,
-              desconto_unitario_fator1: Number(synced?.valor_desconto_item ?? synced?.desconto_unitario) || 0,
-              total: Number(synced?.total) > 0 ? Number(synced.total) : totalLinha,
+              ...syncedPersist,
+              custo_unitario_fator1: Number(syncedPersist?.custo_unitario) || 0,
+              quantidade_comercial: Number(syncedPersist?.quantidade) || 0,
+              quantidade_base: Number(syncedPersist?.quantidade_base) || 0,
+              fator_aplicado: Number(syncedPersist?.fator_conversao) || 1,
+              frete_unitario_fator1: Number(syncedPersist?.custo_frete_unitario) || 0,
+              outros_unitario_fator1: Number(syncedPersist?.custo_outros_unitario) || 0,
+              desconto_unitario_fator1:
+                Number(syncedPersist?.valor_desconto_item ?? syncedPersist?.desconto_unitario) || 0,
+              total: Number(syncedPersist?.total) > 0 ? Number(syncedPersist.total) : totalLinha,
             });
             return {
-              id: synced?.pedido_compra_item_id || synced?.id || undefined,
-              produto_id: synced?.produto_id || '',
-              produto_unidade_id: synced?.produto_unidade_id || '',
-              unidade_sigla: synced?.unidade_medida || synced?.unidade_apresentacao || '',
-              quantidade_comercial: (normalizado.quantidade_comercial ?? Number(synced?.quantidade)) || 0,
+              id: syncedPersist?.pedido_compra_item_id || syncedPersist?.id || undefined,
+              produto_id: syncedPersist?.produto_id || '',
+              produto_unidade_id: syncedPersist?.produto_unidade_id || '',
+              unidade_sigla: syncedPersist?.unidade_medida || syncedPersist?.unidade_apresentacao || '',
+              quantidade_comercial:
+                (normalizado.quantidade_comercial ?? Number(syncedPersist?.quantidade)) || 0,
               custo_unitario_fator1: normalizado.custo_unitario_fator1,
               frete_unitario_fator1: normalizado.frete_unitario_fator1 ?? 0,
               outros_unitario_fator1: normalizado.outros_unitario_fator1 ?? 0,
               desconto_unitario_fator1: 0,
               valor_desconto_item: 0,
               total: normalizado.total ?? totalLinha,
-              quantidade_vinculada: Number(synced?.quantidade_vinculada) || 0,
+              quantidade_vinculada: Number(syncedPersist?.quantidade_vinculada) || 0,
               ordem: idx,
-              observacoes: typeof synced?.observacoes === 'string' ? synced.observacoes : '',
-              status_recebimento: synced?.status_recebimento || 'Pendente',
+              observacoes: typeof syncedPersist?.observacoes === 'string' ? syncedPersist.observacoes : '',
+              status_recebimento: syncedPersist?.status_recebimento || 'Pendente',
             };
           }).filter((it) => it.produto_id && it.quantidade_comercial > 0);
 
