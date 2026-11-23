@@ -146,7 +146,14 @@ export function prepareWritePayload(payload, entityName, mapping) {
   if (out.created_by === undefined) delete out.created_by;
   // Se nada foi parar em `dados`, remove para não sobrescrever JSONB existente desnecessariamente
   if (Object.keys(out.dados).length === 0) delete out.dados;
-  return sanitizeEmptyDateValues(out);
+  const sanitized = sanitizeEmptyDateValues(out);
+  // Datas opcionais em null não devem ir no payload (evita erro de coluna ausente no PostgREST).
+  for (const k of Object.keys(sanitized)) {
+    if (k !== 'dados' && sanitized[k] === null && isLikelyDateField(k)) {
+      delete sanitized[k];
+    }
+  }
+  return sanitized;
 }
 
 function normalizeFilterColumn(field, mapping) {
