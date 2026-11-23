@@ -126,9 +126,17 @@ export function calcValorItensPedidoCompra(pedido = {}) {
   return 0;
 }
 
+/**
+ * Mercadoria no formulário: soma `item.total` (inclui rateio de despesas nas linhas).
+ * O acréscimo `despesas_rateadas` soma-se no total do pedido à parte (cobertura).
+ */
+export function calcValorMercadoriaPedidoCompraComRateio(pedido = {}) {
+  return calcValorItensPedidoCompra(pedido);
+}
+
 /** Total do pedido: itens + frete − desconto + despesas rateadas (mesma regra do formulário). */
 export function calcValorTotalPedidoCompra(pedido = {}) {
-  const itens = calcValorItensPedidoCompra(pedido);
+  const itens = calcValorMercadoriaPedidoCompraComRateio(pedido);
   const frete = Number(pedido.valor_frete) || 0;
   const desconto = Number(pedido.valor_desconto) || 0;
   const despesas = somaDespesasRateadasNoPedido(pedido);

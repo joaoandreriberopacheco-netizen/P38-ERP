@@ -51,7 +51,7 @@ import { filterEmbarquesVisiveisParaPedido } from './embarqueFilters';
 import { refreshPedidoCompraComLogistica } from '@/lib/fetchPedidoCompraItens';
 import {
   calcValorTotalPedidoCompra,
-  calcValorItensPedidoCompraComCatalogo,
+  calcValorMercadoriaPedidoCompraComRateio,
   prepareLinhaPedidoCompraParaTotais,
   cancelarLancamentosNaoPagosPedidoCompra,
   criarLancamentoAjustePedidoCompra,
@@ -516,10 +516,7 @@ export default function PedidoCompraForm({
 
   // Cálculos automáticos — totais de linha recalculados (CX/PAC), não só `item.total` gravado.
   const { valorItens, valorTotal, despesasAcrescimo, percentualDesconto } = useMemo(() => {
-    const itens = calcValorItensPedidoCompraComCatalogo(
-      { itens: formData.itens || [] },
-      produtosById,
-    );
+    const itens = calcValorMercadoriaPedidoCompraComRateio({ itens: formData.itens || [] });
     const frete = roundToTwoDecimals(parseFloat(formData.valor_frete) || 0);
     const desconto = roundToTwoDecimals(parseFloat(formData.valor_desconto) || 0);
     const despesasRateadas = acrescimoDespesasRateadasNoTotalPedido(formData.despesas_rateadas);
