@@ -90,7 +90,6 @@ import {
 import {
   aplicarRateioDespesasNosItens,
   normalizeDespesasRateadas,
-  valorFinanceiroLinhaPedido,
 } from '@/lib/pedidoCompraDespesasRateadas';
 import {
   COMPRAS_BTN_CITRUS,
@@ -490,15 +489,6 @@ export default function PedidoCompraForm({
       aplicarRateioDespesasNosItens(itens, despesas, produtosById),
     [formData.despesas_rateadas, produtosById],
   );
-
-  const valorItensFinanceiroRateio = useMemo(() => {
-    return roundToTwoDecimals(
-      (formData.itens || []).reduce(
-        (acc, item) => acc + valorFinanceiroLinhaPedido(item, produtosById[item?.produto_id]),
-        0,
-      ),
-    );
-  }, [formData.itens, produtosById]);
 
   const handleDespesasRateadasChange = useCallback(
     (despesas) => {
