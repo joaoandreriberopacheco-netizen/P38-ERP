@@ -53,6 +53,7 @@ export const PEDIDO_COMPRA_COLUMNS = [
   'status_conferencia_pedido', 'solicitacao_edicao_data', 'solicitacao_edicao_motivo',
   'solicitacao_edicao_solicitante', 'solicitacao_cancelamento_data', 'solicitacao_cancelamento_motivo',
   'is_encomenda',
+  'despesas_rateadas',
 ];
 
 export const EMBARQUE_COLUMNS = [

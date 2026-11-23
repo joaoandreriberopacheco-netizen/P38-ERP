@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Plus, Minus, ShoppingCart, ChevronLeft, Trash2, DollarSign, AlertCircle, ArrowRight, TrendingDown, TrendingUp, Boxes } from 'lucide-react';
+import { Search, Plus, Minus, ShoppingCart, ChevronLeft, Trash2, DollarSign, AlertCircle, ArrowRight, TrendingDown, TrendingUp, Boxes, Receipt } from 'lucide-react';
 import NovoProdutoRapidoDialog from './NovoProdutoRapidoDialog';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
@@ -97,8 +97,9 @@ export default function MobileProductSelector({
   onProductCreated,
   onOpenImporter,
   onAddItemsBatch,
+  despesasRateadasPanel = null,
 }) {
-  const [view, setView] = useState('menu'); // 'menu' | 'discount-entry' | 'catalog' | 'cart' | 'edit'
+  const [view, setView] = useState('menu'); // 'menu' | 'discount-entry' | 'catalog' | 'cart' | 'edit' | 'despesas-rateadas'
   const [search, setSearch] = useState('');
   const [modoLote, setModoLote] = useState(false);
   const [loteDraft, setLoteDraft] = useState({});
@@ -599,6 +600,48 @@ export default function MobileProductSelector({
             </div>
             <ChevronLeft className="w-5 h-5 text-muted-foreground rotate-180 shrink-0" />
           </button>
+
+          {/* Despesas Rateadas */}
+          <button
+            onClick={() => setView('despesas-rateadas')}
+            disabled={items.length === 0}
+            className={cn(
+              menuCardClass,
+              'flex items-center gap-4',
+              items.length === 0 && 'opacity-50',
+            )}
+          >
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-muted/50">
+              <Receipt className="w-6 h-6 text-foreground/90" />
+            </div>
+            <div className="flex-1 text-left min-w-0">
+              <div className="font-medium text-foreground">Despesas Rateadas</div>
+              <div className="text-xs text-muted-foreground mt-0.5">
+                {items.length === 0
+                  ? 'Adicione itens primeiro'
+                  : 'Frete e outras despesas no custo dos itens'}
+              </div>
+            </div>
+            <ChevronLeft className="w-5 h-5 text-muted-foreground rotate-180 shrink-0" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (view === 'despesas-rateadas') {
+    return (
+      <div className={SELECTOR_PANEL_CLASS}>
+        <div className="flex items-center p-4 border-b border-border/15 dark:border-white/10 flex-shrink-0 gap-2">
+          <Button variant="ghost" size="icon" onClick={() => setView('menu')} className="h-10 w-10">
+            <ChevronLeft className="w-5 h-5" />
+          </Button>
+          <div className="ml-2 font-medium flex-1 text-foreground">Despesas rateadas</div>
+        </div>
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          {despesasRateadasPanel || (
+            <p className="p-4 text-sm text-muted-foreground">Nenhum painel de despesas configurado.</p>
+          )}
         </div>
       </div>
     );

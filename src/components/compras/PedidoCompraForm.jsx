@@ -31,6 +31,7 @@ import { cn } from '@/components/utils';
 import { registrarTransicao } from './transicaoHelper';
 import { buildBypassAuthPayload } from '@/components/auth/operacaoAuthFlags';
 import MobileProductSelector from './MobileProductSelector';
+import PedidoCompraDespesasRateadas from './PedidoCompraDespesasRateadas';
 import AtualizarPrecosDialog from './AtualizarPrecosDialog';
 import PendenciasPedido from './PendenciasPedido';
 import LogsPedidoCompra from './LogsPedidoCompra';
@@ -86,6 +87,11 @@ import {
   calcularResumoNecessidadeDetalhe,
   resolverEmbarqueNecessidadeContexto,
 } from '@/lib/pedidoCompraNecessidade';
+import {
+  aplicarRateioDespesasNosItens,
+  normalizeDespesasRateadas,
+  valorFinanceiroLinhaPedido,
+} from '@/lib/pedidoCompraDespesasRateadas';
 import {
   COMPRAS_BTN_CITRUS,
   COMPRAS_BTN_PRIMARY,
@@ -152,7 +158,8 @@ export default function PedidoCompraForm({
     num_parcelas: 1,
     intervalo_parcelas_dias: 30,
     data_primeiro_vencimento: '',
-    conta_pagamento_id: ''
+    conta_pagamento_id: '',
+    despesas_rateadas: [],
   });
   const [fornecedores, setFornecedores] = useState([]);
   const [produtos, setProdutos] = useState([]);
@@ -311,6 +318,9 @@ export default function PedidoCompraForm({
         ...pedido,
         data_emissao: dataEmissao,
         is_encomenda: isPedidoCompraEncomenda(pedido),
+        despesas_rateadas: normalizeDespesasRateadas(
+          pedido.despesas_rateadas ?? pedido?.dados?.despesas_rateadas,
+        ),
         itens: (pedido.itens || []).map((item) => syncPedidoCompraItemQuantities(item)),
       };
       setFormData(pedidoComData);
@@ -470,6 +480,32 @@ export default function PedidoCompraForm({
     }
     return map;
   }, [produtos]);
+
+  const aplicarDespesasItens = useCallback(
+    (itens, despesas = formData.despesas_rateadas) =>
+      aplicarRateioDespesasNosItens(itens, despesas, produtosById),
+    [formData.despesas_rateadas, produtosById],
+  );
+
+  const valorItensFinanceiroRateio = useMemo(() => {
+    return roundToTwoDecimals(
+      (formData.itens || []).reduce(
+        (acc, item) => acc + valorFinanceiroLinhaPedido(item, produtosById[item?.produto_id]),
+        0,
+      ),
+    );
+  }, [formData.itens, produtosById]);
+
+  const handleDespesasRateadasChange = useCallback(
+    (despesas) => {
+      const norm = normalizeDespesasRateadas(despesas);
+      const itens = aplicarDespesasItens(formData.itens, norm);
+      const newData = { ...formData, despesas_rateadas: norm, itens };
+      saveToHistory(newData);
+      setFormData(newData);
+    },
+    [aplicarDespesasItens, formData],
+  );
 
   // Cálculos automáticos — totais de linha recalculados (CX/PAC), não só `item.total` gravado.
   const { valorItens, valorTotal, percentualDesconto } = useMemo(() => {
@@ -672,7 +708,8 @@ export default function PedidoCompraForm({
     item.total = calcTotalItemCompraPedido(item);
     Object.assign(item, normalizeItemToCanonicalFactorOne(item, 'custo'));
 
-    const newData = { ...formData, itens: newItems };
+    const itens = aplicarDespesasItens(newItems);
+    const newData = { ...formData, itens };
     saveToHistory(newData);
     setFormData(newData);
   };
@@ -730,10 +767,8 @@ export default function PedidoCompraForm({
         newItem = calculateItemTotals(newItem);
     }
 
-    const newData = {
-      ...formData,
-      itens: [...formData.itens, newItem],
-    };
+    const itens = aplicarDespesasItens([...formData.itens, newItem]);
+    const newData = { ...formData, itens };
     saveToHistory(newData);
     setFormData(newData);
   };
@@ -789,7 +824,8 @@ export default function PedidoCompraForm({
 
     const merged = mergeLoteIntoItems(formData.itens, incoming, buildFromProduct, catalog);
     const recalc = merged.map((item) => calculateItemTotals(item));
-    const newData = { ...formData, itens: recalc };
+    const itens = aplicarDespesasItens(recalc);
+    const newData = { ...formData, itens };
     saveToHistory(newData);
     setFormData(newData);
   };
@@ -937,7 +973,8 @@ export default function PedidoCompraForm({
   const handleRemoveItem = (index) => {
     const newItems = [...formData.itens];
     newItems.splice(index, 1);
-    const newData = { ...formData, itens: newItems };
+    const itens = aplicarDespesasItens(newItems);
+    const newData = { ...formData, itens };
     saveToHistory(newData);
     setFormData(newData);
   };
@@ -1830,23 +1867,35 @@ export default function PedidoCompraForm({
             </TabsContent>
 
             {/* ABA: ITENS — usa o mesmo seletor estilo PDV */}
-            <TabsContent value="itens" className="mt-0 h-full -mx-6 -mt-0" data-tour="pedido-tab-itens">
-              <MobileProductSelector
-                items={formData.itens}
-                products={produtos}
-                onAddItem={handleAddItem}
-                onAddItemsBatch={handleAddItemsBatch}
-                onUpdateItem={handleItemChange}
-                onRemoveItem={handleRemoveItem}
-                formatCurrency={formatCurrency}
-                onOpenAdjustPrices={() => setShowAtualizarPrecos(true)}
-                isLocked={isItensLocked}
-                modoCorrecaoItens={modoCorrecaoItens}
-                onProductCreated={(novoProduto) => {
-                  setProdutos(prev => [...prev, novoProduto]);
-                }}
-                onOpenImporter={() => setIsImportadorPedidoOpen(true)}
-              />
+            <TabsContent value="itens" className="mt-0 h-full -mx-6 -mt-0 flex flex-col min-h-0" data-tour="pedido-tab-itens">
+              <div className="flex-1 min-h-0">
+                <MobileProductSelector
+                  items={formData.itens}
+                  products={produtos}
+                  onAddItem={handleAddItem}
+                  onAddItemsBatch={handleAddItemsBatch}
+                  onUpdateItem={handleItemChange}
+                  onRemoveItem={handleRemoveItem}
+                  formatCurrency={formatCurrency}
+                  onOpenAdjustPrices={() => setShowAtualizarPrecos(true)}
+                  isLocked={isItensLocked}
+                  modoCorrecaoItens={modoCorrecaoItens}
+                  onProductCreated={(novoProduto) => {
+                    setProdutos(prev => [...prev, novoProduto]);
+                  }}
+                  onOpenImporter={() => setIsImportadorPedidoOpen(true)}
+                  despesasRateadasPanel={
+                    <PedidoCompraDespesasRateadas
+                      despesas={formData.despesas_rateadas}
+                      onChange={handleDespesasRateadasChange}
+                      formatCurrency={formatCurrency}
+                      valorItensFinanceiro={valorItensFinanceiroRateio}
+                      isLocked={isItensLocked}
+                      className="border-0"
+                    />
+                  }
+                />
+              </div>
             </TabsContent>
 
           {/* ABA: PAGAMENTO */}
