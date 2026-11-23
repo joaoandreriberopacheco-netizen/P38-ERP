@@ -91,7 +91,6 @@ import {
   aplicarRateioDespesasNosItens,
   normalizeDespesasRateadas,
   normalizeDespesasRateadasForEdit,
-  valorFinanceiroLinhaPedido,
   acrescimoDespesasRateadasNoTotalPedido,
 } from '@/lib/pedidoCompraDespesasRateadas';
 import {
@@ -514,17 +513,8 @@ export default function PedidoCompraForm({
     [aplicarDespesasItens],
   );
 
-  const valorItensFinanceiroRateio = useMemo(() => {
-    return roundToTwoDecimals(
-      (formData.itens || []).reduce(
-        (acc, item) => acc + valorFinanceiroLinhaPedido(item, produtosById[item?.produto_id]),
-        0,
-      ),
-    );
-  }, [formData.itens, produtosById]);
-
   // Cálculos automáticos — totais de linha recalculados (CX/PAC), não só `item.total` gravado.
-  const { valorItens, valorTotal, percentualDesconto } = useMemo(() => {
+  const { valorItens, valorTotal, despesasAcrescimo, percentualDesconto } = useMemo(() => {
     const itens = calcValorItensPedidoCompraComCatalogo(
       { itens: formData.itens || [] },
       produtosById,
@@ -537,6 +527,7 @@ export default function PedidoCompraForm({
     return {
       valorItens: itens,
       valorTotal: total,
+      despesasAcrescimo: despesasRateadas,
       percentualDesconto: percentDesc,
     };
   }, [
@@ -1909,13 +1900,18 @@ export default function PedidoCompraForm({
                   }}
                   onOpenImporter={() => setIsImportadorPedidoOpen(true)}
                   onSelectorViewChange={setItensSelectorView}
+                  pedidoValorMercadoria={valorItens}
+                  pedidoDespesasAcrescimo={despesasAcrescimo}
                   pedidoValorTotal={valorTotal}
                   despesasRateadasPanel={
                     <PedidoCompraDespesasRateadas
                       despesas={formData.despesas_rateadas}
                       onChange={handleDespesasRateadasChange}
                       formatCurrency={formatCurrency}
-                      valorItensFinanceiro={valorItensFinanceiroRateio}
+                      valorMercadoria={valorItens}
+                      acrescimoDespesasRateadas={despesasAcrescimo}
+                      valorFrete={roundToTwoDecimals(parseFloat(formData.valor_frete) || 0)}
+                      valorDesconto={roundToTwoDecimals(parseFloat(formData.valor_desconto) || 0)}
                       valorTotalPedido={valorTotal}
                       isLocked={isItensLocked}
                       className="border-0"

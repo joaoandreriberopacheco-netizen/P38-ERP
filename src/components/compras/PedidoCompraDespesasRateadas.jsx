@@ -93,14 +93,19 @@ export default function PedidoCompraDespesasRateadas({
   despesas = [],
   onChange,
   formatCurrency,
-  valorItensFinanceiro = 0,
+  valorMercadoria = 0,
+  acrescimoDespesasRateadas = null,
+  valorFrete = 0,
+  valorDesconto = 0,
   valorTotalPedido = 0,
   isLocked = false,
   className,
 }) {
   const { toast } = useToast();
   const rows = useMemo(() => normalizeDespesasRateadasForEdit(despesas), [despesas]);
-  const totalDespesas = somaDespesasRateadas(rows);
+  const totalDespesasLinhas = somaDespesasRateadas(rows);
+  const acrescimoDespesas =
+    acrescimoDespesasRateadas != null ? acrescimoDespesasRateadas : totalDespesasLinhas;
   const fmt = (n) => (typeof formatCurrency === 'function' ? formatCurrency(n) : String(n ?? 0));
   const lastRowRef = useRef(null);
   const prevCountRef = useRef(rows.length);
@@ -149,19 +154,31 @@ export default function PedidoCompraDespesasRateadas({
         className="sticky top-0 z-30 -mx-4 mb-3 border-b border-border/40 bg-card/95 px-4 py-2.5 backdrop-blur-sm desktop-layout:-mx-6 desktop-layout:px-6"
         data-pulse-sensor="pedido-compra-despesas-totais"
       >
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs tabular-nums">
-          <span className="text-muted-foreground">
-            Despesas:{' '}
-            <span className="font-medium text-foreground">{fmt(totalDespesas)}</span>
-          </span>
-          <span className="text-muted-foreground">
-            Base itens:{' '}
-            <span className="font-medium text-foreground">{fmt(valorItensFinanceiro)}</span>
-          </span>
-          <span className="text-muted-foreground sm:ml-auto">
-            Total pedido:{' '}
-            <span className="font-semibold text-foreground">{fmt(valorTotalPedido)}</span>
-          </span>
+        <div className="space-y-1 text-xs tabular-nums" role="group" aria-label="Resumo do pedido">
+          <div className="flex min-w-0 items-baseline justify-between gap-2">
+            <span className="text-muted-foreground">Mercadoria</span>
+            <span className="font-medium text-foreground">{fmt(valorMercadoria)}</span>
+          </div>
+          <div className="flex min-w-0 items-baseline justify-between gap-2">
+            <span className="text-muted-foreground">Acréscimo despesas</span>
+            <span className="font-medium text-foreground">{fmt(acrescimoDespesas)}</span>
+          </div>
+          {valorFrete > 0 && (
+            <div className="flex min-w-0 items-baseline justify-between gap-2">
+              <span className="text-muted-foreground">Frete</span>
+              <span className="font-medium text-foreground">{fmt(valorFrete)}</span>
+            </div>
+          )}
+          {valorDesconto > 0 && (
+            <div className="flex min-w-0 items-baseline justify-between gap-2">
+              <span className="text-muted-foreground">Desconto</span>
+              <span className="font-medium text-foreground">− {fmt(valorDesconto)}</span>
+            </div>
+          )}
+          <div className="flex min-w-0 items-baseline justify-between gap-2 border-t border-border/40 pt-1.5">
+            <span className="font-medium text-foreground">Total pedido</span>
+            <span className="text-sm font-semibold text-foreground">{fmt(valorTotalPedido)}</span>
+          </div>
         </div>
       </div>
 

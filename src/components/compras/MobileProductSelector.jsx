@@ -98,6 +98,8 @@ export default function MobileProductSelector({
   onOpenImporter,
   onAddItemsBatch,
   despesasRateadasPanel = null,
+  pedidoValorMercadoria = null,
+  pedidoDespesasAcrescimo = null,
   pedidoValorTotal = null,
   onSelectorViewChange,
 }) {
@@ -661,7 +663,21 @@ export default function MobileProductSelector({
           )}
         </div>
         <div className="flex-shrink-0 border-t border-border/15 bg-card/95 p-4 backdrop-blur-sm dark:border-white/10">
-          <div className="flex items-center justify-between">
+          <div className="space-y-1 text-xs tabular-nums">
+            {pedidoValorMercadoria != null && (
+              <div className="flex justify-between gap-2 text-muted-foreground">
+                <span>Mercadoria</span>
+                <span className="text-foreground">{formatCurrency(pedidoValorMercadoria)}</span>
+              </div>
+            )}
+            {pedidoDespesasAcrescimo != null && Number(pedidoDespesasAcrescimo) >= 0 && (
+              <div className="flex justify-between gap-2 text-muted-foreground">
+                <span>Acréscimo despesas</span>
+                <span className="text-foreground">{formatCurrency(pedidoDespesasAcrescimo)}</span>
+              </div>
+            )}
+          </div>
+          <div className="mt-2 flex items-center justify-between gap-2">
             <span className="text-sm text-muted-foreground">Total do pedido</span>
             <div className={cn('text-xl font-bold tabular-nums sm:text-2xl', P38_ACCENT)}>
               {formatCurrency(totalPedidoExibicao)}
