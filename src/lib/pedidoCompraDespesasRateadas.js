@@ -67,7 +67,19 @@ function resolveQuantidadeBase(item = {}) {
 
 /** `outros` na linha do pedido (manual + rateio de despesas), unidade fator-1. */
 export function outrosUnitarioFator1LinhaPedidoCompra(item = {}) {
-  return Math.max(0, Number(item?.outros_unitario_fator1 ?? item?.custo_outros_unitario) || 0);
+  const dados = item?.dados && typeof item.dados === 'object' ? item.dados : {};
+  const explicit = Number(
+    item?.outros_unitario_fator1 ?? dados.outros_unitario_fator1 ?? item?.custo_outros_unitario,
+  );
+  if (Number.isFinite(explicit) && explicit > 0) return explicit;
+  const custoF1 = Number(item?.custo_unitario_fator1 ?? item?.custo_unitario) || 0;
+  const custoTotalF1 =
+    Number(item?.custo_total_unitario_fator1 ?? item?.custo_final_unitario) || 0;
+  const freteF1 = Number(item?.frete_unitario_fator1 ?? item?.custo_frete_unitario ?? dados.frete_unitario_fator1) || 0;
+  if (custoTotalF1 > custoF1 + 0.000001) {
+    return Math.max(0, roundToTwoDecimals(custoTotalF1 - custoF1 - freteF1));
+  }
+  return 0;
 }
 
 export { resolveOutrosUnitarioManual, valorFinanceiroLinhaPedido } from '@/lib/pedidoCompraFinanceiro';

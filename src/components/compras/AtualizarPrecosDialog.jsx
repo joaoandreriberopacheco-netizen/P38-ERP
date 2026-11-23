@@ -143,6 +143,7 @@ export default function AtualizarPrecosDialog({
   toolbarExtra = null,
 }) {
   const sessionInitializedRef = useRef(false);
+  const itensInitFingerprintRef = useRef('');
   const [selecionados, setSelecionados] = useState({});
   const [processando, setProcessando] = useState(false);
   const [pendingUpdate, setPendingUpdate] = useState(null);
@@ -195,8 +196,18 @@ export default function AtualizarPrecosDialog({
       return;
     }
     if (!itens.length) return;
-    if (sessionInitializedRef.current) return;
+    const fingerprint = itens
+      .map((item) =>
+        [
+          item?.produto_id,
+          outrosUnitarioFator1LinhaPedidoCompra(item),
+          getCustoCompraLiquidoFator1(item),
+        ].join(':'),
+      )
+      .join('|');
+    if (sessionInitializedRef.current && itensInitFingerprintRef.current === fingerprint) return;
     sessionInitializedRef.current = true;
+    itensInitFingerprintRef.current = fingerprint;
 
     const modoInicial = 'comercial';
     setUnidadeVisualizacao(modoInicial);
@@ -210,10 +221,12 @@ export default function AtualizarPrecosDialog({
 
       const valorCompraLiquidoBase = getCustoCompraLiquidoFator1(item) || (p.valor_compra || 0);
       const outrosLinhaF1 = outrosUnitarioFator1LinhaPedidoCompra(item);
+      const freteLinhaF1 =
+        Number(item?.frete_unitario_fator1 ?? item?.custo_frete_unitario) || 0;
 
       const c = {
         valor_compra: valorCompraLiquidoBase,
-        custo_frete_padrao: p.custo_frete_padrao || 0,
+        custo_frete_padrao: freteLinhaF1 > 0 ? freteLinhaF1 : (p.custo_frete_padrao || 0),
         custo_imposto1_padrao: p.custo_imposto1_padrao || 0,
         custo_imposto2_padrao: p.custo_imposto2_padrao || 0,
         custo_outros_padrao: outrosLinhaF1 > 0 ? outrosLinhaF1 : (p.custo_outros_padrao || 0),

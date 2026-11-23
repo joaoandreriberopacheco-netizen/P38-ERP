@@ -357,6 +357,22 @@ export default function PedidoCompraForm({
     }
   }, [pedido, draftKey]);
 
+  /** Ao abrir pedido com despesas gravadas, reaplica rateio nas linhas (SQL pode vir sem outros). */
+  const despesasRateioHidratadoRef = useRef(null);
+  useEffect(() => {
+    if (!pedido?.id || !produtos.length) return;
+    if (despesasRateioHidratadoRef.current === pedido.id) return;
+    const despesas = normalizeDespesasRateadasForEdit(
+      pedido.despesas_rateadas ?? pedido?.dados?.despesas_rateadas,
+    );
+    if (acrescimoDespesasRateadasNoTotalPedido(despesas) <= 0) return;
+    despesasRateioHidratadoRef.current = pedido.id;
+    setFormData((prev) => {
+      const itens = aplicarDespesasItens(prev.itens, normalizeDespesasRateadas(despesas));
+      return { ...prev, itens };
+    });
+  }, [pedido?.id, pedido?.despesas_rateadas, produtos.length, aplicarDespesasItens]);
+
   useEffect(() => {
     if (!formData) return;
     if (isRestoringDraftRef.current) {
@@ -498,6 +514,15 @@ export default function PedidoCompraForm({
     (itens, despesas) =>
       aplicarRateioDespesasNosItens(itens, despesas ?? [], produtosById),
     [produtosById],
+  );
+
+  const itensParaAtualizarPrecos = useMemo(
+    () =>
+      aplicarDespesasItens(
+        formData.itens || [],
+        normalizeDespesasRateadas(formData.despesas_rateadas),
+      ),
+    [formData.itens, formData.despesas_rateadas, aplicarDespesasItens],
   );
 
   const handleDespesasRateadasChange = useCallback(
@@ -2084,7 +2109,7 @@ export default function PedidoCompraForm({
             refetchProdutosCatalog().then(({ data }) => data && setProdutos(data));
           }
         }}
-        itens={formData.itens || []}
+        itens={itensParaAtualizarPrecos}
         produtos={produtos}
       />
 
