@@ -18,6 +18,20 @@ import { getPedidoCompraDataPagamentoChave } from '@/lib/pedidoCompraDataPagamen
 
 const roundToTwoDecimals = (n) => Math.round((Number(n) || 0) * 100) / 100;
 
+/** Evita import circular com pedidoCompraDespesasRateadas — mesma regra de soma persistível. */
+function somaDespesasRateadasNoPedido(pedido = {}) {
+  const raw = pedido.despesas_rateadas ?? pedido?.dados?.despesas_rateadas;
+  if (!Array.isArray(raw)) return 0;
+  return roundToTwoDecimals(
+    raw.reduce((acc, row) => {
+      const valor = Math.max(0, Number(row?.valor) || 0);
+      const descricao = String(row?.descricao || '').trim();
+      if (!descricao && valor <= 0) return acc;
+      return acc + valor;
+    }, 0),
+  );
+}
+
 function qtdComercialItemPedido(item = {}) {
   const q = Number(item?.quantidade ?? item?.quantidade_comercial);
   return Number.isFinite(q) && q > 0 ? q : 0;
@@ -112,12 +126,13 @@ export function calcValorItensPedidoCompra(pedido = {}) {
   return 0;
 }
 
-/** Total do pedido: itens + frete − desconto global (mesma regra do formulário). */
+/** Total do pedido: itens + frete − desconto + despesas rateadas (mesma regra do formulário). */
 export function calcValorTotalPedidoCompra(pedido = {}) {
   const itens = calcValorItensPedidoCompra(pedido);
   const frete = Number(pedido.valor_frete) || 0;
   const desconto = Number(pedido.valor_desconto) || 0;
-  return roundToTwoDecimals(itens + frete - desconto);
+  const despesas = somaDespesasRateadasNoPedido(pedido);
+  return roundToTwoDecimals(itens + frete - desconto + despesas);
 }
 
 const statusCancelavel = (l) =>

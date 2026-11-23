@@ -49,6 +49,11 @@ export function somaDespesasRateadas(despesas) {
   );
 }
 
+/** Acréscimo no total do pedido (cabeçalho) — despesas não entram na soma de mercadoria do catálogo. */
+export function acrescimoDespesasRateadasNoTotalPedido(despesas) {
+  return somaDespesasRateadas(despesas);
+}
+
 function resolveQuantidadeBase(item = {}) {
   const qb = Number(item.quantidade_base);
   if (Number.isFinite(qb) && qb > 0) return qb;

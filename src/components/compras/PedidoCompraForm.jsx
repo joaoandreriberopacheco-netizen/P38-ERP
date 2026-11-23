@@ -92,6 +92,7 @@ import {
   normalizeDespesasRateadas,
   normalizeDespesasRateadasForEdit,
   valorFinanceiroLinhaPedido,
+  acrescimoDespesasRateadasNoTotalPedido,
 } from '@/lib/pedidoCompraDespesasRateadas';
 import {
   COMPRAS_BTN_CITRUS,
@@ -530,14 +531,21 @@ export default function PedidoCompraForm({
     );
     const frete = roundToTwoDecimals(parseFloat(formData.valor_frete) || 0);
     const desconto = roundToTwoDecimals(parseFloat(formData.valor_desconto) || 0);
-    const total = roundToTwoDecimals(itens + frete - desconto);
+    const despesasRateadas = acrescimoDespesasRateadasNoTotalPedido(formData.despesas_rateadas);
+    const total = roundToTwoDecimals(itens + frete - desconto + despesasRateadas);
     const percentDesc = itens > 0 ? roundToTwoDecimals((desconto / itens) * 100) : 0;
     return {
       valorItens: itens,
       valorTotal: total,
       percentualDesconto: percentDesc,
     };
-  }, [formData.itens, formData.valor_frete, formData.valor_desconto, produtosById]);
+  }, [
+    formData.itens,
+    formData.valor_frete,
+    formData.valor_desconto,
+    formData.despesas_rateadas,
+    produtosById,
+  ]);
 
   const handleChange = (field, value) => {
     setFormData(prev => {
