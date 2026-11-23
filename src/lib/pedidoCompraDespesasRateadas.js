@@ -93,6 +93,18 @@ export function resolveOutrosUnitarioManual(item = {}) {
   return Math.max(0, outros - rateado);
 }
 
+const TOLERANCIA_RATEIO_JA_INCORPORADO = 0.01;
+
+/**
+ * Custo pousado: peso financeiro (só custo_unitario) já bate com o total gravado — não re-ratear.
+ */
+export function rateioDespesasJaIncorporadoNaLinha(item = {}, produto = null) {
+  const totalSalvo = Number(item?.total ?? item?.valor_total_item ?? 0);
+  if (!Number.isFinite(totalSalvo) || totalSalvo <= 0) return false;
+  const vFin = valorFinanceiroLinhaPedido(item, produto);
+  return Math.abs(roundToTwoDecimals(vFin) - roundToTwoDecimals(totalSalvo)) <= TOLERANCIA_RATEIO_JA_INCORPORADO;
+}
+
 /**
  * Valor financeiro da linha (mercadoria), base do rateio proporcional — sem despesas rateadas.
  */
@@ -156,21 +168,33 @@ export function aplicarRateioDespesasNosItens(itens = [], despesas = [], produto
     const produto = produtosById[it.produto_id];
     const manual = resolveOutrosUnitarioManual(it);
     const vFin = valorFinanceiroLinhaPedido(it, produto);
-    return { it, produto, manual, vFin };
+    const skipRateio = rateioDespesasJaIncorporadoNaLinha(it, produto);
+    return { it, produto, manual, vFin, skipRateio };
   });
-  const somaPeso = pesos.reduce((s, p) => s + p.vFin, 0);
+  const pesosElegiveis = pesos.filter((p) => !p.skipRateio);
+  const somaPeso = pesosElegiveis.reduce((s, p) => s + p.vFin, 0);
 
   let residual = totalDespesas;
   const alocadoPorId = new Map();
 
-  pesos.forEach((p, idx) => {
+  if (!pesosElegiveis.length) {
+    return [...(itens || [])];
+  }
+
+  pesosElegiveis.forEach((p, idx) => {
     let share = 0;
     if (somaPeso > 0) {
-      share = idx === pesos.length - 1 ? residual : roundToTwoDecimals(totalDespesas * (p.vFin / somaPeso));
-      if (idx < pesos.length - 1) residual = roundToTwoDecimals(residual - share);
-    } else if (pesos.length > 0) {
-      share = idx === pesos.length - 1 ? residual : roundToTwoDecimals(totalDespesas / pesos.length);
-      if (idx < pesos.length - 1) residual = roundToTwoDecimals(residual - share);
+      share =
+        idx === pesosElegiveis.length - 1
+          ? residual
+          : roundToTwoDecimals(totalDespesas * (p.vFin / somaPeso));
+      if (idx < pesosElegiveis.length - 1) residual = roundToTwoDecimals(residual - share);
+    } else if (pesosElegiveis.length > 0) {
+      share =
+        idx === pesosElegiveis.length - 1
+          ? residual
+          : roundToTwoDecimals(totalDespesas / pesosElegiveis.length);
+      if (idx < pesosElegiveis.length - 1) residual = roundToTwoDecimals(residual - share);
     }
     const qBase = resolveQuantidadeBase(p.it);
     const rateioF1 = qBase > 0 ? share / qBase : 0;
