@@ -90,6 +90,8 @@ import {
 import {
   aplicarRateioDespesasNosItens,
   normalizeDespesasRateadas,
+  normalizeDespesasRateadasForEdit,
+  valorFinanceiroLinhaPedido,
 } from '@/lib/pedidoCompraDespesasRateadas';
 import {
   COMPRAS_BTN_CITRUS,
@@ -321,7 +323,7 @@ export default function PedidoCompraForm({
         ...pedido,
         data_emissao: dataEmissao,
         is_encomenda: isPedidoCompraEncomenda(pedido),
-        despesas_rateadas: normalizeDespesasRateadas(
+        despesas_rateadas: normalizeDespesasRateadasForEdit(
           pedido.despesas_rateadas ?? pedido?.dados?.despesas_rateadas,
         ),
         itens: (pedido.itens || []).map((item) => syncPedidoCompraItemQuantities(item)),
@@ -492,14 +494,23 @@ export default function PedidoCompraForm({
 
   const handleDespesasRateadasChange = useCallback(
     (despesas) => {
-      const norm = normalizeDespesasRateadas(despesas);
-      const itens = aplicarDespesasItens(formData.itens, norm);
+      const norm = normalizeDespesasRateadasForEdit(despesas);
+      const itens = aplicarDespesasItens(formData.itens, normalizeDespesasRateadas(norm));
       const newData = { ...formData, despesas_rateadas: norm, itens };
       saveToHistory(newData);
       setFormData(newData);
     },
     [aplicarDespesasItens, formData],
   );
+
+  const valorItensFinanceiroRateio = useMemo(() => {
+    return roundToTwoDecimals(
+      (formData.itens || []).reduce(
+        (acc, item) => acc + valorFinanceiroLinhaPedido(item, produtosById[item?.produto_id]),
+        0,
+      ),
+    );
+  }, [formData.itens, produtosById]);
 
   // Cálculos automáticos — totais de linha recalculados (CX/PAC), não só `item.total` gravado.
   const { valorItens, valorTotal, percentualDesconto } = useMemo(() => {
@@ -1246,6 +1257,7 @@ export default function PedidoCompraForm({
       const dataToSave = {
         ...formData,
         itens: itensComTotaisAtualizados,
+        despesas_rateadas: normalizeDespesasRateadas(formData.despesas_rateadas),
         ...(saveOptions.status ? { status: saveOptions.status } : {}),
         valor_itens: valorItens,
         valor_total: valorTotal,
@@ -1879,10 +1891,14 @@ export default function PedidoCompraForm({
                   }}
                   onOpenImporter={() => setIsImportadorPedidoOpen(true)}
                   onSelectorViewChange={setItensSelectorView}
+                  pedidoValorTotal={valorTotal}
                   despesasRateadasPanel={
                     <PedidoCompraDespesasRateadas
                       despesas={formData.despesas_rateadas}
                       onChange={handleDespesasRateadasChange}
+                      formatCurrency={formatCurrency}
+                      valorItensFinanceiro={valorItensFinanceiroRateio}
+                      valorTotalPedido={valorTotal}
                       isLocked={isItensLocked}
                       className="border-0"
                     />

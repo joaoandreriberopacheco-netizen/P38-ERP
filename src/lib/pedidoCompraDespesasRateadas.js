@@ -21,16 +21,21 @@ export function newDespesaRateadaRow({ descricao = '', valor = 0 } = {}) {
   };
 }
 
-/** Normaliza lista persistida no pedido. */
-export function normalizeDespesasRateadas(raw) {
+/** Normaliza linhas para edição (mantém rascunho vazio recém-adicionado). */
+export function normalizeDespesasRateadasForEdit(raw) {
   if (!Array.isArray(raw)) return [];
-  return raw
-    .map((row) => ({
-      id: row?.id || newDespesaRateadaRow().id,
-      descricao: String(row?.descricao || '').trim(),
-      valor: roundToTwoDecimals(Math.max(0, Number(row?.valor) || 0)),
-    }))
-    .filter((row) => row.descricao || row.valor > 0);
+  return raw.map((row) => ({
+    id: row?.id || newDespesaRateadaRow().id,
+    descricao: String(row?.descricao || '').trim(),
+    valor: roundToTwoDecimals(Math.max(0, Number(row?.valor) || 0)),
+  }));
+}
+
+/** Lista para gravar no pedido — omite linhas sem descrição nem valor. */
+export function normalizeDespesasRateadas(raw) {
+  return normalizeDespesasRateadasForEdit(raw).filter(
+    (row) => row.descricao || row.valor > 0,
+  );
 }
 
 export function somaDespesasRateadas(despesas) {

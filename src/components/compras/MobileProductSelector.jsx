@@ -98,6 +98,7 @@ export default function MobileProductSelector({
   onOpenImporter,
   onAddItemsBatch,
   despesasRateadasPanel = null,
+  pedidoValorTotal = null,
   onSelectorViewChange,
 }) {
   const [view, setView] = useState('menu'); // 'menu' | 'discount-entry' | 'catalog' | 'cart' | 'edit' | 'despesas-rateadas'
@@ -116,6 +117,12 @@ export default function MobileProductSelector({
   useEffect(() => {
     onSelectorViewChange?.(view);
   }, [view, onSelectorViewChange]);
+
+  const totalItems = items.length;
+  const totalValue = useMemo(
+    () => roundToTwoDecimals(items.reduce((acc, item) => acc + (Number(item.total) || 0), 0)),
+    [items],
+  );
 
   // Desconto global sobre preços de compra
   const [descontoGlobalPct, setDescontoGlobalPct] = useState(0);
@@ -636,6 +643,9 @@ export default function MobileProductSelector({
   }
 
   if (view === 'despesas-rateadas') {
+    const totalPedidoExibicao = roundToTwoDecimals(
+      pedidoValorTotal != null ? Number(pedidoValorTotal) : totalValue,
+    );
     // Painel in-flow (sem fixed): evita ficar atrás do FAB do formulário (z-[999]).
     return (
       <div className="relative z-[1] flex h-full min-h-0 flex-col bg-card isolate">
@@ -645,10 +655,18 @@ export default function MobileProductSelector({
           </Button>
           <div className="ml-2 font-medium flex-1 text-foreground">Despesas rateadas</div>
         </div>
-        <div className="relative z-[1] flex-1 min-h-0 overflow-y-auto overscroll-y-contain pb-4">
+        <div className="relative z-[1] flex-1 min-h-0 overflow-y-auto overscroll-y-contain">
           {despesasRateadasPanel || (
             <p className="p-4 text-sm text-muted-foreground">Nenhum painel de despesas configurado.</p>
           )}
+        </div>
+        <div className="flex-shrink-0 border-t border-border/15 bg-card/95 p-4 backdrop-blur-sm dark:border-white/10">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Total do pedido</span>
+            <div className={cn('text-xl font-bold tabular-nums sm:text-2xl', P38_ACCENT)}>
+              {formatCurrency(totalPedidoExibicao)}
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -1022,9 +1040,6 @@ export default function MobileProductSelector({
       </>
     );
   }
-
-  const totalItems = items.length;
-  const totalValue = roundToTwoDecimals(items.reduce((acc, item) => acc + (item.total || 0), 0));
 
   // View: Catalog (Busca de Produtos)
   if (view === 'catalog') {

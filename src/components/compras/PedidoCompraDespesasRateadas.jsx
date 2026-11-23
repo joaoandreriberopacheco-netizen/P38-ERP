@@ -1,11 +1,15 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { COMPRAS_FIELD_H12 } from '@/lib/comprasP38Theme';
-import { newDespesaRateadaRow, normalizeDespesasRateadas } from '@/lib/pedidoCompraDespesasRateadas';
+import {
+  newDespesaRateadaRow,
+  normalizeDespesasRateadasForEdit,
+  somaDespesasRateadas,
+} from '@/lib/pedidoCompraDespesasRateadas';
 
 const parseValorInput = (raw) => {
   const s = String(raw ?? '').trim().replace(/\./g, '').replace(',', '.');
@@ -16,13 +20,27 @@ const parseValorInput = (raw) => {
 export default function PedidoCompraDespesasRateadas({
   despesas = [],
   onChange,
+  formatCurrency,
+  valorItensFinanceiro = 0,
+  valorTotalPedido = 0,
   isLocked = false,
   className,
 }) {
-  const rows = useMemo(() => normalizeDespesasRateadas(despesas), [despesas]);
+  const rows = useMemo(() => normalizeDespesasRateadasForEdit(despesas), [despesas]);
+  const totalDespesas = somaDespesasRateadas(rows);
+  const fmt = (n) => (typeof formatCurrency === 'function' ? formatCurrency(n) : String(n ?? 0));
+  const lastRowRef = useRef(null);
+  const prevCountRef = useRef(rows.length);
+
+  useEffect(() => {
+    if (rows.length > prevCountRef.current && lastRowRef.current) {
+      lastRowRef.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+    prevCountRef.current = rows.length;
+  }, [rows.length]);
 
   const emit = (nextRows) => {
-    onChange?.(normalizeDespesasRateadas(nextRows));
+    onChange?.(normalizeDespesasRateadasForEdit(nextRows));
   };
 
   const handleField = (id, patch) => {
@@ -31,14 +49,38 @@ export default function PedidoCompraDespesasRateadas({
 
   return (
     <section
-      className={cn('bg-card px-4 py-4 desktop-layout:px-6', className)}
+      className={cn(
+        'relative z-10 bg-card px-4 py-4 desktop-layout:px-6',
+        className,
+      )}
       data-pulse-sensor="pedido-compra-despesas-rateadas"
     >
-      <div className="space-y-2">
-        {rows.map((row) => (
+      <div
+        className="sticky top-0 z-30 -mx-4 mb-3 border-b border-border/40 bg-card/95 px-4 py-2.5 backdrop-blur-sm desktop-layout:-mx-6 desktop-layout:px-6"
+        data-pulse-sensor="pedido-compra-despesas-totais"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs tabular-nums">
+          <span className="text-muted-foreground">
+            Despesas:{' '}
+            <span className="font-medium text-foreground">{fmt(totalDespesas)}</span>
+          </span>
+          <span className="text-muted-foreground">
+            Base itens:{' '}
+            <span className="font-medium text-foreground">{fmt(valorItensFinanceiro)}</span>
+          </span>
+          <span className="text-muted-foreground sm:ml-auto">
+            Total pedido:{' '}
+            <span className="font-semibold text-foreground">{fmt(valorTotalPedido)}</span>
+          </span>
+        </div>
+      </div>
+
+      <div className="relative z-10 space-y-2">
+        {rows.map((row, index) => (
             <div
               key={row.id}
-              className="grid grid-cols-12 gap-2 items-center rounded-xl border border-border/50 bg-muted/20 px-3 py-2"
+              ref={index === rows.length - 1 ? lastRowRef : null}
+              className="relative z-10 grid grid-cols-12 gap-2 items-center rounded-xl border border-border/50 bg-muted/20 px-3 py-2"
             >
               <div className="col-span-12 sm:col-span-7">
                 <Label className="sr-only">Descrição</Label>
