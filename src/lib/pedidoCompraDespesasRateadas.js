@@ -79,9 +79,30 @@ const TOLERANCIA_RATEIO_JA_INCORPORADO = 0.01;
  */
 export function rateioDespesasJaIncorporadoNaLinha(item = {}, produto = null) {
   const totalSalvo = Number(item?.total ?? item?.valor_total_item ?? 0);
-  if (!Number.isFinite(totalSalvo) || totalSalvo <= 0) return false;
   const vFin = valorFinanceiroLinhaPedido(item, produto);
-  return Math.abs(roundToTwoDecimals(vFin) - roundToTwoDecimals(totalSalvo)) <= TOLERANCIA_RATEIO_JA_INCORPORADO;
+  const totalBateMercadoria =
+    Number.isFinite(totalSalvo) &&
+    totalSalvo > 0 &&
+    Math.abs(roundToTwoDecimals(vFin) - roundToTwoDecimals(totalSalvo)) <=
+      TOLERANCIA_RATEIO_JA_INCORPORADO;
+
+  /** Gravações antigas com rateio dentro de `custo_unitario` (marcador explícito). */
+  if (item.incorpora_despesa_rateada_no_custo === true) {
+    return totalBateMercadoria;
+  }
+
+  if (!Number.isFinite(totalSalvo) || totalSalvo <= 0) return false;
+
+  const rateado = Number(item.despesa_rateada_outros_fator1) || 0;
+  const manual = resolveOutrosUnitarioManual(item);
+  const outrosAtual = Number(item.outros_unitario_fator1 ?? item.custo_outros_unitario) || 0;
+
+  /** Linha ainda sem rateio em `outros` — sempre elegível (inclui total só mercadoria). */
+  if (rateado <= 0 && outrosAtual <= manual + 0.0001) {
+    return false;
+  }
+
+  return false;
 }
 
 function finalizeItemAposRateio(item = {}, produto = null) {
