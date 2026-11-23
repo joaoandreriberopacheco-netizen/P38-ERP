@@ -1,5 +1,8 @@
 import { roundToTwoDecimals } from '@/lib/financialUtils';
-import { totalLinhaPedidoCompraAtualizado } from '@/lib/pedidoCompraFinanceiro';
+import {
+  resolveOutrosUnitarioManual,
+  valorFinanceiroLinhaPedido,
+} from '@/lib/pedidoCompraFinanceiro';
 import {
   calcTotalItemCompraPedido,
   normalizeItemToCanonicalFactorOne,
@@ -62,15 +65,12 @@ function resolveQuantidadeBase(item = {}) {
   return q * f;
 }
 
-/** Outros por unidade fator-1 sem a parte rateada (manual). */
-export function resolveOutrosUnitarioManual(item = {}) {
-  if (item.outros_unitario_fator1_manual != null) {
-    return Math.max(0, Number(item.outros_unitario_fator1_manual) || 0);
-  }
-  const outros = Number(item.outros_unitario_fator1 ?? item.custo_outros_unitario) || 0;
-  const rateado = Number(item.despesa_rateada_outros_fator1) || 0;
-  return Math.max(0, outros - rateado);
+/** `outros` na linha do pedido (manual + rateio de despesas), unidade fator-1. */
+export function outrosUnitarioFator1LinhaPedidoCompra(item = {}) {
+  return Math.max(0, Number(item?.outros_unitario_fator1 ?? item?.custo_outros_unitario) || 0);
 }
+
+export { resolveOutrosUnitarioManual, valorFinanceiroLinhaPedido } from '@/lib/pedidoCompraFinanceiro';
 
 const TOLERANCIA_RATEIO_JA_INCORPORADO = 0.01;
 
@@ -82,20 +82,6 @@ export function rateioDespesasJaIncorporadoNaLinha(item = {}, produto = null) {
   if (!Number.isFinite(totalSalvo) || totalSalvo <= 0) return false;
   const vFin = valorFinanceiroLinhaPedido(item, produto);
   return Math.abs(roundToTwoDecimals(vFin) - roundToTwoDecimals(totalSalvo)) <= TOLERANCIA_RATEIO_JA_INCORPORADO;
-}
-
-/**
- * Valor financeiro da linha (mercadoria), base do rateio proporcional — sem despesas rateadas.
- */
-export function valorFinanceiroLinhaPedido(item = {}, produto = null) {
-  const manual = resolveOutrosUnitarioManual(item);
-  const base = {
-    ...item,
-    outros_unitario_fator1: manual,
-    custo_outros_unitario: manual,
-    despesa_rateada_outros_fator1: 0,
-  };
-  return Math.max(0, totalLinhaPedidoCompraAtualizado(base, produto));
 }
 
 function finalizeItemAposRateio(item = {}, produto = null) {

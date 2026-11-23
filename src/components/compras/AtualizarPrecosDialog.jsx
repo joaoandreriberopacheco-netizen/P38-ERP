@@ -22,6 +22,7 @@ import {
   calcPrecoCustoFromComponents,
   resolveCustoTotalUnitBaseProduto,
 } from '@/lib/productUnits';
+import { outrosUnitarioFator1LinhaPedidoCompra } from '@/lib/pedidoCompraDespesasRateadas';
 
 const findProduto = (produtos, produtoId) =>
   produtos.find((p) => String(p.id) === String(produtoId));
@@ -208,13 +209,14 @@ export default function AtualizarPrecosDialog({
       if (!p) return;
 
       const valorCompraLiquidoBase = getCustoCompraLiquidoFator1(item) || (p.valor_compra || 0);
+      const outrosLinhaF1 = outrosUnitarioFator1LinhaPedidoCompra(item);
 
       const c = {
         valor_compra: valorCompraLiquidoBase,
         custo_frete_padrao: p.custo_frete_padrao || 0,
         custo_imposto1_padrao: p.custo_imposto1_padrao || 0,
         custo_imposto2_padrao: p.custo_imposto2_padrao || 0,
-        custo_outros_padrao: p.custo_outros_padrao || 0,
+        custo_outros_padrao: outrosLinhaF1 > 0 ? outrosLinhaF1 : (p.custo_outros_padrao || 0),
         avaria_percentual: p.avaria_percentual || 0,
         desconto_pct: 0,
         desconto_compra_padrao: 0,

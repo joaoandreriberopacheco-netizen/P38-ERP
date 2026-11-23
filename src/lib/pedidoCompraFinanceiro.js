@@ -99,6 +99,28 @@ export function prepareLinhaPedidoCompraParaTotais(item = {}, produto = null) {
   };
 }
 
+/** Outros por unidade fator-1 sem a parte rateada (manual). */
+export function resolveOutrosUnitarioManual(item = {}) {
+  if (item.outros_unitario_fator1_manual != null) {
+    return Math.max(0, Number(item.outros_unitario_fator1_manual) || 0);
+  }
+  const outros = Number(item.outros_unitario_fator1 ?? item.custo_outros_unitario) || 0;
+  const rateado = Number(item.despesa_rateada_outros_fator1) || 0;
+  return Math.max(0, outros - rateado);
+}
+
+/** Valor de mercadoria da linha (sem rateio de despesas em `outros`). */
+export function valorFinanceiroLinhaPedido(item = {}, produto = null) {
+  const manual = resolveOutrosUnitarioManual(item);
+  const base = {
+    ...item,
+    outros_unitario_fator1: manual,
+    custo_outros_unitario: manual,
+    despesa_rateada_outros_fator1: 0,
+  };
+  return Math.max(0, totalLinhaPedidoCompraAtualizado(base, produto));
+}
+
 /** Soma itens do pedido usando totais recalculados (evita `item.total` legado errado em CX). */
 export function calcValorItensPedidoCompraComCatalogo(pedido = {}, produtosById = {}) {
   const itens = pedido.itens || [];
@@ -131,7 +153,20 @@ export function calcValorItensPedidoCompra(pedido = {}) {
  * O acréscimo `despesas_rateadas` soma-se no total do pedido à parte.
  */
 export function calcValorMercadoriaPedidoCompraBase(pedido = {}, produtosById = {}) {
-  return calcValorItensPedidoCompraComCatalogo(pedido, produtosById);
+  const itens = pedido.itens || [];
+  if (!itens.length) {
+    const valorItensDireto = Number(pedido.valor_itens);
+    if (Number.isFinite(valorItensDireto) && valorItensDireto >= 0) {
+      return roundToTwoDecimals(valorItensDireto);
+    }
+    return 0;
+  }
+  return roundToTwoDecimals(
+    itens.reduce(
+      (acc, item) => acc + valorFinanceiroLinhaPedido(item, produtosById[item?.produto_id]),
+      0,
+    ),
+  );
 }
 
 /** @deprecated Use calcValorMercadoriaPedidoCompraBase */
@@ -139,13 +174,16 @@ export function calcValorMercadoriaPedidoCompraComRateio(pedido = {}, produtosBy
   return calcValorMercadoriaPedidoCompraBase(pedido, produtosById);
 }
 
-/** Total do pedido: itens + frete − desconto + despesas rateadas (mesma regra do formulário). */
-export function calcValorTotalPedidoCompra(pedido = {}) {
-  const itens = calcValorItensPedidoCompra(pedido);
+/** Total do pedido: mercadoria base + frete − desconto + despesas rateadas (formulário / financeiro). */
+export function calcValorTotalPedidoCompra(pedido = {}, produtosById = {}) {
+  const mercadoriaHeader = Number(pedido.valor_itens);
+  const mercadoria = Number.isFinite(mercadoriaHeader) && mercadoriaHeader >= 0
+    ? roundToTwoDecimals(mercadoriaHeader)
+    : calcValorMercadoriaPedidoCompraBase(pedido, produtosById);
   const frete = Number(pedido.valor_frete) || 0;
   const desconto = Number(pedido.valor_desconto) || 0;
   const despesas = somaDespesasRateadasNoPedido(pedido);
-  return roundToTwoDecimals(itens + frete - desconto + despesas);
+  return roundToTwoDecimals(mercadoria + frete - desconto + despesas);
 }
 
 const statusCancelavel = (l) =>
