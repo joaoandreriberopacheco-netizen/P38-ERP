@@ -210,6 +210,7 @@ export default function PedidoCompraForm({
   const anexoImportUploadedRef = useRef(false);
   const valorTotalBaseEdicaoRef = useRef(calcValorTotalPedidoCompra(pedido || {}));
   const pendingAuthSaveRef = useRef(null);
+  const despesasRateioHidratadoRef = useRef(null);
   const [diferencaDialogOpen, setDiferencaDialogOpen] = useState(false);
   const [diferencaDialogCtx, setDiferencaDialogCtx] = useState(null);
   const [pedidoLogistica, setPedidoLogistica] = useState(pedido);
@@ -499,6 +500,21 @@ export default function PedidoCompraForm({
       aplicarRateioDespesasNosItens(itens, despesas ?? [], produtosById),
     [produtosById],
   );
+
+  /** Ao abrir pedido com despesas gravadas, reaplica rateio nas linhas (SQL pode vir sem outros). */
+  useEffect(() => {
+    if (!pedido?.id || !produtos.length) return;
+    if (despesasRateioHidratadoRef.current === pedido.id) return;
+    const despesas = normalizeDespesasRateadasForEdit(
+      pedido.despesas_rateadas ?? pedido?.dados?.despesas_rateadas,
+    );
+    if (acrescimoDespesasRateadasNoTotalPedido(despesas) <= 0) return;
+    despesasRateioHidratadoRef.current = pedido.id;
+    setFormData((prev) => {
+      const itens = aplicarDespesasItens(prev.itens, normalizeDespesasRateadas(despesas));
+      return { ...prev, itens };
+    });
+  }, [pedido?.id, pedido?.despesas_rateadas, produtos.length, aplicarDespesasItens]);
 
   const itensParaAtualizarPrecos = useMemo(
     () =>
