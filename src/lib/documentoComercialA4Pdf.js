@@ -138,9 +138,16 @@ export async function createDocumentoComercialA4Pdf(props) {
     y = Math.max(yEmp, y);
   }
 
+  if (props.visualSkin === 'formigres') {
+    const barW = 13.2;
+    const yBar = M + 2;
+    doc.setFillColor(218, 28, 36);
+    doc.rect(headerRightX - barW, yBar, barW, 0.8, 'F');
+  }
+
   doc.setFont('NotoSans', 'bold');
   doc.setFontSize(12);
-  let yTit = M + 2;
+  let yTit = M + (props.visualSkin === 'formigres' ? 5 : 2);
   for (const line of tituloLines) {
     doc.text(line, headerRightX, yTit, { align: 'right' });
     yTit += 5.5;

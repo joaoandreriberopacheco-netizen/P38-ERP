@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Printer, Share2, Loader2 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowLeft, Loader2, Printer, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
@@ -23,9 +23,51 @@ import { useProdutosListQuery } from '@/hooks/useP38Entities';
 
 const A4_PREVIEW_WIDTH_PX = Math.round(210 * 3.7795275591);
 
+function PreviewA4Scaled({ children }) {
+  const containerRef = useRef(null);
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return undefined;
+
+    const calc = () => {
+      const available = el.offsetWidth - 24;
+      if (available <= 0) return;
+      setScale(Math.min(1, Math.max(0.35, available / A4_PREVIEW_WIDTH_PX)));
+    };
+
+    calc();
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(calc) : null;
+    ro?.observe(el);
+    window.addEventListener('resize', calc);
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener('resize', calc);
+    };
+  }, []);
+
+  return (
+    <div ref={containerRef} className="w-full min-w-0 flex justify-center py-2 px-2">
+      <div
+        style={{
+          width: A4_PREVIEW_WIDTH_PX,
+          transformOrigin: 'top center',
+          transform: `scale(${scale})`,
+        }}
+      >
+        <div className="shadow-2xl rounded-sm overflow-hidden">{children}</div>
+      </div>
+    </div>
+  );
+}
+
 export default function ComprovantePedidoCompra({ pedido, open = true, onClose, produtosMap: produtosMapProp }) {
   const [dadosEmpresa, setDadosEmpresa] = useState(null);
   const [gerando, setGerando] = useState(false);
+  const [pdfBlob, setPdfBlob] = useState(null);
+  const [pdfUrl, setPdfUrl] = useState(null);
+  const [previewMode, setPreviewMode] = useState('pdf');
   const { data: produtosCached } = useProdutosListQuery();
 
   const produtosMap = useMemo(() => {
@@ -50,10 +92,54 @@ export default function ComprovantePedidoCompra({ pedido, open = true, onClose, 
     return mapPedidoCompraParaDocumentoComercial(pedido, dadosEmpresa, produtosMap);
   }, [pedido, dadosEmpresa, produtosMap]);
 
-  const gerarPDF = async () => {
+  const gerarPDF = useCallback(async () => {
     if (!docProps) throw new Error('Pedido indisponível');
     return createDocumentoComercialA4Pdf(docProps);
-  };
+  }, [docProps]);
+
+  useEffect(() => {
+    if (!open || !docProps) {
+      setPdfBlob(null);
+      setPdfUrl(null);
+      return undefined;
+    }
+
+    let cancelled = false;
+    setGerando(true);
+    setPreviewMode('pdf');
+
+    (async () => {
+      try {
+        const doc = await gerarPDF();
+        const blob = doc.output('blob');
+        if (cancelled) return;
+        setPdfBlob(blob);
+      } catch (e) {
+        if (!cancelled) {
+          console.error(e);
+          toast.error('Não foi possível gerar o PDF A4');
+          setPreviewMode('html');
+        }
+      } finally {
+        if (!cancelled) setGerando(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, docProps, gerarPDF]);
+
+  useEffect(() => {
+    if (!pdfBlob) {
+      if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+      setPdfUrl(null);
+      return undefined;
+    }
+    const url = URL.createObjectURL(pdfBlob);
+    setPdfUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [pdfBlob]);
 
   const handleShare = async () => {
     setGerando(true);
@@ -64,7 +150,7 @@ export default function ComprovantePedidoCompra({ pedido, open = true, onClose, 
         fileBaseName: fileName,
         title: `Pedido de compra ${pedido?.numero || ''}`,
       });
-      if (r === 'downloaded') toast.success('PDF gerado com sucesso');
+      if (r === 'downloaded') toast.success('PDF A4 gerado com sucesso');
     } catch (e) {
       if (e?.name !== 'AbortError') toast.error('Erro ao gerar PDF');
     } finally {
@@ -73,23 +159,19 @@ export default function ComprovantePedidoCompra({ pedido, open = true, onClose, 
   };
 
   const handlePrint = async () => {
+    if (pdfUrl && shouldUseMobileDocumentExport()) {
+      await handleShare();
+      return;
+    }
+
     const el = document.getElementById('pedido-compra-a4-print');
-    if (!el) return;
+    if (!el) {
+      if (pdfUrl) window.open(pdfUrl, '_blank', 'noopener');
+      return;
+    }
 
     if (shouldUseMobileDocumentExport()) {
-      setGerando(true);
-      try {
-        const r = await exportPdfDocumentAndShare({
-          createPdfDocument: () => gerarPDF(),
-          fileBaseName: `pedido-compra-${pedido?.numero || 'minuta'}`,
-          title: `Pedido de compra ${pedido?.numero || ''}`,
-        });
-        if (r === 'downloaded') toast.success('PDF pronto — use Abrir em para imprimir');
-      } catch (e) {
-        if (e?.name !== 'AbortError') toast.error('Erro ao gerar PDF');
-      } finally {
-        setGerando(false);
-      }
+      await handleShare();
       return;
     }
 
@@ -156,9 +238,27 @@ export default function ComprovantePedidoCompra({ pedido, open = true, onClose, 
           Voltar
         </button>
         <span className="text-sm font-semibold font-glacial" style={{ color: FORMIGRES_DOC_TEXT_STRONG }}>
-          Pedido de compra — PDF
+          Pedido de compra — A4
         </span>
         <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant={previewMode === 'pdf' ? 'default' : 'outline'}
+            className="h-8 text-xs hidden sm:inline-flex"
+            onClick={() => setPreviewMode('pdf')}
+          >
+            PDF
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={previewMode === 'html' ? 'default' : 'outline'}
+            className="h-8 text-xs hidden sm:inline-flex"
+            onClick={() => setPreviewMode('html')}
+          >
+            Layout
+          </Button>
           <Button
             onClick={handlePrint}
             disabled={gerando}
@@ -171,31 +271,46 @@ export default function ComprovantePedidoCompra({ pedido, open = true, onClose, 
           </Button>
           <Button
             onClick={handleShare}
-            disabled={gerando}
+            disabled={gerando || !docProps}
             size="sm"
             className="h-9 text-xs gap-1.5 rounded-xl px-4 text-white"
             style={{ background: FORMIGRES_DOC_ACCENT }}
           >
             {gerando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Share2 className="w-3.5 h-3.5" />}
-            {gerando ? 'Gerando...' : 'PDF'}
+            {gerando ? 'Gerando...' : 'Baixar PDF'}
           </Button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto overflow-x-hidden w-full min-w-0 p-4">
-        <div
-          className="mx-auto shadow-2xl rounded-sm overflow-hidden p38-pdf-light-root"
-          style={{
-            width: A4_PREVIEW_WIDTH_PX,
-            maxWidth: '100%',
-            background: '#ffffff',
-            colorScheme: 'only light',
-          }}
-          data-skin="formigres"
-          data-theme="light"
-        >
-          <DocumentoComercialA4 {...docProps} printId="pedido-compra-a4-print" />
-        </div>
+      <div className="flex-1 overflow-y-auto overflow-x-hidden w-full min-w-0" style={{ background: '#ffffff' }}>
+        {gerando && !pdfUrl && previewMode === 'pdf' ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3 text-sm" style={{ color: FORMIGRES_DOC_TEXT }}>
+            <Loader2 className="w-8 h-8 animate-spin" />
+            Gerando PDF A4 (modo claro)…
+          </div>
+        ) : null}
+
+        {previewMode === 'pdf' && pdfUrl ? (
+          <iframe
+            title={`PDF pedido ${pedido?.numero || ''}`}
+            src={pdfUrl}
+            className="w-full h-full min-h-[calc(100vh-56px)] border-0"
+            style={{ backgroundColor: '#ffffff', colorScheme: 'only light' }}
+          />
+        ) : null}
+
+        {previewMode === 'html' || (previewMode === 'pdf' && !pdfUrl && !gerando) ? (
+          <PreviewA4Scaled>
+            <div
+              className="p38-pdf-light-root"
+              style={{ background: '#ffffff', colorScheme: 'only light' }}
+              data-skin="formigres"
+              data-theme="light"
+            >
+              <DocumentoComercialA4 {...docProps} printId="pedido-compra-a4-print" />
+            </div>
+          </PreviewA4Scaled>
+        ) : null}
       </div>
     </div>
   );

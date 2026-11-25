@@ -67,6 +67,12 @@ export default function PedidoCompraFAB({
     }
     if (onOpenPedidoPdf) {
       onOpenPedidoPdf();
+    } else {
+      toast({
+        title: 'PDF indisponível',
+        description: 'Atualize a página. O pedido deve abrir o PDF A4 (Formigres).',
+        variant: 'destructive',
+      });
     }
     setIsExpanded(false);
   };

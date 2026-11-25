@@ -1638,7 +1638,7 @@ export default function PedidoCompraForm({
                   <DropdownMenuSeparator />
                   <DropdownMenuItem disabled={!pedido?.id} onClick={() => handlePrintReport('pedido')}>
                     <Printer className="w-4 h-4 mr-2" />
-                    Relatório do Pedido
+                    PDF A4 do pedido (Formigres)
                   </DropdownMenuItem>
                   <DropdownMenuItem disabled={!pedido?.id} onClick={() => handlePrintReport('precificacao')}>
                     <Printer className="w-4 h-4 mr-2" />
