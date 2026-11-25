@@ -418,6 +418,14 @@ async function main() {
       unidade: '',
       status_site: row.status,
       observacao: row.observacao || '',
+      local_uso_erp: row.local_uso_erp || '',
+      local_uso_nbr: row.local_uso_nbr || '',
+      local_uso_fonte: row.local_uso_fonte || '',
+      textura_erp: row.textura_erp || '',
+      textura_site: row.textura_site || '',
+      tipo_borda_erp: row.tipo_borda_erp || '',
+      tipo_borda_site: row.tipo_borda_site || '',
+      ficha_varredura_ok: row.ficha_varredura_ok || '',
     };
   });
 

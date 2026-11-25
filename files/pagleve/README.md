@@ -38,5 +38,10 @@ npm run catalogo:publicar-pagleve
 | Arquivo | Conteúdo |
 |---------|----------|
 | `raio-x-pagleve-site-verificado.xlsx` | Planilha antiga (328 itens) — **não** é mais a lista-mãe |
+| `raio-x-pagleve-site-verificado.csv` | Mesma planilha em CSV |
+| `pagleve-fabricantes-sites-oficiais.md` | Sites oficiais e regras de busca |
+| `pagleve-precos-sibling-match.md` | **Planejado:** preços por “irmão” (formato → acabamento → linha) quando o Excel não tem preço |
+| `pagleve-local-uso-nbr.md` | **Local de uso:** NBR LA–LE como eixo comum; tradução por fabricante (cerâmica) |
+| `pagleve-orfaos-descricao-por-formato.md` | Órfãos com descrição ERP para pesquisa |
 | `precos-siah-fornecedor.csv` | OCR scans WhatsApp — substituído por `precos-pre-os.json` quando existir |
 
