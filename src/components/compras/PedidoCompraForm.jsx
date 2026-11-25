@@ -43,6 +43,8 @@ import BannerStatusPedido from './BannerStatusPedido.jsx';
 import AnexosPedidoCompra from './AnexosPedidoCompra.jsx';
 import SolicitarEdicaoPDV from './SolicitarEdicaoPDV.jsx';
 import DiferencaPedidoCompraDialog from './DiferencaPedidoCompraDialog.jsx';
+import ComprovantePedidoCompra from './ComprovantePedidoCompra.jsx';
+import PedidoCompraPdfBlobPreview from './PedidoCompraPdfBlobPreview.jsx';
 import LancamentosCompraPanel from './LancamentosCompraPanel.jsx';
 import PainelCentralFinanceiroPedido from './PainelCentralFinanceiroPedido.jsx';
 import PedidoCompraLogisticaTab from './PedidoCompraLogisticaTab.jsx';
@@ -212,6 +214,8 @@ export default function PedidoCompraForm({
   const pendingAuthSaveRef = useRef(null);
   const [diferencaDialogOpen, setDiferencaDialogOpen] = useState(false);
   const [diferencaDialogCtx, setDiferencaDialogCtx] = useState(null);
+  const [comprovanteCompraOpen, setComprovanteCompraOpen] = useState(false);
+  const [relatorioPdfPreview, setRelatorioPdfPreview] = useState(null);
   const [pedidoLogistica, setPedidoLogistica] = useState(pedido);
   const [abaPedidoDesktop, setAbaPedidoDesktop] = useState(abaInicial);
   /** Sub-tela do seletor de itens (menu, despesas-rateadas, …) — FAB fica oculto fora do menu. */
@@ -1159,56 +1163,67 @@ export default function PedidoCompraForm({
 
   const canReopen = currentUser?.role === 'admin' && isLocked;
 
+  const pedidoParaDocumento = useMemo(
+    () => ({
+      ...formData,
+      id: pedido?.id,
+      numero: pedido?.numero,
+      valor_itens: valorItens,
+      valor_total: valorTotal,
+    }),
+    [formData, pedido?.id, pedido?.numero, valorItens, valorTotal],
+  );
+
+  const handleOpenPedidoCompraPdf = useCallback(() => {
+    if (!pedido?.id) {
+      toast({ title: 'Salve o pedido antes de gerar o PDF', variant: 'destructive' });
+      return;
+    }
+    setRelatorioPdfPreview(null);
+    setComprovanteCompraOpen(true);
+  }, [pedido?.id, toast]);
+
   const handlePrintReport = async (tipo = 'pedido') => {
     if (!pedido?.id) {
       toast({ title: 'Salve o pedido antes de imprimir', variant: 'destructive' });
       return;
     }
 
+    if (tipo === 'pedido') {
+      handleOpenPedidoCompraPdf();
+      return;
+    }
+
     try {
       toast({ title: 'Gerando relatório...', description: 'Aguarde...' });
 
-      let functionName = 'gerarRelatorioPedido';
-      let fileName = `Pedido_${pedido.numero}.pdf`;
+      let functionName = 'gerarRelatorioPrecificacao';
+      let fileName = `Precificacao_${pedido.numero}.pdf`;
+      let title = 'Relatório de precificação';
 
-      if (tipo === 'precificacao') {
-        functionName = 'gerarRelatorioPrecificacao';
-        fileName = `Precificacao_${pedido.numero}.pdf`;
-      } else if (tipo === 'pendencias') {
+      if (tipo === 'pendencias') {
         functionName = 'gerarRelatorioPendencias';
         fileName = `Pendencias_${pedido.numero}.pdf`;
+        title = 'Relatório de pendências';
       }
 
       const response = await base44.functions.invoke(functionName, { pedido_id: pedido.id });
-
-      console.log('Response completa:', response);
-      console.log('Response status:', response?.status);
-      console.log('Response data type:', typeof response?.data);
 
       if (!response || !response.data) {
         throw new Error('Resposta inválida do servidor');
       }
 
       const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      toast({ title: 'Relatório gerado com sucesso!' });
+      setComprovanteCompraOpen(false);
+      setRelatorioPdfPreview({ blob, filename: fileName, title });
+      toast({ title: 'Relatório pronto', description: 'Visualização em modo claro' });
     } catch (error) {
-      console.error('Erro completo:', error);
-      console.error('Erro message:', error?.message);
-      console.error('Erro stack:', error?.stack);
       const errorMsg = error?.message || error?.toString() || 'Erro desconhecido ao gerar relatório';
-      toast({ 
-        title: 'Erro ao gerar relatório', 
+      toast({
+        title: 'Erro ao gerar relatório',
         description: errorMsg,
         variant: 'destructive',
-        duration: 10000
+        duration: 10000,
       });
     }
   };
@@ -2172,9 +2187,10 @@ export default function PedidoCompraForm({
        {/* FAB multi-role com Bússola — oculto na sub-tela despesas rateadas (itens) */}
        {!isLocked && mostrarFabPedidoCompra && (
          <PedidoCompraFAB 
-           pedido={{ ...formData, id: pedido?.id, numero: pedido?.numero, valor_itens: valorItens, valor_total: valorTotal }}
+           pedido={pedidoParaDocumento}
            onSave={handleInitiateSave}
            isSaving={isSaving}
+           onOpenPedidoPdf={handleOpenPedidoCompraPdf}
            mostrarEnviarFinanceiro={!isLocked && !!pedido?.id && formData.status === 'Rascunho' && formData.itens.length > 0}
            onEnviarFinanceiro={() => {
              handleInitiateSave({ status: 'Aguardando Aprovação Financeira' });
@@ -2185,13 +2201,28 @@ export default function PedidoCompraForm({
        )}
        {isLocked && mostrarFabPedidoCompra && (
          <PedidoCompraFAB 
-           pedido={{ ...formData, id: pedido?.id, numero: pedido?.numero, valor_itens: valorItens, valor_total: valorTotal }}
+           pedido={pedidoParaDocumento}
            onSave={handleInitiateSave}
            isSaving={isSaving}
+           onOpenPedidoPdf={handleOpenPedidoCompraPdf}
            mostrarSolicitarEdicao={podeSolicitarCorrecao}
            onSolicitarEdicao={() => setIsSolicitarEdicaoOpen(true)}
          />
        )}
+
+       <ComprovantePedidoCompra
+         pedido={pedidoParaDocumento}
+         open={comprovanteCompraOpen}
+         onClose={() => setComprovanteCompraOpen(false)}
+         produtosMap={produtosMapBasico}
+       />
+       <PedidoCompraPdfBlobPreview
+         open={Boolean(relatorioPdfPreview)}
+         blob={relatorioPdfPreview?.blob}
+         filename={relatorioPdfPreview?.filename}
+         title={relatorioPdfPreview?.title}
+         onClose={() => setRelatorioPdfPreview(null)}
+       />
 
            <AnexosPedidoCompra
          pedidoId={pedido?.id}

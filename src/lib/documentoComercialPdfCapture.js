@@ -1,4 +1,5 @@
 import { ensureDocumentoComercialA4FontLoaded } from '@/lib/documentoComercialA4Font';
+import { injectPdfLightModeClone } from '@/lib/formigresDocumentTheme';
 
 const OFFSCREEN_HOST_ID = 'p38-documento-a4-pdf-capture-host';
 
@@ -48,6 +49,8 @@ export async function html2canvasDocumentoComercialA4(element, html2canvas, opti
   });
 
   try {
+    const userOnClone = options.html2canvas?.onclone;
+  const { onclone: _drop, ...html2canvasRest } = options.html2canvas || {};
     return await html2canvas(clone, {
       scale: options.scale ?? 2,
       useCORS: true,
@@ -56,7 +59,11 @@ export async function html2canvasDocumentoComercialA4(element, html2canvas, opti
       width: clone.scrollWidth || clone.offsetWidth,
       height: clone.scrollHeight || clone.offsetHeight,
       windowWidth: clone.scrollWidth || 794,
-      ...options.html2canvas,
+      ...html2canvasRest,
+      onclone: (clonedDoc) => {
+        injectPdfLightModeClone(clonedDoc);
+        if (typeof userOnClone === 'function') userOnClone(clonedDoc);
+      },
     });
   } finally {
     host.replaceChildren();
