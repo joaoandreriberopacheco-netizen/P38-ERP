@@ -6,10 +6,25 @@ import { normalizeItemCompraParaExibicao, custoApresentacaoParaFator1 } from '@/
 import { base44 } from '@/api/base44Client';
 import { gerarConsultaComprasHtmlPdf } from '@/lib/consultaComprasHtmlExport';
 import { gerarRelatorioSaldoEmbarquePdf } from '@/lib/comprasRelatorioSaldoEmbarque';
+import { fetchFluxoOrganicoEncomendaReport } from '@/lib/relatorioFluxoOrganicoEncomenda/fetchFluxoOrganicoEncomendaReport';
+import { generateRelatorioFluxoOrganicoEncomendaPdf } from '@/lib/relatorioFluxoOrganicoEncomenda/generateRelatorioFluxoOrganicoEncomendaPdf';
 
 const VERSOES_RELATORIO_COM_ANEXOS = new Set(['expandida_com_anexos', 'expandida_com_anexos_a4']);
 const VERSOES_HTML_CONSULTA = new Set(['expandida_mobile', 'expandida_mobile_claro']);
 const VERSAO_SALDO_EMBARQUE = 'saldo_a_embarcar';
+export const VERSAO_FLUXO_ORGANICO_ENCOMENDA = 'fluxo_organico_encomenda';
+
+const COMPETENCIA_MES_RE = /^\d{4}-\d{2}$/;
+
+/** Mês civil YYYY-MM (Tabatinga) para relatórios; fallback = mês corrente. */
+export function normalizarCompetenciaRelatorioMes(competencia) {
+  const fallback = dataHoje().slice(0, 7);
+  const raw = String(competencia ?? fallback).slice(0, 7);
+  if (!COMPETENCIA_MES_RE.test(raw)) return fallback;
+  const [, m] = raw.split('-').map(Number);
+  if (!m || m < 1 || m > 12) return fallback;
+  return raw;
+}
 
 /** Quatro formatos canónicos — mobile consulta via HTML (mesmos componentes da tela). */
 export const COMPRAS_RELATORIOS = [
@@ -42,6 +57,13 @@ export const COMPRAS_RELATORIOS = [
     label: 'PDF saldo a embarcar',
     icon: 'list',
     title: 'Falta operacional por pedido (exclui trânsito)',
+  },
+  {
+    version: VERSAO_FLUXO_ORGANICO_ENCOMENDA,
+    label: 'PDF fluxo orgânico × encomenda',
+    icon: 'list',
+    title:
+      'Duas páginas: reposição convencional + cruzamento encomenda — escolhe o mês; não usa o filtro da consulta',
   },
 ];
 
@@ -170,7 +192,24 @@ export async function gerarComprasRelatorioPdf({
   produtosMap: produtosMapInput = {},
   groupBy = 'eta_transportadora',
   sortOrder = 'asc',
+  competencia: competenciaInput,
 }) {
+  if (version === VERSAO_FLUXO_ORGANICO_ENCOMENDA) {
+    const competencia = normalizarCompetenciaRelatorioMes(competenciaInput);
+    onProgress?.(`Carregando vendas, compras e catálogo (${competencia})…`);
+    const report = await fetchFluxoOrganicoEncomendaReport(competencia);
+    onProgress?.('Montando PDF (fluxo orgânico + encomendas)…');
+    const resposta = await generateRelatorioFluxoOrganicoEncomendaPdf(report);
+    const blob = new Blob([resposta.data], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `FluxoOrganicoEncomenda_${competencia}_${dataHoje()}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+    return;
+  }
+
   onProgress?.('Sincronizando itens do pedido (SQL)...');
   const pedidosSql = await loadPedidosCompraComItensCanonico(base44, pedidos || []);
   const gruposSql = Array.isArray(grupos) && grupos.length

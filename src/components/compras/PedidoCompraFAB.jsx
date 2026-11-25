@@ -14,6 +14,7 @@ export default function PedidoCompraFAB({
   mostrarEnviarFinanceiro,
   onSolicitarEdicao,
   mostrarSolicitarEdicao,
+  onOpenPedidoPdf,
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showAnexosModal, setShowAnexosModal] = useState(false);
@@ -59,27 +60,19 @@ export default function PedidoCompraFAB({
     if (showAnexosModal) carregarAnexos();
   }, [showAnexosModal]);
 
-  const handlePrintPDF = async () => {
+  const handlePrintPDF = () => {
     if (!pedido?.id) {
       toast({ title: 'Salve o pedido antes de gerar o PDF', variant: 'destructive' });
       return;
     }
-    try {
-      toast({ title: 'Gerando PDF...', description: 'Aguarde...' });
-      const response = await base44.functions.invoke('gerarRelatorioPedido', { pedido_id: pedido.id });
-      if (!response?.data) throw new Error('Resposta inválida');
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `Pedido_${pedido.numero || pedido.id}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      toast({ title: 'PDF gerado com sucesso!' });
-    } catch (error) {
-      toast({ title: 'Erro ao gerar PDF', description: error.message, variant: 'destructive' });
+    if (onOpenPedidoPdf) {
+      onOpenPedidoPdf();
+    } else {
+      toast({
+        title: 'PDF indisponível',
+        description: 'Atualize a página. O pedido deve abrir o PDF A4 (Formigres).',
+        variant: 'destructive',
+      });
     }
     setIsExpanded(false);
   };
@@ -195,6 +188,9 @@ export default function PedidoCompraFAB({
         onDelete={handleAnexoDelete}
         uploading={anexoUploading}
         referenciaNomero={pedido?.numero}
+        pedidoId={pedido?.id}
+        referenciaTipo="PedidoCompra"
+        referenciaId={pedido?.id}
       />
     </>
   );

@@ -195,14 +195,29 @@ const MESES_CURTOS = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out
 const MESES_LONGOS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
 /**
+ * Dia civil YYYY-MM-DD para campos financeiros (date, timestamptz meia-noite UTC, etc.).
+ * Evita deslocar o dia ao interpretar `...T00:00:00.000Z` como instante UTC.
+ */
+export function chaveDiaCampoData(valor) {
+  if (valor == null || valor === '') return '';
+  const s = String(valor).trim();
+  const d10 = s.slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(d10)) {
+    if (s.length === 10) return d10;
+    if (/^\d{4}-\d{2}-\d{2}T00:00:00(\.000)?Z$/i.test(s)) return d10;
+  }
+  const local = toRioBranco(valor);
+  if (!local) return '';
+  return `${local.getUTCFullYear()}-${pad(local.getUTCMonth() + 1)}-${pad(local.getUTCDate())}`;
+}
+
+/**
  * Retorna chave YYYY-MM-DD no fuso UTC-5 — para agrupamentos de listas.
  * @param {string|Date} valor
  * @returns {string} e.g. "2026-03-16"
  */
 export function toLocalDateKey(valor) {
-  const local = toRioBranco(valor);
-  if (!local) return '';
-  return `${local.getUTCFullYear()}-${pad(local.getUTCMonth() + 1)}-${pad(local.getUTCDate())}`;
+  return chaveDiaCampoData(valor);
 }
 
 /**

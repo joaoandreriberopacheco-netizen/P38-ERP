@@ -1,6 +1,6 @@
 import React from 'react';
 import { formatarDataCurta } from '@/components/utils/dateUtils';
-import { AlertCircle, ArrowRightLeft, Clock } from 'lucide-react';
+import { AlertCircle, ArrowDown, ArrowRightLeft, ArrowUp, ChevronRight } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   P38MobileLine,
@@ -11,7 +11,28 @@ import {
 } from '@/components/ui/p38-mobile-line';
 import { cn } from '@/lib/utils';
 import { formatFinanceiroValor } from './FinanceiroListaShared';
+import FluxoExtratoRowIcon from './FluxoExtratoRowIcon';
+import { rotuloFormaPagamentoExtrato } from '@/lib/fluxoExtratoIconKind';
 import { isTransferenciaEntreContas } from '@/lib/saldoContaFinanceira';
+import { isLancamentoPago, statusRotuloListaFinanceiro } from '@/lib/lancamentoFinanceiroStatus';
+import {
+  getDataChaveLancamento,
+  extratoTransferenciaInternaCasa,
+  normalizarPerspectivaTransferencia,
+  resolverPerspectivaValorTransferenciaExtrato,
+} from '@/lib/financialUtils';
+import { P38_EXTRATO_V8_TRANSFER_INTERNA_VALUE } from './financeiroP38';
+import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
+import {
+  P38_EXTRATO_V8_ROW_LINE,
+  P38_EXTRATO_V8_ROW_META,
+  P38_EXTRATO_V8_ROW_TITLE,
+  P38_EXTRATO_V8_ROW_GRID,
+  P38_EXTRATO_V8_ROW_VALUE,
+  P38_EXTRATO_V8_ROW_VALUE_CELL,
+  extratoFornecedorNome,
+  lancamentoExtratoEhCompraMercadoria,
+} from './financeiroP38';
 
 const LINE_TITLE_CLASS =
   '[&>div>div:first-child]:text-[15px] [&>div>div:first-child]:font-semibold sm:[&>div>div:first-child]:text-base';
@@ -43,13 +64,53 @@ function tipoLinha(l) {
   return l.tipo;
 }
 
+function rotuloFormaPagamento(l) {
+  const direto = l?.forma_pagamento_tipo || l?.forma_pagamento;
+  const dados = l?.dados?.forma_pagamento_tipo || l?.dados?.forma_pagamento;
+  return String(direto || dados || '').trim();
+}
+
+/** Receitas geradas a partir de pedido de venda (PDV / gestão de vendas). */
+function isLancamentoVenda(l) {
+  const ref = l?.referencia_tipo || l?.dados?.referencia_tipo;
+  return ref === 'PedidoVenda';
+}
+
+/** Lançamento real para detalhe/edição (linhas sintéticas de transferência no extrato). */
+function resolverLancamentoAcaoExtrato(l, { perspectiva, isTransfConsolidada }) {
+  if (!l) return null;
+  if (l._lancamentoTransferencia) return l._lancamentoTransferencia;
+  if (perspectiva === 'entrada' && l._lancamentoReceita) return l._lancamentoReceita;
+  if (perspectiva === 'saida' && l._lancamentoDespesa) return l._lancamentoDespesa;
+  if (isTransfConsolidada) return l._lancamentoDespesa || l._lancamentoReceita;
+  if (l._lancamentoDespesa) return l._lancamentoDespesa;
+  if (l._lancamentoReceita) return l._lancamentoReceita;
+  const id = String(l.id || '');
+  if (id.startsWith('transfer-single-') || id.startsWith('transfer-par-') || id.startsWith('transfer-unico-')) {
+    return l._lancamentoDespesa || l._lancamentoReceita || null;
+  }
+  if (l.tipo === 'Transferência' || isTransferenciaEntreContas(l)) return l;
+  return l;
+}
+
+function descricaoComFormaPagamento(l) {
+  const base = String(l?.descricao || '').trim();
+  if (!isLancamentoVenda(l)) return base;
+  const forma = rotuloFormaPagamento(l);
+  if (!forma) return base;
+  const sufixo = `(${forma})`;
+  if (base.toLowerCase().includes(sufixo.toLowerCase())) return base;
+  if (!base) return sufixo;
+  return `${base} ${sufixo}`;
+}
+
 /** Barra lateral — mesmo critério do Fluxo de Caixa: verde receita, vermelho despesa. */
 function rowAccent(l, { dimPago = false } = {}) {
   const tipo = tipoLinha(l);
   const isR = tipo === 'Receita';
   const isT = tipo === 'Transferência';
   const cancelado = l.status === 'Cancelado';
-  const isPago = l.status === 'Pago' || !!l.data_pagamento;
+  const isPago = isLancamentoPago(l);
 
   if (dimPago && isPago) return 'muted';
   if (cancelado) return 'muted';
@@ -58,36 +119,152 @@ function rowAccent(l, { dimPago = false } = {}) {
   return 'danger';
 }
 
-function valorNode(l) {
+function valorNode(
+  l,
+  {
+    extratoMobile = false,
+    perspectivaTransferencia = null,
+    contaVisualizadaId = null,
+    contasSel = null,
+  } = {},
+) {
   const tipo = tipoLinha(l);
   const isR = tipo === 'Receita';
   const isT = tipo === 'Transferência';
   const cancelado = l.status === 'Cancelado';
+  const pago = isLancamentoPago(l);
+  const statusLista = statusRotuloListaFinanceiro(l);
+
+  const perspectivaTransf = resolverPerspectivaValorTransferenciaExtrato(l, {
+    perspectivaPreferida: perspectivaTransferencia,
+    contaVisualizadaId,
+    contasSel,
+  });
 
   if (cancelado) return '—';
-  if (isT) return formatFinanceiroValor(Math.abs(l.valor || 0));
+  if (isT || (extratoMobile && perspectivaTransf)) {
+    const valorFmt = formatFinanceiroValor(Math.abs(l.valor || 0));
+    if (extratoMobile) {
+      const valorExtratoTransferencia = (sign, signClass) => (
+        <span className={cn(P38_EXTRATO_V8_ROW_VALUE, 'inline-block text-right', signClass)}>
+          <span className="inline-block min-w-[0.65rem] text-right">{sign}</span>
+          <span className="ml-px">{valorFmt}</span>
+        </span>
+      );
+      if (perspectivaTransf === 'entrada') {
+        return valorExtratoTransferencia('+', 'text-[#3d5a3d] dark:text-[#a4ce33]');
+      }
+      if (perspectivaTransf === 'saida') {
+        return valorExtratoTransferencia('−', 'text-[#dc2626] dark:text-[#f87171]');
+      }
+      const transferInterna = extratoTransferenciaInternaCasa(l, contasSel);
+      return (
+        <span
+          className={cn(
+            P38_EXTRATO_V8_ROW_VALUE,
+            'inline-block text-right',
+            transferInterna
+              ? P38_EXTRATO_V8_TRANSFER_INTERNA_VALUE
+              : 'text-[#374151] dark:text-[#d1d5db]',
+          )}
+        >
+          {valorFmt}
+        </span>
+      );
+    }
+    return valorFmt;
+  }
+
+  const valorFmt = formatFinanceiroValor(Math.abs(l.valor || 0));
+  const signClass = isR
+    ? 'text-[#3d5a3d] dark:text-[#a4ce33]'
+    : !pago && statusLista === 'Vencido'
+      ? 'text-amber-600 dark:text-amber-400'
+      : extratoMobile
+        ? 'text-[#dc2626] dark:text-[#f87171]'
+        : 'text-foreground/85';
+
+  if (extratoMobile) {
+    const sign = isR ? '+' : '−';
+    return (
+      <span className={cn(P38_EXTRATO_V8_ROW_VALUE, 'inline-block text-right', signClass)}>
+        <span className="inline-block min-w-[0.65rem] text-right">{sign}</span>
+        <span className="ml-px">{valorFmt}</span>
+      </span>
+    );
+  }
 
   return (
-    <>
-      <span
-        className={
-          isR
-            ? 'text-[#4A5D23] dark:text-[#a4ce33]'
-            : l.status === 'Vencido'
-              ? 'text-amber-600 dark:text-amber-400'
-              : 'text-foreground/85'
-        }
-      >
-        {isR ? '+' : '−'}
-      </span>
-      {formatFinanceiroValor(Math.abs(l.valor || 0))}
-    </>
+    <span className="inline-flex items-center justify-end gap-0.5 tabular-nums">
+      <span className={signClass}>{isR ? '+' : '−'}</span>
+      <span>{valorFmt}</span>
+    </span>
   );
+}
+
+/** entrada = seta verde ↑ | saida = seta vermelha ↓ (extrato) | neutra = sem seta (fluxo multi-conta) */
+export function resolverDirecaoSetaTransferencia(l, contaVisualizadaId = null) {
+  if (!l || l.status === 'Cancelado') return null;
+  const eTransfer = tipoLinha(l) === 'Transferência' || isTransferenciaEntreContas(l);
+  if (!eTransfer) return null;
+
+  const perspectiva = l.perspectivaTransferencia;
+  if (perspectiva === 'entrada') return 'entrada';
+  if (perspectiva === 'saida') return 'saida';
+  if (perspectiva === 'neutra') return null;
+
+  if (contaVisualizadaId) {
+    const destinoId = l.conta_destino_id || (l.tipo === 'Receita' ? l.conta_financeira_id : null);
+    const origemId =
+      l.conta_origem_id || (l.tipo === 'Despesa' ? l.conta_financeira_id : null) || l.conta_financeira_id;
+    if (destinoId === contaVisualizadaId && origemId !== contaVisualizadaId) return 'entrada';
+    if (origemId === contaVisualizadaId && destinoId && destinoId !== contaVisualizadaId) return 'saida';
+  }
+
+  if (l.tipo === 'Receita' && isTransferenciaEntreContas(l)) return 'entrada';
+  if (l.tipo === 'Despesa' && isTransferenciaEntreContas(l)) return 'saida';
+  if (l.tipo === 'Transferência' && l.conta_destino_id) return 'saida';
+
+  return null;
+}
+
+function setaTipoAoLadoValor(l, contaVisualizadaId = null) {
+  const cancelado = l.status === 'Cancelado';
+  if (cancelado) return null;
+
+  const dirTransf = resolverDirecaoSetaTransferencia(l, contaVisualizadaId);
+  if (dirTransf === 'entrada') {
+    return (
+      <ArrowUp
+        className="h-3 w-3 shrink-0 opacity-80 text-green-600 dark:text-green-400"
+        aria-hidden
+      />
+    );
+  }
+  if (dirTransf === 'saida') {
+    return (
+      <ArrowDown
+        className="h-3 w-3 shrink-0 opacity-80 text-red-500 dark:text-red-400"
+        aria-hidden
+      />
+    );
+  }
+
+  const tipo = tipoLinha(l);
+  if (tipo === 'Transferência') return null;
+
+  const isR = tipo === 'Receita';
+  const Icon = isR ? ArrowUp : ArrowDown;
+  const iconClass = isR
+    ? 'text-green-600 dark:text-green-400'
+    : 'text-red-500 dark:text-red-400';
+  return <Icon className={cn('h-3 w-3 shrink-0 opacity-80', iconClass)} aria-hidden />;
 }
 
 function rowMeta(l, { showPago = false, dimProgramada = false } = {}) {
   const cancelado = l.status === 'Cancelado';
-  const isPago = l.status === 'Pago' || !!l.data_pagamento;
+  const isPago = isLancamentoPago(l);
+  const statusExib = statusRotuloListaFinanceiro(l);
   const visiveis = tagsVisiveisFinanceiro(l.tags);
   const programada = l._isProgramada || dimProgramada;
 
@@ -104,11 +281,11 @@ function rowMeta(l, { showPago = false, dimProgramada = false } = {}) {
       {programada && !isPago && (
         <P38StatusLabel tone="warning">Programado</P38StatusLabel>
       )}
-      {l.status && l.status !== 'Pago' && !programada && (
-        showPago && l.status === 'Vencido' ? (
-          <P38StatusPill tone="danger">{l.status}</P38StatusPill>
+      {!programada && statusExib && statusExib !== 'Pago' && !isPago && (
+        showPago && statusExib === 'Vencido' ? (
+          <P38StatusPill tone="danger">{statusExib}</P38StatusPill>
         ) : (
-          <P38StatusLabel tone={lancStatusTone(l.status)}>{l.status}</P38StatusLabel>
+          <P38StatusLabel tone={lancStatusTone(statusExib)}>{statusExib}</P38StatusLabel>
         )
       )}
       {showPago && isPago && <P38StatusLabel tone="success">Pago</P38StatusLabel>}
@@ -138,38 +315,67 @@ export default function FinanceiroLancRow({
   selecionarPagos = false,
   selecionado = false,
   onToggleSelecionado,
+  contaVisualizadaId = null,
+  contasSel = null,
+  extratoMobile = false,
 }) {
   const cancelado = l.status === 'Cancelado';
-  const isPago = l.status === 'Pago' || !!l.data_pagamento;
+  const isPago = isLancamentoPago(l);
   const podeSelecionar = emSelecao && (selecionarPagos ? isPago : !isPago);
   const conc = l.status_conciliacao || 'N/A';
-  const isTransfConsolidada = l.isTransferenciaConsolidada || l.perspectivaTransferencia === 'neutra';
-  const perspectiva = l.perspectivaTransferencia;
+
+  const dirExtrato = contaVisualizadaId ? resolverDirecaoSetaTransferencia(l, contaVisualizadaId) : null;
+  const perspectiva =
+    normalizarPerspectivaTransferencia(dirExtrato)
+    || normalizarPerspectivaTransferencia(l.perspectivaTransferencia);
+  const isTransfConsolidada =
+    !contaVisualizadaId && (l.isTransferenciaConsolidada || l.perspectivaTransferencia === 'neutra');
+
   const data =
     dataField === 'vencimento'
       ? l.data_vencimento
       : dataField === 'pagamento'
         ? l.data_pagamento || l.data_vencimento
         : l.data_pagamento || l.data_vencimento;
+  const dataChaveLista = getDataChaveLancamento(l);
+  const dataExibicao = dataChaveLista || data;
 
   const trailing = (
     <>
       {podeSelecionar && (
         <Checkbox checked={selecionado} onCheckedChange={() => onToggleSelecionado?.(l.id)} />
       )}
-      {conc === 'Pendente' && <Clock className="h-2.5 w-2.5 text-muted-foreground" />}
-      {conc === 'Discrepância' && <AlertCircle className="h-2.5 w-2.5 text-muted-foreground" />}
+      {setaTipoAoLadoValor(l, contaVisualizadaId)}
+      {EXIBIR_UI_CONCILIACAO_FINANCEIRO && conc === 'Discrepância' && (
+        <AlertCircle className="h-2.5 w-2.5 text-muted-foreground" />
+      )}
     </>
   );
 
+  const subtitleExtratoMeta = () => {
+    if (lancamentoExtratoEhCompraMercadoria(l)) {
+      return [dataExibicao ? formatarDataCurta(dataExibicao) : null, extratoFornecedorNome(l)]
+        .filter(Boolean)
+        .join(' · ');
+    }
+    const categoria = String(l?.categoria || l?.dados?.categoria || '').trim();
+    const parts = [
+      dataExibicao ? formatarDataCurta(dataExibicao) : null,
+      categoria || null,
+      l.conta_financeira_nome,
+      rotuloFormaPagamentoExtrato(l) || null,
+    ].filter(Boolean);
+    return parts.join(' · ');
+  };
+
   const subtitle = isTransfConsolidada || perspectiva ? (
     <span className="line-clamp-2 break-words">
-      {data ? formatarDataCurta(data) : '—'}
+      {dataExibicao ? formatarDataCurta(dataExibicao) : '—'}
       {l.notaTransferencia ? ` · ${l.notaTransferencia}` : ''}
     </span>
-  ) : (
+  ) : extratoMobile ? null : (
     <span className="line-clamp-2 break-words">
-      {data ? formatarDataCurta(data) : '—'}
+      {dataExibicao ? formatarDataCurta(dataExibicao) : '—'}
       {l.conta_financeira_nome ? ` · ${l.conta_financeira_nome}` : ''}
     </span>
   );
@@ -198,10 +404,12 @@ export default function FinanceiroLancRow({
       </span>
     </span>
   ) : (
-    <span className={cn('line-clamp-2 normal-case leading-snug', cancelado && 'line-through')}>{l.descricao}</span>
+    <span className={cn('line-clamp-2 normal-case leading-snug break-words', cancelado && 'line-through')}>
+      {descricaoComFormaPagamento(l)}
+    </span>
   );
 
-  const lancamentoClick = l._lancamentoTransferencia || (isTransfConsolidada ? (l._lancamentoDespesa || l) : l);
+  const lancamentoClick = resolverLancamentoAcaoExtrato(l, { perspectiva, isTransfConsolidada }) || l;
 
   const esmaecido = cancelado || (showPago && isPago) || dimProgramada || l._isProgramada;
 
@@ -213,9 +421,116 @@ export default function FinanceiroLancRow({
     title,
     subtitle,
     meta: rowMeta(l, { showPago, dimProgramada: dimProgramada || l._isProgramada }),
-    value: valorNode(l),
+    value: valorNode(l, {
+      extratoMobile,
+      perspectivaTransferencia: perspectiva,
+      contaVisualizadaId,
+      contasSel,
+    }),
     trailing,
   };
+
+  if (extratoMobile) {
+    const extratoTitlePlain = (() => {
+      if (isTransfConsolidada) {
+        return (
+          <span className={cn('line-clamp-2 break-words', cancelado && 'line-through')}>
+            {l.contaOrigemNome}
+            <span className="text-[#6b7280] dark:text-muted-foreground"> › </span>
+            {l.contaDestinoNome}
+          </span>
+        );
+      }
+      if (perspectiva === 'saida') {
+        return (
+          <span className={cn('line-clamp-2 break-words', cancelado && 'line-through')}>
+            Transferência → {l.contaDestinoNome || 'Destino'}
+          </span>
+        );
+      }
+      if (perspectiva === 'entrada') {
+        return (
+          <span className={cn('line-clamp-2 break-words', cancelado && 'line-through')}>
+            Transferência ← {l.contaOrigemNome || 'Origem'}
+          </span>
+        );
+      }
+      return (
+        <span className={cn('line-clamp-2 break-words', cancelado && 'line-through')}>
+          {descricaoComFormaPagamento(l)}
+        </span>
+      );
+    })();
+
+    const metaLinha = subtitleExtratoMeta();
+    const metaExtra =
+      (isTransfConsolidada || perspectiva) && l.notaTransferencia ? String(l.notaTransferencia).trim() : null;
+
+    const extratoRow = (
+      <div className={P38_EXTRATO_V8_ROW_GRID}>
+        <div className="flex w-[18px] shrink-0 items-center justify-start self-center">
+          <FluxoExtratoRowIcon lancamento={l} compact contasSel={contasSel} />
+        </div>
+        <div className="min-w-0 max-w-full overflow-hidden text-left">
+          <div className={cn(P38_EXTRATO_V8_ROW_TITLE, 'line-clamp-2 break-words text-left')}>
+            {extratoTitlePlain}
+          </div>
+          <div className={cn(P38_EXTRATO_V8_ROW_META, 'text-left')}>
+            <span className="line-clamp-2 break-words">{metaLinha}</span>
+            {metaExtra ? (
+              <>
+                <br />
+                <span className="line-clamp-2 break-words">{metaExtra}</span>
+              </>
+            ) : null}
+          </div>
+        </div>
+        <div className={P38_EXTRATO_V8_ROW_VALUE_CELL}>
+          {valorNode(l, {
+            extratoMobile: true,
+            perspectivaTransferencia: perspectiva,
+            contaVisualizadaId,
+            contasSel,
+          })}
+        </div>
+        <ChevronRight
+          className="h-3.5 w-3.5 shrink-0 justify-self-end text-[#6b7280] dark:text-muted-foreground"
+          aria-hidden
+        />
+      </div>
+    );
+    if (podeSelecionar) {
+      return (
+        <P38MobileLine
+          thinAccent={false}
+          accent="none"
+          onClick={() => onToggleSelecionado?.(l.id)}
+          className={P38_EXTRATO_V8_ROW_LINE}
+        >
+          {extratoRow}
+        </P38MobileLine>
+      );
+    }
+    return (
+      <P38MobileLine
+        thinAccent={false}
+        accent="none"
+        as="div"
+        role="button"
+        tabIndex={0}
+        onClick={() => onClick?.(lancamentoClick)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick?.(lancamentoClick);
+          }
+        }}
+        className={cn(P38_EXTRATO_V8_ROW_LINE, 'cursor-pointer')}
+      >
+        {extratoRow}
+      </P38MobileLine>
+    );
+  }
 
   if (podeSelecionar) {
     return (

@@ -3,7 +3,7 @@ import { Scale } from 'lucide-react';
 import FinanceiroLancRow from './FinanceiroLancRow';
 import { FinanceiroGrupo, FinanceiroListaEstado } from './FinanceiroListaShared';
 
-export default function ListaExtratoConta({ grupos, loading, onRow }) {
+export default function ListaExtratoConta({ grupos, loading, onRow, contaVisualizadaId = null }) {
   return (
     <FinanceiroListaEstado
       loading={loading}
@@ -28,6 +28,7 @@ export default function ListaExtratoConta({ grupos, loading, onRow }) {
               striped={index % 2 === 1}
               dataField="pagamento"
               onClick={onRow}
+              contaVisualizadaId={contaVisualizadaId}
             />
           ))}
         </FinanceiroGrupo>

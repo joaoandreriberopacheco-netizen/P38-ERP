@@ -1,6 +1,8 @@
 import { toLocalDateKey } from '@/components/utils/dateUtils';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { corteHistoricoAtivo, passaFiltroCorteHistorico } from '@/lib/filtroDataFinanceiro';
 import {
+  calcularSaldoContaAposDataCorte,
   calcularSaldoContaFinanceira,
   contaUsaRegraCaixaPDV,
   filtrarLancamentosDaConta,
@@ -14,6 +16,7 @@ import {
   totaisEntradaSaidaMovimentos,
 } from '@/lib/saldoContaFinanceira';
 import { normalizarMovimentoCaixaParaLinha } from '@/lib/gruposMovimentacaoConta';
+import { isTransferenciaRegistroUnico } from '@/lib/projecaoTransferenciaFinanceira';
 
 function dataChaveMovimento(mov) {
   const data = mov.data_pagamento || mov.data_vencimento || getDataMovimentoCaixa(mov);
@@ -57,6 +60,19 @@ function rotuloTransferencia(mov, conta, contasById, parReceita = null) {
       const destino = nomeConta(contasById, conta.is_caixa_geral ? null : null);
       return mov.descricao || mov.observacao || `Recolhimento${destino ? ` → ${destino}` : ''}`;
     }
+  }
+
+  if (isTransferenciaRegistroUnico(mov)) {
+    const destinoNome = nomeConta(contasById, mov.conta_destino_id);
+    const origemNome = nomeConta(contasById, mov.conta_financeira_id);
+    const nota = mov.descricao || mov.observacoes;
+    if (conta?.id === mov.conta_financeira_id && destinoNome) {
+      return nota ? `${nota} → ${destinoNome}` : `→ ${destinoNome}`;
+    }
+    if (conta?.id === mov.conta_destino_id && origemNome) {
+      return nota ? `${nota} ← ${origemNome}` : `← ${origemNome}`;
+    }
+    return nota || 'Transferência';
   }
 
   if (isTransferenciaEntreContas(mov)) {
@@ -156,14 +172,24 @@ function montarLinhaCorte(mov, conta, contasById, paresTransferencia) {
     (mov.origem === 'movimento' && isMovimentoTransferenciaCaixaPDV(mov));
 
   let lado = 'entrada';
-  if (mov.tipo === 'Despesa' || (mov.origem === 'movimento' && isMovimentoTransferenciaCaixaPDV(mov))) {
+  if (mov.origem === 'movimento' && isMovimentoTransferenciaCaixaPDV(mov)) {
     lado = 'saida';
+  } else if (isTransferenciaRegistroUnico(mov)) {
+    if (conta?.id === mov.conta_financeira_id) lado = 'saida';
+    else if (conta?.id === mov.conta_destino_id) lado = 'entrada';
+  } else if (mov.tipo === 'Despesa') {
+    lado = 'saida';
+  } else if (mov.tipo === 'Receita') {
+    lado = 'entrada';
   }
 
   let transferenciaDestinoId = null;
   let transferenciaOrigemId = null;
   if (isTransf) {
-    if (lado === 'saida') {
+    if (isTransferenciaRegistroUnico(mov)) {
+      transferenciaOrigemId = mov.conta_financeira_id || null;
+      transferenciaDestinoId = mov.conta_destino_id || null;
+    } else if (lado === 'saida') {
       transferenciaDestinoId = par?.conta_financeira_id || mov.conta_destino_id || null;
       if (!transferenciaDestinoId && mov.origem === 'movimento' && isMovimentoTransferenciaCaixaPDV(mov)) {
         const caixaGeral = Object.values(contasById).find((c) => c.is_caixa_geral);
@@ -210,6 +236,8 @@ export function montarCorteDiarioConta({
   contasById = {},
   dataInicio,
   dataFim,
+  mostrarHistoricoAnterior = false,
+  dataCorteHistorico = null,
 }) {
   if (!conta) {
     return {
@@ -222,7 +250,11 @@ export function montarCorteDiarioConta({
     };
   }
 
-  const todas = coletarMovimentacoesConta(conta, lancamentos, movimentos, todosLancamentos);
+  const corteOpts = { mostrarHistoricoAnterior, dataCorte: dataCorteHistorico };
+  const todasBrutas = coletarMovimentacoesConta(conta, lancamentos, movimentos, todosLancamentos);
+  const todas = todasBrutas.filter((mov) =>
+    passaFiltroCorteHistorico(dataChaveMovimento(mov), corteOpts),
+  );
   const paresTransferencia = indexarParesTransferencia(todosLancamentos);
 
   const noPeriodoLista = todas.filter((mov) => noPeriodo(dataChaveMovimento(mov), dataInicio, dataFim));
@@ -231,7 +263,9 @@ export function montarCorteDiarioConta({
     return dataKey && dataFim && dataKey > dataFim;
   });
 
-  const saldoAtual = calcularSaldoContaFinanceira(conta, lancamentos, movimentos);
+  const saldoAtual = corteHistoricoAtivo(corteOpts)
+    ? calcularSaldoContaAposDataCorte(conta, lancamentos, movimentos, dataCorteHistorico)
+    : calcularSaldoContaFinanceira(conta, lancamentos, movimentos);
   const { entradas: entApos, saidas: saiApos } = totaisEntradaSaidaMovimentos(aposPeriodo, conta);
   const saldoFinal = roundToTwoDecimals(saldoAtual - entApos + saiApos);
 
@@ -275,6 +309,8 @@ export function montarCorteDiarioMapa({
   contasSel = [],
   dataInicio,
   dataFim,
+  mostrarHistoricoAnterior = false,
+  dataCorteHistorico = null,
 }) {
   const contasById = Object.fromEntries(contas.map((c) => [c.id, c]));
   const selecionadas = ordenarContasCorteDiario(
@@ -290,6 +326,8 @@ export function montarCorteDiarioMapa({
       contasById,
       dataInicio,
       dataFim,
+      mostrarHistoricoAnterior,
+      dataCorteHistorico,
     }),
   );
 

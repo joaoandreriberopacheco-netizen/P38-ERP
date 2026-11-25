@@ -122,6 +122,7 @@ export default function AnexosModalIntegrado({
         uploading={uploading}
         referenciaNomero={referenciaNomero}
         pedidoId={pedidoId}
+        referencias={referencias}
         readOnly={readOnly}
       />
     </div>

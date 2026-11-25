@@ -9,7 +9,12 @@ import {
   CalendarCheck,
   Layers,
   ChevronDown,
+  Package,
+  DollarSign,
+  BadgeCheck,
+  Wallet,
 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
@@ -42,6 +47,18 @@ import {
   COMPRAS_SECTION_CARD,
 } from '@/lib/comprasP38Theme';
 import { statusPedidoCompraExplicitos } from '@/components/compras/StatusPedidoCompraPicker';
+import {
+  FILTRO_COMPRAS_ENCOMENDA_DEFAULT,
+  FILTRO_COMPRAS_ENCOMENDA_OCULTAR,
+  FILTRO_COMPRAS_ENCOMENDA_SOMENTE,
+  FILTRO_COMPRAS_ENCOMENDA_TODOS,
+} from '@/lib/pedidoCompraEncomenda';
+import {
+  FILTRO_COMPRAS_PAGAMENTO_APROV_DEFAULT,
+  FILTRO_COMPRAS_PAGAMENTO_APROV_OCULTAR,
+  FILTRO_COMPRAS_PAGAMENTO_APROV_SOMENTE,
+  FILTRO_COMPRAS_PAGAMENTO_APROV_TODOS,
+} from '@/lib/pedidoCompraFiltroPagamentoAprovado';
 
 const ETA_FILTRO_MODOS = [
   { value: 'antes', label: 'Antes de' },
@@ -54,6 +71,143 @@ const CHIP_BASE = 'inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 ro
 const CHIP_IDLE = COMPRAS_CHIP_IDLE;
 const CHIP_ACTIVE = 'font-medium shadow-sm';
 const SECTION_CARD = COMPRAS_SECTION_CARD;
+
+const ENCOMENDA_FILTRO_CYCLE = [
+  FILTRO_COMPRAS_ENCOMENDA_TODOS,
+  FILTRO_COMPRAS_ENCOMENDA_OCULTAR,
+  FILTRO_COMPRAS_ENCOMENDA_SOMENTE,
+];
+
+function encomendaFiltroLabel(value) {
+  if (value === FILTRO_COMPRAS_ENCOMENDA_OCULTAR) return 'Encomendas: não mostrar';
+  if (value === FILTRO_COMPRAS_ENCOMENDA_SOMENTE) return 'Encomendas: mostrar apenas';
+  return 'Encomendas: mostrar (normal)';
+}
+
+/** Pagamento aprovado: normal → só aprovados → só não aprovados. */
+const PAGAMENTO_APROV_FILTRO_CYCLE = [
+  FILTRO_COMPRAS_PAGAMENTO_APROV_TODOS,
+  FILTRO_COMPRAS_PAGAMENTO_APROV_SOMENTE,
+  FILTRO_COMPRAS_PAGAMENTO_APROV_OCULTAR,
+];
+
+function pagamentoAprovadoFiltroLabel(value) {
+  if (value === FILTRO_COMPRAS_PAGAMENTO_APROV_SOMENTE) return 'Pagamento: só aprovados';
+  if (value === FILTRO_COMPRAS_PAGAMENTO_APROV_OCULTAR) return 'Pagamento: só não aprovados';
+  return 'Pagamento: todos';
+}
+
+/** Ícone $ — 1.º clique só aprovados; 2.º só não aprovados; 3.º todos. */
+/** Ícone com popover de período (aprovação financeira / data pagamento). */
+function PeriodoDateRangeFiltroIcon({
+  icon: Icon,
+  title,
+  startDate,
+  endDate,
+  onApply,
+  onClear,
+}) {
+  const ativo = !!(startDate || endDate);
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          title={title}
+          aria-label={title}
+          className={cn(
+            COMPRAS_MOBILE_ICON_BTN,
+            'h-8 w-8 rounded-full',
+            ativo && COMPRAS_CHIP_ACTIVE_OLIVE,
+          )}
+        >
+          <Icon className="h-4 w-4 shrink-0" aria-hidden />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-[min(100vw-2rem,22rem)] border-0 shadow-lg rounded-xl p-3">
+        <p className="text-[11px] font-light uppercase tracking-wide text-muted-foreground mb-2">{title}</p>
+        <MobileDateRangePicker
+          startDate={startDate}
+          endDate={endDate}
+          onApply={onApply}
+          onClear={onClear}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function PagamentoAprovadoFiltroIcon({ value = FILTRO_COMPRAS_PAGAMENTO_APROV_DEFAULT, onChange }) {
+  const label = pagamentoAprovadoFiltroLabel(value);
+
+  const cycle = () => {
+    const idx = PAGAMENTO_APROV_FILTRO_CYCLE.indexOf(value);
+    const safeIdx = idx >= 0 ? idx : 0;
+    const next = PAGAMENTO_APROV_FILTRO_CYCLE[(safeIdx + 1) % PAGAMENTO_APROV_FILTRO_CYCLE.length];
+    onChange?.(next);
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={cycle}
+      title={label}
+      aria-label={label}
+      className={cn(
+        COMPRAS_MOBILE_ICON_BTN,
+        'h-8 w-8 rounded-full',
+        value === FILTRO_COMPRAS_PAGAMENTO_APROV_SOMENTE && COMPRAS_CHIP_ACTIVE_OLIVE,
+        value === FILTRO_COMPRAS_PAGAMENTO_APROV_OCULTAR && 'text-muted-foreground/55',
+      )}
+    >
+      <DollarSign className="h-4 w-4 shrink-0" aria-hidden />
+      {value === FILTRO_COMPRAS_PAGAMENTO_APROV_OCULTAR ? (
+        <span
+          className="pointer-events-none absolute inset-0 flex items-center justify-center"
+          aria-hidden
+        >
+          <span className="h-[1.5px] w-[1.125rem] rotate-45 rounded-full bg-muted-foreground/75 dark:bg-muted-foreground/60" />
+        </span>
+      ) : null}
+    </button>
+  );
+}
+
+/** Um ícone — toque alterna: normal → ocultar → só encomendas. */
+function EncomendaFiltroIcon({ value = FILTRO_COMPRAS_ENCOMENDA_DEFAULT, onChange }) {
+  const label = encomendaFiltroLabel(value);
+
+  const cycle = () => {
+    const idx = ENCOMENDA_FILTRO_CYCLE.indexOf(value);
+    const next = ENCOMENDA_FILTRO_CYCLE[(idx + 1) % ENCOMENDA_FILTRO_CYCLE.length];
+    onChange?.(next);
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={cycle}
+      title={label}
+      aria-label={label}
+      className={cn(
+        COMPRAS_MOBILE_ICON_BTN,
+        'h-8 w-8 rounded-full',
+        value === FILTRO_COMPRAS_ENCOMENDA_SOMENTE && COMPRAS_CHIP_ACTIVE_OLIVE,
+        value === FILTRO_COMPRAS_ENCOMENDA_OCULTAR && 'text-muted-foreground/55',
+      )}
+    >
+      <Package className="h-4 w-4 shrink-0" aria-hidden />
+      {value === FILTRO_COMPRAS_ENCOMENDA_OCULTAR ? (
+        <span
+          className="pointer-events-none absolute inset-0 flex items-center justify-center"
+          aria-hidden
+        >
+          <span className="h-[1.5px] w-[1.125rem] rotate-45 rounded-full bg-muted-foreground/75 dark:bg-muted-foreground/60" />
+        </span>
+      ) : null}
+    </button>
+  );
+}
 
 function QuickFilterToggle({ label, checked, onCheckedChange }) {
   return (
@@ -156,6 +310,14 @@ function FiltrosComprasPainel({
   onRecebimentoInicial,
   recebimentoFinal,
   onRecebimentoFinal,
+  aprovacaoFinanceiraInicial,
+  onAprovacaoFinanceiraInicial,
+  aprovacaoFinanceiraFinal,
+  onAprovacaoFinanceiraFinal,
+  pagamentoInicial,
+  onPagamentoInicial,
+  pagamentoFinal,
+  onPagamentoFinal,
   onFiltroSomenteNaoConcluidos,
   searchTag,
   onSearchTag,
@@ -324,6 +486,42 @@ function FiltrosComprasPainel({
         />
       </FilterSection>
 
+      <FilterSection title="Aprovação financeira" icon={BadgeCheck} className={layout === 'desktop' ? 'h-full' : undefined}>
+        <p className="text-[10px] font-light text-muted-foreground leading-snug">
+          Filtra pela data em que o financeiro aprovou o pedido (coluna data_aprovacao_financeira).
+        </p>
+        <MobileDateRangePicker
+          startDate={aprovacaoFinanceiraInicial}
+          endDate={aprovacaoFinanceiraFinal}
+          onApply={(inicio, fim) => {
+            onAprovacaoFinanceiraInicial(inicio);
+            onAprovacaoFinanceiraFinal(fim);
+          }}
+          onClear={() => {
+            onAprovacaoFinanceiraInicial('');
+            onAprovacaoFinanceiraFinal('');
+          }}
+        />
+      </FilterSection>
+
+      <FilterSection title="Data de pagamento" icon={Wallet} className={layout === 'desktop' ? 'h-full' : undefined}>
+        <p className="text-[10px] font-light text-muted-foreground leading-snug">
+          Filtra pelo 1.º vencimento ou pagamento das parcelas vinculadas ao pedido.
+        </p>
+        <MobileDateRangePicker
+          startDate={pagamentoInicial}
+          endDate={pagamentoFinal}
+          onApply={(inicio, fim) => {
+            onPagamentoInicial(inicio);
+            onPagamentoFinal(fim);
+          }}
+          onClear={() => {
+            onPagamentoInicial('');
+            onPagamentoFinal('');
+          }}
+        />
+      </FilterSection>
+
       <FilterSection
         title="Status do pedido"
         icon={Layers}
@@ -395,6 +593,10 @@ export default function FiltrosCompras({
   onFiltroUltimos30Dias,
   filtroSomenteNaoConcluidos = FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT,
   onFiltroSomenteNaoConcluidos,
+  filtroEncomenda = FILTRO_COMPRAS_ENCOMENDA_DEFAULT,
+  onFiltroEncomenda,
+  filtroPagamentoAprovado = FILTRO_COMPRAS_PAGAMENTO_APROV_DEFAULT,
+  onFiltroPagamentoAprovado,
   statusSel,
   onStatusSel,
   todasTags,
@@ -416,6 +618,14 @@ export default function FiltrosCompras({
   onRecebimentoInicial,
   recebimentoFinal,
   onRecebimentoFinal,
+  aprovacaoFinanceiraInicial,
+  onAprovacaoFinanceiraInicial,
+  aprovacaoFinanceiraFinal,
+  onAprovacaoFinanceiraFinal,
+  pagamentoInicial,
+  onPagamentoInicial,
+  pagamentoFinal,
+  onPagamentoFinal,
   hasActiveFilters,
   onLimparFiltros,
   mobileLeading = null,
@@ -428,6 +638,8 @@ export default function FiltrosCompras({
     let count = 0;
     if (dataInicial || dataFinal) count += 1;
     if (recebimentoInicial || recebimentoFinal) count += 1;
+    if (aprovacaoFinanceiraInicial || aprovacaoFinanceiraFinal) count += 1;
+    if (pagamentoInicial || pagamentoFinal) count += 1;
     if (
       etaFiltroModo &&
       ((['antes', 'depois'].includes(etaFiltroModo) && etaData) ||
@@ -437,8 +649,27 @@ export default function FiltrosCompras({
     }
     count += statusPedidoCompraExplicitos(statusSel).length;
     count += tagsSel.length;
+    if (filtroEncomenda && filtroEncomenda !== FILTRO_COMPRAS_ENCOMENDA_TODOS) count += 1;
+    if (filtroPagamentoAprovado && filtroPagamentoAprovado !== FILTRO_COMPRAS_PAGAMENTO_APROV_TODOS) count += 1;
     return count;
-  }, [dataInicial, dataFinal, recebimentoInicial, recebimentoFinal, etaFiltroModo, etaData, etaInicial, etaFinal, statusSel, tagsSel]);
+  }, [
+    dataInicial,
+    dataFinal,
+    recebimentoInicial,
+    recebimentoFinal,
+    aprovacaoFinanceiraInicial,
+    aprovacaoFinanceiraFinal,
+    pagamentoInicial,
+    pagamentoFinal,
+    etaFiltroModo,
+    etaData,
+    etaInicial,
+    etaFinal,
+    statusSel,
+    tagsSel,
+    filtroEncomenda,
+    filtroPagamentoAprovado,
+  ]);
 
   const activeChips = useMemo(() => {
     const chips = [];
@@ -473,6 +704,40 @@ export default function FiltrosCompras({
         onRemove: () => {
           onRecebimentoInicial('');
           onRecebimentoFinal('');
+        },
+      });
+    }
+
+    if (aprovacaoFinanceiraInicial || aprovacaoFinanceiraFinal) {
+      const label = aprovacaoFinanceiraInicial && aprovacaoFinanceiraFinal
+        ? `Aprovação: ${formatDateLabel(aprovacaoFinanceiraInicial)} – ${formatDateLabel(aprovacaoFinanceiraFinal)}`
+        : aprovacaoFinanceiraInicial
+          ? `Aprovação desde ${formatDateLabel(aprovacaoFinanceiraInicial)}`
+          : `Aprovação até ${formatDateLabel(aprovacaoFinanceiraFinal)}`;
+      chips.push({
+        key: 'periodo-aprovacao-financeira',
+        label,
+        tone: 'accent',
+        onRemove: () => {
+          onAprovacaoFinanceiraInicial('');
+          onAprovacaoFinanceiraFinal('');
+        },
+      });
+    }
+
+    if (pagamentoInicial || pagamentoFinal) {
+      const label = pagamentoInicial && pagamentoFinal
+        ? `Pagamento: ${formatDateLabel(pagamentoInicial)} – ${formatDateLabel(pagamentoFinal)}`
+        : pagamentoInicial
+          ? `Pagamento desde ${formatDateLabel(pagamentoInicial)}`
+          : `Pagamento até ${formatDateLabel(pagamentoFinal)}`;
+      chips.push({
+        key: 'periodo-pagamento',
+        label,
+        tone: 'neutral',
+        onRemove: () => {
+          onPagamentoInicial('');
+          onPagamentoFinal('');
         },
       });
     }
@@ -535,12 +800,50 @@ export default function FiltrosCompras({
       });
     });
 
+    if (filtroEncomenda === FILTRO_COMPRAS_ENCOMENDA_SOMENTE) {
+      chips.push({
+        key: 'encomenda-somente',
+        label: 'Só pedidos de encomenda',
+        tone: 'accent',
+        onRemove: () => onFiltroEncomenda?.(FILTRO_COMPRAS_ENCOMENDA_TODOS),
+      });
+    }
+    if (filtroEncomenda === FILTRO_COMPRAS_ENCOMENDA_OCULTAR) {
+      chips.push({
+        key: 'encomenda-ocultar',
+        label: 'Sem pedidos de encomenda',
+        tone: 'neutral',
+        onRemove: () => onFiltroEncomenda?.(FILTRO_COMPRAS_ENCOMENDA_TODOS),
+      });
+    }
+
+    if (filtroPagamentoAprovado === FILTRO_COMPRAS_PAGAMENTO_APROV_SOMENTE) {
+      chips.push({
+        key: 'pagamento-aprov-somente',
+        label: 'Só pagamento aprovado',
+        tone: 'accent',
+        onRemove: () => onFiltroPagamentoAprovado?.(FILTRO_COMPRAS_PAGAMENTO_APROV_TODOS),
+      });
+    }
+    if (filtroPagamentoAprovado === FILTRO_COMPRAS_PAGAMENTO_APROV_OCULTAR) {
+      chips.push({
+        key: 'pagamento-aprov-ocultar',
+        label: 'Só pagamento não aprovado',
+        tone: 'neutral',
+        onRemove: () => onFiltroPagamentoAprovado?.(FILTRO_COMPRAS_PAGAMENTO_APROV_TODOS),
+      });
+    }
+
     return chips;
   }, [
     dataInicial,
     dataFinal,
     recebimentoInicial,
     recebimentoFinal,
+    aprovacaoFinanceiraInicial,
+    aprovacaoFinanceiraFinal,
+    pagamentoInicial,
+    pagamentoFinal,
     etaFiltroModo,
     etaData,
     etaInicial,
@@ -551,12 +854,20 @@ export default function FiltrosCompras({
     onDataFinal,
     onRecebimentoInicial,
     onRecebimentoFinal,
+    onAprovacaoFinanceiraInicial,
+    onAprovacaoFinanceiraFinal,
+    onPagamentoInicial,
+    onPagamentoFinal,
     onEtaFiltroModo,
     onEtaData,
     onEtaInicial,
     onEtaFinal,
     onStatusSel,
     onTagsSel,
+    filtroEncomenda,
+    onFiltroEncomenda,
+    filtroPagamentoAprovado,
+    onFiltroPagamentoAprovado,
   ]);
 
   const painelProps = {
@@ -581,6 +892,14 @@ export default function FiltrosCompras({
     onRecebimentoInicial,
     recebimentoFinal,
     onRecebimentoFinal,
+    aprovacaoFinanceiraInicial,
+    onAprovacaoFinanceiraInicial,
+    aprovacaoFinanceiraFinal,
+    onAprovacaoFinanceiraFinal,
+    pagamentoInicial,
+    onPagamentoInicial,
+    pagamentoFinal,
+    onPagamentoFinal,
     onFiltroSomenteNaoConcluidos,
     searchTag,
     onSearchTag: setSearchTag,
@@ -612,6 +931,36 @@ export default function FiltrosCompras({
           } else {
             onStatusSel(statusSel.filter((s) => s !== '__nao_concluido__'));
           }
+        }}
+      />
+      <EncomendaFiltroIcon value={filtroEncomenda} onChange={onFiltroEncomenda} />
+      <PeriodoDateRangeFiltroIcon
+        icon={BadgeCheck}
+        title="Período da aprovação financeira"
+        startDate={aprovacaoFinanceiraInicial}
+        endDate={aprovacaoFinanceiraFinal}
+        onApply={(inicio, fim) => {
+          onAprovacaoFinanceiraInicial?.(inicio);
+          onAprovacaoFinanceiraFinal?.(fim);
+        }}
+        onClear={() => {
+          onAprovacaoFinanceiraInicial?.('');
+          onAprovacaoFinanceiraFinal?.('');
+        }}
+      />
+      <PagamentoAprovadoFiltroIcon value={filtroPagamentoAprovado} onChange={onFiltroPagamentoAprovado} />
+      <PeriodoDateRangeFiltroIcon
+        icon={Wallet}
+        title="Período da data de pagamento"
+        startDate={pagamentoInicial}
+        endDate={pagamentoFinal}
+        onApply={(inicio, fim) => {
+          onPagamentoInicial?.(inicio);
+          onPagamentoFinal?.(fim);
+        }}
+        onClear={() => {
+          onPagamentoInicial?.('');
+          onPagamentoFinal?.('');
         }}
       />
     </div>
@@ -694,8 +1043,8 @@ export default function FiltrosCompras({
         )}
 
         <Drawer open={showFilters} onOpenChange={setShowFilters}>
-          <DrawerContent className="max-h-[92vh] border-0 rounded-t-[28px] bg-card px-4 pb-0 dark:bg-card">
-            <DrawerHeader className="px-0 pb-1 text-left">
+          <DrawerContent className="max-h-[92dvh] flex flex-col border-0 rounded-t-[28px] bg-card px-4 pb-0 dark:bg-card">
+            <DrawerHeader className="shrink-0 px-0 pb-1 text-left">
               <DrawerTitle className="font-glacial font-light uppercase tracking-wide text-foreground">Filtros</DrawerTitle>
               {activeFilterCount > 0 ? (
                 <p className="text-xs font-light text-muted-foreground">{activeFilterCount} filtro(s) ativo(s)</p>
@@ -703,11 +1052,11 @@ export default function FiltrosCompras({
             </DrawerHeader>
 
             {/* Evitar p38-stage-panel-scroll aqui: flex+min-h-0 colapsava o painel a altura 0 no drawer mobile */}
-            <div className="overflow-y-auto overscroll-contain pb-4 -mx-1 px-1 max-h-[calc(92vh-10.5rem)]">
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pb-4 -mx-1 px-1 touch-pan-y">
               <FiltrosComprasPainel {...painelProps} layout="drawer" />
             </div>
 
-            <div className={cn('-mx-4 bg-card/95 px-4 py-3 backdrop-blur-sm dark:bg-card/95', COMPRAS_DIVIDER_TOP)}>
+            <div className={cn('shrink-0 -mx-4 bg-card/95 px-4 py-3 backdrop-blur-sm dark:bg-card/95', COMPRAS_DIVIDER_TOP)}>
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -761,7 +1110,12 @@ export default function FiltrosCompras({
       )}
 
       <CollapsibleContent>
-        <div className={cn(COMPRAS_SECTION_CARD, 'p-4')}>
+        <div
+          className={cn(
+            COMPRAS_SECTION_CARD,
+            'p-4 max-h-[min(70vh,calc(100dvh-11rem))] overflow-y-auto overscroll-contain touch-pan-y',
+          )}
+        >
           <div className="mb-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-sm font-light uppercase tracking-wide text-foreground">
               <SlidersHorizontal className={cn('h-4 w-4', COMPRAS_ICON_ACCENT)} />

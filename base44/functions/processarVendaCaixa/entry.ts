@@ -47,8 +47,27 @@ Deno.serve(async (req) => {
     return d.toISOString().split('T')[0];
   };
 
-  /** Conta da maquininha — nunca o Caixa PDV (igual PIX → Banco do Brasil). */
-  const resolveContaDestinoCartao = async (pag) => {
+  const DATA_INICIO_PAGBANK = '2026-11-06';
+  const normNomeConta = (nome: string) =>
+    String(nome || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/\p{M}/gu, '');
+
+  /** Cartão crédito desde 06/11/2026 → PagBank (imediato); débito mantém conta da maquininha. */
+  const resolveContaDestinoCartao = async (pag, dataVenda: string) => {
+    const isCredito = pag.forma_pagamento === 'Cartão de Crédito';
+    if (isCredito && dataVenda >= DATA_INICIO_PAGBANK) {
+      const contas = await svc.entities.ContasFinanceiras.list();
+      const pagBank = contas.find((c) => {
+        const n = normNomeConta(c.nome);
+        return n.includes('pagbank') || (n.includes('pag') && n.includes('bank'));
+      });
+      if (!pagBank) {
+        throw new Error('Conta PagBank não encontrada. Crie a conta PagBank em Caixas e Bancos.');
+      }
+      return { id: pagBank.id, nome: pagBank.nome };
+    }
     let contaDestinoId = pag.maquininha_conta_id || null;
     let contaDestinoNome = pag.maquininha_conta_nome || pag.maquininha_nome || 'Maquininha';
     if (!contaDestinoId && pag.maquininha_id) {
@@ -62,7 +81,7 @@ Deno.serve(async (req) => {
     }
     if (!contaDestinoId) {
       throw new Error(
-        `Maquininha "${pag.maquininha_nome || '?'}" sem conta destino. Configure em Maquininhas (ex.: Banco do Brasil).`
+        `Maquininha "${pag.maquininha_nome || '?'}" sem conta destino. Configure em Maquininhas.`
       );
     }
     return { id: contaDestinoId, nome: contaDestinoNome };
@@ -367,16 +386,16 @@ Deno.serve(async (req) => {
         const valorBruto = pag.valor;
         const valorLiquido = parseFloat((valorBruto * (1 - taxa / 100)).toFixed(2));
 
-        // Data de vencimento = próximo dia útil (D+1; sexta–domingo credita na segunda)
-        const prazoDias = pag.prazo_maquininha_dias ?? 1;
-        const dataVencimento = addDiasUteis(hoje, prazoDias);
         const isCredito = pag.forma_pagamento === 'Cartão de Crédito';
+        const creditoPagBank = isCredito && hoje >= DATA_INICIO_PAGBANK;
+        const prazoDias = creditoPagBank ? 0 : (pag.prazo_maquininha_dias ?? 1);
+        const dataVencimento = creditoPagBank ? hoje : addDiasUteis(hoje, prazoDias);
 
         const maquininhaNome = pag.maquininha_nome || pag.forma_pagamento;
         const bandeira = pag.bandeira || '';
         const descricao = `${pag.forma_pagamento}${bandeira ? ` ${bandeira}` : ''}${pag.parcelas > 1 ? ` ${pag.parcelas}x` : ''} - ${maquininhaNome} - Venda ${numeroPedido}`;
 
-        const { id: contaDestinoId, nome: contaDestinoNome } = await resolveContaDestinoCartao(pag);
+        const { id: contaDestinoId, nome: contaDestinoNome } = await resolveContaDestinoCartao(pag, hoje);
 
         await svc.entities.LancamentoFinanceiro.create({
           tipo: 'Receita',
@@ -387,9 +406,9 @@ Deno.serve(async (req) => {
           valor_liquido: valorLiquido,
           data_vencimento: dataVencimento,
           data_liquidacao_prevista: dataVencimento,
-          // Em Aberto (Contas Abertas) até liquidação automática 08:00 (débito e crédito)
-          status: 'Em Aberto',
-          status_conciliacao: 'Pendente',
+          ...(creditoPagBank ? { data_pagamento: hoje } : {}),
+          status: creditoPagBank ? 'Pago' : 'Em Aberto',
+          status_conciliacao: creditoPagBank ? 'Conciliado' : 'Pendente',
           forma_pagamento: pag.forma_pagamento,
           forma_pagamento_tipo: pag.forma_pagamento === 'Cartão de Débito' ? 'Cartão Débito' : 'Cartão Crédito',
           categoria: 'Venda de Produto',

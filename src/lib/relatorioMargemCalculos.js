@@ -28,6 +28,7 @@ import {
 } from '@/lib/relatorioMargemTroca';
 import {
   MARGEM_CUSTO_CADASTRO_ATUAL,
+  MARGEM_CUSTO_MOMENTO_VENDA,
   margemCustoModeParaVenda,
 } from '@/lib/margemCustoMode';
 
@@ -178,6 +179,84 @@ export function resolveMargemProdutoKey(item = {}) {
   return `nome:${nome || 'sem-nome'}`;
 }
 
+function somaComponentesUnitMargem(componentes = {}) {
+  return CUSTO_MARGEM_CAMPOS.reduce(
+    (sum, campo) => sum + normalizeCustoNum(componentes[campo.sourceKey]),
+    0,
+  );
+}
+
+/** Componentes unitários fator-1 a partir do cadastro (compra líquida, frete, avaria, impostos…). */
+export function resolveCustoComponentesCatalogoProduto(product = null) {
+  if (!product) return null;
+
+  const valorCompraBruto = normalizeCustoNum(product.valor_compra);
+  const desconto = resolveValorDescontoCompraPadraoFator1(product, valorCompraBruto);
+  const valorCompraLiquido = roundMoney(Math.max(0, valorCompraBruto - desconto));
+  const componentes = {
+    valor_compra: valorCompraLiquido,
+    custo_avaria: roundMoney(resolveAvariaCompraFator1(product, valorCompraBruto)),
+    custo_frete: normalizeCustoNum(product.custo_frete_padrao),
+    custo_imposto1: normalizeCustoNum(product.custo_imposto1_padrao),
+    custo_imposto2: normalizeCustoNum(product.custo_imposto2_padrao),
+    custo_outros: normalizeCustoNum(product.custo_outros_padrao),
+  };
+
+  const somaComponentes = somaComponentesUnitMargem(componentes);
+  const salvo = normalizeCustoNum(product.preco_custo_calculado);
+  if (somaComponentes <= 0 && salvo > 0) {
+    return {
+      valor_compra: salvo,
+      custo_avaria: 0,
+      custo_frete: 0,
+      custo_imposto1: 0,
+      custo_imposto2: 0,
+      custo_outros: 0,
+    };
+  }
+  return componentes;
+}
+
+/**
+ * Escala componentes do cadastro para bater com o custo unitário alvo (ex.: custo na venda).
+ * Mantém lucro/markup no total; só detalha frete/avaria/impostos na UI.
+ */
+export function escalarComponentesCustoMargemParaTotal(componentes, targetUnitTotal) {
+  const target = roundMoney(normalizeCustoNum(targetUnitTotal));
+  const zeros = {
+    valor_compra: 0,
+    custo_avaria: 0,
+    custo_frete: 0,
+    custo_imposto1: 0,
+    custo_imposto2: 0,
+    custo_outros: 0,
+  };
+  if (target <= 0) return zeros;
+  if (!componentes) {
+    return { ...zeros, valor_compra: target };
+  }
+
+  const bruto = somaComponentesUnitMargem(componentes);
+  if (bruto <= 0) {
+    return { ...zeros, valor_compra: target };
+  }
+
+  const keys = CUSTO_MARGEM_CAMPOS.map((c) => c.sourceKey);
+  const out = { ...zeros };
+  let acumulado = 0;
+  for (let i = 0; i < keys.length; i += 1) {
+    const key = keys[i];
+    if (i === keys.length - 1) {
+      out[key] = roundMoney(target - acumulado);
+    } else {
+      const parte = roundMoney((normalizeCustoNum(componentes[key]) / bruto) * target);
+      out[key] = parte;
+      acumulado += parte;
+    }
+  }
+  return out;
+}
+
 /** Componentes de custo unitário na unidade base — cadastro ou custo na venda. */
 export function resolveCustoComponentesUnitBaseMargem(
   product = null,
@@ -186,61 +265,18 @@ export function resolveCustoComponentesUnitBaseMargem(
 ) {
   const costMode = options.costMode || MARGEM_CUSTO_CADASTRO_ATUAL;
   const momentoUnit = resolveCustoUnitarioMargem(item, product, { costMode });
+  const catalogo = resolveCustoComponentesCatalogoProduto(product);
+
   if (costMode !== MARGEM_CUSTO_CADASTRO_ATUAL && momentoUnit > 0) {
-    return {
-      valor_compra: momentoUnit,
-      custo_avaria: 0,
-      custo_frete: 0,
-      custo_imposto1: 0,
-      custo_imposto2: 0,
-      custo_outros: 0,
-    };
+    return escalarComponentesCustoMargemParaTotal(catalogo, momentoUnit);
   }
 
-  if (product) {
-    const valorCompraBruto = normalizeCustoNum(product.valor_compra);
-    const desconto = resolveValorDescontoCompraPadraoFator1(product, valorCompraBruto);
-    const valorCompraLiquido = roundMoney(Math.max(0, valorCompraBruto - desconto));
-    const componentes = {
-      valor_compra: valorCompraLiquido,
-      custo_avaria: roundMoney(resolveAvariaCompraFator1(product, valorCompraBruto)),
-      custo_frete: normalizeCustoNum(product.custo_frete_padrao),
-      custo_imposto1: normalizeCustoNum(product.custo_imposto1_padrao),
-      custo_imposto2: normalizeCustoNum(product.custo_imposto2_padrao),
-      custo_outros: normalizeCustoNum(product.custo_outros_padrao),
-    };
-    const somaComponentes =
-      componentes.valor_compra +
-      componentes.custo_avaria +
-      componentes.custo_frete +
-      componentes.custo_imposto1 +
-      componentes.custo_imposto2 +
-      componentes.custo_outros;
-    const salvo = normalizeCustoNum(product.preco_custo_calculado);
-    if (somaComponentes <= 0 && salvo > 0) {
-      return {
-        valor_compra: salvo,
-        custo_avaria: 0,
-        custo_frete: 0,
-        custo_imposto1: 0,
-        custo_imposto2: 0,
-        custo_outros: 0,
-      };
-    }
-    return componentes;
-  }
+  if (catalogo) return catalogo;
 
   const fallback = normalizeCustoNum(
     item.custo_unitario_momento ?? item.custo_unitario ?? item.custo_calculado,
   );
-  return {
-    valor_compra: fallback,
-    custo_avaria: 0,
-    custo_frete: 0,
-    custo_imposto1: 0,
-    custo_imposto2: 0,
-    custo_outros: 0,
-  };
+  return escalarComponentesCustoMargemParaTotal(null, fallback);
 }
 
 export function criarCamposCustoComponentesZerados() {
@@ -328,12 +364,17 @@ export function buildCustoBreakdownLineMargem(row, { mode = 'unit', formatNum } 
   return parts.join(' · ');
 }
 
-export function labelComposicaoCustoMargem(row = {}, { porUnidade = true } = {}) {
+export function labelComposicaoCustoMargem(
+  row = {},
+  { porUnidade = true, costBasis = MARGEM_CUSTO_CADASTRO_ATUAL } = {},
+) {
   const un = String(row.unidade_exibicao || '').trim().toUpperCase();
+  const precoLabel =
+    costBasis === MARGEM_CUSTO_MOMENTO_VENDA ? 'custo na venda' : 'preços de hoje';
   if (porUnidade && un) {
-    return `Composição do custo por ${un} (preços de hoje)`;
+    return `Composição do custo por ${un} (${precoLabel})`;
   }
-  return 'Composição do custo (preços de hoje)';
+  return `Composição do custo (${precoLabel})`;
 }
 
 /** Preço de venda unitário líquido — após rateio do desconto do pedido (receita ÷ qtd vitrine). */

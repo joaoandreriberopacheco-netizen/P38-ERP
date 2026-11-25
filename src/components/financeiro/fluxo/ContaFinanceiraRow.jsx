@@ -1,7 +1,11 @@
 import React from 'react';
-import { Clock, Edit, MoreVertical, Scale, ArrowRightLeft } from 'lucide-react';
+import { Clock, Edit, Landmark, MoreVertical, Scale, ArrowRightLeft, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { P38StatusPill } from '@/components/ui/p38-mobile-line';
+import {
+  P38MobileLine,
+  P38StatusPill,
+  p38AccentKeyFromTone,
+} from '@/components/ui/p38-mobile-line';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -11,12 +15,66 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { formatFinanceiroValor } from './FinanceiroListaShared';
+import ContaTipoChip from './ContaTipoChip';
 import { getSaldoExibicaoConta } from '@/lib/saldoContaFinanceira';
 import { p38Accent } from '@/lib/p38ThemeSurfaces';
+import {
+  P38_ACCENT,
+  P38_EXTRATO_V8_ROW_GRID,
+  P38_EXTRATO_V8_ROW_LINE,
+  P38_EXTRATO_V8_ROW_META,
+  P38_EXTRATO_V8_ROW_TITLE,
+  P38_EXTRATO_V8_ROW_VALUE,
+  P38_EXTRATO_V8_ROW_VALUE_CELL,
+} from './financeiroP38';
+import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
+
+const LINE_TITLE_CLASS =
+  '[&>div>div:first-child]:text-[15px] [&>div>div:first-child]:font-semibold sm:[&>div>div:first-child]:text-base';
 
 function stopClick(e) {
   e.preventDefault();
   e.stopPropagation();
+}
+
+function rowAccent(conta, isNegativo, ativa) {
+  if (!ativa) return 'muted';
+  if (isNegativo) return 'danger';
+  return 'success';
+}
+
+function ContaRowMenu({ conta, pendencias, onConciliar, onAjuste, onEdit, className }) {
+  return (
+    <div className={className} onClick={stopClick} onKeyDown={stopClick}>
+      {EXIBIR_UI_CONCILIACAO_FINANCEIRO && pendencias > 0 && (
+        <Clock className="mr-1 h-3.5 w-3.5 text-amber-500 sm:hidden" aria-hidden />
+      )}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Mais ações">
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-52">
+          {EXIBIR_UI_CONCILIACAO_FINANCEIRO && pendencias > 0 && (
+            <DropdownMenuItem onClick={() => onConciliar?.(conta)}>
+              <ArrowRightLeft className="mr-2 h-4 w-4" />
+              Conciliar ({pendencias})
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem onClick={() => onAjuste?.(conta)}>
+            <Scale className="mr-2 h-4 w-4" />
+            Ajustar saldo
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => onEdit?.(conta)}>
+            <Edit className="mr-2 h-4 w-4" />
+            Editar conta
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
 }
 
 export default function ContaFinanceiraRow({
@@ -29,6 +87,8 @@ export default function ContaFinanceiraRow({
   onAjuste,
   onConciliar,
   striped,
+  listaUnificada = false,
+  extratoMobile = false,
 }) {
   const saldo = saldosProntos && saldosCalculados
     ? getSaldoExibicaoConta(conta, saldosCalculados)
@@ -36,12 +96,136 @@ export default function ContaFinanceiraRow({
   const isNegativo = saldo != null && saldo < 0;
   const ativa = conta.ativo !== false;
 
-  const subtitle = [conta.tipo, conta.banco].filter(Boolean).join(' · ');
+  const subtitle = listaUnificada
+    ? null
+    : [conta.tipo, conta.banco].filter(Boolean).join(' · ');
   const valueSub = conta.is_caixa_pdv
     ? 'Dinheiro na gaveta'
     : conta.agencia
       ? `Ag ${conta.agencia}`
       : null;
+
+  const saldoDisplay = saldosProntos && saldo != null
+    ? formatFinanceiroValor(saldo)
+    : null;
+
+  if (listaUnificada && extratoMobile) {
+    const metaParts = [
+      conta.tipo,
+      conta.banco,
+      valueSub,
+      !ativa ? 'Inativa' : null,
+      conta.is_caixa_pdv ? 'PDV' : null,
+    ].filter(Boolean);
+
+    const Icon = conta.tipo === 'Conta Bancária' ? Landmark : Wallet;
+
+    return (
+      <P38MobileLine
+        thinAccent={false}
+        accent="none"
+        as="button"
+        type="button"
+        onClick={() => onExtrato?.(conta)}
+        className={cn(P38_EXTRATO_V8_ROW_LINE, 'cursor-pointer text-left', !ativa && 'opacity-70')}
+      >
+        <div className={P38_EXTRATO_V8_ROW_GRID}>
+          <div className="flex w-[18px] shrink-0 items-center justify-center self-center text-[#3d5a3d] dark:text-[#a4ce33]">
+            <Icon className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
+          </div>
+          <div className="min-w-0 max-w-full overflow-hidden text-left">
+            <div className={cn(P38_EXTRATO_V8_ROW_TITLE, 'line-clamp-2 break-words')}>{conta.nome}</div>
+            <div className={cn(P38_EXTRATO_V8_ROW_META, 'line-clamp-2 break-words')}>
+              {metaParts.join(' · ')}
+            </div>
+          </div>
+          <div className={P38_EXTRATO_V8_ROW_VALUE_CELL}>
+            {saldoDisplay ? (
+              <span
+                className={cn(
+                  P38_EXTRATO_V8_ROW_VALUE,
+                  isNegativo ? 'text-red-600 dark:text-red-400' : 'text-[#3d5a3d] dark:text-[#a4ce33]',
+                )}
+              >
+                {saldoDisplay}
+              </span>
+            ) : (
+              <span className={cn(P38_EXTRATO_V8_ROW_VALUE, 'text-muted-foreground animate-pulse')}>…</span>
+            )}
+          </div>
+          <div className="flex items-center justify-end" onClick={stopClick} onKeyDown={stopClick}>
+            <ContaRowMenu
+              conta={conta}
+              pendencias={pendencias}
+              onConciliar={onConciliar}
+              onAjuste={onAjuste}
+              onEdit={onEdit}
+              className="flex shrink-0 items-center [&_button]:h-7 [&_button]:w-7"
+            />
+          </div>
+        </div>
+      </P38MobileLine>
+    );
+  }
+
+  if (listaUnificada) {
+    return (
+      <P38MobileLine
+        as="button"
+        type="button"
+        thinAccent
+        striped={striped}
+        accent={p38AccentKeyFromTone(rowAccent(conta, isNegativo, ativa))}
+        onClick={() => onExtrato?.(conta)}
+        className={cn(
+          'w-full text-left',
+          LINE_TITLE_CLASS,
+          'max-md:!py-3.5 max-md:min-h-[58px]',
+          !ativa && 'opacity-70',
+        )}
+        title={conta.nome}
+        subtitle={valueSub}
+        value={
+          saldoDisplay ? (
+            <span
+              className={cn(
+                'text-[15px] font-semibold tabular-nums sm:text-base',
+                isNegativo ? 'text-red-600 dark:text-red-400' : P38_ACCENT,
+              )}
+            >
+              {saldoDisplay}
+            </span>
+          ) : (
+            <span className="text-muted-foreground animate-pulse">…</span>
+          )
+        }
+        meta={
+          <>
+            <ContaTipoChip conta={conta} variant="inline" />
+            {!ativa && <P38StatusPill tone="muted" className="text-[10px]">Inativa</P38StatusPill>}
+            {EXIBIR_UI_CONCILIACAO_FINANCEIRO && pendencias > 0 && (
+              <P38StatusPill tone="warning" className="max-w-[8.5rem] truncate text-[10px]">
+                {pendencias} conc.
+              </P38StatusPill>
+            )}
+            {conta.is_caixa_pdv && (
+              <P38StatusPill tone="muted" className="text-[10px]">PDV</P38StatusPill>
+            )}
+          </>
+        }
+        trailing={
+          <ContaRowMenu
+            conta={conta}
+            pendencias={pendencias}
+            onConciliar={onConciliar}
+            onAjuste={onAjuste}
+            onEdit={onEdit}
+            className="flex shrink-0 items-center"
+          />
+        }
+      />
+    );
+  }
 
   const borderAccent = isNegativo
     ? p38Accent.danger.border
@@ -85,9 +269,7 @@ export default function ContaFinanceiraRow({
                 isNegativo ? 'text-red-600 dark:text-red-400' : 'text-foreground',
               )}
             >
-              {saldosProntos && saldo != null
-                ? formatFinanceiroValor(saldo)
-                : <span className="text-muted-foreground animate-pulse">…</span>}
+              {saldoDisplay ?? <span className="text-muted-foreground animate-pulse">…</span>}
             </p>
             {valueSub && (
               <p className="mt-0.5 truncate text-[10px] text-muted-foreground sm:text-xs">
@@ -95,44 +277,14 @@ export default function ContaFinanceiraRow({
               </p>
             )}
           </div>
-          <div
+          <ContaRowMenu
+            conta={conta}
+            pendencias={pendencias}
+            onConciliar={onConciliar}
+            onAjuste={onAjuste}
+            onEdit={onEdit}
             className="flex shrink-0 items-center sm:hidden"
-            onClick={stopClick}
-            onKeyDown={stopClick}
-          >
-            {pendencias > 0 && (
-              <Clock className="mr-1 h-3.5 w-3.5 text-amber-500" aria-hidden />
-            )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  aria-label="Mais ações"
-                >
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52">
-                {pendencias > 0 && (
-                  <DropdownMenuItem onClick={() => onConciliar?.(conta)}>
-                    <ArrowRightLeft className="mr-2 h-4 w-4" />
-                    Conciliar ({pendencias})
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem onClick={() => onAjuste?.(conta)}>
-                  <Scale className="mr-2 h-4 w-4" />
-                  Ajustar saldo
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => onEdit?.(conta)}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Editar conta
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          />
         </div>
       </div>
 
@@ -141,7 +293,7 @@ export default function ContaFinanceiraRow({
           <P38StatusPill tone={ativa ? 'success' : 'muted'} className="text-[10px]">
             {ativa ? 'Ativa' : 'Inativa'}
           </P38StatusPill>
-          {pendencias > 0 && (
+          {EXIBIR_UI_CONCILIACAO_FINANCEIRO && pendencias > 0 && (
             <P38StatusPill tone="warning" className="max-w-[8.5rem] truncate text-[10px]">
               {pendencias} conc.
             </P38StatusPill>
@@ -153,41 +305,14 @@ export default function ContaFinanceiraRow({
           )}
         </div>
 
-        <div
+        <ContaRowMenu
+          conta={conta}
+          pendencias={pendencias}
+          onConciliar={onConciliar}
+          onAjuste={onAjuste}
+          onEdit={onEdit}
           className="hidden shrink-0 items-center sm:flex"
-          onClick={stopClick}
-          onKeyDown={stopClick}
-        >
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 sm:h-9 sm:w-9"
-                aria-label="Mais ações"
-              >
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
-              {pendencias > 0 && (
-                <DropdownMenuItem onClick={() => onConciliar?.(conta)}>
-                  <ArrowRightLeft className="mr-2 h-4 w-4" />
-                  Conciliar ({pendencias})
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem onClick={() => onAjuste?.(conta)}>
-                <Scale className="mr-2 h-4 w-4" />
-                Ajustar saldo
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onEdit?.(conta)}>
-                <Edit className="mr-2 h-4 w-4" />
-                Editar conta
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        />
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import { VirtualizedList } from '@/components/ui/virtualized-list';
 import { ArrowLeft, Plus, Minus, DollarSign, Pencil, RefreshCw } from 'lucide-react';
 import { formatarDataHora } from '@/components/utils/dateUtils';
 import { caixaClasses } from '@/lib/caixaP38Theme';
+import { codigoDespesaTurno } from '@/lib/codigoDespesaTurno';
 
 export default function ListaMovimentosDialog({ open, onOpenChange, tipo, movimentos, despesasLista, formatValor, onSelectMovimento, onRefresh }) {
 
@@ -51,17 +52,21 @@ export default function ListaMovimentosDialog({ open, onOpenChange, tipo, movime
           ) : (
             <VirtualizedList
               items={listaFiltrada}
-              estimateSize={isDespesas ? 96 : 132}
+              estimateSize={isDespesas ? 112 : 132}
               className="h-[calc(100vh-190px)] pr-1"
               contentClassName="max-w-4xl mx-auto"
               itemClassName="pb-3"
               getItemKey={(item) => item.id}
               renderItem={(item) => {
                 if (isDespesas) {
+                  const codigo = codigoDespesaTurno(item);
                   return (
                     <div className="bg-card rounded-2xl p-5 shadow-sm">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
+                          {codigo && (
+                            <div className="text-xs font-mono font-semibold text-muted-foreground mb-1">{codigo}</div>
+                          )}
                           <div className="text-sm font-semibold text-foreground">{item.descricao}</div>
                           <div className="text-xs text-muted-foreground mt-1">{item.categoria} · {item.created_date ? formatarDataHora(item.created_date).split(' ')[1] : ''}</div>
                         </div>

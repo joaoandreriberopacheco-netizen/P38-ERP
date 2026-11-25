@@ -1,10 +1,18 @@
 import React, { useState } from 'react';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { dataHoje } from '@/components/utils/dateUtils';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
-import { P38_FIELD_SURFACE } from './financeiroP38';
+import {
+  P38_EXTRATO_V8_DATE_HEADER,
+  P38_EXTRATO_V8_DAY_CARD,
+  P38_EXTRATO_V8_DAY_GROUP,
+  P38_EXTRATO_V8_DAY_SALDO,
+  P38_EXTRATO_V8_DAY_SALDO_VALUE,
+  P38_FIELD_SURFACE,
+} from './financeiroP38';
 import FinanceiroResumoBar from './FinanceiroResumoBar';
 import P38ModuleLoadingOverlay from '@/components/ui/P38ModuleLoadingOverlay';
 
@@ -19,12 +27,28 @@ export function formatFinanceiroGrupoLabel(k, hStr, oStr) {
   return format(d, "d 'de' MMMM", { locale: ptBR });
 }
 
+/** Rótulo de data do protótipo extrato v8 — «11 NOVEMBRO DE 2026». */
+export function formatExtratoMobileGrupoLabel(k) {
+  if (k === 'sem-data' || k === 'sem-vencimento') return 'SEM DATA';
+  const hStr = dataHoje();
+  const oStr = format(subDays(new Date(`${hStr}T12:00:00-05:00`), 1), 'yyyy-MM-dd');
+  if (k === hStr) return 'HOJE';
+  if (k === oStr) return 'ONTEM';
+  const d = new Date(`${k}T12:00:00-05:00`);
+  if (Number.isNaN(d.getTime())) return String(k).toUpperCase();
+  if (k > hStr) {
+    return `${format(d, "d 'DE' MMMM 'DE' yyyy", { locale: ptBR })} (PREVISTO)`.toUpperCase();
+  }
+  return format(d, "d 'DE' MMMM 'DE' yyyy", { locale: ptBR }).toUpperCase();
+}
+
 export const formatFinanceiroValor = (v) =>
   `R$ ${(Math.round((v || 0) * 100) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 /** Cabeçalho de grupo colapsável — Fluxo de Caixa e Contas Abertas. */
 export function FinanceiroGrupo({
   label,
+  grupoKey,
   labelClassName,
   receitas = 0,
   despesas = 0,
@@ -33,12 +57,30 @@ export function FinanceiroGrupo({
   variant = 'default',
   card = false,
   balancoDia = false,
+  extratoV8 = false,
   ocultarTotais = false,
   children,
   defaultOpen = true,
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const liquido = liquidoProp != null ? liquidoProp : receitas - despesas;
+
+  if (extratoV8) {
+    const dateLabel = grupoKey != null ? formatExtratoMobileGrupoLabel(grupoKey) : String(label || '').toUpperCase();
+    const saldoDia = saldoAcumulado != null ? saldoAcumulado : liquido;
+    return (
+      <div className={P38_EXTRATO_V8_DAY_GROUP}>
+        <p className={P38_EXTRATO_V8_DATE_HEADER}>{dateLabel}</p>
+        <div className={P38_EXTRATO_V8_DAY_CARD}>
+          <div className={P38_EXTRATO_V8_DAY_SALDO}>
+            <span className="font-normal !font-[inherit]">Saldo do dia</span>
+            <strong className={P38_EXTRATO_V8_DAY_SALDO_VALUE}>{formatFinanceiroValor(saldoDia)}</strong>
+          </div>
+          <div className="min-w-0">{children}</div>
+        </div>
+      </div>
+    );
+  }
   const showBreakdown = !balancoDia && receitas > 0 && despesas > 0;
   const overdue = variant === 'overdue';
 
@@ -178,6 +220,7 @@ export function FinanceiroListaEstado({
   vazioMensagem,
   vazioIcon: VazioIcon,
   flushBottom = false,
+  listClassName,
   children,
 }) {
   if (loading && loadingPresentation === 'skeleton') {
@@ -211,7 +254,8 @@ export function FinanceiroListaEstado({
       <P38ModuleLoadingOverlay open={showOverlay} message={loadingMessage} />
       <div
         className={cn(
-          'min-w-0 w-full max-w-full space-y-2 overflow-x-hidden',
+          'relative z-0 min-w-0 w-full max-w-full overflow-x-hidden',
+          listClassName ?? 'space-y-2',
           showOverlay && 'pointer-events-none select-none opacity-25',
         )}
       >

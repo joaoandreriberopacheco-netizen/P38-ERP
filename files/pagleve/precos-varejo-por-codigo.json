@@ -1,0 +1,12 @@
+{
+  "meta": {
+    "tipo": "pagleve-precos-varejo-manual",
+    "nota": "Preço de lista sem desconto comercial (sobrepõe tabela Formigres e match SIAH por descrição)."
+  },
+  "por_codigo_tintao": {
+    "INDF-061": {
+      "preco_varejo_m2": 37.5,
+      "descricao": "Cement Clear 60x60 RET mate (JG)"
+    }
+  }
+}

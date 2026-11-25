@@ -71,10 +71,28 @@ function normDesc(s) {
     .trim();
 }
 
+function hasTesseract() {
+  try {
+    execSync('command -v tesseract', { encoding: 'utf8' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function main() {
   const pngs = findScanPngs();
   if (!pngs.length) {
     console.error('Nenhum scan PNG encontrado. Coloque em files/pagleve/fornecedor-siah-scans/');
+    process.exit(1);
+  }
+  if (!hasTesseract()) {
+    if (fs.existsSync(OUT_CSV) && fs.existsSync(OUT_JSON)) {
+      console.error('tesseract ausente — mantendo precos-siah-fornecedor.csv/json existentes.');
+      console.log(JSON.stringify({ ok: true, skipped: 'no_tesseract', csv: OUT_CSV, json: OUT_JSON }, null, 2));
+      return;
+    }
+    console.error('tesseract não instalado e sem CSV/JSON de preços SIAH em cache.');
     process.exit(1);
   }
   let allText = '';

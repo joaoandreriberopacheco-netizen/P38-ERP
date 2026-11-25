@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { formatCaixaR } from '@/components/vendas/caixa/CaixaValorDisplay';
+import { valorExibicaoPedidoCompra } from '@/lib/pedidoCompraValorExibicao';
 
 export default function BuscarPedidoCompraParaAnexo({
   onSelecionar,
@@ -94,7 +96,9 @@ export default function BuscarPedidoCompraParaAnexo({
         ) : pedidos.length === 0 ? (
           <p className="text-center text-sm text-muted-foreground py-10">Nenhum pedido encontrado</p>
         ) : (
-          pedidos.map((p) => (
+          pedidos.map((p) => {
+            const valorPedido = valorExibicaoPedidoCompra(p);
+            return (
             <button
               type="button"
               key={p.id}
@@ -106,9 +110,13 @@ export default function BuscarPedidoCompraParaAnexo({
               }`}
             >
               <p className="font-semibold">{p.numero || p.id}</p>
-              <p className="text-xs opacity-80 mt-0.5">{p.fornecedor_nome || '—'}</p>
+              <p className="text-xs opacity-80 mt-0.5 line-clamp-2 break-words">{p.fornecedor_nome || '—'}</p>
+              {valorPedido != null && Number(valorPedido) !== 0 ? (
+                <p className="text-xs tabular-nums font-medium mt-1 opacity-90">{formatCaixaR(valorPedido)}</p>
+              ) : null}
             </button>
-          ))
+            );
+          })
         )}
       </div>
 

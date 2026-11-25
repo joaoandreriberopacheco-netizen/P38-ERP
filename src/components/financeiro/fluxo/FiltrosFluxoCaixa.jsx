@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   X, Wallet, Clock, ChevronDown,
-  ChevronLeft, ChevronRight, Layers, RefreshCw
+  ChevronLeft, ChevronRight, Layers, RefreshCw, ArrowDownLeft, ArrowUpRight,
 } from 'lucide-react';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -13,12 +13,28 @@ import {
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import FinanceiroFiltrosShell from './FinanceiroFiltrosShell';
+import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
 import FinanceiroCorteHistoricoFiltro from './FinanceiroCorteHistoricoFiltro';
 import {
   P38_CHIP_ACTIVE,
   P38_CHIP_INACTIVE,
   P38_POPOVER,
 } from './financeiroP38';
+import { contasSelEfetivoFluxo, contasSelEquivaleFiltroFluxoPadrao } from '@/lib/filtroDataFinanceiro';
+import {
+  contaMarcadaNoFluxo,
+  filtroContasFluxoAtivo,
+  marcarPadraoContasFluxo,
+  marcarTodasContasFluxo,
+  selecaoContasFluxoEhPadrao,
+  selecaoContasFluxoEhTodas,
+  toggleContaFluxoSelecao,
+} from './contasFluxoSelecaoUi';
+import {
+  DIRECAO_FLUXO_ENTRADAS,
+  DIRECAO_FLUXO_SAIDAS,
+  DIRECAO_FLUXO_TODAS,
+} from '@/lib/filtroDirecaoFluxoCaixa';
 
 const P38_CAL_SELECTED =
   'bg-[#4a5240] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22] font-bold';
@@ -174,20 +190,27 @@ function PeriodoPicker({ periodo, onPeriodo, customStart, customEnd, onCustom, i
 
 // ─── Filtro Contas ────────────────────────────────────────────────────────────
 function ContasFiltro({ contas, sel, onSel }) {
-  const allIds = contas.map(c => c.id);
-  const todasSel = contas.length > 0 && sel.length === contas.length;
-  const toggle = (id) => sel.includes(id) ? onSel(sel.filter(c => c !== id)) : onSel([...sel, id]);
-  const handleTodas = () => onSel(todasSel ? [] : allIds);
+  const allIds = contas.map((c) => c.id);
+  const filtroAtivo = filtroContasFluxoAtivo(sel, contas, contas);
+  const estaSelecionada = (id) => contaMarcadaNoFluxo(id, sel, contas);
+  const toggle = (id) => onSel(toggleContaFluxoSelecao(id, sel, contas));
+  const handleTodas = () => onSel(marcarTodasContasFluxo(contas));
+  const handlePadrao = () => onSel(marcarPadraoContasFluxo());
+
+  let label = 'Contas operacionais';
+  if (selecaoContasFluxoEhTodas(sel, contas)) label = 'Todas as contas';
+  else if (filtroAtivo) label = `${contasSelEfetivoFluxo(sel, contas).length} selecionada(s)`;
+
   return (
     <Popover>
       <PopoverTrigger asChild>
         <button
           type="button"
           className={`flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all shadow-sm
-          ${!todasSel ? P38_CHIP_ACTIVE : P38_CHIP_INACTIVE}`}
+          ${filtroAtivo ? P38_CHIP_ACTIVE : P38_CHIP_INACTIVE}`}
         >
           <Wallet className="w-3.5 h-3.5" />
-          <span>{todasSel ? 'Todas as contas' : `${sel.length} selecionada${sel.length > 1 ? 's' : ''}`}</span>
+          <span>{label}</span>
           <ChevronDown className="w-3 h-3 opacity-70" />
         </button>
       </PopoverTrigger>
@@ -195,24 +218,35 @@ function ContasFiltro({ contas, sel, onSel }) {
         <div className="mb-2 px-2 pt-1">
           <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Contas financeiras</p>
         </div>
-        <button
-          type="button"
-          onClick={handleTodas}
-          className={`w-full text-left px-3 py-2 rounded-2xl text-xs mb-1.5 transition-colors ${todasSel
-            ? `${P38_CHIP_ACTIVE} font-medium`
-            : 'text-muted-foreground hover:bg-secondary/80 dark:hover:bg-[#383e47]'}`}
-        >
-          Todas as contas
-        </button>
+        <div className="mb-1.5 flex gap-1">
+          <button
+            type="button"
+            onClick={handlePadrao}
+            className={`flex-1 rounded-2xl px-2 py-2 text-left text-xs transition-colors ${selecaoContasFluxoEhPadrao(sel, contas)
+              ? `${P38_CHIP_ACTIVE} font-medium`
+              : 'text-muted-foreground hover:bg-secondary/80 dark:hover:bg-[#383e47]'}`}
+          >
+            Operacionais
+          </button>
+          <button
+            type="button"
+            onClick={handleTodas}
+            className={`flex-1 rounded-2xl px-2 py-2 text-left text-xs transition-colors ${selecaoContasFluxoEhTodas(sel, contas)
+              ? `${P38_CHIP_ACTIVE} font-medium`
+              : 'text-muted-foreground hover:bg-secondary/80 dark:hover:bg-[#383e47]'}`}
+          >
+            Todas
+          </button>
+        </div>
         <div className="space-y-1">
           {contas.map(c => (
             <label
               key={c.id}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-2xl cursor-pointer transition-all ${sel.includes(c.id)
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-2xl cursor-pointer transition-all ${estaSelecionada(c.id)
                 ? 'bg-secondary/80 dark:bg-[#383e47] shadow-sm'
                 : 'hover:bg-secondary/60 dark:hover:bg-[#383e47]/60'}`}
             >
-              <Checkbox checked={sel.includes(c.id)} onCheckedChange={() => toggle(c.id)} className="w-4 h-4" />
+              <Checkbox checked={estaSelecionada(c.id)} onCheckedChange={() => toggle(c.id)} className="w-4 h-4" />
               <span className="w-2.5 h-2.5 rounded-full flex-none shadow-sm" style={{ background: c.cor || '#a4ce33' }} />
               <span className="text-xs truncate text-foreground/90">{c.nome}</span>
             </label>
@@ -269,6 +303,34 @@ function CmvFiltro({ cmvOnly, onToggle }) {
   );
 }
 
+function DirecaoFluxoFiltro({ value, onChange }) {
+  const opts = [
+    { v: DIRECAO_FLUXO_TODAS, l: 'Todos', icon: null },
+    { v: DIRECAO_FLUXO_ENTRADAS, l: 'Somente entradas', icon: ArrowDownLeft },
+    { v: DIRECAO_FLUXO_SAIDAS, l: 'Somente saídas', icon: ArrowUpRight },
+  ];
+  return (
+    <div>
+      <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Movimento</p>
+      <div className="flex flex-wrap gap-1.5">
+        {opts.map(({ v, l, icon: Icon }) => (
+          <button
+            key={v || 'todos'}
+            type="button"
+            onClick={() => onChange(v)}
+            className={`flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-medium transition-colors ${
+              (value || DIRECAO_FLUXO_TODAS) === v ? P38_CHIP_ACTIVE : P38_CHIP_INACTIVE
+            }`}
+          >
+            {Icon ? <Icon className="h-3 w-3 shrink-0" aria-hidden /> : null}
+            {l}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ConciliacaoLoteFiltro({ contas, onOpenConciliacao }) {
   return (
     <Popover>
@@ -308,6 +370,7 @@ function FiltrosFluxoPainel({
   statusSel, onStatusSel,
   pendentes, onPendentes,
   cmvOnly, onCmvOnly,
+  direcaoFluxo, onDirecaoFluxo,
   onOpenConciliacao,
   mostrarHistoricoAnterior, dataCorteHistorico, onMostrarHistoricoAnterior, onDataCorteHistorico,
 }) {
@@ -329,8 +392,12 @@ function FiltrosFluxoPainel({
         <ContasFiltro contas={contas} sel={contasSel} onSel={onContasSel} />
         <StatusFiltro sel={statusSel} onSel={onStatusSel} />
         <CmvFiltro cmvOnly={cmvOnly} onToggle={onCmvOnly} />
-        <ConciliacaoLoteFiltro contas={contas} onOpenConciliacao={onOpenConciliacao} />
+        {EXIBIR_UI_CONCILIACAO_FINANCEIRO && (
+          <ConciliacaoLoteFiltro contas={contas} onOpenConciliacao={onOpenConciliacao} />
+        )}
       </div>
+
+      <DirecaoFluxoFiltro value={direcaoFluxo} onChange={onDirecaoFluxo} />
 
       <FinanceiroCorteHistoricoFiltro
         mostrarHistoricoAnterior={mostrarHistoricoAnterior}
@@ -353,6 +420,8 @@ export default function FiltrosFluxoCaixa({
   statusSel, onStatusSel,
   pendentes, onPendentes,
   cmvOnly, onCmvOnly,
+  direcaoFluxo,
+  onDirecaoFluxo,
   onOpenConciliacao,
   conciliacaoPendente = 0,
   ordemLancamentos = 'desc',
@@ -361,17 +430,51 @@ export default function FiltrosFluxoCaixa({
   dataCorteHistorico,
   onMostrarHistoricoAnterior,
   onDataCorteHistorico,
+  filtersOpen: filtersOpenProp,
+  onFiltersOpenChange,
+  hideBar = false,
 }) {
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filtersOpenInternal, setFiltersOpenInternal] = useState(false);
+  const filtersOpen = filtersOpenProp ?? filtersOpenInternal;
+  const setFiltersOpen = onFiltersOpenChange ?? setFiltersOpenInternal;
 
   const hasPanelFilters =
     periodo !== 'mes' ||
     statusSel.length > 0 ||
     cmvOnly ||
+    !!direcaoFluxo ||
     mostrarHistoricoAnterior ||
     !!customStart ||
     !!customEnd ||
-    (contas.length > 0 && contasSel.length > 0 && contasSel.length < contas.length);
+    (contas.length > 0 && !contasSelEquivaleFiltroFluxoPadrao(contasSel, contas));
+
+  if (hideBar) {
+    return filtersOpen ? (
+      <FiltrosFluxoPainel
+        periodo={periodo}
+        onPeriodo={onPeriodo}
+        customStart={customStart}
+        customEnd={customEnd}
+        onCustom={onCustom}
+        contas={contas}
+        contasSel={contasSel}
+        onContasSel={onContasSel}
+        statusSel={statusSel}
+        onStatusSel={onStatusSel}
+        pendentes={pendentes}
+        onPendentes={onPendentes}
+        cmvOnly={cmvOnly}
+        onCmvOnly={onCmvOnly}
+        direcaoFluxo={direcaoFluxo}
+        onDirecaoFluxo={onDirecaoFluxo}
+        onOpenConciliacao={onOpenConciliacao}
+        mostrarHistoricoAnterior={mostrarHistoricoAnterior}
+        dataCorteHistorico={dataCorteHistorico}
+        onMostrarHistoricoAnterior={onMostrarHistoricoAnterior}
+        onDataCorteHistorico={onDataCorteHistorico}
+      />
+    ) : null;
+  }
 
   return (
     <FinanceiroFiltrosShell
@@ -382,9 +485,9 @@ export default function FiltrosFluxoCaixa({
       filtersOpen={filtersOpen}
       onFiltersOpenChange={setFiltersOpen}
       hasActiveFilters={hasPanelFilters}
-      conciliacaoPendente={conciliacaoPendente}
-      pendentes={pendentes}
-      onPendentesToggle={onPendentes}
+      conciliacaoPendente={EXIBIR_UI_CONCILIACAO_FINANCEIRO ? conciliacaoPendente : 0}
+      pendentes={EXIBIR_UI_CONCILIACAO_FINANCEIRO ? pendentes : false}
+      onPendentesToggle={EXIBIR_UI_CONCILIACAO_FINANCEIRO ? onPendentes : undefined}
       ordemLancamentos={ordemLancamentos}
       onOrdemLancamentosChange={onOrdemLancamentosChange}
     >
@@ -403,6 +506,8 @@ export default function FiltrosFluxoCaixa({
         onPendentes={onPendentes}
         cmvOnly={cmvOnly}
         onCmvOnly={onCmvOnly}
+        direcaoFluxo={direcaoFluxo}
+        onDirecaoFluxo={onDirecaoFluxo}
         onOpenConciliacao={onOpenConciliacao}
         mostrarHistoricoAnterior={mostrarHistoricoAnterior}
         dataCorteHistorico={dataCorteHistorico}

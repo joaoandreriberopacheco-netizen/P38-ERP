@@ -86,7 +86,7 @@ O deploy publica o código; no **Supabase Dashboard → Edge Functions → Secre
 | Secret | Função |
 |--------|--------|
 | `GROQ_API_KEY` | Fallback OCR em série (`p38-core` → `StructurarDocumentoOcr`, Llama free tier) — **recomendado** para importadores |
-| `GROQ_OCR_MODEL` | Opcional — default `llama-3.3-70b-versatile` |
+| `GROQ_OCR_MODEL` | Opcional — default `openai/gpt-oss-20b` (evitar `llama-3.3-70b-versatile`, 404 no tier atual) |
 | `GEMINI_API_KEY` ou `GOOGLE_API_KEY` | Opcional — só features legacy `InvokeLLM` (tags, etc.) com `VITE_P38_LLM_ENABLED=true` |
 | `GEMINI_MODEL` | Opcional — default `gemini-3.6-flash` (PDF/imagem) / `gemini-3.5-flash-lite` (texto) |
 | `RESEND_API_KEY` | `gerenciar-pin` (email PIN) |

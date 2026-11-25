@@ -137,7 +137,13 @@ export function derivePedidoCompraItem({ pedido = {}, produto = {}, input = {} }
  * relatorios antigos consomem hoje.
  */
 export function pedidoCompraItemToLegacyMirror(item = {}) {
+  const d = item?.dados && typeof item.dados === "object" ? item.dados : {};
   const fator = asNumber(item?.fator_aplicado, 1) || 1;
+  const outrosF1 = asNumber(
+    item?.outros_unitario_fator1 ?? d.outros_unitario_fator1 ?? item?.custo_outros_unitario,
+    0,
+  );
+  const freteF1 = asNumber(item?.frete_unitario_fator1 ?? d.frete_unitario_fator1, 0);
   return {
     produto_id: item?.produto_id || "",
     produto_nome: item?.produto_nome || "",
@@ -153,8 +159,12 @@ export function pedidoCompraItemToLegacyMirror(item = {}) {
     custo_final_unitario_base: asNumber(item?.custo_total_unitario_fator1, 0),
     custo_unitario_apresentacao: asNumber(item?.custo_unitario_comercial, 0),
     custo_final_unitario_apresentacao: round6(asNumber(item?.custo_total_unitario_fator1, 0) * fator),
-    custo_frete_unitario: asNumber(item?.frete_unitario_fator1, 0),
-    custo_outros_unitario: asNumber(item?.outros_unitario_fator1, 0),
+    frete_unitario_fator1: freteF1,
+    custo_frete_unitario: freteF1,
+    outros_unitario_fator1: outrosF1,
+    custo_outros_unitario: outrosF1,
+    despesa_rateada_outros_fator1: asNumber(d.despesa_rateada_outros_fator1, 0),
+    custo_unitario_comercial: asNumber(item?.custo_unitario_comercial ?? d.custo_unitario_comercial, 0),
     desconto_unitario: asNumber(item?.desconto_unitario_fator1, 0),
     total: asNumber(item?.total, 0),
     preco_eixo: "FATOR_1",

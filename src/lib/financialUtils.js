@@ -1,10 +1,117 @@
 import {
   agora,
+  chaveDiaCampoData,
   codigoOrdenacaoDesdeDataSomente,
   codigoOrdenacaoDesdeInstante,
   toLocalDateKey,
 } from '@/components/utils/dateUtils';
 import { codigoOrdemLancamento, diaChaveOrdemLancamento, instanteDesdeCodigoOrdenacao } from '@/lib/lancamentoOrdemMeta';
+import { calcularPerspectivaTransferencia, extrairParTransferencia } from '@/lib/projecaoTransferenciaFinanceira';
+
+/** `neutra` não é perspectiva para cor de valor — só entrada/saída. */
+export function normalizarPerspectivaTransferencia(perspectiva) {
+  return perspectiva === 'entrada' || perspectiva === 'saida' ? perspectiva : null;
+}
+
+function linhaEhTransferenciaExtrato(l) {
+  if (!l) return false;
+  if (l.tipoExibicao === 'Transferência' || l.isTransferenciaConsolidada) return true;
+  if (l.tipo === 'Transferência') return true;
+  if (l.categoria === 'Transferência entre Contas') return true;
+  if (l.referencia_tipo === 'MovimentosCaixa') return true;
+  if (l._lancamentoTransferencia || l._lancamentoDespesa || l._lancamentoReceita) return true;
+  return false;
+}
+
+function lancamentoBaseTransferenciaExtrato(l) {
+  return l?._lancamentoTransferencia || l?._lancamentoDespesa || l?._lancamentoReceita || l;
+}
+
+function idsOrigemDestinoTransferenciaExtrato(l) {
+  const base = lancamentoBaseTransferenciaExtrato(l);
+  const par = extrairParTransferencia(base);
+  const origemId =
+    l.conta_origem_id || par?.origemId || (base.tipo === 'Despesa' ? base.conta_financeira_id : null);
+  const destinoId =
+    l.conta_destino_id || par?.destinoId || (base.tipo === 'Receita' ? base.conta_financeira_id : null);
+  return { origemId, destinoId };
+}
+
+/**
+ * Tom esmaecido no extrato: origem e destino da transferência estão no filtro de contas
+ * (saldo agregado não muda — «em casa»). Uma só conta no filtro → cores normais de entrada/saída.
+ */
+export function extratoTransferenciaInternaCasa(l, contasSel = null) {
+  if (!linhaEhTransferenciaExtrato(l)) return false;
+  const { origemId, destinoId } = idsOrigemDestinoTransferenciaExtrato(l);
+  if (!origemId || !destinoId) return false;
+  const sel = Array.isArray(contasSel) ? contasSel : [];
+  if (!sel.length) {
+    return calcularPerspectivaTransferencia(lancamentoBaseTransferenciaExtrato(l), sel, null) === 'neutra';
+  }
+  return sel.includes(origemId) && sel.includes(destinoId);
+}
+
+/**
+ * Perspectiva para cor/sinal do valor no extrato mobile.
+ * Ignora `neutra` (truthy) e recalcula com filtro de contas quando preciso.
+ */
+export function resolverPerspectivaValorTransferenciaExtrato(
+  l,
+  { perspectivaPreferida = null, contaVisualizadaId = null, contasSel = null } = {},
+) {
+  if (!l || l.status === 'Cancelado') return null;
+  if (!linhaEhTransferenciaExtrato(l)) return null;
+
+  if (extratoTransferenciaInternaCasa(l, contasSel)) return null;
+
+  const pref = normalizarPerspectivaTransferencia(perspectivaPreferida);
+  if (pref) return pref;
+
+  const fromRow = normalizarPerspectivaTransferencia(l.perspectivaTransferencia);
+  if (fromRow) return fromRow;
+
+  const base = lancamentoBaseTransferenciaExtrato(l);
+  const recalc = normalizarPerspectivaTransferencia(
+    calcularPerspectivaTransferencia(base, contasSel || [], null),
+  );
+  if (recalc) return recalc;
+
+  if (contaVisualizadaId) {
+    const destinoId = l.conta_destino_id || (base.tipo === 'Receita' ? base.conta_financeira_id : null);
+    const origemId =
+      l.conta_origem_id || (base.tipo === 'Despesa' ? base.conta_financeira_id : null) || base.conta_financeira_id;
+    if (destinoId === contaVisualizadaId && origemId !== contaVisualizadaId) return 'entrada';
+    if (origemId === contaVisualizadaId && destinoId && destinoId !== contaVisualizadaId) return 'saida';
+  }
+
+  const { origemId, destinoId } = idsOrigemDestinoTransferenciaExtrato(l);
+
+  if (contasSel?.length && origemId && destinoId) {
+    const origemVisivel = contasSel.includes(origemId);
+    const destinoVisivel = contasSel.includes(destinoId);
+    if (origemVisivel && destinoVisivel) return null;
+    if (origemVisivel) return 'saida';
+    if (destinoVisivel) return 'entrada';
+  }
+
+  if (l._lancamentoReceita && !l._lancamentoDespesa) return 'entrada';
+  if (l._lancamentoDespesa && !l._lancamentoReceita) return 'saida';
+
+  if (base.tipo === 'Receita') return 'entrada';
+  if (base.tipo === 'Despesa') return 'saida';
+
+  if (base.tipo === 'Transferência' && base.conta_financeira_id && base.conta_destino_id) {
+    if (contasSel?.length) {
+      const origemVisivel = contasSel.includes(base.conta_financeira_id);
+      const destinoVisivel = contasSel.includes(base.conta_destino_id);
+      if (origemVisivel && !destinoVisivel) return 'saida';
+      if (!origemVisivel && destinoVisivel) return 'entrada';
+    }
+  }
+
+  return null;
+}
 
 /**
  * Arredonda número (ou string numérica) para 2 casas decimais.
@@ -116,14 +223,19 @@ export const parseFinancialValue = (value) => {
  * Prioriza `data_lancamento` (data/hora informada pelo utilizador).
  */
 export function getDataChaveLancamento(l) {
+  // Extrato / grupos: dia civil do pagamento manda (Tabatinga); data_lancamento só ordena na lista.
+  if (l?.data_pagamento && (l.status === 'Pago' || l.data_pagamento)) {
+    const kPag = chaveDiaCampoData(l.data_pagamento);
+    if (kPag) return kPag;
+  }
   const ordem = diaChaveOrdemLancamento(l);
   if (ordem) return ordem;
   if (l?.forma_pagamento_tipo === 'Cartão Crédito' && l?.status_conciliacao === 'Pendente') {
     const d = l.data_liquidacao_prevista || l.data_vencimento;
-    if (d) return toLocalDateKey(d);
+    if (d) return chaveDiaCampoData(d);
   }
   const dr = l?.data_pagamento || l?.data_vencimento;
-  return dr ? toLocalDateKey(dr) : null;
+  return dr ? chaveDiaCampoData(dr) : null;
 }
 
 /** Item base para ordenação (transferência consolidada herda do par). */

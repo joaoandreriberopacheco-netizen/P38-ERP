@@ -13,9 +13,34 @@ import {
 } from '../lib/formigresSnapshot.mjs';
 import { stripAccents } from '../lib/formigresCatalog.mjs';
 import { raioXProdutoDescricao } from '../lib/raioXProdutoDescricao.mjs';
+import {
+  acabamentoFromErpDesc,
+  carmeloSlugCandidates,
+  cecafiCarmeloSlugCandidates,
+  parseCarmeloProdutoHtml,
+} from '../lib/carmeloPaginaProduto.mjs';
+import { extrairClassificacaoPei } from '../lib/paglevePeiResistencia.mjs';
+import {
+  imagensJsonFromLumeFicha,
+  lumePortfolioSlugFromRow,
+  lumePortfolioUrl,
+  parseLumePortfolioHtml,
+} from '../lib/lumePaginaProduto.mjs';
+import { resolveFormatoPagLeve } from '../lib/pagleveFormatoOcr.mjs';
+import {
+  incopisosProdutoUrl,
+  incopisosSlugCandidates,
+  parseIncopisosOembedJson,
+  parseIncopisosProdutoHtml,
+} from '../lib/incopisosPaginaProduto.mjs';
+import { rochaSlugCandidatesFromErp, rochaSlugFromSiahDesc } from '../lib/rochaPortalPagina.mjs';
 
 const ROOT = process.cwd();
-const CSV = process.env.PAGLEVE_OUT || path.join(ROOT, 'files', 'pagleve', 'raio-x-pagleve-site-verificado.csv');
+const CSV =
+  process.env.PAGLEVE_OUT ||
+  (fs.existsSync(path.join(ROOT, 'files', 'pagleve', 'pagleve-base-cruzada.csv'))
+    ? path.join(ROOT, 'files', 'pagleve', 'pagleve-base-cruzada.csv')
+    : path.join(ROOT, 'files', 'pagleve', 'raio-x-pagleve-site-verificado.csv'));
 const ROCHA = 'https://www.portalgruporocha.com.br';
 const LUME = 'https://lumeceramica.com.br';
 const CF = 'https://www.carmelofior.com.br';
@@ -82,16 +107,6 @@ function ogTitle(html) {
   return html.match(/<meta property="og:title" content="([^"]+)"/i)?.[1] || '';
 }
 
-/** PR70001 no SIAH → slug pr7000 no portal (descarta 1 final + 4 dígitos). */
-export function rochaSlugFromSiahDesc(desc) {
-  const m = String(desc || '').match(/\b(PR|R)(\d{4,})\b/i);
-  if (!m) return '';
-  let digits = m[2];
-  if (digits.length >= 5 && digits.endsWith('1')) digits = digits.slice(0, -1);
-  const core = digits.length > 4 ? digits.slice(0, 4) : digits;
-  return `${m[1].toLowerCase()}${core}`;
-}
-
 function tryRochaSlug(slug) {
   if (!slug) return null;
   const url = `${ROCHA}/produtos/${slug}`;
@@ -108,16 +123,56 @@ function tryRochaSlug(slug) {
   };
 }
 
+function tryRochaSlugsFromDesc(desc) {
+  const slugs = [...new Set([...rochaSlugCandidatesFromErp(desc), rochaSlugFromSiahDesc(desc)].filter(Boolean))];
+  for (const slug of slugs) {
+    const hit = tryRochaSlug(slug);
+    if (hit) return hit;
+  }
+  return null;
+}
+
+function tryLumePortfolioForRow(row) {
+  const slug = lumePortfolioSlugFromRow(row);
+  if (!slug) return null;
+  const url = lumePortfolioUrl(slug);
+  const html = curl(url);
+  const ficha = parseLumePortfolioHtml(html, url);
+  if (!ficha) return null;
+  return {
+    fabricante_grupo: 'Lume Cerâmica',
+    marca_no_site: 'Lume',
+    evidencia_url: url,
+    descricao_no_site: ficha.descricao_no_site,
+    imagem_url: ficha.imagem_url || '',
+    imagens_json: imagensJsonFromLumeFicha(ficha),
+    status: 'confirmado_site',
+    match_metodo: `lume_portfolio:${slug}`,
+  };
+}
+
 function lumePortfolioSearch(q) {
   const html = curl(`${LUME}/?s=${encodeURIComponent(q)}`);
   const m = html.match(/href="(https:\/\/lumeceramica\.com\.br\/portfolio-item\/[^"]+)"/i);
   if (!m) return null;
-  const title = html.match(new RegExp(`>${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^<]{0,40}<`, 'i'));
+  const ficha = parseLumePortfolioHtml(curl(m[1]), m[1]);
+  if (ficha) {
+    return {
+      fabricante_grupo: 'Lume Cerâmica',
+      marca_no_site: 'Lume',
+      evidencia_url: m[1],
+      descricao_no_site: ficha.descricao_no_site,
+      imagem_url: ficha.imagem_url || '',
+      imagens_json: imagensJsonFromLumeFicha(ficha),
+      status: 'confirmado_site',
+      match_metodo: `lume_busca:${q}`,
+    };
+  }
   return {
     fabricante_grupo: 'Lume Cerâmica',
     marca_no_site: 'Lume',
     evidencia_url: m[1],
-    descricao_no_site: title ? title[0].replace(/[<>]/g, '').trim() : q,
+    descricao_no_site: q,
     status: 'confirmado_site',
     match_metodo: `lume_busca:${q}`,
   };
@@ -131,20 +186,193 @@ function carmeloSlugFromName(name) {
     .replace(/-+/g, '-');
 }
 
+const CF_SLUG_BY_CODE = {
+  32102: 'albury-plus-rt-90x90',
+  33999: 'albury-lux-plus-rt-90x90',
+  'INDF-117': 'alaska-plus-32-75',
+  'INDF-119': 'alvor',
+  'INDF-035': 'solaria-plus-rt-90x90',
+  'INDF-137': 'dream-plus-rt-90x90',
+  'INDF-157': 'cronos-plus-mre-rt-90x90',
+  'INDF-118': 'selena-cinza',
+  'INDF-004': 'bellavista-po-rt',
+  'INDF-011': 'georgia-po-rt',
+  'INDF-033': 'venezia-po-rt',
+  'INDF-036': 'pissis-plus-mre-rt',
+  'INDF-136': 'elemento-cinza-plus-rt-90x90',
+};
+
+const INCOPISOS_SLUG_BY_CODE = {
+  31929: 'ladrillo-red',
+  31930: 'minerale-beige',
+  'INDF-078': 'square-mont-blanc',
+  'INDF-102': 'studio-cotto',
+  'INDF-079': 'hd-160101',
+  'INDF-047': 'puglia-grigio-2',
+};
+
+function acabamentoLabelFromSuperficie(s) {
+  const t = String(s || '').trim();
+  if (!t) return '';
+  if (/^brilhante$/i.test(t)) return 'Brilhante';
+  if (/^mate$/i.test(t)) return 'Mate';
+  if (/^acetinado$/i.test(t)) return 'Acetinado';
+  if (/^polido$/i.test(t)) return 'Polido';
+  return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
+}
+
 function tryCarmeloSlug(slug) {
   const url = `${CF}/produto/${slug}`;
   const html = curl(url);
   if (!html || html.length < 800) return null;
-  const title = html.match(/<title>([^<]+)<\/title>/i)?.[1] || '';
-  if (!/carmelo|fior|arielle/i.test(title) && !/produto/i.test(html)) return null;
+  const ficha = parseCarmeloProdutoHtml(html);
+  if (!ficha) return null;
+  const acab = acabamentoLabelFromSuperficie(ficha.superficie);
+  const marca = ficha.marca_site || 'Carmelo Fior';
+  const gallery = ficha.imagens_urls?.length ? ficha.imagens_urls : (ficha.imagem_url ? [ficha.imagem_url] : []);
+  const imagem_url = gallery[0] || '';
   return {
     fabricante_grupo: 'Carmelo Fior',
-    marca_no_site: 'Carmelo Fior',
+    marca_no_site: marca,
     evidencia_url: url,
-    descricao_no_site: title.split('|')[0].trim(),
+    descricao_no_site: ficha.descricao_no_site,
+    imagem_url,
+    imagens_json: gallery.length ? JSON.stringify(gallery) : '',
+    site_superficie: ficha.superficie || '',
+    site_linha: ficha.linha_site || '',
+    site_classificacao_pei: ficha.classificacao_uso || '',
+    site_acabamento_label: acab,
     status: 'confirmado_site',
     match_metodo: `carmelo_slug:${slug}`,
   };
+}
+
+function enrichCarmeloHitFromErp(row, hit) {
+  const pei = extrairClassificacaoPei(row.descricao_erp);
+  const erpAcab = acabamentoFromErpDesc(row.descricao_erp);
+  if (erpAcab) hit.site_acabamento_label = erpAcab;
+  const titulo = String(hit.descricao_no_site || '').split(' · ')[0] || hit.descricao_no_site;
+  const fmt = String(row.formato || '').replace(/x/i, '×');
+  const parts = [titulo];
+  if (fmt) parts.push(`${fmt} cm`);
+  if (hit.site_linha) parts.push(hit.site_linha);
+  if (hit.site_acabamento_label) parts.push(hit.site_acabamento_label);
+  if (pei) {
+    hit.site_classificacao_pei = pei;
+    parts.push(pei);
+  }
+  hit.descricao_no_site = parts.join(' · ');
+  return hit;
+}
+
+/** No ERP muitas linhas Etna/Cecafi; no site a marca vem da ficha Carmelo (Cecafi, Fiorano, Idealle…). */
+function isCecafiRow(row) {
+  const blob = `${row.fabricante_grupo || ''} ${row.marca_no_site || ''} ${row.descricao_erp || ''}`;
+  if (/cecafi|etna/i.test(blob)) return true;
+  return String(row.match_metodo || '').startsWith('carmelo_grupo:');
+}
+
+/** Fichas no portal Carmelo (slug fixo) mesmo quando o ERP só diz “Carmelo Fior” (ex. Selena → selena-cinza). */
+function isCarmeloGrupoCatalogRow(row) {
+  if (isCecafiRow(row)) return true;
+  if (!/carmelo/i.test(String(row.fabricante_grupo || row.marca_no_site || ''))) return false;
+  const blob = stripAccents(`${row.descricao_erp || ''} ${row.modelo || ''} ${modeloNome(row)}`).toLowerCase();
+  return /selena|noble|branco neve|clean|alvor|selah|vino|melinda|theo|bolt|dritto|minerati/.test(blob);
+}
+
+function applyCarmeloGrupoLoop(rows) {
+  for (const r of rows.filter(
+    (x) =>
+      isCarmeloGrupoCatalogRow(x) &&
+      (x.formato === '57x57' || x.formato === '38x75' || x.formato === '32x57') &&
+      x.status !== 'confirmado_site',
+  )) {
+    let hit = tryCarmeloCecafiRow(r) || tryCarmeloForRow(r);
+    if (hit) {
+      const slug = (hit.match_metodo || '').split(':').pop() || '';
+      if (hit.evidencia_url?.includes('carmelofior.com.br') && !String(hit.match_metodo).startsWith('carmelo_grupo:')) {
+        hit = applyCarmeloGrupoHit(r, hit, slug);
+      }
+      applyHit(r, hit, 'Grupo Carmelo Fior — marca na ficha do site');
+    } else {
+      indicacao(r, 'Carmelo Fior', 'Cecafi', r.formato, 'buscar slug em carmelofior.com.br/produto/…');
+    }
+  }
+}
+
+function applyCarmeloGrupoHit(row, hit, slug) {
+  const out = enrichCarmeloHitFromErp(row, hit);
+  out.fabricante_grupo = 'Carmelo Fior';
+  if (!out.marca_no_site || out.marca_no_site === 'Carmelo Fior') {
+    out.marca_no_site = hit.marca_no_site || 'Cecafi';
+  }
+  out.match_metodo = `carmelo_grupo:${slug}`;
+  return out;
+}
+
+function tryCarmeloCecafiRow(row) {
+  const modelo = modeloNome(row) || row.modelo || '';
+  const slugs = cecafiCarmeloSlugCandidates(row, modelo);
+  for (const slug of slugs) {
+    const hit = tryCarmeloSlug(slug);
+    if (!hit) continue;
+    return applyCarmeloGrupoHit(row, hit, slug);
+  }
+  return null;
+}
+
+function tryIncopisosSlug(slug) {
+  const url = incopisosProdutoUrl(slug);
+  const html = curl(url);
+  let ficha = parseIncopisosProdutoHtml(html);
+  if (!ficha && (/^\d+$/.test(String(slug)) || /^hd-\d+$/i.test(String(slug)))) {
+    const oembedUrl = `https://grupoincopisos.com.br/wp-json/oembed/1.0/embed?url=${encodeURIComponent(url)}`;
+    const oembed = curl(oembedUrl);
+    ficha = parseIncopisosOembedJson(oembed, url);
+  }
+  if (!ficha) return null;
+  return {
+    fabricante_grupo: 'Grupo Incopisos',
+    marca_no_site: ficha.marca_site,
+    evidencia_url: url,
+    descricao_no_site: ficha.descricao_no_site,
+    imagem_url: ficha.imagem_url || '',
+    status: 'confirmado_site',
+    match_metodo: `incopisos_slug:${slug}`,
+  };
+}
+
+function isIncopisosErpRow(row) {
+  const blob = `${row.fabricante_grupo || ''} ${row.marca_no_site || ''}`;
+  return /incopisos/i.test(blob) || String(row.match_metodo || '').startsWith('incopisos_slug:');
+}
+
+function tryIncopisosForRow(row) {
+  const fixed = INCOPISOS_SLUG_BY_CODE[row.codigo];
+  if (fixed) {
+    const hit = tryIncopisosSlug(fixed);
+    if (hit) return hit;
+  }
+  const modelo = modeloNome(row) || row.modelo || '';
+  for (const slug of incopisosSlugCandidates(row, modelo)) {
+    const hit = tryIncopisosSlug(slug);
+    if (hit) return hit;
+  }
+  return null;
+}
+
+function tryCarmeloForRow(row) {
+  const fixed = CF_SLUG_BY_CODE[row.codigo];
+  if (fixed) {
+    const hit = tryCarmeloSlug(fixed);
+    if (hit) return enrichCarmeloHitFromErp(row, hit);
+  }
+  const modelo = modeloNome(row);
+  for (const slug of carmeloSlugCandidates(row, modelo)) {
+    const hit = tryCarmeloSlug(slug);
+    if (hit) return enrichCarmeloHitFromErp(row, hit);
+  }
+  return null;
 }
 
 function modeloNome(row) {
@@ -171,29 +399,19 @@ async function main() {
   const byCode = new Map(rows.map((r) => [r.codigo, r]));
   const fg = buildFormigresSnapshot(await fetchFormigresProdutos());
 
-  const fmtFix = {
-    '0x50': '50x50',
-    '7x57': '57x57',
-    '8x58': '58x58',
-    '2x57': '32x57',
-    '0x90': '90x90',
-    '2x82': '82x82',
-    '5x75': '75x75',
-    '6x75': '75x75',
-    '9x75': '39x75',
-    '0x70': '70x70',
-  };
-
   for (const r of rows) {
-    if (fmtFix[r.formato]) r.formato = fmtFix[r.formato];
+    const resolved = resolveFormatoPagLeve(r.descricao_erp || r.modelo || '', r.formato);
+    if (resolved) r.formato = resolved;
   }
 
   // 70x70 — Rocha por código portal
   for (const r of rows.filter((x) => x.formato === '70x70' && x.status !== 'confirmado_site')) {
-    const slug = rochaSlugFromSiahDesc(r.descricao_erp);
-    const hit = tryRochaSlug(slug);
-    if (hit) applyHit(r, hit, `portal slug ${slug} (SIAH→site)`);
-    else indicacao(r, 'Grupo Rocha', 'Rochaforte / Rochaprime (portal)', '70x70', `slug tentado: ${slug}`);
+    const hit = tryRochaSlugsFromDesc(r.descricao_erp);
+    if (hit) applyHit(r, hit, `portal slug (SIAH→site)`);
+    else {
+      const tried = rochaSlugCandidatesFromErp(r.descricao_erp).join(',') || rochaSlugFromSiahDesc(r.descricao_erp);
+      indicacao(r, 'Grupo Rocha', 'Rochaforte / Rochaprime (portal)', '70x70', `slug tentado: ${tried}`);
+    }
   }
 
   // 82x82 — Rocha (loft)
@@ -238,6 +456,9 @@ async function main() {
     'INDF-001': 'gales-po-rt',
     'INDF-010': 'alaska-po-rt',
     34860: 'alaska-po-rt',
+    'INDF-004': 'bellavista-po-rt',
+    'INDF-011': 'georgia-po-rt',
+    'INDF-033': 'venezia-po-rt',
   };
   for (const r of rows.filter((x) => x.formato === '74x74' && x.status !== 'confirmado_site')) {
     const n = stripAccents(r.descricao_erp).toLowerCase();
@@ -246,9 +467,22 @@ async function main() {
     if (!slug && n.includes('gales')) slug = 'gales-po-rt';
     if (!slug && n.includes('sicilia')) slug = 'sicilia-po-rt';
     if (!slug && n.includes('breda')) slug = 'breda-po-rt';
+    if (!slug && n.includes('bellavista')) slug = 'bellavista-po-rt';
+    if (!slug && n.includes('georgia')) slug = 'georgia-po-rt';
+    if (!slug && n.includes('venezia')) slug = 'venezia-po-rt';
     const hit = slug ? tryCarmeloSlug(slug) : null;
     if (hit) applyHit(r, hit);
     else indicacao(r, 'Carmelo Fior', 'Carmelo Fior', '74x74');
+  }
+
+  // 32×57 / 38×75 / 57×57 — slugs grupo (noble-57x57, selena-cinza…) antes do genérico 32×57
+  applyCarmeloGrupoLoop(rows);
+
+  // 32x57 — Carmelo Fior (ex. Alaska Plus → alaska-plus-32-75)
+  for (const r of rows.filter((x) => x.formato === '32x57' && x.status !== 'confirmado_site')) {
+    const hit = tryCarmeloForRow(r);
+    if (hit) applyHit(r, hit, 'Carmelo 32×57 — ficha oficial');
+    else indicacao(r, 'Carmelo Fior', 'Carmelo Fior', '32x57');
   }
 
   // 90x90 — Carmelo
@@ -256,13 +490,22 @@ async function main() {
     const n = stripAccents(r.descricao_erp).toLowerCase();
     let slug = '';
     if (n.includes('narbona')) slug = 'narbona-plus-rt-90x90';
+    else if (n.includes('albury') && n.includes('lux')) slug = 'albury-lux-plus-rt-90x90';
     else if (n.includes('albury')) slug = 'albury-plus-rt-90x90';
     else if (n.includes('sidney')) slug = 'sidney-plus-rt-90x90';
     else if (n.includes('vinci')) slug = 'vinci-plus-rt-90x90';
     else if (n.includes('amon')) slug = 'amon-plus-rt-90x90';
+    else if (n.includes('pissis')) slug = 'pissis-plus-mre-rt';
+    else if (n.includes('elemento') && n.includes('cinza')) slug = 'elemento-cinza-plus-rt-90x90';
     const hit = slug ? tryCarmeloSlug(slug) : null;
     if (hit) applyHit(r, hit);
     else indicacao(r, 'Carmelo Fior', 'Carmelo Fior', '90x90');
+  }
+
+  // Slugs Incopisos por código (ex. Puglia 90×90 no grupoincopisos, não Carmelo)
+  for (const r of rows.filter((x) => INCOPISOS_SLUG_BY_CODE[x.codigo] && x.status !== 'confirmado_site')) {
+    const hit = tryIncopisosForRow(r);
+    if (hit) applyHit(r, hit, 'Grupo Incopisos — slug indicado');
   }
 
   // 75x75 — Lume
@@ -272,19 +515,37 @@ async function main() {
   };
   for (const r of rows.filter((x) => x.formato === '75x75' && x.status !== 'confirmado_site')) {
     const n = stripAccents(r.descricao_erp).toLowerCase();
-    let q = lume75[r.codigo] ? 'monterrey grigio' : n.includes('monterrey') ? 'monterrey grigio' : n.includes('asphalt') ? 'asphalt' : n.includes('petra') ? 'petra nat' : n.includes('portorio') ? 'nero portorio' : n.includes('avorio') ? 'avorio cinza' : '';
-    let hit = null;
-    if (lume75[r.codigo]) {
-      hit = {
-        fabricante_grupo: 'Lume Cerâmica',
-        marca_no_site: 'Lume',
-        evidencia_url: `${LUME}/portfolio-item/${lume75[r.codigo]}/`,
-        descricao_no_site: 'Monterrey Grigio 75×75',
-        status: 'confirmado_site',
-        match_metodo: 'lume_url_fixa',
-      };
-    } else if (q) hit = lumePortfolioSearch(q);
-    if (hit) applyHit(r, hit);
+    let hit = tryLumePortfolioForRow(r);
+    if (!hit && lume75[r.codigo]) {
+      const slug = lume75[r.codigo];
+      const url = lumePortfolioUrl(slug);
+      const ficha = parseLumePortfolioHtml(curl(url), url);
+      if (ficha) {
+        hit = {
+          fabricante_grupo: 'Lume Cerâmica',
+          marca_no_site: 'Lume',
+          evidencia_url: url,
+          descricao_no_site: ficha.descricao_no_site,
+          imagem_url: ficha.imagem_url || '',
+          imagens_json: imagensJsonFromLumeFicha(ficha),
+          status: 'confirmado_site',
+          match_metodo: `lume_portfolio:${slug}`,
+        };
+      }
+    }
+    const q = n.includes('monterrey')
+      ? 'monterrey grigio'
+      : n.includes('asphalt')
+        ? 'asphalt'
+        : n.includes('petra')
+          ? 'petra nat'
+          : n.includes('portor')
+            ? 'nero portorio'
+            : n.includes('avorio')
+              ? 'avorio cinza'
+              : '';
+    if (!hit && q) hit = lumePortfolioSearch(q);
+    if (hit) applyHit(r, hit, 'Lume — ficha lumeceramica.com.br');
     else indicacao(r, 'Lume Cerâmica', 'Lume', '75x75');
   }
 
@@ -299,16 +560,38 @@ async function main() {
   }
 
   // 45x89 — Lume
-  for (const r of rows.filter((x) => x.formato === '45x89')) {
-    const hit = lumePortfolioSearch('nero portorio 45x89') || lumePortfolioSearch('portorio');
-    if (hit) applyHit(r, hit);
+  for (const r of rows.filter((x) => x.formato === '45x89' && x.status !== 'confirmado_site')) {
+    const hit =
+      tryLumePortfolioForRow(r) || lumePortfolioSearch('nero portorio 45x89') || lumePortfolioSearch('portorio');
+    if (hit) applyHit(r, hit, 'Lume — ficha lumeceramica.com.br');
     else indicacao(r, 'Lume Cerâmica', 'Lume', '45x89');
   }
 
-  // 57x57 — Cecafi (todos)
-  for (const r of rows.filter((x) => x.formato === '57x57')) {
-    if (r.status === 'confirmado_site' && r.fabricante_grupo === 'Cecafi') continue;
-    indicacao(r, 'Cecafi', 'Cecafi', '57x57', 'buscar ficha Etna/Cecafi ou Formigres');
+  // 90×90 — Carmelo Fior (ex. /produto/solaria-plus-rt-90x90)
+  for (const r of rows.filter((x) => x.formato === '90x90' && /carmelo/i.test(String(x.fabricante_grupo || x.marca_no_site || '')))) {
+    const hit = tryCarmeloForRow(r);
+    if (hit) applyHit(r, hit, 'Carmelo Fior — slug 90×90 no site');
+    else if (r.status !== 'confirmado_site') {
+      indicacao(r, 'Carmelo Fior', 'Carmelo Fior', '90x90', 'buscar slug …-rt-90x90 em carmelofior.com.br');
+    }
+  }
+
+  // 32×58 — Incopisos por código HD (ex. /produto/160101/)
+  for (const r of rows.filter((x) => isIncopisosErpRow(x) && x.formato === '32x58')) {
+    const hit = tryIncopisosForRow(r);
+    if (hit) applyHit(r, hit, 'Grupo Incopisos — ficha por código HD');
+    else if (r.status !== 'confirmado_site') {
+      indicacao(r, 'Grupo Incopisos', 'Incopisos', '32x58', 'buscar /produto/hd-{código sem ponto} em grupoincopisos.com.br');
+    }
+  }
+
+  // 39×75 — Grupo Incopisos (ex. /produto/ladrillo-red/)
+  for (const r of rows.filter((x) => isIncopisosErpRow(x) && x.formato === '39x75')) {
+    const hit = tryIncopisosForRow(r);
+    if (hit) applyHit(r, hit, 'Grupo Incopisos — ficha grupoincopisos.com.br');
+    else if (r.status !== 'confirmado_site') {
+      indicacao(r, 'Grupo Incopisos', 'Incopisos', '39x75', 'buscar slug em grupoincopisos.com.br/produto/…');
+    }
   }
 
   // 58x58 — Incopisos
@@ -338,6 +621,20 @@ async function main() {
       },
       '56×113 religioso — Incopisos',
     );
+  }
+
+  for (const codigo of Object.keys(CF_SLUG_BY_CODE)) {
+    const r = byCode.get(codigo);
+    if (!r) continue;
+    let hit = tryCarmeloForRow(r);
+    if (!hit) continue;
+    const slugFixo = CF_SLUG_BY_CODE[codigo];
+    const slug = slugFixo || hit.match_metodo?.split(':').pop() || '';
+    if (isCecafiRow(r) || codigo === 'INDF-119') {
+      applyHit(r, applyCarmeloGrupoHit(r, hit, slug), 'Grupo Carmelo Fior — marca na ficha do site');
+    } else {
+      applyHit(r, enrichCarmeloHitFromErp(r, hit), 'Carmelo — URL João André / ficha oficial');
+    }
   }
 
   writeCsv(CSV, rows);

@@ -10,27 +10,8 @@ import { loadPedidoCompraCli } from './lib/load-pedido-compra-cli.mjs';
 import {
   pedidoTemBaixaLogisticaAcordo,
   isLancamentoAcordoFinanceiroOrfao,
+  parseQtdBaixaAcordoHistorico,
 } from '../src/lib/acordoFinanceiroOrfaoLancamento.js';
-
-/** Lê quantidades acordadas na linha de histórico (evita baixar órfão a mais). */
-export function parseQtdBaixaAcordoHistorico(historico = '', lancamentoId = '') {
-  const line = String(historico || '')
-    .split('\n')
-    .find((ln) => ln.includes('[ACORDO FINANCEIRO ÓRFÃOS') && ln.includes(`lançamento=${lancamentoId}`));
-  if (!line) return [];
-  const marker = `lançamento=${lancamentoId} | `;
-  const start = line.indexOf(marker);
-  if (start < 0) return [];
-  const rest = line.slice(start + marker.length);
-  const end = rest.lastIndexOf(' | ');
-  const blob = (end > 0 ? rest.slice(0, end) : rest).trim();
-  const out = [];
-  for (const chunk of blob.split(';').map((s) => s.trim()).filter(Boolean)) {
-    const m = chunk.match(/^(.+?):\s*[-−](\d+(?:\.\d+)?)\s*base/i);
-    if (m) out.push({ produto_nome: m[1].trim(), qtd_baixa_base: Number(m[2]) });
-  }
-  return out;
-}
 import { aplicarBaixaLogisticaAcordoFinanceiroOrfaos } from '../src/lib/aplicarAcordoFinanceiroOrfaos.js';
 import { listarLancamentosPedidoCompra } from '../src/lib/pedidoCompraFinanceiro.js';
 import { invokeRecalcularConclusaoPedidoCompra } from '../src/lib/p38StockRecalc.js';

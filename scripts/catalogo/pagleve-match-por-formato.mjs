@@ -24,15 +24,39 @@ import {
   findInSnapshot as findInCerbrasSnapshot,
 } from '../lib/cerbrasSnapshot.mjs';
 import {
+  incopisosProdutoUrl,
+  incopisosSlugCandidates,
+  parseIncopisosOembedJson,
+  parseIncopisosProdutoHtml,
+} from '../lib/incopisosPaginaProduto.mjs';
+import {
   extractImagensFromDetalhe,
   fetchProdutoDetalhe,
 } from '../lib/formigresCatalog.mjs';
 import { stripAccents } from '../lib/formigresCatalog.mjs';
-import { raioXProdutoDescricao } from '../lib/raioXProdutoDescricao.mjs';
+import { modeloComercialCatalogo, raioXProdutoDescricao, referenciaRochaprimeCatalogo, referenciaRochaprimeErp } from '../lib/raioXProdutoDescricao.mjs';
+import {
+  imagensJsonFromLumeFicha,
+  lumePortfolioSlugFromRow,
+  lumePortfolioUrl,
+  parseLumePortfolioHtml,
+} from '../lib/lumePaginaProduto.mjs';
+import {
+  isRochaProductHtmlValid,
+  parseRochaCMapFromProdutosHtml,
+  rochaProductUrl,
+  rochaSlugCandidatesFromErp,
+  rochaSlugFromSiahDesc,
+  rochaTitleFromHtml,
+} from '../lib/rochaPortalPagina.mjs';
 
 const ROOT = process.cwd();
 const IN_CSV = process.env.PAGLEVE_RAIO_X || path.join(ROOT, 'files', 'pagleve', 'raio-x-produtos.csv');
-const OUT_CSV = process.env.PAGLEVE_OUT || path.join(ROOT, 'files', 'pagleve', 'raio-x-pagleve-site-verificado.csv');
+const OUT_CSV =
+  process.env.PAGLEVE_OUT ||
+  (fs.existsSync(path.join(ROOT, 'files', 'pagleve', 'pagleve-base-cruzada.csv'))
+    ? path.join(ROOT, 'files', 'pagleve', 'pagleve-base-cruzada.csv')
+    : path.join(ROOT, 'files', 'pagleve', 'raio-x-pagleve-site-verificado.csv'));
 const ROCHA_BASE = 'https://www.portalgruporocha.com.br';
 const LUME_BASE = 'https://lumeceramica.com.br';
 const UA = 'P38-PagLeve-match/1.0';
@@ -40,6 +64,7 @@ const UA = 'P38-PagLeve-match/1.0';
 const args = process.argv.slice(2);
 const onlyFmt = args.includes('--formato') ? args[args.indexOf('--formato') + 1]?.toLowerCase() : null;
 const onlyIndicacao = args.includes('--only-indicacao');
+const onlyPendente = args.includes('--only-pendente');
 
 const CSV_FIELDS = [
   'codigo',
@@ -70,14 +95,14 @@ function siteTryOrderForRow(row) {
   if (g.includes('lume') || fmt === '45x89' || fmt === '62x119' || fmt === '22x90') {
     return ['lume', 'formigres', 'carmelo', 'rocha', 'cerbras'];
   }
-  if (g.includes('carmelo') || g.includes('arielle')) {
+  if (g.includes('carmelo') || g.includes('arielle') || /arielle/i.test(row.marca_no_site || '')) {
     return ['carmelo', 'formigres', 'lume', 'rocha', 'cerbras'];
   }
   if (g.includes('rocha') || g.includes('rochamaxx') || g.includes('rochaforte')) {
     return ['rocha', 'formigres', 'lume', 'carmelo', 'cerbras'];
   }
-  if (g.includes('cecafi') || fmt === '38x75' || fmt === '57x57') {
-    return ['formigres', 'cerbras', 'carmelo', 'lume', 'rocha'];
+  if (g.includes('cecafi') || g.includes('etna') || fmt === '38x75' || fmt === '57x57') {
+    return ['carmelo', 'formigres', 'cerbras', 'lume', 'rocha'];
   }
   if (g.includes('cedasa') || fmt === '58x58') {
     return ['cerbras', 'formigres', 'carmelo', 'lume', 'rocha'];
@@ -177,7 +202,8 @@ async function loadRochaSlugIndex() {
   while ((m = re.exec(html)) !== null) {
     if (m[1].length >= 3) slugs.add(m[1].toLowerCase());
   }
-  return { slugs, html };
+  const cMap = parseRochaCMapFromProdutosHtml(html);
+  return { slugs, html, cMap };
 }
 
 function nameSlug(text) {
@@ -191,32 +217,15 @@ function nameSlug(text) {
 /** Nome comercial para busca no site — só texto da descrição, sem códigos internos do fornecedor (PR…, R…). */
 function modeloParaBusca(row) {
   const desc = row.descricao_erp || row.descricao_original || '';
-  const rx = raioXProdutoDescricao(row.codigo, desc);
-  let modelo = rx.modelo || '';
-  modelo = modelo
-    .replace(/\([^)]*$/g, ' ')
-    .replace(/\(\d+[,.]?\d*\)?/g, ' ')
-    .replace(/\b0X\d+\b/gi, ' ')
-    .replace(/\b(PR\d{3,}|R\d{3,})\b/gi, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-  if (!modelo || /^[a-z]?\d+$/i.test(modelo.replace(/\s/g, ''))) {
-    modelo = stripAccents(desc)
-      .replace(/\b\d{2,5}\b/g, ' ')
-      .replace(/\b(PR\d+|R\d+)\b/gi, ' ')
-      .replace(/[^a-zA-Z ]+/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim()
-      .split(/\s+/)
-      .filter((w) => w.length > 3 && !/^(PISO|ROCHAPRIME|ROCHAMAXX|HD|MRE)$/i.test(w))
-      .slice(0, 4)
-      .join(' ');
-  }
-  return modelo;
+  return modeloComercialCatalogo(row.codigo, desc, row.modelo, row.descricao_no_site || '');
 }
 
 function temNomeComercial(row) {
+  const desc = row.descricao_erp || row.descricao_original || '';
+  const ref = referenciaRochaprimeCatalogo(desc);
+  const refErp = referenciaRochaprimeErp(desc);
   const m = modeloParaBusca(row);
+  if (ref && (!m || m.toUpperCase() === refErp || m.toUpperCase() === ref)) return false;
   if (!m || m.length < 4) return false;
   const tokens = m.split(/\s+/).filter((t) => t.length >= 4 && !/^(rochaprime|rochamaxx)$/i.test(t));
   return tokens.length > 0;
@@ -240,38 +249,32 @@ function rochaSlugCandidates(row) {
   return [...new Set(out)];
 }
 
-/** PR70001 no ERP → pr7000 no portal (regra João André; não é busca por código interno aleatório). */
-function rochaSlugFromSiahDesc(desc) {
-  const m = String(desc || '').match(/\b(PR|R)(\d{4,})\b/i);
-  if (!m) return '';
-  let digits = m[2];
-  if (digits.length >= 5 && digits.endsWith('1')) digits = digits.slice(0, -1);
-  const core = digits.length > 4 ? digits.slice(0, 4) : digits;
-  return `${m[1].toLowerCase()}${core}`;
-}
-
-function tryRocha(row, rochaSlugs) {
+function tryRocha(row, rochaCtx) {
+  const { slugs: rochaSlugs, cMap } = rochaCtx;
   const candidates = rochaSlugCandidates(row);
-  const codeSlug = rochaSlugFromSiahDesc(row.descricao_erp || row.descricao_original);
+  const desc = row.descricao_erp || row.descricao_original || '';
+  for (const s of rochaSlugCandidatesFromErp(desc)) {
+    if (s) candidates.unshift(s);
+  }
+  const codeSlug = rochaSlugFromSiahDesc(desc);
   if (codeSlug) candidates.unshift(codeSlug);
   const tried = [];
+  const seen = new Set();
   for (let c of candidates) {
-    if (/^(pr|r)\d+$/i.test(c) && c !== codeSlug) {
+    if (!c || seen.has(c)) continue;
+    seen.add(c);
+    if (!/^(pr|r)\d+$/i.test(c) && !rochaSlugs.has(c) && /^\d/.test(c)) {
       tried.push(c);
       continue;
     }
-    if (!rochaSlugs.has(c) && /^\d/.test(c)) {
-      tried.push(c);
-      continue;
-    }
-    const url = `${ROCHA_BASE}/produtos/${c}`;
+    const url = rochaProductUrl(c, cMap);
     const html = curlGet(url);
-    if (!html || html.includes('Page not found') || html.length < 500) {
+    if (!html || !isRochaProductHtmlValid(html)) {
       tried.push(c);
       continue;
     }
-    const title = metaOg(html, 'og:title') || '';
-    if (!title || /not found/i.test(title)) {
+    const title = rochaTitleFromHtml(html) || metaOg(html, 'og:title') || '';
+    if (!title) {
       tried.push(c);
       continue;
     }
@@ -296,7 +299,10 @@ async function tryFormigres(row, snap) {
   if (!temNomeComercial(row) && !nome) {
     return { reason: 'sem_nome', sites_consultados: 'formigres.com.br' };
   }
-  const desc = nome ? `${row.formato} ${nome}` : row.descricao_original || '';
+  const desc =
+    row.descricao_erp ||
+    row.descricao_original ||
+    (nome ? `${row.formato || ''} ${nome}`.trim() : '');
   const { match, score, reason } = findInFormigresSnapshot(snap, desc, {
     minScore: 32,
     requireFormato: true,
@@ -330,6 +336,25 @@ function tryLume(row) {
   if (!temNomeComercial(row)) {
     return { sites_consultados: 'lumeceramica.com.br', reason: 'sem_nome' };
   }
+  const slug = lumePortfolioSlugFromRow(row);
+  if (slug) {
+    const url = lumePortfolioUrl(slug);
+    const html = curlGet(url);
+    const ficha = parseLumePortfolioHtml(html, url);
+    if (ficha) {
+      return {
+        fabricante_grupo: 'Lume Cerâmica',
+        marca_no_site: 'Lume',
+        descricao_no_site: ficha.descricao_no_site,
+        evidencia_url: url,
+        imagem_url: ficha.imagem_url || '',
+        imagens_json: imagensJsonFromLumeFicha(ficha),
+        status: 'confirmado_site',
+        sites_consultados: 'lumeceramica.com.br',
+        match_metodo: `lume_portfolio:${slug}`,
+      };
+    }
+  }
   const q = stripAccents(modeloParaBusca(row) || '')
     .replace(/[^a-zA-Z0-9 ]/g, ' ')
     .trim()
@@ -343,27 +368,27 @@ function tryLume(row) {
     return { sites_consultados: 'lumeceramica.com.br', tried: q, reason: 'zero_resultados' };
   }
   const fmt = (row.formato || '').replace('x', '[x×]');
-  const linkRe = new RegExp(
-    `href=\"(https://lumeceramica\\.com\\.br/produto/[^\"]+)\"[^>]*>([^<]{4,120})<`,
-    'gi',
-  );
+  const linkRe = /href="(https:\/\/lumeceramica\.com\.br\/portfolio-item\/[^"]+)"/gi;
   let best = null;
   let m;
   while ((m = linkRe.exec(html)) !== null) {
-    const title = m[2].replace(/\s+/g, ' ').trim();
-    if (!new RegExp(fmt, 'i').test(title) && !new RegExp(fmt, 'i').test(m[1])) continue;
-    if (!stripAccents(title).toLowerCase().includes(stripAccents(q.split(' ')[0]).toLowerCase())) continue;
-    best = { url: m[1], title };
+    const url = m[1];
+    if (!new RegExp(fmt, 'i').test(url)) continue;
+    if (!stripAccents(url).toLowerCase().includes(stripAccents(q.split(' ')[0]).toLowerCase())) continue;
+    best = url;
     break;
   }
   if (!best) return { sites_consultados: 'lumeceramica.com.br', tried: q };
-  const imgM = html.match(/https:\/\/[^"'\s]+lume[^"'\s]+\.(webp|jpg|png)/i);
+  const page = curlGet(best);
+  const ficha = parseLumePortfolioHtml(page, best);
+  if (!ficha) return { sites_consultados: 'lumeceramica.com.br', tried: q };
   return {
     fabricante_grupo: 'Lume Cerâmica',
     marca_no_site: 'Lume',
-    descricao_no_site: best.title,
-    evidencia_url: best.url,
-    imagem_url: imgM ? imgM[0] : '',
+    descricao_no_site: ficha.descricao_no_site,
+    evidencia_url: best,
+    imagem_url: ficha.imagem_url || '',
+    imagens_json: imagensJsonFromLumeFicha(ficha),
     status: 'confirmado_site',
     sites_consultados: 'lumeceramica.com.br',
     match_metodo: `lume_busca:${q}`,
@@ -394,7 +419,35 @@ function tryCarmelo(row, snap) {
   };
 }
 
+function tryIncopisosSlugDirect(row) {
+  const nome = modeloParaBusca(row);
+  for (const slug of incopisosSlugCandidates(row, nome)) {
+    const url = incopisosProdutoUrl(slug);
+    const page = curlGet(url);
+    let ficha = parseIncopisosProdutoHtml(page);
+    if (!ficha && (/^\d+$/.test(String(slug)) || /^hd-\d+$/i.test(String(slug)))) {
+      const oembedUrl = `https://grupoincopisos.com.br/wp-json/oembed/1.0/embed?url=${encodeURIComponent(url)}`;
+      ficha = parseIncopisosOembedJson(curlGet(oembedUrl), url);
+    }
+    if (!ficha) continue;
+    return {
+      fabricante_grupo: 'Grupo Incopisos',
+      marca_no_site: ficha.marca_site,
+      descricao_no_site: ficha.descricao_no_site,
+      evidencia_url: url,
+      imagem_url: ficha.imagem_url || '',
+      status: 'confirmado_site',
+      sites_consultados: 'grupoincopisos.com.br',
+      match_metodo: `incopisos_slug:${slug}`,
+    };
+  }
+  return null;
+}
+
 function tryIncopisos(row) {
+  const direct = tryIncopisosSlugDirect(row);
+  if (direct) return direct;
+
   if (!temNomeComercial(row)) {
     return { sites_consultados: 'grupoincopisos.com.br', reason: 'sem_nome' };
   }
@@ -475,7 +528,7 @@ async function tryMatchersForRow(row, ctx, order) {
   for (const key of order) {
     let hit = null;
     if (key === 'rocha') {
-      hit = tryRocha(row, ctx.rochaSlugs);
+      hit = tryRocha(row, ctx.rochaIndex);
       sites.push('portalgruporocha.com.br');
     } else if (key === 'formigres') {
       hit = await tryFormigres(row, ctx.snapFg);
@@ -515,9 +568,9 @@ async function loadMatchContext() {
   const cbUrls = await fetchSitemapUrls();
   const snapCb = buildCerbrasSnapshot(cbUrls.map((u) => normalizeFromUrl(u)).filter(Boolean));
   console.log('Carregando índice Grupo Rocha...');
-  const { slugs: rochaSlugs } = await loadRochaSlugIndex();
-  console.log('Slugs Rocha:', rochaSlugs.size);
-  return { snapFg, snapCf, snapCb, rochaSlugs };
+  const rochaIndex = await loadRochaSlugIndex();
+  console.log('Slugs Rocha:', rochaIndex.slugs.size, '| com ?c=:', rochaIndex.cMap.size);
+  return { snapFg, snapCf, snapCb, rochaIndex };
 }
 
 async function resolveIndicacoesJoao() {
@@ -548,9 +601,51 @@ async function resolveIndicacoesJoao() {
   console.log('Arquivo:', OUT_CSV);
 }
 
+async function resolvePendenteMatch() {
+  if (!fs.existsSync(OUT_CSV)) {
+    console.error('CSV não encontrado:', OUT_CSV);
+    process.exit(1);
+  }
+  const rows = loadCsv(OUT_CSV);
+  const targets = rows.filter(
+    (r) =>
+      r.status !== 'confirmado_site' ||
+      !String(r.evidencia_url || '').trim(),
+  );
+  console.log(`Match pendente (sem ficha confirmada): ${targets.length} itens`);
+  const ctx = await loadMatchContext();
+  let ok = 0;
+  for (const row of targets) {
+    if (!row.formato) {
+      const desc = row.descricao_erp || row.descricao_original || '';
+      const rx = raioXProdutoDescricao(row.codigo, desc);
+      if (rx.formato) row.formato = rx.formato.toLowerCase();
+    }
+    const order = siteTryOrderForRow(row);
+    const hit = await tryMatchersForRow(row, ctx, order);
+    row.sites_consultados = hit.sites_consultados || order.join(';');
+    if (hit.status === 'confirmado_site') {
+      applyHit(row, hit);
+      ok++;
+      console.log(' OK', row.codigo, row.fabricante_grupo, (row.descricao_no_site || '').slice(0, 48));
+    } else {
+      row.status = row.status === 'pendente' ? 'nao_encontrado' : row.status;
+      row.observacao = `sem_ficha;ordem:${order.join('→')}`;
+      console.log(' --', row.codigo, row.fabricante_grupo || '(sem grupo)', order.slice(0, 3).join('→'));
+    }
+  }
+  writeCsv(OUT_CSV, rows, CSV_FIELDS);
+  console.log('\nNovos confirmado_site:', ok, 'ainda sem ficha:', targets.length - ok);
+  console.log('Arquivo:', OUT_CSV);
+}
+
 async function main() {
   if (onlyIndicacao) {
     await resolveIndicacoesJoao();
+    return;
+  }
+  if (onlyPendente) {
+    await resolvePendenteMatch();
     return;
   }
 

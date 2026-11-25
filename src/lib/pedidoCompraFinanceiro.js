@@ -7,11 +7,30 @@ export {
   loadPedidosCompraComItensCanonico,
 } from '@/lib/fetchPedidoCompraItens';
 
-import { calcTotalItemCompraPedido } from '@/lib/productUnits';
+import {
+  calcTotalItemCompraPedido,
+  repararLinhaCompraApresentacaoComProduto,
+  syncItemDescontoApresentacao,
+} from '@/lib/productUnits';
 import { isLancamentoCancelado, isLancamentoPago } from '@/lib/lancamentoFinanceiroStatus';
 import { dataHoje, formatarLogTime } from '@/components/utils/dateUtils';
+import { getPedidoCompraDataPagamentoChave } from '@/lib/pedidoCompraDataPagamento';
 
 const roundToTwoDecimals = (n) => Math.round((Number(n) || 0) * 100) / 100;
+
+/** Evita import circular com pedidoCompraDespesasRateadas — mesma regra de soma persistível. */
+function somaDespesasRateadasNoPedido(pedido = {}) {
+  const raw = pedido.despesas_rateadas ?? pedido?.dados?.despesas_rateadas;
+  if (!Array.isArray(raw)) return 0;
+  return roundToTwoDecimals(
+    raw.reduce((acc, row) => {
+      const valor = Math.max(0, Number(row?.valor) || 0);
+      const descricao = String(row?.descricao || '').trim();
+      if (!descricao && valor <= 0) return acc;
+      return acc + valor;
+    }, 0),
+  );
+}
 
 function qtdComercialItemPedido(item = {}) {
   const q = Number(item?.quantidade ?? item?.quantidade_comercial);
@@ -57,6 +76,63 @@ export function getTotalLinhaPedidoCompra(item = {}) {
   return calcTotalItemCompraPedido(item);
 }
 
+/**
+ * Recalcula total da linha com regras de CX/unidade (ignora `item.total` desatualizado).
+ * Use no formulário de pedido quando o catálogo do produto está disponível.
+ */
+export function totalLinhaPedidoCompraAtualizado(item = {}, produto = null) {
+  const base = produto ? repararLinhaCompraApresentacaoComProduto(item, produto) : item;
+  const synced = syncItemDescontoApresentacao(base);
+  return calcTotalItemCompraPedido(synced);
+}
+
+/** Linha com `total` / `subtotal` alinhados ao cálculo comercial atual. */
+export function prepareLinhaPedidoCompraParaTotais(item = {}, produto = null) {
+  const base = produto ? repararLinhaCompraApresentacaoComProduto(item, produto) : item;
+  const synced = syncItemDescontoApresentacao(base);
+  const total = calcTotalItemCompraPedido(synced);
+  return {
+    ...synced,
+    total,
+    valor_total_item: total,
+    subtotal: total,
+  };
+}
+
+/** Outros por unidade fator-1 sem a parte rateada (manual). */
+export function resolveOutrosUnitarioManual(item = {}) {
+  if (item.outros_unitario_fator1_manual != null) {
+    return Math.max(0, Number(item.outros_unitario_fator1_manual) || 0);
+  }
+  const outros = Number(item.outros_unitario_fator1 ?? item.custo_outros_unitario) || 0;
+  const rateado = Number(item.despesa_rateada_outros_fator1) || 0;
+  return Math.max(0, outros - rateado);
+}
+
+/** Valor de mercadoria da linha (sem rateio de despesas em `outros`). */
+export function valorFinanceiroLinhaPedido(item = {}, produto = null) {
+  const manual = resolveOutrosUnitarioManual(item);
+  const base = {
+    ...item,
+    outros_unitario_fator1: manual,
+    custo_outros_unitario: manual,
+    despesa_rateada_outros_fator1: 0,
+  };
+  return Math.max(0, totalLinhaPedidoCompraAtualizado(base, produto));
+}
+
+/** Soma itens do pedido usando totais recalculados (evita `item.total` legado errado em CX). */
+export function calcValorItensPedidoCompraComCatalogo(pedido = {}, produtosById = {}) {
+  const itens = pedido.itens || [];
+  if (!itens.length) return calcValorItensPedidoCompra(pedido);
+  return roundToTwoDecimals(
+    itens.reduce(
+      (acc, item) => acc + totalLinhaPedidoCompraAtualizado(item, produtosById[item?.produto_id]),
+      0,
+    ),
+  );
+}
+
 /** Soma dos totais de linha; `valor_itens` só entra se não houver itens no espelho. */
 export function calcValorItensPedidoCompra(pedido = {}) {
   const itens = pedido.itens || [];
@@ -72,12 +148,42 @@ export function calcValorItensPedidoCompra(pedido = {}) {
   return 0;
 }
 
-/** Total do pedido: itens + frete − desconto global (mesma regra do formulário). */
-export function calcValorTotalPedidoCompra(pedido = {}) {
-  const itens = calcValorItensPedidoCompra(pedido);
+/**
+ * Mercadoria no formulário: preço base dos itens, sem rateio em `outros`.
+ * O acréscimo `despesas_rateadas` soma-se no total do pedido à parte.
+ */
+export function calcValorMercadoriaPedidoCompraBase(pedido = {}, produtosById = {}) {
+  const itens = pedido.itens || [];
+  if (!itens.length) {
+    const valorItensDireto = Number(pedido.valor_itens);
+    if (Number.isFinite(valorItensDireto) && valorItensDireto >= 0) {
+      return roundToTwoDecimals(valorItensDireto);
+    }
+    return 0;
+  }
+  return roundToTwoDecimals(
+    itens.reduce(
+      (acc, item) => acc + valorFinanceiroLinhaPedido(item, produtosById[item?.produto_id]),
+      0,
+    ),
+  );
+}
+
+/** @deprecated Use calcValorMercadoriaPedidoCompraBase */
+export function calcValorMercadoriaPedidoCompraComRateio(pedido = {}, produtosById = {}) {
+  return calcValorMercadoriaPedidoCompraBase(pedido, produtosById);
+}
+
+/** Total do pedido: mercadoria base + frete − desconto + despesas rateadas (formulário / financeiro). */
+export function calcValorTotalPedidoCompra(pedido = {}, produtosById = {}) {
+  const mercadoriaHeader = Number(pedido.valor_itens);
+  const mercadoria = Number.isFinite(mercadoriaHeader) && mercadoriaHeader >= 0
+    ? roundToTwoDecimals(mercadoriaHeader)
+    : calcValorMercadoriaPedidoCompraBase(pedido, produtosById);
   const frete = Number(pedido.valor_frete) || 0;
   const desconto = Number(pedido.valor_desconto) || 0;
-  return roundToTwoDecimals(itens + frete - desconto);
+  const despesas = somaDespesasRateadasNoPedido(pedido);
+  return roundToTwoDecimals(mercadoria + frete - desconto + despesas);
 }
 
 const statusCancelavel = (l) =>
@@ -201,16 +307,51 @@ export function getPedidoCompraDisplayStatusFinanceiroLabel(status = '') {
   return status;
 }
 
-export async function carregarLancamentosPedidosCompraMap(base44, pedidoIds = []) {
+const LANCAMENTOS_PEDIDO_CHUNK = 40;
+
+function anexarLancamentosNoMapa(map, lancamento) {
+  const l = lancamento || {};
+  const candidatos = [
+    l.pedido_compra_vinculado_id,
+    l.referencia_tipo === 'PedidoCompra' ? l.referencia_id : null,
+  ].filter(Boolean);
+
+  for (const pid of candidatos) {
+    if (!map.has(pid)) map.set(pid, []);
+    const arr = map.get(pid);
+    if (!arr.some((x) => x.id === l.id)) arr.push(l);
+  }
+}
+
+/** Busca lançamentos de compra em lote (evita N×2 filters na lista de gestão). */
+export async function carregarLancamentosPedidosCompraMapBatch(base44, pedidoIds = []) {
   const map = new Map();
   const ids = [...new Set((pedidoIds || []).filter(Boolean))];
-  await Promise.all(
-    ids.map(async (id) => {
-      const lancs = await listarLancamentosPedidoCompra(base44, id);
-      map.set(id, lancs);
-    }),
-  );
+  if (!ids.length || !base44?.entities?.LancamentoFinanceiro?.filter) return map;
+
+  const lf = base44.entities.LancamentoFinanceiro;
+  for (let i = 0; i < ids.length; i += LANCAMENTOS_PEDIDO_CHUNK) {
+    const chunk = ids.slice(i, i + LANCAMENTOS_PEDIDO_CHUNK);
+    const [porVinculo, porReferencia] = await Promise.all([
+      lf.filter({ pedido_compra_vinculado_id: { $in: chunk } }).catch(() => []),
+      lf.filter({ referencia_id: { $in: chunk }, referencia_tipo: 'PedidoCompra' }).catch(() => []),
+    ]);
+    [...(porVinculo || []), ...(porReferencia || [])].forEach((row) => anexarLancamentosNoMapa(map, row));
+  }
+
+  for (const rows of map.values()) {
+    rows.sort((a, b) => {
+      const da = a.data_vencimento || a.data_pagamento || '';
+      const db = b.data_vencimento || b.data_pagamento || '';
+      return String(da).localeCompare(String(db), 'pt-BR');
+    });
+  }
+
   return map;
+}
+
+export async function carregarLancamentosPedidosCompraMap(base44, pedidoIds = []) {
+  return carregarLancamentosPedidosCompraMapBatch(base44, pedidoIds);
 }
 
 export function enriquecerPedidoCompraFinanceiroDisplay(pedido = {}, lancamentos = []) {
@@ -231,29 +372,41 @@ export function enriquecerPedidoCompraFinanceiroDisplay(pedido = {}, lancamentos
  * @returns {{ pedidos: Array, cards: Array }}
  */
 export async function enriquecerPedidosCompraGestaoFinanceiro(base44, pedidos = [], cards = []) {
-  const candidatos = pedidos.filter((p) => pedidoStatusIndicaAguardandoAprovacaoFinanceira(p));
-  if (!candidatos.length) return { pedidos, cards };
+  const ids = pedidos.map((p) => p.id).filter(Boolean);
+  if (!ids.length) return { pedidos, cards };
 
-  const lancMap = await carregarLancamentosPedidosCompraMap(
-    base44,
-    candidatos.map((p) => p.id),
-  );
+  const lancMap = await carregarLancamentosPedidosCompraMapBatch(base44, ids);
 
   const pedidosEnriquecidos = pedidos.map((pedido) => {
-    const lancs = lancMap.get(pedido.id);
-    if (!lancs) return pedido;
-    return enriquecerPedidoCompraFinanceiroDisplay(pedido, lancs);
+    const lancs = lancMap.get(pedido.id) || [];
+    const base = lancs.length
+      ? enriquecerPedidoCompraFinanceiroDisplay(pedido, lancs)
+      : { ...pedido, _lancamentos_compra: pedido._lancamentos_compra || [] };
+    const dataPagamento = getPedidoCompraDataPagamentoChave(base);
+    return {
+      ...base,
+      _data_pagamento_resolvida: dataPagamento || base._data_pagamento_resolvida,
+      _display_data_pagamento: dataPagamento,
+    };
   });
 
   const pedidosPorId = new Map(pedidosEnriquecidos.map((p) => [p.id, p]));
   const cardsEnriquecidos = cards.map((card) => {
     const pedidoBase = pedidosPorId.get(card.id);
-    if (!pedidoBase?._financeiro_aprovado_efetivo) return card;
-    return {
+    if (!pedidoBase) return card;
+    const merged = {
       ...card,
+      data_primeiro_vencimento:
+        pedidoBase.data_primeiro_vencimento ?? card.data_primeiro_vencimento,
+      _lancamentos_compra: pedidoBase._lancamentos_compra,
       _financeiro_aprovado_efetivo: pedidoBase._financeiro_aprovado_efetivo,
       _display_status_financeiro: pedidoBase._display_status_financeiro,
-      _lancamentos_compra: pedidoBase._lancamentos_compra,
+      _data_pagamento_resolvida: pedidoBase._data_pagamento_resolvida,
+    };
+    const dataPagamento = getPedidoCompraDataPagamentoChave(merged);
+    return {
+      ...merged,
+      _display_data_pagamento: dataPagamento,
     };
   });
 

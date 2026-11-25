@@ -15,8 +15,15 @@ export function omitKeys(obj = {}, keys = []) {
   return out;
 }
 
+/** Datas de pagamento opcionais — omitir vazio para não enviar coluna promovida inexistente/atrasada. */
+const PEDIDO_COMPRA_OPTIONAL_DATE_KEYS = ['data_primeiro_vencimento'];
+
 export function omitPedidoCompraEspelho(obj = {}) {
-  return omitKeys(obj, PEDIDO_COMPRA_ESPELHO_KEYS);
+  const out = omitKeys(obj, PEDIDO_COMPRA_ESPELHO_KEYS);
+  PEDIDO_COMPRA_OPTIONAL_DATE_KEYS.forEach((k) => {
+    if (!out[k]) delete out[k];
+  });
+  return out;
 }
 
 export function omitEmbarqueEspelho(obj = {}) {

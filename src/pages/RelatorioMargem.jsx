@@ -210,7 +210,7 @@ function MargemCustoValorTooltip({ row, mode = 'unit', children, className = '' 
   );
 }
 
-function MargemCustoDetalheTotais({ totals }) {
+function MargemCustoDetalheTotais({ totals, costBasis }) {
   const items = CUSTO_MARGEM_CAMPOS.map((campo) => ({
     label: campo.label,
     value: campo.subtract ? -(totals?.[campo.totalKey] || 0) : (totals?.[campo.totalKey] || 0),
@@ -221,7 +221,7 @@ function MargemCustoDetalheTotais({ totals }) {
   return (
     <div className={`mx-3 md:mx-0 mt-2 rounded-lg border ${MARGIN_TABLE_BORDER} ${MARGIN_TABLE_PANEL} px-3 py-2.5`}>
       <p className={`${MARGIN_TABLE_MICRO} uppercase tracking-wide text-muted-foreground`}>
-        {labelComposicaoCustoMargem(totals, { porUnidade: false })}
+        {labelComposicaoCustoMargem(totals, { porUnidade: false, costBasis })}
       </p>
       <div className="mt-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-3 gap-y-2">
         {items.map((item) => (
@@ -2306,7 +2306,7 @@ export default function RelatorioMargemVendas() {
                 <div className="hidden desktop-layout:block mb-3 space-y-3">
                   <MargemMobileReportHeader filtrosDesc={filtrosDesc} />
                   <MargemMobileKpis totals={totals} totalMarkup={totalMarkup} />
-                  <MargemCustoDetalheTotais totals={totals} />
+                  <MargemCustoDetalheTotais totals={totals} costBasis={margemCostMode} />
                 </div>
               )}
               {/* Desktop Table View */}
@@ -2394,7 +2394,7 @@ export default function RelatorioMargemVendas() {
                   <>
                     <MargemMobileReportHeader filtrosDesc={filtrosDesc} />
                     <MargemMobileKpis totals={totals} totalMarkup={totalMarkup} />
-                    <MargemCustoDetalheTotais totals={totals} />
+                    <MargemCustoDetalheTotais totals={totals} costBasis={margemCostMode} />
                   </>
                 )}
                 <div ref={mobileHeaderSentinelRef} className="h-px w-full shrink-0" aria-hidden />

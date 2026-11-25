@@ -24,8 +24,9 @@ import {
 } from '@/lib/comprasEmbarqueCards';
 import { buildConsultaItensEmbarque } from '@/lib/consultaComprasEmbarques';
 import { isPedidoCompraEncomenda, pedidosCompraReposicaoEstoque } from '@/lib/pedidoCompraEncomenda';
+import { resolveKpiFisicoResumoGlobal } from '@/lib/relatorioEstoqueGlobalPdf/resumoGlobalAjusteKpi';
 
-export const PDF_BUILD = 'estoque-reuniao-v23';
+export const PDF_BUILD = 'estoque-reuniao-v24';
 
 const BRL_KPI = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -1309,6 +1310,14 @@ function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
   const { M, CW, pageH } = layout;
   let y = M;
 
+  const kpiFisico = resolveKpiFisicoResumoGlobal(data.total);
+  const kpiNotes = [`${QTD.format(data.skusCom)} referências com saldo positivo`];
+  if (kpiFisico.ativo) {
+    kpiNotes.push(
+      `Ajuste temporário: ${BRL_KPI.format(kpiFisico.descontoAplicado)} descontados do total em destaque`,
+    );
+  }
+
   const familiasColumns = [
     { key: 'letra', label: 'CL.', width: 0.06, align: 'center' },
     { key: 'familia', label: 'FAMÍLIA', width: 0.46, align: 'left' },
@@ -1323,8 +1332,8 @@ function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
       `Atualizado em ${data.geradoEm} (Tabatinga)`,
     ],
     kpiLabel: 'VALOR TOTAL EM ESTOQUE (CUSTO)',
-    kpiValue: BRL_KPI.format(data.total),
-    kpiNotes: [`${QTD.format(data.skusCom)} referências com saldo positivo`],
+    kpiValue: BRL_KPI.format(kpiFisico.exibido),
+    kpiNotes,
   });
 
   y = drawAbcdComposicaoPair(doc, fontFamily, normalizePdfText, layout, y, {
@@ -1355,6 +1364,10 @@ function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
     pageH,
   });
 
+  const footerDireita = kpiFisico.ativo
+    ? `Total custo integral: ${BRL_KPI.format(kpiFisico.integral)} — descontados ${BRL_KPI.format(kpiFisico.descontoAplicado)} no KPI acima`
+    : 'Famílias, curva ABCD e composição de custo no nível 1';
+
   drawPageFooter(
     doc,
     fontFamily,
@@ -1363,7 +1376,7 @@ function drawPage1Fisico(doc, fontFamily, normalizePdfText, data, layout) {
     CW,
     pageH,
     `P38 · Estoque físico · p.1 · ${PDF_BUILD}`,
-    'Famílias, curva ABCD e composição de custo no nível 1',
+    footerDireita,
   );
 }
 

@@ -19,18 +19,27 @@ export function FinanceiroSummaryChip({ children, className }) {
 export default function FinanceiroListaMeta({
   total,
   totalLabel = 'lançamentos',
+  showTotal = true,
   hasActiveFilters,
   onLimparFiltros,
   summaryChips,
   extraActions,
 }) {
+  const trailing =
+    summaryChips || extraActions || (hasActiveFilters && onLimparFiltros);
+  if (!showTotal && !trailing) return null;
+
   return (
     <div className="flex min-w-0 flex-col gap-1 py-1 sm:flex-row sm:items-center sm:justify-between sm:gap-0 sm:py-0.5">
-      <p className="shrink-0 text-[11px] font-medium uppercase tracking-wide text-foreground/40 dark:text-foreground/45">
-        {total} {totalLabel}
-      </p>
+      {showTotal ? (
+        <p className="shrink-0 text-[11px] font-medium uppercase tracking-wide text-foreground/40 dark:text-foreground/45">
+          {total} {totalLabel}
+        </p>
+      ) : (
+        <span className="hidden sm:block sm:min-w-0 sm:flex-1" aria-hidden />
+      )}
 
-      {(summaryChips || extraActions || (hasActiveFilters && onLimparFiltros)) && (
+      {trailing && (
         <div className="flex min-w-0 flex-wrap items-center gap-1 sm:justify-end">
           {summaryChips}
           {extraActions}

@@ -35,6 +35,8 @@ dist-ssr
 *.sw?
 
 # Export local da fila Flare (pode conter dados sensíveis)
+files/pagleve/catalogo-convite-secret.local
+
 docs/flare-export/flare-pending.json
 docs/pulse/corridor-report.json
 docs/pulse/shipping-report.json

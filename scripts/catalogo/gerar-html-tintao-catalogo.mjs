@@ -21,6 +21,8 @@ import {
   buildCatalogTourFabHtml,
   buildCatalogTourHtml,
 } from '../lib/catalogoTour.mjs';
+import { buildPublicUrl, readAccessSlug } from '../lib/catalogoFormigresAcesso.mjs';
+import { PEI_USO_CLASSES } from '../lib/paglevePeiResistencia.mjs';
 
 const ROOT = process.cwd();
 const args = process.argv.slice(2);
@@ -63,9 +65,9 @@ const CONFIGS = {
     classifDir: path.join(ROOT, 'docs', 'imports-local', 'formigres', 'classificacao'),
     classifPattern: /^formigres-completo-\d{4}-\d{2}-\d{2}\.json$/,
     outHtml: path.join(ROOT, 'docs', 'imports-local', 'formigres', 'Catálogo Formigres — Demonstração.html'),
-    outDeploy: path.join(ROOT, 'deploy', 'catalogo-formigres', 'index.html'),
+    outDeploy: path.join(ROOT, 'deploy', 'catalogo-formigres', 'catalogo.html'),
     outPdfThumbs: path.join(ROOT, 'docs', 'imports-local', 'formigres', 'catalogo-formigres-pdf-thumbs.json'),
-    publicUrl: (process.env.CATALOGO_FORMIGRES_PUBLIC_URL || 'https://catalogo-formigres-p38.vercel.app/').replace(/\/?$/, '/'),
+    publicUrl: (process.env.CATALOGO_FORMIGRES_PUBLIC_URL || 'https://p38-fg-catalogo-2be33ba9.vercel.app/').replace(/\/?$/, '/'),
     skipApiEnrich: true,
     skipPdfThumbs: false,
     title: 'Catálogo Formigres — Pisos e Porcelanatos',
@@ -136,19 +138,22 @@ const CONFIGS = {
     publicUrl: (process.env.CATALOGO_PAGLEVE_PUBLIC_URL || 'https://catalogo-pague-leve.vercel.app/').replace(/\/?$/, '/'),
     skipSnapshot: true,
     skipApiEnrich: true,
-    skipPdfThumbs: true,
+    skipPdfThumbs: false,
+    pdfThumbsExternal: true,
     skipGemeasDedup: true,
     title: 'Pague Leve — Catálogo de estoque',
     h1: 'Pisos e porcelanatos',
-    hint: 'Marque caixas na tabela · revise no carrinho',
+    hint: 'Marque com ♥ (sem caixas) ou informe caixas · revise no carrinho',
     qtyUnit: 'caixa',
     qtyLabel: 'Caixas',
     qtyLabelPl: 'caixas',
     demoBanner: '',
     themeKey: 'pagleve-catalog-theme-v1',
     qtyKey: 'pagleve-catalog-qty-v1',
+    markKey: 'pagleve-catalog-mark-v1',
     descontoKey: 'pagleve-catalog-desconto-v1',
     groupKey: 'pagleve-catalog-group-v1',
+    tourKey: 'pagleve-catalog-tour-v2',
     pdfLayoutKey: 'pagleve-catalog-pdf-layout-v1',
     classifError: 'JSON de classificação não encontrado. Rode: npm run catalogo:classificar-pagleve',
     skin: 'pagleve',
@@ -162,6 +167,10 @@ const CONFIGS = {
 };
 
 const CFG = CONFIGS[MODO] || CONFIGS.tintao;
+if (MODO === 'formigres') {
+  const slug = readAccessSlug();
+  if (slug) CFG.publicUrl = buildPublicUrl(slug);
+}
 const CLASSIF_DIR = CFG.classifDir;
 const OUT_HTML = CFG.outHtml;
 const OUT_DEPLOY_HTML = CFG.outDeploy;
@@ -270,6 +279,16 @@ const PAGLEVE_ACAB_ORDER = [
   'Sem acabamento',
 ];
 
+/** Balde de textura para filtro PagLeve (separado de marca). */
+const PAGLEVE_TEXTURA_GRUPO_ORDER = [
+  'Brilhante · Esmaltado',
+  'Mate · Acetinado',
+  'Semiderrapante · Protetiva · MRE',
+  'Antiderrapante',
+  'Polido',
+  'Outros',
+];
+
 function getCatalogConfig(cfg = CFG) {
   if (cfg.skin === 'pagleve') {
     return {
@@ -356,8 +375,8 @@ async function fetchPdfThumbDataUri(url) {
     const buf = Buffer.from(await res.arrayBuffer());
     const thumb = await sharp(buf)
       .rotate()
-      .resize(80, 80, { fit: 'cover' })
-      .jpeg({ quality: 48, mozjpeg: true })
+      .resize(160, 160, { fit: 'cover' })
+      .jpeg({ quality: 82, mozjpeg: true })
       .toBuffer();
     return `data:image/jpeg;base64,${thumb.toString('base64')}`;
   } catch {
@@ -444,6 +463,8 @@ function slimItem(item) {
   return {
     codigo_tintao: item.codigo_tintao,
     descricao: item.descricao,
+    descricao_erp: item.descricao_erp || '',
+    catalogo_nome_modelo: item.catalogo_nome_modelo || item.modelo || '',
     formato: item.formato || '—',
     linha: item.linha || 'desconhecida',
     subtipo: item.subtipo,
@@ -455,6 +476,7 @@ function slimItem(item) {
     marca_nome: item.marca_nome || '',
     fabricante_grupo: item.fabricante_grupo || '',
     referencia: item.referencia || '',
+    pei_uso: item.pei_uso || '',
     gemeas: (item.gemeas || []).map((g) => ({
       codigo: String(g.codigo),
       marca: g.marca || '—',
@@ -468,6 +490,7 @@ function slimItem(item) {
     peso_kg_caixa: item.peso_kg_caixa ?? null,
     peso_kg_palete: item.peso_kg_palete ?? null,
     unidade: item.unidade || '',
+    produto_url: item.produto_url || '',
     imagem_url: item.imagem_url || '',
     imagens: (item.imagens || []).map((img) => ({ url: img.url, tipo: img.tipo || 'principal' })),
   };
@@ -1072,16 +1095,144 @@ const PAGLEVE_SKIN_CSS = `
       background: linear-gradient(90deg, #3d1a52 0%, #2a1038 100%);
       border-bottom-color: var(--pl-green);
     }
+    html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) {
+      table-layout: fixed;
+      width: 100%;
+    }
+    html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) .col-foto { width: 58px; }
+    html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) .col-modelo { width: 28%; }
+    html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) .col-marca { width: 12%; }
+    html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) .col-grupo { width: 14%; }
+    html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) .col-pack { width: 18%; }
+    html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) .col-preco { width: 10%; }
+    html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) .col-sel { width: 40px; text-align: center; }
+    html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) .col-qty { width: 64px; }
+    html[data-skin="pagleve"] .mark-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--muted);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    html[data-skin="pagleve"] .mark-btn:hover { border-color: var(--accent-dim); color: var(--accent); }
+    html[data-skin="pagleve"] .mark-btn.is-marked,
+    html[data-skin="pagleve"] .mark-btn[aria-pressed="true"] {
+      color: #e11d48;
+      border-color: #fda4af;
+      background: #fff1f2;
+    }
+    html[data-skin="pagleve"] .mark-btn svg { width: 18px; height: 18px; pointer-events: none; }
+    html[data-skin="pagleve"] .pedido-qty-fav { color: #e11d48; font-weight: 700; }
+    html[data-skin="pagleve"] .model-row.has-mark:not(.has-qty) {
+      box-shadow: inset 3px 0 0 #fda4af;
+    }
+    html[data-skin="pagleve"] .catalog-card-pagleve {
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 10px 0;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+    html[data-skin="pagleve"] .catalog-card-pagleve:last-child { border-bottom: 0; }
+    html[data-skin="pagleve"] .pagleve-card-grid {
+      display: grid;
+      grid-template-columns: 52px minmax(0, 1fr) 56px 40px;
+      column-gap: 8px;
+      align-items: start;
+    }
+    html[data-skin="pagleve"] .pagleve-card-slot-foto { grid-column: 1; width: 52px; }
+    html[data-skin="pagleve"] .pagleve-card-slot-body { grid-column: 2; min-width: 0; }
+    html[data-skin="pagleve"] .pagleve-card-slot-qty { grid-column: 3; width: 56px; }
+    html[data-skin="pagleve"] .pagleve-card-slot-heart { grid-column: 4; width: 40px; display: flex; justify-content: center; }
+    html[data-skin="pagleve"] .pagleve-card-slot-foto .thumb-btn,
+    html[data-skin="pagleve"] .pagleve-card-slot-foto .thumb-empty {
+      width: 52px;
+      height: 52px;
+    }
+    html[data-skin="pagleve"] .pagleve-card-title {
+      font-size: .82rem;
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--text-strong);
+      word-break: break-word;
+    }
+    html[data-skin="pagleve"] .pagleve-card-code {
+      margin-top: 2px;
+      font-size: .68rem;
+      color: var(--muted);
+      line-height: 1.25;
+    }
+    html[data-skin="pagleve"] .pagleve-card-meta {
+      margin-top: 6px;
+      font-size: .72rem;
+      color: var(--muted);
+      line-height: 1.35;
+      word-break: break-word;
+    }
+    html[data-skin="pagleve"] .pagleve-card-meta .pagleve-card-preco { margin-top: 4px; color: var(--text); font-weight: 600; }
+    html[data-skin="pagleve"] .pagleve-card-qty-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      width: 100%;
+    }
+    html[data-skin="pagleve"] .pagleve-card-qty-label {
+      font-size: .58rem;
+      font-weight: 600;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      color: var(--muted);
+      line-height: 1;
+    }
+    html[data-skin="pagleve"] .pagleve-card-qty-stack .qty-input {
+      width: 52px;
+      min-width: 0;
+      min-height: 40px;
+      text-align: center;
+      font-size: .92rem;
+      font-weight: 700;
+      padding: 4px 2px;
+    }
+    html[data-skin="pagleve"] .pagleve-card-m2hint {
+      font-size: .58rem;
+      line-height: 1.2;
+      color: var(--muted);
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+    html[data-skin="pagleve"] .pagleve-card-slot-heart .mark-btn {
+      width: 36px;
+      height: 36px;
+    }
+    html[data-skin="pagleve"] .qty-cell-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
     html[data-skin="pagleve"] .col-marca,
     html[data-skin="pagleve"] .col-grupo {
       font-size: .74rem;
       color: var(--muted);
-      white-space: nowrap;
-      max-width: 120px;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: unset;
+      word-break: break-word;
+      line-height: 1.35;
+      vertical-align: top;
     }
-    html[data-skin="pagleve"] .col-grupo { max-width: 140px; }
+    html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) .col-modelo {
+      word-break: break-word;
+      line-height: 1.3;
+      white-space: normal;
+    }
     html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th {
       text-align: center;
       vertical-align: middle;
@@ -1107,21 +1258,282 @@ const PAGLEVE_SKIN_CSS = `
       html[data-skin="pagleve"] .col-grupo,
       html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(3),
       html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(4) { display: none; }
+      html[data-skin="pagleve"] .col-sel,
       html[data-skin="pagleve"] .col-qty,
-      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(7) {
+      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(7),
+      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(8) {
         position: sticky;
-        right: 0;
         background: var(--surface);
         z-index: 1;
+        box-shadow: -4px 0 6px rgba(0,0,0,.05);
+      }
+      html[data-skin="pagleve"] .col-sel,
+      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(7) {
+        right: 58px;
+        width: 40px;
+        min-width: 40px;
+        padding-left: 2px;
+        padding-right: 2px;
+      }
+      html[data-skin="pagleve"] .col-qty,
+      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(8) {
+        right: 0;
         width: 58px;
         min-width: 58px;
         padding-left: 4px;
         padding-right: 4px;
-        box-shadow: -4px 0 6px rgba(0,0,0,.05);
       }
-      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(7) {
+      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(7),
+      html[data-skin="pagleve"] .model-table:not(.catalog-pedido-table) thead th:nth-child(8) {
         background: var(--surface-2);
         z-index: 2;
+      }
+    }
+    html[data-skin="pagleve"] .pagleve-catalog-filter {
+      flex: 1 1 108px;
+      min-width: 0;
+      max-width: 156px;
+      font-size: .74rem;
+    }
+    html[data-skin="pagleve"] .pagleve-marca-filter {
+      position: relative;
+      flex: 1 1 120px;
+      min-width: 0;
+    }
+    html[data-skin="pagleve"] .pagleve-marca-filter-btn {
+      width: 100%;
+      justify-content: center;
+      gap: 6px;
+      font-size: .74rem;
+      padding: 8px 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    html[data-skin="pagleve"] .pagleve-marca-filter-btn.active {
+      border-color: var(--pl-purple);
+      color: var(--pl-purple-deep);
+      background: var(--accent-muted);
+    }
+    html[data-skin="pagleve"] .pagleve-filter-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: 999px;
+      font-size: .65rem;
+      font-weight: 700;
+      background: var(--pl-purple);
+      color: #fff;
+      line-height: 1;
+    }
+    html[data-skin="pagleve"] .pagleve-marca-panel {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      z-index: 50;
+      min-width: min(280px, calc(100vw - 28px));
+      max-height: min(52vh, 320px);
+      overflow: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 8px 0 6px;
+    }
+    html[data-skin="pagleve"] .pagleve-marca-panel[hidden] { display: none !important; }
+    html[data-skin="pagleve"] .pagleve-marca-panel-head {
+      display: flex;
+      gap: 6px;
+      padding: 0 10px 8px;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 4px;
+    }
+    html[data-skin="pagleve"] .pagleve-marca-panel-head .btn {
+      flex: 1;
+      padding: 6px 8px;
+      font-size: .7rem;
+    }
+    html[data-skin="pagleve"] .pagleve-marca-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: .78rem;
+      line-height: 1.3;
+    }
+    html[data-skin="pagleve"] .pagleve-marca-option:hover { background: var(--accent-muted); }
+    html[data-skin="pagleve"] .pagleve-marca-option input {
+      margin-top: 2px;
+      flex-shrink: 0;
+      accent-color: var(--pl-purple);
+    }
+    html[data-skin="pagleve"] .pagleve-marca-option span {
+      min-width: 0;
+      word-break: break-word;
+    }
+    html[data-skin="pagleve"] .pagleve-preco-filter { position: relative; flex: 0 0 auto; }
+    html[data-skin="pagleve"] .pagleve-preco-filter-btn {
+      position: relative;
+      min-width: 44px;
+      justify-content: center;
+      color: var(--pl-purple-deep);
+    }
+    html[data-skin="pagleve"] .pagleve-preco-filter-btn .pagleve-filter-badge {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      min-width: 8px;
+      padding: 0 4px;
+    }
+    html[data-skin="pagleve"] .pagleve-preco-filter-btn.active {
+      border-color: var(--pl-purple);
+      background: var(--accent-muted);
+    }
+    html[data-skin="pagleve"] .pagleve-preco-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(0, 0, 0, .42);
+    }
+    html[data-skin="pagleve"] .pagleve-preco-overlay.open { display: flex; }
+    html[data-skin="pagleve"] .pagleve-preco-dialog {
+      width: min(320px, 100%);
+      max-height: min(90vh, 420px);
+      overflow: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px 16px 12px;
+    }
+    html[data-skin="pagleve"] .pagleve-preco-dialog-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    html[data-skin="pagleve"] .pagleve-preco-panel-title {
+      margin: 0;
+      font-size: .88rem;
+      font-weight: 600;
+      color: var(--text-strong);
+    }
+    html[data-skin="pagleve"] .pagleve-preco-panel-sub {
+      margin: 4px 0 0;
+      font-size: .72rem;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+    html[data-skin="pagleve"] .pagleve-preco-dialog-close {
+      flex-shrink: 0;
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: transparent;
+      color: var(--text);
+      font-size: 1.1rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+    html[data-skin="pagleve"] .pagleve-preco-dialog-close:hover {
+      background: var(--accent-muted);
+      border-color: var(--accent-dim);
+    }
+    html[data-skin="pagleve"] .pagleve-preco-dual {
+      position: relative;
+      height: 32px;
+      margin: 8px 0 4px;
+    }
+    html[data-skin="pagleve"] .pagleve-preco-dual input[type="range"] {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      margin: 0;
+      pointer-events: none;
+      height: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+    }
+    html[data-skin="pagleve"] .pagleve-preco-dual input[type="range"]::-webkit-slider-thumb {
+      pointer-events: auto;
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid var(--pl-purple);
+      box-shadow: 0 1px 4px rgba(0,0,0,.15);
+      cursor: pointer;
+    }
+    html[data-skin="pagleve"] .pagleve-preco-dual input[type="range"]::-moz-range-thumb {
+      pointer-events: auto;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid var(--pl-purple);
+      box-shadow: 0 1px 4px rgba(0,0,0,.15);
+      cursor: pointer;
+    }
+    html[data-skin="pagleve"] .pagleve-preco-track {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 6px;
+      transform: translateY(-50%);
+      border-radius: 999px;
+      background: var(--surface-3);
+      pointer-events: none;
+    }
+    html[data-skin="pagleve"] .pagleve-preco-track-fill {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      border-radius: 999px;
+      background: var(--pl-purple);
+    }
+    html[data-skin="pagleve"] .pagleve-preco-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: .76rem;
+      font-weight: 600;
+      color: var(--text-strong);
+      font-variant-numeric: tabular-nums;
+      margin-bottom: 10px;
+    }
+    html[data-skin="pagleve"] .pagleve-preco-panel-foot {
+      display: flex;
+      gap: 8px;
+    }
+    html[data-skin="pagleve"] .pagleve-preco-panel-foot .btn { flex: 1; font-size: .72rem; padding: 6px 8px; }
+    @media (max-width: 720px) {
+      html[data-skin="pagleve"] .toolbar-main {
+        flex-wrap: wrap;
+        align-items: stretch;
+      }
+      html[data-skin="pagleve"] .toolbar-main .search {
+        flex: 1 1 100%;
+        min-width: 0;
+      }
+      html[data-skin="pagleve"] .toolbar-main .pagleve-catalog-filter,
+      html[data-skin="pagleve"] .toolbar-main .pagleve-marca-filter {
+        flex: 1 1 calc(50% - 6px);
+        max-width: none;
       }
     }
     @media (max-width: 480px) {
@@ -1167,6 +1579,51 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         </div>
       </div>`
     : '';
+  const pagleveGroupDefault = isPagleveSkin ? 'acabamento-formato' : 'formato-acabamento';
+  const pagleveGroupFmtSel = pagleveGroupDefault === 'formato-acabamento' ? ' selected' : '';
+  const pagleveGroupAcabSel = pagleveGroupDefault === 'acabamento-formato' ? ' selected' : '';
+  const pagleveCatalogFiltersHtml = isPagleveSkin
+    ? '<div class="pagleve-marca-filter" id="filter-superficie-wrap">'
+      + '<button type="button" class="btn pagleve-marca-filter-btn" id="filter-superficie-btn" aria-expanded="false" aria-haspopup="listbox">'
+      + 'Superfície <span class="pagleve-filter-badge" id="filter-superficie-badge" hidden></span></button>'
+      + '<div class="pagleve-marca-panel" id="filter-superficie-panel" hidden role="listbox" aria-multiselectable="true" aria-label="Filtrar por superfície">'
+      + '<div class="pagleve-marca-panel-head">'
+      + '<button type="button" class="btn" id="filter-superficie-clear">Limpar</button>'
+      + '<button type="button" class="btn" id="filter-superficie-all">Todas</button>'
+      + '</div><div class="pagleve-marca-options" id="filter-superficie-options"></div></div></div>'
+      + '<div class="pagleve-marca-filter" id="filter-uso-wrap">'
+      + '<button type="button" class="btn pagleve-marca-filter-btn" id="filter-uso-btn" aria-expanded="false" aria-haspopup="listbox">'
+      + 'Local de uso <span class="pagleve-filter-badge" id="filter-uso-badge" hidden></span></button>'
+      + '<div class="pagleve-marca-panel" id="filter-uso-panel" hidden role="listbox" aria-multiselectable="true" aria-label="Filtrar por local de uso PEI">'
+      + '<div class="pagleve-marca-panel-head">'
+      + '<button type="button" class="btn" id="filter-uso-clear">Limpar</button>'
+      + '<button type="button" class="btn" id="filter-uso-all">Todos</button>'
+      + '</div><div class="pagleve-marca-options" id="filter-uso-options"></div></div></div>'
+      + '<div class="pagleve-preco-filter" id="filter-preco-wrap">'
+      + '<button type="button" class="btn btn-icon pagleve-preco-filter-btn" id="filter-preco-btn" aria-expanded="false" aria-haspopup="dialog" aria-label="Faixa de preço por m²" title="Faixa de preço (R$/m²)">'
+      + '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+      + '<line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>'
+      + '<span class="pagleve-filter-badge" id="filter-preco-badge" hidden></span></button></div>'
+    : '';
+  const paglevePrecoDialogHtml = isPagleveSkin
+    ? '<div class="pagleve-preco-overlay" id="filter-preco-overlay" role="dialog" aria-modal="true" aria-label="Faixa de preço" aria-hidden="true">'
+      + '<div class="pagleve-preco-dialog" id="filter-preco-dialog">'
+      + '<div class="pagleve-preco-dialog-head">'
+      + '<div><p class="pagleve-preco-panel-title">Faixa de preço (R$/m²)</p>'
+      + '<p class="pagleve-preco-panel-sub" id="filter-preco-sub">Valores com desconto da barra superior, quando houver.</p></div>'
+      + '<button type="button" class="pagleve-preco-dialog-close" id="filter-preco-close" aria-label="Fechar">×</button>'
+      + '</div>'
+      + '<div class="pagleve-preco-dual">'
+      + '<div class="pagleve-preco-track" aria-hidden="true"><div class="pagleve-preco-track-fill" id="filter-preco-fill"></div></div>'
+      + '<input type="range" id="filter-preco-min-range" min="0" max="200" step="0.1" value="0" aria-label="Preço mínimo" />'
+      + '<input type="range" id="filter-preco-max-range" min="0" max="200" step="0.1" value="200" aria-label="Preço máximo" />'
+      + '</div>'
+      + '<div class="pagleve-preco-labels"><span id="filter-preco-min-label">R$ 0</span><span id="filter-preco-max-label">R$ 200</span></div>'
+      + '<div class="pagleve-preco-panel-foot">'
+      + '<button type="button" class="btn" id="filter-preco-clear">Limpar</button>'
+      + '<button type="button" class="btn btn-primary" id="filter-preco-apply">Aplicar</button>'
+      + '</div></div></div>'
+    : '';
   const qtyLabel = cfg.qtyLabel || (isB2bSkin ? 'Paletes' : 'Caixas');
   const qtyLabelPl = cfg.qtyLabelPl || (isB2bSkin ? 'paletes' : 'caixas');
   const qtyUnit = cfg.qtyUnit || (isB2bSkin ? 'palete' : 'caixa');
@@ -1189,6 +1646,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       qtyUnit,
       qtyLabel,
       qtyLabelPl,
+      pdfThumbsUrl: cfg.pdfThumbsExternal ? 'pdf-thumbs.json' : '',
     },
   }).replace(/</g, '\\u003c');
   const pdfThumbsJson = JSON.stringify(pdfThumbs).replace(/</g, '\\u003c');
@@ -1233,7 +1691,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       fabricanteNome: cfg.fabricanteNome || 'Formigres',
     })
     : '';
-  const catalogTourJs = isB2bSkin
+  const catalogTourEnabled = isB2bSkin || isPagleveSkin;
+  const catalogTourJs = catalogTourEnabled
     ? buildCatalogTourClientJs({ tourKey: cfg.tourKey, skin: cfg.skin, qtyLabelPl })
     : '';
   const regimePanelHtml = isB2bSkin
@@ -1382,7 +1841,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     html[data-theme="light"] .load-overlay { background: rgba(242,242,240,.97); }
     ${isB2bSkin ? buildBrandSkinCss(cfg.skin) : ''}
     ${isPagleveSkin ? PAGLEVE_SKIN_CSS : ''}
-    ${isB2bSkin ? buildCatalogTourCss(cfg.skin) : ''}
+    ${catalogTourEnabled ? buildCatalogTourCss(cfg.skin) : ''}
     .load-logo-ant {
       position: relative;
       width: min(200px, 58vw);
@@ -1877,13 +2336,15 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       border-color: var(--accent);
       background: var(--surface-2);
     }
+    .model-row.has-mark,
+    .model-row.has-selection,
     .model-row.has-qty {
       background: var(--accent-muted);
     }
-    body.has-selection .model-row:not(.has-qty) {
+    body.has-selection .model-row:not(.has-qty):not(.has-mark) {
       opacity: .78;
     }
-    body.has-selection .model-row:not(.has-qty):hover {
+    body.has-selection .model-row:not(.has-qty):not(.has-mark):hover {
       opacity: .95;
     }
     .fab-stack {
@@ -2551,6 +3012,30 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     .lightbox-head h3 { margin: 0; font-size: .95rem; }
     .lightbox-meta { margin: 4px 0 0; font-size: .78rem; color: var(--muted); }
     .lightbox-meta.loading { color: var(--accent); }
+    .lightbox-head-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .lightbox-fabricante-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--accent-bright);
+      background: transparent;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+    .lightbox-fabricante-link:hover {
+      background: var(--accent-muted);
+      border-color: var(--accent-dim);
+    }
+    .lightbox-fabricante-link[hidden] { display: none !important; }
     .lightbox-close {
       background: transparent; border: 1px solid var(--border); color: var(--text);
       border-radius: var(--radius); width: 34px; height: 34px; cursor: pointer; font-size: 1.1rem;
@@ -2692,7 +3177,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       .pedido-cards { overflow-x: hidden; max-width: 100%; }
       .pedido-card { max-width: 100%; overflow: hidden; box-sizing: border-box; }
       html[data-skin="formigres"] .catalog-table-wrap { display: none !important; }
-      html[data-skin="formigres"] .catalog-cards-wrap {
+      html[data-skin="pagleve"] .catalog-table-wrap { display: none !important; }
+      html[data-skin="formigres"] .catalog-cards-wrap,
+      html[data-skin="pagleve"] .catalog-cards-wrap {
         display: block;
         padding: 0 0 10px;
         overflow-x: hidden;
@@ -2880,7 +3367,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
 
     <div class="toolbar">
       <div class="toolbar-main">
-        <input id="search" class="search" type="search" placeholder="Código, modelo ou formato (ex.: 45x45)…" />
+        <input id="search" class="search" type="search" placeholder="${isPagleveSkin ? 'Código, modelo, formato ou marca…' : 'Código, modelo ou formato (ex.: 45x45)…'}" />
+        ${pagleveCatalogFiltersHtml}
         <button type="button" class="btn btn-icon btn-clear-qty" id="clear-qty-main" aria-label="Limpar seleção" title="Limpar seleção">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/>
@@ -2892,8 +3380,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       </div>
       <div class="toolbar-extra toolbar-mobile-only" id="toolbar-extra" hidden>
         <select id="group-by" class="select-group" title="Agrupar">
-          <option value="formato-acabamento" selected>Formato › acabamento</option>
-          <option value="acabamento-formato">Acabamento › formato</option>
+          <option value="formato-acabamento"${pagleveGroupFmtSel}>Formato › acabamento</option>
+          <option value="acabamento-formato"${pagleveGroupAcabSel}>Acabamento › formato</option>
         </select>
         <button type="button" class="btn btn-primary" id="start-qty">${escTpl(qtyLabel)}</button>
         <button type="button" class="btn" id="filter-qty">Na seleção</button>
@@ -2903,8 +3391,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       </div>
       <div class="toolbar-extra toolbar-desktop-only">
         <select id="group-by-desktop" class="select-group">
-          <option value="formato-acabamento" selected>Agrupar: formato › acabamento</option>
-          <option value="acabamento-formato">Agrupar: acabamento › formato</option>
+          <option value="formato-acabamento"${pagleveGroupFmtSel}>Agrupar: formato › acabamento</option>
+          <option value="acabamento-formato"${pagleveGroupAcabSel}>Agrupar: acabamento › formato</option>
         </select>
         <button type="button" class="btn" id="filter-qty-d">Só na seleção</button>
         <button type="button" class="btn" id="clear-qty-d">Limpar seleção</button>
@@ -2922,7 +3410,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
 
   ${themeToggleHtml}
 
-  ${isB2bSkin ? buildCatalogTourFabHtml() : ''}
+  ${catalogTourEnabled ? buildCatalogTourFabHtml() : ''}
 
   <div class="fab-stack" id="fab-stack">
     <button type="button" class="fab cart-fab" id="cart-fab" aria-label="Minha seleção">
@@ -2975,7 +3463,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
   </div>
 
   ${regimeDialogHtml}
-  ${isB2bSkin ? buildCatalogTourHtml() : ''}
+  ${paglevePrecoDialogHtml}
+  ${catalogTourEnabled ? buildCatalogTourHtml() : ''}
 
   <div id="pedido-print"></div>
 
@@ -2999,7 +3488,16 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           <h3 id="lightbox-title">Modelo</h3>
           <p class="lightbox-meta" id="lightbox-meta">Cerâmica</p>
         </div>
-        <button type="button" class="lightbox-close" id="lightbox-close" aria-label="Fechar">×</button>
+        <div class="lightbox-head-actions">
+          <a class="lightbox-fabricante-link" id="lightbox-fabricante-link" href="#" target="_blank" rel="noopener noreferrer" aria-label="Abrir ficha no site do fabricante" title="Ficha no fabricante" hidden>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+              <path d="M2 12h20"/>
+            </svg>
+          </a>
+          <button type="button" class="lightbox-close" id="lightbox-close" aria-label="Fechar">×</button>
+        </div>
       </div>
       <div class="lightbox-stage">
         <button type="button" class="gallery-nav prev" id="gallery-prev" aria-label="Foto anterior">‹</button>
@@ -3031,6 +3529,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     const PDF_TITLE = '${escTpl(cfg.h1)}';
     const CATALOG_SKIN = '${escTpl(cfg.skin || 'default')}';
+    const PAGLEVE_TEXTURA_GRUPO_ORDER = ${JSON.stringify(PAGLEVE_TEXTURA_GRUPO_ORDER)};
+    const PAGLEVE_PEI_USO_ORDER = ${JSON.stringify(PEI_USO_CLASSES)};
     const QTY_UNIT = CFG.qtyUnit || 'caixa';
     const QTY_LABEL = CFG.qtyLabel || 'Caixas';
     const QTY_LABEL_PL = CFG.qtyLabelPl || 'caixas';
@@ -3038,6 +3538,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     const QTY_KEY = '${cfg.qtyKey}';
     const PDF_LAYOUT_KEY = '${cfg.pdfLayoutKey || ''}';
     const PAGLEVE_PDF_LAYOUT = CATALOG_SKIN === 'pagleve' && !!PDF_LAYOUT_KEY;
+    const MARK_KEY = '${cfg.markKey || ''}';
+    const MARKS_ENABLED = CATALOG_SKIN === 'pagleve' && !!MARK_KEY;
     const THEME_KEY = '${cfg.themeKey}';
     const DESCONTO_KEY = '${cfg.descontoKey}';
     const REGIME_KEY = '${cfg.regimeKey || ''}';
@@ -3049,6 +3551,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     const CATALOG_TABLE_HEAD_HTML = PEDIDO_TABLE_HEAD_HTML;
     let qtyMap = {};
     try { qtyMap = JSON.parse(localStorage.getItem(QTY_KEY) || '{}'); } catch { qtyMap = {}; }
+    let markSet = new Set();
+    if (MARKS_ENABLED) {
+      try {
+        const rawMarks = JSON.parse(localStorage.getItem(MARK_KEY) || '[]');
+        if (Array.isArray(rawMarks)) markSet = new Set(rawMarks.map((c) => String(c)));
+      } catch { markSet = new Set(); }
+    }
     let descontoComercialPct = 0;
     try {
       const d = Number(localStorage.getItem(DESCONTO_KEY));
@@ -3267,7 +3776,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       destinoEl?.addEventListener('change', syncRegimeDialogPreview);
       tributarioEl?.addEventListener('change', syncRegimeDialogPreview);
     }
-    let groupBy = 'formato-acabamento';
+    let groupBy = CATALOG_SKIN === 'pagleve' ? 'acabamento-formato' : 'formato-acabamento';
     try {
       const savedGroup = localStorage.getItem(GROUP_KEY);
       groupBy = normalizeGroupBy(savedGroup);
@@ -3275,9 +3784,18 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function normalizeGroupBy(val) {
       if (val === 'formato-acabamento' || val === 'acabamento-formato') return val;
       if (val === 'acabamento') return 'acabamento-formato';
-      return 'formato-acabamento';
+      return CATALOG_SKIN === 'pagleve' ? 'acabamento-formato' : 'formato-acabamento';
     }
     let filterQtyOnly = false;
+    let filterSuperficiesSelected = new Set();
+    let filterPeiUsoSelected = new Set();
+    let precoCatalogBounds = { min: 0, max: 0, step: 1 };
+    let filterPrecoMin = 0;
+    let filterPrecoMax = 0;
+    let filterPrecoActive = false;
+    let pagLeveRefreshPrecoBounds = null;
+    let pagLeveSuperficieCatalog = [];
+    let pagLevePeiUsoCatalog = [];
     let pedidoOpen = false;
     let pedidoPdfSheetOpen = false;
     let dom = {};
@@ -3291,6 +3809,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return (el && el.textContent) || '';
     }
     let pdfThumbsCache = null;
+    let pdfThumbsFetchPromise = null;
     function loadPdfThumbs() {
       if (pdfThumbsCache) return pdfThumbsCache;
       try {
@@ -3299,6 +3818,36 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       } catch { /* ignore */ }
       if (!pdfThumbsCache) pdfThumbsCache = {};
       return pdfThumbsCache;
+    }
+    function pdfThumbsReadyCount(thumbs) {
+      return Object.values(thumbs || {}).filter(isPdfDataUri).length;
+    }
+    async function ensurePdfThumbsCatalogLoaded() {
+      const base = loadPdfThumbs();
+      if (pdfThumbsReadyCount(base) >= 8) return base;
+      const rel = CFG && CFG.pdfThumbsUrl;
+      if (!rel) return base;
+      if (!pdfThumbsFetchPromise) {
+        pdfThumbsFetchPromise = fetch(rel, { cache: 'force-cache' })
+          .then((res) => (res.ok ? res.json() : {}))
+          .catch(() => ({}));
+      }
+      const remote = await pdfThumbsFetchPromise;
+      pdfThumbsCache = { ...base, ...remote };
+      return pdfThumbsCache;
+    }
+    function pdfThumbFromDom(url) {
+      if (!url) return '';
+      const norm = String(url).split('?')[0];
+      const imgs = document.querySelectorAll('.thumb-btn img, .pedido-col-foto img, .pedido-card-thumb, .col-foto img');
+      for (const el of imgs) {
+        const src = el.currentSrc || el.src || '';
+        if (!src || src.startsWith('data:')) continue;
+        if (src === url || src.split('?')[0] === norm) {
+          if (el.complete && el.naturalWidth > 0) return rasterizePdfThumb(el, PDF_THUMB_PX);
+        }
+      }
+      return '';
     }
     function pdfImgSrc(url, thumbs, item) {
       if (!url && item?.imagem_url) url = item.imagem_url;
@@ -3314,8 +3863,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const src = pdfImgSrc(url, thumbs, item);
       return isPdfDataUri(src) ? src : '';
     }
-    const PDF_THUMB_PX = 112;
-    const PDF_PRINT_THUMB_PX = 48;
+    const PDF_THUMB_PX = 160;
+    const PDF_PRINT_THUMB_PX = 64;
     const PDF_PAGE_WIDTH_MOBILE_PX = 390;
     const PDF_PAGE_WIDTH_DESKTOP_PX = 714;
     function prefersPdfMobileCanvas() {
@@ -3375,13 +3924,15 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const h = img.naturalHeight * scale;
       ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
       try {
-        return canvas.toDataURL('image/jpeg', 0.82);
+        return canvas.toDataURL('image/jpeg', 0.9);
       } catch {
         return '';
       }
     }
     async function loadPdfThumbFromUrlAsync(url) {
       if (!url) return '';
+      const fromDom = pdfThumbFromDom(url);
+      if (fromDom) return fromDom;
       const viaImage = () => new Promise((resolve) => {
         const img = new Image();
         img.crossOrigin = 'anonymous';
@@ -3463,6 +4014,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       descontoComercialPct = Math.round(n * 10) / 10;
       localStorage.setItem(DESCONTO_KEY, String(descontoComercialPct));
       refreshDescontoUi();
+      if (pagLeveRefreshPrecoBounds) pagLeveRefreshPrecoBounds();
       renderCatalogo();
       renderPedido();
     }
@@ -3496,15 +4048,58 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const n = Number(qtyMap[String(cod)] || 0);
       return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
     }
+    function isMarked(cod) {
+      return MARKS_ENABLED && markSet.has(String(cod));
+    }
+    function inSelection(cod) {
+      return getQty(cod) > 0 || isMarked(cod);
+    }
+    function saveMarks() {
+      if (!MARKS_ENABLED) return;
+      localStorage.setItem(MARK_KEY, JSON.stringify([...markSet]));
+    }
+    function syncSelectionRowUi(cod) {
+      const qty = getQty(cod);
+      const marked = isMarked(cod);
+      const on = qty > 0 || marked;
+      document.querySelectorAll('.model-row[data-cod="' + cod + '"]').forEach((row) => {
+        row.dataset.qty = String(qty);
+        row.dataset.marked = marked ? '1' : '0';
+        row.classList.toggle('has-qty', qty > 0);
+        row.classList.toggle('has-mark', marked);
+        row.classList.toggle('has-selection', on);
+      });
+      document.querySelectorAll('.mark-btn[data-cod="' + cod + '"]').forEach((btn) => {
+        btn.classList.toggle('is-marked', marked);
+        btn.setAttribute('aria-pressed', marked ? 'true' : 'false');
+        btn.setAttribute('aria-label', marked ? 'Remover favorito da seleção' : 'Marcar favorito sem informar caixas');
+      });
+    }
+    function setMarked(cod, on) {
+      if (!MARKS_ENABLED) return;
+      const c = String(cod);
+      if (on) markSet.add(c);
+      else markSet.delete(c);
+      saveMarks();
+      syncSelectionRowUi(c);
+      renderPedido();
+      updateCartFab();
+      if (filterQtyOnly) applySearch(document.getElementById('search').value);
+    }
+    function toggleMark(cod) {
+      setMarked(cod, !isMarked(cod));
+    }
+    function renderMarkButtonHtml(cod, marked) {
+      const fill = marked ? 'currentColor' : 'none';
+      return '<button type="button" class="mark-btn' + (marked ? ' is-marked' : '') + '" data-cod="' + esc(String(cod)) + '" aria-pressed="' + (marked ? 'true' : 'false') + '" aria-label="' + (marked ? 'Remover favorito da seleção' : 'Marcar favorito sem informar caixas') + '" title="Favorito (sem caixas)">' +
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="' + fill + '" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg></button>';
+    }
     function setQty(cod, val) {
       const n = Math.max(0, Math.floor(Number(val) || 0));
       if (n > 0) qtyMap[String(cod)] = n;
       else delete qtyMap[String(cod)];
       localStorage.setItem(QTY_KEY, JSON.stringify(qtyMap));
-      document.querySelectorAll('.model-row[data-cod="' + cod + '"]').forEach((row) => {
-        row.dataset.qty = String(n);
-        row.classList.toggle('has-qty', n > 0);
-      });
+      syncSelectionRowUi(cod);
       document.querySelectorAll('.qty-input[data-cod="' + cod + '"]').forEach((input) => {
         if (document.activeElement !== input) input.value = n || '';
       });
@@ -3514,17 +4109,24 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       if (filterQtyOnly) applySearch(document.getElementById('search').value);
     }
     function clearAllQty() {
-      const hasQty = Object.keys(qtyMap).length > 0 || [...document.querySelectorAll('.qty-input')].some((el) => Number(el.value) > 0);
+      const hasQty = Object.keys(qtyMap).length > 0
+        || [...document.querySelectorAll('.qty-input')].some((el) => Number(el.value) > 0)
+        || (MARKS_ENABLED && markSet.size > 0);
       if (!hasQty) return;
-      if (!confirm('Limpar toda a seleção?\\n\\nAs ' + QTY_LABEL_PL + ' marcadas serão apagadas.')) return;
+      if (!confirm('Limpar toda a seleção?\\n\\nFavoritos ♥ e ' + QTY_LABEL_PL + ' serão apagados.')) return;
       qtyMap = {};
       localStorage.removeItem(QTY_KEY);
+      if (MARKS_ENABLED) {
+        markSet = new Set();
+        localStorage.removeItem(MARK_KEY);
+      }
       document.querySelectorAll('.qty-input').forEach((input) => {
         input.value = '';
       });
       document.querySelectorAll('.model-row').forEach((row) => {
         row.dataset.qty = '0';
-        row.classList.remove('has-qty');
+        row.dataset.marked = '0';
+        row.classList.remove('has-qty', 'has-mark', 'has-selection');
         row.querySelector('.model-col-m2') && (row.querySelector('.model-col-m2').textContent = '');
         row.querySelector('.model-col-cx') && (row.querySelector('.model-col-cx').textContent = '');
         row.querySelector('.model-col-peso') && (row.querySelector('.model-col-peso').textContent = '');
@@ -3607,7 +4209,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function syncBodyScrollLock() {
       const locked = pedidoOpen
         || pedidoPdfSheetOpen
-        || document.getElementById('lightbox')?.classList.contains('open');
+        || document.getElementById('lightbox')?.classList.contains('open')
+        || document.getElementById('filter-preco-overlay')?.classList.contains('open');
       document.body.style.overflow = locked ? 'hidden' : '';
     }
     function fmtKg(v) {
@@ -3676,7 +4279,34 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return String(a || '').localeCompare(String(b || ''), 'pt-BR');
     }
     function itemTitulo(item) {
+      if (CATALOG_SKIN === 'pagleve') {
+        return item.formigres_titulo || item.catalogo_nome_modelo || item.modelo || item.descricao || '';
+      }
       return item.formigres_titulo || item.descricao || '';
+    }
+    function referenciaRochaprimeErpCliente(descricao) {
+      const raw = String(descricao || '');
+      if (!/ROCHAPRIME|ROCHAMAXX|ROCHAFORTE/i.test(raw)) return '';
+      const m = raw.match(/\\b(PR|R)(\\d{3,})\\b/i);
+      if (!m) return '';
+      return (m[1] + m[2]).toUpperCase();
+    }
+    function referenciaRochaprimeCatalogoCliente(descricao) {
+      const erp = referenciaRochaprimeErpCliente(descricao);
+      if (!erp) return '';
+      const m = erp.match(/^(PR|R)(\\d+)$/i);
+      if (!m) return erp;
+      let digits = m[2];
+      if (digits.length >= 5 && digits.endsWith('1')) digits = digits.slice(0, -1);
+      return (m[1] + digits).toUpperCase();
+    }
+    function pagLeveBuscaExtra(item) {
+      if (CATALOG_SKIN !== 'pagleve') return '';
+      let extra = String(item.descricao_erp || '');
+      const erp = referenciaRochaprimeErpCliente(extra);
+      const cat = referenciaRochaprimeCatalogoCliente(extra);
+      if (cat && erp && cat !== erp) extra += ' ' + cat;
+      return extra;
     }
     function compareItensFormatoNome(a, b) {
       const byFmt = compareFormato(a.formato, b.formato);
@@ -3697,9 +4327,18 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     function pedidoItens() {
       return CATALOGO.itens
-        .map((item) => ({ item, qty: getQty(item.codigo_tintao) }))
-        .filter((x) => x.qty > 0)
+        .map((item) => ({
+          item,
+          qty: getQty(item.codigo_tintao),
+          marked: isMarked(item.codigo_tintao),
+        }))
+        .filter((x) => x.qty > 0 || x.marked)
         .sort((a, b) => compareItensFormatoNome(a.item, b.item));
+    }
+    function fmtPedidoQtyCell(qty, marked) {
+      if (qty > 0) return String(qty);
+      if (marked) return '<span class="pedido-qty-fav" title="Só favorito — informe caixas depois">—</span>';
+      return '—';
     }
     function tipoKey(item) {
       if (item.linha === 'polida') return 'polida';
@@ -3723,7 +4362,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       if (linha === 'polida') return 'retificada';
       const acabNorm = String(acabKey(item)).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
       if (acabNorm === 'polido' || acabNorm === 'polida') return 'retificada';
-      const blob = (item.descricao + ' ' + item.formigres_titulo + ' ' + item.formigres_acabamento).toUpperCase();
+      const blob = (String(item.descricao_erp || item.descricao) + ' ' + item.formigres_titulo + ' ' + item.formigres_acabamento).toUpperCase();
       if (linha !== 'bold' && (/\bRT\s*POLIDO\b|\bPOLIDO\b/.test(blob))) return 'retificada';
       return linha;
     }
@@ -3735,17 +4374,84 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       }
       return acabKey(item);
     }
+    const PEI_USO_CLASSES = ['LA', 'LB', 'LC', 'LD', 'LE', 'LCI', 'LEI'];
+    function normPagLeveBlob(s) {
+      return String(s || '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase();
+    }
+    function isPeiUsoClasse(token) {
+      const t = String(token || '').trim().toUpperCase().replace(/^PEI\\s+/, '');
+      return PEI_USO_CLASSES.indexOf(t) >= 0;
+    }
+    function inferTexturaBlobPagLeve(blob) {
+      if (/\\bantiderrap/.test(blob) || /\\bgranilh/.test(blob)) return 'antiderrapante';
+      if (/\\bsemiderrap/.test(blob) || /\\bprotetiva\\b/.test(blob) || /\\baderente\\b/.test(blob) || /\\bgotej/.test(blob) || /\\bmre\\b/.test(blob)) {
+        return 'semiderrapante';
+      }
+      if (/\\bmate\\b/.test(blob) || /\\bacetinad/.test(blob)) return 'mate';
+      if (/\\bbrilh/.test(blob) || /\\besmalt/.test(blob)) return 'brilhante';
+      if (/\\bpolid/.test(blob) || /\\brt\\s*polid/.test(blob)) return 'polido';
+      return '';
+    }
+    function catalogTexturaGrupo(item) {
+      if (CATALOG_SKIN !== 'pagleve') return catalogAcabKey(item);
+      const rawLabel = String(item.acabamento_label || item.formigres_acabamento || '').trim();
+      const label = isPeiUsoClasse(rawLabel) ? '' : normPagLeveBlob(rawLabel);
+      const blob = normPagLeveBlob(
+        (item.descricao_erp || item.descricao || '') + ' ' + (item.formigres_titulo || '') + ' ' + (item.rotulo || '') + ' ' + (item.subtipo || ''),
+      );
+      const inferred = !label ? inferTexturaBlobPagLeve(blob) : '';
+      if (
+        label.includes('antiderrap') || label.includes('granilh')
+        || item.subtipo === 'antiderrapante' || inferred === 'antiderrapante'
+      ) return 'Antiderrapante';
+      if (
+        label.includes('semiderrap') || item.subtipo === 'semiderrapante'
+        || label.includes('protetiva') || label.includes('aderente')
+        || label.includes('gotej')
+        || /\\bmre\\b/.test(blob) || inferred === 'semiderrapante'
+      ) return 'Semiderrapante · Protetiva · MRE';
+      if (label.includes('mate') || label.includes('acetinad') || inferred === 'mate') return 'Mate · Acetinado';
+      if (label.includes('brilh') || label.includes('esmalt') || inferred === 'brilhante') return 'Brilhante · Esmaltado';
+      if (label.includes('polid') || item.linha === 'polida' || item.subtipo === 'polida' || inferred === 'polido') return 'Polido';
+      if (rawLabel && !isPeiUsoClasse(rawLabel)) return 'Outros';
+      return 'Outros';
+    }
+    function pagLeveMarcaKey(item) {
+      const m = String(item.marca_nome || '').trim();
+      return m || '__sem_marca__';
+    }
+    function pagLeveMarcaLabel(key) {
+      return key === '__sem_marca__' ? 'Sem marca' : key;
+    }
     function grupoLabelFormato(key) {
       return 'Formato ' + key;
     }
+    function pagLeveAgrupamentoPlano() {
+      return CATALOG_SKIN === 'pagleve' && groupBy === 'acabamento-formato';
+    }
     function sortGruposNivel1(keys) {
-      if (groupBy === 'formato-acabamento') {
+      if (groupBy === 'formato-acabamento' || pagLeveAgrupamentoPlano()) {
         return [...keys].sort(compareFormato);
       }
       return sortAcabKeys(keys);
     }
     function buildTree(itens) {
       const tree = {};
+      if (pagLeveAgrupamentoPlano()) {
+        for (const item of itens) {
+          const linha = catalogLinhaKey(item);
+          const fmt = item.formato || '—';
+          tree[linha] ??= {};
+          tree[linha][fmt] ??= [];
+          tree[linha][fmt].push(item);
+        }
+        for (const linha of Object.keys(tree)) {
+          for (const fmt of Object.keys(tree[linha])) {
+            tree[linha][fmt] = sortItemList(tree[linha][fmt]);
+          }
+        }
+        return tree;
+      }
       if (groupBy === 'formato-acabamento') {
         for (const item of itens) {
           const linha = catalogLinhaKey(item);
@@ -3792,7 +4498,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return parts.length ? parts.join(' · ') : '—';
     }
     function updateModelRowCalcs(cod) {
-      if (!IS_B2B_CATALOG) return;
+      if (!IS_B2B_CATALOG && CATALOG_SKIN !== 'pagleve') return;
       const item = itemsByCode.get(String(cod));
       if (!item) return;
       const qty = getQty(cod);
@@ -3807,6 +4513,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         };
         if (row.classList.contains('catalog-card')) {
           setCell('.catalog-card-qty-m2', m2tot ? fmtDecimal(m2tot) + ' m²' : '—');
+          setCell('.pagleve-card-m2hint', m2tot ? fmtDecimal(m2tot) + ' m²' : '—');
           setCell('.model-col-sub', sub ? fmtMoney(sub) : '—');
           setCell('.model-col-cx', cxTot ? fmtDecimal(cxTot, 0) : '—');
           setCell('.model-col-peso', pesoTot ? fmtKg(pesoTot) : '—');
@@ -3841,7 +4548,18 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       if (!item.gemeas || !item.gemeas.length) return '';
       return item.gemeas.map((g) => [g.marca, g.referencia, g.codigo].join(' ')).join(' ');
     }
+    function catalogPeiUso(item) {
+      const p = String(item.pei_uso || '').trim().toUpperCase();
+      if (p) return p;
+      const ref = String(item.referencia || '').trim().toUpperCase();
+      const m = ref.match(/PEI\\s+(LEI|LCI|LA|LB|LC|LD|LE)\\b/) || ref.match(/^\\b(LEI|LCI|LA|LB|LC|LD|LE)\\b$/);
+      return m ? m[1] : '';
+    }
     function modelResistencia(item) {
+      if (CATALOG_SKIN === 'pagleve') {
+        const u = catalogPeiUso(item);
+        return u ? ('PEI ' + u) : '';
+      }
       const r = String(item.referencia || '').trim();
       return r && r !== '—' ? r : '';
     }
@@ -3936,7 +4654,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function renderTableRow(item) {
       const imgs = getGaleria(item);
       const img = imgs[0]?.url || item.imagem_url || '';
-      const titulo = item.formigres_titulo || item.descricao;
+      const titulo = itemTitulo(item);
       const cod = item.codigo_tintao;
       const qty = getQty(cod);
       const pack = fmtEmbalagemText(item);
@@ -3958,7 +4676,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         const titleHtml = gemeasTrigger
           ? '<span class="pedido-row-title-line"><span class="pedido-row-title">' + esc(titulo) + '</span>' + gemeasTrigger + '</span>'
           : '<span class="pedido-row-title">' + esc(titulo) + '</span>';
-        return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(normalize((titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + formatSearchBlob(item.formato) + ' ' + cod + ' ' + pack + ' ' + resistSearch + ' ' + searchExtra))) + '" data-qty="' + qty + '">' +
+        return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(normalize((titulo + ' ' + pagLeveBuscaExtra(item) + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + formatSearchBlob(item.formato) + ' ' + cod + ' ' + pack + ' ' + resistSearch + ' ' + searchExtra))) + '" data-qty="' + qty + '">' +
           '<td class="pedido-col-foto col-foto">' + foto + '</td>' +
           '<td class="pedido-col-modelo col-modelo">' + titleHtml + warn + gemeasMarcasHtml + '<div class="pedido-row-meta">' + rowMeta + '</div></td>' +
           '<td class="pedido-col-qty col-qty">' +
@@ -3979,13 +4697,22 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         ? esc(item.marca_nome || '—') + ' · ' + esc(item.fabricante_grupo || '—') + ' · '
         : '';
       const metaMobile = '<div class="model-meta-mobile">' + marcaGrupoMobile + esc(pack) + ' · ' + fmtPrecoHtml(item.preco_m2) + '</div>';
-      const searchBlob = (titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack + ' ' + (item.marca_nome || '') + ' ' + (item.fabricante_grupo || '')).toLowerCase();
-      return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(searchBlob) + '" data-qty="' + qty + '">' +
+      const searchBlob = (titulo + ' ' + pagLeveBuscaExtra(item) + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack + ' ' + (item.marca_nome || '') + ' ' + (item.fabricante_grupo || '')).toLowerCase();
+      const marked = isMarked(cod);
+      const selected = qty > 0 || marked;
+      const pagLeveAttrs = CATALOG_SKIN === 'pagleve'
+        ? ' data-textura="' + esc(catalogTexturaGrupo(item)) + '" data-pei-uso="' + esc(catalogPeiUso(item)) + '"'
+        : '';
+      const heartCol = CATALOG_SKIN === 'pagleve'
+        ? '<td class="col-sel">' + renderMarkButtonHtml(cod, marked) + '</td>'
+        : '';
+      return '<tr class="model-row' + (qty > 0 ? ' has-qty' : '') + (marked ? ' has-mark' : '') + (selected ? ' has-selection' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(searchBlob) + '" data-qty="' + qty + '" data-marked="' + (marked ? '1' : '0') + '"' + pagLeveAttrs + '>' +
         '<td class="col-foto">' + foto + '</td>' +
         '<td class="col-modelo"><strong>' + esc(titulo) + '</strong>' + warn + '<br><small style="color:var(--muted)">#' + esc(cod) + '</small>' + metaMobile + '</td>' +
         marcaGrupoCols +
         '<td class="col-pack">' + esc(pack) + '</td>' +
         '<td class="col-preco' + (hasDescontoAtivo() ? ' has-desc' : '') + '">' + fmtPrecoHtml(item.preco_m2) + '</td>' +
+        heartCol +
         '<td class="col-qty">' +
         '<input type="number" class="qty-input" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" tabindex="0" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="' + esc(QTY_LABEL) + '" placeholder="0" />' +
         '</td></tr>';
@@ -3993,7 +4720,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function formigresItemSearchKey(item, cod, pack, titulo, extra) {
       const resistSearch = modelResistencia(item);
       const fmtBlob = formatSearchBlob(item.formato);
-      return normalize(titulo + ' ' + item.descricao + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + fmtBlob + ' ' + cod + ' ' + pack + ' ' + resistSearch + ' ' + (extra || ''));
+      return normalize(titulo + ' ' + pagLeveBuscaExtra(item) + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + fmtBlob + ' ' + cod + ' ' + pack + ' ' + resistSearch + ' ' + (extra || ''));
     }
     function formatSearchBlob(fmt) {
       const raw = String(fmt || '').trim();
@@ -4034,10 +4761,43 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '<span class="pedido-card-qty-sub catalog-card-qty-m2">' + esc(m2tot ? fmtDecimal(m2tot) + ' m²' : '—') + '</span>' +
       '</div>';
     }
+    function renderCatalogCardPagLeve(item) {
+      const imgs = getGaleria(item);
+      const img = imgs[0]?.url || item.imagem_url || '';
+      const titulo = itemTitulo(item);
+      const cod = item.codigo_tintao;
+      const qty = getQty(cod);
+      const pack = fmtEmbalagemText(item);
+      const marked = isMarked(cod);
+      const m2tot = qty ? itemM2Total(item, qty) : null;
+      const warn = item.match_status !== 'encontrado' ? ' <span class="badge warn">sem match</span>' : '';
+      const thumb = renderCatalogCardThumb(item, cod, titulo, imgs, img);
+      const searchBlob = (titulo + ' ' + pagLeveBuscaExtra(item) + ' ' + item.formigres_acabamento + ' ' + item.formato + ' ' + cod + ' ' + pack + ' ' + (item.marca_nome || '') + ' ' + (item.fabricante_grupo || '')).toLowerCase();
+      const pagLeveAttrs = ' data-textura="' + esc(catalogTexturaGrupo(item)) + '" data-pei-uso="' + esc(catalogPeiUso(item)) + '"';
+      const metaLines = esc(item.marca_nome || '—') + ' · ' + esc(item.fabricante_grupo || '—') + '<br>' + esc(pack);
+      const precoHtml = '<div class="pagleve-card-preco">' + fmtPrecoHtml(item.preco_m2) + '</div>';
+      return '<article class="catalog-card catalog-card-pagleve model-row' + (qty > 0 ? ' has-qty' : '') + (marked ? ' has-mark' : '') + ((qty > 0 || marked) ? ' has-selection' : '') + '" data-cod="' + esc(cod) + '" data-search="' + esc(searchBlob) + '" data-qty="' + qty + '" data-marked="' + (marked ? '1' : '0') + '"' + pagLeveAttrs + '>' +
+        '<div class="pagleve-card-grid">' +
+          '<div class="pagleve-card-slot-foto">' + thumb + '</div>' +
+          '<div class="pagleve-card-slot-body">' +
+            '<div class="pagleve-card-title">' + esc(titulo) + warn + '</div>' +
+            '<div class="pagleve-card-code">#' + esc(cod) + '</div>' +
+            '<div class="pagleve-card-meta">' + metaLines + precoHtml + '</div>' +
+          '</div>' +
+          '<div class="pagleve-card-slot-qty">' +
+            '<div class="pagleve-card-qty-stack">' +
+              '<span class="pagleve-card-qty-label">' + esc(QTY_LABEL) + '</span>' +
+              '<input type="number" class="qty-input" min="0" step="1" inputmode="numeric" enterkeyhint="next" autocomplete="off" tabindex="0" value="' + (qty || '') + '" data-cod="' + esc(cod) + '" aria-label="' + esc(QTY_LABEL) + '" placeholder="0" />' +
+              '<span class="pagleve-card-m2hint catalog-card-qty-m2">' + esc(m2tot ? fmtDecimal(m2tot) + ' m²' : '—') + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="pagleve-card-slot-heart">' + renderMarkButtonHtml(cod, marked) + '</div>' +
+        '</div></article>';
+    }
     function renderCatalogCardFormigres(item) {
       const imgs = getGaleria(item);
       const img = imgs[0]?.url || item.imagem_url || '';
-      const titulo = item.formigres_titulo || item.descricao;
+      const titulo = itemTitulo(item);
       const cod = item.codigo_tintao;
       const qty = getQty(cod);
       const pack = fmtEmbalagemText(item);
@@ -4100,9 +4860,21 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       }
       const retailExtraHead = CATALOG_SKIN === 'pagleve' ? '<th class="col-marca">Marca</th><th class="col-grupo">Grupo</th>' : '';
       const retailHead = CATALOG_SKIN === 'pagleve'
-        ? '<th class="col-foto">Foto</th><th class="col-modelo">Modelo</th>' + retailExtraHead + '<th class="col-pack">Embalagem</th><th class="col-preco">Preço/m²</th><th class="col-qty">' + esc(QTY_LABEL) + '</th>'
+        ? '<th class="col-foto">Foto</th><th class="col-modelo">Modelo</th>' + retailExtraHead + '<th class="col-pack">Embalagem</th><th class="col-preco">Preço/m²</th><th class="col-sel" title="Favorito sem caixas">♥</th><th class="col-qty">' + esc(QTY_LABEL) + '</th>'
         : '<th>Foto</th><th>Modelo</th>' + retailExtraHead + '<th>Embalagem</th><th>Preço/m²</th><th>' + esc(QTY_LABEL) + '</th>';
-      return '<div class="table-wrap"><table class="model-table"><thead><tr>' + retailHead + '</tr></thead><tbody>' +
+      const colgroup = CATALOG_SKIN === 'pagleve'
+        ? '<colgroup><col class="col-foto"><col class="col-modelo"><col class="col-marca"><col class="col-grupo"><col class="col-pack"><col class="col-preco"><col class="col-sel"><col class="col-qty"></colgroup>'
+        : '';
+      if (CATALOG_SKIN === 'pagleve') {
+        const body = items.map(renderTableRow).join('');
+        const cards = items.map(renderCatalogCardPagLeve).join('');
+        return '<div class="catalog-items">' +
+          '<div class="catalog-table-wrap table-wrap"><table class="model-table">' + colgroup + '<thead><tr>' + retailHead + '</tr></thead><tbody>' +
+          body + '</tbody></table></div>' +
+          '<div class="catalog-cards-wrap"><div class="catalog-cards">' + cards + '</div></div>' +
+          '</div>';
+      }
+      return '<div class="table-wrap"><table class="model-table">' + colgroup + '<thead><tr>' + retailHead + '</tr></thead><tbody>' +
         items.map(renderTableRow).join('') + '</tbody></table></div>';
     }
     function renderAcabamentoLeaf(acab, items) {
@@ -4133,6 +4905,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '<div class="acc-inner">' + formatos.map((f) => renderFormato(f, formatosMap[f])).join('') + '</div></details>';
     }
     function countLinhaMap(gruposMap) {
+      if (pagLeveAgrupamentoPlano()) {
+        return Object.keys(gruposMap).reduce((s, f) => s + gruposMap[f].length, 0);
+      }
       if (groupBy === 'formato-acabamento') {
         return Object.keys(gruposMap).reduce((s, fmt) =>
           s + Object.keys(gruposMap[fmt]).reduce((a, ac) => a + gruposMap[fmt][ac].length, 0), 0);
@@ -4145,7 +4920,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const n = countLinhaMap(gruposMap);
       const label = CFG.linhaLabel[linha] || linha;
       let inner;
-      if (groupBy === 'formato-acabamento') {
+      if (pagLeveAgrupamentoPlano()) {
+        inner = keys.map((f) => renderFormato(f, gruposMap[f])).join('');
+      } else if (groupBy === 'formato-acabamento') {
         inner = keys.map((k) => renderFormatoComAcab(k, gruposMap[k], linha)).join('');
       } else if (linha === 'polida') {
         inner = keys.flatMap((acab) => {
@@ -4166,7 +4943,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       applySearch(document.getElementById('search').value);
     }
     function catalogRowSelector() {
-      if (IS_B2B_CATALOG) {
+      if (IS_B2B_CATALOG || CATALOG_SKIN === 'pagleve') {
         return window.matchMedia('(max-width: 720px)').matches
           ? '.catalog-cards-wrap .model-row'
           : '.catalog-table-wrap .model-row';
@@ -4192,12 +4969,19 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     function applySearch(termRaw) {
       const terms = searchTermsFromQuery(termRaw);
       for (const row of document.querySelectorAll('#catalogo .model-row')) {
-        const qty = Number(row.dataset.qty || 0);
-        const showQty = !filterQtyOnly || qty > 0;
+        const cod = row.dataset.cod || '';
+        const showQty = !filterQtyOnly || inSelection(cod);
         const showTerm = rowMatchesSearch(row, terms);
-        const show = showQty && showTerm;
+        const showSuperficie = !filterSuperficiesSelected.size || filterSuperficiesSelected.has(row.dataset.textura || '');
+        const showPei = !filterPeiUsoSelected.size || filterPeiUsoSelected.has(row.dataset.peiUso || '');
+        let showPreco = true;
+        if (CATALOG_SKIN === 'pagleve' && filterPrecoActive) {
+          const item = itemsByCode.get(String(row.dataset.cod || ''));
+          const eff = item ? precoEfetivo(item.preco_m2) : null;
+          showPreco = eff != null && eff >= filterPrecoMin && eff <= filterPrecoMax;
+        }
+        const show = showQty && showTerm && showSuperficie && showPei && showPreco;
         row.classList.toggle('hidden', !show);
-        const cod = row.dataset.cod;
         if (cod && !show) {
           document.querySelectorAll('.model-gemeas-detail[data-gemeas-for="' + cod + '"]').forEach((el) => el.classList.add('hidden'));
           document.querySelector('.model-gemeas-trigger[data-cod="' + cod + '"]')?.setAttribute('aria-expanded', 'false');
@@ -4257,8 +5041,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         }).join('') +
       '</tr></table>';
     }
-    function renderPedidoCardRow1({ thumb, titulo, item, qty, m2tot, sub }) {
+    function renderPedidoCardRow1({ thumb, titulo, item, qty, marked, m2tot, sub }) {
       const qtyShort = QTY_UNIT === 'palete' ? 'pl' : 'cx';
+      const qtyMain = qty > 0
+        ? (qty + ' <span>' + esc(qtyShort) + '</span>')
+        : (marked ? '<span class="pedido-qty-fav">♥</span> <span title="Sem caixas">fav</span>' : '—');
       return '<div class="pedido-card-head">' + thumb +
         '<div class="pedido-card-head-main">' +
           '<div class="pedido-card-desc">' +
@@ -4267,7 +5054,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
             '<div class="pedido-card-meta">' + renderItemMetaHtml(item) + '</div>' +
           '</div>' +
           '<div class="pedido-card-qty">' +
-            '<span class="pedido-card-qty-main pedido-card-hero">' + qty + ' <span>' + esc(qtyShort) + '</span></span>' +
+            '<span class="pedido-card-qty-main pedido-card-hero">' + qtyMain + '</span>' +
             '<span class="pedido-card-qty-sub">' + esc(m2tot ? fmtDecimal(m2tot) + ' m²' : '—') + '</span>' +
           '</div>' +
           '<div class="pedido-card-total">' +
@@ -4277,7 +5064,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '</div>' +
       '</div>';
     }
-    function renderPedidoTableRow({ item, qty, img, titulo, m2unit, m2tot, pesoTot, cxTot, cxpl, sub }, thumbs, opts) {
+    function renderPedidoTableRow({ item, qty, marked, img, titulo, m2unit, m2tot, pesoTot, cxTot, cxpl, sub }, thumbs, opts) {
+      const qtyCell = MARKS_ENABLED ? fmtPedidoQtyCell(qty, marked) : String(qty);
       const forPdf = opts && opts.pdf;
       const emb = itemEmbalagem(item);
       const rowMeta = renderItemMetaHtml(item);
@@ -4294,7 +5082,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         return '<tr>' +
           '<td class="pedido-col-foto">' + thumbCell + '</td>' +
           '<td class="pedido-col-modelo"><span class="pedido-row-title">' + esc(titulo) + '</span><div class="pedido-row-meta">' + rowMeta + '</div></td>' +
-          '<td class="pedido-col-qty">' + qty + '</td>' +
+          '<td class="pedido-col-qty">' + qtyCell + '</td>' +
           '<td class="pedido-col-num">' + (m2tot ? fmtDecimal(m2tot) : '—') + '</td>' +
           '<td class="pedido-col-num">' + (cxTot ? fmtDecimal(cxTot, 0) : '—') + '</td>' +
           '<td class="pedido-col-num pedido-col-peso">' + (pesoTot ? fmtKg(pesoTot) : '—') + '</td>' +
@@ -4305,20 +5093,20 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return '<tr>' +
         '<td class="pedido-col-foto">' + thumbCell + '</td>' +
         '<td class="pedido-col-modelo"><span class="pedido-row-title">' + esc(titulo) + '</span><div class="pedido-row-meta">' + rowMeta + '</div></td>' +
-        '<td class="pedido-col-qty">' + qty + '</td>' +
+        '<td class="pedido-col-qty">' + qtyCell + '</td>' +
         '<td class="pedido-col-num">' + (m2unit ? fmtDecimal(m2unit) : '—') + '</td>' +
         '<td class="pedido-col-num">' + (m2tot ? fmtDecimal(m2tot) : '—') + '</td>' +
         '<td class="pedido-col-num pedido-col-preco ' + (hasDescontoAtivo() ? 'has-desc' : '') + '">' + precoCell + '</td>' +
         '<td class="pedido-col-num col-subtotal">' + esc(sub != null ? fmtMoney(sub) : '—') + '</td></tr>';
     }
-    function renderPedidoCard({ item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl, sub }, opts) {
+    function renderPedidoCard({ item, qty, marked, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl, sub }, opts) {
       const forPdf = opts && opts.pdf;
       const thumbs = opts && opts.thumbs;
       const imgSrc = forPdf ? (pdfImgSrcForPrint(img, thumbs, item) || '') : img;
       const thumb = imgSrc
-        ? '<img class="pedido-card-thumb" src="' + esc(imgSrc) + '" alt=""' + (forPdf ? ' width="48" height="48"' : ' loading="lazy"') + ' />'
+        ? '<img class="pedido-card-thumb" src="' + esc(imgSrc) + '" alt=""' + (forPdf ? ' width="64" height="64"' : ' loading="lazy"') + ' />'
         : '<span class="pedido-card-thumb pedido-card-thumb-empty" aria-hidden="true">—</span>';
-      const row1 = renderPedidoCardRow1({ thumb, titulo, item, qty, m2tot, sub });
+      const row1 = renderPedidoCardRow1({ thumb, titulo, item, qty, marked, m2tot, sub });
       const precoOpts = forPdf ? { pdf: true } : null;
       const cardClass = 'pedido-card' + (forPdf ? ' pedido-card-pdf' : '');
 
@@ -4352,7 +5140,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       let totalValor = 0;
       const bodyRows = [];
       const cardRows = [];
-      for (const { item, qty } of rows) {
+      for (const { item, qty, marked } of rows) {
         const emb = itemEmbalagem(item);
         const m2unit = itemM2Unit(item);
         const m2tot = itemM2Total(item, qty);
@@ -4367,8 +5155,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         if (sub) totalValor += sub;
         const imgs = getGaleria(item);
         const img = imgs[0]?.url || '';
-        const titulo = item.formigres_titulo || item.descricao;
-        const rowData = { item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl: emb.cxpl, sub };
+        const titulo = itemTitulo(item);
+        const rowData = { item, qty, marked, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl: emb.cxpl, sub };
         bodyRows.push(renderPedidoTableRow(rowData, null, null));
         cardRows.push(renderPedidoCard(rowData));
       }
@@ -4406,6 +5194,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       let totalQty = 0;
       for (const { qty } of rows) totalQty += qty;
       const count = rows.length;
+      const favOnly = rows.filter((r) => r.marked && r.qty <= 0).length;
       const badge = document.getElementById('cart-fab-badge');
       const fab = document.getElementById('cart-fab');
       if (badge) {
@@ -4414,9 +5203,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       }
       if (fab) {
         fab.classList.toggle('has-items', count > 0);
-        fab.setAttribute('aria-label', count
-          ? 'Minha seleção — ' + count + ' modelos, ' + totalQty + ' ' + QTY_LABEL_PL
-          : 'Minha seleção vazia');
+        let label = 'Minha seleção vazia';
+        if (count) {
+          label = 'Minha seleção — ' + count + ' modelos';
+          if (totalQty) label += ', ' + totalQty + ' ' + QTY_LABEL_PL;
+          else if (favOnly) label += ', só favoritos ♥';
+        }
+        fab.setAttribute('aria-label', label);
       }
       document.body.classList.toggle('has-selection', count > 0);
     }
@@ -4451,7 +5244,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return printPdfLayout().pageWmm;
     }
     function buildPrintFormatoResumoHtml(rows) {
-      if (!rows.length || QTY_UNIT !== 'palete') return '';
+      if (!rows.length) return '';
       const groups = new Map();
       for (const { item, qty } of rows) {
         const fmt = item.formato || '—';
@@ -4470,18 +5263,49 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       let totM2 = 0;
       let totCx = 0;
       let totPeso = 0;
+      if (QTY_UNIT === 'palete') {
+        const bodyRows = fmtKeys.map((fmt) => {
+          const g = groups.get(fmt);
+          totQty += g.qty;
+          totM2 += g.m2;
+          totCx += g.cx;
+          totPeso += g.peso;
+          return '<tr>' +
+            '<td class="print-fmt-resumo-fmt">' + esc(grupoLabelFormato(fmt)) + '</td>' +
+            '<td class="print-fmt-resumo-num">' + g.qty + '</td>' +
+            '<td class="print-fmt-resumo-num">' + (g.m2 ? fmtDecimal(g.m2) : '—') + '</td>' +
+            '<td class="print-fmt-resumo-num">' + (g.cx ? fmtDecimal(g.cx, 0) : '—') + '</td>' +
+            '<td class="print-fmt-resumo-num">' + (g.peso ? fmtKg(g.peso) : '—') + '</td>' +
+          '</tr>';
+        }).join('');
+        const totalRow = '<tr class="print-fmt-resumo-total">' +
+          '<td class="print-fmt-resumo-fmt"><strong>Total</strong></td>' +
+          '<td class="print-fmt-resumo-num"><strong>' + totQty + '</strong></td>' +
+          '<td class="print-fmt-resumo-num"><strong>' + fmtDecimal(totM2) + '</strong></td>' +
+          '<td class="print-fmt-resumo-num"><strong>' + fmtDecimal(totCx, 0) + '</strong></td>' +
+          '<td class="print-fmt-resumo-num"><strong>' + fmtKg(totPeso) + '</strong></td>' +
+        '</tr>';
+        return '<section class="print-fmt-resumo-wrap">' +
+          '<p class="print-fmt-resumo-title">Resumo por formato</p>' +
+          '<table class="print-fmt-resumo-table">' +
+            '<colgroup><col class="col-fmt-res-fmt"><col class="col-fmt-res-num"><col class="col-fmt-res-num"><col class="col-fmt-res-num"><col class="col-fmt-res-num"></colgroup>' +
+            '<thead><tr>' +
+              '<th>Formato</th><th>Paletes</th><th>m²</th><th>Caixas</th><th>Peso</th>' +
+            '</tr></thead>' +
+            '<tbody>' + bodyRows + totalRow + '</tbody>' +
+          '</table>' +
+        '</section>';
+      }
       const bodyRows = fmtKeys.map((fmt) => {
         const g = groups.get(fmt);
         totQty += g.qty;
         totM2 += g.m2;
         totCx += g.cx;
-        totPeso += g.peso;
         return '<tr>' +
           '<td class="print-fmt-resumo-fmt">' + esc(grupoLabelFormato(fmt)) + '</td>' +
           '<td class="print-fmt-resumo-num">' + g.qty + '</td>' +
           '<td class="print-fmt-resumo-num">' + (g.m2 ? fmtDecimal(g.m2) : '—') + '</td>' +
           '<td class="print-fmt-resumo-num">' + (g.cx ? fmtDecimal(g.cx, 0) : '—') + '</td>' +
-          '<td class="print-fmt-resumo-num">' + (g.peso ? fmtKg(g.peso) : '—') + '</td>' +
         '</tr>';
       }).join('');
       const totalRow = '<tr class="print-fmt-resumo-total">' +
@@ -4489,14 +5313,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '<td class="print-fmt-resumo-num"><strong>' + totQty + '</strong></td>' +
         '<td class="print-fmt-resumo-num"><strong>' + fmtDecimal(totM2) + '</strong></td>' +
         '<td class="print-fmt-resumo-num"><strong>' + fmtDecimal(totCx, 0) + '</strong></td>' +
-        '<td class="print-fmt-resumo-num"><strong>' + fmtKg(totPeso) + '</strong></td>' +
       '</tr>';
       return '<section class="print-fmt-resumo-wrap">' +
         '<p class="print-fmt-resumo-title">Resumo por formato</p>' +
-        '<table class="print-fmt-resumo-table">' +
-          '<colgroup><col class="col-fmt-res-fmt"><col class="col-fmt-res-num"><col class="col-fmt-res-num"><col class="col-fmt-res-num"><col class="col-fmt-res-num"></colgroup>' +
+        '<table class="print-fmt-resumo-table print-fmt-resumo-caixa">' +
+          '<colgroup><col class="col-fmt-res-fmt"><col class="col-fmt-res-num"><col class="col-fmt-res-num"><col class="col-fmt-res-num"></colgroup>' +
           '<thead><tr>' +
-            '<th>Formato</th><th>Paletes</th><th>m²</th><th>Caixas</th><th>Peso</th>' +
+            '<th>Formato</th><th>Caixas</th><th>m²</th><th>Cx total</th>' +
           '</tr></thead>' +
           '<tbody>' + bodyRows + totalRow + '</tbody>' +
         '</table>' +
@@ -4506,7 +5329,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const rows = pedidoItens();
       let totalQty = 0, totalM2 = 0, totalPeso = 0, totalCaixas = 0, totalValor = 0;
       const cards = [];
-      for (const { item, qty } of rows) {
+      for (const { item, qty, marked } of rows) {
         const emb = itemEmbalagem(item);
         const m2unit = itemM2Unit(item);
         const m2tot = itemM2Total(item, qty);
@@ -4521,8 +5344,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         if (sub) totalValor += sub;
         const imgs = getGaleria(item);
         const img = imgs[0]?.url || '';
-        const titulo = item.formigres_titulo || item.descricao;
-        const rowData = { item, qty, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl: emb.cxpl, sub };
+        const titulo = itemTitulo(item);
+        const rowData = { item, qty, marked, img, titulo, m2unit, m2tot, pesoUnit, pesoTot, cxTot, cxpl: emb.cxpl, sub };
         cards.push(renderPedidoCard(rowData, { pdf: true, thumbs }));
       }
       const descNote = hasDescontoAtivo() ? '<p class="print-note">' + esc(descontoNoteText()) + ' sobre a tabela.</p>' : '';
@@ -4624,7 +5447,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '.print-fmt-resumo-table .print-fmt-resumo-fmt { color: #2f2f2f; font-weight: 600; letter-spacing: .03em; }' +
         '.print-fmt-resumo-table .print-fmt-resumo-total td { border-top: 2px solid ' + rowLine + '; border-bottom: 0; padding-top: 6px; font-weight: 600; }' +
         '.print-fmt-resumo-table col.col-fmt-res-fmt { width: 30%; }' +
-        '.print-fmt-resumo-table col.col-fmt-res-num { width: 17.5%; }';
+        '.print-fmt-resumo-table col.col-fmt-res-num { width: 17.5%; }' +
+        '.print-fmt-resumo-caixa col.col-fmt-res-fmt { width: 34%; }' +
+        '.print-fmt-resumo-caixa col.col-fmt-res-num { width: 22%; }';
     }
     function pdfCanvasBackground(theme) {
       return '#ffffff';
@@ -4668,7 +5493,9 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       }
       const style = clonedDoc.createElement('style');
       style.textContent =
-        'html, body, .print-render-root, .print-sheet, .pedido-card-pdf { background: #ffffff !important; color: #5a5a5a !important; color-scheme: only light !important; }';
+        'html, body, .print-render-root, .print-sheet, .pedido-card-pdf { background: #ffffff !important; color: #5a5a5a !important; color-scheme: only light !important; }' +
+        '.pedido-card-title, .pedido-card-qty-main, .pedido-card-spec-v, .print-fmt-resumo-fmt { color: #2f2f2f !important; }' +
+        '.preco-stack, .preco-stack strong, .preco-desc { color: #2f2f2f !important; }';
       clonedDoc.head.appendChild(style);
     }
     async function waitPrintImagesRoot(root) {
@@ -4806,7 +5633,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const prevLabel = btn?.textContent || 'PDF do pedido';
       if (btn) { btn.disabled = true; btn.textContent = 'Gerando PDF…'; }
       try {
-        let thumbs = loadPdfThumbs();
+        let thumbs = await ensurePdfThumbsCatalogLoaded();
         if (btn) btn.textContent = 'A preparar fotos…';
         thumbs = await ensurePedidoPdfThumbs(thumbs);
         const readyUrls = pedidoPdfImageUrls().filter((url) => isPdfDataUri(thumbs[url])).length;
@@ -4965,9 +5792,272 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       try { localStorage.setItem(GROUP_KEY, groupBy); } catch { /* ignore */ }
       renderCatalogo();
     }
+    function syncPagleveFilterBadge(btnId, badgeId, selected) {
+      const btn = document.getElementById(btnId);
+      const badge = document.getElementById(badgeId);
+      const n = selected.size;
+      const active = n > 0;
+      if (btn) btn.classList.toggle('active', active);
+      if (badge) {
+        badge.hidden = !active;
+        badge.textContent = String(n);
+      }
+    }
+    function initPagleveMultiFilter(opts) {
+      if (CATALOG_SKIN !== 'pagleve') return;
+      const wrap = document.getElementById(opts.optionsId);
+      if (!wrap) return;
+      const values = new Set();
+      for (const item of CATALOGO.itens) {
+        const v = opts.valueFromItem(item);
+        if (v) values.add(v);
+      }
+      const order = opts.order || [];
+      const extras = [...values].filter((g) => order.indexOf(g) < 0).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+      const groups = order.filter((g) => values.has(g)).concat(extras);
+      opts.catalogRef.length = 0;
+      opts.catalogRef.push(...groups);
+      wrap.innerHTML = groups.map((key) =>
+        '<label class="pagleve-marca-option"><input type="checkbox" value="' + esc(key) + '" />'
+        + '<span>' + esc(opts.label(key)) + '</span></label>',
+      ).join('');
+      wrap.addEventListener('change', (e) => {
+        const input = e.target.closest('input[type="checkbox"]');
+        if (!input) return;
+        if (input.checked) opts.selected.add(input.value);
+        else opts.selected.delete(input.value);
+        syncPagleveFilterBadge(opts.btnId, opts.badgeId, opts.selected);
+        applySearch(q?.value || '');
+      });
+      bindClick(opts.btnId, (e) => {
+        e.stopPropagation();
+        const panel = document.getElementById(opts.panelId);
+        const btn = document.getElementById(opts.btnId);
+        if (!panel || !btn) return;
+        document.querySelectorAll('.pagleve-marca-panel').forEach((p) => {
+          if (p.id !== opts.panelId) p.hidden = true;
+        });
+        document.querySelectorAll('.pagleve-marca-filter-btn').forEach((b) => {
+          if (b.id !== opts.btnId) b.setAttribute('aria-expanded', 'false');
+        });
+        const open = panel.hidden;
+        panel.hidden = !open;
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      bindClick(opts.clearId, () => {
+        opts.selected.clear();
+        wrap.querySelectorAll('input[type="checkbox"]').forEach((el) => { el.checked = false; });
+        syncPagleveFilterBadge(opts.btnId, opts.badgeId, opts.selected);
+        applySearch(q?.value || '');
+      });
+      bindClick(opts.allId, () => {
+        opts.selected.clear();
+        for (const v of opts.catalogRef) opts.selected.add(v);
+        wrap.querySelectorAll('input[type="checkbox"]').forEach((el) => { el.checked = true; });
+        syncPagleveFilterBadge(opts.btnId, opts.badgeId, opts.selected);
+        applySearch(q?.value || '');
+      });
+    }
+    function initSuperficieFilter() {
+      initPagleveMultiFilter({
+        optionsId: 'filter-superficie-options',
+        panelId: 'filter-superficie-panel',
+        btnId: 'filter-superficie-btn',
+        badgeId: 'filter-superficie-badge',
+        clearId: 'filter-superficie-clear',
+        allId: 'filter-superficie-all',
+        selected: filterSuperficiesSelected,
+        catalogRef: pagLeveSuperficieCatalog,
+        order: PAGLEVE_TEXTURA_GRUPO_ORDER,
+        valueFromItem: (item) => catalogTexturaGrupo(item),
+        label: (k) => k,
+      });
+    }
+    function initPeiUsoFilter() {
+      initPagleveMultiFilter({
+        optionsId: 'filter-uso-options',
+        panelId: 'filter-uso-panel',
+        btnId: 'filter-uso-btn',
+        badgeId: 'filter-uso-badge',
+        clearId: 'filter-uso-clear',
+        allId: 'filter-uso-all',
+        selected: filterPeiUsoSelected,
+        catalogRef: pagLevePeiUsoCatalog,
+        order: PAGLEVE_PEI_USO_ORDER,
+        valueFromItem: (item) => catalogPeiUso(item),
+        label: (k) => 'PEI ' + k,
+      });
+    }
+    function itemPrecoEfetivoCatalogo(item) {
+      return precoEfetivo(item?.preco_m2);
+    }
+    function fmtPrecoRangeLabel(v) {
+      return 'R$ ' + fmtDecimal(v, v >= 100 ? 0 : 2);
+    }
+    function syncPrecoRangeSubtitle() {
+      const sub = document.getElementById('filter-preco-sub');
+      if (!sub) return;
+      if (hasDescontoAtivo()) {
+        const parts = [];
+        if (descontoComercialPct > 0) parts.push('desc. ' + fmtDecimal(descontoComercialPct, 1) + '%');
+        const inc = descontoIncentivoPct();
+        if (inc > 0) parts.push('incentivo ' + fmtDecimal(inc, 1) + '%');
+        sub.textContent = 'Sliders com preço líquido (' + parts.join(' + ') + ').';
+      } else {
+        sub.textContent = 'Tabela cheia — sem desconto na barra superior.';
+      }
+    }
+    function openPrecoRangeDialog() {
+      const overlay = document.getElementById('filter-preco-overlay');
+      const btn = document.getElementById('filter-preco-btn');
+      if (!overlay) return;
+      syncPrecoRangeSubtitle();
+      if (pagLeveRefreshPrecoBounds) pagLeveRefreshPrecoBounds({ keepFilter: true });
+      overlay.classList.add('open');
+      overlay.setAttribute('aria-hidden', 'false');
+      if (btn) btn.setAttribute('aria-expanded', 'true');
+      document.body.style.overflow = 'hidden';
+    }
+    function closePrecoRangeDialog() {
+      const overlay = document.getElementById('filter-preco-overlay');
+      const btn = document.getElementById('filter-preco-btn');
+      if (!overlay) return;
+      overlay.classList.remove('open');
+      overlay.setAttribute('aria-hidden', 'true');
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+      syncBodyScrollLock();
+    }
+    function refreshPrecoCatalogBounds(opts) {
+      if (CATALOG_SKIN !== 'pagleve') return;
+      const effs = CATALOGO.itens.map((i) => itemPrecoEfetivoCatalogo(i)).filter((n) => n != null && n > 0);
+      if (!effs.length) return;
+      const prev = precoCatalogBounds;
+      const rawMin = Math.floor(Math.min(...effs) * 10) / 10;
+      const rawMax = Math.ceil(Math.max(...effs) * 10) / 10;
+      const wasFull = !filterPrecoActive
+        || (filterPrecoMin <= (prev.min ?? rawMin) && filterPrecoMax >= (prev.max ?? rawMax));
+      precoCatalogBounds = { min: rawMin, max: rawMax, step: rawMax > 80 ? 0.5 : 0.1 };
+      const minR = document.getElementById('filter-preco-min-range');
+      const maxR = document.getElementById('filter-preco-max-range');
+      if (minR && maxR) {
+        for (const el of [minR, maxR]) {
+          el.min = String(rawMin);
+          el.max = String(rawMax);
+          el.step = String(precoCatalogBounds.step);
+        }
+        if (wasFull && !(opts && opts.keepFilter && filterPrecoActive)) {
+          filterPrecoActive = false;
+          filterPrecoMin = rawMin;
+          filterPrecoMax = rawMax;
+          minR.value = String(rawMin);
+          maxR.value = String(rawMax);
+        } else if (filterPrecoActive) {
+          filterPrecoMin = Math.max(rawMin, Math.min(filterPrecoMin, rawMax));
+          filterPrecoMax = Math.min(rawMax, Math.max(filterPrecoMax, rawMin));
+          minR.value = String(filterPrecoMin);
+          maxR.value = String(filterPrecoMax);
+        } else {
+          filterPrecoMin = rawMin;
+          filterPrecoMax = rawMax;
+          minR.value = String(rawMin);
+          maxR.value = String(rawMax);
+        }
+      }
+      syncPrecoRangeUi();
+      if (filterPrecoActive) applySearch(q?.value || '');
+    }
+    function syncPrecoRangeUi() {
+      const minR = document.getElementById('filter-preco-min-range');
+      const maxR = document.getElementById('filter-preco-max-range');
+      const fill = document.getElementById('filter-preco-fill');
+      const minL = document.getElementById('filter-preco-min-label');
+      const maxL = document.getElementById('filter-preco-max-label');
+      if (!minR || !maxR) return;
+      let lo = Number(minR.value);
+      let hi = Number(maxR.value);
+      if (lo > hi) {
+        [lo, hi] = [hi, lo];
+        minR.value = String(lo);
+        maxR.value = String(hi);
+      }
+      if (minL) minL.textContent = fmtPrecoRangeLabel(lo);
+      if (maxL) maxL.textContent = fmtPrecoRangeLabel(hi);
+      if (fill && precoCatalogBounds.max > precoCatalogBounds.min) {
+        const span = precoCatalogBounds.max - precoCatalogBounds.min;
+        const left = ((lo - precoCatalogBounds.min) / span) * 100;
+        const width = ((hi - lo) / span) * 100;
+        fill.style.left = left + '%';
+        fill.style.width = width + '%';
+      }
+      const btn = document.getElementById('filter-preco-btn');
+      const badge = document.getElementById('filter-preco-badge');
+      const narrowed = filterPrecoActive && (
+        filterPrecoMin > precoCatalogBounds.min || filterPrecoMax < precoCatalogBounds.max
+      );
+      if (btn) btn.classList.toggle('active', narrowed);
+      if (badge) {
+        badge.hidden = !narrowed;
+        badge.textContent = '·';
+      }
+    }
+    function applyPrecoRangeFilter() {
+      const minR = document.getElementById('filter-preco-min-range');
+      const maxR = document.getElementById('filter-preco-max-range');
+      if (!minR || !maxR) return;
+      filterPrecoMin = Number(minR.value);
+      filterPrecoMax = Number(maxR.value);
+      filterPrecoActive = true;
+      syncPrecoRangeUi();
+      applySearch(q?.value || '');
+      closePrecoRangeDialog();
+    }
+    function initPrecoRangeFilter() {
+      if (CATALOG_SKIN !== 'pagleve') return;
+      const minR = document.getElementById('filter-preco-min-range');
+      const maxR = document.getElementById('filter-preco-max-range');
+      if (!minR || !maxR) return;
+      pagLeveRefreshPrecoBounds = refreshPrecoCatalogBounds;
+      refreshPrecoCatalogBounds();
+      const onSlide = () => syncPrecoRangeUi();
+      minR.addEventListener('input', onSlide);
+      maxR.addEventListener('input', onSlide);
+      bindClick('filter-preco-btn', (e) => {
+        e.stopPropagation();
+        const overlay = document.getElementById('filter-preco-overlay');
+        if (overlay?.classList.contains('open')) closePrecoRangeDialog();
+        else openPrecoRangeDialog();
+      });
+      bindClick('filter-preco-close', closePrecoRangeDialog);
+      const overlay = document.getElementById('filter-preco-overlay');
+      overlay?.addEventListener('click', (e) => {
+        if (e.target === overlay) closePrecoRangeDialog();
+      });
+      bindClick('filter-preco-apply', applyPrecoRangeFilter);
+      bindClick('filter-preco-clear', () => {
+        filterPrecoActive = false;
+        filterPrecoMin = precoCatalogBounds.min;
+        filterPrecoMax = precoCatalogBounds.max;
+        minR.value = String(precoCatalogBounds.min);
+        maxR.value = String(precoCatalogBounds.max);
+        syncPrecoRangeUi();
+        applySearch(q?.value || '');
+        closePrecoRangeDialog();
+      });
+      syncPrecoRangeSubtitle();
+    }
     function initCatalogControls() {
       if (groupSel) groupSel.value = groupBy;
       if (groupSelD) groupSelD.value = groupBy;
+      initSuperficieFilter();
+      initPeiUsoFilter();
+      initPrecoRangeFilter();
+      if (CATALOG_SKIN === 'pagleve') {
+        document.addEventListener('click', (e) => {
+          if (e.target.closest('.pagleve-marca-filter')) return;
+          document.querySelectorAll('.pagleve-marca-panel').forEach((p) => { p.hidden = true; });
+          document.querySelectorAll('.pagleve-marca-filter-btn').forEach((b) => b.setAttribute('aria-expanded', 'false'));
+        });
+      }
     }
     function toggleFilterQty(btn) {
       filterQtyOnly = !filterQtyOnly;
@@ -5086,6 +6176,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         onThumbClick(btn);
         return;
       }
+      const markBtn = e.target.closest('.mark-btn');
+      if (markBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleMark(markBtn.dataset.cod);
+        return;
+      }
       if (e.target.closest('.qty-input')) return;
       const row = e.target.closest('.model-row');
       if (!row || row.classList.contains('hidden')) return;
@@ -5108,6 +6205,19 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     const btnNext = document.getElementById('gallery-next');
     let galeriaAtual = [];
     let galeriaIdx = 0;
+    const lbFabricanteLink = document.getElementById('lightbox-fabricante-link');
+
+    function syncLightboxFabricanteLink(url) {
+      if (!lbFabricanteLink) return;
+      const u = String(url || '').trim();
+      if (u && /^https?:\\/\\//i.test(u)) {
+        lbFabricanteLink.href = u;
+        lbFabricanteLink.hidden = false;
+      } else {
+        lbFabricanteLink.hidden = true;
+        lbFabricanteLink.removeAttribute('href');
+      }
+    }
 
     function renderGaleriaIdx(idx) {
       if (!galeriaAtual.length) return;
@@ -5124,7 +6234,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       ).join('');
     }
 
-    function openGaleria(imagens, title, loadingMore) {
+    function openGaleria(imagens, title, loadingMore, produtoUrl) {
       galeriaAtual = imagens.length ? imagens : [];
       galeriaIdx = 0;
       lbTitle.textContent = title || 'Modelo';
@@ -5132,6 +6242,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         lbMeta.textContent = 'A carregar mais fotos…';
         lbMeta.classList.add('loading');
       }
+      syncLightboxFabricanteLink(produtoUrl);
       renderGaleriaIdx(0);
       lb.classList.add('open');
       syncBodyScrollLock();
@@ -5141,6 +6252,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       lb.classList.remove('open', 'has-multi');
       lbImg.src = '';
       galeriaAtual = [];
+      syncLightboxFabricanteLink('');
       syncBodyScrollLock();
     }
 
@@ -5148,7 +6260,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       const title = btn.dataset.title || 'Modelo';
       const item = itemsByCode.get(String(btn.dataset.cod || ''));
       const imagens = item ? getGaleria(item) : [];
-      openGaleria(imagens, title, false);
+      let produtoUrl = item?.produto_url || '';
+      if (!produtoUrl && item?.formigres_id) {
+        produtoUrl = 'https://www.formigres.com.br/produto/' + item.formigres_id;
+      }
+      openGaleria(imagens, title, false, produtoUrl);
     }
 
     btnPrev.addEventListener('click', () => renderGaleriaIdx(galeriaIdx - 1));
@@ -5162,7 +6278,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     lb.addEventListener('click', (e) => { if (e.target === lb) closeLightbox(); });
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
-        if (lb.classList.contains('open')) closeLightbox();
+        if (document.getElementById('filter-preco-overlay')?.classList.contains('open')) closePrecoRangeDialog();
+        else if (lb.classList.contains('open')) closeLightbox();
         else if (pedidoPdfSheetOpen) closePedidoPdfSheet();
         else if (pedidoOpen) closePedidoPanel();
       }
@@ -5206,6 +6323,16 @@ async function mainAsync() {
         produto_url: item.produto_url || '',
       };
     });
+    let pdfThumbs = {};
+    let pdfThumbsInline = {};
+    if (!CFG.skipPdfThumbs) {
+      console.error('A gerar miniaturas leves para PDF…');
+      pdfThumbs = await buildPdfThumbMap(itens);
+      pdfThumbsInline = CFG.pdfThumbsExternal ? {} : pdfThumbs;
+    } else {
+      console.error('A saltar miniaturas PDF embutidas (catálogo grande).');
+    }
+    const thumbsCount = Object.values(pdfThumbs).filter(Boolean).length;
     const antLogoDataUri = loadAntLogoDataUri();
     const brandLogoDataUri = loadBrandLogoDataUri(CFG);
     const pdfFontCss = loadPdfFontFaceCss();
@@ -5214,7 +6341,7 @@ async function mainAsync() {
       itens,
       antLogoDataUri,
       brandLogoDataUri,
-      pdfThumbs: {},
+      pdfThumbs: pdfThumbsInline,
       pdfFontCss,
       cfg: CFG,
     });
@@ -5222,17 +6349,26 @@ async function mainAsync() {
     fs.mkdirSync(path.dirname(OUT_DEPLOY_HTML), { recursive: true });
     fs.writeFileSync(OUT_HTML, html);
     fs.writeFileSync(OUT_DEPLOY_HTML, html);
+    if (!CFG.skipPdfThumbs) {
+      fs.writeFileSync(OUT_PDF_THUMBS, `${JSON.stringify(pdfThumbs)}\n`);
+      if (CFG.pdfThumbsExternal) {
+        const deployThumbs = path.join(path.dirname(OUT_DEPLOY_HTML), 'pdf-thumbs.json');
+        fs.writeFileSync(deployThumbs, `${JSON.stringify(pdfThumbs)}\n`);
+      }
+    }
     const htmlKb = Math.round(fs.statSync(OUT_DEPLOY_HTML).size / 1024);
     console.log(JSON.stringify({
       ok: true,
       modo: MODO,
       itens: itens.length,
       comFoto: itens.filter((i) => i.imagem_url).length,
+      pdfThumbs: thumbsCount,
       htmlKb,
       fonte: jsonPath,
       html: OUT_HTML,
       deployHtml: OUT_DEPLOY_HTML,
       publicUrl: PUBLIC_URL,
+      pdfThumbsFile: OUT_PDF_THUMBS,
     }, null, 2));
     return;
   }

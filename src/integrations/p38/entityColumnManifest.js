@@ -51,10 +51,11 @@ export const PEDIDO_COMPRA_COLUMNS = [
   'itens', 'valor_total', 'valor_frete', 'valor_desconto', 'forma_pagamento_compra',
   'observacoes', 'historico', 'tags', 'nfe_emitida',
   'conta_pagamento_id', 'tem_divergencias', 'conferencia_id', 'data_aprovacao_financeira',
+  'data_primeiro_vencimento',
   'data_despacho', 'data_chegada', 'data_conclusao', 'motivo_rejeicao_financeira',
   'status_conferencia_pedido', 'solicitacao_edicao_data', 'solicitacao_edicao_motivo',
   'solicitacao_edicao_solicitante', 'solicitacao_cancelamento_data', 'solicitacao_cancelamento_motivo',
-  'manifesto_entrada_id', 'is_encomenda',
+  'manifesto_entrada_id', 'is_encomenda', 'despesas_rateadas',
 ];
 
 export const EMBARQUE_COLUMNS = [

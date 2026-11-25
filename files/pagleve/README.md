@@ -1,39 +1,47 @@
-# PagLeve — raio-x (estoque SIAH)
+# PagLeve — catálogo virtual (PDF fábrica × PRE_OS)
 
-Arquivos gerados na análise **formato a formato**, com fabricante só quando há **URL no site** (ou indicação documentada).
+**Regra:** entram no site **só** produtos que aparecem nos **PDFs de fábrica** (relatório 510 por marca) **e** têm **preço no PRE_OS**.  
+Está no PRE_OS mas **não** está em Incopisos / Formigres / Carmelo Fior / Arielle / Rochaprime → **fora do catálogo**.
 
-| Arquivo | Conteúdo |
-|---------|----------|
-| `raio-x-pagleve-site-verificado.xlsx` | Planilha principal (328 itens) — abrir no Excel |
-| `raio-x-pagleve-site-verificado.csv` | Mesma planilha em CSV |
-| `pagleve-fabricantes-sites-oficiais.md` | Sites oficiais e regras de busca |
-| `pagleve-precos-sibling-match.md` | **Planejado:** preços por “irmão” (formato → acabamento → linha) quando o Excel não tem preço |
-| `pagleve-local-uso-nbr.md` | **Local de uso:** NBR LA–LE como eixo comum; tradução por fabricante (cerâmica) |
-| `pagleve-orfaos-descricao-por-formato.md` | Órfãos com descrição ERP para pesquisa |
+| Fonte | Ficheiro em `fonte/` | Papel |
+|--------|----------------------|--------|
+| **PDF fábrica (510)** | `formigres_*.pdf`, `rochaprime_*.pdf`, `carmelo_fior_*.pdf`, `arielle_*.pdf`, `incopisos_*.pdf` | **Quem entra** — código loja + origem + descrição |
+| **PRE_OS** | `PRE_OS_0973.pdf` | **Preço/m²** (e confirma venda); estoque ignorado → disponível |
+| **Estoque Casa Israel** | `docs/ESTOQUE PARA CASA ISRAEL*.XLSX` | **Descrição/referência SIAH** usada na classificação (ex. Florence vs texto errado no cruzamento) |
 
-Atualizar match no site (ordem por fabricante que o João indicou):
+Gerar / atualizar base:
 
 ```bash
-npm run catalogo:match-pagleve-indicacoes   # regras + busca só nos 56 “indicação João”
-# ou match completo por formato:
-npm run catalogo:match-pagleve
+npm run catalogo:montar-base-pagleve
 ```
 
-## Catálogo web (estilo premium, como Tintão)
+Saídas principais:
 
-Depois de atualizar o CSV:
+| Ficheiro | Conteúdo |
+|----------|----------|
+| `pagleve-base-cruzada.csv` | Lista-mãe do catálogo (substitui o raio-x antigo de ~328 itens) |
+| `precos-pre-os.json` | Preços por código loja (usado na classificação) |
+| `pagleve-base-meta.json` | Resumo (cruzados vs só PRE_OS) |
+
+Publicar catálogo web (match de fichas + fotos + HTML + deploy Vercel via push em `deploy/catalogo-pagleve/`):
 
 ```bash
 npm run catalogo:publicar-pagleve
 ```
 
-Usa o **mesmo layout do Tintão** (Libre Franklin, carrinho de caixas, **campo Desconto** no topo, árvore **Bold** e **Retificada** com acabamentos — **polida/polido é textura dentro de Retificada**, não terceira linha).
+**Arielle:** marca no PDF 510; no catálogo grupo **Carmelo Fior**, filtro de marca **Arielle**; fichas buscam no site Carmelo/Arielle.
 
-**Preços:** coluna **Preço Varejo** do relatório SIAH que o fornecedor mandou (scans em `fornecedor-siah-scans/` → `precos-siah-fornecedor.csv`).
+---
 
-```bash
-npm run catalogo:extrair-precos-pagleve   # OCR dos scans (tesseract)
-npm run catalogo:publicar-pagleve         # regras + match indicações + classificar + preços + HTML
-```
+## Legado (referência)
 
-Publicação: projecto Vercel isolado em `deploy/catalogo-pagleve/` — ver README dessa pasta.
+| Arquivo | Conteúdo |
+|---------|----------|
+| `raio-x-pagleve-site-verificado.xlsx` | Planilha antiga (328 itens) — **não** é mais a lista-mãe |
+| `raio-x-pagleve-site-verificado.csv` | Mesma planilha em CSV |
+| `pagleve-fabricantes-sites-oficiais.md` | Sites oficiais e regras de busca |
+| `pagleve-precos-sibling-match.md` | **Planejado:** preços por “irmão” (formato → acabamento → linha) quando o Excel não tem preço |
+| `pagleve-local-uso-nbr.md` | **Local de uso:** NBR LA–LE como eixo comum; tradução por fabricante (cerâmica) |
+| `pagleve-orfaos-descricao-por-formato.md` | Órfãos com descrição ERP para pesquisa |
+| `precos-siah-fornecedor.csv` | OCR scans WhatsApp — substituído por `precos-pre-os.json` quando existir |
+

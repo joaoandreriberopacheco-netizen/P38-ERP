@@ -8,27 +8,26 @@ import { loadP38SecretsBundle } from './load-p38-secrets-bundle.mjs';
 import { resolveP38Secrets } from './p38-secrets.mjs';
 import { createSupabaseEntityLayer } from '../src/integrations/p38/supabaseEntityLayer.js';
 import { toSupabaseEdgeFunctionName } from '../src/lib/p38EdgeFunctionNames.js';
+import { resolveP38SupabaseAdminConfig } from './p38-supabase-admin.mjs';
+
+export { requireP38SupabaseAdmin, resolveP38SupabaseAdminConfig } from './p38-supabase-admin.mjs';
 
 /**
  * @returns {{ supabase: import('@supabase/supabase-js').SupabaseClient, entities: object, functions: { invoke: Function } }}
  */
 export function requireP38SupabaseScriptClient() {
-  loadDotEnvFiles();
-  loadP38SecretsBundle();
-  const secrets = resolveP38Secrets();
-  let url = secrets.supabaseUrl;
-  const serviceRoleKey = secrets.serviceRoleKey;
-
-  if (!url && secrets.databaseUrl && secrets.projectRef) {
-    url = `https://${secrets.projectRef}.supabase.co`;
-  }
+  const { url, serviceRoleKey } = resolveP38SupabaseAdminConfig();
 
   if (!url || !serviceRoleKey) {
-    console.error(
-      '[P38] Scripts Supabase: defina VITE_SUPABASE_URL (ou NEXT_PUBLIC_SUPABASE_URL) e SUPABASE_SERVICE_ROLE_KEY.',
-    );
+    if (!url) {
+      console.error(
+        '[P38] URL Supabase em falta. Defina NEXT_PUBLIC_SUPABASE_URL (recomendado) ou VITE_SUPABASE_URL.',
+      );
+    }
+    if (!serviceRoleKey) {
+      console.error('[P38] SUPABASE_SERVICE_ROLE_KEY em falta.');
+    }
     console.error('Guia: docs/migration/P38_CONFIGURAR_SECRETS_PASSO_A_PASSO.md');
-    console.error('(Base44 não faz parte deste projeto — dados e Edge Functions estão no Supabase.)');
     process.exit(1);
   }
 

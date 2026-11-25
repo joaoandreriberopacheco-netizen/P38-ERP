@@ -72,7 +72,11 @@ export async function gerarViagensTransportadoraLocal(entities, transportadora) 
   }
   const viagensNormalizadas = [...viagensPorId.values()];
   const codigosLocais = new Set(viagensNormalizadas.map((viagem) => viagem.codigo).filter(Boolean));
-  const saidasExistentes = new Set(viagensNormalizadas.map((viagem) => viagem.data_saida_origem).filter(Boolean));
+  const saidasExistentes = new Set(
+    viagensNormalizadas
+      .map((viagem) => (viagem.data_saida_origem ? String(viagem.data_saida_origem).slice(0, 10) : null))
+      .filter(Boolean),
+  );
 
   let sequencia = 1;
   const novasViagens = [];

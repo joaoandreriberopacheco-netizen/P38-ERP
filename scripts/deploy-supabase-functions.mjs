@@ -20,6 +20,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 const functionsDir = path.join(root, 'supabase', 'functions');
 
+/** Pin para CI previsível; v3 exige [local_smtp] e --remote + --yes em deploy hosted. */
+const SUPABASE_CLI_VERSION = '3.0.0';
+
 function resolveProjectRef() {
   return resolveSupabaseDeployEnv().projectRef || null;
 }
@@ -73,13 +76,13 @@ export async function deploySupabaseFunctions({ dryRun = false } = {}) {
 
     const deployArgs = [
       '--yes',
-      'supabase@latest',
+      `supabase@${SUPABASE_CLI_VERSION}`,
       'functions',
       'deploy',
       name,
-      '--project-ref',
-      projectRef,
+      `--remote=${projectRef}`,
       '--use-api',
+      '--yes',
     ];
     if (functionSkipsJwtVerify(name)) {
       deployArgs.push('--no-verify-jwt');

@@ -1,21 +1,11 @@
 import { base44 } from '@/api/base44Client';
-import { generateRelatorioPedidosCompraPdf } from '@/lib/relatorioPedidosCompraPdf/generateRelatorioPedidosCompraPdf';
+import { gerarRelatorioPedidosCompra } from '@/functions/gerarRelatorioPedidosCompra';
 import { hydratePedidosCompraItensFromSql } from '@/lib/fetchPedidoCompraItens';
 import { getEmbarqueItensLinhas, hydrateEmbarquesFromSql } from '@/lib/fetchEmbarqueItens';
 import { carregarProdutosMap } from '@/lib/embarqueVitrineHelpers';
+import { materializePedidosCompraView } from '@/lib/comprasEmbarqueCards';
+import { buildGruposConsultaEmbarques, enrichEmbarqueParaConsulta } from '@/lib/consultaComprasEmbarques';
 import { normalizarPedidoParaRelatorio } from '@/lib/comprasRelatorioPedidos';
-import { isEmbarqueSaldoPendente } from '@/lib/embarqueTipoSaldoPendente';
-
-function buildEmbarqueFallback(pedidoId, pedidoNumero) {
-  return {
-    id: `original-${pedidoId}`,
-    pedido_compra_id: pedidoId,
-    numero: pedidoNumero || '',
-    tipo: 'Original',
-    status: 'Pendente',
-    status_recebimento: 'Pendente',
-  };
-}
 
 async function carregarPedidoParaMinutaAnexos(pedidoId) {
   const pedido = await base44.entities.PedidoCompra.get(pedidoId);
@@ -34,13 +24,6 @@ async function carregarPedidoParaMinutaAnexos(pedidoId) {
     embarquesDb = [];
   }
 
-  const embarque =
-    embarquesDb
-      .filter((item) => !isEmbarqueSaldoPendente(item))
-      .sort((a, b) => new Date(a.created_date || 0) - new Date(b.created_date || 0))[0]
-    || embarquesDb[0]
-    || buildEmbarqueFallback(pedidoId, pedido.numero);
-
   const produtoIds = [
     ...new Set([
       ...(pedido.itens || []).map((item) => item.produto_id).filter(Boolean),
@@ -49,22 +32,25 @@ async function carregarPedidoParaMinutaAnexos(pedidoId) {
   ];
   const produtosMap = await carregarProdutosMap(produtoIds.map((id) => ({ produto_id: id })));
 
-  const pedidoNormalizado = normalizarPedidoParaRelatorio(
-    {
-      ...pedido,
-      _embarque: embarque,
-      _display_code: pedido.numero,
-      _display_fornecedor: pedido.fornecedor_nome || '—',
-      _display_status: pedido.status,
-    },
-    produtosMap,
-  );
+  const { cardsDeEmbarque } = materializePedidosCompraView([pedido], embarquesDb, produtosMap);
+  const pedidosConsulta = (cardsDeEmbarque || []).map((card) => enrichEmbarqueParaConsulta(card, produtosMap));
 
-  return { pedido: pedidoNormalizado, produtosMap };
+  return { pedido, pedidosConsulta, produtosMap };
+}
+
+function buildGruposMinutaPedido(pedidosConsulta, produtosMap) {
+  if (!pedidosConsulta.length) return [];
+  return buildGruposConsultaEmbarques(pedidosConsulta, 'eta_transportadora', 'asc').map((grupo) => ({
+    key: grupo.key,
+    label: grupo.label,
+    groupDate: grupo.groupDate,
+    groupCarrier: grupo.groupCarrier,
+    pedidos: (grupo.cards || []).map((card) => normalizarPedidoParaRelatorio(card, produtosMap)),
+  }));
 }
 
 /**
- * Exporta anexos do pedido com minuta A4 na 1ª página (enxuto + consulta mobile).
+ * Minuta individual: capa enxuta (mesmo PDF da consulta nos relatórios) + anexos.
  */
 export async function exportPedidoAnexosComMinutaPdf({
   pedidoId,
@@ -76,14 +62,27 @@ export async function exportPedidoAnexosComMinutaPdf({
     throw new Error('Pedido não informado para exportar anexos com minuta.');
   }
 
-  const { pedido, produtosMap } = await carregarPedidoParaMinutaAnexos(pedidoId);
+  const { pedido, pedidosConsulta, produtosMap } = await carregarPedidoParaMinutaAnexos(pedidoId);
   const anexosValidos = (anexos || []).filter((item) => item?.url_drive);
+  const numero = pedidoNumero || pedido.numero || pedidoId;
 
-  const resultado = await generateRelatorioPedidosCompraPdf({
-    pedidos: [pedido],
+  if (!pedidosConsulta.length) {
+    throw new Error('Não há dados do pedido para montar a minuta.');
+  }
+
+  const pedidosNormalizados = pedidosConsulta.map((card) => normalizarPedidoParaRelatorio(card, produtosMap));
+  const grupos = buildGruposMinutaPedido(pedidosConsulta, produtosMap);
+  const totalGeral = pedidosConsulta.reduce(
+    (acc, card) => acc + (Number(card._consulta_valor) || Number(card._display_valor) || 0),
+    0,
+  );
+
+  const resultado = await gerarRelatorioPedidosCompra({
+    pedidos: pedidosNormalizados,
+    grupos,
     version: 'expandida_com_anexos_a4',
-    filtros_desc: `Anexos do pedido ${pedidoNumero || pedido.numero || pedidoId}`,
-    kpis: { totalPedidos: 1, totalGeral: pedido.valor_total || 0 },
+    filtros_desc: `Pedido ${numero}`,
+    kpis: { totalPedidos: pedidosNormalizados.length, totalGeral },
     produtos_map: produtosMap,
     anexos_por_pedido: { [pedidoId]: anexosValidos },
   });

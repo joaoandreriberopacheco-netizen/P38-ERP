@@ -744,6 +744,74 @@ export function linhaPrecoNoEixoFatorUm(linha = {}) {
   return false;
 }
 
+/** Tolerância relativa para comparar preços na mesma ordem de grandeza. */
+function tolPrecoUnitario(ref = 0) {
+  const base = Math.abs(Number(ref) || 0);
+  return Math.max(0.001, 0.001 * base);
+}
+
+/**
+ * Snapshot `*_apresentacao` gravado por engano no eixo fator-1 (R$/UN) com linha em CX/PAC.
+ * Não confundir com preço comercial legítimo (já × fator).
+ */
+export function custoApresentacaoPareceEixoFatorUm(linha = {}, apres, unitF1) {
+  const f = normalizeNumber(linha.fator_conversao, 1) || 1;
+  if (f <= 1) return false;
+  const a = normalizeNumber(apres, 0);
+  const u = normalizeNumber(unitF1, 0);
+  if (!(a > 0 && u > 0)) return false;
+  return Math.abs(a - u) <= tolPrecoUnitario(u);
+}
+
+/** Converte preço de apresentação errado (fator-1) para unidade comercial da linha. */
+export function corrigirCustoApresentacaoComercialLinha(linha = {}, apres, unitF1) {
+  const f = normalizeNumber(linha.fator_conversao, 1) || 1;
+  const a = normalizeNumber(apres, 0);
+  if (!(a > 0)) return 0;
+  const u = normalizeNumber(unitF1, 0);
+  if (custoApresentacaoPareceEixoFatorUm(linha, a, u)) {
+    return roundToTwoDecimals(custoFator1ParaApresentacao(u, f));
+  }
+  return roundToTwoDecimals(a);
+}
+
+/**
+ * Corrige linhas CX/PAC cujo preço de apresentação ficou no eixo fator-1 (valor_compra)
+ * ao abrir o item com o produto do catálogo.
+ */
+export function repararLinhaCompraApresentacaoComProduto(item = {}, product = null) {
+  if (!product) return item;
+  const f = normalizeNumber(item.fator_conversao, 1) || 1;
+  if (f <= 1) return item;
+
+  const unit = normalizeUnitCode(item.unidade_medida || item.unidade_apresentacao);
+  const opcoes = buildPurchaseUnitOptions(product);
+  const opt = opcoes.find((o) => normalizeUnitCode(o.unidade) === unit);
+  const precoEmbalagemSugerido = normalizeNumber(opt?.valor_unitario, 0);
+  if (!(precoEmbalagemSugerido > 0)) return item;
+
+  const catalogoF1 = normalizeNumber(product.valor_compra, 0);
+  const custoF1 = normalizeNumber(item.custo_unitario, 0);
+  const apresSnapshot = normalizeNumber(item.custo_unitario_apresentacao, NaN);
+  const apresReferencia =
+    Number.isFinite(apresSnapshot) && apresSnapshot > 0 ? apresSnapshot : custoF1;
+
+  const parecePrecoUnidadeBase =
+    (catalogoF1 > 0 &&
+      apresReferencia > 0 &&
+      Math.abs(apresReferencia - catalogoF1) <= tolPrecoUnitario(catalogoF1)) ||
+    custoApresentacaoPareceEixoFatorUm(item, apresReferencia, custoF1);
+
+  if (!parecePrecoUnidadeBase) return item;
+  if (precoEmbalagemSugerido <= apresReferencia * 1.25) return item;
+
+  const reconciliado = syncItemDescontoApresentacao(item, precoEmbalagemSugerido);
+  return {
+    ...reconciliado,
+    total: calcTotalItemCompraPedido(reconciliado),
+  };
+}
+
 /** Custo/preço na unidade comercial (vitrine ou embalagem escolhida). */
 export function custoFator1ParaApresentacao(valorFator1, fatorConversao = 1) {
   return normalizeNumber(valorFator1, 0) * (normalizeNumber(fatorConversao, 1) || 1);
@@ -771,7 +839,7 @@ export function resolveCustoUnitarioComercialLinha(linha = {}, axis = "custo") {
       : normalizeNumber(linha.custo_unitario, NaN);
 
   if (Number.isFinite(apres) && apres > 0) {
-    return roundToTwoDecimals(apres);
+    return corrigirCustoApresentacaoComercialLinha(linha, apres, unitF1);
   }
 
   if (!(Number.isFinite(unitF1) && unitF1 > 0)) return 0;
@@ -1037,7 +1105,8 @@ export function calcTotalItemCompraPedido(item = {}) {
       if (
         custoLiquidoF1 > 0 &&
         custoApres > 0 &&
-        Math.abs(custoApres - custoLiquidoF1) <= Math.max(0.001, 0.001 * custoLiquidoF1)
+        (Math.abs(custoApres - custoLiquidoF1) <= Math.max(0.001, 0.001 * custoLiquidoF1) ||
+          custoApresentacaoPareceEixoFatorUm(item, custoApres, custoLiquidoF1))
       ) {
         return totalViaBase();
       }
@@ -1125,18 +1194,37 @@ export function normalizeItemToCanonicalFactorOne(item = {}, axisPrefix = "custo
   let unitVal = normalizeNumber(item?.[unitField], 0);
   let finalVal = normalizeNumber(item?.[finalField], unitVal);
 
+  const apresPareceF1 =
+    fator > 1 &&
+    Number.isFinite(apresExplicit) &&
+    apresExplicit > 0 &&
+    custoApresentacaoPareceEixoFatorUm(item, apresExplicit, unitVal);
+  const finalApresPareceF1 =
+    fator > 1 &&
+    Number.isFinite(finalApresExplicit) &&
+    finalApresExplicit > 0 &&
+    custoApresentacaoPareceEixoFatorUm(item, finalApresExplicit, finalVal);
+
   // Preço da embalagem (CX/PAC) é fonte da verdade quando já veio do documento/importação.
-  if (fator > 1 && Number.isFinite(apresExplicit) && apresExplicit > 0) {
+  if (fator > 1 && Number.isFinite(apresExplicit) && apresExplicit > 0 && !apresPareceF1) {
     unitVal = apresExplicit / fator;
   }
-  if (fator > 1 && Number.isFinite(finalApresExplicit) && finalApresExplicit > 0) {
+  if (fator > 1 && Number.isFinite(finalApresExplicit) && finalApresExplicit > 0 && !finalApresPareceF1) {
     finalVal = finalApresExplicit / fator;
   }
 
   const unitApresentacao =
-    Number.isFinite(apresExplicit) && apresExplicit > 0 ? apresExplicit : unitVal * fator;
+    apresPareceF1
+      ? roundToTwoDecimals(custoFator1ParaApresentacao(unitVal, fator))
+      : Number.isFinite(apresExplicit) && apresExplicit > 0
+        ? apresExplicit
+        : unitVal * fator;
   const finalApresentacao =
-    Number.isFinite(finalApresExplicit) && finalApresExplicit > 0 ? finalApresExplicit : finalVal * fator;
+    finalApresPareceF1
+      ? roundToTwoDecimals(custoFator1ParaApresentacao(finalVal, fator))
+      : Number.isFinite(finalApresExplicit) && finalApresExplicit > 0
+        ? finalApresExplicit
+        : finalVal * fator;
 
   const payload = {
     ...item,
@@ -1561,7 +1649,8 @@ export function normalizeItemCompraParaExibicao(item = {}, produto = null) {
  * Só para UI (carrinho, cards); não altera persistência do pedido.
  */
 export function getItemCompraExibicaoVitrine(item = {}, produto = null) {
-  const norm = normalizeItemCompraParaExibicao(item, produto);
+  const itemLinha = produto ? repararLinhaCompraApresentacaoComProduto(item, produto) : item;
+  const norm = normalizeItemCompraParaExibicao(itemLinha, produto);
   const unit = norm.unidade_medida || item?.unidade_medida || "UN";
   const qty = Number(norm.quantidade) || 0;
   const total = Number(norm.valor_total_item ?? item?.total) || 0;

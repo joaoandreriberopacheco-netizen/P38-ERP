@@ -1,3 +1,65 @@
+import { lancamentoEhCompraMercadoriaPedido } from '@/lib/agefinConsultaFilters';
+import { cn } from '@/lib/utils';
+
+/** Layout extrato mobile (protótipo v8) — hero colapsável + barra verde claro. */
+export const FLUXO_EXTRATO_MOBILE_V8 = true;
+
+/** Barra fixa do extrato — abas Contas/Fluxo à esquerda (paridade com tela Contas). */
+export const P38_EXTRATO_V8_APP_BAR = cn(
+  'relative z-30 grid shrink-0 grid-cols-[auto_1fr_auto] items-center gap-2 px-4 py-2.5',
+  'bg-[#3d5a3d] text-white dark:bg-[#2d333b] dark:text-foreground',
+);
+
+/**
+ * `--font` em `fluxo-caixa-extrato-prototype.html` (system stack; sem @font-face / Google Fonts).
+ * Aplica só na árvore `FluxoExtratoMobileShell`.
+ */
+export const P38_EXTRATO_V8_FONT_FAMILY =
+  "font-[system-ui,-apple-system,'Segoe_UI',Roboto,sans-serif]";
+export const P38_EXTRATO_V8_FONT_SCOPE = cn(P38_EXTRATO_V8_FONT_FAMILY, '[&_*]:font-[inherit]');
+
+/** Paridade visual com `fluxo-caixa-extrato-prototype.html` (list-scroll / tx-row). */
+export const P38_EXTRATO_V8_LIST_BG = 'bg-[#f4f5f3] dark:bg-[#1f1d22]';
+/** Protótipo dark `--surface` / hero — contraste com `--bg` (#1f1d22). */
+export const P38_EXTRATO_V8_SURFACE_DARK = 'dark:bg-[#2d333b]';
+export const P38_EXTRATO_V8_DAY_CARD = cn(
+  'overflow-hidden rounded-xl border border-[#e5e7eb] bg-white shadow-sm dark:border-white/10 dark:shadow-none',
+  P38_EXTRATO_V8_SURFACE_DARK,
+);
+/** Bloco data + card — separação entre dias no extrato mobile. */
+export const P38_EXTRATO_V8_DAY_GROUP = 'w-full min-w-0';
+export const P38_EXTRATO_V8_DAY_LIST_GAP = 'flex flex-col gap-7';
+export const P38_EXTRATO_V8_DATE_HEADER =
+  'pb-2.5 pt-1 text-[11px] font-bold uppercase tracking-[0.04em] text-[#6b7280] dark:text-muted-foreground';
+/** `.tx-title` */
+export const P38_EXTRATO_V8_ROW_TITLE =
+  'text-sm font-semibold leading-[1.25] text-[#1a1a1a] normal-case dark:text-[#eceff1]';
+/** `.tx-meta` */
+export const P38_EXTRATO_V8_ROW_META =
+  'mt-0.5 text-[11px] font-normal leading-snug text-[#6b7280] dark:text-muted-foreground normal-case';
+/** `.tx-value` */
+export const P38_EXTRATO_V8_ROW_VALUE =
+  'text-[13px] font-bold tabular-nums whitespace-nowrap';
+/** Grid da linha — texto ~58% da largura; valor e chevron em colunas fixas (ver protótipo 40px 1fr auto 20px). */
+export const P38_EXTRATO_V8_ROW_GRID =
+  'grid w-full min-w-0 grid-cols-[1rem_minmax(0,58%)_minmax(5.75rem,max-content)_0.875rem] items-center gap-x-2 gap-y-0';
+/** Coluna de valor na linha — protótipo `auto`, sem truncate (valores longos visíveis). */
+export const P38_EXTRATO_V8_ROW_VALUE_CELL = 'max-w-none shrink-0 justify-self-end text-right whitespace-nowrap';
+/** Transferência com origem e destino no filtro — valor e ícone esmaecidos (saldo agregado inalterado). */
+export const P38_EXTRATO_V8_TRANSFER_INTERNA_VALUE =
+  'text-[#6b7280]/90 dark:text-[#9ca3af]/95';
+export const P38_EXTRATO_V8_TRANSFER_INTERNA_ICON_TILE =
+  'bg-[#eceeed] text-[#9ca3af] opacity-85 dark:bg-[#383e47]/55 dark:text-[#9ca3af]';
+/** `.day-saldo` — mesma família que `.tx-row` (herda `P38_EXTRATO_V8_FONT_SCOPE`). */
+export const P38_EXTRATO_V8_DAY_SALDO =
+  'flex items-center justify-between border-b border-[#e5e7eb] px-3.5 py-3 text-[13px] font-normal leading-none text-[#1a1a1a] !font-[inherit] dark:border-white/10 dark:text-foreground';
+export const P38_EXTRATO_V8_DAY_SALDO_VALUE = cn(
+  P38_EXTRATO_V8_ROW_VALUE,
+  '!font-[inherit] text-[#3d5a3d] dark:text-[#a4ce33]',
+);
+export const P38_EXTRATO_V8_ROW_LINE =
+  'w-full border-0 border-l-0 !border-b border-[#e5e7eb] !bg-transparent pl-3 pr-3.5 py-3.5 !font-[inherit] shadow-none last:!border-b-0 dark:!border-white/10';
+
 /**
  * Tokens P38 partilhados — fluxo de caixa, contas abertas e Planejamento.
  *
@@ -26,9 +88,16 @@ export const P38_POPOVER =
 export const P38_KPI_SHELL =
   'rounded-xl bg-card border-0 shadow-sm px-3 py-2.5 sm:px-3 sm:py-2.5 dark:p38-field-surface dark:shadow-none';
 export const P38_ACCENT = 'text-[#a8942e] dark:text-[#a4ce33]';
-/** Mobile: busca + ícones fixos ao rolar; desktop sem sticky. */
+/**
+ * Mobile: busca + ícones fixos ao rolar (dentro do painel que scrolla).
+ * Fundo opaco + z alto para o conteúdo da lista não “vazar” por baixo.
+ */
 export const P38_FILTROS_STICKY =
-  'sticky top-0 z-30 bg-background/95 py-2 backdrop-blur-sm md:static md:z-auto md:bg-transparent md:py-0 md:backdrop-blur-none';
+  'sticky top-0 z-50 isolate bg-background py-2 shadow-[0_1px_0_0_hsl(var(--border)/0.45)] md:static md:z-auto md:isolate-auto md:bg-transparent md:py-0 md:shadow-none';
+
+/** Faixa de filtros fora do scroll (Fluxo/Caixas) — sempre por cima da lista. */
+export const P38_FINANCEIRO_FILTROS_BAR =
+  'relative z-40 shrink-0 isolate border-b border-border/35 bg-background pb-2 shadow-sm dark:border-white/10 md:z-auto md:border-b-0 md:shadow-none';
 
 /** Abas Contas / Fluxo — ícones ao lado do título (mobile). */
 export const FINANCEIRO_ABA_TAB_GROUP =
@@ -38,3 +107,41 @@ export const FINANCEIRO_ABA_TAB_BTN =
 export const FINANCEIRO_ABA_TAB_ACTIVE =
   'bg-[#4a5240] text-white dark:bg-[#636B2F] dark:text-[#A8B56E]';
 export const FINANCEIRO_ABA_TAB_IDLE = 'text-muted-foreground hover:text-foreground/90';
+
+/** Compra de mercadoria / CMV — enriquecer meta do extrato com pedido e fornecedor. */
+export function lancamentoExtratoEhCompraMercadoria(l) {
+  if (!l) return false;
+  if (lancamentoEhCompraMercadoriaPedido(l)) return true;
+  if (l.is_custo_mercadoria === true) return true;
+  const cat = String(l.categoria || l?.dados?.categoria || '').toLowerCase();
+  return cat.includes('compra de mercadoria') || cat.includes('compras de mercadoria');
+}
+
+export function extratoNumeroPedidoCompra(l) {
+  const fromVinculo =
+    l?.pedido_compra_vinculado_numero || l?.dados?.pedido_compra_vinculado_numero || '';
+  const fromRef =
+    l?.referencia_tipo === 'PedidoCompra'
+      ? l?.referencia_numero || l?.dados?.referencia_numero || ''
+      : '';
+  const n = String(fromVinculo || fromRef || '').trim();
+  return n || null;
+}
+
+export function extratoFornecedorNome(l) {
+  const n =
+    l?.terceiro_nome ||
+    l?.dados?.terceiro_nome ||
+    l?.dados?.fornecedor_nome ||
+    l?.fornecedor_nome ||
+    '';
+  const s = String(n).trim();
+  return s || null;
+}
+
+/** Meta extrato compra mercadoria — fornecedor (pedido fica no título/descrição, não na legenda). */
+export function extratoCompraMercadoriaMetaExtras(l) {
+  if (!lancamentoExtratoEhCompraMercadoria(l)) return [];
+  const fornecedor = extratoFornecedorNome(l);
+  return fornecedor ? [fornecedor] : [];
+}

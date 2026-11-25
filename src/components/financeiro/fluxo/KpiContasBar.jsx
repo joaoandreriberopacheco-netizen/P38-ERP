@@ -3,10 +3,12 @@ import { Wallet, Layers, Clock, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatKpiValor } from './FinanceiroKpiInline';
 import { P38_ACCENT } from './financeiroP38';
+import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
 
-function KpiSegment({ icon: Icon, value, valueClass, iconClass }) {
+function KpiSegment({ icon: Icon, value, valueClass, iconClass, hint }) {
   return (
     <span
+      title={hint}
       className={cn(
         'inline-flex shrink-0 items-center gap-1 tabular-nums text-[11px] font-semibold md:text-xs',
         valueClass,
@@ -29,7 +31,7 @@ export default function KpiContasBar({ kpis, saldosProntos = false }) {
   const title = [
     saldoExibir ? `Saldo ${formatKpiValor(kpis.saldoTotal)}` : 'Saldo a calcular',
     `${kpis.qtdTotal} conta${kpis.qtdTotal !== 1 ? 's' : ''}`,
-    kpis.pendencias > 0 ? `${kpis.pendencias} pendente(s)` : null,
+    EXIBIR_UI_CONCILIACAO_FINANCEIRO && kpis.pendencias > 0 ? `${kpis.pendencias} pendente(s)` : null,
     kpis.negativas > 0 ? `${kpis.negativas} negativa(s)` : null,
   ]
     .filter(Boolean)
@@ -53,8 +55,9 @@ export default function KpiContasBar({ kpis, saldosProntos = false }) {
         value={String(kpis.qtdTotal)}
         valueClass="text-foreground"
         iconClass="text-foreground/70"
+        hint="Quantidade de contas na lista — para filtrar, use o ícone carteira ao lado"
       />
-      {kpis.pendencias > 0 && (
+      {EXIBIR_UI_CONCILIACAO_FINANCEIRO && kpis.pendencias > 0 && (
         <>
           <span className="shrink-0 text-muted-foreground/35" aria-hidden>
             ·

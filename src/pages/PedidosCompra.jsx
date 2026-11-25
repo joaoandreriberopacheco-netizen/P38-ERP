@@ -36,12 +36,34 @@ import { compareEmbarquesConsulta, enrichEmbarqueParaConsulta, buildConsultaIten
 import { calcValorEmbarqueCard, calcValorEmbarcadoPedido } from '@/lib/embarqueValorFinanceiro';
 import { pedidoNaoConcluido } from '@/lib/comprasEmbarqueCards';
 import {
+  FILTRO_COMPRAS_ENCOMENDA_DEFAULT,
+  passaFiltroEncomendaPedidoCompra,
+} from '@/lib/pedidoCompraEncomenda';
+import {
+  FILTRO_COMPRAS_PAGAMENTO_APROV_DEFAULT,
+  passaFiltroPagamentoAprovadoPedidoCompra,
+} from '@/lib/pedidoCompraFiltroPagamentoAprovado';
+import {
   cardEmbarqueMatchStatusFiltro,
   comparePedidosNoMesmoGrupoEmbarque,
   comprasStatusFiltroExplicitos,
   COMPRAS_STATUS_FILTRO_AGUARDANDO_PGTO,
   normalizeComprasStatusFiltroCodigo,
 } from '@/lib/comprasEmbarquesPalette';
+import {
+  comparePedidosPorDataBase,
+  metaGrupoDataBasePedidoCompra,
+} from '@/lib/pedidoCompraDataBase';
+import {
+  comparePedidosPorDataAprovacaoFinanceira,
+  metaGrupoDataAprovacaoFinanceiraPedidoCompra,
+  pedidoPassaFiltroDataAprovacaoFinanceira,
+} from '@/lib/pedidoCompraDataAprovacaoFinanceira';
+import {
+  comparePedidosPorDataPagamento,
+  metaGrupoDataPagamentoPedidoCompra,
+  pedidoPassaFiltroDataPagamento,
+} from '@/lib/pedidoCompraDataPagamento';
 import { omitPedidoCompraEspelho } from '@/lib/omitEspelhoPersist';
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
 import FiltrosCompras from '@/components/compras/FiltrosCompras';
@@ -81,9 +103,12 @@ import {
   FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT,
   FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT,
   buildComprasGestaoFetchFilters,
-  filtroComprasStatusSelInicial,
   passaFiltroVisibilidadePedidosCompra,
 } from '@/lib/filtroVisibilidadePedidosCompra';
+import {
+  readComprasGestaoFiltrosNav,
+  writeComprasGestaoFiltrosNav,
+} from '@/lib/comprasGestaoFiltrosNav';
 const toLocalDate = (d) => toLocalDateKey(new Date(d));
 
 const etaMatchesFilter = (embarque, modo, dataRef, inicial, final) => {
@@ -151,6 +176,12 @@ const passaFiltrosEmbarqueCard = (
     etaFinal,
     recebimentoInicial,
     recebimentoFinal,
+    pagamentoInicial,
+    pagamentoFinal,
+    aprovacaoFinanceiraInicial,
+    aprovacaoFinanceiraFinal,
+    filtroEncomenda = FILTRO_COMPRAS_ENCOMENDA_DEFAULT,
+    filtroPagamentoAprovado = FILTRO_COMPRAS_PAGAMENTO_APROV_DEFAULT,
     skipSearch = false,
     searchIncludeProdutos = false,
     ocultarPendenteSaldo = false,
@@ -203,6 +234,12 @@ const passaFiltrosEmbarqueCard = (
   if (dataFinal && (!dataPedido || dataPedido > dataFinal)) return false;
   if (!etaMatchesFilter(embarque, etaFiltroModo, etaData, etaInicial, etaFinal)) return false;
   if (!recebimentoMatchesFilter(card, recebimentoInicial, recebimentoFinal)) return false;
+  if (!pedidoPassaFiltroDataPagamento(card, pagamentoInicial, pagamentoFinal)) return false;
+  if (!pedidoPassaFiltroDataAprovacaoFinanceira(card, aprovacaoFinanceiraInicial, aprovacaoFinanceiraFinal)) {
+    return false;
+  }
+  if (!passaFiltroEncomendaPedidoCompra(card, filtroEncomenda)) return false;
+  if (!passaFiltroPagamentoAprovadoPedidoCompra(card, filtroPagamentoAprovado)) return false;
   return true;
 };
 
@@ -228,6 +265,12 @@ const compareGruposPedidosCompra = (a, b, sortOrder, groupBy) => {
     }
 
     return String(a.orderValue).localeCompare(String(b.orderValue), 'pt-BR');
+  }
+
+  if (groupBy === 'data_pagamento' || groupBy === 'data_aprovacao_financeira') {
+    const aMissing = a.orderValue === 'sem-data';
+    const bMissing = b.orderValue === 'sem-data';
+    if (aMissing !== bMissing) return aMissing ? -1 : 1;
   }
 
   if (sortOrder === 'asc') return String(a.orderValue).localeCompare(String(b.orderValue), 'pt-BR');
@@ -278,8 +321,17 @@ export default function PedidosCompraPage() {
   const { chromeVisible, scrollRef, scrollEl } = useScrollChromeVisibility(isPhone, MOBILE_LIST_CHROME_OPTIONS);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [filtroUltimos30Dias, setFiltroUltimos30Dias] = useState(FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT);
-  const [filtroSomenteNaoConcluidos, setFiltroSomenteNaoConcluidos] = useState(FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT);
+  const filtrosNavInicialRef = useRef(null);
+  if (filtrosNavInicialRef.current === null) {
+    filtrosNavInicialRef.current = readComprasGestaoFiltrosNav();
+  }
+  const filtrosNavInicial = filtrosNavInicialRef.current;
+  const [filtroUltimos30Dias, setFiltroUltimos30Dias] = useState(filtrosNavInicial.filtroUltimos30Dias);
+  const [filtroSomenteNaoConcluidos, setFiltroSomenteNaoConcluidos] = useState(filtrosNavInicial.filtroSomenteNaoConcluidos);
+  const [filtroEncomenda, setFiltroEncomenda] = useState(filtrosNavInicial.filtroEncomenda);
+  const [filtroPagamentoAprovado, setFiltroPagamentoAprovado] = useState(
+    filtrosNavInicial.filtroPagamentoAprovado ?? FILTRO_COMPRAS_PAGAMENTO_APROV_DEFAULT,
+  );
   const comprasFetchFilters = useMemo(
     () => buildComprasGestaoFetchFilters({
       somenteNaoConcluidos: filtroSomenteNaoConcluidos,
@@ -291,17 +343,25 @@ export default function PedidosCompraPage() {
   const [pedidos, setPedidos] = useState([]);
   const [embarques, setEmbarques] = useState([]);
   const [produtosMap, setProdutosMap] = useState({});
-  const [search, setSearch] = useState('');
-  const [statusSel, setStatusSel] = useState(filtroComprasStatusSelInicial);
-  const [tagsSel, setTagsSel] = useState([]);
-  const [dataInicial, setDataInicial] = useState('');
-  const [dataFinal, setDataFinal] = useState('');
-  const [etaFiltroModo, setEtaFiltroModo] = useState('');
-  const [etaData, setEtaData] = useState('');
-  const [etaInicial, setEtaInicial] = useState('');
-  const [etaFinal, setEtaFinal] = useState('');
-  const [recebimentoInicial, setRecebimentoInicial] = useState('');
-  const [recebimentoFinal, setRecebimentoFinal] = useState('');
+  const [search, setSearch] = useState(filtrosNavInicial.search);
+  const [statusSel, setStatusSel] = useState(filtrosNavInicial.statusSel);
+  const [tagsSel, setTagsSel] = useState(filtrosNavInicial.tagsSel);
+  const [dataInicial, setDataInicial] = useState(filtrosNavInicial.dataInicial);
+  const [dataFinal, setDataFinal] = useState(filtrosNavInicial.dataFinal);
+  const [etaFiltroModo, setEtaFiltroModo] = useState(filtrosNavInicial.etaFiltroModo);
+  const [etaData, setEtaData] = useState(filtrosNavInicial.etaData);
+  const [etaInicial, setEtaInicial] = useState(filtrosNavInicial.etaInicial);
+  const [etaFinal, setEtaFinal] = useState(filtrosNavInicial.etaFinal);
+  const [recebimentoInicial, setRecebimentoInicial] = useState(filtrosNavInicial.recebimentoInicial);
+  const [recebimentoFinal, setRecebimentoFinal] = useState(filtrosNavInicial.recebimentoFinal);
+  const [pagamentoInicial, setPagamentoInicial] = useState(filtrosNavInicial.pagamentoInicial);
+  const [pagamentoFinal, setPagamentoFinal] = useState(filtrosNavInicial.pagamentoFinal);
+  const [aprovacaoFinanceiraInicial, setAprovacaoFinanceiraInicial] = useState(
+    filtrosNavInicial.aprovacaoFinanceiraInicial,
+  );
+  const [aprovacaoFinanceiraFinal, setAprovacaoFinanceiraFinal] = useState(
+    filtrosNavInicial.aprovacaoFinanceiraFinal,
+  );
   const [showImportador, setShowImportador] = useState(false);
   const [selecionadosIds, setSelecionadosIds] = useState([]);
   const [enviandoLote, setEnviandoLote] = useState(false);
@@ -309,12 +369,62 @@ export default function PedidosCompraPage() {
   const [showEnvioDialog, setShowEnvioDialog] = useState(false);
   const [formaPagamentoLote, setFormaPagamentoLote] = useState('Parcelado');
   const [dataPrimeiroVencimentoLote, setDataPrimeiroVencimentoLote] = useState('');
-  const [groupBy, setGroupBy] = useState('eta_transportadora');
-  const [sortOrder, setSortOrder] = useState('asc');
-  const [activeView, setActiveView] = useState('embarques');
+  const [groupBy, setGroupBy] = useState(filtrosNavInicial.groupBy);
+  const [sortOrder, setSortOrder] = useState(filtrosNavInicial.sortOrder);
+  const [activeView, setActiveView] = useState(filtrosNavInicial.activeView);
   const [showAtualizarPrecosFiltrados, setShowAtualizarPrecosFiltrados] = useState(false);
 
   /** Aba Saldo = mesma lista Embarques, filtro fixo Pendente (regra única pós-desmembramento). */
+  useEffect(() => {
+    writeComprasGestaoFiltrosNav({
+      filtroUltimos30Dias,
+      filtroSomenteNaoConcluidos,
+      filtroEncomenda,
+      filtroPagamentoAprovado,
+      search,
+      statusSel,
+      tagsSel,
+      dataInicial,
+      dataFinal,
+      etaFiltroModo,
+      etaData,
+      etaInicial,
+      etaFinal,
+      recebimentoInicial,
+      recebimentoFinal,
+      pagamentoInicial,
+      pagamentoFinal,
+      aprovacaoFinanceiraInicial,
+      aprovacaoFinanceiraFinal,
+      groupBy,
+      sortOrder,
+      activeView,
+    });
+  }, [
+    filtroUltimos30Dias,
+    filtroSomenteNaoConcluidos,
+    filtroEncomenda,
+    filtroPagamentoAprovado,
+    search,
+    statusSel,
+    tagsSel,
+    dataInicial,
+    dataFinal,
+    etaFiltroModo,
+    etaData,
+    etaInicial,
+    etaFinal,
+    recebimentoInicial,
+    recebimentoFinal,
+    pagamentoInicial,
+    pagamentoFinal,
+    aprovacaoFinanceiraInicial,
+    aprovacaoFinanceiraFinal,
+    groupBy,
+    sortOrder,
+    activeView,
+  ]);
+
   const handleSelectView = (view) => {
     setActiveView(view);
     if (view === 'saldo') {
@@ -504,12 +614,20 @@ export default function PedidosCompraPage() {
       etaFinal,
       recebimentoInicial,
       recebimentoFinal,
+      pagamentoInicial,
+      pagamentoFinal,
+      aprovacaoFinanceiraInicial,
+      aprovacaoFinanceiraFinal,
+      filtroEncomenda,
+      filtroPagamentoAprovado,
     }),
     [
       search,
       statusSel,
       filtroUltimos30Dias,
       filtroSomenteNaoConcluidos,
+      filtroEncomenda,
+      filtroPagamentoAprovado,
       tagsSel,
       dataInicial,
       dataFinal,
@@ -519,6 +637,10 @@ export default function PedidosCompraPage() {
       etaFinal,
       recebimentoInicial,
       recebimentoFinal,
+      pagamentoInicial,
+      pagamentoFinal,
+      aprovacaoFinanceiraInicial,
+      aprovacaoFinanceiraFinal,
     ],
   );
 
@@ -618,27 +740,28 @@ export default function PedidosCompraPage() {
         return { key: `status:${status}`, label: status, orderValue: status.toLowerCase() };
       }
 
-      if (groupBy === 'eta_transportadora') {
-        const eta = embarque?.eta ? toLocalDate(embarque.eta) : 'sem-eta';
-        const transportadora = embarque?.transportadora_nome?.trim() || 'Sem transportadora';
-        const semDados = eta === 'sem-eta' && transportadora === 'Sem transportadora';
-        return {
-          key: semDados ? 'eta_transportadora:sem-dados' : `eta_transportadora:${eta}:${transportadora}`,
-          label: semDados ? 'Sem ETA / Sem transportadora' : `${eta === 'sem-eta' ? 'Sem ETA' : formatarSoData(eta)} · ${transportadora}`,
-          orderValue: `${eta}|${transportadora.toLowerCase()}`,
-          groupDate: semDados || eta === 'sem-eta' ? 'Sem ETA' : formatarSoData(eta),
-          groupCarrier: semDados ? 'Sem transportadora' : transportadora,
-        };
+      if (groupBy === 'data_pagamento') {
+        return metaGrupoDataPagamentoPedidoCompra(pedido);
       }
 
-      const dataKey = pedido.data_emissao || (pedido.created_date ? toLocalDate(pedido.created_date) : null);
-      const key = dataKey || 'sem-data';
-      const hoje = dataHoje();
-      let label = 'Sem data';
-      if (key !== 'sem-data') {
-        label = key === hoje ? 'Hoje' : formatarSoData(key);
+      if (groupBy === 'data_aprovacao_financeira') {
+        return metaGrupoDataAprovacaoFinanceiraPedidoCompra(pedido);
       }
-      return { key: `data_pedido:${key}`, label, orderValue: key };
+
+      if (groupBy === 'data_pedido') {
+        return metaGrupoDataBasePedidoCompra(pedido);
+      }
+
+      const eta = embarque?.eta ? toLocalDate(embarque.eta) : 'sem-eta';
+      const transportadora = embarque?.transportadora_nome?.trim() || 'Sem transportadora';
+      const semDados = eta === 'sem-eta' && transportadora === 'Sem transportadora';
+      return {
+        key: semDados ? 'eta_transportadora:sem-dados' : `eta_transportadora:${eta}:${transportadora}`,
+        label: semDados ? 'Sem ETA / Sem transportadora' : `${eta === 'sem-eta' ? 'Sem ETA' : formatarSoData(eta)} · ${transportadora}`,
+        orderValue: `${eta}|${transportadora.toLowerCase()}`,
+        groupDate: semDados || eta === 'sem-eta' ? 'Sem ETA' : formatarSoData(eta),
+        groupCarrier: semDados ? 'Sem transportadora' : transportadora,
+      };
     };
 
     const map = {};
@@ -668,7 +791,14 @@ export default function PedidosCompraPage() {
     return Object.values(map)
       .sort((a, b) => compareGruposPedidosCompra(a, b, sortOrder, groupBy))
       .map((grupo) => {
-        const pedidosSort = grupo.pedidos.sort(comparePedidosNoMesmoGrupoEmbarque);
+        const pedidosSort = grupo.pedidos.sort((a, b) => {
+          if (groupBy === 'data_pagamento') return comparePedidosPorDataPagamento(a, b, sortOrder);
+          if (groupBy === 'data_aprovacao_financeira') {
+            return comparePedidosPorDataAprovacaoFinanceira(a, b, sortOrder);
+          }
+          if (groupBy === 'data_pedido') return comparePedidosPorDataBase(a, b, sortOrder);
+          return comparePedidosNoMesmoGrupoEmbarque(a, b);
+        });
 
         return {
           key: grupo.key,
@@ -687,10 +817,13 @@ export default function PedidosCompraPage() {
     (etaFiltroModo === 'personalizado' && (etaInicial || etaFinal))
   );
   const hasActiveFilters = search || tagsSel.length > 0 || dataInicial || dataFinal || hasEtaFilter
-    || recebimentoInicial || recebimentoFinal
+    || recebimentoInicial || recebimentoFinal || pagamentoInicial || pagamentoFinal
+    || aprovacaoFinanceiraInicial || aprovacaoFinanceiraFinal
     || statusPedidoCompraExplicitos(statusSel).length > 0
     || filtroUltimos30Dias !== FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT
-    || filtroSomenteNaoConcluidos !== FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT;
+    || filtroSomenteNaoConcluidos !== FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT
+    || filtroEncomenda !== FILTRO_COMPRAS_ENCOMENDA_DEFAULT
+    || filtroPagamentoAprovado !== FILTRO_COMPRAS_PAGAMENTO_APROV_DEFAULT;
 
   const pedidosConsulta = useMemo(() => {
     let cards = filtrados;
@@ -843,6 +976,9 @@ export default function PedidosCompraPage() {
                 search={search} onSearch={setSearch}
                 filtroUltimos30Dias={filtroUltimos30Dias} onFiltroUltimos30Dias={setFiltroUltimos30Dias}
                 filtroSomenteNaoConcluidos={filtroSomenteNaoConcluidos} onFiltroSomenteNaoConcluidos={setFiltroSomenteNaoConcluidos}
+                filtroEncomenda={filtroEncomenda} onFiltroEncomenda={setFiltroEncomenda}
+                filtroPagamentoAprovado={filtroPagamentoAprovado}
+                onFiltroPagamentoAprovado={setFiltroPagamentoAprovado}
                 statusSel={statusSelUi} onStatusSel={setStatusSel}
                 todasTags={todasTags} tagsSel={tagsSel} onTagsSel={setTagsSel}
                 dataInicial={dataInicial} onDataInicial={setDataInicial}
@@ -853,12 +989,20 @@ export default function PedidosCompraPage() {
                 etaFinal={etaFinal} onEtaFinal={setEtaFinal}
                 recebimentoInicial={recebimentoInicial} onRecebimentoInicial={setRecebimentoInicial}
                 recebimentoFinal={recebimentoFinal} onRecebimentoFinal={setRecebimentoFinal}
+                pagamentoInicial={pagamentoInicial} onPagamentoInicial={setPagamentoInicial}
+                pagamentoFinal={pagamentoFinal} onPagamentoFinal={setPagamentoFinal}
+                aprovacaoFinanceiraInicial={aprovacaoFinanceiraInicial}
+                onAprovacaoFinanceiraInicial={setAprovacaoFinanceiraInicial}
+                aprovacaoFinanceiraFinal={aprovacaoFinanceiraFinal}
+                onAprovacaoFinanceiraFinal={setAprovacaoFinanceiraFinal}
                 hasActiveFilters={hasActiveFilters}
                 onLimparFiltros={() => {
                   setSearch('');
                   setStatusSel(filtroComprasStatusSelInicial());
                   setFiltroUltimos30Dias(FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT);
                   setFiltroSomenteNaoConcluidos(FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT);
+                  setFiltroEncomenda(FILTRO_COMPRAS_ENCOMENDA_DEFAULT);
+                  setFiltroPagamentoAprovado(FILTRO_COMPRAS_PAGAMENTO_APROV_DEFAULT);
                   setTagsSel([]);
                   setDataInicial('');
                   setDataFinal('');
@@ -868,6 +1012,10 @@ export default function PedidosCompraPage() {
                   setEtaFinal('');
                   setRecebimentoInicial('');
                   setRecebimentoFinal('');
+                  setPagamentoInicial('');
+                  setPagamentoFinal('');
+                  setAprovacaoFinanceiraInicial('');
+                  setAprovacaoFinanceiraFinal('');
                 }}
               />
             </div>
@@ -878,6 +1026,7 @@ export default function PedidosCompraPage() {
                   loading={loading}
                   onEdit={handleOpenPedido}
                   onDelete={loadData}
+                  onDuplicated={loadData}
                   selecionadosIds={selecionadosIds}
                   onToggleSelecao={handleToggleSelecao}
                   modoSelecao={modoSelecao}
@@ -1008,6 +1157,9 @@ export default function PedidosCompraPage() {
         search={search} onSearch={setSearch}
         filtroUltimos30Dias={filtroUltimos30Dias} onFiltroUltimos30Dias={setFiltroUltimos30Dias}
         filtroSomenteNaoConcluidos={filtroSomenteNaoConcluidos} onFiltroSomenteNaoConcluidos={setFiltroSomenteNaoConcluidos}
+        filtroEncomenda={filtroEncomenda} onFiltroEncomenda={setFiltroEncomenda}
+        filtroPagamentoAprovado={filtroPagamentoAprovado}
+        onFiltroPagamentoAprovado={setFiltroPagamentoAprovado}
         statusSel={statusSelUi} onStatusSel={setStatusSel}
         todasTags={todasTags} tagsSel={tagsSel} onTagsSel={setTagsSel}
         dataInicial={dataInicial} onDataInicial={setDataInicial}
@@ -1018,12 +1170,20 @@ export default function PedidosCompraPage() {
         etaFinal={etaFinal} onEtaFinal={setEtaFinal}
         recebimentoInicial={recebimentoInicial} onRecebimentoInicial={setRecebimentoInicial}
         recebimentoFinal={recebimentoFinal} onRecebimentoFinal={setRecebimentoFinal}
+        pagamentoInicial={pagamentoInicial} onPagamentoInicial={setPagamentoInicial}
+        pagamentoFinal={pagamentoFinal} onPagamentoFinal={setPagamentoFinal}
+        aprovacaoFinanceiraInicial={aprovacaoFinanceiraInicial}
+        onAprovacaoFinanceiraInicial={setAprovacaoFinanceiraInicial}
+        aprovacaoFinanceiraFinal={aprovacaoFinanceiraFinal}
+        onAprovacaoFinanceiraFinal={setAprovacaoFinanceiraFinal}
         hasActiveFilters={hasActiveFilters}
         onLimparFiltros={() => {
           setSearch('');
           setStatusSel(filtroComprasStatusSelInicial());
           setFiltroUltimos30Dias(FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT);
           setFiltroSomenteNaoConcluidos(FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT);
+          setFiltroEncomenda(FILTRO_COMPRAS_ENCOMENDA_DEFAULT);
+          setFiltroPagamentoAprovado(FILTRO_COMPRAS_PAGAMENTO_APROV_DEFAULT);
           setTagsSel([]);
           setDataInicial('');
           setDataFinal('');
@@ -1033,6 +1193,10 @@ export default function PedidosCompraPage() {
           setEtaFinal('');
           setRecebimentoInicial('');
           setRecebimentoFinal('');
+          setPagamentoInicial('');
+          setPagamentoFinal('');
+          setAprovacaoFinanceiraInicial('');
+          setAprovacaoFinanceiraFinal('');
         }}
       />
       </div>
@@ -1046,6 +1210,7 @@ export default function PedidosCompraPage() {
           loading={loading}
           onEdit={handleOpenPedido}
           onDelete={loadData}
+          onDuplicated={loadData}
           selecionadosIds={selecionadosIds}
           onToggleSelecao={handleToggleSelecao}
           modoSelecao={modoSelecao}

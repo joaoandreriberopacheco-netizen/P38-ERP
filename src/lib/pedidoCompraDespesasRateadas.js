@@ -1,0 +1,221 @@
+import { roundToTwoDecimals } from '@/lib/financialUtils';
+import {
+  resolveOutrosUnitarioManual,
+  valorFinanceiroLinhaPedido,
+} from '@/lib/pedidoCompraFinanceiro';
+import {
+  calcTotalItemCompraPedido,
+  normalizeItemToCanonicalFactorOne,
+  repararLinhaCompraApresentacaoComProduto,
+  syncItemDescontoApresentacao,
+} from '@/lib/productUnits';
+
+const round6 = (n) => Math.round((Number(n) || 0) * 1_000_000) / 1_000_000;
+
+export function newDespesaRateadaRow({ descricao = '', valor = 0 } = {}) {
+  const id =
+    typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `dr_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  return {
+    id,
+    descricao: String(descricao || '').trim(),
+    valor: roundToTwoDecimals(Math.max(0, Number(valor) || 0)),
+  };
+}
+
+/** Normaliza linhas para edição (mantém rascunho vazio recém-adicionado). */
+export function normalizeDespesasRateadasForEdit(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((row) => ({
+    id: row?.id || newDespesaRateadaRow().id,
+    descricao: String(row?.descricao || '').trim(),
+    valor: roundToTwoDecimals(Math.max(0, Number(row?.valor) || 0)),
+  }));
+}
+
+/** Linha com dados mínimos para entrar no pedido (gravar ou ratear). */
+export function despesaRateadaProntaParaPersistir(row) {
+  const descricao = String(row?.descricao || '').trim();
+  const valor = roundToTwoDecimals(Math.max(0, Number(row?.valor) || 0));
+  return Boolean(descricao || valor > 0);
+}
+
+/** Lista para gravar no pedido — omite linhas sem descrição nem valor. */
+export function normalizeDespesasRateadas(raw) {
+  return normalizeDespesasRateadasForEdit(raw).filter(despesaRateadaProntaParaPersistir);
+}
+
+export function somaDespesasRateadas(despesas) {
+  return roundToTwoDecimals(
+    normalizeDespesasRateadas(despesas).reduce((acc, row) => acc + row.valor, 0),
+  );
+}
+
+/** Acréscimo no total do pedido (cabeçalho) — despesas não entram na soma de mercadoria do catálogo. */
+export function acrescimoDespesasRateadasNoTotalPedido(despesas) {
+  return somaDespesasRateadas(despesas);
+}
+
+function resolveQuantidadeBase(item = {}) {
+  const qb = Number(item.quantidade_base);
+  if (Number.isFinite(qb) && qb > 0) return qb;
+  const q = Number(item.quantidade) || 0;
+  const f = Number(item.fator_conversao) || 1;
+  return q * f;
+}
+
+/** `outros` na linha do pedido (manual + rateio de despesas), unidade fator-1. */
+export function outrosUnitarioFator1LinhaPedidoCompra(item = {}) {
+  const dados = item?.dados && typeof item.dados === 'object' ? item.dados : {};
+  const explicit = Number(
+    item?.outros_unitario_fator1 ?? dados.outros_unitario_fator1 ?? item?.custo_outros_unitario,
+  );
+  if (Number.isFinite(explicit) && explicit > 0) return explicit;
+  const custoF1 = Number(item?.custo_unitario_fator1 ?? item?.custo_unitario) || 0;
+  const custoTotalF1 =
+    Number(item?.custo_total_unitario_fator1 ?? item?.custo_final_unitario) || 0;
+  const freteF1 = Number(item?.frete_unitario_fator1 ?? item?.custo_frete_unitario ?? dados.frete_unitario_fator1) || 0;
+  if (custoTotalF1 > custoF1 + 0.000001) {
+    return Math.max(0, roundToTwoDecimals(custoTotalF1 - custoF1 - freteF1));
+  }
+  return 0;
+}
+
+export { resolveOutrosUnitarioManual, valorFinanceiroLinhaPedido } from '@/lib/pedidoCompraFinanceiro';
+
+const TOLERANCIA_RATEIO_JA_INCORPORADO = 0.01;
+
+/**
+ * Custo pousado: peso financeiro (só custo_unitario) já bate com o total gravado — não re-ratear.
+ */
+export function rateioDespesasJaIncorporadoNaLinha(item = {}, produto = null) {
+  const totalSalvo = Number(item?.total ?? item?.valor_total_item ?? 0);
+  const vFin = valorFinanceiroLinhaPedido(item, produto);
+  const totalBateMercadoria =
+    Number.isFinite(totalSalvo) &&
+    totalSalvo > 0 &&
+    Math.abs(roundToTwoDecimals(vFin) - roundToTwoDecimals(totalSalvo)) <=
+      TOLERANCIA_RATEIO_JA_INCORPORADO;
+
+  /** Gravações antigas com rateio dentro de `custo_unitario` (marcador explícito). */
+  if (item.incorpora_despesa_rateada_no_custo === true) {
+    return totalBateMercadoria;
+  }
+
+  if (!Number.isFinite(totalSalvo) || totalSalvo <= 0) return false;
+
+  const rateado = Number(item.despesa_rateada_outros_fator1) || 0;
+  const manual = resolveOutrosUnitarioManual(item);
+  const outrosAtual = Number(item.outros_unitario_fator1 ?? item.custo_outros_unitario) || 0;
+
+  /** Linha ainda sem rateio em `outros` — sempre elegível (inclui total só mercadoria). */
+  if (rateado <= 0 && outrosAtual <= manual + 0.0001) {
+    return false;
+  }
+
+  return false;
+}
+
+function finalizeItemAposRateio(item = {}, produto = null) {
+  let line = produto ? repararLinhaCompraApresentacaoComProduto(item, produto) : { ...item };
+  line = syncItemDescontoApresentacao(line);
+  const cost = roundToTwoDecimals(parseFloat(line.custo_unitario) || 0);
+  const descUnit = roundToTwoDecimals(parseFloat(line.valor_desconto_item) || 0);
+  const frete = Number(line.frete_unitario_fator1 ?? line.custo_frete_unitario) || 0;
+  const outros = Number(line.outros_unitario_fator1) || 0;
+  const fator = Number(line.fator_conversao) || 1;
+  const custoFinalUnitario = roundToTwoDecimals(cost - descUnit + frete + outros);
+  line.custo_final_unitario = custoFinalUnitario;
+  line.custo_final_unitario_apresentacao = roundToTwoDecimals(custoFinalUnitario * fator);
+  line.custo_total_unitario_fator1 = custoFinalUnitario;
+  line.total = calcTotalItemCompraPedido(line);
+  line.valor_total_item = line.total;
+  return normalizeItemToCanonicalFactorOne(line, 'custo');
+}
+
+/**
+ * Distribui despesas (ex.: frete do fornecedor) nas linhas via `outros_unitario_fator1`.
+ * Persistência: `despesas_rateadas` no pedido; rateio fica nos itens (espelho + PedidoCompraItem).
+ */
+export function aplicarRateioDespesasNosItens(itens = [], despesas = [], produtosById = {}) {
+  const lista = (itens || []).filter((i) => i?.produto_id);
+  const totalDespesas = somaDespesasRateadas(despesas);
+
+  if (!lista.length) return [...(itens || [])];
+
+  if (totalDespesas <= 0) {
+    return (itens || []).map((it) => {
+      if (!it?.produto_id) return it;
+      const manual = resolveOutrosUnitarioManual(it);
+      const produto = produtosById[it.produto_id];
+      return finalizeItemAposRateio(
+        {
+          ...it,
+          outros_unitario_fator1: manual,
+          custo_outros_unitario: manual,
+          despesa_rateada_outros_fator1: 0,
+          outros_unitario_fator1_manual: manual,
+        },
+        produto,
+      );
+    });
+  }
+
+  const pesos = lista.map((it) => {
+    const produto = produtosById[it.produto_id];
+    const manual = resolveOutrosUnitarioManual(it);
+    const vFin = valorFinanceiroLinhaPedido(it, produto);
+    const skipRateio = rateioDespesasJaIncorporadoNaLinha(it, produto);
+    return { it, produto, manual, vFin, skipRateio };
+  });
+  const pesosElegiveis = pesos.filter((p) => !p.skipRateio);
+  const somaPeso = pesosElegiveis.reduce((s, p) => s + p.vFin, 0);
+
+  let residual = totalDespesas;
+  const alocadoPorId = new Map();
+
+  if (!pesosElegiveis.length) {
+    return [...(itens || [])];
+  }
+
+  pesosElegiveis.forEach((p, idx) => {
+    let share = 0;
+    if (somaPeso > 0) {
+      share =
+        idx === pesosElegiveis.length - 1
+          ? residual
+          : roundToTwoDecimals(totalDespesas * (p.vFin / somaPeso));
+      if (idx < pesosElegiveis.length - 1) residual = roundToTwoDecimals(residual - share);
+    } else if (pesosElegiveis.length > 0) {
+      share =
+        idx === pesosElegiveis.length - 1
+          ? residual
+          : roundToTwoDecimals(totalDespesas / pesosElegiveis.length);
+      if (idx < pesosElegiveis.length - 1) residual = roundToTwoDecimals(residual - share);
+    }
+    const qBase = resolveQuantidadeBase(p.it);
+    const rateioF1 = qBase > 0 ? share / qBase : 0;
+    const outros = p.manual + rateioF1;
+    const key = p.it.item_key || p.it.produto_id;
+    alocadoPorId.set(
+      key,
+      finalizeItemAposRateio(
+        {
+          ...p.it,
+          outros_unitario_fator1: round6(outros),
+          custo_outros_unitario: round6(outros),
+          despesa_rateada_outros_fator1: round6(rateioF1),
+          outros_unitario_fator1_manual: p.manual,
+        },
+        p.produto,
+      ),
+    );
+  });
+
+  return (itens || []).map((it) => {
+    const key = it?.item_key || it?.produto_id;
+    if (key && alocadoPorId.has(key)) return alocadoPorId.get(key);
+    return it;
+  });
+}

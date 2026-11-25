@@ -8,7 +8,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const HTML = path.resolve(__dirname, '../../deploy/catalogo-formigres/index.html');
+const HTML = path.resolve(__dirname, '../../deploy/catalogo-formigres/catalogo.html');
 
 async function main() {
   if (!fs.existsSync(HTML)) {

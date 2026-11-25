@@ -114,6 +114,7 @@ export async function salvarEdicaoLancamentoFinanceiro({
     }
     if (realizado && isPagoOriginal) {
       return {
+        status: 'Pago',
         data_pagamento: dataPagamento || lancamento.data_pagamento || dataHoje(),
         conta_financeira_id: contaId,
         conta_financeira_nome: conta?.nome,

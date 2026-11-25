@@ -17,7 +17,13 @@ import KpiContasBar from './fluxo/KpiContasBar';
 import ContasSaldoPicker from './fluxo/ContasSaldoPicker';
 import FiltrosContasFinanceiras, { TIPOS_CONTA } from './fluxo/FiltrosContasFinanceiras';
 import ListaContasFinanceiras from './fluxo/ListaContasFinanceiras';
+import { marcarPadraoContasFluxo, marcarTodasContasFluxo } from './fluxo/contasFluxoSelecaoUi';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from './fluxo/FinanceiroListaMeta';
+import FluxoExtratoMobileShell from './fluxo/FluxoExtratoMobileShell';
+import FluxoContasUtilShortcuts from './fluxo/FluxoContasUtilShortcuts';
+import { P38_FINANCEIRO_FILTROS_BAR, P38_KPI_SHELL } from './fluxo/financeiroP38';
+import { useCompactShell } from '@/hooks/use-breakpoint';
+import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
 import {
   calcularSaldosAposDataCorte,
   calcularSaldosTodasContas,
@@ -25,17 +31,33 @@ import {
 } from '@/lib/saldoContaFinanceira';
 import {
   DATA_CORTE_HISTORICO_PADRAO,
+  contasAtivasOperacionais,
+  contasOpcoesSeletorContasFinanceiro,
+  contasSelEfetivoFluxo,
+  contasSelEquivaleFiltroFluxoPadrao,
+  contasSelModoTodasContas,
   gravarPreferenciasCorteHistorico,
+  isContaCaixaPDVFinanceiro,
+  isContaOcultaSaldoPadrao,
   isContaTransicao,
   lerPreferenciasCorteHistorico,
   passaFiltroCorteHistorico,
 } from '@/lib/filtroDataFinanceiro';
 import { getDataAncoraFluxoKey } from '@/lib/lancamentoFinanceiroStatus';
 import {
-  contasParaSaldoKpi,
   gravarPreferenciasSaldoContas,
   lerPreferenciasSaldoContas,
+  migrarPreferenciasSaldoLegadoFluxo,
+  sanitizarPreferenciasSaldoContas,
 } from '@/lib/preferenciasSaldoContas';
+import {
+  contasSelEfetivoGestaoCaixas,
+  contasSelPadraoGestaoCaixas,
+  contasComTipoEfetivoGestaoCaixas,
+  gravarPreferenciasCaixasContas,
+  lerPreferenciasCaixasContas,
+} from '@/lib/preferenciasCaixasContas';
+import { isContaPagBank, tipoContaFinanceiraEfetivo } from '@/lib/contaPagBank';
 
 const GestaoContasCtx = createContext(null);
 
@@ -72,41 +94,69 @@ function useGestaoContasModel(shared) {
   const [lancamentosSaldo, setLancamentosSaldo] = useState([]);
   const [movimentosSaldo, setMovimentosSaldo] = useState([]);
   const [carregandoSaldosBase, setCarregandoSaldosBase] = useState(true);
-  const [mostrarHistoricoAnterior, setMostrarHistoricoAnterior] = useState(
+  const [mostrarHistoricoLocal, setMostrarHistoricoLocal] = useState(
     () => lerPreferenciasCorteHistorico().mostrarHistoricoAnterior,
   );
-  const [dataCorteHistorico, setDataCorteHistorico] = useState(
+  const [dataCorteLocal, setDataCorteLocal] = useState(
     () => lerPreferenciasCorteHistorico().dataCorte || DATA_CORTE_HISTORICO_PADRAO,
   );
-  const [contasSaldoSelLocal, setContasSaldoSelLocal] = useState(() => lerPreferenciasSaldoContas());
+
+  const mostrarHistoricoAnterior = shared?.mostrarHistoricoAnterior ?? mostrarHistoricoLocal;
+  const dataCorteHistorico = shared?.dataCorteHistorico ?? dataCorteLocal;
+  /** Mesma semântica do Fluxo: `[]` = operacionais (sem PP/PJ). */
+  const [contasSelLocal, setContasSelLocal] = useState([]);
 
   const atualizarCorteHistorico = useCallback((mostrar, dataCorte) => {
-    setMostrarHistoricoAnterior(mostrar);
-    setDataCorteHistorico(dataCorte);
+    if (shared?.atualizarCorteHistorico) {
+      shared.atualizarCorteHistorico(mostrar, dataCorte);
+      return;
+    }
+    setMostrarHistoricoLocal(mostrar);
+    setDataCorteLocal(dataCorte);
     gravarPreferenciasCorteHistorico(mostrar, dataCorte);
-  }, []);
+  }, [shared]);
 
   const accounts = shared?.contas ?? accountsLocal;
   const lancamentos = shared?.lancs ?? lancamentosLocal;
   const movimentosCaixa = shared?.movimentos ?? movimentosLocal;
   const loading = shared ? shared.loading : loadingLocal;
-  const contasSaldoSel = shared?.contasSaldoSel ?? contasSaldoSelLocal;
-  const contasSaldoOpcoes = shared?.contasSaldoOpcoes ?? accounts.filter(
-    (c) => c.ativo !== false && !isContaTransicao(c),
-  );
+  const contasAtivasLista = shared?.contasAtivas ?? contasAtivasOperacionais(accounts);
+  const contasSel = shared?.contasSel ?? contasSelLocal;
+  const contasPickerOpcoes = shared?.contasPickerOpcoes
+    ?? contasOpcoesSeletorContasFinanceiro(contasAtivasLista);
 
-  const atualizarContasSaldoSel = useCallback((ids) => {
+  const atualizarSelecaoContas = useCallback((ids) => {
+    if (shared?.atualizarSelecaoContasFluxo) {
+      shared.atualizarSelecaoContasFluxo(ids);
+      return;
+    }
     if (shared?.atualizarContasSaldoSel) {
       shared.atualizarContasSaldoSel(ids);
       return;
     }
-    setContasSaldoSelLocal(ids);
-    gravarPreferenciasSaldoContas(ids);
+    setContasSelLocal(ids);
+    gravarPreferenciasCaixasContas(ids);
   }, [shared]);
+
+  const incluiContasOcultas = useMemo(() => {
+    const ocultas = contasAtivasLista.filter((c) => isContaOcultaSaldoPadrao(c));
+    if (!ocultas.length) return false;
+    const efetivos = new Set(contasSelEfetivoGestaoCaixas(contasSel, contasAtivasLista));
+    return ocultas.some((c) => efetivos.has(c.id));
+  }, [contasSel, contasAtivasLista]);
+
+  const toggleContasOcultasLista = useCallback(() => {
+    if (incluiContasOcultas) {
+      const padrao = contasSelPadraoGestaoCaixas(contasAtivasLista);
+      atualizarSelecaoContas(padrao);
+      return;
+    }
+    atualizarSelecaoContas(marcarTodasContasFluxo(contasAtivasLista));
+  }, [atualizarSelecaoContas, contasAtivasLista, incluiContasOcultas]);
 
   const aplicarSaldoBase = useCallback((lancsFull, movsFull) => {
     if (!Array.isArray(lancsFull) || !Array.isArray(movsFull)) return false;
-    if (!lancsFull.length || !movsFull.length) return false;
+    if (!lancsFull.length) return false;
     setLancamentosSaldo(lancsFull);
     setMovimentosSaldo(movsFull);
     setCarregandoSaldosBase(false);
@@ -174,17 +224,22 @@ function useGestaoContasModel(shared) {
     if (shared) return;
     const ativas = accounts.filter((c) => c.ativo !== false);
     if (!ativas.length) return;
-    setContasSaldoSelLocal((prev) => {
-      if (!prev.length) return prev;
-      const valid = prev.filter((id) => ativas.some((c) => c.id === id));
-      if (valid.length !== prev.length) gravarPreferenciasSaldoContas(valid);
-      return valid;
-    });
+    const prefs = lerPreferenciasCaixasContas(ativas).filter((id) => ativas.some((c) => c.id === id));
+    const padrao = contasSelPadraoGestaoCaixas(ativas);
+    const sel = prefs.length ? prefs : padrao;
+    setContasSelLocal(sel);
+    if (!prefs.length && padrao.length) gravarPreferenciasCaixasContas(padrao);
   }, [shared, accounts]);
 
   const precisaBaseCompletaSaldo = !mostrarHistoricoAnterior && !!dataCorteHistorico;
-  const baseSaldoDisponivel = lancamentosSaldo.length > 0 && movimentosSaldo.length > 0;
+  /** Com corte ativo, saldo usa base completa de lançamentos (movimentos podem ser vazios). */
+  const baseSaldoDisponivel = lancamentosSaldo.length > 0;
   const saldosProntos = !carregandoSaldosBase && (!precisaBaseCompletaSaldo || baseSaldoDisponivel);
+
+  const contasParaMapaSaldo = useMemo(
+    () => accounts.filter((c) => c && !isContaTransicao(c)),
+    [accounts],
+  );
 
   const lancsParaSaldo = baseSaldoDisponivel
     ? lancamentosSaldo
@@ -210,27 +265,49 @@ function useGestaoContasModel(shared) {
   const saldosCalculados = useMemo(() => {
     if (!saldosProntos) return null;
     if (!mostrarHistoricoAnterior && dataCorteHistorico) {
-      return calcularSaldosAposDataCorte(accounts, lancsParaSaldo, movsParaSaldo, dataCorteHistorico);
+      return calcularSaldosAposDataCorte(
+        contasParaMapaSaldo,
+        lancsParaSaldo,
+        movsParaSaldo,
+        dataCorteHistorico,
+      );
     }
-    return calcularSaldosTodasContas(accounts, lancsParaSaldo, movsParaSaldo);
-  }, [accounts, lancsParaSaldo, movsParaSaldo, mostrarHistoricoAnterior, dataCorteHistorico, saldosProntos]);
+    return calcularSaldosTodasContas(contasParaMapaSaldo, lancsParaSaldo, movsParaSaldo);
+  }, [
+    contasParaMapaSaldo,
+    lancsParaSaldo,
+    movsParaSaldo,
+    mostrarHistoricoAnterior,
+    dataCorteHistorico,
+    saldosProntos,
+  ]);
 
-  const contasEnriquecidas = useMemo(() => accounts.map((account) => ({
-    ...account,
-    saldo_calculado: saldosCalculados ? saldosCalculados[account.id] : null,
-  })), [accounts, saldosCalculados]);
+  const contasEnriquecidas = useMemo(
+    () => contasComTipoEfetivoGestaoCaixas(accounts).map((account) => ({
+      ...account,
+      saldo_calculado: saldosCalculados ? saldosCalculados[account.id] : null,
+    })),
+    [accounts, saldosCalculados],
+  );
 
   const contasOperacionais = useMemo(
-    () => contasEnriquecidas.filter((account) => !isContaTransicao(account)),
+    () => contasEnriquecidas.filter(
+      (account) => !isContaTransicao(account) && !isContaCaixaPDVFinanceiro(account),
+    ),
     [contasEnriquecidas],
   );
 
-  const contasNoSaldoKpi = useMemo(
-    () => contasParaSaldoKpi(contasSaldoSel, contasSaldoOpcoes),
-    [contasSaldoSel, contasSaldoOpcoes],
+  const idsContasVisiveis = useMemo(
+    () => new Set(contasSelEfetivoGestaoCaixas(contasSel, contasAtivasLista)),
+    [contasSel, contasAtivasLista],
   );
 
-  const filtrados = useMemo(() => contasOperacionais.filter((account) => {
+  const contasVisiveisSelecao = useMemo(
+    () => contasOperacionais.filter((account) => idsContasVisiveis.has(account.id)),
+    [contasOperacionais, idsContasVisiveis],
+  );
+
+  const filtrados = useMemo(() => contasVisiveisSelecao.filter((account) => {
     if (statusFiltro === 'ativas' && account.ativo === false) return false;
     if (statusFiltro === 'inativas' && account.ativo !== false) return false;
     if (tipoFiltro !== 'todos' && account.tipo !== tipoFiltro) return false;
@@ -245,7 +322,7 @@ function useGestaoContasModel(shared) {
       );
     }
     return true;
-  }), [contasOperacionais, statusFiltro, tipoFiltro, somentePendencias, pendenciasConciliacao, search]);
+  }), [contasVisiveisSelecao, statusFiltro, tipoFiltro, somentePendencias, pendenciasConciliacao, search]);
 
   const kpis = useMemo(() => {
     let saldoTotal = 0;
@@ -255,9 +332,8 @@ function useGestaoContasModel(shared) {
     let saldoNegativo = 0;
     let pendencias = 0;
 
-    contasOperacionais.forEach((a) => {
+    contasVisiveisSelecao.forEach((a) => {
       if (!saldosProntos || !saldosCalculados) return;
-      if (!contasNoSaldoKpi.some((c) => c.id === a.id)) return;
       const saldo = getSaldoExibicaoConta(a, saldosCalculados);
       saldoTotal += saldo;
       if (a.ativo !== false) qtdAtivas++;
@@ -271,14 +347,14 @@ function useGestaoContasModel(shared) {
 
     return {
       saldoTotal: saldosProntos ? saldoTotal : null,
-      qtdTotal: contasOperacionais.length,
+      qtdTotal: contasVisiveisSelecao.length,
       qtdAtivas,
       qtdInativas,
       negativas,
       saldoNegativo: Math.abs(saldoNegativo),
       pendencias,
     };
-  }, [contasOperacionais, contasNoSaldoKpi, saldosCalculados, pendenciasConciliacao, saldosProntos]);
+  }, [contasVisiveisSelecao, saldosCalculados, pendenciasConciliacao, saldosProntos]);
 
   const grupos = useMemo(() => {
     const map = {};
@@ -296,8 +372,17 @@ function useGestaoContasModel(shared) {
       }));
   }, [filtrados]);
 
+  /** Mobile (aba Caixas): uma lista só, por nome — sem cabeçalhos por tipo. */
+  const contasListaUnificada = useMemo(
+    () => [...filtrados].sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR')),
+    [filtrados],
+  );
+
   const totalPendencias = kpis.pendencias;
-  const hasActiveFilters = tipoFiltro !== 'todos' || statusFiltro !== 'ativas' || somentePendencias || mostrarHistoricoAnterior;
+  const selecaoContasPersonalizada = contasSel.length > 0
+    && !contasSelEquivaleFiltroFluxoPadrao(contasSel, contasAtivasLista)
+    && !contasSelModoTodasContas(contasSel, contasAtivasLista);
+  const hasActiveFilters = tipoFiltro !== 'todos' || statusFiltro !== 'ativas' || somentePendencias || mostrarHistoricoAnterior || incluiContasOcultas || selecaoContasPersonalizada;
 
   const resetForm = () => {
     setSelectedAccount(null);
@@ -305,12 +390,16 @@ function useGestaoContasModel(shared) {
   };
 
   const handleSave = async () => {
+    const payload = {
+      ...formData,
+      ...(isContaPagBank({ nome: formData.nome }) ? { tipo: 'Conta Bancária' } : {}),
+    };
     if (selectedAccount) {
-      await base44.entities.ContasFinanceiras.update(selectedAccount.id, formData);
+      await base44.entities.ContasFinanceiras.update(selectedAccount.id, payload);
     } else {
       await base44.entities.ContasFinanceiras.create({
-        ...formData,
-        saldo_atual: formData.saldo_inicial,
+        ...payload,
+        saldo_atual: payload.saldo_inicial,
       });
     }
     await loadData();
@@ -322,7 +411,7 @@ function useGestaoContasModel(shared) {
     setSelectedAccount(account);
     setFormData({
       nome: account.nome || '',
-      tipo: account.tipo || 'Caixa Físico',
+      tipo: tipoContaFinanceiraEfetivo(account) || 'Caixa Físico',
       banco: account.banco || '',
       agencia: account.agencia || '',
       conta: account.conta || '',
@@ -343,8 +432,9 @@ function useGestaoContasModel(shared) {
   const handleExtrato = (account) => {
     const lancsPreload = lancamentosSaldo.length ? lancamentosSaldo : shared?.lancsSaldo;
     const movsPreload = movimentosSaldo.length ? movimentosSaldo : shared?.movsSaldo;
-    navigate(`${createPageUrl('ExtratoConta')}?id=${account.id}`, {
+    navigate(`${createPageUrl('ExtratoConta')}?id=${account.id}&from=caixas`, {
       state: {
+        financeiroAba: 'caixas',
         extratoPreload: {
           conta: account,
           lancsSaldo: lancsPreload?.length ? lancsPreload : undefined,
@@ -363,6 +453,7 @@ function useGestaoContasModel(shared) {
     loading,
     filtrados,
     grupos,
+    contasListaUnificada,
     kpis,
     saldosCalculados,
     pendenciasConciliacao,
@@ -402,9 +493,12 @@ function useGestaoContasModel(shared) {
     dataCorteHistorico,
     atualizarCorteHistorico,
     saldosProntos,
-    contasSaldoSel,
-    contasSaldoOpcoes,
-    atualizarContasSaldoSel,
+    contasSel,
+    contasPickerOpcoes,
+    contasAtivasLista,
+    atualizarSelecaoContas,
+    incluiContasOcultas,
+    toggleContasOcultasLista,
   };
 }
 
@@ -413,36 +507,56 @@ function GestaoContasProvider({ shared, children }) {
   return <GestaoContasCtx.Provider value={value}>{children}</GestaoContasCtx.Provider>;
 }
 
-/** KPIs — faixa compacta (mobile e desktop). */
-export function GestaoContasKpis({ compact = false }) {
+/** KPIs — faixa compacta (mobile e desktop). Ícone carteira abre o seletor ao lado do saldo. */
+export function GestaoContasKpis() {
   const m = useContext(GestaoContasCtx);
+  const compact = useCompactShell();
   if (!m) return null;
   return (
-    <div className={cn('flex min-w-0 items-center gap-2', !compact && 'flex-col gap-2 sm:flex-row sm:items-center sm:gap-3')}>
+    <div
+      className={cn(
+        'flex min-w-0 items-center gap-1.5 md:gap-2',
+        compact && cn('w-full rounded-xl px-3 py-2.5', P38_KPI_SHELL),
+      )}
+    >
       <div className="min-w-0 flex-1">
         <KpiContasBar kpis={m.kpis} saldosProntos={m.saldosProntos} />
       </div>
-      {!compact && (
-        <ContasSaldoPicker
-          contas={m.contasSaldoOpcoes}
-          sel={m.contasSaldoSel}
-          onSel={m.atualizarContasSaldoSel}
-          className="self-start"
-        />
-      )}
+      <ContasSaldoPicker
+        variant="icon"
+        contas={m.contasPickerOpcoes}
+        sel={m.contasSel}
+        onSel={m.atualizarSelecaoContas}
+        contasTodasParaMarcar={m.contasAtivasLista}
+        modoFluxo
+        modoGestaoCaixas
+        className="shrink-0"
+      />
     </div>
   );
 }
 
 /** Filtros + meta + lista + FAB + diálogos. */
-export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) {
+export function GestaoContasPane({
+  mobileShell = false,
+  extratoMobileV8 = false,
+  listScrollRef = null,
+  scrollEl = null,
+  aba,
+  onAbaChange,
+  abasItems,
+}) {
   const m = useContext(GestaoContasCtx);
+  const compact = useCompactShell();
+  const [contasSearchVisible, setContasSearchVisible] = useState(false);
   if (!m) return null;
+  const listaEstiloPlanejamento = mobileShell || compact || extratoMobileV8;
 
   const {
     loading,
     filtrados,
     grupos,
+    contasListaUnificada,
     pendenciasConciliacao,
     search,
     setSearch,
@@ -481,6 +595,9 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
     dataCorteHistorico,
     atualizarCorteHistorico,
     saldosProntos,
+    incluiContasOcultas,
+    toggleContasOcultasLista,
+    atualizarSelecaoContas,
   } = m;
 
   const tipoLabel = TIPOS_CONTA.find((t) => t.v === tipoFiltro)?.l;
@@ -503,6 +620,8 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
       dataCorteHistorico={dataCorteHistorico}
       onMostrarHistoricoAnterior={(v) => atualizarCorteHistorico(v, dataCorteHistorico)}
       onDataCorteHistorico={(v) => atualizarCorteHistorico(mostrarHistoricoAnterior, v || DATA_CORTE_HISTORICO_PADRAO)}
+      mostrarContasOcultas={incluiContasOcultas}
+      onMostrarContasOcultas={toggleContasOcultasLista}
     />
   );
 
@@ -517,6 +636,7 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
         setTipoFiltro('todos');
         setStatusFiltro('ativas');
         setSomentePendencias(false);
+        atualizarSelecaoContas(marcarPadraoContasFluxo());
         setSearch('');
       }}
       summaryChips={
@@ -528,7 +648,7 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
             {statusFiltro !== 'ativas' && statusLabel && (
               <FinanceiroSummaryChip>{statusLabel}</FinanceiroSummaryChip>
             )}
-            {somentePendencias && (
+            {EXIBIR_UI_CONCILIACAO_FINANCEIRO && somentePendencias && (
               <FinanceiroSummaryChip className="text-amber-700 dark:text-amber-400">
                 Conciliação
               </FinanceiroSummaryChip>
@@ -540,7 +660,7 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
               <FinanceiroSummaryChip>{tipoLabel}</FinanceiroSummaryChip>
             )}
             {statusLabel && <FinanceiroSummaryChip>{statusLabel}</FinanceiroSummaryChip>}
-            {somentePendencias && (
+            {EXIBIR_UI_CONCILIACAO_FINANCEIRO && somentePendencias && (
               <FinanceiroSummaryChip className="text-amber-700 dark:text-amber-400">
                 Conciliação
               </FinanceiroSummaryChip>
@@ -553,6 +673,9 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
             {mostrarHistoricoAnterior && (
               <FinanceiroSummaryChip>Histórico completo</FinanceiroSummaryChip>
             )}
+            {incluiContasOcultas && (
+              <FinanceiroSummaryChip>Caixa PP / PJ visíveis</FinanceiroSummaryChip>
+            )}
           </>
         )
       }
@@ -562,10 +685,12 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
   const listaBlock = (
     <ListaContasFinanceiras
       grupos={grupos}
+      contasFlat={listaEstiloPlanejamento ? contasListaUnificada : null}
       loading={loading}
       pendenciasMap={pendenciasConciliacao}
       saldosCalculados={saldosCalculados}
       saldosProntos={saldosProntos}
+      extratoMobile={extratoMobileV8}
       onExtrato={handleExtrato}
       onEdit={handleEdit}
       onAjuste={handleAjuste}
@@ -713,39 +838,81 @@ export function GestaoContasPane({ mobileShell = false, listScrollRef = null }) 
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!conciliacaoConta} onOpenChange={(open) => !open && setConciliacaoConta(null)}>
-        <DialogContent className="flex h-[min(85dvh,90vh)] max-h-[min(85dvh,90vh)] w-[calc(100vw-1rem)] max-w-3xl flex-col gap-0 overflow-hidden border-border/40 p-0 dark:border-border/40 dark:bg-muted">
-          <DialogHeader className="shrink-0 px-6 pb-3 pt-6">
-            <DialogTitle className="flex items-center gap-2 text-foreground">
-              <ArrowRightLeft className="h-5 w-5 text-amber-500" />
-              Conciliação — {conciliacaoConta?.nome}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pb-4 md:px-6 md:pb-6">
-            {conciliacaoConta && (
-              <ConciliacaoBancaria
-                contaId={conciliacaoConta.id}
-                contaNome={conciliacaoConta.nome}
-                onClose={() => setConciliacaoConta(null)}
-                onConciliado={loadData}
-              />
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {EXIBIR_UI_CONCILIACAO_FINANCEIRO && (
+        <Dialog open={!!conciliacaoConta} onOpenChange={(open) => !open && setConciliacaoConta(null)}>
+          <DialogContent className="flex h-[min(85dvh,90vh)] max-h-[min(85dvh,90vh)] w-[calc(100vw-1rem)] max-w-3xl flex-col gap-0 overflow-hidden border-border/40 p-0 dark:border-border/40 dark:bg-muted">
+            <DialogHeader className="shrink-0 px-6 pb-3 pt-6">
+              <DialogTitle className="flex items-center gap-2 text-foreground">
+                <ArrowRightLeft className="h-5 w-5 text-amber-500" />
+                Conciliação — {conciliacaoConta?.nome}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pb-4 md:px-6 md:pb-6">
+              {conciliacaoConta && (
+                <ConciliacaoBancaria
+                  contaId={conciliacaoConta.id}
+                  contaNome={conciliacaoConta.nome}
+                  onClose={() => setConciliacaoConta(null)}
+                  onConciliado={loadData}
+                />
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
+
+  if (mobileShell && extratoMobileV8) {
+    return (
+      <>
+        <FluxoExtratoMobileShell
+          className="min-h-0 flex-1"
+          scrollRef={listScrollRef}
+          scrollEl={scrollEl}
+          aba={aba}
+          onAbaChange={onAbaChange}
+          abasItems={abasItems}
+          title="Contas"
+          appBarAriaLabel="Barra de contas"
+          saldoLabel="Saldo total"
+          saldo={m.kpis.saldoTotal}
+          saldoPronto={m.saldosProntos}
+          search={search}
+          onSearch={setSearch}
+          searchVisible={contasSearchVisible}
+          searchPlaceholder="Buscar conta, banco…"
+          searchPulseSensorId="contas-financeiras.busca"
+          onBusca={() => setContasSearchVisible((v) => !v)}
+          onFiltros={() => setFiltersOpen((v) => !v)}
+          loading={loading}
+          filtrosPanel={filtersOpen ? filtrosBlock : null}
+          shortcuts={
+            <FluxoContasUtilShortcuts
+              onBusca={() => setContasSearchVisible((v) => !v)}
+              onFiltros={() => setFiltersOpen((v) => !v)}
+              onNovaConta={handleNova}
+            />
+          }
+        >
+          {showMetaOnMobile ? <div className="pb-2">{metaBlock}</div> : null}
+          {listaBlock}
+        </FluxoExtratoMobileShell>
+        {fabAndDialogs}
+      </>
+    );
+  }
 
   if (mobileShell) {
     return (
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="shrink-0 z-10 space-y-2 border-b border-border/25 bg-background/95 px-4 pb-2 backdrop-blur-sm">
+        <div className={cn('space-y-2 px-4 md:px-6', P38_FINANCEIRO_FILTROS_BAR)}>
           {filtrosBlock}
           {showMetaOnMobile ? metaBlock : null}
         </div>
         <div
           ref={listScrollRef}
-          className="flex-1 min-h-0 min-w-0 p38-stage-panel-scroll overflow-x-hidden touch-pan-y p38-scroll-pad-fab"
+          className="flex-1 min-h-0 min-w-0 p38-stage-panel-scroll overflow-x-hidden overscroll-y-contain touch-pan-y p38-scroll-pad-fab px-2 pb-2 pt-1"
         >
           {listaBlock}
         </div>

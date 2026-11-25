@@ -51,6 +51,36 @@ function KpiExtratoHelpTooltip({ kpis, saldoLabel, taxa }) {
 export default function KpiExtratoConta({ kpis, layout = 'card', saldoLabel = 'Saldo na conta' }) {
   const taxa = kpis.entradas > 0 ? (kpis.saidas / kpis.entradas * 100).toFixed(0) : 0;
   const helpTooltip = <KpiExtratoHelpTooltip kpis={kpis} saldoLabel={saldoLabel} taxa={taxa} />;
+  const saldoFmt = `${kpis.saldo >= 0 ? '+' : '−'}${formatKpiValor(Math.abs(kpis.saldo))}`;
+
+  if (layout === 'oneline') {
+    return (
+      <p className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0 text-[11px] leading-snug text-muted-foreground">
+        <span className="shrink-0">
+          Entradas{' '}
+          <span className="font-semibold tabular-nums text-foreground">{formatKpiValor(kpis.entradas)}</span>
+        </span>
+        <span className="shrink-0 text-foreground/25" aria-hidden>
+          ·
+        </span>
+        <span className="shrink-0">
+          Saídas{' '}
+          <span className="font-semibold tabular-nums text-foreground">{formatKpiValor(kpis.saidas)}</span>
+        </span>
+        <span className="shrink-0 text-foreground/25" aria-hidden>
+          ·
+        </span>
+        <span className="min-w-0">
+          Saldo{' '}
+          <span
+            className={`font-semibold tabular-nums ${kpis.saldo >= 0 ? P38_ACCENT : 'text-foreground/80'}`}
+          >
+            {saldoFmt}
+          </span>
+        </span>
+      </p>
+    );
+  }
 
   return (
     <div className={layout === 'stack' ? 'relative' : undefined}>

@@ -4,21 +4,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { montarCorteDiarioMapa, ordenarContasCorteDiario } from '@/lib/corteDiarioMapa';
-import { contaUsaRegraCaixaPDV } from '@/lib/saldoContaFinanceira';
+import { contasIdsFiltroFluxoPadrao } from '@/lib/filtroDataFinanceiro';
 import BalanceteDiaFiltros from './BalanceteDiaFiltros';
 import CorteDiarioPainel from './CorteDiarioPainel';
 
 function contasPadraoCorte(contas = []) {
-  const ativas = contas.filter((c) => c.ativo !== false);
-  const pdv = ativas.filter((c) => contaUsaRegraCaixaPDV(c));
-  const geral = ativas.filter((c) => c.is_caixa_geral);
-  const bancos = ativas.filter((c) => {
-    const tipo = String(c.tipo || '').toLowerCase();
-    return tipo.includes('banc') || tipo.includes('poupan');
-  });
-  const ids = [...pdv, ...geral, ...bancos].map((c) => c.id);
-  if (ids.length) return [...new Set(ids)];
-  return ativas.map((c) => c.id);
+  const ids = contasIdsFiltroFluxoPadrao(contas);
+  if (ids.length) return ids;
+  return contas.filter((c) => c.ativo !== false).map((c) => c.id);
 }
 
 export default function CorteDiarioDialog({
@@ -30,6 +23,8 @@ export default function CorteDiarioDialog({
   initialDia = null,
   initialContasSel = null,
   abrirDiretoNoMapa = false,
+  mostrarHistoricoAnterior = false,
+  dataCorteHistorico = null,
 }) {
   const [etapa, setEtapa] = useState('config');
   const [dia, setDia] = useState(dataHoje());
@@ -61,8 +56,10 @@ export default function CorteDiarioDialog({
       contasSel,
       dataInicio: dia,
       dataFim: dia,
+      mostrarHistoricoAnterior,
+      dataCorteHistorico,
     });
-  }, [etapa, contas, lancamentos, movimentos, contasSel, dia]);
+  }, [etapa, contas, lancamentos, movimentos, contasSel, dia, mostrarHistoricoAnterior, dataCorteHistorico]);
 
   const emitirMapa = () => {
     if (!contasSel.length || !dia) return;
@@ -81,7 +78,7 @@ export default function CorteDiarioDialog({
         overlayClassName="z-[100]"
         className={`z-[100] flex max-h-[min(92dvh,900px)] flex-col gap-0 overflow-hidden border-0 p-0 shadow-2xl ${
           etapa === 'painel'
-            ? 'h-[min(92dvh,900px)] w-[calc(100vw-1rem)] max-w-6xl'
+            ? 'h-[min(92dvh,900px)] w-[calc(100vw-1rem)] max-w-[min(96rem,calc(100vw-1rem))]'
             : 'w-[calc(100vw-1rem)] max-w-lg'
         } rounded-[28px] bg-card`}
         onOpenAutoFocus={(e) => e.preventDefault()}

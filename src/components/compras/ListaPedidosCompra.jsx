@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { formatarDataCurta } from '@/components/utils/dateUtils';
-import { ChevronDown, Trash2, Check, Package2, CalendarClock } from 'lucide-react';
+import { ChevronDown, Trash2, Check, Package2, CalendarClock, Copy, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { formatQuantity } from '@/lib/financialUtils';
 import { formatCommercialQuantity } from '@/lib/productUnits';
@@ -20,8 +20,11 @@ import { isEmbarqueSaldoPendente } from '@/lib/embarqueTipoSaldoPendente';
 import { cn } from '@/components/utils';
 import { comprasStatusBorderClass, getComprasDisplayStatusLabel, resolveComprasStatusConfig } from '@/lib/comprasEmbarquesPalette';
 import { ComprasRecebimentoDateChip } from '@/components/compras/ComprasStatusChip';
-import CaixaValorDisplay from '@/components/vendas/caixa/CaixaValorDisplay';
+import PedidoCompraCardMenu from '@/components/compras/PedidoCompraCardMenu';
+import CaixaValorDisplay, { formatCaixaR } from '@/components/vendas/caixa/CaixaValorDisplay';
 import { caixaTypo } from '@/lib/caixaP38Theme';
+import { duplicarPedidoCompra } from '@/lib/duplicarPedidoCompra';
+import { toast } from 'sonner';
 
 import { COMPRAS_HIER_L1, COMPRAS_SEP } from '@/lib/comprasP38Theme';
 
@@ -148,6 +151,7 @@ function EmbarqueListaCard({
   pedido,
   onEdit,
   onDelete,
+  onDuplicated,
   selecionado,
   desabilitadoSelecao,
   onToggleSelecao,
@@ -156,6 +160,7 @@ function EmbarqueListaCard({
 }) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [duplicando, setDuplicando] = useState(false);
   const {
     displayStatus,
     displayStatusLabel,
@@ -179,6 +184,25 @@ function EmbarqueListaCard({
       return;
     }
     onEdit(pedido);
+  };
+
+  const handleDuplicar = async (event) => {
+    event.stopPropagation();
+    if (duplicando || !pedido?.id) return;
+    setDuplicando(true);
+    try {
+      const novo = await duplicarPedidoCompra(base44, pedido.id);
+      toast.success('Pedido duplicado', {
+        description: `${novo.numero} criado em rascunho.`,
+      });
+      onDuplicated?.(novo);
+    } catch (error) {
+      toast.error('Não foi possível duplicar', {
+        description: error?.message || 'Tente novamente.',
+      });
+    } finally {
+      setDuplicando(false);
+    }
   };
 
   return (
@@ -226,27 +250,62 @@ function EmbarqueListaCard({
                   displayStatus === 'Aprovado' && 'font-normal',
                   'flex-1 min-w-0',
                 )}>{codigo}</p>
-                {pedido.status === 'Rascunho' && !modoSelecao ? (
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setShowConfirm(true); }}
-                    className="h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-red-500 shrink-0"
-                    aria-label="Excluir rascunho"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                {!modoSelecao ? (
+                  <div className="flex items-center shrink-0 -mr-0.5">
+                    <button
+                      type="button"
+                      onClick={handleDuplicar}
+                      disabled={duplicando}
+                      className="h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/40 shrink-0 touch-manipulation"
+                      aria-label="Duplicar pedido"
+                      title="Duplicar pedido (rascunho)"
+                    >
+                      {duplicando ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                    <PedidoCompraCardMenu
+                      pedidoId={pedido.id}
+                      pedidoNumero={pedido.numero}
+                    />
+                    {pedido.status === 'Rascunho' ? (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setShowConfirm(true); }}
+                        className="h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-red-500 shrink-0"
+                        aria-label="Excluir rascunho"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    ) : null}
+                  </div>
                 ) : null}
               </div>
 
               <p className={cn(
                 EMBARQUE_SUBTITLE,
-                'normal-case',
+                'normal-case !line-clamp-none',
                 displayStatus === 'Aprovado' && 'font-normal text-foreground/75',
               )}>
-                {pedido._display_fornecedor || pedido.fornecedor_nome || '—'}
+                <span className="line-clamp-2 block break-words">
+                  {pedido._display_fornecedor || pedido.fornecedor_nome || '—'}
+                </span>
+                {valorExibido != null && Number(valorExibido) !== 0 ? (
+                  <span className="text-foreground/80 tabular-nums whitespace-nowrap font-normal block mt-0.5 sm:hidden">
+                    {formatCaixaR(valorExibido)}
+                  </span>
+                ) : null}
+                {valorExibido != null && Number(valorExibido) !== 0 ? (
+                  <span className="hidden sm:inline text-foreground/80 tabular-nums whitespace-nowrap font-normal">
+                    {' · '}
+                    {formatCaixaR(valorExibido)}
+                  </span>
+                ) : null}
               </p>
 
-              <div className="flex items-end justify-between gap-3 min-w-0">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between min-w-0">
               <div className="min-w-0 flex-1 space-y-1">
                 <div className="flex flex-wrap items-start gap-x-1.5 gap-y-1">
                   <div className="flex flex-col items-start gap-0.5 shrink-0">
@@ -277,7 +336,7 @@ function EmbarqueListaCard({
                 tone="neutral"
                 signed={false}
                 size="sm"
-                className="shrink-0"
+                className="shrink-0 hidden sm:inline-flex self-end"
               />
               </div>
             </div>
@@ -305,7 +364,7 @@ function EmbarqueListaCard({
   );
 }
 
-function GrupoDia({ label, groupDate, groupCarrier, pedidos, onEdit, onDelete, selecionadosIds, onToggleSelecao, modoSelecao, className = '', _total_eta = 0 }) {
+function GrupoDia({ label, groupDate, groupCarrier, pedidos, onEdit, onDelete, onDuplicated, selecionadosIds, onToggleSelecao, modoSelecao, className = '', _total_eta = 0 }) {
   const [open, setOpen] = useState(true);
   const hasStructuredHeader = groupDate != null && groupCarrier != null;
   const headerTextClass = 'text-sm font-light text-foreground/85 leading-relaxed';
@@ -367,6 +426,7 @@ function GrupoDia({ label, groupDate, groupCarrier, pedidos, onEdit, onDelete, s
               pedido={p}
               onEdit={onEdit}
               onDelete={onDelete}
+              onDuplicated={onDuplicated}
               modoSelecao={modoSelecao}
               selecionado={selecionadosIds.includes(p.id)}
               desabilitadoSelecao={!pedidoSelecionavelEnvioFinanceiroLote(p)}
@@ -380,7 +440,7 @@ function GrupoDia({ label, groupDate, groupCarrier, pedidos, onEdit, onDelete, s
   );
 }
 
-export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete, selecionadosIds = [], onToggleSelecao, modoSelecao = false }) {
+export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete, onDuplicated, selecionadosIds = [], onToggleSelecao, modoSelecao = false }) {
   if (loading) {
     return (
       <div className="space-y-3 font-din-1451" aria-busy="true" aria-label="A carregar embarques">
@@ -420,15 +480,16 @@ export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete, 
         );
 
         return (
-          <GrupoDia
-            key={key}
-            label={label}
-            groupDate={groupDate}
-            groupCarrier={groupCarrier}
-            pedidos={pedidos}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            selecionadosIds={selecionadosIds}
+        <GrupoDia
+          key={key}
+          label={label}
+          groupDate={groupDate}
+          groupCarrier={groupCarrier}
+          pedidos={pedidos}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onDuplicated={onDuplicated}
+          selecionadosIds={selecionadosIds}
             onToggleSelecao={onToggleSelecao}
             modoSelecao={modoSelecao}
             className={index > 0 ? (isSpecialTransition ? 'pt-3' : 'pt-2') : ''}

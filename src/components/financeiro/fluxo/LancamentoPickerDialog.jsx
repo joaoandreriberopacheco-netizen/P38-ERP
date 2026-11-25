@@ -8,6 +8,10 @@ import {
 } from '@/components/ui/drawer';
 import { useCompactShell } from '@/hooks/use-breakpoint';
 import { cn } from '@/lib/utils';
+import {
+  focusPrimeiroCampoModal,
+  useRegisterLancamentoModalOpen,
+} from './lancamentoModalStack';
 
 /** Camadas do stack de diálogos do formulário de lançamento. */
 export const Z_LANCAMENTO = {
@@ -69,6 +73,7 @@ export default function LancamentoPickerDialog({
   bodyClassName,
 }) {
   const isMobile = useCompactShell();
+  useRegisterLancamentoModalOpen(open);
 
   if (isMobile) {
     return (
@@ -98,7 +103,7 @@ export default function LancamentoPickerDialog({
       <DialogContent
         overlayClassName="z-[68] bg-black/70"
         className={cn(dialogSheetClass, className)}
-        onOpenAutoFocus={(e) => e.preventDefault()}
+        onOpenAutoFocus={focusPrimeiroCampoModal}
       >
         <DialogHeader className="sr-only">
           <DialogTitle>{title}</DialogTitle>
@@ -123,6 +128,7 @@ export function LancamentoFormSheet({
   const isMobile = useCompactShell();
   const overlayZ = elevated ? 'z-[72]' : 'z-[68]';
   const contentZ = elevated ? 'z-[72]' : 'z-[70]';
+  useRegisterLancamentoModalOpen(open);
 
   if (isMobile) {
     return (
@@ -160,7 +166,7 @@ export function LancamentoFormSheet({
       <DialogContent
         overlayClassName={cn(overlayZ, 'bg-black/70')}
         className={cn('max-w-sm rounded-2xl', contentZ, className)}
-        onOpenAutoFocus={(e) => e.preventDefault()}
+        onOpenAutoFocus={focusPrimeiroCampoModal}
       >
         {title && (
           <DialogHeader>

@@ -3,6 +3,7 @@ import { Search, X, SlidersHorizontal, Clock, ArrowDownWideNarrow, ArrowUpWideNa
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { P38_CHIP_ACTIVE, P38_FIELD_SURFACE, P38_FILTROS_STICKY, P38_SEARCH } from './financeiroP38';
+import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
 
 const iconBtnBase = cn(
   'relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-opacity hover:opacity-90',
@@ -93,7 +94,7 @@ export default function FinanceiroFiltrosShell({
             </button>
           )}
 
-          {onPendentesToggle && (
+          {EXIBIR_UI_CONCILIACAO_FINANCEIRO && onPendentesToggle && (
             <button
               type="button"
               aria-label="Aguardando conciliação"

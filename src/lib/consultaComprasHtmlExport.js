@@ -30,6 +30,19 @@ async function waitForCaptureLayout(container) {
   }
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   await new Promise((resolve) => setTimeout(resolve, 120));
+  const captureEl = container.querySelector('#consulta-export-capture');
+  const contentHeight = Math.max(
+    captureEl?.scrollHeight || 0,
+    captureEl?.offsetHeight || 0,
+    container.scrollHeight || 0,
+    container.offsetHeight || 0,
+    120,
+  );
+  container.style.height = `${contentHeight}px`;
+  container.style.minHeight = `${contentHeight}px`;
+  if (captureEl instanceof HTMLElement) {
+    captureEl.style.minHeight = `${contentHeight}px`;
+  }
   void container.offsetHeight;
 }
 
@@ -64,10 +77,12 @@ function prepareCloneForPdfCapture(clonedDoc) {
 /**
  * Captura elemento HTML longo → PDF mobile multi-página (largura ~390px).
  */
-export async function renderConsultaElementToPdfBlob(element, { theme = 'light' } = {}) {
+export async function renderConsultaElementToJsPdf(element, { theme = 'light' } = {}) {
   if (!element) throw new Error('Elemento inválido');
   const { html2canvas, jsPDF } = await loadPdfCaptureLibs();
-  const backgroundColor = theme === 'dark' ? '#0f0f0f' : '#ffffff';
+  const backgroundColor = '#ffffff';
+
+  const captureHeight = Math.max(element.scrollHeight, element.offsetHeight, 120);
 
   const canvas = await html2canvas(element, {
     scale: 2,
@@ -75,7 +90,9 @@ export async function renderConsultaElementToPdfBlob(element, { theme = 'light' 
     backgroundColor,
     logging: false,
     width: MOBILE_EXPORT_WIDTH_PX,
+    height: captureHeight,
     windowWidth: MOBILE_EXPORT_WIDTH_PX,
+    windowHeight: captureHeight,
     scrollX: 0,
     scrollY: 0,
     x: 0,
@@ -84,6 +101,11 @@ export async function renderConsultaElementToPdfBlob(element, { theme = 'light' 
       typeof node?.classList?.contains === 'function' && node.classList.contains('no-pdf-capture'),
     onclone: (clonedDoc) => {
       prepareCloneForPdfCapture(clonedDoc);
+      if (clonedDoc?.documentElement) {
+        clonedDoc.documentElement.classList.remove('dark');
+        clonedDoc.documentElement.setAttribute('data-theme', 'light');
+        clonedDoc.documentElement.style.colorScheme = 'only light';
+      }
     },
   });
 
@@ -93,6 +115,10 @@ export async function renderConsultaElementToPdfBlob(element, { theme = 'light' 
     unit: 'mm',
     format: [MOBILE_PAGE_WIDTH_MM, MOBILE_PAGE_HEIGHT_MM],
   });
+
+  if (!canvas.height || canvas.height < 2) {
+    throw new Error('Não foi possível capturar o visual da consulta para o PDF.');
+  }
 
   let renderedHeight = 0;
   let pageIndex = 0;
@@ -128,7 +154,54 @@ export async function renderConsultaElementToPdfBlob(element, { theme = 'light' 
     pageIndex += 1;
   }
 
+  return pdf;
+}
+
+export async function renderConsultaElementToPdfBlob(element, options = {}) {
+  const pdf = await renderConsultaElementToJsPdf(element, options);
   return pdf.output('blob');
+}
+
+/**
+ * Monta o visual da consulta (mesmos componentes da tela) e devolve jsPDF pronto para anexos.
+ */
+export async function renderConsultaPedidosToJsPdf({
+  pedidosFiltrados = [],
+  groupBy = 'eta_transportadora',
+  sortOrder = 'asc',
+  produtosMap = {},
+  showDetalheCustos = true,
+  theme = 'light',
+  filtrosDesc = '',
+  contextLabel = 'Consulta de compras',
+}) {
+  const host = buildExportHost();
+  const root = createRoot(host);
+
+  try {
+    flushSync(() => {
+      root.render(
+        React.createElement(ConsultaComprasExportDocument, {
+          pedidosFiltrados,
+          groupBy,
+          sortOrder,
+          produtosMap,
+          showDetalheCustos,
+          theme,
+          filtrosDesc,
+          contextLabel,
+        }),
+      );
+    });
+
+    await waitForCaptureLayout(host);
+    const captureEl = host.querySelector('#consulta-export-capture');
+    if (!captureEl) throw new Error('Área de captura não encontrada');
+    return await renderConsultaElementToJsPdf(captureEl, { theme });
+  } finally {
+    root.unmount();
+    host.remove();
+  }
 }
 
 function buildExportHost() {
@@ -136,13 +209,14 @@ function buildExportHost() {
   host.setAttribute('data-consulta-export-host', 'true');
   host.style.cssText = [
     'position:fixed',
-    'left:0',
+    'left:-12000px',
     'top:0',
     'width:' + MOBILE_EXPORT_WIDTH_PX + 'px',
-    'z-index:-1',
     'pointer-events:none',
     'opacity:1',
+    'visibility:visible',
     'overflow:visible',
+    'z-index:1',
   ].join(';');
   document.body.appendChild(host);
   return host;
@@ -201,7 +275,7 @@ export async function gerarConsultaComprasHtmlPdf({
 }) {
   onProgress?.('Montando visual da consulta...');
 
-  const theme = version === 'expandida_mobile' ? 'dark' : 'light';
+  const theme = 'light';
   const showDetalheCustos = true;
 
   const host = buildExportHost();

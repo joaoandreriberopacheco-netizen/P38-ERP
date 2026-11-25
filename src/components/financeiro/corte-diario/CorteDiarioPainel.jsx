@@ -50,11 +50,12 @@ function agregarPorPar(links) {
   return map;
 }
 
-function dimensoesA4(numContas) {
-  if (numContas <= 2) return { cardWidth: 200, arrowWidth: 36 };
-  if (numContas === 3) return { cardWidth: 170, arrowWidth: 32 };
-  if (numContas === 4) return { cardWidth: 140, arrowWidth: 28 };
-  return { cardWidth: 118, arrowWidth: 24 };
+/** Larguras para arcos SVG — proporcional ao nº de contas no ecrã largo. */
+function dimensoesPalitosFluidos(numContas) {
+  const n = Math.max(1, numContas);
+  const cardWidth = Math.max(160, Math.min(280, Math.floor(900 / n)));
+  const arrowWidth = Math.max(28, Math.min(48, Math.floor(40 - n * 2)));
+  return { cardWidth, arrowWidth };
 }
 
 export default function CorteDiarioPainel({ mapa }) {
@@ -75,7 +76,7 @@ export default function CorteDiarioPainel({ mapa }) {
   const somaPar = (origemId, destinoId) =>
     porPar.get(`${origemId}→${destinoId}`)?.valor || 0;
 
-  const dims = useMemo(() => dimensoesA4(contas.length), [contas.length]);
+  const dims = useMemo(() => dimensoesPalitosFluidos(contas.length), [contas.length]);
 
   if (!contas.length) {
     return (
@@ -96,7 +97,7 @@ export default function CorteDiarioPainel({ mapa }) {
         </Button>
       </div>
 
-      <div id="balancete-print-root" className="balancete-a4 space-y-2">
+      <div id="balancete-print-root" className="balancete-canvas space-y-3">
         <div className="rounded-lg border border-border/40 bg-muted/15 px-3 py-2">
           <p className="text-[8px] font-bold uppercase tracking-widest text-muted-foreground">
             Balancete diário
@@ -106,30 +107,28 @@ export default function CorteDiarioPainel({ mapa }) {
           </p>
         </div>
 
-        <div className="w-full overflow-x-auto pb-1">
-          <div className="inline-block min-w-full">
-            <CorteDiarioArcos
-              contas={contas}
-              links={transferenciasArco}
-              cardWidth={dims.cardWidth}
-              arrowWidth={dims.arrowWidth}
-              compact
-            />
-            <div className="flex items-stretch">
-              {contas.map((conta, index) => {
-                const proxima = contas[index + 1];
-                const valorSeta = proxima ? somaPar(conta.contaId, proxima.contaId) : 0;
+        <div className="w-full overflow-x-auto pb-2">
+          <CorteDiarioArcos
+            contas={contas}
+            links={transferenciasArco}
+            cardWidth={dims.cardWidth}
+            arrowWidth={dims.arrowWidth}
+            compact={false}
+          />
+          <div className="balancete-map-row">
+            {contas.map((conta, index) => {
+              const proxima = contas[index + 1];
+              const valorSeta = proxima ? somaPar(conta.contaId, proxima.contaId) : 0;
 
-                return (
-                  <React.Fragment key={conta.contaId}>
-                    <CorteDiarioContaT conta={conta} compact />
-                    {proxima && (
-                      <CorteDiarioSeta valor={valorSeta} ativa={valorSeta > 0} compact />
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </div>
+              return (
+                <React.Fragment key={conta.contaId}>
+                  <CorteDiarioContaT conta={conta} compact={false} />
+                  {proxima && (
+                    <CorteDiarioSeta valor={valorSeta} ativa={valorSeta > 0} compact={false} />
+                  )}
+                </React.Fragment>
+              );
+            })}
           </div>
         </div>
       </div>

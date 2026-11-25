@@ -31,6 +31,7 @@ import { cn } from '@/components/utils';
 import { registrarTransicao } from './transicaoHelper';
 import { buildBypassAuthPayload } from '@/components/auth/operacaoAuthFlags';
 import MobileProductSelector from './MobileProductSelector';
+import PedidoCompraDespesasRateadas from './PedidoCompraDespesasRateadas';
 import AtualizarPrecosDialog from './AtualizarPrecosDialog';
 import PendenciasPedido from './PendenciasPedido';
 import LogsPedidoCompra from './LogsPedidoCompra';
@@ -42,6 +43,8 @@ import BannerStatusPedido from './BannerStatusPedido.jsx';
 import AnexosPedidoCompra from './AnexosPedidoCompra.jsx';
 import SolicitarEdicaoPDV from './SolicitarEdicaoPDV.jsx';
 import DiferencaPedidoCompraDialog from './DiferencaPedidoCompraDialog.jsx';
+import ComprovantePedidoCompra from './ComprovantePedidoCompra.jsx';
+import PedidoCompraPdfBlobPreview from './PedidoCompraPdfBlobPreview.jsx';
 import LancamentosCompraPanel from './LancamentosCompraPanel.jsx';
 import PainelCentralFinanceiroPedido from './PainelCentralFinanceiroPedido.jsx';
 import PedidoCompraLogisticaTab from './PedidoCompraLogisticaTab.jsx';
@@ -50,6 +53,8 @@ import { filterEmbarquesVisiveisParaPedido } from './embarqueFilters';
 import { refreshPedidoCompraComLogistica } from '@/lib/fetchPedidoCompraItens';
 import {
   calcValorTotalPedidoCompra,
+  calcValorMercadoriaPedidoCompraBase,
+  prepareLinhaPedidoCompraParaTotais,
   cancelarLancamentosNaoPagosPedidoCompra,
   criarLancamentoAjustePedidoCompra,
   getPedidoCompraDisplayStatusFinanceiro,
@@ -77,12 +82,19 @@ import {
   normalizePedidoCompraItemCustoLiquidoParaPersist,
 } from '@/lib/productUnits';
 import { savePedidoCompraItem } from '@/functions/savePedidoCompraItem';
+import { isSupabaseBrowserConfigured } from '@/lib/supabaseBrowserClient';
 import { uploadAnexoParaPedidoCompra } from '@/lib/uploadAnexoReferencia';
 import { mergeLoteIntoItems, parseLoteQuantidade } from '@/lib/catalogLoteUtils';
 import {
   calcularResumoNecessidadeDetalhe,
   resolverEmbarqueNecessidadeContexto,
 } from '@/lib/pedidoCompraNecessidade';
+import {
+  aplicarRateioDespesasNosItens,
+  normalizeDespesasRateadas,
+  normalizeDespesasRateadasForEdit,
+  acrescimoDespesasRateadasNoTotalPedido,
+} from '@/lib/pedidoCompraDespesasRateadas';
 import {
   COMPRAS_BTN_CITRUS,
   COMPRAS_BTN_PRIMARY,
@@ -149,7 +161,8 @@ export default function PedidoCompraForm({
     num_parcelas: 1,
     intervalo_parcelas_dias: 30,
     data_primeiro_vencimento: '',
-    conta_pagamento_id: ''
+    conta_pagamento_id: '',
+    despesas_rateadas: [],
   });
   const [fornecedores, setFornecedores] = useState([]);
   const [produtos, setProdutos] = useState([]);
@@ -201,8 +214,14 @@ export default function PedidoCompraForm({
   const pendingAuthSaveRef = useRef(null);
   const [diferencaDialogOpen, setDiferencaDialogOpen] = useState(false);
   const [diferencaDialogCtx, setDiferencaDialogCtx] = useState(null);
+  const [comprovanteCompraOpen, setComprovanteCompraOpen] = useState(false);
+  const [relatorioPdfPreview, setRelatorioPdfPreview] = useState(null);
   const [pedidoLogistica, setPedidoLogistica] = useState(pedido);
   const [abaPedidoDesktop, setAbaPedidoDesktop] = useState(abaInicial);
+  /** Sub-tela do seletor de itens (menu, despesas-rateadas, …) — FAB fica oculto fora do menu. */
+  const [itensSelectorView, setItensSelectorView] = useState('menu');
+  const mostrarFabPedidoCompra =
+    abaPedidoDesktop !== 'itens' || itensSelectorView === 'menu';
 
   const pedidoCompraTourSteps = useMemo(
     () => buildPedidoCompraFormTour({ setAba: setAbaPedidoDesktop }),
@@ -286,7 +305,15 @@ export default function PedidoCompraForm({
       if (!cancelled && synced) {
         const [atualizado] = await base44.entities.PedidoCompra.filter({ id: pedido.id });
         if (atualizado) {
-          setFormData((prev) => ({ ...prev, ...atualizado }));
+          setFormData((prev) => ({
+            ...prev,
+            ...atualizado,
+            despesas_rateadas: normalizeDespesasRateadasForEdit(
+              prev.despesas_rateadas?.length
+                ? prev.despesas_rateadas
+                : atualizado.despesas_rateadas ?? atualizado?.dados?.despesas_rateadas,
+            ),
+          }));
           setPedidoLogistica((prev) => ({ ...(prev || {}), ...atualizado }));
         }
       }
@@ -308,6 +335,9 @@ export default function PedidoCompraForm({
         ...pedido,
         data_emissao: dataEmissao,
         is_encomenda: isPedidoCompraEncomenda(pedido),
+        despesas_rateadas: normalizeDespesasRateadasForEdit(
+          pedido.despesas_rateadas ?? pedido?.dados?.despesas_rateadas,
+        ),
         itens: (pedido.itens || []).map((item) => syncPedidoCompraItemQuantities(item)),
       };
       setFormData(pedidoComData);
@@ -460,19 +490,82 @@ export default function PedidoCompraForm({
     loadDependencies();
   }, [pedido]);
 
-  // Cálculos automáticos
-  const { valorItens, valorTotal, percentualDesconto } = useMemo(() => {
-    const itens = roundToTwoDecimals((formData.itens || []).reduce((acc, item) => acc + (item.total || 0), 0));
+  const produtosById = useMemo(() => {
+    const map = {};
+    for (const p of produtos) {
+      if (p?.id) map[p.id] = p;
+    }
+    return map;
+  }, [produtos]);
+
+  const aplicarDespesasItens = useCallback(
+    (itens, despesas) =>
+      aplicarRateioDespesasNosItens(itens, despesas ?? [], produtosById),
+    [produtosById],
+  );
+
+  const itensParaAtualizarPrecos = useMemo(
+    () =>
+      aplicarDespesasItens(
+        formData.itens || [],
+        normalizeDespesasRateadas(formData.despesas_rateadas),
+      ),
+    [formData.itens, formData.despesas_rateadas, aplicarDespesasItens],
+  );
+
+  /** Ao abrir pedido com despesas gravadas, reaplica rateio nas linhas (SQL pode vir sem outros). */
+  const despesasRateioHidratadoRef = useRef(null);
+  useEffect(() => {
+    if (!pedido?.id || !produtos.length) return;
+    if (despesasRateioHidratadoRef.current === pedido.id) return;
+    const despesas = normalizeDespesasRateadasForEdit(
+      pedido.despesas_rateadas ?? pedido?.dados?.despesas_rateadas,
+    );
+    if (acrescimoDespesasRateadasNoTotalPedido(despesas) <= 0) return;
+    despesasRateioHidratadoRef.current = pedido.id;
+    setFormData((prev) => {
+      const itens = aplicarDespesasItens(prev.itens, normalizeDespesasRateadas(despesas));
+      return { ...prev, itens };
+    });
+  }, [pedido?.id, pedido?.despesas_rateadas, produtos.length, aplicarDespesasItens]);
+
+  const handleDespesasRateadasChange = useCallback(
+    (despesas) => {
+      setFormData((prev) => {
+        const norm = normalizeDespesasRateadasForEdit(despesas);
+        const itens = aplicarDespesasItens(prev.itens, normalizeDespesasRateadas(norm));
+        const newData = { ...prev, despesas_rateadas: norm, itens };
+        saveToHistory(newData);
+        return newData;
+      });
+    },
+    [aplicarDespesasItens],
+  );
+
+  // Cálculos automáticos — totais de linha recalculados (CX/PAC), não só `item.total` gravado.
+  const { valorItens, valorTotal, despesasAcrescimo, percentualDesconto } = useMemo(() => {
+    const itens = calcValorMercadoriaPedidoCompraBase(
+      { itens: formData.itens || [] },
+      produtosById,
+    );
     const frete = roundToTwoDecimals(parseFloat(formData.valor_frete) || 0);
     const desconto = roundToTwoDecimals(parseFloat(formData.valor_desconto) || 0);
-    const total = roundToTwoDecimals(itens + frete - desconto);
+    const despesasRateadas = acrescimoDespesasRateadasNoTotalPedido(formData.despesas_rateadas);
+    const total = roundToTwoDecimals(itens + frete - desconto + despesasRateadas);
     const percentDesc = itens > 0 ? roundToTwoDecimals((desconto / itens) * 100) : 0;
-    return { 
-      valorItens: itens, 
+    return {
+      valorItens: itens,
       valorTotal: total,
-      percentualDesconto: percentDesc
+      despesasAcrescimo: despesasRateadas,
+      percentualDesconto: percentDesc,
     };
-  }, [formData.itens, formData.valor_frete, formData.valor_desconto]);
+  }, [
+    formData.itens,
+    formData.valor_frete,
+    formData.valor_desconto,
+    formData.despesas_rateadas,
+    produtosById,
+  ]);
 
   const handleChange = (field, value) => {
     setFormData(prev => {
@@ -658,7 +751,8 @@ export default function PedidoCompraForm({
     item.total = calcTotalItemCompraPedido(item);
     Object.assign(item, normalizeItemToCanonicalFactorOne(item, 'custo'));
 
-    const newData = { ...formData, itens: newItems };
+    const itens = aplicarDespesasItens(newItems, formData.despesas_rateadas);
+    const newData = { ...formData, itens, despesas_rateadas: formData.despesas_rateadas ?? [] };
     saveToHistory(newData);
     setFormData(newData);
   };
@@ -716,10 +810,8 @@ export default function PedidoCompraForm({
         newItem = calculateItemTotals(newItem);
     }
 
-    const newData = {
-      ...formData,
-      itens: [...formData.itens, newItem],
-    };
+    const itens = aplicarDespesasItens([...formData.itens, newItem], formData.despesas_rateadas);
+    const newData = { ...formData, itens, despesas_rateadas: formData.despesas_rateadas ?? [] };
     saveToHistory(newData);
     setFormData(newData);
   };
@@ -775,7 +867,8 @@ export default function PedidoCompraForm({
 
     const merged = mergeLoteIntoItems(formData.itens, incoming, buildFromProduct, catalog);
     const recalc = merged.map((item) => calculateItemTotals(item));
-    const newData = { ...formData, itens: recalc };
+    const itens = aplicarDespesasItens(recalc, formData.despesas_rateadas);
+    const newData = { ...formData, itens, despesas_rateadas: formData.despesas_rateadas ?? [] };
     saveToHistory(newData);
     setFormData(newData);
   };
@@ -923,7 +1016,8 @@ export default function PedidoCompraForm({
   const handleRemoveItem = (index) => {
     const newItems = [...formData.itens];
     newItems.splice(index, 1);
-    const newData = { ...formData, itens: newItems };
+    const itens = aplicarDespesasItens(newItems, formData.despesas_rateadas);
+    const newData = { ...formData, itens, despesas_rateadas: formData.despesas_rateadas ?? [] };
     saveToHistory(newData);
     setFormData(newData);
   };
@@ -1069,56 +1163,67 @@ export default function PedidoCompraForm({
 
   const canReopen = currentUser?.role === 'admin' && isLocked;
 
+  const pedidoParaDocumento = useMemo(
+    () => ({
+      ...formData,
+      id: pedido?.id,
+      numero: pedido?.numero,
+      valor_itens: valorItens,
+      valor_total: valorTotal,
+    }),
+    [formData, pedido?.id, pedido?.numero, valorItens, valorTotal],
+  );
+
+  const handleOpenPedidoCompraPdf = useCallback(() => {
+    if (!pedido?.id) {
+      toast({ title: 'Salve o pedido antes de gerar o PDF', variant: 'destructive' });
+      return;
+    }
+    setRelatorioPdfPreview(null);
+    setComprovanteCompraOpen(true);
+  }, [pedido?.id, toast]);
+
   const handlePrintReport = async (tipo = 'pedido') => {
     if (!pedido?.id) {
       toast({ title: 'Salve o pedido antes de imprimir', variant: 'destructive' });
       return;
     }
 
+    if (tipo === 'pedido') {
+      handleOpenPedidoCompraPdf();
+      return;
+    }
+
     try {
       toast({ title: 'Gerando relatório...', description: 'Aguarde...' });
 
-      let functionName = 'gerarRelatorioPedido';
-      let fileName = `Pedido_${pedido.numero}.pdf`;
+      let functionName = 'gerarRelatorioPrecificacao';
+      let fileName = `Precificacao_${pedido.numero}.pdf`;
+      let title = 'Relatório de precificação';
 
-      if (tipo === 'precificacao') {
-        functionName = 'gerarRelatorioPrecificacao';
-        fileName = `Precificacao_${pedido.numero}.pdf`;
-      } else if (tipo === 'pendencias') {
+      if (tipo === 'pendencias') {
         functionName = 'gerarRelatorioPendencias';
         fileName = `Pendencias_${pedido.numero}.pdf`;
+        title = 'Relatório de pendências';
       }
 
       const response = await base44.functions.invoke(functionName, { pedido_id: pedido.id });
-
-      console.log('Response completa:', response);
-      console.log('Response status:', response?.status);
-      console.log('Response data type:', typeof response?.data);
 
       if (!response || !response.data) {
         throw new Error('Resposta inválida do servidor');
       }
 
       const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      toast({ title: 'Relatório gerado com sucesso!' });
+      setComprovanteCompraOpen(false);
+      setRelatorioPdfPreview({ blob, filename: fileName, title });
+      toast({ title: 'Relatório pronto', description: 'Visualização em modo claro' });
     } catch (error) {
-      console.error('Erro completo:', error);
-      console.error('Erro message:', error?.message);
-      console.error('Erro stack:', error?.stack);
       const errorMsg = error?.message || error?.toString() || 'Erro desconhecido ao gerar relatório';
-      toast({ 
-        title: 'Erro ao gerar relatório', 
+      toast({
+        title: 'Erro ao gerar relatório',
         description: errorMsg,
         variant: 'destructive',
-        duration: 10000
+        duration: 10000,
       });
     }
   };
@@ -1194,8 +1299,14 @@ export default function PedidoCompraForm({
         }
       }
 
-      const dataToSave = { 
+      const itensComTotaisAtualizados = (formData.itens || []).map((it) =>
+        prepareLinhaPedidoCompraParaTotais(it, produtosById[it?.produto_id]),
+      );
+
+      const dataToSave = {
         ...formData,
+        itens: itensComTotaisAtualizados,
+        despesas_rateadas: normalizeDespesasRateadas(formData.despesas_rateadas),
         ...(saveOptions.status ? { status: saveOptions.status } : {}),
         valor_itens: valorItens,
         valor_total: valorTotal,
@@ -1241,10 +1352,13 @@ export default function PedidoCompraForm({
 
       // ── Sincroniza linhas canónicas em PedidoCompraItem (SQL) ──
       // replaceAll persiste cada linha; recomporPedido actualiza só totais (sem espelho JSON).
-      if (pedidoId && Array.isArray(dataToSave?.itens)) {
+      if (pedidoId && Array.isArray(dataToSave?.itens) && isSupabaseBrowserConfigured()) {
         try {
           const itensCanonicos = dataToSave.itens.map((it, idx) => {
-            const synced = syncItemDescontoApresentacao(it);
+            const produtoLinha = produtosById[it?.produto_id];
+            const synced = syncItemDescontoApresentacao(
+              produtoLinha ? prepareLinhaPedidoCompraParaTotais(it, produtoLinha) : it,
+            );
             const totalLinha = calcTotalItemCompraPedido(synced);
             const normalizado = normalizePedidoCompraItemCustoLiquidoParaPersist({
               ...synced,
@@ -1254,7 +1368,8 @@ export default function PedidoCompraForm({
               fator_aplicado: Number(synced?.fator_conversao) || 1,
               frete_unitario_fator1: Number(synced?.custo_frete_unitario) || 0,
               outros_unitario_fator1: Number(synced?.custo_outros_unitario) || 0,
-              desconto_unitario_fator1: Number(synced?.valor_desconto_item ?? synced?.desconto_unitario) || 0,
+              desconto_unitario_fator1:
+                Number(synced?.valor_desconto_item ?? synced?.desconto_unitario) || 0,
               total: Number(synced?.total) > 0 ? Number(synced.total) : totalLinha,
             });
             return {
@@ -1262,7 +1377,8 @@ export default function PedidoCompraForm({
               produto_id: synced?.produto_id || '',
               produto_unidade_id: synced?.produto_unidade_id || '',
               unidade_sigla: synced?.unidade_medida || synced?.unidade_apresentacao || '',
-              quantidade_comercial: (normalizado.quantidade_comercial ?? Number(synced?.quantidade)) || 0,
+              quantidade_comercial:
+                (normalizado.quantidade_comercial ?? Number(synced?.quantidade)) || 0,
               custo_unitario_fator1: normalizado.custo_unitario_fator1,
               frete_unitario_fator1: normalizado.frete_unitario_fator1 ?? 0,
               outros_unitario_fator1: normalizado.outros_unitario_fator1 ?? 0,
@@ -1290,11 +1406,21 @@ export default function PedidoCompraForm({
             });
           }
         } catch (canonicalErr) {
-          console.warn('Sincronia canonica de PedidoCompraItem falhou:', canonicalErr?.message || canonicalErr);
-          toast({
-            title: 'Aviso de sincronia canonica',
-            description: 'O pedido foi salvo, mas a entidade canonica PedidoCompraItem nao pode ser sincronizada. Detalhe: ' + (canonicalErr?.message || ''),
-          });
+          const msg = canonicalErr?.message || String(canonicalErr);
+          const supabaseIndisponivel =
+            canonicalErr?.code === 'P38_SUPABASE_NOT_CONFIGURED' ||
+            /não configurado no servidor|SUPABASE_URL|nao configurado/i.test(msg);
+          if (supabaseIndisponivel) {
+            console.debug('Sincronia PedidoCompraItem ignorada (Supabase/proxy indisponível).', msg);
+          } else {
+            console.warn('Sincronia canonica de PedidoCompraItem falhou:', msg);
+            toast({
+              title: 'Aviso de sincronia canonica',
+              description:
+                'O pedido foi salvo, mas a entidade canonica PedidoCompraItem nao pode ser sincronizada. Detalhe: ' +
+                msg,
+            });
+          }
         }
       }
 
@@ -1420,6 +1546,12 @@ export default function PedidoCompraForm({
         }
       }
 
+      setFormData((prev) => ({
+        ...prev,
+        itens: itensComTotaisAtualizados,
+        valor_itens: valorItens,
+        valor_total: valorTotal,
+      }));
       clearDraft();
       valorTotalBaseEdicaoRef.current = roundToTwoDecimals(valorTotal);
       if (mudouParaAguardando && reenvioFinanceiroBloqueado) {
@@ -1506,7 +1638,7 @@ export default function PedidoCompraForm({
                   <DropdownMenuSeparator />
                   <DropdownMenuItem disabled={!pedido?.id} onClick={() => handlePrintReport('pedido')}>
                     <Printer className="w-4 h-4 mr-2" />
-                    Relatório do Pedido
+                    PDF A4 do pedido (Formigres)
                   </DropdownMenuItem>
                   <DropdownMenuItem disabled={!pedido?.id} onClick={() => handlePrintReport('precificacao')}>
                     <Printer className="w-4 h-4 mr-2" />
@@ -1792,23 +1924,43 @@ export default function PedidoCompraForm({
             </TabsContent>
 
             {/* ABA: ITENS — usa o mesmo seletor estilo PDV */}
-            <TabsContent value="itens" className="mt-0 h-full -mx-6 -mt-0" data-tour="pedido-tab-itens">
-              <MobileProductSelector
-                items={formData.itens}
-                products={produtos}
-                onAddItem={handleAddItem}
-                onAddItemsBatch={handleAddItemsBatch}
-                onUpdateItem={handleItemChange}
-                onRemoveItem={handleRemoveItem}
-                formatCurrency={formatCurrency}
-                onOpenAdjustPrices={() => setShowAtualizarPrecos(true)}
-                isLocked={isItensLocked}
-                modoCorrecaoItens={modoCorrecaoItens}
-                onProductCreated={(novoProduto) => {
-                  setProdutos(prev => [...prev, novoProduto]);
-                }}
-                onOpenImporter={() => setIsImportadorPedidoOpen(true)}
-              />
+            <TabsContent value="itens" className="mt-0 h-full -mx-6 -mt-0 flex flex-col min-h-0 relative" data-tour="pedido-tab-itens">
+              <div className="flex-1 min-h-0">
+                <MobileProductSelector
+                  items={formData.itens}
+                  products={produtos}
+                  onAddItem={handleAddItem}
+                  onAddItemsBatch={handleAddItemsBatch}
+                  onUpdateItem={handleItemChange}
+                  onRemoveItem={handleRemoveItem}
+                  formatCurrency={formatCurrency}
+                  onOpenAdjustPrices={() => setShowAtualizarPrecos(true)}
+                  isLocked={isItensLocked}
+                  modoCorrecaoItens={modoCorrecaoItens}
+                  onProductCreated={(novoProduto) => {
+                    setProdutos(prev => [...prev, novoProduto]);
+                  }}
+                  onOpenImporter={() => setIsImportadorPedidoOpen(true)}
+                  onSelectorViewChange={setItensSelectorView}
+                  pedidoValorMercadoria={valorItens}
+                  pedidoDespesasAcrescimo={despesasAcrescimo}
+                  pedidoValorTotal={valorTotal}
+                  despesasRateadasPanel={
+                    <PedidoCompraDespesasRateadas
+                      despesas={formData.despesas_rateadas}
+                      onChange={handleDespesasRateadasChange}
+                      formatCurrency={formatCurrency}
+                      valorMercadoria={valorItens}
+                      acrescimoDespesasRateadas={despesasAcrescimo}
+                      valorFrete={roundToTwoDecimals(parseFloat(formData.valor_frete) || 0)}
+                      valorDesconto={roundToTwoDecimals(parseFloat(formData.valor_desconto) || 0)}
+                      valorTotalPedido={valorTotal}
+                      isLocked={isItensLocked}
+                      className="border-0"
+                    />
+                  }
+                />
+              </div>
             </TabsContent>
 
           {/* ABA: PAGAMENTO */}
@@ -1972,7 +2124,7 @@ export default function PedidoCompraForm({
             refetchProdutosCatalog().then(({ data }) => data && setProdutos(data));
           }
         }}
-        itens={formData.itens || []}
+        itens={itensParaAtualizarPrecos}
         produtos={produtos}
       />
 
@@ -2032,12 +2184,13 @@ export default function PedidoCompraForm({
 
 
 
-       {/* FAB multi-role com Bússola */}
-       {!isLocked && (
+       {/* FAB multi-role com Bússola — oculto na sub-tela despesas rateadas (itens) */}
+       {!isLocked && mostrarFabPedidoCompra && (
          <PedidoCompraFAB 
-           pedido={{ ...formData, id: pedido?.id, numero: pedido?.numero, valor_itens: valorItens, valor_total: valorTotal }}
+           pedido={pedidoParaDocumento}
            onSave={handleInitiateSave}
            isSaving={isSaving}
+           onOpenPedidoPdf={handleOpenPedidoCompraPdf}
            mostrarEnviarFinanceiro={!isLocked && !!pedido?.id && formData.status === 'Rascunho' && formData.itens.length > 0}
            onEnviarFinanceiro={() => {
              handleInitiateSave({ status: 'Aguardando Aprovação Financeira' });
@@ -2046,15 +2199,30 @@ export default function PedidoCompraForm({
            onSolicitarEdicao={() => setIsSolicitarEdicaoOpen(true)}
          />
        )}
-       {isLocked && (
+       {isLocked && mostrarFabPedidoCompra && (
          <PedidoCompraFAB 
-           pedido={{ ...formData, id: pedido?.id, numero: pedido?.numero, valor_itens: valorItens, valor_total: valorTotal }}
+           pedido={pedidoParaDocumento}
            onSave={handleInitiateSave}
            isSaving={isSaving}
+           onOpenPedidoPdf={handleOpenPedidoCompraPdf}
            mostrarSolicitarEdicao={podeSolicitarCorrecao}
            onSolicitarEdicao={() => setIsSolicitarEdicaoOpen(true)}
-           />
-           )}
+         />
+       )}
+
+       <ComprovantePedidoCompra
+         pedido={pedidoParaDocumento}
+         open={comprovanteCompraOpen}
+         onClose={() => setComprovanteCompraOpen(false)}
+         produtosMap={produtosMapBasico}
+       />
+       <PedidoCompraPdfBlobPreview
+         open={Boolean(relatorioPdfPreview)}
+         blob={relatorioPdfPreview?.blob}
+         filename={relatorioPdfPreview?.filename}
+         title={relatorioPdfPreview?.title}
+         onClose={() => setRelatorioPdfPreview(null)}
+       />
 
            <AnexosPedidoCompra
          pedidoId={pedido?.id}

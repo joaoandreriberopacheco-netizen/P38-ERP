@@ -5,12 +5,104 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { execSync } from 'node:child_process';
+import { pickRochaImagesFromHtml } from '../lib/rochaPortalPagina.mjs';
 import { classificarFormigres, resumirClassificacoes } from '../lib/formigresClassificar.mjs';
+import {
+  extrairClassificacaoPei,
+  isClasseUsoPei,
+  referenciaResistenciaCatalogo,
+} from '../lib/paglevePeiResistencia.mjs';
+import { modeloComercialCatalogo, raioXProdutoDescricao } from '../lib/raioXProdutoDescricao.mjs';
+import { resolveFormatoPagLeve } from '../lib/pagleveFormatoOcr.mjs';
+import { loadPrecosSiah, resolvePrecoSiah } from '../lib/paglevePrecosSiah.mjs';
+import {
+  loadEstoqueCasaIsrael,
+  resolveEstoqueCasaIsraelPath,
+} from '../lib/pagleveEstoqueCasaIsrael.mjs';
 
 const ROOT = process.cwd();
 const IN_CSV =
-  process.env.PAGLEVE_CSV || path.join(ROOT, 'files', 'pagleve', 'raio-x-pagleve-site-verificado.csv');
+  process.env.PAGLEVE_CSV ||
+  (fs.existsSync(path.join(ROOT, 'files', 'pagleve', 'pagleve-base-cruzada.csv'))
+    ? path.join(ROOT, 'files', 'pagleve', 'pagleve-base-cruzada.csv')
+    : path.join(ROOT, 'files', 'pagleve', 'raio-x-pagleve-site-verificado.csv'));
 const OUT_DIR = path.join(ROOT, 'files', 'pagleve', 'classificacao');
+const RAIO_X_VERIFICADO_CSV = path.join(ROOT, 'files', 'pagleve', 'raio-x-pagleve-site-verificado.csv');
+
+/** Base cruzada muitas vezes não replica imagens do portal Rocha — usa raio-x verificado. */
+function loadRaioXImagemOverlay() {
+  if (!fs.existsSync(RAIO_X_VERIFICADO_CSV)) return new Map();
+  const byCodigo = new Map();
+  for (const r of loadCsv(RAIO_X_VERIFICADO_CSV)) {
+    const codigo = String(r.codigo || '').trim();
+    if (!codigo) continue;
+    byCodigo.set(codigo, {
+      imagem_url: String(r.imagem_url || '').trim(),
+      imagens_json: String(r.imagens_json || '').trim(),
+      evidencia_url: String(r.evidencia_url || '').trim(),
+    });
+  }
+  return byCodigo;
+}
+
+function normProdutoUrl(u) {
+  return String(u || '').trim().replace(/\/$/, '').toLowerCase();
+}
+
+const rochaPortalHtmlCache = new Map();
+
+function curlRochaPortal(url) {
+  try {
+    return execSync(`curl -sL --max-time 22 -A P38 ${JSON.stringify(url)}`, {
+      encoding: 'utf8',
+      maxBuffer: 6 * 1024 * 1024,
+    });
+  } catch {
+    return '';
+  }
+}
+
+/** Portal Rocha: base cruzada costuma ter URL sem imagens (ex. R7007 / irmãs Rochaprime). */
+function fillRochaPortalImagens(row) {
+  if (String(row.imagem_url || '').trim()) return row;
+  const url = String(row.evidencia_url || '').trim().split('?')[0];
+  if (!url.includes('portalgruporocha.com.br/produtos/')) return row;
+  const slug = url.match(/\/produtos\/([^/?#]+)/i)?.[1]?.toLowerCase() || '';
+  if (!slug) return row;
+  let html = rochaPortalHtmlCache.get(slug);
+  if (html === undefined) {
+    html = curlRochaPortal(url);
+    rochaPortalHtmlCache.set(slug, html);
+  }
+  if (!html) return row;
+  const picks = pickRochaImagesFromHtml(html, slug);
+  if (!picks.length) return row;
+  const next = { ...row };
+  next.imagem_url = picks[0];
+  next.imagens_json = JSON.stringify(picks.slice(0, 8));
+  return next;
+}
+
+function overlayImagensRaioX(row, imagemOverlay) {
+  if (!imagemOverlay) return row;
+  const next = { ...row };
+  const baseUrl = normProdutoUrl(next.evidencia_url);
+  const overlayUrl = normProdutoUrl(imagemOverlay.evidencia_url);
+  if (baseUrl && overlayUrl && baseUrl !== overlayUrl) {
+    return next;
+  }
+  const baseImg = String(next.imagem_url || '').trim();
+  const overlayImg = String(imagemOverlay.imagem_url || '').trim();
+  const baseGal = String(next.imagens_json || '').trim();
+  const overlayGal = String(imagemOverlay.imagens_json || '').trim();
+  const baseCount = parseImagensJson(baseGal, baseImg).length;
+  const overlayCount = parseImagensJson(overlayGal, overlayImg).length;
+  if (!baseImg && overlayImg) next.imagem_url = overlayImg;
+  if (overlayCount > baseCount && overlayGal) next.imagens_json = overlayGal;
+  else if (!baseGal && overlayGal) next.imagens_json = overlayGal;
+  return next;
+}
 
 function parseCsvLine(line) {
   const out = [];
@@ -59,6 +151,14 @@ function parseM2Caixa(descricao) {
 function parseTipoAcabFromSite(descricaoNoSite) {
   const raw = String(descricaoNoSite || '');
   const upper = raw.toUpperCase();
+  if (/\bMRE\b/.test(upper) || /MAIOR\s+RESIST/.test(upper) || /ESCORREGAMENTO/.test(upper)) {
+    const partsEarly = raw.split('·').map((p) => p.trim()).filter(Boolean);
+    const tipoPart = partsEarly.find((p) => /bold|retificad/i.test(p)) || '';
+    let tipo = '';
+    if (/bold/i.test(tipoPart)) tipo = 'BOLD';
+    else if (/retificad/i.test(tipoPart)) tipo = 'RETIFICADO';
+    return { tipo, acabamento: 'MRE' };
+  }
   if (/RT\s*POLIDO|\bPOLIDO\b|\bPOLIDA\b/.test(upper)) {
     return { tipo: '', acabamento: 'POLIDO' };
   }
@@ -75,54 +175,137 @@ function parseTipoAcabFromSite(descricaoNoSite) {
   if (/bold/i.test(tipoPart)) tipo = 'BOLD';
   else if (/retificad/i.test(tipoPart)) tipo = 'RETIFICADO';
   const acab = acabPart.toUpperCase().replace(/\s+/g, ' ').trim();
+  if (isClasseUsoPei(acab)) return { tipo, acabamento: '' };
   return { tipo, acabamento: acab };
 }
 
-function inferAcabamentoLabel(descErp, descSite, classif) {
-  const { acabamento: siteAcab } = parseTipoAcabFromSite(descSite);
-  if (siteAcab && !/CONHEÇA|MODELOS/i.test(siteAcab)) {
-    if (/ACETINAD/i.test(siteAcab)) return 'Acetinado';
-    if (/^MATE$/i.test(siteAcab)) return 'Mate';
-    if (/BRILHANTE/i.test(siteAcab)) return 'Brilhante';
-    if (/GRANILHAD/i.test(siteAcab)) return 'Granilhado';
-    if (/POLIDO/i.test(siteAcab)) return 'Polido';
-    if (/GOTEJAD/i.test(siteAcab)) return 'Gotejado';
-    return siteAcab.charAt(0) + siteAcab.slice(1).toLowerCase();
-  }
+function inferAcabamentoFromDescricaoErp(descErp, classif) {
   const u = String(descErp || '').toUpperCase();
-  if (/RT\s*POLIDO|\bPOLIDO\b/.test(u) && classif.linha === 'polida') return 'Polido';
+  if (/RT\s*POLIDO|\bPOLIDO\b|\bPLD\b/.test(u) && classif.linha === 'polida') return 'Polido';
+  if (/\bMRE\b/.test(u)) return 'MRE';
   if (/GRANILHAD/.test(u)) return 'Granilhado';
   if (/GOTEJAD/.test(u)) return 'Gotejado';
   if (/ACETINAD/.test(u)) return 'Acetinado';
   if (/\bMATE\b/.test(u)) return 'Mate';
   if (/BRILH/.test(u)) return 'Brilhante';
-  if (classif.subtipo === 'antiderrapante') return 'Protetiva aderente';
-  if (classif.subtipo === 'semiderrapante') return 'Granilhado';
+  if (/ESMALT/.test(u)) return 'Esmaltado';
+  if (classif.subtipo === 'antiderrapante') return 'Antiderrapante';
+  if (classif.subtipo === 'semiderrapante') return 'Semiderrapante';
   if (classif.variante_lisa === 'mate') return 'Mate';
   if (classif.variante_lisa === 'brilhante') return 'Brilhante';
   return '';
 }
 
+function inferAcabamentoLabel(descErp, descSite, classif, row = {}) {
+  const hasPeiUso = Boolean(extrairClassificacaoPei(descErp) || extrairClassificacaoPei(row.site_classificacao_pei || ''));
+  const siteAcabExtra = String(row.site_acabamento_label || '').trim();
+  if (siteAcabExtra && !/^(bold|ret|retificado)$/i.test(siteAcabExtra) && !isClasseUsoPei(siteAcabExtra)) {
+    return siteAcabExtra;
+  }
+
+  const u = String(descErp || '').toUpperCase();
+  const siteUpper = String(descSite || '').toUpperCase();
+  if (/RT\s*POLIDO|\bPOLIDO\b|\bPLD\b/.test(u) && classif.linha === 'polida') return 'Polido';
+  if (/\bMRE\b/.test(u) || (/\bMRE\b/.test(siteUpper) && !/BRILHANTE\s*$/i.test(String(descSite || '').trim()))) {
+    return 'MRE';
+  }
+  if (/GRANILHAD/.test(u)) return 'Granilhado';
+  if (/GOTEJAD/.test(u)) return 'Gotejado';
+  if (/ACETINAD/.test(u)) return 'Acetinado';
+  if (/\bMATE\b/.test(u)) return 'Mate';
+  if (/BRILH/.test(u)) return 'Brilhante';
+  if (/ESMALT/.test(u)) return 'Esmaltado';
+
+  const { acabamento: siteAcab } = parseTipoAcabFromSite(descSite);
+  if (hasPeiUso) return inferAcabamentoFromDescricaoErp(descErp, classif);
+  if (siteAcab && !/CONHEÇA|MODELOS/i.test(siteAcab) && !/^(BOLD|RETIFICADO|RET)$/i.test(siteAcab)) {
+    if (/ACETINAD/i.test(siteAcab)) return 'Acetinado';
+    if (/^MATE$/i.test(siteAcab)) return 'Mate';
+    if (/^MRE$/i.test(siteAcab)) return 'MRE';
+    if (/BRILHANTE/i.test(siteAcab) && !/\bMRE\b/i.test(descSite)) return 'Brilhante';
+    if (/GRANILHAD/i.test(siteAcab)) return 'Granilhado';
+    if (/POLIDO/i.test(siteAcab)) return 'Polido';
+    if (/GOTEJAD/i.test(siteAcab)) return 'Gotejado';
+    if (isClasseUsoPei(siteAcab)) return inferAcabamentoFromDescricaoErp(descErp, classif);
+    return siteAcab.charAt(0) + siteAcab.slice(1).toLowerCase();
+  }
+  if (/brilhante/i.test(descSite)) return 'Brilhante';
+  if (classif.subtipo === 'antiderrapante') return 'Antiderrapante';
+  if (classif.subtipo === 'semiderrapante') return 'Semiderrapante';
+  if (classif.variante_lisa === 'mate') return 'Mate';
+  if (classif.variante_lisa === 'brilhante') return 'Brilhante';
+  return inferAcabamentoFromDescricaoErp(descErp, classif);
+}
+
 function parseImagensJson(raw, imagemUrl) {
   const out = [];
-  try {
-    const arr = JSON.parse(raw || '[]');
-    if (Array.isArray(arr)) {
-      for (const url of arr) {
-        if (url) out.push({ url: String(url), tipo: 'principal' });
+  const s = String(raw || '').trim();
+  if (s) {
+    try {
+      const arr = JSON.parse(s);
+      if (Array.isArray(arr)) {
+        for (const url of arr) {
+          if (url) out.push({ url: String(url), tipo: 'principal' });
+        }
+      }
+    } catch {
+      // Base cruzada (ex. Carmelo Fior): [https://…,https://…] sem aspas — não é JSON válido.
+      const inner = s.replace(/^\[|\]$/g, '').trim();
+      if (inner) {
+        const urls = inner
+          .split(/,(?=https?:\/\/)/i)
+          .map((u) => u.trim().replace(/^["']|["']$/g, ''))
+          .filter((u) => /^https?:\/\//i.test(u));
+        for (const url of urls) out.push({ url, tipo: 'principal' });
       }
     }
-  } catch {
-    /* ignore */
   }
   if (!out.length && imagemUrl) out.push({ url: imagemUrl, tipo: 'principal' });
   return out;
 }
 
-function mapStatus(status) {
-  if (status === 'confirmado_site') return 'encontrado';
-  if (status === 'indicacao_joao') return 'indicacao';
+function mapStatus(status, row = {}) {
+  if (status === 'confirmado_site' || String(row.evidencia_url || '').trim()) return 'encontrado';
+  if (status === 'indicacao_joao' || status === 'pendente') return 'indicacao';
   return 'sem_ficha';
+}
+
+function titleCaseModelo(str = '') {
+  return String(str || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+}
+
+function nomeModeloPrincipal(row, descricao) {
+  return modeloComercialCatalogo(row.codigo, descricao, row.modelo, row.descricao_no_site || '');
+}
+
+function linhaCatalogoLabel(classif, siteHints, descErp) {
+  if (classif.linha === 'bold') return 'BOLD';
+  if (classif.linha === 'retificada' || classif.linha === 'polida') return 'RET';
+  const u = String(descErp || '').toUpperCase();
+  if (/\bBOLD\b/.test(u)) return 'BOLD';
+  if (/\bRT\b|\bRET\b|\bRETIFIC/.test(u)) return 'RET';
+  if (siteHints.tipo === 'BOLD') return 'BOLD';
+  if (siteHints.tipo === 'RETIFICADO') return 'RET';
+  return '';
+}
+
+/** Subtítulo: modelo · formato · BOLD|RET · textura (Brilhante, Mate, …). */
+function subtituloCatalogoPagLeve(row, descricao, classif, acabLabel, siteHints) {
+  const parts = [];
+  const nome = nomeModeloPrincipal(row, descricao);
+  if (nome) parts.push(nome);
+  const fmt = String(row.formato || '').replace(/×/g, 'x').toLowerCase();
+  if (fmt) parts.push(fmt);
+  const linha = linhaCatalogoLabel(classif, siteHints, descricao);
+  if (linha) parts.push(linha);
+  const tex = String(acabLabel || '').trim();
+  if (tex && !isClasseUsoPei(tex) && tex.toUpperCase() !== linha) parts.push(tex);
+  return parts.join(' · ');
 }
 
 /** PagLeve: polida é textura (acabamento), não linha comercial à parte de Bold/Retificada. */
@@ -139,14 +322,30 @@ function normalizarLinhaPagLeve(classif, acabLabel) {
   };
 }
 
-function main() {
+async function main() {
   if (!fs.existsSync(IN_CSV)) {
     console.error('CSV não encontrado:', IN_CSV);
     process.exit(1);
   }
+  const estoqueCasaIsraelPath = resolveEstoqueCasaIsraelPath();
+  const estoqueCasaIsrael = await loadEstoqueCasaIsrael(estoqueCasaIsraelPath);
   const rows = loadCsv(IN_CSV);
-  const items = rows.map((row) => {
-    const descricao = row.descricao_erp || row.modelo || row.codigo;
+  const usarOverlayImagens = String(IN_CSV).includes('pagleve-base-cruzada');
+  const imagemOverlayPorCodigo = usarOverlayImagens ? loadRaioXImagemOverlay() : new Map();
+  const precosSiah = loadPrecosSiah();
+  const items = rows.map((rowIn) => {
+    const codigo = String(rowIn.codigo || '').trim();
+    const row = fillRochaPortalImagens(
+      overlayImagensRaioX(rowIn, imagemOverlayPorCodigo.get(codigo)),
+    );
+    const casaIsrael = estoqueCasaIsrael.get(codigo);
+    const descricao =
+      casaIsrael?.descricao || row.descricao_erp || row.modelo || row.codigo;
+    if (casaIsrael?.formato) {
+      row.formato =
+        resolveFormatoPagLeve(descricao, casaIsrael.formato.replace(/×/g, 'x')) || row.formato;
+    }
+    row.formato = resolveFormatoPagLeve(descricao, row.formato) || row.formato;
     const siteHints = parseTipoAcabFromSite(row.descricao_no_site);
     const classif = classificarFormigres({
       tipo: siteHints.tipo,
@@ -154,16 +353,42 @@ function main() {
       titulo: row.descricao_no_site || descricao,
       descricao,
     });
-    let acabLabel = inferAcabamentoLabel(descricao, row.descricao_no_site, classif);
+    let acabLabel = inferAcabamentoLabel(descricao, row.descricao_no_site, classif, row);
     const classifPl = normalizarLinhaPagLeve(classif, acabLabel);
     if (classifPl.linha === 'retificada' && classif.linha === 'polida' && !acabLabel) {
       acabLabel = 'Polido';
     }
+    if (isClasseUsoPei(acabLabel)) {
+      acabLabel = inferAcabamentoFromDescricaoErp(descricao, classifPl);
+    }
     const imagens = parseImagensJson(row.imagens_json, row.imagem_url);
+    const catalogoNomeModelo = nomeModeloPrincipal(row, descricao);
+    const catalogoSubtitulo = subtituloCatalogoPagLeve(row, descricao, classifPl, acabLabel, siteHints);
+    const peiUso = extrairClassificacaoPei(descricao) || extrairClassificacaoPei(row.site_classificacao_pei || '');
+    const precoCsv = row.preco_varejo_m2
+      ? Number(String(row.preco_varejo_m2).replace(',', '.'))
+      : null;
+    const precoHit = precosSiah
+      ? resolvePrecoSiah(
+          {
+            codigo_tintao: row.codigo,
+            modelo: catalogoNomeModelo || row.modelo,
+            formato: (row.formato || '').replace(/×/g, 'x'),
+            descricao,
+          },
+          precosSiah,
+        )
+      : { preco_m2: null };
+    const precoFinal = precoCsv ?? precoHit.preco_m2 ?? null;
+    const precoFonte = precoCsv != null ? 'pre_os_coluna' : precoHit.fonte || '';
+    const descricaoErp = descricao;
+    const nomeCurto = catalogoNomeModelo || row.modelo || row.codigo;
     return {
       codigo_tintao: row.codigo,
-      modelo: row.modelo || '',
-      descricao,
+      modelo: catalogoNomeModelo || row.modelo || '',
+      catalogo_nome_modelo: catalogoNomeModelo,
+      descricao_erp: descricaoErp,
+      descricao: nomeCurto,
       formato: (row.formato || '').replace(/×/g, 'x'),
       linha: classifPl.linha,
       subtipo: classifPl.subtipo,
@@ -171,21 +396,25 @@ function main() {
       rotulo: classifPl.rotulo,
       confianca: classifPl.confianca,
       motivo: classifPl.motivo,
-      match_status: mapStatus(row.status),
+      match_status: mapStatus(row.status, row),
       match_score: row.status === 'confirmado_site' ? 100 : 0,
       formigres_id: (String(row.evidencia_url || '').match(/formigres\.com\.br\/produto\/(\d+)/i) || [])[1] || '',
-      formigres_titulo: row.descricao_no_site || row.modelo || '',
+      formigres_titulo: catalogoSubtitulo,
       formigres_tipo: siteHints.tipo,
-      formigres_acabamento: siteHints.acabamento || acabLabel.toUpperCase(),
+      formigres_acabamento:
+        (siteHints.acabamento && !isClasseUsoPei(siteHints.acabamento) ? siteHints.acabamento : acabLabel.toUpperCase()),
       acabamento_label: acabLabel,
       marca_nome: row.marca_no_site || row.fabricante_grupo || '',
       fabricante_grupo: row.fabricante_grupo || '',
-      referencia: row.codigo,
+      pei_uso: peiUso,
+      referencia: referenciaResistenciaCatalogo(descricao, row.site_classificacao_pei) || row.codigo,
       produto_url: row.evidencia_url || '',
       imagem_url: row.imagem_url || imagens[0]?.url || '',
       imagens,
-      preco_m2: null,
-      m2_por_caixa: parseM2Caixa(descricao),
+      preco_m2: precoFinal,
+      preco_fonte: precoFonte,
+      codigo_siah: precoHit.codigo_siah || '',
+      m2_por_caixa: parseM2Caixa(descricaoErp),
       unidade: '',
       status_site: row.status,
       observacao: row.observacao || '',
@@ -207,6 +436,9 @@ function main() {
   const payload = {
     geradoEm: new Date().toISOString(),
     fonte: IN_CSV,
+    ...(estoqueCasaIsraelPath
+      ? { fonte_descricao_estoque: path.basename(estoqueCasaIsraelPath) }
+      : {}),
     resumo,
     itens: items,
   };
@@ -214,9 +446,13 @@ function main() {
   console.log(JSON.stringify({
     ok: true,
     itens: items.length,
+  ...(estoqueCasaIsraelPath ? { estoqueCasaIsrael: path.basename(estoqueCasaIsraelPath) } : {}),
     resumo: resumo.porRotulo,
     json: jsonPath,
   }, null, 2));
 }
 
-main();
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

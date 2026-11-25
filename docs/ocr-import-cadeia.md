@@ -13,8 +13,8 @@ PDF/imagem
   → ① OCR local (pdf.js ou Paddle) — só texto
   → ② Groq estrutura JSON (layout-agnóstico) — ~1 req/doc
   → ③ Parser por regras — só se ② falhar ou IA desligada
-  → Match local por descrição + hierarquia do catálogo
-  → Revisão humana no importador
+  → ④ Groq match catálogo (candidatos locais + semântica) — ~1 req/doc (`VITE_P38_OCR_GROQ_MATCH`, default ligado)
+  → Validação local (marca/cor/embalagem) + revisão humana no importador
 ```
 
 Boleto e comprovante mantêm parser local primeiro (campos fixos: linha digitável, valor).
@@ -25,11 +25,13 @@ Boleto e comprovante mantêm parser local primeiro (campos fixos: linha digitáv
 |----------|---------|--------|
 | `VITE_P38_OCR_CLOUD_FALLBACK` | `true` | Liga/desliga chamadas Groq |
 | `VITE_P38_OCR_GROQ_PRIMARY` | `true` | Pedido/cotação/lista: IA **antes** do parser por layout |
+| `VITE_P38_OCR_GROQ_MATCH` | `true` | Segunda chamada Groq: associa linhas ao catálogo (estilo Gemini antigo) |
 
 ## Match com catálogo
 
-- **Não** usa código numérico do fornecedor nem EAN do PDF para auto-vincular.
-- **Usa** descrição do documento vs hierarquia/nome do produto no P38 (tokens + similaridade).
+- **Não** usa código numérico do fornecedor nem EAN do PDF para auto-vincular sozinho.
+- **Groq (recomendado):** shortlist local de candidatos + IA escolhe `produto_id` por semântica.
+- **Fallback:** descrição vs hierarquia/nome no P38 (tokens + similaridade) se a IA falhar ou estiver desligada.
 - Sem match claro → linha na revisão com busca pré-preenchida pela **descrição** lida do PDF.
 - Match fraco ou marca/cor diferente → **sugerir criar produto novo** (nome + preço do PDF, produto “irmão” no catálogo como modelo).
 

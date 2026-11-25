@@ -70,6 +70,49 @@ export function normalizeEventoLogisticoRecord(item) {
   };
 }
 
+/** Chave canónica: mesma embarcação + mesma saída de Manaus (evita triplicatas na UI). */
+export function viagemLogisticaDedupKey(evento) {
+  const transportadoraId = evento?.transportadora_id || evento?.embarcacao_template_id || '';
+  const saida = normalizeFluvialDateKey(evento?.data_saida_origem) || '';
+  if (!transportadoraId || !saida) return null;
+  return `${transportadoraId}::${saida}`;
+}
+
+function rankEventoForViagemDedup(evento) {
+  const hasCodigo = evento?.codigo ? 1 : 0;
+  const hexId = evento?.id && !String(evento.id).includes('-') ? 1 : 0;
+  const created = evento?.created_at || evento?.created_date || '';
+  return { hasCodigo, hexId, created };
+}
+
+function pickMelhorEventoViagem(a, b) {
+  const ra = rankEventoForViagemDedup(a);
+  const rb = rankEventoForViagemDedup(b);
+  if (rb.hasCodigo !== ra.hasCodigo) return rb.hasCodigo > ra.hasCodigo ? b : a;
+  if (rb.hexId !== ra.hexId) return rb.hexId > ra.hexId ? b : a;
+  const ta = new Date(ra.created || 0).getTime();
+  const tb = new Date(rb.created || 0).getTime();
+  return tb >= ta ? b : a;
+}
+
+/** Mantém uma viagem por transportadora + data_saida_origem (alinhado a `npm run viagens-fluvial:dedup`). */
+export function dedupeLogisticaEventosPorViagem(eventos = []) {
+  const porChave = new Map();
+  const semChave = [];
+
+  (eventos || []).forEach((evento) => {
+    const key = viagemLogisticaDedupKey(evento);
+    if (!key) {
+      semChave.push(evento);
+      return;
+    }
+    const atual = porChave.get(key);
+    porChave.set(key, atual ? pickMelhorEventoViagem(atual, evento) : evento);
+  });
+
+  return [...semChave, ...porChave.values()];
+}
+
 export function unifyLogisticaEventos(fromSandbox = [], fromProd = []) {
   const mapa = new Map();
 
@@ -83,7 +126,7 @@ export function unifyLogisticaEventos(fromSandbox = [], fromProd = []) {
     }
   });
 
-  return Array.from(mapa.values());
+  return dedupeLogisticaEventosPorViagem(Array.from(mapa.values()));
 }
 
 export function getFluvialFetchWindowDays(periodoId) {

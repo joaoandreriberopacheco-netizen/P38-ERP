@@ -166,6 +166,9 @@ async function main() {
   console.log(' ', maskPresence('DATABASE_URL', secrets.databaseUrl));
   console.log(' ', maskPresence('SUPABASE_ACCESS_TOKEN', secrets.accessToken));
   console.log(' ', maskPresence('SUPABASE_SERVICE_ROLE_KEY', secrets.serviceRoleKey));
+  if (!secrets.serviceRoleKey) {
+    console.log(' ', maskPresence('supabase-service-role-key (Cursor)', Boolean(process.env['supabase-service-role-key']?.trim())));
+  }
   console.log(' ', maskPresence('P38_AUTH_URL', secrets.p38AuthUrl));
   console.log(' ', maskPresence('VERCEL_TOKEN', secrets.vercelToken));
 

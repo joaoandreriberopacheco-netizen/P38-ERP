@@ -63,6 +63,9 @@ function isNewForecastMonth() {
   return sessionStorage.getItem(SESSION_MONTH_KEY) !== month;
 }
 
+/** Evita corridas paralelas (Boats + Itinerário) que criavam viagens em triplicata. */
+let ensureHorizonInFlight = null;
+
 /**
  * Mantém forecast de 3 meses (fim de mês civil) sem apagar viagens existentes.
  *
@@ -71,6 +74,18 @@ function isNewForecastMonth() {
  * - Caso contrário: no máximo uma vez por dia por sessão.
  */
 export async function ensureFluvialViagensHorizon(transportadoras = [], eventos = []) {
+  if (ensureHorizonInFlight) {
+    return ensureHorizonInFlight;
+  }
+
+  ensureHorizonInFlight = ensureFluvialViagensHorizonInner(transportadoras, eventos).finally(() => {
+    ensureHorizonInFlight = null;
+  });
+
+  return ensureHorizonInFlight;
+}
+
+async function ensureFluvialViagensHorizonInner(transportadoras = [], eventos = []) {
   const day = todayKey();
   const needsExtension = fluvialViagensNeedHorizonExtension(transportadoras, eventos);
   const monthRollover = isNewForecastMonth();

@@ -39,13 +39,15 @@ export async function loadPedidoCompraCli(client, { numero, pedidoId }) {
     }
   }
 
-  if (!pedido.itens?.length) {
-    try {
-      const pci = await entities.PedidoCompraItem.filter({ pedido_compra_id: pedido.id });
-      pedido.itens = (pci || []).map(pedidoCompraItemToLegacyMirror);
-    } catch {
-      /* legado JSON no pedido */
+  try {
+    const pci = await entities.PedidoCompraItem.filter({ pedido_compra_id: pedido.id });
+    if (pci?.length) {
+      pedido.itens = pci.map(pedidoCompraItemToLegacyMirror);
+    } else if (!pedido.itens?.length) {
+      pedido.itens = [];
     }
+  } catch {
+    if (!pedido.itens?.length) pedido.itens = [];
   }
 
   const embarquesComDespacho = embList.filter(embarqueTemDespachoInformado);

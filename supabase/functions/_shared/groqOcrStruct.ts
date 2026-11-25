@@ -10,7 +10,7 @@ const env = (k: string): string => Deno.env.get(k) ?? '';
 /** Modelos ativos na Groq (evitar IDs Llama antigos que retornam 404). */
 const DEFAULT_MODEL = 'openai/gpt-oss-20b';
 const FALLBACK_MODEL = 'qwen/qwen3.8-27b';
-const MODEL_CANDIDATES = [DEFAULT_MODEL, FALLBACK_MODEL, 'openai/gpt-oss-120b'];
+export const MODEL_CANDIDATES = [DEFAULT_MODEL, FALLBACK_MODEL, 'openai/gpt-oss-120b'];
 
 export type OcrStructTipo =
   | 'pedido_compra'
@@ -19,11 +19,11 @@ export type OcrStructTipo =
   | 'boleto_agefin'
   | 'comprovante';
 
-function resolveGroqApiKey(): string {
+export function resolveGroqApiKey(): string {
   return env('GROQ_API_KEY') || '';
 }
 
-function resolveGroqModel(): string {
+export function resolveGroqModel(): string {
   return env('GROQ_OCR_MODEL') || DEFAULT_MODEL;
 }
 
@@ -150,7 +150,7 @@ function parseJsonContent(content: string): unknown {
   }
 }
 
-async function callGroqChat(
+export async function callGroqChat(
   model: string,
   prompt: string,
 ): Promise<{ data: unknown; usage: LlmUsage }> {

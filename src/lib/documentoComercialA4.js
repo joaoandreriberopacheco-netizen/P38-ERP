@@ -4,6 +4,7 @@
  */
 
 import { DOCUMENTO_COMERCIAL_A4_FONT } from '@/lib/documentoComercialA4Font';
+import { normalizeItemCompraParaExibicao } from '@/lib/productUnits';
 
 export {
   DOCUMENTO_COMERCIAL_A4_FONT,
@@ -160,5 +161,50 @@ export function mapPedidoVendaParaDocumentoComercial(pedido, dadosEmpresa, dados
     vendedorNome: pedido?.vendedor_nome || '',
     pagamentos: pedido?.pagamentos || [],
     rodapeLegal: 'Este documento não possui validade fiscal.',
+  };
+}
+
+/** Pedido de compra → props do DocumentoComercialA4 (visual Formigres, A4). */
+export function mapPedidoCompraParaDocumentoComercial(pedido, dadosEmpresa, produtosMap = {}) {
+  const itensRaw = Array.isArray(pedido?.itens) ? pedido.itens : [];
+  const itens = [...itensRaw]
+    .sort((a, b) =>
+      String(a?.produto_nome || '').localeCompare(String(b?.produto_nome || ''), 'pt-BR', { sensitivity: 'base' }),
+    )
+    .map((item) => {
+      const produto = produtosMap[item.produto_id] || item._produto || null;
+      const norm = normalizeItemCompraParaExibicao(item, produto);
+      const qtd = Number(norm.quantidade) || 0;
+      const total = Number(norm.valor_total_item ?? item.total) || 0;
+      const preco = qtd > 0 ? total / qtd : Number(norm.valor_unitario_compra ?? item.custo_unitario) || 0;
+      return {
+        produto_id: item.produto_id,
+        nome: item.produto_nome || produto?.nome || '',
+        qtd,
+        unidade: norm.unidade_medida || item.unidade_medida || 'UN',
+        preco_unit: preco,
+        total,
+        caixas: item.quantidade_caixas ?? item.caixas,
+      };
+    });
+
+  const fornecedorNome = pedido?.fornecedor_nome || '';
+
+  return {
+    tipo: 'pedido_compra',
+    visualSkin: 'formigres',
+    empresa: dadosEmpresa,
+    clienteNome: fornecedorNome,
+    counterpartyLabel: 'Fornecedor',
+    numero: pedido?.numero || '',
+    data: pedido?.data_emissao || pedido?.created_date || new Date(),
+    itens,
+    subtotal: pedido?.valor_itens,
+    desconto: pedido?.valor_desconto,
+    frete: pedido?.valor_frete,
+    freteIncluso: false,
+    total: pedido?.valor_total,
+    observacoes: pedido?.observacoes || '',
+    rodapeLegal: 'Documento interno de pedido de compra — sem validade fiscal.',
   };
 }

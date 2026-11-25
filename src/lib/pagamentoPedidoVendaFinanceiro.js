@@ -6,6 +6,7 @@
  */
 
 import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { camposCartaoCreditoPagBankImediato } from '@/lib/contaPagBank';
 import { resolveContaDestinoCartao } from '@/lib/resolveContaDestinoCartao';
 
 /** Mesmo offset que processarVendaCaixa (America/Rio_Branco simplificado). */
@@ -211,9 +212,10 @@ export async function rebuildReceitasLancamentosPedidoVenda(
     if (isCartaoForma(pag.forma_pagamento)) {
       const { bruto: valorBruto, liquido: valorLiquido, taxa } =
         calcularValoresCartao(valor, pag.taxa_maquininha || 0);
-      const prazoDias = pag.prazo_maquininha_dias ?? getPrazoLiquidacaoMaquininha();
-      const dataVencimento = addDiasUteis(hoje, prazoDias);
       const isCredito = pag.forma_pagamento === 'Cartão de Crédito';
+      const imediatoPagBank = isCredito ? camposCartaoCreditoPagBankImediato(hoje) : null;
+      const prazoDias = imediatoPagBank?.prazoDias ?? pag.prazo_maquininha_dias ?? getPrazoLiquidacaoMaquininha();
+      const dataVencimento = imediatoPagBank?.data_vencimento ?? addDiasUteis(hoje, prazoDias);
       const maquininhaNome = pag.maquininha_nome || pag.forma_pagamento;
       const bandeira = pag.bandeira || '';
       const parcelas = pag.parcelas || 1;
@@ -221,6 +223,7 @@ export async function rebuildReceitasLancamentosPedidoVenda(
       const { id: contaDestinoId, nome: contaDestinoNome } = await resolveContaDestinoCartao(
         base44,
         pag,
+        { dataVenda: hoje, formaPagamento: pag.forma_pagamento },
       );
 
       await base44.entities.LancamentoFinanceiro.create({
@@ -231,9 +234,10 @@ export async function rebuildReceitasLancamentosPedidoVenda(
         valor: valorLiquido,
         valor_liquido: valorLiquido,
         data_vencimento: dataVencimento,
-        data_liquidacao_prevista: dataVencimento,
-        status: 'Em Aberto',
-        status_conciliacao: 'Pendente',
+        data_liquidacao_prevista: imediatoPagBank?.data_liquidacao_prevista ?? dataVencimento,
+        ...(imediatoPagBank?.data_pagamento ? { data_pagamento: imediatoPagBank.data_pagamento } : {}),
+        status: imediatoPagBank?.status ?? 'Em Aberto',
+        status_conciliacao: imediatoPagBank?.status_conciliacao ?? 'Pendente',
         forma_pagamento: pag.forma_pagamento,
         forma_pagamento_tipo:
           pag.forma_pagamento === 'Cartão de Débito' ? 'Cartão Débito' : 'Cartão Crédito',

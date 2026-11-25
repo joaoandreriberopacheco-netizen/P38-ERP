@@ -22,6 +22,7 @@ import { P38StatusLabel } from '@/components/ui/p38-mobile-line';
 import { isLancamentoPago } from '@/lib/lancamentoFinanceiroStatus';
 import { resolverDataLancamentoInput } from '@/lib/lancamentoOrdemMeta';
 import { datetimeLocalParaISO } from '@/components/utils/dateUtils';
+import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
 
 const R = (v) => `R$ ${Math.abs(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
@@ -145,7 +146,7 @@ export default function LancamentoDetalheDialog({ lancamento, onClose, onEdit, o
                       {mesAnoLabel(lancamento.data_vencimento)}
                     </span>
                   )}
-                  {isPendente && isPago && (
+                  {EXIBIR_UI_CONCILIACAO_FINANCEIRO && isPendente && isPago && (
                     <span className="flex items-center gap-1 text-[0.65rem] bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
                       <Clock className="w-2.5 h-2.5" /> Aguard. conciliação
                     </span>

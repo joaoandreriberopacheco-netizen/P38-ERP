@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { base44 } from '@/api/base44Client';
-import { X } from 'lucide-react';
+import { Trash2, X } from 'lucide-react';
+import CancelarLancamentoDialog from './CancelarLancamentoDialog';
 import { useToast } from '@/components/ui/use-toast';
 import { addWeeks, addMonths, addYears, format } from 'date-fns';
 import { dataHoje, datetimeLocalParaISO, codigoOrdenacaoDesdeInstante } from '@/components/utils/dateUtils';
@@ -12,13 +13,18 @@ import { criarReforcoPendenteTransferenciaCaixaPDV } from '@/lib/reforcoPendente
 import { useCategorias } from './fluxo/DialogCategoria';
 import LancamentoConfirmacaoDialog from './LancamentoConfirmacaoDialog';
 import LancamentoFormUnico, { formatarDataFormulario } from './fluxo/LancamentoFormUnico';
-import { LancamentoFormSheet } from './fluxo/LancamentoPickerDialog';
 import { normalizeDataText } from '@/lib/normalizeDataText';
 import { gravarPreferenciasLancamento, resolverPreferenciasLancamento } from '@/lib/lancamentoPreferencias';
 import { resolverDataLancamentoInput } from '@/lib/lancamentoOrdemMeta';
 import { isLancamentoPago } from '@/lib/lancamentoFinanceiroStatus';
 import { concluirFluxoTorreCompartilhamento } from '@/lib/torreLancamentoBridge';
 import { useCompactShell } from '@/hooks/use-breakpoint';
+import { useInertAppBackground } from '@/hooks/useInertAppBackground';
+import DialogFocusScope from '@/components/ui/DialogFocusScope';
+import {
+  LancamentoModalStackProvider,
+  useLancamentoModalStackDepth,
+} from './fluxo/lancamentoModalStack';
 import RecorrenciaEscopoDialog from './RecorrenciaEscopoDialog';
 import {
   descricaoPadraoVale,
@@ -42,12 +48,6 @@ const FREQS_MAP = {
   Semestral: (d, i) => addMonths(d, i * 6),
   Anual: (d, i) => addYears(d, i),
 };
-
-function agoraDatetimeLocal() {
-  const d = new Date();
-  const pad = (n) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
 
 /**
  * @param {'center' | 'bottomSheet'} [presentation] — Se omitido: `bottomSheet` quando `origemContaPagar`, senão `center`.
@@ -81,8 +81,6 @@ export default function NovoLancamentoDialog({
   const [descricao, setDescricao] = useState('');
   const [dataCustomizada, setDataCustomizada] = useState(null);
   const [dataHoraCustomizada, setDataHoraCustomizada] = useState(null);
-  const [showDataDialog, setShowDataDialog] = useState(false);
-  const [dataTemp, setDataTemp] = useState('');
   const [dataLancamento, setDataLancamento] = useState('');
   const [categoria, setCategoria] = useState('');
   const [categoriaId, setCategoriaId] = useState('');
@@ -104,6 +102,7 @@ export default function NovoLancamentoDialog({
   const [observacoes, setObservacoes] = useState('');
   const [showEscopoPagamento, setShowEscopoPagamento] = useState(false);
   const [showEscopoCadastro, setShowEscopoCadastro] = useState(false);
+  const [showCancelarDialog, setShowCancelarDialog] = useState(false);
   const [pendingEscopoPagamento, setPendingEscopoPagamento] = useState('apenas_esta');
   const [isValeFolha, setIsValeFolha] = useState(false);
   const [valeFolhaModeloId, setValeFolhaModeloId] = useState('');
@@ -118,8 +117,10 @@ export default function NovoLancamentoDialog({
   const { toast } = useToast();
   const { categorias, reload: reloadCats } = useCategorias();
   const isCompactShell = useCompactShell();
+  useInertAppBackground(open);
 
   const modoEdicao = !!lancamentoExistente;
+  const lancamentoJaCancelado = lancamentoExistente?.status === 'Cancelado';
 
   const centroCustoEfetivo = modoPlanejamento ? centroCusto : centroCustoLocal;
   const centroCustoIdEfetivo = modoPlanejamento ? centroCustoId : centroCustoIdLocal;
@@ -369,31 +370,6 @@ export default function NovoLancamentoDialog({
   };
 
   const dataExibicao = formatarDataFormulario(dataCustomizada, dataHoraCustomizada);
-
-  const abrirEditorData = () => {
-    setDataTemp(dataHoraCustomizada || dataCustomizada || agoraDatetimeLocal());
-    setShowDataDialog(true);
-  };
-
-  const confirmarData = () => {
-    if (!dataTemp) {
-      setShowDataDialog(false);
-      return;
-    }
-    if (dataTemp.includes('T')) {
-      setDataHoraCustomizada(dataTemp);
-      setDataCustomizada(dataTemp.slice(0, 10));
-    } else {
-      setDataCustomizada(dataTemp);
-      setDataHoraCustomizada(null);
-    }
-    setShowDataDialog(false);
-  };
-
-  const cancelarData = () => {
-    setDataTemp('');
-    setShowDataDialog(false);
-  };
 
   const gerarGrupoId = () => `grp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
@@ -802,12 +778,13 @@ export default function NovoLancamentoDialog({
       <div className="flex items-center justify-between px-4 pt-5 pb-2 shrink-0">
         <button
           type="button"
+          data-novo-lancamento-close
           onClick={fecharFluxo}
           className="w-9 h-9 flex items-center justify-center rounded-full bg-muted dark:bg-muted active:scale-95"
         >
           <X className="w-4 h-4 text-muted-foreground" />
         </button>
-        <p className="text-sm font-semibold text-foreground">
+        <p id="novo-lancamento-titulo" className="text-sm font-semibold text-foreground">
           {modoEdicao ? 'Editar lançamento' : 'Novo lançamento'}
         </p>
         <div className="w-9" />
@@ -825,7 +802,12 @@ export default function NovoLancamentoDialog({
         realizado={realizado}
         onRealizadoChange={(v) => setStatus(v ? 'Pago' : 'Em Aberto')}
         dataExibicao={dataExibicao}
-        onEditarData={abrirEditorData}
+        dataCustomizada={dataCustomizada}
+        dataHoraCustomizada={dataHoraCustomizada}
+        onDataVencimentoConfirm={(ymd, dataHoraLocal) => {
+          setDataCustomizada(ymd);
+          setDataHoraCustomizada(dataHoraLocal);
+        }}
         contaId={contaId}
         contaDestinoId={contaDestinoId}
         contas={contas}
@@ -867,6 +849,20 @@ export default function NovoLancamentoDialog({
         saving={saving}
         onSalvar={handleSave}
         onCancelar={onClose}
+        rodapeExtra={
+          modoEdicao && !lancamentoJaCancelado ? (
+            <div className="shrink-0 px-4 pt-3">
+              <button
+                type="button"
+                onClick={() => setShowCancelarDialog(true)}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-50 py-2.5 text-sm font-medium text-red-600 transition-all active:scale-95 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
+              >
+                <Trash2 className="h-4 w-4" />
+                Cancelar lançamento
+              </button>
+            </div>
+          ) : null
+        }
         salvarLabel={modoEdicao ? 'Salvar alterações' : 'Salvar'}
         bloquearRecorrencia={modoEdicao}
         modoPlanejamento={modoPlanejamento}
@@ -896,35 +892,16 @@ export default function NovoLancamentoDialog({
       />
       </div>
 
-      <LancamentoFormSheet
-        open={showDataDialog}
-        onOpenChange={setShowDataDialog}
-        title="Data e hora"
-      >
-        <input
-          autoComplete="off"
-          type="datetime-local"
-          value={dataTemp}
-          onChange={(e) => setDataTemp(e.target.value)}
-          className="h-12 w-full rounded-xl border-0 bg-muted px-3 text-sm outline-none"
-        />
-        <div className="flex gap-2 pt-4">
-          <button
-            type="button"
-            onClick={cancelarData}
-            className="h-11 flex-1 rounded-xl bg-muted text-sm font-medium text-muted-foreground"
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            onClick={confirmarData}
-            className="h-11 flex-1 rounded-xl bg-[#4a5240] text-sm font-semibold text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]"
-          >
-            Confirmar
-          </button>
-        </div>
-      </LancamentoFormSheet>
+      <CancelarLancamentoDialog
+        lancamento={lancamentoExistente}
+        isOpen={showCancelarDialog}
+        onClose={() => setShowCancelarDialog(false)}
+        onSuccess={() => {
+          setShowCancelarDialog(false);
+          void onSaved?.();
+          fecharFluxo();
+        }}
+      />
 
       <LancamentoConfirmacaoDialog
         open={showConfirmDialog}
@@ -990,12 +967,32 @@ export default function NovoLancamentoDialog({
     </div>
   );
 
+  return createPortal(
+    <LancamentoModalStackProvider>
+      <NovoLancamentoDialogPortal layout={layout} onClose={onClose} panel={panel} />
+    </LancamentoModalStackProvider>,
+    document.body,
+  );
+}
+
+function NovoLancamentoDialogPortal({ layout, onClose, panel }) {
+  const nestedDepth = useLancamentoModalStackDepth();
+  const focusTrapped = nestedDepth === 0;
+
+  const focusMount = (event) => {
+    event.preventDefault();
+    const closeBtn = event.currentTarget.querySelector('[data-novo-lancamento-close]');
+    if (closeBtn instanceof HTMLElement) closeBtn.focus();
+  };
+
   if (layout === 'bottomSheet') {
-    return createPortal(
+    return (
       <>
         <button
           type="button"
           aria-label="Fechar"
+          tabIndex={-1}
+          aria-hidden="true"
           className="fixed inset-0 z-[59] cursor-default bg-muted/25 dark:bg-muted/40"
           onClick={onClose}
         />
@@ -1003,29 +1000,43 @@ export default function NovoLancamentoDialog({
           className="fixed inset-x-0 bottom-0 z-[60] flex max-h-[92dvh] justify-center px-0"
           style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >
-          <div className="pointer-events-auto flex h-[92dvh] max-h-[92dvh] w-full max-w-2xl min-h-0 flex-col" role="dialog" aria-modal="true">
+          <DialogFocusScope
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="novo-lancamento-titulo"
+            trapped={focusTrapped}
+            className="pointer-events-auto flex h-[92dvh] max-h-[92dvh] w-full max-w-2xl min-h-0 flex-col outline-none"
+            onMountAutoFocus={focusMount}
+          >
             {panel}
-          </div>
+          </DialogFocusScope>
         </div>
-      </>,
-      document.body,
+      </>
     );
   }
 
-  return createPortal(
+  return (
     <>
       <button
         type="button"
         aria-label="Fechar"
+        tabIndex={-1}
+        aria-hidden="true"
         className="fixed inset-0 z-[59] cursor-default bg-muted/55 backdrop-blur-[2px] dark:bg-muted/40"
         onClick={onClose}
       />
       <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 pointer-events-none md:p-4">
-        <div className="pointer-events-auto flex max-h-[100dvh] w-full max-w-2xl min-h-0 flex-col" role="dialog" aria-modal="true">
+        <DialogFocusScope
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="novo-lancamento-titulo"
+          trapped={focusTrapped}
+          className="pointer-events-auto flex max-h-[100dvh] w-full max-w-2xl min-h-0 flex-col outline-none"
+          onMountAutoFocus={focusMount}
+        >
           {panel}
-        </div>
+        </DialogFocusScope>
       </div>
-    </>,
-    document.body,
+    </>
   );
 }

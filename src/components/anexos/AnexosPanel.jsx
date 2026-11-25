@@ -87,6 +87,9 @@ export default function AnexosPanel({ referenciaId, referenciaTipo, referenciaNo
         onDelete={handleDelete}
         uploading={uploading}
         referenciaNomero={referenciaNomero}
+        pedidoId={referenciaTipo === 'PedidoCompra' ? referenciaId : null}
+        referenciaTipo={referenciaTipo}
+        referenciaId={referenciaId}
         readOnly={readOnly}
       />
     </>

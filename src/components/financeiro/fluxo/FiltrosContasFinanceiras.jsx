@@ -2,6 +2,7 @@ import React from 'react';
 import FinanceiroFiltrosShell from './FinanceiroFiltrosShell';
 import FinanceiroCorteHistoricoFiltro from './FinanceiroCorteHistoricoFiltro';
 import { P38_CHIP_ACTIVE, P38_CHIP_INACTIVE } from './financeiroP38';
+import { EXIBIR_UI_CONCILIACAO_FINANCEIRO } from '@/lib/financeiroConciliacaoUiFlags';
 
 export const TIPOS_CONTA = [
   { v: 'todos', l: 'Todos' },
@@ -34,12 +35,15 @@ export default function FiltrosContasFinanceiras({
   dataCorteHistorico,
   onMostrarHistoricoAnterior,
   onDataCorteHistorico,
+  mostrarContasOcultas = false,
+  onMostrarContasOcultas,
 }) {
   const hasActiveFilters =
     tipoFiltro !== 'todos' ||
     statusFiltro !== 'ativas' ||
     somentePendencias ||
-    mostrarHistoricoAnterior;
+    mostrarHistoricoAnterior ||
+    mostrarContasOcultas;
 
   return (
     <FinanceiroFiltrosShell
@@ -50,9 +54,9 @@ export default function FiltrosContasFinanceiras({
       filtersOpen={filtersOpen}
       onFiltersOpenChange={onFiltersOpenChange}
       hasActiveFilters={hasActiveFilters}
-      conciliacaoPendente={totalPendencias}
-      pendentes={somentePendencias}
-      onPendentesToggle={onSomentePendencias}
+      conciliacaoPendente={EXIBIR_UI_CONCILIACAO_FINANCEIRO ? totalPendencias : 0}
+      pendentes={EXIBIR_UI_CONCILIACAO_FINANCEIRO ? somentePendencias : false}
+      onPendentesToggle={EXIBIR_UI_CONCILIACAO_FINANCEIRO ? onSomentePendencias : undefined}
     >
       <div className="space-y-3">
         <div>
@@ -86,6 +90,22 @@ export default function FiltrosContasFinanceiras({
             ))}
           </div>
         </div>
+
+        {onMostrarContasOcultas ? (
+          <div>
+            <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Contas de migração</p>
+            <button
+              type="button"
+              onClick={() => onMostrarContasOcultas()}
+              className={`rounded-full px-2.5 py-1.5 text-xs font-medium transition-colors ${mostrarContasOcultas ? P38_CHIP_ACTIVE : P38_CHIP_INACTIVE}`}
+            >
+              Mostrar Caixa PP / PJ
+            </button>
+            <p className="mt-1.5 text-[10px] leading-snug text-muted-foreground/80">
+              Por defeito ficam ocultas (poupança e PJ de transição).
+            </p>
+          </div>
+        ) : null}
 
         <FinanceiroCorteHistoricoFiltro
           mostrarHistoricoAnterior={mostrarHistoricoAnterior}

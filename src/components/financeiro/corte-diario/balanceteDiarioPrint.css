@@ -1,14 +1,23 @@
-/* Pré-visualização no ecrã ≈ largura útil A4 retrato */
-.balancete-a4 {
-  max-width: 190mm;
-  margin-left: auto;
-  margin-right: auto;
+/* Ecrã: mapa em T fluido (laptop/tablet); impressão continua A4. */
+.balancete-canvas {
+  width: 100%;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
 }
 
-.balancete-a4 .balancete-palito {
-  flex: 1 1 0;
-  min-width: 0;
-  max-width: none;
+.balancete-canvas .balancete-palito {
+  flex: 1 1 auto;
+  min-width: 12rem;
+  max-width: 24rem;
+}
+
+.balancete-canvas .balancete-map-row {
+  display: flex;
+  width: 100%;
+  min-width: min-content;
+  align-items: stretch;
+  gap: 0.25rem;
 }
 
 @media print {
@@ -40,9 +49,15 @@
     display: none !important;
   }
 
-  .balancete-a4 {
+  .balancete-canvas {
     max-width: none;
     width: 100%;
+  }
+
+  .balancete-canvas .balancete-palito {
+    min-width: 0;
+    max-width: none;
+    flex: 1 1 0;
   }
 
   .balancete-palito {

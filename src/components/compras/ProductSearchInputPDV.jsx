@@ -1,6 +1,8 @@
 import { useState, useRef, useMemo } from 'react';
 import { Search, Plus, Wand2, X, Pencil, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
+import { P38StatusPill } from '@/components/ui/p38-mobile-line';
 import NovoProdutoRapidoDialog from '@/components/compras/NovoProdutoRapidoDialog';
 import CatalogLoteDialog from '@/components/compras/CatalogLoteDialog';
 import { filterAndSortProducts, getProdutoLabel } from '@/components/compras/productMatchingUtils';
@@ -17,8 +19,10 @@ export default function ProductSearchInputPDV({
   enableLotePicker = false,
   onLoteRows,
   size = 'default',
+  appearance = 'default',
 }) {
   const comfortable = size === 'comfortable';
+  const p38 = appearance === 'p38';
   const [isFocused, setIsFocused] = useState(false);
   const [showNovoProduto, setShowNovoProduto] = useState(false);
   const [loteDialogOpen, setLoteDialogOpen] = useState(false);
@@ -83,15 +87,30 @@ export default function ProductSearchInputPDV({
         {isConfirmed && !isFocused ? (
           <div
             className={cn(
-              'rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center gap-2',
-              comfortable ? 'px-4 py-3' : 'px-3 py-2',
+              'flex items-center gap-2 rounded-xl',
+              p38
+                ? cn(P38_FIELD_SURFACE, comfortable ? 'px-3 py-2.5' : 'px-3 py-2')
+                : cn(
+                  'rounded-2xl bg-emerald-50 dark:bg-emerald-900/20',
+                  comfortable ? 'px-4 py-3' : 'px-3 py-2',
+                ),
             )}
           >
-            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 flex-none" />
+            {!p38 ? <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 flex-none" /> : null}
+            {p38 ? (
+              <P38StatusPill tone="success" className="shrink-0">
+                Vinculado
+              </P38StatusPill>
+            ) : null}
             <span
               className={cn(
-                'flex-1 font-medium text-emerald-800 dark:text-emerald-300 truncate',
-                comfortable ? 'text-base' : 'text-sm',
+                'flex-1 truncate font-medium',
+                p38
+                  ? 'text-sm text-foreground'
+                  : cn(
+                    'text-emerald-800 dark:text-emerald-300',
+                    comfortable ? 'text-base' : 'text-sm',
+                  ),
               )}
             >
               {getProdutoLabel(selectedProduct)}
@@ -130,42 +149,72 @@ export default function ProductSearchInputPDV({
             </button>
           </div>
         ) : (
-          <div className={cn('rounded-2xl bg-card transition-all dark:bg-background', comfortable && 'shadow-sm border border-border/40')}>
+          <div
+            className={cn(
+              'rounded-xl transition-all',
+              p38
+                ? cn(P38_FIELD_SURFACE, 'overflow-hidden')
+                : cn('rounded-2xl bg-card dark:bg-background', comfortable && 'shadow-sm border border-border/40'),
+            )}
+          >
             <div className={cn('flex items-center gap-2 px-2 sm:px-3', comfortable ? 'h-14' : 'h-12')}>
               {!comfortable ? (
-              <span className={cn(
-                "text-[11px] sm:text-xs truncate max-w-[90px] sm:max-w-[110px] text-right",
-                item.selected_product_id === 'create_new' ? 'text-muted-foreground' :
-                selectedProduct ? 'text-emerald-700 dark:text-emerald-400' :
-                suggestedProduct ? 'text-emerald-600 dark:text-emerald-400' :
-                'text-red-400 dark:text-red-500'
-              )}>
-                {item.selected_product_id === 'create_new' ? 'Criando...' :
-                 selectedProduct ? getProdutoLabel(selectedProduct) :
-                 suggestedProduct ? `IA: ${getProdutoLabel(suggestedProduct)}` :
-                 'Não encontrado'}
-              </span>
-              ) : (
-              <span
-                className={cn(
-                  'shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide',
-                  item.selected_product_id === 'create_new'
-                    ? 'bg-muted text-muted-foreground'
+                <span
+                  className={cn(
+                    'text-[11px] sm:text-xs truncate max-w-[90px] sm:max-w-[110px] text-right',
+                    item.selected_product_id === 'create_new' ? 'text-muted-foreground' :
+                    selectedProduct ? 'text-emerald-700 dark:text-emerald-400' :
+                    suggestedProduct ? 'text-emerald-600 dark:text-emerald-400' :
+                    'text-red-400 dark:text-red-500',
+                  )}
+                >
+                  {item.selected_product_id === 'create_new' ? 'Criando...' :
+                   selectedProduct ? getProdutoLabel(selectedProduct) :
+                   suggestedProduct ? `IA: ${getProdutoLabel(suggestedProduct)}` :
+                   'Não encontrado'}
+                </span>
+              ) : p38 ? (
+                <P38StatusPill
+                  tone={
+                    item.selected_product_id === 'create_new'
+                      ? 'muted'
+                      : selectedProduct
+                        ? 'success'
+                        : suggestedProduct
+                          ? 'warning'
+                          : 'danger'
+                  }
+                  className="shrink-0"
+                >
+                  {item.selected_product_id === 'create_new'
+                    ? 'Salvando'
                     : selectedProduct
-                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
+                      ? 'OK'
                       : suggestedProduct
-                        ? 'bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-200'
-                        : 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300',
-                )}
-              >
-                {item.selected_product_id === 'create_new'
-                  ? 'Salvando'
-                  : selectedProduct
-                    ? 'OK'
-                    : suggestedProduct
-                      ? 'Sugestão'
-                      : 'Pendente'}
-              </span>
+                        ? 'Sugestão'
+                        : 'Pendente'}
+                </P38StatusPill>
+              ) : (
+                <span
+                  className={cn(
+                    'shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide',
+                    item.selected_product_id === 'create_new'
+                      ? 'bg-muted text-muted-foreground'
+                      : selectedProduct
+                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
+                        : suggestedProduct
+                          ? 'bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-200'
+                          : 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300',
+                  )}
+                >
+                  {item.selected_product_id === 'create_new'
+                    ? 'Salvando'
+                    : selectedProduct
+                      ? 'OK'
+                      : suggestedProduct
+                        ? 'Sugestão'
+                        : 'Pendente'}
+                </span>
               )}
 
               <div className="relative flex-1 min-w-0">

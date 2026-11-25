@@ -13,6 +13,7 @@ import { buildGruposConsultaEmbarques } from '@/lib/consultaComprasEmbarques';
 import { buildConsultaItemCustoDetalhe } from '@/lib/consultaItemCustoDetalhe';
 import { comprasAccentFromDisplayStatus, comprasStatusBorderClass, getComprasDisplayStatusLabel } from '@/lib/comprasEmbarquesPalette';
 import ComprasStatusChip, { ComprasRecebimentoDateChip } from '@/components/compras/ComprasStatusChip';
+import PedidoCompraCardMenu from '@/components/compras/PedidoCompraCardMenu';
 
 import { COMPRAS_HIER_L1, COMPRAS_HIER_L2, COMPRAS_SEP } from '@/lib/comprasP38Theme';
 
@@ -145,13 +146,20 @@ function ConsultaEmbarqueCard({
       {exportMode ? (
         <div className={headerShellClass}>{headerContent}</div>
       ) : (
-        <button
-          type="button"
-          onClick={() => onVerPedido?.(card)}
-          className={headerShellClass}
-        >
-          {headerContent}
-        </button>
+        <div className="flex items-start gap-0 min-w-0">
+          <button
+            type="button"
+            onClick={() => onVerPedido?.(card)}
+            className={cn(headerShellClass, 'flex-1 min-w-0')}
+          >
+            {headerContent}
+          </button>
+          <PedidoCompraCardMenu
+            pedidoId={card.id}
+            pedidoNumero={card.numero}
+            className="mt-2 mr-0.5"
+          />
+        </div>
       )}
       {itensEmbarque.length > 0 ? (
         <div className={cn(CONSULTA_HIER.l2, exportMode ? 'pb-1.5 pt-1 overflow-visible' : 'pb-1 pt-0.5')}>
