@@ -15,6 +15,7 @@ import {
   labelColunaQuantidade,
   formatTituloApresentacao,
 } from '@/lib/documentoComercialA4';
+import { FORMIGRES_DOC_ACCENT } from '@/lib/formigresDocumentTheme';
 
 const lineBottom = `1px solid ${DOCUMENTO_COMERCIAL_A4_BORDER}`;
 const lineBottomStrong = `1px solid ${DOCUMENTO_COMERCIAL_A4_BORDER_STRONG}`;
@@ -98,6 +99,8 @@ export default function DocumentoComercialA4({
   avisoPreco = '',
   rodapeLegal = 'Este documento não possui validade fiscal.',
   printId = 'cupom-print',
+  visualSkin = 'default',
+  counterpartyLabel = 'Cliente',
 }) {
   const empresaNorm = normalizeEmpresaCupom(empresa);
   const observacoesUsuario = extractObservacoesUsuario(observacoes);
@@ -109,9 +112,11 @@ export default function DocumentoComercialA4({
   const resumo = buildResumoDocumentoComercial(lista, tot);
 
   const tituloDocBruto = titulo
-    || (tipo === 'pedido_venda'
-      ? `Pedido de venda${numero ? ` nº ${numero}` : ''}`
-      : 'Orçamento');
+    || (tipo === 'pedido_compra'
+      ? `Pedido de compra${numero ? ` nº ${numero}` : ''}`
+      : tipo === 'pedido_venda'
+        ? `Pedido de venda${numero ? ` nº ${numero}` : ''}`
+        : 'Orçamento');
   const tituloDoc = formatTituloApresentacao(tituloDocBruto);
   const nomeEmpresaExibicao = empresaNorm?.nome ? formatTituloApresentacao(empresaNorm.nome) : '';
   const clienteExibicao = clienteNome ? formatTituloApresentacao(clienteNome) : '';
@@ -184,6 +189,17 @@ export default function DocumentoComercialA4({
           )}
 
           <div style={{ flex: '0 1 46%', textAlign: 'right', minWidth: '200px' }}>
+            {visualSkin === 'formigres' && (
+              <div
+                style={{
+                  width: 50,
+                  height: 3,
+                  background: FORMIGRES_DOC_ACCENT,
+                  marginBottom: 10,
+                  marginLeft: 'auto',
+                }}
+              />
+            )}
             <h1
               style={{
                 fontSize: '18px',
@@ -214,7 +230,7 @@ export default function DocumentoComercialA4({
         {clienteNome && (
           <div style={{ marginBottom: '22px' }}>
             <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#666', marginBottom: '4px' }}>
-              Cliente
+              {counterpartyLabel}
             </div>
             <div style={{ fontSize: '16px', fontWeight: 600, color: '#111' }}>
               {clienteExibicao}

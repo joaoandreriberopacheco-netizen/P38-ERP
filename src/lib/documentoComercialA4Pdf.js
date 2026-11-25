@@ -69,6 +69,9 @@ function linhaItemPrecoUnit(item) {
 function tituloDocumento(props) {
   const { tipo, titulo, numero } = props;
   if (titulo) return formatTituloApresentacao(titulo);
+  if (tipo === 'pedido_compra') {
+    return formatTituloApresentacao(`Pedido de compra${numero ? ` nº ${numero}` : ''}`);
+  }
   if (tipo === 'pedido_venda') {
     return formatTituloApresentacao(`Pedido de venda${numero ? ` nº ${numero}` : ''}`);
   }

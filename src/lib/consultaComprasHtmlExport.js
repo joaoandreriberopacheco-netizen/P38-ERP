@@ -80,7 +80,7 @@ function prepareCloneForPdfCapture(clonedDoc) {
 export async function renderConsultaElementToJsPdf(element, { theme = 'light' } = {}) {
   if (!element) throw new Error('Elemento inválido');
   const { html2canvas, jsPDF } = await loadPdfCaptureLibs();
-  const backgroundColor = theme === 'dark' ? '#0f0f0f' : '#ffffff';
+  const backgroundColor = '#ffffff';
 
   const captureHeight = Math.max(element.scrollHeight, element.offsetHeight, 120);
 
@@ -101,6 +101,11 @@ export async function renderConsultaElementToJsPdf(element, { theme = 'light' } 
       typeof node?.classList?.contains === 'function' && node.classList.contains('no-pdf-capture'),
     onclone: (clonedDoc) => {
       prepareCloneForPdfCapture(clonedDoc);
+      if (clonedDoc?.documentElement) {
+        clonedDoc.documentElement.classList.remove('dark');
+        clonedDoc.documentElement.setAttribute('data-theme', 'light');
+        clonedDoc.documentElement.style.colorScheme = 'only light';
+      }
     },
   });
 
@@ -270,7 +275,7 @@ export async function gerarConsultaComprasHtmlPdf({
 }) {
   onProgress?.('Montando visual da consulta...');
 
-  const theme = version === 'expandida_mobile' ? 'dark' : 'light';
+  const theme = 'light';
   const showDetalheCustos = true;
 
   const host = buildExportHost();
