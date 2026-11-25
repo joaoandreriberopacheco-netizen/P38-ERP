@@ -149,6 +149,7 @@ const CONFIGS = {
     qtyKey: 'pagleve-catalog-qty-v1',
     descontoKey: 'pagleve-catalog-desconto-v1',
     groupKey: 'pagleve-catalog-group-v1',
+    pdfLayoutKey: 'pagleve-catalog-pdf-layout-v1',
     classifError: 'JSON de classificação não encontrado. Rode: npm run catalogo:classificar-pagleve',
     skin: 'pagleve',
     siteSub: 'Estoque Novo Aleixo · Catálogo B2B',
@@ -1157,6 +1158,15 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
   const loadSquaresHtml = Array.from({ length: 20 }, () => '<span class="load-square"></span>').join('');
   const isB2bSkin = isB2bCatalogSkin(cfg.skin);
   const isPagleveSkin = cfg.skin === 'pagleve';
+  const pedidoPdfLayoutHtml = isPagleveSkin
+    ? `<div class="pedido-pdf-layout" id="pedido-pdf-layout-wrap">
+        <p class="pedido-pdf-layout-label">Formato do PDF</p>
+        <div class="pedido-pdf-layout-opts" role="radiogroup" aria-label="Formato do PDF do pedido">
+          <button type="button" class="pedido-pdf-layout-opt" data-pdf-layout="a4" aria-pressed="true">A4 — imprimir</button>
+          <button type="button" class="pedido-pdf-layout-opt" data-pdf-layout="mobile" aria-pressed="false">Celular</button>
+        </div>
+      </div>`
+    : '';
   const qtyLabel = cfg.qtyLabel || (isB2bSkin ? 'Paletes' : 'Caixas');
   const qtyLabelPl = cfg.qtyLabelPl || (isB2bSkin ? 'paletes' : 'caixas');
   const qtyUnit = cfg.qtyUnit || (isB2bSkin ? 'palete' : 'caixa');
@@ -2002,8 +2012,50 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       gap: 10px;
       margin-top: 14px;
       flex-wrap: wrap;
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .pedido-actions-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      width: 100%;
     }
     .pedido-actions .btn { flex: 1; min-width: 120px; border-radius: var(--radius); padding: 12px; }
+    .pedido-pdf-layout { width: 100%; }
+    .pedido-pdf-layout-label {
+      margin: 0 0 6px;
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .pedido-pdf-layout-opts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      width: 100%;
+    }
+    .pedido-pdf-layout-opt {
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      padding: 10px 8px;
+      font-size: .82rem;
+      font-weight: 500;
+      border-radius: var(--radius);
+      cursor: pointer;
+      line-height: 1.25;
+    }
+    .pedido-pdf-layout-opt:hover { border-color: var(--accent-border); }
+    .pedido-pdf-layout-opt[aria-pressed="true"] {
+      border-color: var(--accent-border);
+      background: var(--accent-muted);
+      color: var(--text-strong);
+      font-weight: 700;
+      box-shadow: inset 0 0 0 1px var(--accent-ring);
+    }
     .pedido-empty {
       text-align: center;
       color: var(--muted);
@@ -2913,8 +2965,11 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       <div class="pedido-total" id="pedido-total"></div>
       </div>
       <div class="pedido-actions">
-        <button type="button" class="btn" id="clear-qty-panel">Limpar seleção</button>
-        <button type="button" class="btn btn-primary" id="pdf-pedido-panel" disabled>PDF do pedido</button>
+        ${pedidoPdfLayoutHtml}
+        <div class="pedido-actions-row">
+          <button type="button" class="btn" id="clear-qty-panel">Limpar seleção</button>
+          <button type="button" class="btn btn-primary" id="pdf-pedido-panel" disabled>PDF do pedido</button>
+        </div>
       </div>
     </section>
   </div>
@@ -2981,6 +3036,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     const QTY_LABEL_PL = CFG.qtyLabelPl || 'caixas';
     const TIPO_LABEL_GAL = { principal: 'Cerâmica', ambiente: 'Ambiente', piso: 'Piso', face: 'Face', outro: 'Imagem' };
     const QTY_KEY = '${cfg.qtyKey}';
+    const PDF_LAYOUT_KEY = '${cfg.pdfLayoutKey || ''}';
+    const PAGLEVE_PDF_LAYOUT = CATALOG_SKIN === 'pagleve' && !!PDF_LAYOUT_KEY;
     const THEME_KEY = '${cfg.themeKey}';
     const DESCONTO_KEY = '${cfg.descontoKey}';
     const REGIME_KEY = '${cfg.regimeKey || ''}';
@@ -3259,8 +3316,45 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     const PDF_THUMB_PX = 112;
     const PDF_PRINT_THUMB_PX = 48;
-    const PDF_CANVAS_SCALE = 2;
-    const PDF_PAGE_WIDTH_PX = 390;
+    const PDF_PAGE_WIDTH_MOBILE_PX = 390;
+    const PDF_PAGE_WIDTH_DESKTOP_PX = 714;
+    function prefersPdfMobileCanvas() {
+      const w = window.innerWidth || PDF_PAGE_WIDTH_MOBILE_PX;
+      if (w < 720) return true;
+      return prefersFastBoot();
+    }
+    function defaultPedidoPdfLayout() {
+      return prefersPdfMobileCanvas() ? 'mobile' : 'a4';
+    }
+    function getPedidoPdfLayout() {
+      if (!PAGLEVE_PDF_LAYOUT) return defaultPedidoPdfLayout();
+      try {
+        const v = localStorage.getItem(PDF_LAYOUT_KEY);
+        if (v === 'a4' || v === 'mobile') return v;
+      } catch { /* ignore */ }
+      return defaultPedidoPdfLayout();
+    }
+    function setPedidoPdfLayout(mode) {
+      if (!PAGLEVE_PDF_LAYOUT) return;
+      const next = mode === 'mobile' ? 'mobile' : 'a4';
+      try { localStorage.setItem(PDF_LAYOUT_KEY, next); } catch { /* ignore */ }
+      syncPedidoPdfLayoutUi();
+    }
+    function syncPedidoPdfLayoutUi() {
+      if (!PAGLEVE_PDF_LAYOUT) return;
+      const mode = getPedidoPdfLayout();
+      document.querySelectorAll('.pedido-pdf-layout-opt[data-pdf-layout]').forEach((btn) => {
+        const on = btn.getAttribute('data-pdf-layout') === mode;
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    }
+    function pedidoPdfUsesMobileLayout() {
+      if (PAGLEVE_PDF_LAYOUT) return getPedidoPdfLayout() === 'mobile';
+      return prefersPdfMobileCanvas();
+    }
+    function pdfCanvasScale() {
+      return pedidoPdfUsesMobileLayout() ? 2 : 3;
+    }
     function pedidoPdfImageUrls() {
       const urls = new Set();
       for (const { item } of pedidoItens()) {
@@ -4331,6 +4425,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       pedidoOpen = true;
       document.getElementById('pedido-overlay').classList.add('open');
       renderPedido();
+      syncPedidoPdfLayoutUi();
       syncBodyScrollLock();
     }
 
@@ -4344,9 +4439,10 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       return Math.ceil(Number(px || 0) * 25.4 / 96);
     }
     function printPdfLayout() {
-      const pageWpx = PDF_PAGE_WIDTH_PX;
-      const pageWmm = Math.max(88, pxToMm(pageWpx));
-      return { marginMm: 3, pageWmm, pageWpx, orientation: 'portrait' };
+      const mobile = pedidoPdfUsesMobileLayout();
+      const pageWpx = mobile ? PDF_PAGE_WIDTH_MOBILE_PX : PDF_PAGE_WIDTH_DESKTOP_PX;
+      const pageWmm = mobile ? Math.max(88, pxToMm(pageWpx)) : 210;
+      return { marginMm: mobile ? 3 : 8, pageWmm, pageWpx, mobile, orientation: 'portrait' };
     }
     function printPageWidthPx() {
       return printPdfLayout().pageWpx;
@@ -4469,12 +4565,17 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     }
     function printPedidoPrintCss(pageWmm, pageHmm) {
       const rowLine = '#d5d5d5';
+      const desktopA4 = pageWmm >= 200;
+      const thumbPx = desktopA4 ? 64 : 48;
+      const titlePx = desktopA4 ? 13 : 12;
+      const specValPx = desktopA4 ? 10 : 9;
       const pageRule = pageHmm != null
         ? '@page { size: ' + pageWmm + 'mm ' + pageHmm + 'mm; margin: 3mm 2mm; }'
-        : '';
+        : '@page { size: A4 portrait; margin: 8mm 6mm; }';
       return pageRule +
         '*, *::before, *::after { box-sizing: border-box; }' +
-        'html, body { margin: 0; padding: 0; }' +
+        'html { margin: 0; padding: 0; color-scheme: only light; background: #ffffff !important; }' +
+        'body { margin: 0; padding: 0; background: #ffffff !important; color: #5a5a5a !important; }' +
         '.print-render-root { background: #ffffff; color: #5a5a5a; font-family: "Libre Franklin", "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 13px; -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; width: 100%; }' +
         '.print-sheet { width: 100%; max-width: 100%; margin: 0 auto; box-sizing: border-box; background: #ffffff; color: #5a5a5a; padding: 4px 12px 8px; overflow: hidden; }' +
         '.print-head { margin-bottom: 10px; }' +
@@ -4490,7 +4591,7 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '.pedido-card-pdf .pedido-card-head { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; align-items: start; }' +
         '.pedido-card-pdf .pedido-card-head-main { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(68px, 0.95fr); column-gap: 6px; align-items: start; min-width: 0; }' +
         '.pedido-card-pdf .pedido-card-desc { min-width: 0; overflow: hidden; }' +
-        '.pedido-card-pdf .pedido-card-title { font-size: 12px; font-weight: 700; line-height: 1.2; color: #2f2f2f; word-break: break-word; }' +
+        '.pedido-card-pdf .pedido-card-title { font-size: ' + titlePx + 'px; font-weight: 700; line-height: 1.2; color: #2f2f2f; word-break: break-word; }' +
         '.pedido-card-pdf .pedido-card-meta { margin-top: 2px; font-size: 10px; color: #767676; line-height: 1.3; word-break: break-word; }' +
         '.pedido-card-pdf .pedido-card-qty { text-align: center; min-width: 0; }' +
         '.pedido-card-pdf .pedido-card-qty-main { display: block; font-size: 12px; font-weight: 700; color: #2f2f2f; line-height: 1.15; font-variant-numeric: tabular-nums; }' +
@@ -4498,13 +4599,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
         '.pedido-card-pdf .pedido-card-total { text-align: right; min-width: 0; }' +
         '.pedido-card-pdf .pedido-card-total .pedido-card-hero { display: block; font-size: 12px; font-weight: 700; color: #b01219; white-space: nowrap; font-variant-numeric: tabular-nums; }' +
         '.pedido-card-pdf .pedido-card-total-label { display: block; font-size: 8px; text-transform: uppercase; letter-spacing: .05em; color: #767676; margin-top: 2px; }' +
-        '.pedido-card-pdf .pedido-card-thumb { width: 48px; height: 48px; border-radius: 6px; object-fit: cover; flex-shrink: 0; background: #fafafa; display: block; }' +
+        '.pedido-card-pdf .pedido-card-thumb { width: ' + thumbPx + 'px; height: ' + thumbPx + 'px; border-radius: 6px; object-fit: cover; flex-shrink: 0; background: #fafafa; display: block; }' +
         '.pedido-card-pdf .pedido-card-thumb-empty { display: flex; align-items: center; justify-content: center; color: #767676; font-size: 11px; }' +
         '.pedido-card-pdf .pedido-card-spec { width: 100%; max-width: 100%; box-sizing: border-box; border-collapse: collapse; margin-top: 10px; padding-top: 10px; border-top: 1px solid ' + rowLine + '; table-layout: fixed; }' +
         '.pedido-card-pdf .pedido-card-spec td { width: 25%; padding: 6px 3px; vertical-align: top; text-align: left; border: 0; overflow: hidden; word-break: break-word; }' +
         '.pedido-card-pdf .pedido-card-spec td + td { border-left: 1px solid ' + rowLine + '; }' +
         '.pedido-card-pdf .pedido-card-spec-l { display: block; font-size: 8px; font-weight: 500; color: #767676; margin-bottom: 4px; line-height: 1.2; text-transform: none; letter-spacing: 0; }' +
-        '.pedido-card-pdf .pedido-card-spec-v { display: block; font-size: 9px; font-weight: 500; color: #2f2f2f; font-variant-numeric: tabular-nums; line-height: 1.25; margin-top: 4px; padding-top: 4px; border-top: 1px solid ' + rowLine + '; word-break: break-word; }' +
+        '.pedido-card-pdf .pedido-card-spec-v { display: block; font-size: ' + specValPx + 'px; font-weight: 500; color: #2f2f2f; font-variant-numeric: tabular-nums; line-height: 1.25; margin-top: 4px; padding-top: 4px; border-top: 1px solid ' + rowLine + '; word-break: break-word; }' +
         '.pedido-card-pdf .pedido-card-spec-v.pedido-card-spec-preco .preco-orig { display: block; font-size: 8px; text-decoration: line-through; color: #767676; line-height: 1.1; }' +
         '.pedido-card-pdf .pedido-card-spec-v.pedido-card-spec-preco .preco-desc { display: block; font-size: 9px; font-weight: 600; color: #2f2f2f; }' +
         '.print-footer { margin-top: 12px; padding-top: 10px; border-top: 1px solid ' + rowLine + '; text-align: right; break-inside: avoid; page-break-inside: avoid; }' +
@@ -4533,7 +4634,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     let pedidoPdfBlobUrl = null;
 
     function pedidoPdfFilename() {
-      return 'pedido-formigres-' + new Date().toISOString().slice(0, 10) + '.pdf';
+      const prefix = CATALOG_SKIN === 'pagleve' ? 'pedido-pague-leve' : 'pedido-formigres';
+      return prefix + '-' + new Date().toISOString().slice(0, 10) + '.pdf';
     }
     function revokePedidoPdfBlob() {
       if (pedidoPdfBlobUrl) {
@@ -4543,7 +4645,8 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       pedidoPdfBlob = null;
     }
     function pedidoPdfIframeHead(pageWmm) {
-      return '<meta charset="utf-8"><style>' + getPdfFontFaceCss() + printPedidoPrintCss(pageWmm, null) + '</style>';
+      return '<meta charset="utf-8"><meta name="color-scheme" content="light">' +
+        '<style>' + getPdfFontFaceCss() + printPedidoPrintCss(pageWmm, null) + '</style>';
     }
     function injectPdfFontClone(clonedDoc) {
       const css = getPdfFontFaceCss();
@@ -4552,6 +4655,21 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       style.textContent = css;
       clonedDoc.head.appendChild(style);
       clonedDoc.documentElement.style.fontFamily = "'Libre Franklin', system-ui, sans-serif";
+    }
+    function injectPdfPrintClone(clonedDoc) {
+      injectPdfFontClone(clonedDoc);
+      if (!clonedDoc) return;
+      clonedDoc.documentElement.setAttribute('data-theme', 'light');
+      clonedDoc.documentElement.style.colorScheme = 'only light';
+      clonedDoc.documentElement.style.background = '#ffffff';
+      if (clonedDoc.body) {
+        clonedDoc.body.style.background = '#ffffff';
+        clonedDoc.body.style.color = '#5a5a5a';
+      }
+      const style = clonedDoc.createElement('style');
+      style.textContent =
+        'html, body, .print-render-root, .print-sheet, .pedido-card-pdf { background: #ffffff !important; color: #5a5a5a !important; color-scheme: only light !important; }';
+      clonedDoc.head.appendChild(style);
     }
     async function waitPrintImagesRoot(root) {
       const imgs = [...root.querySelectorAll('img')];
@@ -4592,21 +4710,22 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
       });
     }
     async function renderPedidoPdfBlob(thumbs) {
-      const pageWpx = printPageWidthPx();
-      const pageWmm = printPageWidthMm();
+      const layout = printPdfLayout();
+      const pageWpx = layout.pageWpx;
+      const pageWmm = layout.pageWmm;
       const readyThumbs = await ensurePedidoPdfThumbs(thumbs);
       const html = buildPedidoPrintHtml(readyThumbs);
       const iframe = document.createElement('iframe');
       iframe.setAttribute('aria-hidden', 'true');
-      iframe.style.cssText = 'position:fixed;left:0;top:0;width:' + pageWpx + 'px;height:2400px;border:0;opacity:0;pointer-events:none;z-index:2147483646;';
+      iframe.style.cssText = 'position:fixed;left:0;top:0;width:' + pageWpx + 'px;height:3200px;border:0;opacity:0;pointer-events:none;z-index:2147483646;';
       document.body.appendChild(iframe);
       try {
         const win = iframe.contentWindow;
         const doc = win.document;
         doc.open();
         doc.write(
-          '<!DOCTYPE html><html><head>' + pedidoPdfIframeHead(pageWmm) +
-          "</head><body style=\\"margin:0;font-family:'Libre Franklin',system-ui,sans-serif\\"><div class=\\"print-render-root\\" style=\\"width:" + pageWpx + "px\\">" +
+          '<!DOCTYPE html><html lang="pt-BR" data-theme="light"><head>' + pedidoPdfIframeHead(pageWmm) +
+          '</head><body style="margin:0;background:#ffffff;color:#5a5a5a;font-family:\\'Libre Franklin\\',system-ui,sans-serif"><div class="print-render-root" style="width:' + pageWpx + 'px;background:#ffffff">' +
           html +
           '</div></body></html>'
         );
@@ -4626,17 +4745,18 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
           sheet.offsetHeight || 0,
           280,
         ) + 48);
-        let pageHmm = Math.max(100, pxToMm(heightPx) + 12);
-        if (pageHmm > 1400) pageHmm = 297;
+        const contentHmm = Math.max(100, pxToMm(heightPx) + 12);
+        const useA4Pages = !layout.mobile;
         const pageStyle = doc.createElement('style');
-        pageStyle.textContent = printPedidoPrintCss(pageWmm, pageHmm);
+        pageStyle.textContent = printPedidoPrintCss(pageWmm, useA4Pages ? null : contentHmm);
         doc.head.appendChild(pageStyle);
+        const canvasScale = pdfCanvasScale();
         const blob = await win.html2pdf().set({
-          margin: 3,
+          margin: useA4Pages ? 8 : 3,
           filename: pedidoPdfFilename(),
           image: { type: 'jpeg', quality: 0.94 },
           html2canvas: {
-            scale: PDF_CANVAS_SCALE,
+            scale: canvasScale,
             useCORS: true,
             allowTaint: false,
             logging: false,
@@ -4645,9 +4765,13 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
             height: heightPx,
             windowHeight: heightPx,
             backgroundColor: pdfCanvasBackground(PDF_THEME),
-            onclone: injectPdfFontClone,
+            onclone: injectPdfPrintClone,
           },
-          jsPDF: { unit: 'mm', format: [pageWmm, pageHmm], orientation: 'portrait' },
+          jsPDF: {
+            unit: 'mm',
+            format: useA4Pages ? 'a4' : [pageWmm, Math.min(contentHmm, 1200)],
+            orientation: 'portrait',
+          },
           pagebreak: { mode: ['css', 'legacy'], avoid: ['.pedido-card-pdf', '.print-footer', '.print-fmt-resumo-wrap'] },
         }).from(measureEl).outputPdf('blob');
         if (!blob || blob.size < 12000) throw new Error('PDF gerado vazio');
@@ -4901,6 +5025,12 @@ function buildHtml({ classif, itens, antLogoDataUri = '', brandLogoDataUri = '',
     bindClick('cart-fab', () => (pedidoOpen ? closePedidoPanel() : openPedidoPanel()));
     bindClick('pedido-close', closePedidoPanel);
     bindClick('pdf-pedido-panel', exportPedidoPdf);
+    if (PAGLEVE_PDF_LAYOUT) {
+      document.querySelectorAll('.pedido-pdf-layout-opt[data-pdf-layout]').forEach((btn) => {
+        btn.addEventListener('click', () => setPedidoPdfLayout(btn.getAttribute('data-pdf-layout')));
+      });
+      syncPedidoPdfLayoutUi();
+    }
     bindClick('pedido-pdf-download', downloadPedidoPdfFile);
     bindClick('pedido-pdf-close', closePedidoPdfSheet);
     document.getElementById('pedido-pdf-sheet')?.addEventListener('click', (e) => {
