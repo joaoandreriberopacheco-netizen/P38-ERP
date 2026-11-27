@@ -53,24 +53,37 @@ function stackedBarHtml(pctPartes, { compact = false } = {}) {
   return `<div class="stack-bar">${segs || '<span class="empty">—</span>'}</div>`;
 }
 
+function margemInline(m) {
+  const mg = m?.margem;
+  if (!mg?.margemContribuicaoPct && !mg?.markupPct) return '';
+  return `<span class="margem-inline">m.c. ${pctStr(mg.margemContribuicaoPct)} · MK ${pctStr(mg.markupPct)}</span>`;
+}
+
+function margemCells(m) {
+  const mg = m?.margem;
+  if (!mg) {
+    return '<td class="num muted">—</td><td class="num muted">—</td>';
+  }
+  return `<td class="num">${pctStr(mg.margemContribuicaoPct)}</td><td class="num">${pctStr(mg.markupPct)}</td>`;
+}
+
 function tableRowMes(m, getPct, getVal, getTotal) {
   const total = getTotal(m);
-  const cells = PARTES_LIST
-    .map((p) => {
-      const pct = getPct(m, p);
-      const val = getVal(m, p);
-      return `<td class="num">${pctStr(pct)}<br><span class="sub">R$ ${brl(val)}</span></td>`;
-    })
-    .join('');
+  const cells = PARTES_LIST.map((p) => {
+    const pct = getPct(m, p);
+    const val = getVal(m, p);
+    return `<td class="num">${pctStr(pct)}<br><span class="sub">R$ ${brl(val)}</span></td>`;
+  }).join('');
   const parcial = m.mesParcial ? ' *' : '';
   return `<tr>
     <td class="mes">${esc(m.label)}${parcial}</td>
     <td class="num">R$ ${brl(total)}</td>
     ${cells}
+    ${margemCells(m)}
   </tr>`;
 }
 
-function htmlTabelaMeses(rows, bruto) {
+function htmlTabelaMeses(rows, bruto, margemMedia = null) {
   const body = rows
     .map((m) => {
       if (bruto) {
@@ -90,15 +103,27 @@ function htmlTabelaMeses(rows, bruto) {
     })
     .join('');
 
+  const footer =
+    margemMedia ?
+      `<tr class="totais">
+        <td><strong>Média da janela</strong></td>
+        <td colspan="4" class="muted">ponderada por receita</td>
+        <td class="num"><strong>${pctStr(margemMedia.margemContribuicaoPct)}</strong></td>
+        <td class="num"><strong>${pctStr(margemMedia.markupPct)}</strong></td>
+      </tr>`
+    : '';
+
   return `<table class="data">
     <thead>
       <tr>
         <th>Mês</th>
-        <th>Total</th>
+        <th>Total vendas</th>
         <th>P1</th><th>P2</th><th>P3</th>
+        <th>m.c.</th>
+        <th>Markup</th>
       </tr>
     </thead>
-    <tbody>${body}</tbody>
+    <tbody>${body}${footer}</tbody>
   </table>`;
 }
 
@@ -107,7 +132,7 @@ function htmlStackedBlock(rows, bruto) {
     .map((m) => {
       const pct = bruto ? m.pctPartes : m.pctPartesOrganico;
       return `<div class="stack-row">
-        <div class="stack-label">${esc(m.label)}${m.mesParcial ? ' *' : ''}</div>
+        <div class="stack-label">${esc(m.label)}${m.mesParcial ? ' *' : ''} ${margemInline(m)}</div>
         ${stackedBarHtml(pct)}
       </div>`;
     })
@@ -167,6 +192,9 @@ function buildHtml(report) {
     table.data td.num { text-align: right; font-variant-numeric: tabular-nums; }
     table.data td.mes { text-transform: capitalize; font-weight: 600; white-space: nowrap; }
     table.data .sub { color: #71717a; font-size: 7pt; }
+    table.data tr.totais td { border-top: 1px solid #d4d4d8; background: #fafafa; }
+    .margem-inline { font-weight: 400; color: #52525b; font-size: 7.5pt; margin-left: 6px; }
+    td.muted { color: #a1a1aa; }
     table.mini { font-size: 7.5pt; margin-top: 8px; }
     .note { font-size: 8pt; color: #71717a; margin: 8px 0 0; }
     .foot { font-size: 7.5pt; color: #a1a1aa; margin-top: 12px; }
@@ -185,7 +213,7 @@ function buildHtml(report) {
     ${htmlStackedBlock(report.pagina1_bruto, true)}
     ${htmlMediaGeral(report.padraoPartes, 'bruto')}
     <div class="section-title">Tabela</div>
-    ${htmlTabelaMeses(report.pagina1_bruto, true)}
+    ${htmlTabelaMeses(report.pagina1_bruto, true, report.margemMediaJanela)}
     <p class="note">* Mês parcial (ainda não fechou).</p>
     <p class="foot">Página 1 de 2 · P38 · Gerado ${esc(gerado)} (Tabatinga)</p>
   </section>
@@ -197,7 +225,8 @@ function buildHtml(report) {
     ${htmlStackedBlock(report.pagina2_organico, false)}
     ${htmlMediaGeral(report.padraoPartes, 'organico')}
     <div class="section-title">Tabela</div>
-    ${htmlTabelaMeses(report.pagina2_organico, false)}
+    ${htmlTabelaMeses(report.pagina2_organico, false, report.margemMediaJanela)}
+    <p class="note">m.c. = margem de contribuição (lucro ÷ receita líquida). Markup = lucro ÷ custo. Fonte: KPI mensal, snapshot de margem ou Relatório de Margem (Supabase).</p>
     <div class="section-title">Dias excluídos (outliers)</div>
     ${htmlOutliers(report.outliersDiarios)}
     <p class="note">Compare com a página 1: com 3 partes e dias úteis, a média orgânica tende a ~33% por terço quando o mês está fechado.</p>
@@ -233,7 +262,7 @@ if (!url || !serviceRoleKey) {
 }
 
 const supabase = createClient(url, serviceRoleKey, { auth: { persistSession: false } });
-const report = await runVendasSazonalidadeAnalise(supabase);
+const report = await runVendasSazonalidadeAnalise(supabase, { enrichMargem: true });
 const fileName = `P38-vendas-sazonalidade-6m-${report.dataCorte}.pdf`;
 const outPath = path.join(OUT_DIR, fileName);
 

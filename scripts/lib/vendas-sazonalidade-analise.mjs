@@ -269,6 +269,7 @@ const PARTES_LIST = [1, 2, 3];
  * @param {{ meses?: number, refDate?: Date }} [opts]
  */
 export async function runVendasSazonalidadeAnalise(supabase, opts = {}) {
+  const { enrichMargem = false } = opts;
   const meses = opts.meses ?? MESES_PADRAO;
   const ref = opts.refDate ?? new Date();
   const hojeKey = format(ref, 'yyyy-MM-dd');
@@ -336,6 +337,23 @@ export async function runVendasSazonalidadeAnalise(supabase, opts = {}) {
     });
   }
 
+  let margemPorMes = {};
+  let margemMedia = null;
+  if (enrichMargem) {
+    const {
+      attachMargemToPaginas,
+      enrichMargemCompetenciasFaltantes,
+      loadMargemCompetenciaSnapshotMap,
+      loadMargemKpiMensalMap,
+      margemMediaPonderada,
+    } = await import('./margem-mes-kpi-load.mjs');
+    margemPorMes = await loadMargemKpiMensalMap(supabase, monthKeys);
+    margemPorMes = await loadMargemCompetenciaSnapshotMap(supabase, monthKeys, margemPorMes);
+    margemPorMes = await enrichMargemCompetenciasFaltantes(supabase, monthKeys, margemPorMes);
+    attachMargemToPaginas(pagina1, pagina2, margemPorMes);
+    margemMedia = margemMediaPonderada(pagina1, (r) => r.total);
+  }
+
   return {
     janela: `${monthKeys[0]} a ${monthKeys[monthKeys.length - 1]}`,
     dataCorte: hojeKey,
@@ -349,6 +367,8 @@ export async function runVendasSazonalidadeAnalise(supabase, opts = {}) {
       bruto: PARTES_LIST.map((p) => ({ parte: p, pctMedio: mean(partMeanRaw[p]) })),
       organico: PARTES_LIST.map((p) => ({ parte: p, pctMedio: mean(partMeanFilt[p]) })),
     },
+    margemPorMes,
+    margemMediaJanela: margemMedia,
     outliersDiarios,
   };
 }
