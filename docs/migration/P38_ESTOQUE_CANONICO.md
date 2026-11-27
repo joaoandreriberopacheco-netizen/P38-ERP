@@ -8,7 +8,7 @@
 
 3. **Contagem física (Contagem Express / auditoria)** — Quando há inventário real no armazém, **a quantidade contada prevalece** sobre o saldo do extrato. O sistema gera um movimento `Ajuste de Inventário` com delta = físico − saldo extrato **completo**, nunca um valor arbitrário.
 
-4. **Estoque virtual (catálogo)** — Soma ao físico apenas pedidos aprovados e **não recebidos** (trânsito). Não substitui nem corrige o físico.
+4. **Estoque virtual (catálogo)** — Soma ao físico apenas pedidos de **reposição** aprovados e **não recebidos** (trânsito). Pedidos marcados como **encomenda** ficam de fora. Não substitui nem corrige o físico.
 
 ## O que NÃO é permitido
 

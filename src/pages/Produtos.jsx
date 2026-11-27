@@ -49,7 +49,10 @@ import {
 import { filtersNeedIep, filtersNeedSalesVelocity } from '@/lib/catalogNumericFilters';
 import { createCatalogStockContext } from '@/lib/catalogEstoqueVirtual';
 import { fetchPedidosCompraParaSugestaoEstoque } from '@/lib/fetchPedidosCompraParaSugestaoEstoque';
-import { buildPendenteAprovadoFinanceiroPorProduto } from '@/lib/sugestaoCompraEstoquePendente';
+import {
+  buildPendenteAprovadoFinanceiroPorProduto,
+  CATALOG_ESTOQUE_VIRTUAL_PENDENTE_OPTIONS,
+} from '@/lib/sugestaoCompraEstoquePendente';
 import { saveCatalogProdutoFilters } from '@/lib/catalogProdutoFiltersStorage';
 import { sumCatalogStockTotals, lineEstoqueQuantidade, lineValorCustoTotal } from '@/lib/catalogStockTotals';
 import { isCatalogEstoqueVirtualPendenteCarregando } from '@/lib/catalogEstoqueVirtual';
@@ -1186,7 +1189,7 @@ function ProdutosPageContent({ hierarchyMode = 'cadastro' } = {}) {
     isFetching: pendenteEstoqueFetching,
     isError: pendenteEstoqueErro,
   } = useQuery({
-    queryKey: ['catalogo', 'pendente-estoque'],
+    queryKey: ['catalogo', 'pendente-estoque', 'sem-encomenda'],
     enabled: estoqueVirtualAtivo,
     staleTime: 5 * 60 * 1000,
     retry: 2,
@@ -1195,7 +1198,11 @@ function ProdutosPageContent({ hierarchyMode = 'cadastro' } = {}) {
       return buildPendenteAprovadoFinanceiroPorProduto(
         data.pedidosAbertos,
         data.recebidosPorPedidoProduto,
-        { embarques: data.embarques, pedidosParaEmbarque: data.pedidosTodos },
+        {
+          embarques: data.embarques,
+          pedidosParaEmbarque: data.pedidosTodos,
+          ...CATALOG_ESTOQUE_VIRTUAL_PENDENTE_OPTIONS,
+        },
       );
     },
   });
@@ -1420,7 +1427,7 @@ function ProdutosPageContent({ hierarchyMode = 'cadastro' } = {}) {
 
       let pendenteMap = pendentePorProduto;
       if (estoqueVirtualAtivo) {
-        const cachedPendente = queryClient.getQueryData(['catalogo', 'pendente-estoque']);
+        const cachedPendente = queryClient.getQueryData(['catalogo', 'pendente-estoque', 'sem-encomenda']);
         if (cachedPendente && typeof cachedPendente === 'object') {
           pendenteMap = cachedPendente;
         } else if (!pendenteMap || Object.keys(pendenteMap).length === 0) {
@@ -1429,9 +1436,13 @@ function ProdutosPageContent({ hierarchyMode = 'cadastro' } = {}) {
           pendenteMap = buildPendenteAprovadoFinanceiroPorProduto(
             data.pedidosAbertos,
             data.recebidosPorPedidoProduto,
-            { embarques: data.embarques, pedidosParaEmbarque: data.pedidosTodos },
+            {
+              embarques: data.embarques,
+              pedidosParaEmbarque: data.pedidosTodos,
+              ...CATALOG_ESTOQUE_VIRTUAL_PENDENTE_OPTIONS,
+            },
           );
-          queryClient.setQueryData(['catalogo', 'pendente-estoque'], pendenteMap);
+          queryClient.setQueryData(['catalogo', 'pendente-estoque', 'sem-encomenda'], pendenteMap);
         }
       }
 
