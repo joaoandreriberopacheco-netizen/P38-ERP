@@ -15,6 +15,7 @@ import {
   buildTurboChargerV2Workbook,
   loadCampHierByCodigo,
 } from './lib/turboChargerV2Workbook.mjs';
+import { loadProdutosForaDo4x3 } from './lib/turboChargerLoadCadastroLive.mjs';
 
 const ROOT = process.cwd();
 const OUT = path.join(ROOT, 'docs', 'exports', 'P38-TurboCharger-v2.xlsx');
@@ -25,14 +26,16 @@ async function main() {
   factRows = factRows.map((row) => normalizeFactRowTaxonomy({ ...row }));
 
   const campHierByCod = await loadCampHierByCodigo({ withSupabase: WITH_SB });
-  const wb = buildTurboChargerV2Workbook(factRows, campHierByCod);
+  const codigos4x3 = new Set(factRows.map((r) => r.codigo_interno));
+  const fora4x3 = await loadProdutosForaDo4x3(codigos4x3);
+  const wb = buildTurboChargerV2Workbook(factRows, campHierByCod, fora4x3);
 
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   await wb.xlsx.writeFile(OUT);
 
   const filledHier = factRows.filter((r) => campHierByCod.has(r.codigo_interno)).length;
   console.log(
-    `[turbocharger:v2] ${OUT}\n  SKUs: ${factRows.length} · Camp hier: ${filledHier}/${factRows.length} · fonte 4×3: ${fs.existsSync(SRC_4X3) ? 'ok' : 'em falta'}`,
+    `[turbocharger:v2] ${OUT}\n  SKUs 4×3: ${factRows.length} · fora do 4×3 (live): ${fora4x3.length} · Camp hier: ${filledHier}/${factRows.length} · fonte: ${fs.existsSync(SRC_4X3) ? 'ok' : 'em falta'}`,
   );
 }
 

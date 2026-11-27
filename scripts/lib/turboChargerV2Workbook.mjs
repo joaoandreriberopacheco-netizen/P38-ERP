@@ -9,6 +9,7 @@ const SKUS_COMPLETO = path.join(process.cwd(), 'docs', 'exports', 'P38-catalogo-
 const SHEET_CAMINHO_4 = 'Caminho_4';
 const SHEET_CATALOGO = 'Catalogo_atual';
 const SHEET_4X3 = 'Catalogo_4x3';
+const SHEET_FORA_4X3 = 'Cadastro_fora_4x3';
 
 const CAMINHO_4_COLS = [
   { key: 'codigo_interno', label: 'Cód. interno', width: 14 },
@@ -32,6 +33,18 @@ const CATALOGO_COLS = [
 ];
 
 /** Caminho 4× + comp 3× + Camp hier — aba única. */
+const FORA_4X3_COLS = [
+  { key: 'codigo_interno', label: 'Cód. interno', width: 14 },
+  { key: 'created_at', label: 'Cadastro em', width: 12 },
+  { key: 'nome', label: 'Nome (cadastro)', width: 48 },
+  { key: 'camp_hier_1', label: 'Camp hier 1', width: 24 },
+  { key: 'camp_hier_2', label: 'Camp hier 2', width: 20 },
+  { key: 'camp_hier_3', label: 'Camp hier 3', width: 20 },
+  { key: 'camp_hier_4', label: 'Camp hier 4', width: 18 },
+  { key: 'camp_hier_5', label: 'Camp hier 5', width: 18 },
+  { key: 'situacao', label: 'Situação', width: 42 },
+];
+
 const CATALOGO_4X3_COLS = [
   { key: 'codigo_interno', label: 'Cód. interno', width: 14 },
   { key: 'codigo_4x', label: 'Código caminho 4', width: 14 },
@@ -151,8 +164,13 @@ function writeDataSheet(wb, name, cols, rows) {
  * TurboCharger v2 — três abas de trabalho (+ README).
  * @param {object[]} factRows — normalizados (4×3)
  * @param {Map<string, object>} campHierByCod
+ * @param {object[]} fora4x3Rows — activos no sistema fora do export 4×3
  */
-export function buildTurboChargerV2Workbook(factRows, campHierByCod = new Map()) {
+export function buildTurboChargerV2Workbook(
+  factRows,
+  campHierByCod = new Map(),
+  fora4x3Rows = [],
+) {
   const wb = new ExcelJS.Workbook();
   wb.creator = 'P38 TurboCharger v2';
   wb.created = new Date();
@@ -170,6 +188,10 @@ export function buildTurboChargerV2Workbook(factRows, campHierByCod = new Map())
     [
       SHEET_4X3,
       '4×3 completo: Caminho_4 + Catalogo_atual numa só aba (uma linha por SKU)',
+    ],
+    [
+      SHEET_FORA_4X3,
+      'Produtos activos no Supabase que ainda NÃO estão no 4×3 — classificar no core e correr export:catalogo-4x3',
     ],
     ['Regenerar', 'npm run turbocharger:generate:v2  (ou --with-supabase)'],
     ['Gerado em', new Date().toISOString()],
@@ -227,6 +249,9 @@ export function buildTurboChargerV2Workbook(factRows, campHierByCod = new Map())
   writeDataSheet(wb, SHEET_CAMINHO_4, CAMINHO_4_COLS, caminhoRows);
   writeDataSheet(wb, SHEET_CATALOGO, CATALOGO_COLS, catalogoRows);
   writeDataSheet(wb, SHEET_4X3, CATALOGO_4X3_COLS, catalogo4x3Rows);
+  if (fora4x3Rows.length) {
+    writeDataSheet(wb, SHEET_FORA_4X3, FORA_4X3_COLS, fora4x3Rows);
+  }
 
   return wb;
 }
