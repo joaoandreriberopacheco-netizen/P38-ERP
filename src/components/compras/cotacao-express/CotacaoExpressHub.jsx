@@ -145,8 +145,12 @@ export default function CotacaoExpressHub({
   }
 
   return (
-    <div className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[6.5rem] desktop-layout:pb-4">
+    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden w-full">
+      <div
+        data-pulse-sensor="cotacoes.hub-scroll"
+        className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y pb-[6.5rem] desktop-layout:pb-4"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         <div className="space-y-3">
       <div className={cn(P38_KPI_SHELL, 'space-y-2.5 sm:space-y-3 min-w-0 desktop-layout:grid desktop-layout:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] desktop-layout:items-start desktop-layout:gap-4')}>
         <div className="space-y-2.5 sm:space-y-3 min-w-0">
