@@ -1,23 +1,45 @@
-import { subMonths, format, parseISO, getDaysInMonth } from 'date-fns';
+import { subMonths, format, parseISO, getDaysInMonth, getDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export const MESES_PADRAO = 6;
+export const PARTES_NO_MES = 3;
 
-export function limitesQuatroPartesDoMes(daysInMonth) {
-  const step = daysInMonth / 4;
-  return [1, 2, 3, 4].map((part) => {
+/** Domingo (0) não entra; segunda–sábado contam. */
+export function isDomingoNoMes(monthKey, day) {
+  const [y, m] = monthKey.split('-').map(Number);
+  const d = Number(day);
+  if (!y || !m || !d) return false;
+  return getDay(new Date(y, m - 1, d, 12, 0, 0, 0)) === 0;
+}
+
+export function filtrarSalesByDayDiasUteis(salesByDay, monthKey) {
+  const out = {};
+  for (const [dayStr, val] of Object.entries(salesByDay || {})) {
+    if (isDomingoNoMes(monthKey, dayStr)) continue;
+    out[dayStr] = val;
+  }
+  return out;
+}
+
+export function limitesTresPartesDoMes(daysInMonth) {
+  const step = daysInMonth / PARTES_NO_MES;
+  return [1, 2, 3].map((part) => {
     const start = Math.floor((part - 1) * step) + 1;
-    const end = part === 4 ? daysInMonth : Math.floor(part * step);
+    const end = part === PARTES_NO_MES ? daysInMonth : Math.floor(part * step);
     return { part, start, end, diasNaParte: end - start + 1 };
   });
 }
 
-export function parteQuatroDoMes(day, daysInMonth) {
+export function parteTresDoMes(day, daysInMonth) {
   const d = Number(day);
   if (!Number.isFinite(d) || d < 1 || d > daysInMonth) return null;
-  const step = daysInMonth / 4;
-  return Math.min(4, Math.floor((d - 1) / step) + 1);
+  const step = daysInMonth / PARTES_NO_MES;
+  return Math.min(PARTES_NO_MES, Math.floor((d - 1) / step) + 1);
 }
+
+/** Compat legado (scripts antigos). */
+export const limitesQuatroPartesDoMes = limitesTresPartesDoMes;
+export const parteQuatroDoMes = parteTresDoMes;
 
 function round1(n) {
   return Math.round(n * 10) / 10;
@@ -92,22 +114,23 @@ export function marcarDiasOutlierValorDiario(salesByDay) {
   };
 }
 
-function agregarQuatroPartes(salesByDay, daysInMonth, apenasDias = null) {
+function agregarPartesDoMes(salesByDay, daysInMonth, monthKey, apenasDias = null) {
   const allow = apenasDias === null ? null : new Set(apenasDias.map((d) => d.day));
-  const parts = { 1: 0, 2: 0, 3: 0, 4: 0 };
+  const parts = { 1: 0, 2: 0, 3: 0 };
   let total = 0;
   for (const [dayStr, val] of Object.entries(salesByDay || {})) {
     const day = Number(dayStr);
     const v = Number(val) || 0;
     if (v <= 0) continue;
+    if (isDomingoNoMes(monthKey, day)) continue;
     if (allow && !allow.has(day)) continue;
-    const p = parteQuatroDoMes(day, daysInMonth);
+    const p = parteTresDoMes(day, daysInMonth);
     if (!p) continue;
     parts[p] += v;
     total += v;
   }
   const pct = {};
-  for (const p of [1, 2, 3, 4]) {
+  for (const p of [1, 2, 3]) {
     pct[p] = total > 0 ? round1((parts[p] / total) * 100) : 0;
   }
   return { parts, total: roundMoney(total), pctPartes: pct };
@@ -170,6 +193,8 @@ function mean(arr) {
   return arr.length ? round1(arr.reduce((s, x) => s + x, 0) / arr.length) : 0;
 }
 
+const PARTES_LIST = [1, 2, 3];
+
 /**
  * @param {import('@supabase/supabase-js').SupabaseClient} supabase
  * @param {{ meses?: number, refDate?: Date }} [opts]
@@ -184,20 +209,20 @@ export async function runVendasSazonalidadeAnalise(supabase, opts = {}) {
   const byMonth = await loadSalesByMonth(supabase, monthKeys);
   const pagina1 = [];
   const pagina2 = [];
-  const partMeanRaw = { 1: [], 2: [], 3: [], 4: [] };
-  const partMeanFilt = { 1: [], 2: [], 3: [], 4: [] };
+  const partMeanRaw = { 1: [], 2: [], 3: [] };
+  const partMeanFilt = { 1: [], 2: [], 3: [] };
   const outliersDiarios = [];
 
   for (const mk of monthKeys) {
-    const sbd = byMonth[mk] || {};
+    const sbdUteis = filtrarSalesByDayDiasUteis(byMonth[mk] || {}, mk);
     const [y, m] = mk.split('-').map(Number);
     const daysInMonth = getDaysInMonth(new Date(y, m - 1, 1));
-    const limites = limitesQuatroPartesDoMes(daysInMonth);
+    const limites = limitesTresPartesDoMes(daysInMonth);
     const mesParcial = mk === hojeKey.slice(0, 7);
 
-    const bruto = agregarQuatroPartes(sbd, daysInMonth, null);
-    const outlierInfo = marcarDiasOutlierValorDiario(sbd);
-    const filtrado = agregarQuatroPartes(sbd, daysInMonth, outlierInfo.diasNormais);
+    const bruto = agregarPartesDoMes(sbdUteis, daysInMonth, mk, null);
+    const outlierInfo = marcarDiasOutlierValorDiario(sbdUteis);
+    const filtrado = agregarPartesDoMes(sbdUteis, daysInMonth, mk, outlierInfo.diasNormais);
 
     for (const o of outlierInfo.outliers) {
       outliersDiarios.push({
@@ -210,7 +235,7 @@ export async function runVendasSazonalidadeAnalise(supabase, opts = {}) {
       });
     }
 
-    for (const p of [1, 2, 3, 4]) {
+    for (const p of PARTES_LIST) {
       if (bruto.total > 0) partMeanRaw[p].push(bruto.pctPartes[p]);
       if (filtrado.total > 0) partMeanFilt[p].push(filtrado.pctPartes[p]);
     }
@@ -223,7 +248,7 @@ export async function runVendasSazonalidadeAnalise(supabase, opts = {}) {
       mesParcial,
       pctPartes: bruto.pctPartes,
       total: bruto.total,
-      partesValor: Object.fromEntries([1, 2, 3, 4].map((p) => [p, roundMoney(bruto.parts[p])])),
+      partesValor: Object.fromEntries(PARTES_LIST.map((p) => [p, roundMoney(bruto.parts[p])])),
     });
 
     pagina2.push({
@@ -238,18 +263,22 @@ export async function runVendasSazonalidadeAnalise(supabase, opts = {}) {
       })),
       totalSemOutliers: filtrado.total,
       pctPartesOrganico: filtrado.pctPartes,
-      partesValorOrganico: Object.fromEntries([1, 2, 3, 4].map((p) => [p, roundMoney(filtrado.parts[p])])),
+      partesValorOrganico: Object.fromEntries(PARTES_LIST.map((p) => [p, roundMoney(filtrado.parts[p])])),
     });
   }
 
   return {
     janela: `${monthKeys[0]} a ${monthKeys[monthKeys.length - 1]}`,
     dataCorte: hojeKey,
+    regras: {
+      partesNoMes: PARTES_NO_MES,
+      diasContados: 'segunda a sábado (domingo excluído do total e das partes)',
+    },
     pagina1_bruto: pagina1,
     pagina2_organico: pagina2,
     padraoPartes: {
-      bruto: [1, 2, 3, 4].map((p) => ({ parte: p, pctMedio: mean(partMeanRaw[p]) })),
-      organico: [1, 2, 3, 4].map((p) => ({ parte: p, pctMedio: mean(partMeanFilt[p]) })),
+      bruto: PARTES_LIST.map((p) => ({ parte: p, pctMedio: mean(partMeanRaw[p]) })),
+      organico: PARTES_LIST.map((p) => ({ parte: p, pctMedio: mean(partMeanFilt[p]) })),
     },
     outliersDiarios,
   };

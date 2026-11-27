@@ -2,23 +2,24 @@
 
 Estudo **offline** (não aparece no ERP).
 
+## Regras
+
+- Mês civil em **3 partes iguais** (~um terço dos dias cada).
+- Contam **segunda a sábado**; **domingo não entra** no total nem nas partes.
+- Página 2 remove **dias úteis** outlier (valor diário &gt; Q3+1,5×IQR no mês).
+
 ## Gerar
 
 ```bash
-node scripts/gerar-pdf-vendas-sazonalidade-6m.mjs
+npm run vendas-sazonalidade:pdf
 ```
 
-Requer credenciais Supabase no ambiente (service role) e Playwright Chromium (`npx playwright install chromium` na primeira vez).
-
-## Conteúdo do PDF (2 páginas)
-
-1. **Visão completa** — % do faturamento em 4 partes iguais do mês (P1→P4), gráficos empilhados por mês + tabela + média.
-2. **Média orgânica** — mesma leitura após remover **dias** com valor de venda acima de Q3+1,5×IQR no mês + lista de dias excluídos.
+Requer credenciais Supabase (service role) e Playwright Chromium (`npx playwright install chromium` na primeira vez).
 
 ## JSON (debug)
 
 ```bash
-node scripts/analisar-vendas-sazonalidade-6m.mjs
+npm run vendas-sazonalidade:json
 ```
 
-Saída em `docs/exports/P38-vendas-sazonalidade-6m-<data-corte>.pdf`.
+Saída: `docs/exports/P38-vendas-sazonalidade-6m-<data-corte>.pdf` (2 páginas: completo + orgânico).

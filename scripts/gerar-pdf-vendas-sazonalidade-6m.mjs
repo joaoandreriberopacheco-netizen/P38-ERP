@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * PDF 2 páginas — sazonalidade de vendas (6 meses, 4 partes iguais/mês).
+ * PDF 2 páginas — sazonalidade de vendas (6 meses, 3 partes iguais/mês, dias úteis seg–sáb).
  * Página 1: completo | Página 2: orgânico (sem dias outlier no valor diário).
  * node scripts/gerar-pdf-vendas-sazonalidade-6m.mjs
  */
@@ -11,20 +11,20 @@ import { createClient } from '@supabase/supabase-js';
 import { chromium } from 'playwright';
 import { loadDotEnvFiles } from './base44-env.mjs';
 import { resolveP38SupabaseAdminConfig } from './p38-supabase-admin.mjs';
-import { runVendasSazonalidadeAnalise } from './lib/vendas-sazonalidade-analise.mjs';
+import { PARTES_NO_MES, runVendasSazonalidadeAnalise } from './lib/vendas-sazonalidade-analise.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const OUT_DIR = path.join(ROOT, 'docs/exports');
 const ARTIFACTS_DIR = '/opt/cursor/artifacts';
 
-const PART_COLORS = ['#3b4d5c', '#2563eb', '#4a5240', '#a4ce33'];
+const PART_COLORS = ['#3b4d5c', '#2563eb', '#a4ce33'];
 const PART_LABELS = {
   1: 'P1 início',
-  2: 'P2',
-  3: 'P3',
-  4: 'P4 fim',
+  2: 'P2 meio',
+  3: 'P3 fim',
 };
+const PARTES_LIST = Array.from({ length: PARTES_NO_MES }, (_, i) => i + 1);
 
 function brl(n) {
   return Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -42,7 +42,7 @@ function esc(s) {
 }
 
 function stackedBarHtml(pctPartes, { compact = false } = {}) {
-  const segs = [1, 2, 3, 4]
+  const segs = PARTES_LIST
     .map((p) => {
       const w = Math.max(0, Number(pctPartes[p]) || 0);
       if (w <= 0) return '';
@@ -55,7 +55,7 @@ function stackedBarHtml(pctPartes, { compact = false } = {}) {
 
 function tableRowMes(m, getPct, getVal, getTotal) {
   const total = getTotal(m);
-  const cells = [1, 2, 3, 4]
+  const cells = PARTES_LIST
     .map((p) => {
       const pct = getPct(m, p);
       const val = getVal(m, p);
@@ -95,7 +95,7 @@ function htmlTabelaMeses(rows, bruto) {
       <tr>
         <th>Mês</th>
         <th>Total</th>
-        <th>P1</th><th>P2</th><th>P3</th><th>P4</th>
+        <th>P1</th><th>P2</th><th>P3</th>
       </tr>
     </thead>
     <tbody>${body}</tbody>
@@ -177,9 +177,9 @@ function buildHtml(report) {
 <body>
   <section class="page">
     <h1>Sazonalidade de vendas — visão completa</h1>
-    <p class="meta">Janela ${esc(report.janela)} · corte ${esc(report.dataCorte)} · mês em 4 partes iguais (dias 1→fim)</p>
+    <p class="meta">Janela ${esc(report.janela)} · corte ${esc(report.dataCorte)} · ${PARTES_NO_MES} partes iguais no mês · ${esc(report.regras?.diasContados || 'segunda a sábado')}</p>
     <div class="legend">
-      ${[1, 2, 3, 4].map((p) => `<span><i class="dot" style="background:${PART_COLORS[p - 1]}"></i>${PART_LABELS[p]}</span>`).join('')}
+      ${PARTES_LIST.map((p) => `<span><i class="dot" style="background:${PART_COLORS[p - 1]}"></i>${PART_LABELS[p]}</span>`).join('')}
     </div>
     <h2>Gráficos empilhados (% do mês)</h2>
     ${htmlStackedBlock(report.pagina1_bruto, true)}
@@ -200,7 +200,7 @@ function buildHtml(report) {
     ${htmlTabelaMeses(report.pagina2_organico, false)}
     <div class="section-title">Dias excluídos (outliers)</div>
     ${htmlOutliers(report.outliersDiarios)}
-    <p class="note">Compare com a página 1: a média orgânica aproxima ~25% por parte quando o mês está fechado.</p>
+    <p class="note">Compare com a página 1: com 3 partes e dias úteis, a média orgânica tende a ~33% por terço quando o mês está fechado.</p>
     <p class="foot">Página 2 de 2 · Estudo offline — não altera o ERP · Gerado ${esc(gerado)}</p>
   </section>
 </body>
