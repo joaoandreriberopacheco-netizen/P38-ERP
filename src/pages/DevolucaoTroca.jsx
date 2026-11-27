@@ -664,6 +664,7 @@ export default function DevolucaoTrocaPage() {
 
   const handleConfirmTroca = async ({
     itensSelecionados,
+    itensDevolucao,
     qtds,
     substitutos,
     creditoDevolucao,
@@ -684,24 +685,36 @@ export default function DevolucaoTrocaPage() {
           : 0) + 1;
       const numeroDev = `DT-${String(nextNum).padStart(5, '0')}`;
 
-      const itensDevolvidos = itensSelecionados.map((item) => {
-        const key = pedidoItemKey(item);
-        const qtd = qtds[key] || 0;
-        const linha = calcularLinhaCreditoDevolucao(item, pedido, qtd);
-        return {
-          produto_id: item.produto_id,
-          produto_nome: item.produto_nome,
-          quantidade_devolvida: qtd,
-          preco_unitario: linha.unitCredito,
-          total: linha.total,
-        };
-      });
+      const linhasDevolucao =
+        Array.isArray(itensDevolucao) && itensDevolucao.length > 0
+          ? itensDevolucao
+          : itensSelecionados.map((item) => {
+              const key = pedidoItemKey(item);
+              const qtd = qtds[key] || 0;
+              return { item, qtd, linha: calcularLinhaCreditoDevolucao(item, pedido, qtd) };
+            });
+
+      const itensDevolvidos = linhasDevolucao.map(({ item, qtd, linha }) => ({
+        produto_id: item.produto_id,
+        produto_nome: item.produto_nome,
+        quantidade_devolvida: qtd,
+        quantidade_base: linha.quantidade_base ?? qtd,
+        unidade_medida: linha.unidade_medida || item.unidade_medida,
+        fator_conversao: linha.fator_conversao || item.fator_conversao || 1,
+        preco_unitario: linha.unitCredito,
+        total: linha.total,
+      }));
 
       const itensSubstitutos = substitutos.map((sub) => ({
         produto_id: sub.produto_id,
         produto_nome: sub.produto_nome,
         quantidade: sub.quantidade,
+        quantidade_base: sub.quantidade_base ?? sub.quantidade,
+        unidade_medida: sub.unidade_medida,
+        fator_conversao: sub.fator_conversao,
         preco_unitario: sub.preco_unitario,
+        preco_tabela_unitario: sub.preco_tabela_unitario,
+        com_desconto: Boolean(sub.com_desconto),
         total: sub.total,
       }));
 
@@ -762,15 +775,16 @@ export default function DevolucaoTrocaPage() {
       for (const item of itensDevolvidos) {
         const produto = await base44.entities.Produto.get(item.produto_id);
         if (produto) {
+          const qtyBase = Number(item.quantidade_base) || Number(item.quantidade_devolvida) || 0;
           await base44.entities.Produto.update(item.produto_id, {
-            estoque_atual: (produto.estoque_atual || 0) + item.quantidade_devolvida,
+            estoque_atual: (produto.estoque_atual || 0) + qtyBase,
           });
           await base44.entities.MovimentacaoEstoque.create({
             produto_id: item.produto_id,
             produto_nome: item.produto_nome,
             tipo: 'Entrada',
             motivo: 'Troca',
-            quantidade: item.quantidade_devolvida,
+            quantidade: qtyBase,
             custo_unitario: item.preco_unitario,
             referencia_tipo: 'PedidoVenda',
             referencia_id: pedido.id,
@@ -790,15 +804,16 @@ export default function DevolucaoTrocaPage() {
       for (const item of itensSubstitutos) {
         const produto = await base44.entities.Produto.get(item.produto_id);
         if (produto) {
+          const qtyBaseSaida = Number(item.quantidade_base) || Number(item.quantidade) || 0;
           await base44.entities.Produto.update(item.produto_id, {
-            estoque_atual: Math.max(0, (produto.estoque_atual || 0) - item.quantidade),
+            estoque_atual: Math.max(0, (produto.estoque_atual || 0) - qtyBaseSaida),
           });
           await base44.entities.MovimentacaoEstoque.create({
             produto_id: item.produto_id,
             produto_nome: item.produto_nome,
             tipo: 'Saída',
             motivo: 'Troca',
-            quantidade: item.quantidade,
+            quantidade: qtyBaseSaida,
             custo_unitario: item.preco_unitario,
             referencia_tipo: 'PedidoVenda',
             referencia_id: pedido.id,
