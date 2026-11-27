@@ -167,7 +167,7 @@
     "import:imagens-hipercor": "node scripts/importar-imagens-hipercor.mjs",
     "esquenta:enriquecer": "node scripts/enriquecer-esquenta-fornecedor.mjs",
     "esquenta:pdf": "node scripts/gerar-pdf-esquenta-fornecedor.mjs",
-    "vendas-sazonalidade:pdf": "node scripts/gerar-pdf-vendas-sazonalidade-6m.mjs",
+    "vendas-sazonalidade:pdf": "npx vite-node --config legacy/vite/vite.config.js scripts/gerar-pdf-vendas-sazonalidade-6m.mjs",
     "vendas-sazonalidade:json": "node scripts/analisar-vendas-sazonalidade-6m.mjs",
     "esquenta:gerar": "npm run esquenta:enriquecer && npm run esquenta:pdf",
     "catalogo:snapshot-formigres": "node scripts/catalogo/snapshot-formigres.mjs",

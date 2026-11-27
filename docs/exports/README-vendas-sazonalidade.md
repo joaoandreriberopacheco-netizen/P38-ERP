@@ -8,6 +8,7 @@ Estudo **offline** (não aparece no ERP).
 - Contam **segunda a sábado**; **domingo não entra** no total nem nas partes.
 - Página 2 remove **dias úteis** outlier (valor diário &gt; Q3+1,5×IQR no mês).
 - Meses sem snapshot mensal: pedidos por `data_venda` (deduplicados por `id` na paginação) ou `dashboard_kpi_diario` quando existir.
+- Tabelas incluem **m.c.** (lucro ÷ receita líquida) e **markup** (lucro ÷ custo) por mês, mais linha **Média da janela** (ponderada).
 
 ## Gerar
 
