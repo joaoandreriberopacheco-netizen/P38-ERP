@@ -151,34 +151,27 @@ async function loadSalesByMonth(supabase, monthKeys) {
     if (sbd && Object.keys(sbd).length) byMonth[row.month_key] = sbd;
   }
 
+  const diarioByMonth = await loadKpiDiarioByMonth(supabase, monthKeys);
+  for (const mk of monthKeys) {
+    if (Object.keys(byMonth[mk] || {}).length) continue;
+  const daily = diarioByMonth[mk];
+    if (daily && Object.keys(daily).length) {
+      byMonth[mk] = daily;
+    }
+  }
+
   const missing = monthKeys.filter((mk) => !Object.keys(byMonth[mk] || {}).length);
   if (missing.length) {
-    let all = [];
-    let from = 0;
     const minDate = monthKeys[0] + '-01';
-    while (true) {
-      const { data, error } = await supabase
-        .from('pedido_venda')
-        .select('dados,total,status,created_at')
-        .gte('created_at', minDate)
-        .range(from, from + 999);
-      if (error || !data?.length) break;
-      all = all.concat(data);
-      if (data.length < 1000) break;
-      from += 1000;
-    }
+    const pedidos = await fetchPedidosVendaDeduped(supabase, minDate);
 
-    for (const pv of all) {
-      const st = (pv.dados?.status || pv.status || '').toLowerCase();
-      const tp = (pv.dados?.tipo || pv.tipo || '').toLowerCase();
-      if (st === 'cancelado' || tp === 'orçamento' || tp === 'orcamento') continue;
-      const sd =
-        pv.dados?.data_venda && /^\d{4}/.test(String(pv.dados.data_venda))
-          ? String(pv.dados.data_venda).slice(0, 10)
-          : String(pv.created_at || '').slice(0, 10);
+    for (const pv of pedidos) {
+      if (!pedidoElegivelVendasKpi(pv)) continue;
+      const sd = resolveDataVendaKey(pv);
+      if (!sd) continue;
       const mk = sd.slice(0, 7);
       if (!missing.includes(mk)) continue;
-      const t = Number(pv.dados?.valor_total ?? pv.total ?? 0);
+      const t = valorTotalPedido(pv);
       if (t <= 0) continue;
       const day = String(parseInt(sd.slice(8, 10), 10));
       if (!byMonth[mk]) byMonth[mk] = {};
@@ -191,6 +184,82 @@ async function loadSalesByMonth(supabase, monthKeys) {
 
 function mean(arr) {
   return arr.length ? round1(arr.reduce((s, x) => s + x, 0) / arr.length) : 0;
+}
+
+function resolveDataVendaKey(pv) {
+  const dados = pv?.dados && typeof pv.dados === 'object' ? pv.dados : {};
+  for (const field of ['data_venda', 'data_emissao', 'data_fechamento']) {
+    const raw = dados[field] ?? pv[field];
+    if (typeof raw === 'string' && /^\d{4}-\d{2}-\d{2}/.test(raw)) {
+      return raw.slice(0, 10);
+    }
+  }
+  const created = pv?.created_at ?? pv?.created_date;
+  return typeof created === 'string' ? created.slice(0, 10) : null;
+}
+
+function pedidoElegivelVendasKpi(pv) {
+  const dados = pv?.dados && typeof pv.dados === 'object' ? pv.dados : {};
+  const st = String(dados.status ?? pv.status ?? '')
+    .trim()
+    .toLowerCase();
+  const tp = String(dados.tipo ?? pv.tipo ?? '')
+    .trim()
+    .toLowerCase();
+  if (st === 'cancelado') return false;
+  if (tp === 'orçamento' || tp === 'orcamento' || st === 'orçamento' || st === 'orcamento') return false;
+  return true;
+}
+
+function valorTotalPedido(pv) {
+  const dados = pv?.dados && typeof pv.dados === 'object' ? pv.dados : {};
+  return Number(dados.valor_total ?? pv.valor_total ?? pv.total ?? 0);
+}
+
+/** Paginação PostgREST pode repetir linhas — sempre deduplicar por `id`. */
+async function fetchPedidosVendaDeduped(supabase, minCreatedAt) {
+  const byId = new Map();
+  let from = 0;
+  const pageSize = 1000;
+  const maxPages = 200;
+  for (let page = 0; page < maxPages; page += 1) {
+    const { data, error } = await supabase
+      .from('pedido_venda')
+      .select('id,dados,total,status,created_at')
+      .gte('created_at', minCreatedAt)
+      .range(from, from + pageSize - 1);
+    if (error) throw error;
+    if (!data?.length) break;
+    let novos = 0;
+    for (const row of data) {
+      const id = row?.id;
+      if (id == null || byId.has(String(id))) continue;
+      byId.set(String(id), row);
+      novos += 1;
+    }
+    if (data.length < pageSize) break;
+    if (novos === 0) break;
+    from += pageSize;
+  }
+  return [...byId.values()];
+}
+
+async function loadKpiDiarioByMonth(supabase, monthKeys) {
+  const { data, error } = await supabase
+    .from('dashboard_kpi_diario')
+    .select('month_key,ref_date,payload')
+    .eq('domain', 'vendas')
+    .in('month_key', monthKeys);
+  if (error || !data?.length) return {};
+  const byMonth = {};
+  for (const row of data) {
+    const mk = row.month_key;
+    const day = String(Number(row.payload?.day) || new Date(row.ref_date).getDate());
+    const val = Number(row.payload?.salesNet ?? row.payload?.salesGross ?? 0);
+    if (!byMonth[mk]) byMonth[mk] = {};
+    if (val > 0) byMonth[mk][day] = (byMonth[mk][day] || 0) + val;
+  }
+  return byMonth;
 }
 
 const PARTES_LIST = [1, 2, 3];
